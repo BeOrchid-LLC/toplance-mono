@@ -1,0 +1,59 @@
+import Link from "next/link";
+import { Database, Terminal } from "lucide-react";
+
+/**
+ * Shown on any route that needs a database before one is configured.
+ * A first-run developer should get instructions, not a stack trace.
+ */
+export function SetupNotice() {
+  return (
+    <main className="mx-auto max-w-[720px] px-6 py-16">
+      <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--warning)_16%,var(--mix))] text-warning-ink">
+        <Database className="size-5" />
+      </span>
+      <h1 className="t-h2 mt-4">Supabase is not connected yet</h1>
+      <p className="t-body-lg mt-3 text-ink-2">
+        The public site runs without a database, but this screen needs one. Three
+        commands and you are through:
+      </p>
+
+      <ol className="mt-6 flex flex-col gap-4">
+        {[
+          {
+            cmd: "npm run db:start",
+            note: "Boots Postgres, Auth and Storage in Docker, then prints your API URL and anon key.",
+          },
+          {
+            cmd: "cp .env.local.example .env.local",
+            note: "Paste the two values it printed into the new file.",
+          },
+          {
+            cmd: "npm run db:reset",
+            note: "Applies the migration and seeds the four corridor rule sets.",
+          },
+        ].map((step, i) => (
+          <li key={step.cmd} className="flex gap-4">
+            <span className="special mt-3 w-6 shrink-0">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <div className="min-w-0 flex-1 rounded-md border border-border bg-surface p-4">
+              <code className="flex items-center gap-2 font-mono text-base text-ink">
+                <Terminal className="size-4 shrink-0 text-ink-3" />
+                {step.cmd}
+              </code>
+              <p className="t-muted mt-2">{step.note}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <p className="t-muted mt-8">
+        Full detail is in <code className="font-mono">README.md</code>.{" "}
+        <Link href="/" className="font-semibold text-brand-text hover:underline">
+          Back to the home page
+        </Link>
+        , which works without any of this.
+      </p>
+    </main>
+  );
+}

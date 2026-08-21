@@ -1,0 +1,82 @@
+# ---------- dependencies ----------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ---------- build output ----------
+.next/
+out/
+build/
+dist/
+
+# ---------- secrets ----------
+# Every .env variant stays local. The example file is the one exception:
+# it carries variable names and empty values so a new clone knows what to fill in.
+.env
+.env.*
+!.env.local.example
+*.pem
+*.key
+*.p12
+.env.keys
+
+# ---------- caches ----------
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+.turbo/
+.swc/
+*.tsbuildinfo
+next-env.d.ts
+
+# ---------- testing ----------
+coverage/
+.nyc_output/
+playwright-report/
+blob-report/
+test-results/
+.playwright/
+
+# ---------- logs ----------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---------- deployment tooling ----------
+.vercel/
+
+# ---------- supabase ----------
+# supabase/.gitignore covers these too; repeated here so the root file
+# tells the whole story on its own.
+supabase/.temp/
+supabase/.branches/
+
+# ---------- operating system ----------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ---------- editors ----------
+# Shared workspace config is worth committing; personal state is not.
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+*.swp
+*.swo
+*~

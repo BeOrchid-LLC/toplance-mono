@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { DOC_STATE, STATUS, type ApplicationStatus, type DocumentState } from "@/lib/domain/status";
 
-/** Icon plus label plus colour — never colour alone. */
+/** Colour plus label. The label is always present — colour never stands alone. */
 export function StatusBadge({
   status,
   short = false,
@@ -10,22 +10,10 @@ export function StatusBadge({
   short?: boolean;
 }) {
   const s = STATUS[status];
-  const Icon = s.icon;
-  return (
-    <Badge variant={s.variant}>
-      <Icon aria-hidden />
-      {short ? s.short : s.label}
-    </Badge>
-  );
+  return <Badge variant={s.variant}>{short ? s.short : s.label}</Badge>;
 }
 
 export function DocStateBadge({ state }: { state: DocumentState }) {
   const s = DOC_STATE[state];
-  const Icon = s.icon;
-  return (
-    <Badge variant={s.variant}>
-      <Icon aria-hidden />
-      {s.label}
-    </Badge>
-  );
+  return <Badge variant={s.variant}>{s.label}</Badge>;
 }

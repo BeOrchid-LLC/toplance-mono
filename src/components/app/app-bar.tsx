@@ -26,7 +26,7 @@ export function AppBar({
   showAgentButton?: boolean;
 }) {
   return (
-    <header className="flex h-[var(--bar-h)] items-center gap-6 border-b border-border bg-surface px-4 sm:px-6">
+    <header className="sticky top-0 z-40 flex h-[var(--bar-h)] items-center gap-6 border-b border-border bg-surface px-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-6">
         <Wordmark href={nav[0]?.href ?? "/app"} />
         <nav className="hidden items-center gap-1 lg:flex">

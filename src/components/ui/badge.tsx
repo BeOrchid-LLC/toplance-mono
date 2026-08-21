@@ -9,9 +9,12 @@ import { cn } from "@/lib/utils";
  * metadata, never an interactive control — the one `.special`
  * exemption to the 16px floor.
  *
+ * Pills carry a text label at all times; colour reinforces the state
+ * rather than encoding it, so no icon is needed to disambiguate.
+ *
  * Status → colour mapping is locked:
- *   Submitted → info · Under review → warning · Approved → success
- *   Rejected → danger · Additional docs → neutral · Collecting → brand
+ *   Not started → outline · In progress → neutral · Submitted → info
+ *   Under review → warning · Approved → success · Rejected → danger
  */
 const badgeVariants = cva(
   "inline-flex w-fit shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-pill)] px-3 py-1 text-[13px] font-semibold tracking-[0.02em] [&_svg]:size-4 [&_svg]:pointer-events-none",

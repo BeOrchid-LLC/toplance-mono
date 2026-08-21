@@ -24,7 +24,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Case queue" };
 
-/** Days since a case landed, used for the SLA signal. */
+/** Days since a case landed, used for the overdue signal. */
 function ageInDays(iso: string | null) {
   if (!iso) return 0;
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
@@ -44,8 +44,8 @@ export default async function OpsQueuePage() {
         <div className="max-w-[440px] text-center">
           <h1 className="t-h2">This console is for Toplance staff</h1>
           <p className="t-muted mt-3">
-            Your account does not have operations access. If that is wrong, ask an
-            Owner to set your role — it cannot be granted from this screen.
+            Your account does not have operations access. If that is wrong, ask a
+            Director to set your role — it cannot be granted from this screen.
           </p>
         </div>
       </div>
@@ -62,7 +62,7 @@ export default async function OpsQueuePage() {
   const rows = cases ?? [];
   const awaiting = rows.filter((r) => r.status === "submitted").length;
   const unassigned = rows.filter((r) => !r.assignee_id).length;
-  const overSla = rows.filter((r) => ageInDays(r.created_at) > 5).length;
+  const overdue = rows.filter((r) => ageInDays(r.created_at) > 5).length;
 
   return (
     <div className="min-h-dvh bg-bg">
@@ -82,7 +82,7 @@ export default async function OpsQueuePage() {
             { label: "Open cases", value: rows.length, sub: "in the pipeline", tone: "" },
             { label: "Awaiting review", value: awaiting, sub: "at 100% completion", tone: "text-info-ink" },
             { label: "Unassigned", value: unassigned, sub: "no owner yet", tone: "text-warning-ink" },
-            { label: "Over SLA", value: overSla, sub: "more than 5 days in queue", tone: "text-danger-ink" },
+            { label: "Overdue", value: overdue, sub: "more than 5 days in queue", tone: "text-danger-ink" },
           ].map((s) => (
             <div key={s.label} className="rounded-md border border-border bg-surface p-5">
               <p className="special-caps">{s.label}</p>

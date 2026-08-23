@@ -10,7 +10,37 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-23-platform-stack-migration-design.md`
 
-**Status (2026-08-23):** Tasks 1–4 complete on branch `feat/clerk-auth-phase-1`. Postgres and MinIO run locally, the schema is applied, corridors are seeded, 23 tests pass and typecheck is clean. Task 5 onward is blocked on Clerk credentials.
+**Status (2026-08-23):** All eight tasks implemented. Supabase is gone from the
+repository. 35 tests, typecheck, lint and `npm run build` all pass.
+
+One item is not closed, and it is not a code problem:
+
+**Clerk sign-up cannot complete.** The credentials belong to a shared Clerk
+application named *BeOrchid*, with organizations enabled and
+`force_organization_selection` on. Every Toplance sign-up returns a session with
+`status: "pending"` and an outstanding `choose-organization` task, which
+`auth()` treats as signed out. Toplance has no Clerk organizations — sponsorship
+lives in `org_members` — so the setting is wrong for this product, but it was
+not changed, because the instance is shared with Thrivo's live app. Either a
+separate Clerk application for Toplance, or a platform-lead decision to disable
+forced organization selection. Google and Apple social login are also enabled
+there, which contradicts the client-locked "email code only" constraint.
+
+Because of that, Task 6 Step 7 and Task 8 Step 6 could not be walked by hand.
+They were replaced by tests that are stronger than the manual checks would have
+been, and that stay:
+
+- `src/lib/auth/guards.test.ts` — the cross-account boundary against the real
+  database, including the employer/documents privacy boundary. Deleting the
+  permission check from `guards.ts` fails three of its six tests.
+- `src/lib/storage/documents.test.ts` — the storage round trip against the real
+  container, including that an unsigned request is refused.
+- `src/lib/db/schema.test.ts` — that the `pgView` declaration matches the real
+  view, and that the view carries no column naming a document.
+
+Still unwalked by hand, pending a usable Clerk application: sign-up → intake →
+requirements → upload → view → delete → submit, and the two consoles with real
+sessions.
 
 **Supersedes:** `2026-08-23-phase-1-clerk-auth.md`, which staged Supabase removal across three phases. Its Tasks 1 and 2 are done and carried forward; its Task 3 was reverted in `9e74061`.
 
@@ -925,7 +955,7 @@ git commit -m "Move the corridor seed onto Drizzle's Postgres"
 
 ---
 
-### Task 5: Clerk identity
+### Task 5: ✅ Clerk identity (code complete; blocked on the Clerk instance)
 
 **Requires Clerk credentials.** Stop and report if unavailable.
 
@@ -1211,7 +1241,7 @@ git commit -m "Move authentication onto Clerk's email code flow"
 
 ---
 
-### Task 6: Data layer and guards on Drizzle
+### Task 6: ✅ Data layer and guards on Drizzle
 
 The security-critical task. After it, no code path reaches the database without an access decision.
 
@@ -1572,7 +1602,7 @@ git commit -m "Move the data layer onto Drizzle behind explicit guards"
 
 ---
 
-### Task 7: Document storage on the S3 API
+### Task 7: ✅ Document storage on the S3 API
 
 **Files:**
 - Create: `src/lib/storage/documents.ts`
@@ -1693,7 +1723,7 @@ git commit -m "Move document storage onto the S3 API"
 
 ---
 
-### Task 8: Remove Supabase and audit
+### Task 8: ✅ Remove Supabase and audit
 
 **Files:**
 - Delete: `src/lib/supabase/`, `supabase/`

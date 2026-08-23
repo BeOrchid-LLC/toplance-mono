@@ -29,6 +29,7 @@ import {
   signedDocumentUrl,
 } from "@/lib/storage/documents";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
+import type { ApplicationStatus } from "@/lib/domain/status";
 
 type TravelPurpose = (typeof travelPurpose.enumValues)[number];
 
@@ -367,6 +368,13 @@ export async function removeDocument(applicationId: string, docKey: string) {
   }
 }
 
+/** The only statuses a traveller may submit from. */
+const RESUBMITTABLE: readonly ApplicationStatus[] = [
+  "draft",
+  "collecting_documents",
+  "additional_documents",
+];
+
 /**
  * Submission is gated on the checklist, not on the traveller's opinion
  * of it. At 100% the review team is notified; below it, the button does
@@ -376,12 +384,21 @@ export async function submitApplication(applicationId: string) {
   try {
     await requireApplicationAccess(applicationId, canWriteApplication);
 
-    // TODO(decision): nothing here checks the application's *current*
-    // status, so a case already `under_review` or `approved` can be
-    // pushed back to `submitted`. RLS never blocked this either — the
-    // button is simply hidden below 100% — but the action is callable
-    // directly, so the state machine needs a rule. See the note in the
-    // handover: pick which statuses may transition to `submitted`.
+    // Submission is one-way past review. The button is hidden below
+    // 100%, but the action is callable directly, and nothing else stops
+    // a traveller pushing a case a reviewer is already working on back
+    // to `submitted` — which would lose that reviewer their place in the
+    // queue. `additional_documents` is in the list because resubmitting
+    // is precisely what that status asks for.
+    const [current] = await db
+      .select({ status: applications.status })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1);
+
+    if (!current || !RESUBMITTABLE.includes(current.status)) {
+      return { error: "That application has already gone to the review team." };
+    }
 
     const docs = await db
       .select({ state: documents.state, isRequired: documents.isRequired })

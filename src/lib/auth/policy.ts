@@ -12,10 +12,7 @@
 export type AppRole = "traveler" | "org_member" | "staff";
 export type StaffRole = "reviewer" | "owner";
 
-/**
- * `userId` is whatever identifier `applications.traveler_id` holds: the
- * profile id today, the Clerk user id once Phase 2 repoints the key.
- */
+/** `userId` is what `applications.traveler_id` holds: the Clerk user id. */
 export type Actor = {
   userId: string;
   role: AppRole;
@@ -82,3 +79,83 @@ export function canWriteCorridors(actor: Actor): boolean {
 export function canReadAuditLog(actor: Actor): boolean {
   return isStaff(actor);
 }
+
+/* ============================================================
+ * AUDIT: every policy from supabase/migrations/20260821120000_init.sql
+ *
+ * That migration is deleted; read it at commit 8ef588e if you need the
+ * original text. Each policy below names what enforces it now.
+ *
+ * profiles
+ *   read own profile ............ getProfile() selects on the Clerk id
+ *   update own profile .......... completeProfile() writes on the same
+ *   staff read all profiles ..... ops queue joins profiles behind isStaff
+ *
+ * organisations / org_members
+ *   members read their org ...... employer page joins via own membership
+ *   members read org roster ..... getActor() reads only own memberships
+ *   staff read orgs ............. no surface reads organisations as staff
+ *
+ * corridors / corridor_requirements
+ *   signed-in read .............. every caller sits behind a session:
+ *                                 the pages redirect without one, and
+ *                                 buildChecklist runs only from the
+ *                                 guarded answerQuestion
+ *   owners write ................ canWriteCorridors, UNUSED — reference
+ *                                 data is written by `npm run db:seed`,
+ *                                 which runs as the database owner
+ *
+ * applications
+ *   travellers read own ......... getOrCreateApplication filters on the
+ *                                 caller's own id
+ *   travellers create own ....... same function; it can only insert a
+ *                                 row naming the caller
+ *   travellers update own draft . requireApplicationAccess +
+ *                                 canWriteApplication / canWriteIntakeAnswers
+ *   org members read sponsored .. employer page filters the progress
+ *                                 view by the actor's orgIds
+ *   staff read all .............. ops queue behind isStaff(actor)
+ *   staff update ................ canWriteApplication covers staff; NO
+ *                                 SURFACE YET (see gaps)
+ *
+ * intake_answers
+ *   travellers manage own ....... answerQuestion, canWriteIntakeAnswers
+ *   staff read .................. canReadIntakeAnswers; no surface yet
+ *
+ * documents — the privacy boundary
+ *   travellers manage own ....... uploadDocument / removeDocument /
+ *                                 documentUrl, all guarded
+ *   staff read / review ......... canRead/canWriteDocuments cover staff;
+ *                                 no surface yet
+ *   org members ................. deliberately absent, then and now.
+ *                                 canReadDocuments has no sponsorship
+ *                                 branch and guards.test.ts fails if one
+ *                                 is added
+ *
+ * status_events
+ *   participants read ........... canReadStatusEvents; no surface yet
+ *   staff write ................. DELIBERATE DIVERGENCE. submitApplication
+ *                                 writes the submission event as the
+ *                                 system, with a null actor. Under RLS
+ *                                 that insert was silently rejected and
+ *                                 the error never read, so submitted
+ *                                 cases carried no event at all
+ *
+ * audit_log
+ *   staff read .................. canReadAuditLog; nothing reads or
+ *                                 writes the audit log yet
+ *
+ * GAPS — features whose policies had no code to protect, and still have
+ * none. Listed because RLS used to be the backstop for exactly this: a
+ * forgotten check now fails open, so whoever builds these must add the
+ * guard in the same change.
+ *
+ *   invitations ................. "org admins manage invitations". The
+ *                                 Invite button is disabled. Needs an
+ *                                 org-scoped guard before it is enabled
+ *   messages .................... "participants read/write messages".
+ *                                 Messaging is not built; there is no
+ *                                 canRead/canWriteMessages here yet
+ *   itineraries ................. "travellers read own itinerary",
+ *                                 "staff read itineraries". Not built
+ * ============================================================ */

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ClerkProvider } from "@clerk/nextjs";
 
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -55,10 +56,17 @@ export default function RootLayout({
         data-brand="toplance"
         className={`${inter.variable} ${jetbrains.variable} antialiased`}
       >
-        <Providers>
-          {children}
-          <Toaster />
-        </Providers>
+        {/*
+          * ClerkProvider sits inside <body>, not around <html>. Core 3
+          * requires that for compatibility with cache components, and it
+          * keeps the theme and locale providers where they were.
+          */}
+        <ClerkProvider>
+          <Providers>
+            {children}
+            <Toaster />
+          </Providers>
+        </ClerkProvider>
       </body>
     </html>
   );

@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LocaleMenu } from "@/components/shared/locale-menu";
 import { ThemeSwitch } from "@/components/shared/theme-switch";
-import { signOut } from "@/app/(auth)/actions";
+import { useClerk } from "@clerk/nextjs";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -34,6 +34,8 @@ export function AccountMenu({
   email: string;
   subtitle?: string;
 }) {
+  const { signOut } = useClerk();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger aria-label="Account menu" className="rounded-full">
@@ -61,13 +63,15 @@ export function AccountMenu({
 
         <DropdownMenuSeparator className="md:hidden" />
 
-        <form action={signOut}>
-          <DropdownMenuItem asChild>
-            <button type="submit" className="w-full">
-              <LogOut /> Sign out
-            </button>
-          </DropdownMenuItem>
-        </form>
+        <DropdownMenuItem asChild>
+          <button
+            type="button"
+            onClick={() => signOut({ redirectUrl: "/" })}
+            className="w-full"
+          >
+            <LogOut /> Sign out
+          </button>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

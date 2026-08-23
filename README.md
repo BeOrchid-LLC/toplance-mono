@@ -132,7 +132,10 @@ Working end to end:
 - The public home page, in four languages for the hero and calls to action
 - Email one-time-code auth for all three personas, with session refresh
 - The intake conversation — eleven topics, editable answers, checklist rebuild
-- Corridor resolution and the versioned requirements engine
+- Corridor resolution and the versioned requirements engine, behind a
+  `VisaDataProvider` so a data vendor is one more entry in a list
+- Product analytics to `analytics_events` via `track()`, names locked to
+  `toplance.object_action`
 - Document upload to an S3-compatible bucket, read back via signed URLs
 - Completion scoring, and submission gated on it
 - The employer roster, reading through the privacy-safe view

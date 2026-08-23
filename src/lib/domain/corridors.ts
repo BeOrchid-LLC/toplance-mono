@@ -1,4 +1,43 @@
+import type { TravelPurpose } from "@/lib/visa/types";
+
 export type CorridorChip = { name: string; flag: string };
+
+/**
+ * The intake agent speaks in labels; the corridor table is keyed on
+ * codes. These live here rather than beside either caller because the
+ * checklist builder and the requirements screen both translate, and two
+ * copies would drift — a traveller would see a corridor resolve on one
+ * screen and not the other.
+ *
+ * `PURPOSE_ISO` is typed to the enum, so an unmapped purpose is a
+ * compile error rather than a cast that fails at the database.
+ */
+export const PURPOSE_ISO: Record<string, TravelPurpose> = {
+  Work: "work",
+  Study: "study",
+  Tourism: "tourism",
+  Medical: "medical",
+  Relocation: "relocation",
+};
+
+export const DESTINATION_ISO: Record<string, string> = {
+  "United Kingdom": "gb",
+  Canada: "ca",
+  "United Arab Emirates": "ae",
+  Germany: "de",
+  "United States": "us",
+  Türkiye: "tr",
+  Ireland: "ie",
+  Netherlands: "nl",
+};
+
+export const NATIONALITY_ISO: Record<string, string> = {
+  Nigeria: "ng",
+  Ghana: "gh",
+  Kenya: "ke",
+  "South Africa": "za",
+  Cameroon: "cm",
+};
 
 /**
  * The marketing surface's corridor lists. The requirements engine's

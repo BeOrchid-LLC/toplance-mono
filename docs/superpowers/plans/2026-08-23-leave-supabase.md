@@ -192,33 +192,42 @@ import { Pool } from "pg";
 import * as schema from "@/lib/db/schema";
 
 /**
- * One pool per process. Next reloads modules in development, so the
- * pool is cached on `globalThis` to avoid opening a new one on every
- * hot reload until Postgres refuses connections.
+ * Whether this process has a database to talk to.
+ *
+ * The public marketing page has no session and must render whether or
+ * not the stack is configured — a missing .env.local should disable the
+ * parts that need a database, not take the whole site down. Pages that
+ * need one check this and show the setup notice instead.
+ */
+export const hasDatabaseEnv = Boolean(process.env.DATABASE_URL);
+
+export const SETUP_STEPS = [
+  "npm run db:up          # starts Postgres and MinIO in Docker",
+  "cp .env.local.example .env.local",
+  "npm run db:migrate     # applies the schema",
+  "npm run db:seed        # loads the corridors",
+] as const;
+
+/**
+ * One pool per process. `new Pool` opens no connection on its own, so
+ * building it without a URL is harmless: the failure surfaces on first
+ * query, and `hasDatabaseEnv` is what stops us getting there.
+ *
+ * Next reloads modules in development, so the pool is cached on
+ * `globalThis` — otherwise every hot reload leaks one until Postgres
+ * refuses new connections.
  */
 const globalForDb = globalThis as unknown as { pool?: Pool };
 
-function getPool() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    throw new Error(
-      [
-        "DATABASE_URL is not set.",
-        "",
-        "  1. npm run db:up          # starts Postgres and MinIO in Docker",
-        "  2. copy .env.local.example to .env.local",
-        "  3. npm run db:migrate     # applies the schema",
-        "  4. npm run db:seed        # loads the corridors",
-      ].join("\n")
-    );
-  }
+globalForDb.pool ??= new Pool({ connectionString: process.env.DATABASE_URL });
 
-  globalForDb.pool ??= new Pool({ connectionString: url });
-  return globalForDb.pool;
-}
-
-export const db = drizzle(getPool(), { schema, casing: "snake_case" });
+export const db = drizzle(globalForDb.pool, { schema, casing: "snake_case" });
 ```
+
+Note that the pool must **not** throw when `DATABASE_URL` is absent. Building it
+at import time and throwing there would take down the marketing page, which is
+required to render without a database. `hasDatabaseEnv` is the gate; Task 8
+wires it into every page that needs one.
 
 - [ ] **Step 5: Replace the database scripts**
 
@@ -268,9 +277,22 @@ S3_SECRET_ACCESS_KEY=toplance123
 ```bash
 npm run db:up
 docker exec toplance_postgres pg_isready -U toplance
+docker ps --filter name=toplance --format '{{.Names}}\t{{.Status}}'
 ```
 
-Expected: `accepting connections`.
+Expected: `accepting connections`, and both containers up with
+`toplance_postgres` healthy.
+
+If the first pull fails with `docker-credential-desktop: executable file not
+found in $PATH`, Docker Desktop's helper is not on the shell's PATH. Prefix the
+command rather than reconfiguring Docker:
+
+```bash
+PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH" npm run db:up
+```
+
+Only the first pull needs it; once the images are local, `npm run db:up` works
+unprefixed.
 
 - [ ] **Step 8: Commit**
 

@@ -20,6 +20,12 @@ seam writing to Postgres, so adopting a vendor later is one implementation.
 **Spec:** `docs/superpowers/specs/2026-08-23-platform-stack-migration-design.md`
 (Phase 3)
 
+**Status (2026-08-23):** Tasks 1, 2 and 4 are complete — 52 tests, typecheck,
+lint and build pass. Tasks 3 and 5 remain gated on the vendor decision and must
+not be started before it. The spec's Phase 3 exit ("requirements pages serve
+real provider and curated data") is therefore half met: curated data flows
+through the provider; the API half waits.
+
 ## Global Constraints
 
 - Analytics event names are `app.object_action`, all lowercase — exactly
@@ -95,7 +101,7 @@ this task is worth doing before a vendor exists rather than after.
 
 ---
 
-### Task 1: The provider contract and the curated implementation
+### Task 1: ✅ The provider contract and the curated implementation
 
 **Files:**
 - Create: `src/lib/visa/types.ts`, `src/lib/visa/curated.ts`, `src/lib/visa/index.ts`
@@ -393,7 +399,7 @@ git commit -m "Put visa rule sets behind a provider interface"
 
 ---
 
-### Task 2: Route the requirements engine through the provider
+### Task 2: ✅ Route the requirements engine through the provider
 
 Nothing a traveller sees changes. This replaces two hand-written corridor
 queries with one call, so the vendor decision later touches no page.
@@ -808,7 +814,7 @@ git commit -m "Cache API provider rule sets in Postgres"
 
 ---
 
-### Task 4: The first analytics events
+### Task 4: ✅ The first analytics events
 
 **Files:**
 - Modify: `src/lib/db/schema.ts`

@@ -5,7 +5,7 @@ import { ArrowRight, Briefcase, Shield } from "lucide-react";
 
 import { AuthForm } from "@/components/auth/auth-form";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = { title: "Create your account" };
@@ -26,7 +26,7 @@ const ENTRIES = [
 ];
 
 export default function SignUpPage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   return (
     <div className="mx-auto w-full max-w-[560px]">

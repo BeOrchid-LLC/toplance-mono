@@ -6,15 +6,35 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 
+import { useSignIn, useSignUp } from "@clerk/nextjs";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { PhoneField } from "@/components/auth/phone-field";
 import { useLocale } from "@/components/locale-provider";
-import { requestCode, verifyCode, type AuthState } from "@/app/(auth)/actions";
+import { completeProfile } from "@/app/(auth)/actions";
 
 type Mode = "sign-up" | "sign-in";
+
+/** Local to this component now that the server no longer returns it. */
+type AuthState = { error?: string; sent?: boolean; email?: string };
+
+/**
+ * Clerk's Future API resolves with `{ error }` instead of throwing, so
+ * every call has to be checked. A try/catch around these looks like
+ * error handling and silently swallows every failure.
+ *
+ * `longMessage` is the string Clerk intends for users; `message` is for
+ * developers and is explicitly not stable. Where neither fits the
+ * situation we say it in our own words instead.
+ */
+type ClerkResult = { error: { code: string; longMessage?: string } | null };
+
+function messageFor(error: NonNullable<ClerkResult["error"]>, fallback: string) {
+  return error.longMessage ?? fallback;
+}
 
 export function AuthForm({
   mode,
@@ -33,28 +53,137 @@ export function AuthForm({
     params.get("next") ??
     (audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/app");
 
+  const { signIn } = useSignIn();
+  const { signUp } = useSignUp();
+
+  /**
+   * Held from the first screen so it can be written to the profile once
+   * Clerk has finished creating the account. Clerk stores the email and
+   * the credential; the passport name, phone and language are ours.
+   */
+  const [profileFields, setProfileFields] = React.useState({
+    fullName: "",
+    phone: "",
+    countryIso: "ng",
+  });
+
   function onRequest(formData: FormData) {
-    formData.set("mode", mode);
-    formData.set("locale", locale);
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    const fullName = String(formData.get("full_name") ?? "").trim();
+    const countryIso = String(formData.get("country_iso") ?? "ng");
+    const phone = String(formData.get("phone") ?? "");
+
+    if (!email || !email.includes("@")) {
+      setState({ error: "Enter the email address you want the code sent to." });
+      return;
+    }
+    if (mode === "sign-up" && !fullName) {
+      setState({ error: "Enter your full name as it appears in your passport." });
+      return;
+    }
+
+    setProfileFields({ fullName, phone, countryIso });
+
     startTransition(async () => {
-      const result = await requestCode({}, formData);
-      setState(result);
-      if (result.error) toast.error(result.error);
-      if (result.sent) toast.success(`Code sent to ${result.email}`);
+      // Sign-in must not quietly create an account for a typo'd
+      // address, so the two modes fail differently on purpose.
+      const fallback =
+        mode === "sign-in"
+          ? "We could not find an account for that address. Create one instead."
+          : "We could not send a code to that address. Check it and try again.";
+
+      const steps: ClerkResult[] = [];
+
+      if (mode === "sign-up") {
+        if (!signUp) return;
+        steps.push(await signUp.create({ emailAddress: email }));
+        if (!steps.at(-1)?.error) {
+          steps.push(await signUp.verifications.sendEmailCode());
+        }
+      } else {
+        if (!signIn) return;
+        steps.push(await signIn.create({ identifier: email }));
+        if (!steps.at(-1)?.error) {
+          steps.push(await signIn.emailCode.sendCode({ emailAddress: email }));
+        }
+      }
+
+      const failure = steps.find((s) => s.error)?.error;
+      if (failure) {
+        const message = messageFor(failure, fallback);
+        setState({ error: message });
+        toast.error(message);
+        return;
+      }
+
+      setState({ sent: true, email });
+      toast.success(`Code sent to ${email}`);
     });
   }
 
-  function onVerify(formData: FormData) {
-    formData.set("email", state.email ?? "");
-    formData.set("token", code);
-    formData.set("next", next);
+  function onVerify() {
     startTransition(async () => {
-      const result = await verifyCode({}, formData);
-      // A successful verify redirects, so reaching here means it failed.
-      if (result?.error) {
-        setState((s) => ({ ...s, error: result.error }));
-        toast.error(result.error);
+      const badCode =
+        "That code did not work. It expires after ten minutes and can only be used once.";
+
+      const verified =
+        mode === "sign-up"
+          ? await signUp?.verifications.verifyEmailCode({ code })
+          : await signIn?.emailCode.verifyCode({ code });
+
+      if (!verified) return;
+      if (verified.error) {
+        const message = messageFor(verified.error, badCode);
+        setState((s) => ({ ...s, error: message }));
+        toast.error(message);
+        return;
       }
+
+      // `finalize` turns the completed attempt into the active session.
+      // Its `navigate` callback is explicitly invoked *before* the
+      // session is set, so the profile write cannot go in there — it
+      // would run unauthenticated. Await the plain call instead, then
+      // write, then navigate.
+      const finalized = await (mode === "sign-up" ? signUp : signIn)?.finalize();
+
+      if (finalized?.error) {
+        const message = messageFor(
+          finalized.error,
+          "We verified the code but could not start your session. Try signing in again."
+        );
+        setState((s) => ({ ...s, error: message }));
+        toast.error(message);
+        return;
+      }
+
+      if (mode === "sign-up") {
+        const result = await completeProfile({ ...profileFields, locale });
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+      }
+
+      router.push(next);
+    });
+  }
+
+  function onResend() {
+    startTransition(async () => {
+      const sent =
+        mode === "sign-up"
+          ? await signUp?.verifications.sendEmailCode()
+          : await signIn?.emailCode.sendCode({ emailAddress: state.email ?? "" });
+
+      if (sent?.error) {
+        toast.error(
+          messageFor(sent.error, "Could not send another code. Wait a moment and try again.")
+        );
+        return;
+      }
+      toast.success("New code sent.");
     });
   }
 
@@ -70,7 +199,13 @@ export function AuthForm({
           minutes and can be used once.
         </p>
 
-        <form action={onVerify} className="mt-6">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onVerify();
+          }}
+          className="mt-6"
+        >
           <InputOTP
             maxLength={6}
             value={code}
@@ -108,7 +243,8 @@ export function AuthForm({
           </button>
           <button
             type="button"
-            onClick={() => router.refresh()}
+            onClick={onResend}
+            disabled={pending}
             className="min-h-[var(--row-h)] text-base text-brand-text hover:underline"
           >
             Resend code
@@ -164,6 +300,15 @@ export function AuthForm({
         <Button type="submit" size="block" className="mt-2" disabled={pending}>
           {pending ? "Sending…" : "Continue"} <ArrowRight />
         </Button>
+
+        {/*
+          * Clerk mounts its bot check here. Without the element it falls
+          * back to an invisible challenge and logs an error on every
+          * sign-up; with it, a challenge can render in place when one is
+          * actually needed.
+          */}
+        <div id="clerk-captcha" />
+
 
         {state.error && (
           <p role="alert" className="text-base text-danger-ink">

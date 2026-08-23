@@ -4,13 +4,13 @@ import { CheckCircle2 } from "lucide-react";
 
 import { AuthForm } from "@/components/auth/auth-form";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = { title: "Operations sign-in" };
 
 export default function OpsSignInPage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   return (
     <div className="mx-auto grid max-w-[940px] items-center gap-12 lg:grid-cols-[1fr_420px]">

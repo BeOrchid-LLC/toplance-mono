@@ -16,7 +16,7 @@ import {
   getProfile,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasDatabaseEnv } from "@/lib/db/client";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -24,14 +24,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   const profile = await getProfile();
   const application = await getOrCreateApplication();
   if (!profile || !application) redirect("/sign-in?next=/app");
 
   // Intake first — there is nothing meaningful to show before it.
-  if (!application.intake_complete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect("/app/agent");
 
   const [docs, answers, corridor] = await Promise.all([
     getDocuments(application.id),
@@ -40,7 +40,7 @@ export default async function DashboardPage() {
   ]);
 
   const completion = completionOf(docs);
-  const firstName = profile.full_name.split(" ")[0] || "there";
+  const firstName = profile.fullName.split(" ")[0] || "there";
   const status = STATUS[application.status];
   const remaining = completion.total - completion.verified;
 
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
           <h1 className="t-h2">Good afternoon, {firstName}</h1>
           <p className="t-muted mt-2">
             {answers.destination ?? "Destination not set"}
-            {corridor ? ` · ${corridor.visa_name}` : ""}
+            {corridor ? ` · ${corridor.visaName}` : ""}
           </p>
         </div>
         <StatusBadge status={application.status} />
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           <div className="p-6">
             <p className="t-title">{status.label}</p>
             <p className="t-muted mt-2">{status.blurb}</p>
-            <p className="special mt-4">CASE {application.case_ref.toUpperCase()}</p>
+            <p className="special mt-4">CASE {application.caseRef.toUpperCase()}</p>
           </div>
         </section>
 

@@ -5,7 +5,10 @@ import { ArrowRight, ExternalLink, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/lib/supabase/server";
+import { eq } from "drizzle-orm";
+
+import { db, hasDatabaseEnv } from "@/lib/db/client";
+import { corridorRequirements } from "@/lib/db/schema";
 import {
   getCorridorFor,
   getDocuments,
@@ -13,7 +16,6 @@ import {
   getOrCreateApplication,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -30,11 +32,11 @@ function formatFee(minor: number | null, currency: string | null) {
 }
 
 export default async function RequirementsPage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   const application = await getOrCreateApplication();
   if (!application) redirect("/sign-in?next=/app/requirements");
-  if (!application.intake_complete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect("/app/agent");
 
   const [corridor, docs, answers] = await Promise.all([
     getCorridorFor(application.id),
@@ -71,20 +73,19 @@ export default async function RequirementsPage() {
     );
   }
 
-  const supabase = await createClient();
-  const { data: requirements } = await supabase
-    .from("corridor_requirements")
-    .select("*")
-    .eq("corridor_id", corridor.id)
-    .order("sort_order");
+  const requirements = await db
+    .select()
+    .from(corridorRequirements)
+    .where(eq(corridorRequirements.corridorId, corridor.id))
+    .orderBy(corridorRequirements.sortOrder);
 
-  const required = (requirements ?? []).filter((r) => r.is_required);
-  const optional = (requirements ?? []).filter((r) => !r.is_required);
+  const required = requirements.filter((r) => r.isRequired);
+  const optional = requirements.filter((r) => !r.isRequired);
 
   return (
     <main className="mx-auto max-w-[1140px] px-4 py-8 sm:px-6">
       <p className="kicker mb-3">Your corridor</p>
-      <h1 className="t-h2">{corridor.visa_name}</h1>
+      <h1 className="t-h2">{corridor.visaName}</h1>
       <p className="t-body-lg mt-3 text-ink-2 measure">
         {answers.nationality ?? "Nigeria"} → {answers.destination}, for{" "}
         {(answers.purpose ?? "").toLowerCase()}. This is the rule set that built your
@@ -101,16 +102,16 @@ export default async function RequirementsPage() {
           {
             label: "Typical decision time",
             value:
-              corridor.processing_weeks_min && corridor.processing_weeks_max
-                ? `${corridor.processing_weeks_min}–${corridor.processing_weeks_max} weeks`
+              corridor.processingWeeksMin && corridor.processingWeeksMax
+                ? `${corridor.processingWeeksMin}–${corridor.processingWeeksMax} weeks`
                 : "—",
             sub: "from the date the mission receives your file",
           },
           {
             label: "Government fee",
             value: formatFee(
-              corridor.government_fee_minor,
-              corridor.government_fee_currency
+              corridor.governmentFeeMinor,
+              corridor.governmentFeeCurrency
             ),
             sub: "paid to the mission, not to Toplance",
           },
@@ -129,20 +130,20 @@ export default async function RequirementsPage() {
         <Badge variant="brand">Rule set v{corridor.version}</Badge>
         <span className="t-muted text-[16px]">
           In effect since{" "}
-          {new Date(corridor.effective_from).toLocaleDateString("en-GB", {
+          {new Date(corridor.effectiveFrom).toLocaleDateString("en-GB", {
             day: "numeric",
             month: "long",
             year: "numeric",
           })}
         </span>
-        {corridor.source_url && (
+        {corridor.sourceUrl && (
           <a
-            href={corridor.source_url}
+            href={corridor.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-auto inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
           >
-            {corridor.source_name ?? "Source"} <ExternalLink className="size-4" />
+            {corridor.sourceName ?? "Source"} <ExternalLink className="size-4" />
           </a>
         )}
       </div>

@@ -13,10 +13,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/server";
+import { asc, eq, inArray } from "drizzle-orm";
+
+import { db, hasDatabaseEnv } from "@/lib/db/client";
+import { applications, corridors, profiles } from "@/lib/db/schema";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getProfile } from "@/lib/data/applications";
+import { getActor, getProfile } from "@/lib/data/applications";
+import { isStaff } from "@/lib/auth/policy";
 import { cn } from "@/lib/utils";
 
 // Reads a session, so it is never prerendered.
@@ -25,20 +28,22 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Case queue" };
 
 /** Days since a case landed, used for the overdue signal. */
-function ageInDays(iso: string | null) {
-  if (!iso) return 0;
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+function ageInDays(at: Date | null) {
+  if (!at) return 0;
+  return Math.floor((Date.now() - at.getTime()) / 86_400_000);
 }
 
 export default async function OpsQueuePage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
-  const profile = await getProfile();
-  if (!profile) redirect("/ops/sign-in?next=/ops");
+  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
+  if (!profile || !actor) redirect("/ops/sign-in?next=/ops");
 
-  // Staff-only. RLS would return nothing anyway, but failing here gives
-  // an honest screen instead of a mysteriously empty table.
-  if (profile.role !== "staff") {
+  // Staff-only, and now the only thing making it so. RLS used to return
+  // an empty table to everyone else; this check is what stands in its
+  // place, and it also gives an honest screen rather than a mysteriously
+  // empty one.
+  if (!isStaff(actor)) {
     return (
       <div className="grid min-h-dvh place-items-center px-6">
         <div className="max-w-[440px] text-center">
@@ -52,26 +57,43 @@ export default async function OpsQueuePage() {
     );
   }
 
-  const supabase = await createClient();
-  const { data: cases } = await supabase
-    .from("applications")
-    .select("*, profiles!applications_traveler_id_fkey(full_name, country_iso), corridors(visa_name, destination_iso)")
-    .in("status", ["collecting_documents", "submitted", "under_review", "additional_documents"])
-    .order("created_at", { ascending: true });
+  const rows = await db
+    .select({
+      id: applications.id,
+      caseRef: applications.caseRef,
+      status: applications.status,
+      assigneeId: applications.assigneeId,
+      createdAt: applications.createdAt,
+      travelerName: profiles.fullName,
+      travelerCountryIso: profiles.countryIso,
+      visaName: corridors.visaName,
+      destinationIso: corridors.destinationIso,
+    })
+    .from(applications)
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+    .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+    .where(
+      inArray(applications.status, [
+        "collecting_documents",
+        "submitted",
+        "under_review",
+        "additional_documents",
+      ])
+    )
+    .orderBy(asc(applications.createdAt));
 
-  const rows = cases ?? [];
   const awaiting = rows.filter((r) => r.status === "submitted").length;
-  const unassigned = rows.filter((r) => !r.assignee_id).length;
-  const overdue = rows.filter((r) => ageInDays(r.created_at) > 5).length;
+  const unassigned = rows.filter((r) => !r.assigneeId).length;
+  const overdue = rows.filter((r) => ageInDays(r.createdAt) > 5).length;
 
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
         nav={[{ href: "/ops", label: "Case queue" }]}
         active="/ops"
-        name={profile.full_name}
+        name={profile.fullName}
         email={profile.email}
-        subtitle={`Toplance operations · ${profile.staff_role ?? "reviewer"}`}
+        subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
       />
 
       <main className="mx-auto max-w-[1140px] px-4 py-8 sm:px-6">
@@ -115,32 +137,30 @@ export default async function OpsQueuePage() {
               </TableHeader>
               <TableBody>
                 {rows.map((r) => {
-                  const age = ageInDays(r.created_at);
-                  const traveler = r.profiles as { full_name: string; country_iso: string } | null;
-                  const corridor = r.corridors as { visa_name: string; destination_iso: string } | null;
+                  const age = ageInDays(r.createdAt);
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
                         <span className="t-title block truncate">
-                          {traveler?.full_name ?? "Unnamed"}
+                          {r.travelerName || "Unnamed"}
                         </span>
                         <span className="special">
-                          {(traveler?.country_iso ?? "").toUpperCase()} · {r.case_ref}
+                          {r.travelerCountryIso.toUpperCase()} · {r.caseRef}
                         </span>
                       </TableCell>
                       <TableCell>
                         <span className="t-title block">
-                          {(corridor?.destination_iso ?? "—").toUpperCase()}
+                          {(r.destinationIso ?? "—").toUpperCase()}
                         </span>
-                        <span className="special truncate" title={corridor?.visa_name}>
-                          {corridor?.visa_name ?? "Corridor not set"}
+                        <span className="special truncate" title={r.visaName ?? undefined}>
+                          {r.visaName ?? "Corridor not set"}
                         </span>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={r.status} short />
                       </TableCell>
                       <TableCell>
-                        {r.assignee_id ? (
+                        {r.assigneeId ? (
                           <Badge variant="neutral">Assigned</Badge>
                         ) : (
                           <Badge variant="outline">Unassigned</Badge>

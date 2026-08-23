@@ -5,14 +5,16 @@ import { DocumentRow } from "@/components/app/document-row";
 import { SubmitButton } from "@/components/app/submit-button";
 import { CompletionRing } from "@/components/app/completion-ring";
 import { VERIFIED_MEANS } from "@/lib/domain/status";
-import { createClient } from "@/lib/supabase/server";
+import { eq } from "drizzle-orm";
+
+import { db, hasDatabaseEnv } from "@/lib/db/client";
+import { corridorRequirements } from "@/lib/db/schema";
 import {
   completionOf,
   getDocuments,
   getOrCreateApplication,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -20,27 +22,29 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Documents" };
 
 export default async function DocumentsPage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   const application = await getOrCreateApplication();
   if (!application) redirect("/sign-in?next=/app/documents");
-  if (!application.intake_complete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect("/app/agent");
 
   const docs = await getDocuments(application.id);
   const completion = completionOf(docs);
 
   // Descriptions live on the corridor rule set, not on the application,
   // so guidance updates for everyone the moment a mission changes it.
-  const supabase = await createClient();
-  const { data: requirements } = application.corridor_id
-    ? await supabase
-        .from("corridor_requirements")
-        .select("doc_key, description")
-        .eq("corridor_id", application.corridor_id)
-    : { data: [] };
+  const requirements = application.corridorId
+    ? await db
+        .select({
+          docKey: corridorRequirements.docKey,
+          description: corridorRequirements.description,
+        })
+        .from(corridorRequirements)
+        .where(eq(corridorRequirements.corridorId, application.corridorId))
+    : [];
 
   const descriptions = Object.fromEntries(
-    (requirements ?? []).map((r) => [r.doc_key, r.description])
+    requirements.map((r) => [r.docKey, r.description])
   );
 
   const attention = docs.filter((d) => d.state === "flagged" || d.state === "failed");
@@ -84,7 +88,7 @@ export default async function DocumentsPage() {
                 key={doc.id}
                 doc={doc}
                 applicationId={application.id}
-                description={descriptions[doc.doc_key]}
+                description={descriptions[doc.docKey]}
               />
             ))}
           </div>
@@ -100,7 +104,7 @@ export default async function DocumentsPage() {
                 key={doc.id}
                 doc={doc}
                 applicationId={application.id}
-                description={descriptions[doc.doc_key]}
+                description={descriptions[doc.docKey]}
               />
             ))}
           </div>
@@ -116,7 +120,7 @@ export default async function DocumentsPage() {
                 key={doc.id}
                 doc={doc}
                 applicationId={application.id}
-                description={descriptions[doc.doc_key]}
+                description={descriptions[doc.docKey]}
               />
             ))}
           </div>

@@ -10,6 +10,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  pgView,
   primaryKey,
   text,
   timestamp,
@@ -357,6 +358,34 @@ export const auditLog = pgTable(
     index("audit_log_subject_idx").on(t.subjectType, t.subjectId, t.createdAt),
   ]
 );
+
+/**
+ * Everything an employer is allowed to see about a sponsored
+ * application, and nothing more. Created in
+ * `src/lib/db/sql-objects.sql`; declared here as `.existing()` so the
+ * employer console can query it typed without Drizzle Kit trying to
+ * generate a `CREATE VIEW` for it.
+ *
+ * Column names are written out rather than left to the snake_case
+ * mapping, because the SQL file is the definition and this has to match
+ * it exactly. Adding a column here that reveals a document would break
+ * the promise made on the marketing site and in the console.
+ */
+export const orgApplicationProgress = pgView("org_application_progress", {
+  id: uuid("id").notNull(),
+  caseRef: text("case_ref").notNull(),
+  orgId: uuid("org_id"),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull(),
+  status: applicationStatus("status").notNull(),
+  destinationIso: text("destination_iso"),
+  visaName: text("visa_name"),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  documentsTotal: integer("documents_total"),
+  documentsVerified: integer("documents_verified"),
+  completionPct: integer("completion_pct"),
+}).existing();
 
 export type Profile = typeof profiles.$inferSelect;
 export type Application = typeof applications.$inferSelect;

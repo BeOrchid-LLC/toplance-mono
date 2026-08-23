@@ -1,36 +1,94 @@
 import "server-only";
 
-import { createClient } from "@/lib/supabase/server";
-import type { Tables } from "@/lib/supabase/database.types";
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { desc, eq } from "drizzle-orm";
 
-export type Application = Tables<"applications">;
-export type DocumentRow = Tables<"documents">;
-export type Profile = Tables<"profiles">;
+import { db } from "@/lib/db/client";
+import {
+  applications,
+  corridors,
+  documents,
+  intakeAnswers,
+  orgMembers,
+  profiles,
+  type Application,
+  type DocumentRow,
+  type Profile,
+} from "@/lib/db/schema";
+import type { Actor } from "@/lib/auth/policy";
+
+export type { Application, DocumentRow, Profile };
 
 export type Completion = { total: number; verified: number; pct: number };
 
-export async function getSessionUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+/**
+ * The signed-in user's profile, created on first sight.
+ *
+ * Provisioning happens here rather than in a Clerk webhook so a user can
+ * never reach the app without a profile row: a webhook that is slow,
+ * retried or misconfigured would leave them in exactly that state, and
+ * every foreign key in this schema points at `profiles.id`.
+ */
+export async function getProfile(): Promise<Profile | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const [existing] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
+
+  if (existing) return existing;
+
+  const user = await currentUser();
+  const email = user?.emailAddresses[0]?.emailAddress;
+  if (!email) return null;
+
+  const [created] = await db
+    .insert(profiles)
+    .values({
+      id: userId,
+      email,
+      fullName: [user?.firstName, user?.lastName].filter(Boolean).join(" "),
+    })
+    .onConflictDoNothing()
+    .returning();
+
+  // `onConflictDoNothing` returns nothing when another request won the
+  // race, so fall back to reading the row it wrote rather than telling
+  // the caller there is no profile.
+  if (created) return created;
+
+  const [raced] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.id, userId))
+    .limit(1);
+
+  return raced ?? null;
 }
 
-export async function getProfile(): Promise<Profile | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+/**
+ * The profile plus everything an access decision needs, in the shape
+ * `@/lib/auth/policy` expects. Roles live in Postgres, never in Clerk
+ * metadata, so this is the only place they are read from.
+ */
+export async function getActor(): Promise<Actor | null> {
+  const profile = await getProfile();
+  if (!profile) return null;
 
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  const memberships = await db
+    .select({ orgId: orgMembers.orgId })
+    .from(orgMembers)
+    .where(eq(orgMembers.userId, profile.id));
 
-  return data ?? null;
+  return {
+    userId: profile.id,
+    role: profile.role,
+    staffRole: profile.staffRole ?? null,
+    orgIds: memberships.map((m) => m.orgId),
+  };
 }
 
 /**
@@ -39,54 +97,44 @@ export async function getProfile(): Promise<Profile | null> {
  * somewhere to write answers.
  */
 export async function getOrCreateApplication(): Promise<Application | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const profile = await getProfile();
+  if (!profile) return null;
 
-  const { data: existing } = await supabase
-    .from("applications")
-    .select("*")
-    .eq("traveler_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [existing] = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.travelerId, profile.id))
+    .orderBy(desc(applications.createdAt))
+    .limit(1);
 
   if (existing) return existing;
 
-  const { data: created, error } = await supabase
-    .from("applications")
-    .insert({ traveler_id: user.id })
-    .select("*")
-    .single();
+  const [created] = await db
+    .insert(applications)
+    .values({ travelerId: profile.id })
+    .returning();
 
-  if (error) {
-    console.error("[applications] could not create draft", error.message);
-    return null;
-  }
-  return created;
+  return created ?? null;
 }
 
 export async function getIntakeAnswers(applicationId: string) {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("intake_answers")
-    .select("question_key, value")
-    .eq("application_id", applicationId);
+  const rows = await db
+    .select({
+      questionKey: intakeAnswers.questionKey,
+      value: intakeAnswers.value,
+    })
+    .from(intakeAnswers)
+    .where(eq(intakeAnswers.applicationId, applicationId));
 
-  return Object.fromEntries((data ?? []).map((r) => [r.question_key, r.value]));
+  return Object.fromEntries(rows.map((r) => [r.questionKey, r.value]));
 }
 
 export async function getDocuments(applicationId: string): Promise<DocumentRow[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("documents")
-    .select("*")
-    .eq("application_id", applicationId)
-    .order("sort_order");
-
-  return data ?? [];
+  return db
+    .select()
+    .from(documents)
+    .where(eq(documents.applicationId, applicationId))
+    .orderBy(documents.sortOrder);
 }
 
 /**
@@ -96,7 +144,7 @@ export async function getDocuments(applicationId: string): Promise<DocumentRow[]
  * document nobody requires.
  */
 export function completionOf(docs: DocumentRow[]): Completion {
-  const required = docs.filter((d) => d.is_required);
+  const required = docs.filter((d) => d.isRequired);
   const verified = required.filter((d) => d.state === "verified").length;
   const total = required.length;
   return {
@@ -107,20 +155,12 @@ export function completionOf(docs: DocumentRow[]): Completion {
 }
 
 export async function getCorridorFor(applicationId: string) {
-  const supabase = await createClient();
-  const { data: app } = await supabase
-    .from("applications")
-    .select("corridor_id")
-    .eq("id", applicationId)
-    .maybeSingle();
+  const [row] = await db
+    .select({ corridor: corridors })
+    .from(applications)
+    .innerJoin(corridors, eq(corridors.id, applications.corridorId))
+    .where(eq(applications.id, applicationId))
+    .limit(1);
 
-  if (!app?.corridor_id) return null;
-
-  const { data } = await supabase
-    .from("corridors")
-    .select("*")
-    .eq("id", app.corridor_id)
-    .maybeSingle();
-
-  return data ?? null;
+  return row?.corridor ?? null;
 }

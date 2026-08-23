@@ -33,7 +33,7 @@ export function DocumentRow({
   function upload(file: File) {
     const formData = new FormData();
     formData.set("application_id", applicationId);
-    formData.set("doc_key", doc.doc_key);
+    formData.set("doc_key", doc.docKey);
     formData.set("file", file);
 
     startTransition(async () => {
@@ -45,7 +45,7 @@ export function DocumentRow({
 
   function reset() {
     startTransition(async () => {
-      await removeDocument(applicationId, doc.doc_key);
+      await removeDocument(applicationId, doc.docKey);
       toast.info(`${doc.name} removed`);
     });
   }
@@ -66,7 +66,7 @@ export function DocumentRow({
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="t-h3">{doc.name}</h3>
             <DocStateBadge state={doc.state} />
-            {!doc.is_required && (
+            {!doc.isRequired && (
               <span className="special">ONLY IF IT APPLIES TO YOU</span>
             )}
           </div>

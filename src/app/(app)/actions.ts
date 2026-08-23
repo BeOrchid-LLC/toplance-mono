@@ -1,11 +1,38 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db/client";
+import {
+  applications,
+  corridorRequirements,
+  corridors,
+  documents,
+  intakeAnswers,
+  statusEvents,
+  travelPurpose,
+} from "@/lib/db/schema";
+import {
+  requireApplicationAccess,
+  toActionError,
+} from "@/lib/auth/guards";
+import {
+  canWriteApplication,
+  canWriteDocuments,
+  canWriteIntakeAnswers,
+} from "@/lib/auth/policy";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 
-const PURPOSE_MAP: Record<string, string> = {
+type TravelPurpose = (typeof travelPurpose.enumValues)[number];
+
+/**
+ * The intake agent speaks in labels; the corridor table is keyed on
+ * codes. Typing the maps to the enum means an unmapped purpose is a
+ * compile error rather than a cast that fails at the database.
+ */
+const PURPOSE_MAP: Record<string, TravelPurpose> = {
   Work: "work",
   Study: "study",
   Tourism: "tourism",
@@ -42,49 +69,61 @@ export async function answerQuestion(
   questionKey: string,
   value: string
 ) {
-  const supabase = await createClient();
+  try {
+    await requireApplicationAccess(applicationId, canWriteIntakeAnswers);
 
-  const index = INTAKE_QUESTIONS.findIndex((q) => q.key === questionKey);
-  if (index === -1) return { error: "Unknown question." };
+    const index = INTAKE_QUESTIONS.findIndex((q) => q.key === questionKey);
+    if (index === -1) return { error: "Unknown question." };
 
-  const laterKeys = INTAKE_QUESTIONS.slice(index + 1).map((q) => q.key);
+    const laterKeys = INTAKE_QUESTIONS.slice(index + 1).map((q) => q.key);
 
-  const { error } = await supabase
-    .from("intake_answers")
-    .upsert(
-      { application_id: applicationId, question_key: questionKey, value },
-      { onConflict: "application_id,question_key" }
-    );
+    await db
+      .insert(intakeAnswers)
+      .values({ applicationId, questionKey, value })
+      .onConflictDoUpdate({
+        target: [intakeAnswers.applicationId, intakeAnswers.questionKey],
+        // Re-answering is a new answer, so it carries a new timestamp.
+        set: { value, answeredAt: new Date() },
+      });
 
-  if (error) return { error: error.message };
+    if (laterKeys.length) {
+      await db
+        .delete(intakeAnswers)
+        .where(
+          and(
+            eq(intakeAnswers.applicationId, applicationId),
+            inArray(intakeAnswers.questionKey, laterKeys)
+          )
+        );
+    }
 
-  if (laterKeys.length) {
-    await supabase
-      .from("intake_answers")
-      .delete()
-      .eq("application_id", applicationId)
-      .in("question_key", laterKeys);
+    const answers = await db
+      .select({
+        questionKey: intakeAnswers.questionKey,
+        value: intakeAnswers.value,
+      })
+      .from(intakeAnswers)
+      .where(eq(intakeAnswers.applicationId, applicationId));
+
+    const map = Object.fromEntries(answers.map((a) => [a.questionKey, a.value]));
+    const complete = INTAKE_QUESTIONS.every((q) => map[q.key]);
+
+    if (complete) {
+      await buildChecklist(applicationId, map);
+    } else {
+      await db
+        .update(applications)
+        .set({ intakeComplete: false })
+        .where(eq(applications.id, applicationId));
+    }
+
+    revalidatePath("/app", "layout");
+    return { complete };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
   }
-
-  const { data: answers } = await supabase
-    .from("intake_answers")
-    .select("question_key, value")
-    .eq("application_id", applicationId);
-
-  const map = Object.fromEntries((answers ?? []).map((a) => [a.question_key, a.value]));
-  const complete = INTAKE_QUESTIONS.every((q) => map[q.key]);
-
-  if (complete) {
-    await buildChecklist(applicationId, map);
-  } else {
-    await supabase
-      .from("applications")
-      .update({ intake_complete: false })
-      .eq("id", applicationId);
-  }
-
-  revalidatePath("/app", "layout");
-  return { complete };
 }
 
 /**
@@ -92,100 +131,128 @@ export async function answerQuestion(
  * as this application's checklist. Documents already uploaded keep their
  * state, so switching destination does not throw away a verified
  * passport.
+ *
+ * Private on purpose: its only caller is `answerQuestion`, which has
+ * already established that the caller may write to this application.
+ * Exporting it from a "use server" file would publish an unguarded
+ * endpoint that rewrites anyone's checklist.
  */
-async function buildChecklist(applicationId: string, answers: Record<string, string>) {
-  const supabase = await createClient();
-
+async function buildChecklist(
+  applicationId: string,
+  answers: Record<string, string>
+) {
   const nationality = NATIONALITY_MAP[answers.nationality] ?? "ng";
   const destination = DESTINATION_MAP[answers.destination];
   const purpose = PURPOSE_MAP[answers.purpose];
 
   if (!destination || !purpose) {
-    await supabase
-      .from("applications")
-      .update({ intake_complete: true, status: "collecting_documents" })
-      .eq("id", applicationId);
+    await db
+      .update(applications)
+      .set({ intakeComplete: true, status: "collecting_documents" })
+      .where(eq(applications.id, applicationId));
     return;
   }
 
-  const { data: corridor } = await supabase
-    .from("corridors")
-    .select("id")
-    .eq("nationality_iso", nationality)
-    .eq("destination_iso", destination)
-    .eq("purpose", purpose as never)
-    .eq("is_live", true)
-    .order("version", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [corridor] = await db
+    .select({ id: corridors.id })
+    .from(corridors)
+    .where(
+      and(
+        eq(corridors.nationalityIso, nationality),
+        eq(corridors.destinationIso, destination),
+        eq(corridors.purpose, purpose),
+        eq(corridors.isLive, true)
+      )
+    )
+    .orderBy(desc(corridors.version))
+    .limit(1);
 
   if (!corridor) {
     // A corridor we do not serve yet. The intake still completes; the
     // requirements screen explains that it is in the build queue.
-    await supabase
-      .from("applications")
-      .update({ intake_complete: true, corridor_id: null, status: "collecting_documents" })
-      .eq("id", applicationId);
+    await db
+      .update(applications)
+      .set({
+        intakeComplete: true,
+        corridorId: null,
+        status: "collecting_documents",
+      })
+      .where(eq(applications.id, applicationId));
     return;
   }
 
-  const { data: requirements } = await supabase
-    .from("corridor_requirements")
-    .select("*")
-    .eq("corridor_id", corridor.id)
-    .order("sort_order");
+  const requirements = await db
+    .select()
+    .from(corridorRequirements)
+    .where(eq(corridorRequirements.corridorId, corridor.id))
+    .orderBy(corridorRequirements.sortOrder);
 
-  const { data: existing } = await supabase
-    .from("documents")
-    .select("doc_key, state")
-    .eq("application_id", applicationId);
+  const existing = await db
+    .select({ docKey: documents.docKey, state: documents.state })
+    .from(documents)
+    .where(eq(documents.applicationId, applicationId));
 
-  const keep = new Set((existing ?? []).map((d) => d.doc_key));
+  const keep = new Set(existing.map((d) => d.docKey));
 
-  const rows = (requirements ?? [])
-    .filter((r) => !keep.has(r.doc_key))
+  const rows = requirements
+    .filter((r) => !keep.has(r.docKey))
     .map((r) => ({
-      application_id: applicationId,
-      doc_key: r.doc_key,
+      applicationId,
+      docKey: r.docKey,
       name: r.name,
-      is_required: r.is_required,
-      sort_order: r.sort_order,
+      isRequired: r.isRequired,
+      sortOrder: r.sortOrder,
     }));
 
-  if (rows.length) await supabase.from("documents").insert(rows);
+  if (rows.length) await db.insert(documents).values(rows);
 
   // Drop rows this corridor no longer asks for, unless already uploaded.
-  const wanted = new Set((requirements ?? []).map((r) => r.doc_key));
-  const stale = (existing ?? [])
-    .filter((d) => !wanted.has(d.doc_key) && d.state === "not_started")
-    .map((d) => d.doc_key);
+  const wanted = new Set(requirements.map((r) => r.docKey));
+  const stale = existing
+    .filter((d) => !wanted.has(d.docKey) && d.state === "not_started")
+    .map((d) => d.docKey);
 
   if (stale.length) {
-    await supabase
-      .from("documents")
-      .delete()
-      .eq("application_id", applicationId)
-      .in("doc_key", stale);
+    await db
+      .delete(documents)
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          inArray(documents.docKey, stale)
+        )
+      );
   }
 
-  await supabase
-    .from("applications")
-    .update({
-      intake_complete: true,
-      corridor_id: corridor.id,
+  await db
+    .update(applications)
+    .set({
+      intakeComplete: true,
+      corridorId: corridor.id,
       status: "collecting_documents",
     })
-    .eq("id", applicationId);
+    .where(eq(applications.id, applicationId));
 }
 
 /**
  * Upload a file for one checklist item. The object path is namespaced by
- * application id, which is what the storage policy keys off — a
- * traveller can only write inside their own application's folder.
+ * application id, which used to be what the storage policy keyed off.
+ * Nothing enforces that path server-side any more, so the guard below is
+ * what keeps a traveller inside their own application's folder.
  */
 export async function uploadDocument(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
   const docKey = String(formData.get("doc_key") ?? "");
+
+  try {
+    // Before the file is read, so an unauthorized caller never causes an
+    // upload — not even one that is deleted a moment later.
+    await requireApplicationAccess(applicationId, canWriteDocuments);
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+
   const file = formData.get("file");
 
   if (!(file instanceof File) || file.size === 0) {
@@ -210,40 +277,57 @@ export async function uploadDocument(formData: FormData) {
     };
   }
 
-  const { error } = await supabase
-    .from("documents")
-    .update({ state: "checking", storage_path: path, reason: null })
-    .eq("application_id", applicationId)
-    .eq("doc_key", docKey);
-
-  if (error) return { error: error.message };
+  await db
+    .update(documents)
+    .set({ state: "checking", storagePath: path, reason: null })
+    .where(
+      and(
+        eq(documents.applicationId, applicationId),
+        eq(documents.docKey, docKey)
+      )
+    );
 
   revalidatePath("/app", "layout");
   return { ok: true };
 }
 
 export async function removeDocument(applicationId: string, docKey: string) {
-  const supabase = await createClient();
+  try {
+    await requireApplicationAccess(applicationId, canWriteDocuments);
 
-  const { data: doc } = await supabase
-    .from("documents")
-    .select("storage_path")
-    .eq("application_id", applicationId)
-    .eq("doc_key", docKey)
-    .maybeSingle();
+    const [doc] = await db
+      .select({ storagePath: documents.storagePath })
+      .from(documents)
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, docKey)
+        )
+      )
+      .limit(1);
 
-  if (doc?.storage_path) {
-    await supabase.storage.from("documents").remove([doc.storage_path]);
+    if (doc?.storagePath) {
+      const supabase = await createClient();
+      await supabase.storage.from("documents").remove([doc.storagePath]);
+    }
+
+    await db
+      .update(documents)
+      .set({ state: "not_started", storagePath: null, reason: null })
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, docKey)
+        )
+      );
+
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
   }
-
-  await supabase
-    .from("documents")
-    .update({ state: "not_started", storage_path: null, reason: null })
-    .eq("application_id", applicationId)
-    .eq("doc_key", docKey);
-
-  revalidatePath("/app", "layout");
-  return { ok: true };
 }
 
 /**
@@ -252,33 +336,51 @@ export async function removeDocument(applicationId: string, docKey: string) {
  * not exist.
  */
 export async function submitApplication(applicationId: string) {
-  const supabase = await createClient();
+  try {
+    await requireApplicationAccess(applicationId, canWriteApplication);
 
-  const { data: docs } = await supabase
-    .from("documents")
-    .select("state, is_required")
-    .eq("application_id", applicationId);
+    // TODO(decision): nothing here checks the application's *current*
+    // status, so a case already `under_review` or `approved` can be
+    // pushed back to `submitted`. RLS never blocked this either — the
+    // button is simply hidden below 100% — but the action is callable
+    // directly, so the state machine needs a rule. See the note in the
+    // handover: pick which statuses may transition to `submitted`.
 
-  const required = (docs ?? []).filter((d) => d.is_required);
-  const outstanding = required.filter((d) => d.state !== "verified").length;
+    const docs = await db
+      .select({ state: documents.state, isRequired: documents.isRequired })
+      .from(documents)
+      .where(eq(documents.applicationId, applicationId));
 
-  if (outstanding > 0) {
-    return { error: `${outstanding} document${outstanding === 1 ? "" : "s"} still to verify.` };
+    const required = docs.filter((d) => d.isRequired);
+    const outstanding = required.filter((d) => d.state !== "verified").length;
+
+    if (outstanding > 0) {
+      return {
+        error: `${outstanding} document${outstanding === 1 ? "" : "s"} still to verify.`,
+      };
+    }
+
+    await db
+      .update(applications)
+      .set({ status: "submitted", submittedAt: new Date() })
+      .where(eq(applications.id, applicationId));
+
+    // Under RLS this insert was silently rejected — "staff write status
+    // events" excluded the traveller, and the error was never read. It
+    // succeeds now, so a submitted case finally carries the event that
+    // explains itself. `actorId` stays null: the traveller pressed the
+    // button, but the event is written by the system on their behalf.
+    await db.insert(statusEvents).values({
+      applicationId,
+      toStatus: "submitted",
+      message: "All documents verified. Your file has gone to the review team.",
+    });
+
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
   }
-
-  const { error } = await supabase
-    .from("applications")
-    .update({ status: "submitted", submitted_at: new Date().toISOString() })
-    .eq("id", applicationId);
-
-  if (error) return { error: error.message };
-
-  await supabase.from("status_events").insert({
-    application_id: applicationId,
-    to_status: "submitted",
-    message: "All documents verified. Your file has gone to the review team.",
-  });
-
-  revalidatePath("/app", "layout");
-  return { ok: true };
 }

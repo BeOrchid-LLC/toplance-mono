@@ -14,10 +14,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/server";
+import { desc, eq, inArray } from "drizzle-orm";
+
+import { db, hasDatabaseEnv } from "@/lib/db/client";
+import {
+  orgApplicationProgress,
+  orgMembers,
+  organisations,
+} from "@/lib/db/schema";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getProfile } from "@/lib/data/applications";
+import { getActor, getProfile } from "@/lib/data/applications";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -25,42 +31,51 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Organisation console" };
 
 export default async function EmployerConsolePage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
-  const profile = await getProfile();
-  if (!profile) redirect("/employer/sign-in?next=/employer");
+  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
+  if (!profile || !actor) redirect("/employer/sign-in?next=/employer");
 
-  const supabase = await createClient();
-
-  const { data: membership } = await supabase
-    .from("org_members")
-    .select("org_id, role, organisations(name, seats_purchased)")
-    .eq("user_id", profile.id)
-    .maybeSingle();
+  const [membership] = await db
+    .select({
+      role: orgMembers.role,
+      name: organisations.name,
+      seatsPurchased: organisations.seatsPurchased,
+    })
+    .from(orgMembers)
+    .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
+    .where(eq(orgMembers.userId, profile.id))
+    .limit(1);
 
   /**
    * Read through the progress view, never the applications table
    * directly. The view carries no column that could reveal a document,
    * so this console cannot leak one even by accident.
+   *
+   * The `where` is not a convenience. RLS used to scope this view to the
+   * caller's own organisation; with RLS gone, an unfiltered select
+   * returns every sponsored traveller on the platform. An empty
+   * `orgIds` therefore has to return early rather than fall through to a
+   * query with no restriction.
    */
-  const { data: roster } = await supabase
-    .from("org_application_progress")
-    .select("*")
-    .order("completion_pct", { ascending: false });
+  const rows = actor.orgIds.length
+    ? await db
+        .select()
+        .from(orgApplicationProgress)
+        .where(inArray(orgApplicationProgress.orgId, [...actor.orgIds]))
+        .orderBy(desc(orgApplicationProgress.completionPct))
+    : [];
 
-  const org = membership?.organisations as
-    | { name: string; seats_purchased: number }
-    | undefined;
-  const rows = roster ?? [];
+  const org = membership ?? undefined;
   const used = rows.length;
-  const seats = org?.seats_purchased ?? 0;
+  const seats = org?.seatsPurchased ?? 0;
 
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
         nav={[{ href: "/employer", label: "People" }]}
         active="/employer"
-        name={profile.full_name}
+        name={profile.fullName}
         email={profile.email}
         subtitle={org ? `${org.name} · HR` : "Organisation console"}
       />
@@ -121,28 +136,28 @@ export default async function EmployerConsolePage() {
                 {rows.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell>
-                      <span className="t-title block truncate" title={r.full_name ?? ""}>
-                        {r.full_name}
+                      <span className="t-title block truncate" title={r.fullName ?? ""}>
+                        {r.fullName}
                       </span>
-                      <span className="special">{r.case_ref}</span>
+                      <span className="special">{r.caseRef}</span>
                     </TableCell>
                     <TableCell>
                       <span className="t-title block">
-                        {(r.destination_iso ?? "—").toUpperCase()}
+                        {(r.destinationIso ?? "—").toUpperCase()}
                       </span>
-                      <span className="special truncate" title={r.visa_name ?? ""}>
-                        {r.visa_name ?? "Corridor not set"}
+                      <span className="special truncate" title={r.visaName ?? ""}>
+                        {r.visaName ?? "Corridor not set"}
                       </span>
                     </TableCell>
                     <TableCell>
                       <span className="flex items-center gap-3">
-                        <Progress value={r.completion_pct ?? 0} className="flex-1" />
+                        <Progress value={r.completionPct ?? 0} className="flex-1" />
                         <span className="w-12 shrink-0 text-right font-semibold">
-                          {r.completion_pct ?? 0}%
+                          {r.completionPct ?? 0}%
                         </span>
                       </span>
                       <span className="special">
-                        {r.documents_verified ?? 0} of {r.documents_total ?? 0} verified
+                        {r.documentsVerified ?? 0} of {r.documentsTotal ?? 0} verified
                       </span>
                     </TableCell>
                     <TableCell>

@@ -20,7 +20,9 @@ export function SubmitButton({ applicationId }: { applicationId: string }) {
       onClick={() =>
         startTransition(async () => {
           const result = await submitApplication(applicationId);
-          if (result?.error) {
+          // A discriminated union now, so the failure case cannot be
+          // read past by accident.
+          if ("error" in result) {
             toast.error(result.error);
             return;
           }

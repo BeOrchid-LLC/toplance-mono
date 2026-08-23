@@ -1,4 +1,11 @@
-# Local development only. Staging and production run on Coolify.
+# Local development only. Staging and production run on Coolify, with
+# their credentials supplied there — nothing in this file is a secret or
+# is meant to leave a developer's machine.
+#
+# Every port binds to 127.0.0.1 rather than 0.0.0.0. Docker's default
+# publishes to every interface, which would put a database holding
+# passport scans on the office wifi behind a password written in this
+# file. Keep the loopback prefix.
 #
 # Ports are deliberately not the Supabase defaults: another project on
 # this machine already holds 54322.
@@ -11,7 +18,7 @@ services:
       POSTGRES_PASSWORD: toplance
       POSTGRES_DB: toplance
     ports:
-      - "54329:5432"
+      - "127.0.0.1:54329:5432"
     volumes:
       - toplance_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -31,8 +38,8 @@ services:
       MINIO_ROOT_USER: toplance
       MINIO_ROOT_PASSWORD: toplance123
     ports:
-      - "54330:9000"
-      - "54331:9001"
+      - "127.0.0.1:54330:9000"
+      - "127.0.0.1:54331:9001"
     volumes:
       - toplance_minio:/data
 

@@ -10,7 +10,6 @@ import {
   corridors,
   documents,
   intakeAnswers,
-  statusEvents,
   travelPurpose,
 } from "@/lib/db/schema";
 import {
@@ -28,8 +27,8 @@ import {
   putDocument,
   signedDocumentUrl,
 } from "@/lib/storage/documents";
+import { submitApplicationTx } from "@/lib/data/submissions";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
-import type { ApplicationStatus } from "@/lib/domain/status";
 
 type TravelPurpose = (typeof travelPurpose.enumValues)[number];
 
@@ -268,6 +267,23 @@ export async function uploadDocument(formData: FormData) {
     return { error: "That file is over 10MB. Photograph it again at a lower size." };
   }
 
+  // What is on the checklist row now, before anything is written. A
+  // docKey that is not on this application would otherwise store an
+  // object that no row ever points at, and that nothing can later
+  // delete — an unreachable passport scan kept indefinitely.
+  const [previous] = await db
+    .select({ storagePath: documents.storagePath })
+    .from(documents)
+    .where(
+      and(
+        eq(documents.applicationId, applicationId),
+        eq(documents.docKey, docKey)
+      )
+    )
+    .limit(1);
+
+  if (!previous) return { error: "That document is not on your checklist." };
+
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${applicationId}/${docKey}/${Date.now()}-${safeName}`;
 
@@ -289,6 +305,15 @@ export async function uploadDocument(formData: FormData) {
         eq(documents.docKey, docKey)
       )
     );
+
+  // Replacing a document used to leave the old object in the bucket for
+  // good: only removeDocument ever deleted anything, so every re-upload
+  // retained another copy of someone's passport. Deleted after the row
+  // points at the new object, so a failure here leaves a spare file
+  // rather than a row pointing at one that is gone.
+  if (previous.storagePath && previous.storagePath !== path) {
+    await deleteDocument(previous.storagePath).catch(() => {});
+  }
 
   revalidatePath("/app", "layout");
   return { ok: true };
@@ -368,70 +393,21 @@ export async function removeDocument(applicationId: string, docKey: string) {
   }
 }
 
-/** The only statuses a traveller may submit from. */
-const RESUBMITTABLE: readonly ApplicationStatus[] = [
-  "draft",
-  "collecting_documents",
-  "additional_documents",
-];
-
 /**
  * Submission is gated on the checklist, not on the traveller's opinion
  * of it. At 100% the review team is notified; below it, the button does
  * not exist.
+ *
+ * The guard first, then the transition — which lives in
+ * `@/lib/data/submissions` so it can be tested under real concurrency.
  */
 export async function submitApplication(applicationId: string) {
   try {
     await requireApplicationAccess(applicationId, canWriteApplication);
 
-    // Submission is one-way past review. The button is hidden below
-    // 100%, but the action is callable directly, and nothing else stops
-    // a traveller pushing a case a reviewer is already working on back
-    // to `submitted` — which would lose that reviewer their place in the
-    // queue. `additional_documents` is in the list because resubmitting
-    // is precisely what that status asks for.
-    const [current] = await db
-      .select({ status: applications.status })
-      .from(applications)
-      .where(eq(applications.id, applicationId))
-      .limit(1);
-
-    if (!current || !RESUBMITTABLE.includes(current.status)) {
-      return { error: "That application has already gone to the review team." };
-    }
-
-    const docs = await db
-      .select({ state: documents.state, isRequired: documents.isRequired })
-      .from(documents)
-      .where(eq(documents.applicationId, applicationId));
-
-    const required = docs.filter((d) => d.isRequired);
-    const outstanding = required.filter((d) => d.state !== "verified").length;
-
-    if (outstanding > 0) {
-      return {
-        error: `${outstanding} document${outstanding === 1 ? "" : "s"} still to verify.`,
-      };
-    }
-
-    await db
-      .update(applications)
-      .set({ status: "submitted", submittedAt: new Date() })
-      .where(eq(applications.id, applicationId));
-
-    // Under RLS this insert was silently rejected — "staff write status
-    // events" excluded the traveller, and the error was never read. It
-    // succeeds now, so a submitted case finally carries the event that
-    // explains itself. `actorId` stays null: the traveller pressed the
-    // button, but the event is written by the system on their behalf.
-    await db.insert(statusEvents).values({
-      applicationId,
-      toStatus: "submitted",
-      message: "All documents verified. Your file has gone to the review team.",
-    });
-
-    revalidatePath("/app", "layout");
-    return { ok: true };
+    const result = await submitApplicationTx(applicationId);
+    if ("ok" in result) revalidatePath("/app", "layout");
+    return result;
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

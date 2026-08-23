@@ -1,17 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import {
-  applications,
-  corridorRequirements,
-  corridors,
-  documents,
-  intakeAnswers,
-  travelPurpose,
-} from "@/lib/db/schema";
+import { applications, documents, intakeAnswers } from "@/lib/db/schema";
 import {
   requireApplicationAccess,
   toActionError,
@@ -28,41 +21,13 @@ import {
   signedDocumentUrl,
 } from "@/lib/storage/documents";
 import { submitApplicationTx } from "@/lib/data/submissions";
+import {
+  DESTINATION_ISO,
+  NATIONALITY_ISO,
+  PURPOSE_ISO,
+} from "@/lib/domain/corridors";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
-
-type TravelPurpose = (typeof travelPurpose.enumValues)[number];
-
-/**
- * The intake agent speaks in labels; the corridor table is keyed on
- * codes. Typing the maps to the enum means an unmapped purpose is a
- * compile error rather than a cast that fails at the database.
- */
-const PURPOSE_MAP: Record<string, TravelPurpose> = {
-  Work: "work",
-  Study: "study",
-  Tourism: "tourism",
-  Medical: "medical",
-  Relocation: "relocation",
-};
-
-const DESTINATION_MAP: Record<string, string> = {
-  "United Kingdom": "gb",
-  Canada: "ca",
-  "United Arab Emirates": "ae",
-  Germany: "de",
-  "United States": "us",
-  Türkiye: "tr",
-  Ireland: "ie",
-  Netherlands: "nl",
-};
-
-const NATIONALITY_MAP: Record<string, string> = {
-  Nigeria: "ng",
-  Ghana: "gh",
-  Kenya: "ke",
-  "South Africa": "za",
-  Cameroon: "cm",
-};
+import { resolveRuleSet } from "@/lib/visa";
 
 /**
  * Record one intake answer. Re-answering an earlier question clears
@@ -146,9 +111,9 @@ async function buildChecklist(
   applicationId: string,
   answers: Record<string, string>
 ) {
-  const nationality = NATIONALITY_MAP[answers.nationality] ?? "ng";
-  const destination = DESTINATION_MAP[answers.destination];
-  const purpose = PURPOSE_MAP[answers.purpose];
+  const nationality = NATIONALITY_ISO[answers.nationality] ?? "ng";
+  const destination = DESTINATION_ISO[answers.destination];
+  const purpose = PURPOSE_ISO[answers.purpose];
 
   if (!destination || !purpose) {
     await db
@@ -158,21 +123,13 @@ async function buildChecklist(
     return;
   }
 
-  const [corridor] = await db
-    .select({ id: corridors.id })
-    .from(corridors)
-    .where(
-      and(
-        eq(corridors.nationalityIso, nationality),
-        eq(corridors.destinationIso, destination),
-        eq(corridors.purpose, purpose),
-        eq(corridors.isLive, true)
-      )
-    )
-    .orderBy(desc(corridors.version))
-    .limit(1);
+  const ruleSet = await resolveRuleSet({
+    nationalityIso: nationality,
+    destinationIso: destination,
+    purpose,
+  });
 
-  if (!corridor) {
+  if (!ruleSet) {
     // A corridor we do not serve yet. The intake still completes; the
     // requirements screen explains that it is in the build queue.
     await db
@@ -186,11 +143,7 @@ async function buildChecklist(
     return;
   }
 
-  const requirements = await db
-    .select()
-    .from(corridorRequirements)
-    .where(eq(corridorRequirements.corridorId, corridor.id))
-    .orderBy(corridorRequirements.sortOrder);
+  const requirements = ruleSet.requirements;
 
   const existing = await db
     .select({ docKey: documents.docKey, state: documents.state })
@@ -232,7 +185,7 @@ async function buildChecklist(
     .update(applications)
     .set({
       intakeComplete: true,
-      corridorId: corridor.id,
+      corridorId: ruleSet.corridorId,
       status: "collecting_documents",
     })
     .where(eq(applications.id, applicationId));

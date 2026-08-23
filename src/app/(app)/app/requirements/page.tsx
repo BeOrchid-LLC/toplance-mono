@@ -5,16 +5,18 @@ import { ArrowRight, ExternalLink, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { eq } from "drizzle-orm";
-
-import { db, hasDatabaseEnv } from "@/lib/db/client";
-import { corridorRequirements } from "@/lib/db/schema";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import {
-  getCorridorFor,
   getDocuments,
   getIntakeAnswers,
   getOrCreateApplication,
 } from "@/lib/data/applications";
+import {
+  DESTINATION_ISO,
+  NATIONALITY_ISO,
+  PURPOSE_ISO,
+} from "@/lib/domain/corridors";
+import { resolveRuleSet } from "@/lib/visa";
 import { SetupNotice } from "@/components/shared/setup-notice";
 
 // Needs a session, so it is never prerendered.
@@ -38,15 +40,29 @@ export default async function RequirementsPage() {
   if (!application) redirect("/sign-in?next=/app/requirements");
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [corridor, docs, answers] = await Promise.all([
-    getCorridorFor(application.id),
+  const [docs, answers] = await Promise.all([
     getDocuments(application.id),
     getIntakeAnswers(application.id),
   ]);
 
+  // Resolved from the answers rather than read from the corridors table,
+  // so a provider with no row of ours behind it serves this screen the
+  // same way the curated data does.
+  const destination = DESTINATION_ISO[answers.destination];
+  const purpose = PURPOSE_ISO[answers.purpose];
+
+  const ruleSet =
+    destination && purpose
+      ? await resolveRuleSet({
+          nationalityIso: NATIONALITY_ISO[answers.nationality] ?? "ng",
+          destinationIso: destination,
+          purpose,
+        })
+      : null;
+
   // A corridor we do not serve yet. Say so plainly rather than showing
   // a half-built checklist and letting someone act on it.
-  if (!corridor) {
+  if (!ruleSet) {
     return (
       <main className="mx-auto max-w-[720px] px-4 py-12 sm:px-6">
         <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--warning)_16%,var(--mix))] text-warning-ink">
@@ -73,19 +89,13 @@ export default async function RequirementsPage() {
     );
   }
 
-  const requirements = await db
-    .select()
-    .from(corridorRequirements)
-    .where(eq(corridorRequirements.corridorId, corridor.id))
-    .orderBy(corridorRequirements.sortOrder);
-
-  const required = requirements.filter((r) => r.isRequired);
-  const optional = requirements.filter((r) => !r.isRequired);
+  const required = ruleSet.requirements.filter((r) => r.isRequired);
+  const optional = ruleSet.requirements.filter((r) => !r.isRequired);
 
   return (
     <main className="mx-auto max-w-[1140px] px-4 py-8 sm:px-6">
       <p className="kicker mb-3">Your corridor</p>
-      <h1 className="t-h2">{corridor.visaName}</h1>
+      <h1 className="t-h2">{ruleSet.visaName}</h1>
       <p className="t-body-lg mt-3 text-ink-2 measure">
         {answers.nationality ?? "Nigeria"} → {answers.destination}, for{" "}
         {(answers.purpose ?? "").toLowerCase()}. This is the rule set that built your
@@ -102,16 +112,16 @@ export default async function RequirementsPage() {
           {
             label: "Typical decision time",
             value:
-              corridor.processingWeeksMin && corridor.processingWeeksMax
-                ? `${corridor.processingWeeksMin}–${corridor.processingWeeksMax} weeks`
+              ruleSet.processingWeeksMin && ruleSet.processingWeeksMax
+                ? `${ruleSet.processingWeeksMin}–${ruleSet.processingWeeksMax} weeks`
                 : "—",
             sub: "from the date the mission receives your file",
           },
           {
             label: "Government fee",
             value: formatFee(
-              corridor.governmentFeeMinor,
-              corridor.governmentFeeCurrency
+              ruleSet.governmentFeeMinor,
+              ruleSet.governmentFeeCurrency
             ),
             sub: "paid to the mission, not to Toplance",
           },
@@ -127,23 +137,23 @@ export default async function RequirementsPage() {
       {/* Every figure is traceable. A checklist nobody can trace is a
           checklist nobody trusts. */}
       <div className="mt-6 flex flex-wrap items-center gap-3 rounded-md border border-border bg-surface-2 px-4 py-3">
-        <Badge variant="brand">Rule set v{corridor.version}</Badge>
+        <Badge variant="brand">Rule set v{ruleSet.version}</Badge>
         <span className="t-muted text-[16px]">
           In effect since{" "}
-          {new Date(corridor.effectiveFrom).toLocaleDateString("en-GB", {
+          {new Date(ruleSet.effectiveFrom).toLocaleDateString("en-GB", {
             day: "numeric",
             month: "long",
             year: "numeric",
           })}
         </span>
-        {corridor.sourceUrl && (
+        {ruleSet.sourceUrl && (
           <a
-            href={corridor.sourceUrl}
+            href={ruleSet.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-auto inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
           >
-            {corridor.sourceName ?? "Source"} <ExternalLink className="size-4" />
+            {ruleSet.sourceName ?? "Source"} <ExternalLink className="size-4" />
           </a>
         )}
       </div>
@@ -153,7 +163,7 @@ export default async function RequirementsPage() {
         <ol className="mt-4 flex flex-col gap-3">
           {required.map((r, i) => (
             <li
-              key={r.id}
+              key={r.docKey}
               className="flex gap-4 rounded-md border border-border bg-surface p-5"
             >
               <span className="special mt-1 w-6 shrink-0">
@@ -174,7 +184,7 @@ export default async function RequirementsPage() {
           <ol className="mt-4 flex flex-col gap-3">
             {optional.map((r) => (
               <li
-                key={r.id}
+                key={r.docKey}
                 className="rounded-md border border-dashed border-border-strong bg-surface p-5"
               >
                 <p className="t-title">{r.name}</p>

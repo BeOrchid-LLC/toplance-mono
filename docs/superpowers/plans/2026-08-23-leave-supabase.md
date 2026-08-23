@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-23-platform-stack-migration-design.md`
 
+**Status (2026-08-23):** Tasks 1–4 complete on branch `feat/clerk-auth-phase-1`. Postgres and MinIO run locally, the schema is applied, corridors are seeded, 23 tests pass and typecheck is clean. Task 5 onward is blocked on Clerk credentials.
+
 **Supersedes:** `2026-08-23-phase-1-clerk-auth.md`, which staged Supabase removal across three phases. Its Tasks 1 and 2 are done and carried forward; its Task 3 was reverted in `9e74061`.
 
 ## Already done
@@ -69,7 +71,7 @@ If Clerk keys are unavailable, stop after Task 4 and report. Do not stub or fake
 - `drizzle.config.ts` — Drizzle Kit configuration
 - `src/lib/db/schema.ts` — the entire schema, and the only place table names live
 - `src/lib/db/client.ts` — the pooled connection
-- `src/lib/db/seed.ts` — runs `supabase/seed.sql`'s successor
+- `src/lib/db/seed.mts` — runs `supabase/seed.sql`'s successor
 - `drizzle/` — generated migrations, committed
 - `src/lib/auth/errors.ts` — `UnauthenticatedError`, `ForbiddenError`
 - `src/lib/auth/guards.ts` — session → actor, row fetch, policy application
@@ -96,7 +98,7 @@ If Clerk keys are unavailable, stop after Task 4 and report. Do not stub or fake
 
 ---
 
-### Task 1: Local Postgres, MinIO and the Drizzle connection
+### Task 1: ✅ Local Postgres, MinIO and the Drizzle connection
 
 **Files:**
 - Create: `docker-compose.yml`, `drizzle.config.ts`, `src/lib/db/client.ts`
@@ -118,7 +120,14 @@ npm install -D drizzle-kit @types/pg
 Create `docker-compose.yml`:
 
 ```yaml
-# Local development only. Staging and production run on Coolify.
+# Local development only. Staging and production run on Coolify, with
+# their credentials supplied there — nothing in this file is a secret or
+# is meant to leave a developer's machine.
+#
+# Every port binds to 127.0.0.1 rather than 0.0.0.0. Docker's default
+# publishes to every interface, which would put a database holding
+# passport scans on the office wifi behind a password written in this
+# file. Keep the loopback prefix.
 #
 # Ports are deliberately not the Supabase defaults: another project on
 # this machine already holds 54322.
@@ -131,7 +140,7 @@ services:
       POSTGRES_PASSWORD: toplance
       POSTGRES_DB: toplance
     ports:
-      - "54329:5432"
+      - "127.0.0.1:54329:5432"
     volumes:
       - toplance_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -151,8 +160,8 @@ services:
       MINIO_ROOT_USER: toplance
       MINIO_ROOT_PASSWORD: toplance123
     ports:
-      - "54330:9000"
-      - "54331:9001"
+      - "127.0.0.1:54330:9000"
+      - "127.0.0.1:54331:9001"
     volumes:
       - toplance_minio:/data
 
@@ -239,7 +248,7 @@ In `package.json`, remove the five `db:*` Supabase scripts and add:
 "db:generate": "drizzle-kit generate",
 "db:migrate": "drizzle-kit migrate",
 "db:studio": "drizzle-kit studio",
-"db:seed": "node --experimental-strip-types src/lib/db/seed.ts"
+"db:seed": "node --experimental-strip-types src/lib/db/seed.mts"
 ```
 
 Leave the `supabase` dev dependency in place for now; Task 8 removes it along with the rest.
@@ -303,7 +312,7 @@ git commit -m "Add local Postgres, MinIO and the Drizzle connection"
 
 ---
 
-### Task 2: The schema
+### Task 2: ✅ The schema
 
 Translate `supabase/migrations/20260821120000_init.sql` into Drizzle. Read that file first. Everything except the RLS policies, the `auth.uid()` helper functions and the storage bucket carries over; those are replaced by `src/lib/auth/policy.ts` and Task 7 respectively.
 
@@ -675,7 +684,7 @@ git commit -m "Define the schema in Drizzle"
 
 ---
 
-### Task 3: Generate, extend and apply the migration
+### Task 3: ✅ Generate, extend and apply the migration
 
 **Files:**
 - Create: `drizzle/*.sql` (generated), `drizzle/9999_sql_objects.sql` (hand-written)
@@ -825,12 +834,12 @@ git commit -m "Generate the initial migration and add the SQL objects"
 
 ---
 
-### Task 4: Seed the corridors
+### Task 4: ✅ Seed the corridors
 
 `supabase/seed.sql` is plain SQL touching only `corridors`, `corridor_requirements` and `organisations`. It carries over unchanged apart from its location.
 
 **Files:**
-- Create: `src/lib/db/seed.sql`, `src/lib/db/seed.ts`
+- Create: `src/lib/db/seed.sql`, `src/lib/db/seed.mts`
 - Delete: `supabase/seed.sql`
 
 **Interfaces:**
@@ -847,7 +856,7 @@ The contents need no change: it references no Supabase-specific object.
 
 - [ ] **Step 2: Write the runner**
 
-Create `src/lib/db/seed.ts`:
+Create `src/lib/db/seed.mts`:
 
 ```ts
 import { readFileSync } from "node:fs";
@@ -902,7 +911,7 @@ Run `npm run db:seed` a second time and confirm the count stays at four.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/lib/db/seed.sql src/lib/db/seed.ts
+git add src/lib/db/seed.sql src/lib/db/seed.mts
 git rm --cached supabase/seed.sql 2>/dev/null || true
 git commit -m "Move the corridor seed onto Drizzle's Postgres"
 ```

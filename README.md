@@ -9,19 +9,26 @@ Next.js 16 (App Router) · Tailwind v4 · shadcn/ui · Supabase.
 
 ## First run
 
-You need Docker running for the local Supabase stack.
+You need Docker running for Postgres and the object store, and a Clerk
+application for sign-in.
 
 ```bash
 npm install
-npm run db:start                  # Postgres, Auth and Storage in Docker
-cp .env.local.example .env.local  # paste in the URL and anon key it printed
-npm run db:reset                  # applies the migration, seeds four corridors
-npm run db:types                  # regenerates src/lib/supabase/database.types.ts
+npm run db:up                     # Postgres on 54329, MinIO on 54330
+cp .env.local.example .env.local  # then paste in your two Clerk keys
+npm run db:migrate                # applies the schema and the SQL objects
+npm run db:seed                   # loads four corridors and their requirements
+npm run db:bucket                 # creates the private documents bucket
 npm run dev
 ```
 
+`db:bucket` talks to the S3 API rather than MinIO's own client, so the same
+command works against whatever store staging and production use.
+
 The public home page at `/` works without any of this. Every other route shows a
 setup notice until `.env.local` exists, rather than a stack trace.
+
+The MinIO console is at <http://127.0.0.1:54331> (`toplance` / `toplance123`).
 
 ### Making yourself staff
 
@@ -32,7 +39,11 @@ granting it, deliberately. After signing up once:
 update profiles set role = 'staff', staff_role = 'owner' where email = 'you@example.com';
 ```
 
-Run it in Supabase Studio (`npm run db:start` prints the URL) or via `psql`.
+Run it with `npm run db:studio`, or:
+
+```bash
+docker exec -it toplance_postgres psql -U toplance -d toplance
+```
 
 ---
 

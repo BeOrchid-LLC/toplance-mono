@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Camera, RotateCcw, Trash2, Upload } from "lucide-react";
+import { Camera, Eye, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DocStateBadge } from "@/components/shared/status-badge";
-import { removeDocument, uploadDocument } from "@/app/(app)/actions";
+import { documentUrl, removeDocument, uploadDocument } from "@/app/(app)/actions";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { cn } from "@/lib/utils";
 
@@ -45,8 +45,26 @@ export function DocumentRow({
 
   function reset() {
     startTransition(async () => {
-      await removeDocument(applicationId, doc.docKey);
-      toast.info(`${doc.name} removed`);
+      const result = await removeDocument(applicationId, doc.docKey);
+      if (result?.error) toast.error(result.error);
+      else toast.info(`${doc.name} removed`);
+    });
+  }
+
+  /**
+   * The signed URL is minted per click rather than rendered into the
+   * page. It expires in ten minutes, so one baked into the HTML would be
+   * dead by the time most people scrolled to it — and would sit in the
+   * markup for anything reading the page.
+   */
+  function view() {
+    startTransition(async () => {
+      const result = await documentUrl(applicationId, doc.docKey);
+      if (result.error || !result.url) {
+        toast.error(result.error ?? "That file could not be opened.");
+        return;
+      }
+      window.open(result.url, "_blank", "noopener,noreferrer");
     });
   }
 
@@ -78,6 +96,17 @@ export function DocumentRow({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {doc.storagePath && (
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={view}
+              disabled={pending}
+              aria-label={`View ${doc.name}`}
+            >
+              <Eye /> View
+            </Button>
+          )}
           {doc.state === "verified" || doc.state === "checking" ? (
             <Button
               variant="tertiary"

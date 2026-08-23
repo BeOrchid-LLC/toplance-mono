@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, inArray } from "drizzle-orm";
 
-import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/db/client";
 import {
   applications,
@@ -19,10 +18,16 @@ import {
   toActionError,
 } from "@/lib/auth/guards";
 import {
+  canReadDocuments,
   canWriteApplication,
   canWriteDocuments,
   canWriteIntakeAnswers,
 } from "@/lib/auth/policy";
+import {
+  deleteDocument,
+  putDocument,
+  signedDocumentUrl,
+} from "@/lib/storage/documents";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 
 type TravelPurpose = (typeof travelPurpose.enumValues)[number];
@@ -262,15 +267,12 @@ export async function uploadDocument(formData: FormData) {
     return { error: "That file is over 10MB. Photograph it again at a lower size." };
   }
 
-  const supabase = await createClient();
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${applicationId}/${docKey}/${Date.now()}-${safeName}`;
 
-  const { error: uploadError } = await supabase.storage
-    .from("documents")
-    .upload(path, file, { upsert: false, contentType: file.type });
-
-  if (uploadError) {
+  try {
+    await putDocument(path, file);
+  } catch {
     return {
       error:
         "That upload did not complete. Your place is saved — try again when you have signal.",
@@ -291,6 +293,42 @@ export async function uploadDocument(formData: FormData) {
   return { ok: true };
 }
 
+/**
+ * A link to look at a document that has already been uploaded — mostly
+ * to check the right passport page went up, before a reviewer tells you
+ * it did not.
+ *
+ * The URL is minted here rather than in the component because the bucket
+ * is private and the signature is a bearer credential: anything that
+ * built it on the client would need keys that belong on the server. The
+ * guard runs first, so a signature is never created for a document the
+ * caller may not see.
+ */
+export async function documentUrl(applicationId: string, docKey: string) {
+  try {
+    await requireApplicationAccess(applicationId, canReadDocuments);
+
+    const [doc] = await db
+      .select({ storagePath: documents.storagePath })
+      .from(documents)
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, docKey)
+        )
+      )
+      .limit(1);
+
+    if (!doc?.storagePath) return { error: "Nothing has been uploaded yet." };
+
+    return { url: await signedDocumentUrl(doc.storagePath) };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
 export async function removeDocument(applicationId: string, docKey: string) {
   try {
     await requireApplicationAccess(applicationId, canWriteDocuments);
@@ -307,8 +345,7 @@ export async function removeDocument(applicationId: string, docKey: string) {
       .limit(1);
 
     if (doc?.storagePath) {
-      const supabase = await createClient();
-      await supabase.storage.from("documents").remove([doc.storagePath]);
+      await deleteDocument(doc.storagePath);
     }
 
     await db

@@ -4,6 +4,15 @@ Date: 2026-08-23
 Status: approved for planning
 Author: Ali (with Claude)
 
+**Revised 2026-08-23**, before implementation got past the authorization
+policy. The first draft kept Supabase as a transitional data host so that
+authentication and the database would not change in the same step. That bought
+nothing here: there is no production data to protect and no working local
+Supabase instance to preserve, so the transitional service-role client and the
+`clerk_user_id` migration existed only to be deleted once Drizzle landed. The
+database, identity and file storage now move together, and the schema is
+written once in its final shape.
+
 ## Goal
 
 Toplance runs end to end on the BeOrchid target stack: Clerk for identity,
@@ -51,21 +60,24 @@ unless ownership is checked explicitly. The same applies to the `documents`
 privacy boundary — the promise that an employer sees progress but never a
 passport — which currently exists only as an absent RLS policy.
 
-Protection ends the moment Clerk lands, not when Postgres does. Once sessions
-come from Clerk, queries must use a service-role Supabase client, and the
-service role bypasses RLS entirely. There is no phase in which explicit checks
-and RLS are both protecting the app — **Phase 1 is the security-critical
-phase**, and Phase 2 merely changes which client runs the same checks.
+Row-level security does not survive the move. Self-hosted Postgres reached over
+a connection string has no `auth.uid()` to key policies on, so the database
+stops deciding anything the moment the app leaves Supabase. Everything it was
+enforcing has to already exist in code by then.
 
 Three consequences for the plan:
 
-1. Explicit authorization ships in Phase 1, in the same change that introduces
-   Clerk. It cannot be deferred to Phase 2.
-2. Authorization lives in one place — `src/lib/data/` — and every server action
-   goes through it. No action queries the database directly.
-3. Phase 1 is not complete until every policy in the current `init.sql` has a
+1. Explicit authorization ships in the same phase as the database, not after
+   it. There is no window in which both are protecting the app.
+2. Authorization lives in one place and every server action goes through it. No
+   action queries the database directly.
+3. The phase is not complete until every policy in the current `init.sql` has a
    corresponding check in code, verified against that list line by line, with
    tests for the traveller-ownership and employer-privacy boundaries.
+
+This work is done and committed ahead of the rest: `src/lib/auth/policy.ts`
+holds all of it as pure functions with 23 tests, written without a database
+client on purpose so it survives whatever runs underneath.
 
 ## Target architecture
 
@@ -85,11 +97,16 @@ Three consequences for the plan:
 ### Identity model
 
 `profiles.id` is currently a `uuid` foreign key to `auth.users`. Clerk user IDs
-are strings such as `user_2abc...`, so the users table's primary key becomes
-`text`, and every reference to it changes type: `applications.traveler_id`,
-`applications.assignee_id`, `org_members.user_id`, `documents.verified_by`,
-`messages.sender_id`, `status_events.actor_id`, `invitations.invited_by`,
-`audit_log.actor_id`.
+are strings such as `user_2abc...`, so the users table is keyed on `text` from
+the first migration, and every reference to it is `text` too:
+`applications.traveler_id`, `applications.assignee_id`, `memberships.user_id`,
+`documents.verified_by`, `messages.sender_id`, `status_events.actor_id`,
+`invitations.invited_by`, `audit_logs.actor_id`.
+
+Writing the schema once in this shape is the main practical gain from moving
+identity and data together. The alternative — a `clerk_user_id` column beside a
+UUID primary key, repointed later — means doing the `uuid → text` change across
+every one of those foreign keys twice.
 
 The `handle_new_user` trigger on `auth.users` disappears. Users are provisioned
 just in time: the first authenticated request upserts the Clerk user into the
@@ -107,10 +124,12 @@ Rebuilding from scratch is the cheapest moment to resolve the deviations
 recorded in AGENTS.md: `audit_log` becomes `audit_logs`, `organisations`
 becomes `organizations`, `org_members` becomes `memberships`, and tables move
 into a `toplance` schema with shared identity in `core`. Because these are
-platform conventions, this requires written agreement from the platform team
-before Phase 2 begins. If agreement does not arrive in time, Phase 2 proceeds
-with current names and the rename is deferred to BeOrchid Core work — the
-sequencing does not change, only the table names in the Drizzle schema.
+platform conventions, this requires written agreement from the platform team,
+and it now sits on the critical path: the Drizzle schema is written in the
+first step of Phase 1 and the names are fixed from that commit onward. If
+agreement has not arrived by then, Phase 1 proceeds with the current names and
+the rename is deferred to BeOrchid Core work — the sequencing does not change,
+only the identifiers in the schema file.
 
 ### What survives untouched
 
@@ -127,21 +146,26 @@ are kept as raw SQL in the initial Drizzle migration. The view loses
 
 ## Phases
 
-Each phase ends in a working application. No phase leaves the app broken for
-the next one.
+Each phase ends in a working application, deployable if it needs to be. Within
+Phase 1 the app is expected to be red between steps.
 
 ### Phase 0 — Unblock and baseline
 
-External dependencies and decisions, mostly not code.
+External dependencies and decisions, mostly not code. Only the schema-naming
+answer blocks the start of Phase 1; the rest is needed by its end.
 
 - Restore Ali's Coolify access: the account for `toshpulatov.remote@gmail.com`
   is half-created, registration reports it already exists, and password reset
   is unconfigured. The platform lead must delete and re-invite it.
-- Confirm Clerk dashboard access and create the Toplance application.
-- Obtain written sign-off on: storage choice, deployment target, and the schema
-  naming conventions above.
+- Confirm Clerk dashboard access and create the Toplance application, with
+  email verification code as the sole first factor and password disabled — the
+  no-passwords decision is client-locked.
+- Obtain written sign-off on the schema naming conventions above **before the
+  first schema commit**, and on storage choice and deployment target before
+  Phase 2.
 - Provision staging PostgreSQL on Coolify.
 - Housekeeping: commit the pending `ChatMarkdown` work, sync with `origin/main`.
+  *(Done — `c4da460`.)*
 
 Security note to raise with the platform lead: open registration was enabled on
 the public Coolify dashboard and invitation links were shared in chat. Coolify
@@ -151,65 +175,60 @@ auditing and registration disabling once access is restored.
 **Exit:** Coolify and Clerk are accessible, staging Postgres exists, decisions
 are in writing.
 
-### Phase 1 — Clerk replaces Supabase auth
+### Phase 1 — Leave Supabase
 
-- Add `@clerk/nextjs`; `ClerkProvider` in the root layout.
-- Replace Supabase session refresh in `src/proxy.ts` with `clerkMiddleware`,
-  preserving the existing public-prefix behaviour and `?next=` redirects.
-- Rebuild the three sign-in surfaces on Clerk components, keeping the distinct
-  traveller, employer and ops entry points.
-- Detach `profiles` from Supabase auth so Clerk can own identity while the data
-  still lives there: one throwaway Supabase migration drops the
-  `profiles.id → auth.users(id)` foreign key and the `handle_new_user` trigger,
-  and adds `clerk_user_id text unique`. Profiles are then looked up by Clerk ID
-  and provisioned just in time on first authenticated request. This migration is
-  discarded in Phase 2, when `clerk_user_id` becomes the primary key.
-- **Introduce explicit authorization in `src/lib/data/`** and route every
-  server action through it. Data still lives in Supabase this phase, reached
-  with a service-role client — which bypasses RLS, making these checks the only
-  thing protecting traveller documents from this point forward.
-- Delete `(auth)/actions.ts` and the Supabase callback route.
+Identity, data and file storage move together, because Supabase provides all
+three through one integration and unpicking them in stages means building
+adapters for a system being switched off. Internally the work is ordered
+schema → data layer → identity → storage, each step committed separately, but
+the app is only expected to run again at the end.
 
-**Exit:** all four surfaces authenticate through Clerk; every server action
-performs an explicit ownership or role check; Supabase is a database only.
+- **Authorization** — done ahead of the rest and already committed: every RLS
+  policy transcribed into pure functions in `src/lib/auth/policy.ts`, with
+  tests.
+- **Schema** — Drizzle schema in TypeScript, keyed on Clerk user IDs, in its
+  final conventions-correct shape. Drizzle Kit migrations committed to the
+  repo. The `application_completion` function and `org_application_progress`
+  view carry over as raw SQL; the view loses `security_invoker`, which is
+  meaningless without RLS, and the data layer filters by `org_id` explicitly.
+- **Local development** — a Docker Compose Postgres and an S3-compatible store
+  replace `supabase start`. Note that port 54322 is already taken on the
+  development machine by another project, so this project picks its own.
+- **Seed** — corridors and corridor requirements, previously seeded by the
+  Supabase migration.
+- **Data layer** — `src/lib/data/` and both `actions.ts` files rewritten onto
+  Drizzle, with guards from `src/lib/auth/` in front of every query.
+- **Identity** — `@clerk/nextjs`, `clerkMiddleware` in `src/proxy.ts`, the
+  three sign-in surfaces rebuilt on Clerk's email-code flow, just-in-time user
+  provisioning.
+- **Storage** — the `documents` bucket ported to the S3 API, with uploads and
+  downloads through signed URLs issued by guarded server actions. Object paths
+  keep the `{application_id}/{doc_key}/{filename}` layout. Writing against the
+  S3 SDK rather than a vendor client means the MinIO-versus-R2-versus-S3
+  decision only changes an endpoint and credentials, so it does not block this
+  work.
+- **Removal** — `@supabase/*` dependencies, the `db:*` scripts,
+  `database.types.ts`, the env plumbing and `SetupNotice`'s Supabase
+  assumptions all go.
 
-### Phase 2 — Drizzle and PostgreSQL on Coolify
+**Exit:** all four surfaces run on Clerk and Coolify-shaped Postgres with no
+Supabase dependency; every server action performs an explicit ownership or role
+check, audited against `init.sql` line by line; documents upload, download and
+delete; typecheck, tests and build pass.
 
-- Define the schema in TypeScript, generate the initial migration, and port the
-  completion function and progress view as raw SQL.
-- Write a seed script for corridors and corridor requirements.
-- Rewrite `src/lib/data/` and `(app)/actions.ts` from supabase-js to Drizzle,
-  keeping the Phase 1 authorization checks intact.
-- Replace `supabase start` with a Docker Compose Postgres for local
-  development; retire the `db:*` scripts in favour of Drizzle Kit.
-- Point staging at Coolify Postgres.
+### Phase 2 — Deployment
 
-**Exit:** every page and action reads and writes Coolify Postgres; typecheck,
-build, and a manual pass over all four surfaces succeed.
-
-### Phase 3 — Document storage
-
-- Provision the object store and port the `documents` bucket.
-- Uploads and downloads go through signed URLs issued by server actions, which
-  is where the per-application ownership check now lives. Object paths keep the
-  `{application_id}/{doc_key}/{filename}` layout.
-
-**Exit:** upload, view and delete work against the new store; employers still
-cannot reach document contents by any route.
-
-### Phase 4 — Supabase removal and deployment
-
-- Remove `@supabase/*` dependencies, `db:*` scripts, `database.types.ts`, the
-  env plumbing, and `SetupNotice`'s Supabase assumptions.
-- Configure Coolify deploys for staging, then production, with per-environment
-  Clerk keys, `DATABASE_URL`, and storage credentials.
+- Coolify deploys for staging, then production, with per-environment Clerk
+  keys, `DATABASE_URL` and storage credentials.
+- Backups and connection pooling for the Coolify Postgres, following whatever
+  Thrivo already does on the same server.
 
 **Exit:** the Supabase project can be switched off; staging and production are
 live.
 
-### Phase 5 — Visa data integration
+### Phase 3 — Visa data integration
 
-Independent of the stack work; may begin any time after Phase 2.
+Independent of the stack work; may begin any time after Phase 1.
 
 - Define `VisaDataProvider` with two first-class implementations: curated
   embassy-sourced data for work and study corridors, and an API provider
@@ -224,21 +243,34 @@ Independent of the stack work; may begin any time after Phase 2.
 
 ## Ordering rationale
 
-Auth precedes data because the reverse — bridging Clerk tokens into Supabase
-RLS — is throwaway work on a database we are leaving. Authorization moves in
-the same phase as auth because it has to: the service-role client that Clerk
-forces bypasses RLS, so there is no safe window in which to defer it. Storage
-follows data because it touches the fewest files. Visa data is decoupled
-because it does not depend on where the database lives.
+Supabase leaves in one phase because its parts are not separable in a way worth
+paying for. Auth, database and storage share one integration, so keeping any of
+them while replacing the others means writing an adapter to a system being
+switched off — a service-role client to stand in for RLS, or a `clerk_user_id`
+column beside a UUID key that gets repointed later. With no production data and
+no working local Supabase, staging the work protects nothing and costs a
+schema written twice.
+
+Within the phase the schema comes first because everything else is typed off
+it, and authorization comes before any of it because the database stops
+enforcing access the moment the connection changes. Deployment follows because
+it needs something finished to deploy. Visa data is decoupled throughout — it
+does not depend on where the database lives.
 
 ## Risks
 
-**Silent authorization gaps.** The largest risk in the migration, and it lands
-in Phase 1 rather than Phase 2. Mitigated by centralising checks in the data
-layer, auditing every server action against the policy list in the current
-`init.sql`, and covering the traveller-ownership and employer-privacy
-boundaries with tests. A gap here is not a broken screen; it is one traveller
-reading another's passport.
+**Silent authorization gaps.** The largest risk in the migration. Mitigated by
+centralising checks in the data layer, auditing every server action against the
+policy list in the current `init.sql`, and covering the traveller-ownership and
+employer-privacy boundaries with tests. A gap here is not a broken screen; it
+is one traveller reading another's passport.
+
+**A long red phase.** Merging the work means the app does not run between the
+first schema commit and the last storage commit. Acceptable because nothing is
+deployed from this branch and the alternative is rework, but it does mean
+mistakes surface later than they would in smaller steps. Mitigated by keeping
+the internal order strict, committing each step, and treating the audit against
+`init.sql` as a gate rather than a formality.
 
 **The employer privacy boundary.** Currently guaranteed by an absent RLS policy
 and a view that exposes no document columns. After the move it is guaranteed by
@@ -253,10 +285,17 @@ redistribution — the very things the caching strategy depends on.
 
 ## Open decisions requiring platform sign-off
 
-1. Document storage: MinIO on Coolify (recommended, no new vendor) versus
-   external S3 or R2.
-2. Deployment target for the Next.js app: Coolify, matching Thrivo, versus
+**Blocking — needed before the first schema commit:**
+
+1. Schema naming: adopt `core`/`toplance` schemas and the corrected table names
+   during the rebuild, or defer to BeOrchid Core work. Whichever way, the
+   answer is baked into the first migration.
+
+**Needed before deployment, not before the work starts:**
+
+2. Document storage: MinIO on Coolify (recommended, no new vendor) versus
+   external S3 or R2. Building against the S3 SDK means this is an endpoint and
+   a set of credentials, not an architecture.
+3. Deployment target for the Next.js app: Coolify, matching Thrivo, versus
    Vercel.
-3. Schema naming: adopt `core`/`toplance` schemas and corrected table names
-   during the rebuild, or defer to BeOrchid Core work.
 4. Backups and connection pooling for the Coolify Postgres.

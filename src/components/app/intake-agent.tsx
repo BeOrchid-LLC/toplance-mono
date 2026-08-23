@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLocale, useT } from "@/components/locale-provider";
+import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { answerQuestion } from "@/app/(app)/actions";
 import { INTAKE_QUESTIONS, HISTORY_NOTE } from "@/lib/domain/intake";
 import { cn } from "@/lib/utils";
@@ -118,9 +119,7 @@ export function IntakeAgent({
             </p>
 
             <Bubble from="agent">
-              Nice to meet you, {firstName || "there"}. I will ask a few short
-              questions so I know exactly what you need. You can type, or tap one of
-              the suggestions.
+              {`Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`}
             </Bubble>
 
             {INTAKE_QUESTIONS.map((q, i) => {
@@ -309,7 +308,11 @@ function Bubble({
           : "self-end rounded-br-sm bg-brand font-semibold text-on-brand"
       )}
     >
-      {children}
+      {from === "agent" && typeof children === "string" ? (
+        <ChatMarkdown>{children}</ChatMarkdown>
+      ) : (
+        children
+      )}
     </div>
   );
 }

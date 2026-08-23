@@ -37,7 +37,7 @@ If Clerk keys are not yet available, stop after Task 3 and report. Do not stub o
 ## File Structure
 
 **Create:**
-- `vitest.config.ts` — test runner configuration
+- `vitest.config.mts` — test runner configuration
 - `src/lib/auth/policy.ts` — pure access-decision functions, no I/O
 - `src/lib/auth/policy.test.ts` — exhaustive policy tests
 - `src/lib/auth/errors.ts` — `UnauthenticatedError`, `ForbiddenError`

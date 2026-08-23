@@ -10,6 +10,12 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-23-platform-stack-migration-design.md`
 
+**Status (2026-08-23):** Tasks 1–3 complete on branch `feat/clerk-auth-phase-1`
+(23 tests passing, typecheck clean). Task 4 onward is blocked on Clerk
+credentials — see the credential gate below. Two deviations were made during
+execution and are recorded in the tasks themselves: Vitest 4 rather than 3, and
+no `vite-tsconfig-paths` plugin.
+
 ## Global Constraints
 
 - Authentication is **email one-time code only**. No passwords, no social login. This is a client-locked decision recorded in `src/app/(auth)/actions.ts`: an authenticator app is a barrier for staff who change devices, and a six-digit email code is the same security story without the support burden. Clerk must be configured with **Email verification code** as the sole first factor, and password disabled.
@@ -62,7 +68,7 @@ If Clerk keys are not yet available, stop after Task 3 and report. Do not stub o
 
 ---
 
-### Task 1: Test infrastructure
+### Task 1: ✅ Test infrastructure
 
 **Files:**
 - Create: `vitest.config.mts`
@@ -137,7 +143,7 @@ git commit -m "Add Vitest test infrastructure"
 
 ---
 
-### Task 2: The authorization policy (security core)
+### Task 2: ✅ The authorization policy (security core)
 
 This is the most important task in the phase. Every rule below is transcribed from the RLS policies in `supabase/migrations/20260821120000_init.sql` lines 356–466. Read that section before starting.
 
@@ -488,7 +494,7 @@ git commit -m "Add pure authorization policy with exhaustive tests"
 
 ---
 
-### Task 3: Detach identity from Supabase auth
+### Task 3: ✅ Detach identity from Supabase auth
 
 **Files:**
 - Create: `supabase/migrations/20260824090000_clerk_identity.sql`

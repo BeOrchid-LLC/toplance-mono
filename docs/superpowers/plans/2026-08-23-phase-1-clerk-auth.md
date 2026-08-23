@@ -65,7 +65,7 @@ If Clerk keys are not yet available, stop after Task 3 and report. Do not stub o
 ### Task 1: Test infrastructure
 
 **Files:**
-- Create: `vitest.config.ts`
+- Create: `vitest.config.mts`
 - Modify: `package.json`
 - Test: `src/lib/auth/policy.test.ts` (created in Task 2; this task only proves the runner works)
 
@@ -76,19 +76,23 @@ If Clerk keys are not yet available, stop after Task 3 and report. Do not stub o
 - [ ] **Step 1: Install Vitest**
 
 ```bash
-npm install -D vitest@^3 @vitest/coverage-v8 vite-tsconfig-paths
+npm install -D vitest@^4
 ```
+
+Vitest 4 is the current stable line. No coverage reporter and no
+`vite-tsconfig-paths` plugin are needed: nothing here measures coverage, and
+Vite resolves tsconfig paths natively now.
 
 - [ ] **Step 2: Create the config**
 
-Create `vitest.config.ts`:
+Create `vitest.config.mts`. The `.mts` extension matters — a `.ts` config in
+this CommonJS package triggers a Vite loader warning.
 
 ```ts
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  resolve: { tsconfigPaths: true },
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
@@ -127,7 +131,7 @@ Expected: PASS, 1 test.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add package.json package-lock.json vitest.config.ts src/lib/auth/policy.test.ts
+git add package.json package-lock.json vitest.config.mts src/lib/auth/policy.test.ts
 git commit -m "Add Vitest test infrastructure"
 ```
 

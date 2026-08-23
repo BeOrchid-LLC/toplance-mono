@@ -31,8 +31,14 @@ depend on them. Do not invent per-app variants.
 `app.object_action`, all lowercase — `toplance.document_uploaded`,
 `thrivo.meal_logged`. No other format, for any app.
 
-Nothing in this repo emits analytics yet. The first instrumentation added here
-sets the precedent, so it must follow this shape from the first event.
+The event list is `src/lib/analytics/events.ts` — a union type, so a name that
+does not exist is a compile error, and `events.test.ts` asserts the format. Add
+new events there rather than passing a string at a call site.
+
+Events are written to the `analytics_events` table by `track()`, which never
+throws: no analytics write is worth failing a user's action for. No analytics
+vendor has been chosen; adopting one is a second implementation behind `track()`,
+not a change at every call site.
 
 ## Repositories
 

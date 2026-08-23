@@ -45,6 +45,16 @@ sets the precedent, so it must follow this shape from the first event.
 `staging` and `production`. Nothing else — no `dev`, `qa`, `uat` or `preview`
 as a named environment tier.
 
+## AI chat rendering
+
+- Render every model-authored chat message through the shared
+  `src/components/app/chat-markdown.tsx` component.
+- Keep traveller-authored messages as plain text.
+- Do not enable raw HTML, `rehype-raw`, remote Markdown images or
+  `dangerouslySetInnerHTML` for model output.
+- Extend the shared renderer when a new Markdown element is needed; do not create
+  page-specific Markdown implementations.
+
 # Known deviations in this repo
 
 Recorded so they are neither perpetuated nor silently "fixed" without a plan.

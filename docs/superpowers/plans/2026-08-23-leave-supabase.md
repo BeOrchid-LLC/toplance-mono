@@ -687,7 +687,7 @@ git commit -m "Define the schema in Drizzle"
 ### Task 3: ✅ Generate, extend and apply the migration
 
 **Files:**
-- Create: `drizzle/*.sql` (generated), `drizzle/9999_sql_objects.sql` (hand-written)
+- Create: `drizzle/*.sql` (generated), `src/lib/db/sql-objects.sql` and `src/lib/db/sql-objects.mts` (hand-written)
 
 **Interfaces:**
 - Consumes: `src/lib/db/schema.ts` (Task 2)
@@ -715,7 +715,14 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";--> statement-breakpoint
 
 - [ ] **Step 2: Add the SQL objects Drizzle does not model**
 
-Create `drizzle/9999_sql_objects.sql`. Drizzle Kit does not generate functions, views or triggers, so these are hand-written and applied after the generated migration:
+Create `src/lib/db/sql-objects.sql`. Drizzle Kit does not generate functions,
+views or triggers, so these are hand-written and applied after the generated
+migration by `src/lib/db/sql-objects.mts`, which `db:migrate` chains onto
+`drizzle-kit migrate`.
+
+It lives outside `drizzle/` deliberately: that directory is generated output,
+and rebuilding the migrations from scratch means deleting it — which would take
+any hand-written SQL stored there with it.
 
 ```sql
 -- One definition of "percent complete", used by every persona.
@@ -792,7 +799,7 @@ cross join lateral application_completion(a.id) comp;
 
 ```bash
 npm run db:migrate
-docker exec -i toplance_postgres psql -U toplance -d toplance -v ON_ERROR_STOP=1 < drizzle/9999_sql_objects.sql
+docker exec -i toplance_postgres psql -U toplance -d toplance -v ON_ERROR_STOP=1 < src/lib/db/sql-objects.sql
 ```
 
 Expected: `migrations applied successfully!`, then three "trigger does not
@@ -1536,7 +1543,7 @@ const roster = await db
   .orderBy(desc(orgApplicationProgress.completionPct));
 ```
 
-The view is not in the Drizzle schema, so declare it there first with `pgView("org_application_progress", { ... }).existing()`, matching the columns in `drizzle/9999_sql_objects.sql`.
+The view is not in the Drizzle schema, so declare it there first with `pgView("org_application_progress", { ... }).existing()`, matching the columns in `src/lib/db/sql-objects.sql`.
 
 - [ ] **Step 6: Typecheck and test**
 

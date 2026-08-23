@@ -1,5 +1,5 @@
 {
-  "id": "69b7e009-7229-4c39-8a7b-6cdd2b79aa7b",
+  "id": "2db07204-0508-4df8-8a3d-7b4335b81bc7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -20,7 +20,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'TPL-' || lpad((floor(random() * 9000) + 1000)::text, 4, '0')"
+          "default": "'TPL-' || lpad(nextval('case_ref_seq')::text, 6, '0')"
         },
         "traveler_id": {
           "name": "traveler_id",

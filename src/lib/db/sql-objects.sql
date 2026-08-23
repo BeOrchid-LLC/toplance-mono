@@ -2,8 +2,15 @@
 -- Functions, triggers and views.
 --
 -- Drizzle Kit models tables, not these, so this file is hand-written
--- and applied after the generated migration. It is idempotent: every
--- statement is `create or replace` or guarded by a drop.
+-- and applied straight after the generated migrations by
+-- `npm run db:migrate`.
+--
+-- It lives here rather than in `drizzle/` on purpose: that directory is
+-- generated output and gets deleted whenever the migrations are rebuilt
+-- from scratch, which would take this with it.
+--
+-- Every statement is idempotent — `create or replace`, or guarded by a
+-- drop — so re-running is safe.
 -- ============================================================
 
 -- One definition of "percent complete", used by every persona.
@@ -52,10 +59,10 @@ create trigger documents_touch before update on documents
 --
 -- The previous version was `security_invoker`, which leaned on row-level
 -- security to scope rows to the caller's own organisation. Without RLS
--- that does nothing, so the data layer filters by org_id explicitly and
--- this view is a plain projection. Adding a column that reveals document
--- contents would break the promise made on the marketing site and in the
--- console.
+-- that does nothing, so this is a plain projection and the data layer
+-- filters by org_id explicitly — see the employer console. Adding a
+-- column that reveals document contents would break the promise made on
+-- the marketing site and in that console.
 create or replace view org_application_progress as
 select
   a.id,

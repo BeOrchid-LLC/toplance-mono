@@ -216,10 +216,20 @@ export const applications = pgTable(
   "applications",
   {
     id: uuid().primaryKey().defaultRandom(),
+    /**
+     * The reference a traveller reads out on the phone. Display only —
+     * nothing looks an application up by it, and access is decided on
+     * the uuid by `@/lib/auth/guards`.
+     *
+     * Drawn from a sequence rather than `random()`. The previous
+     * definition picked one of nine thousand values for a unique
+     * column, which is a coin flip on a collision by the hundred and
+     * twelfth application and a hard insert failure when it lands.
+     */
     caseRef: text()
       .notNull()
       .unique()
-      .default(sql`'TPL-' || lpad((floor(random() * 9000) + 1000)::text, 4, '0')`),
+      .default(sql`'TPL-' || lpad(nextval('case_ref_seq')::text, 6, '0')`),
     travelerId: text()
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),

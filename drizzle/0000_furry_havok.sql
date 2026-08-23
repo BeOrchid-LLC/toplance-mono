@@ -1,7 +1,14 @@
--- Added by hand: Drizzle Kit does not model extensions, and the
--- invitations token default calls gen_random_bytes, which pgcrypto
--- provides. Keep this first — the CREATE TABLE below depends on it.
+-- Added by hand: Drizzle Kit models neither extensions nor sequences,
+-- and both are needed before the tables below. Re-adding these is the
+-- one manual step after any `db:generate` that recreates this file.
+--
+-- pgcrypto provides gen_random_bytes for the invitations token default.
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";--> statement-breakpoint
+-- case_ref_seq backs the applications case reference. Postgres resolves
+-- nextval() when the default is set, so the sequence has to exist before
+-- the table that uses it. Starting above zero keeps the first reference
+-- from advertising that it is the first.
+CREATE SEQUENCE IF NOT EXISTS "case_ref_seq" START 1000;--> statement-breakpoint
 CREATE TYPE "public"."app_role" AS ENUM('traveler', 'org_member', 'staff');--> statement-breakpoint
 CREATE TYPE "public"."application_status" AS ENUM('draft', 'collecting_documents', 'submitted', 'under_review', 'additional_documents', 'approved', 'rejected');--> statement-breakpoint
 CREATE TYPE "public"."document_state" AS ENUM('not_started', 'uploaded', 'checking', 'verified', 'flagged', 'failed');--> statement-breakpoint
@@ -11,7 +18,7 @@ CREATE TYPE "public"."staff_role" AS ENUM('reviewer', 'owner');--> statement-bre
 CREATE TYPE "public"."travel_purpose" AS ENUM('tourism', 'work', 'study', 'medical', 'relocation');--> statement-breakpoint
 CREATE TABLE "applications" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"case_ref" text DEFAULT 'TPL-' || lpad((floor(random() * 9000) + 1000)::text, 4, '0') NOT NULL,
+	"case_ref" text DEFAULT 'TPL-' || lpad(nextval('case_ref_seq')::text, 6, '0') NOT NULL,
 	"traveler_id" text NOT NULL,
 	"org_id" uuid,
 	"corridor_id" uuid,

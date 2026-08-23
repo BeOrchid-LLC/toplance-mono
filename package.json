@@ -10,7 +10,7 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "drizzle-kit migrate && node --experimental-strip-types src/lib/db/sql-objects.mts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --experimental-strip-types src/lib/db/seed.mts",
     "typecheck": "tsc --noEmit",

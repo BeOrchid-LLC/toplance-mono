@@ -3,7 +3,7 @@
 Visa and relocation support for people leaving West Africa for work, study and
 treatment — and for the organisations sending them.
 
-Next.js 16 (App Router) · Tailwind v4 · shadcn/ui · Supabase.
+Next.js 16 (App Router) · Tailwind v4 · shadcn/ui · Clerk · Drizzle over PostgreSQL · S3-compatible storage.
 
 ---
 
@@ -57,36 +57,43 @@ src/
     (app)/           traveller: intake agent, requirements, documents
     employer/        organisation console
     ops/             operations case queue
-    auth/callback/   email-link exchange
   components/
     ui/              shadcn primitives, carrying BeOrchid tokens
     site/ auth/ app/ shared/
   lib/
-    supabase/        browser, server and env-guard clients + generated types
+    auth/            policy (pure rules), guards (rules applied to rows)
+    db/              schema, pooled client, SQL objects, seed
+    storage/         S3-compatible document store
     domain/          intake questions, corridors, countries, status model
     data/            server-only read helpers
     i18n/            locales and the localised hero strings
-  proxy.ts           session refresh (Next 16's renamed middleware)
-supabase/
-  migrations/        schema, RLS, storage policies
-  seed.sql           four corridor rule sets and a demo organisation
+  proxy.ts           Clerk session handling (Next 16's renamed middleware)
+drizzle/             generated migrations, committed
 ```
 
 ---
 
 ## Things worth knowing before you change something
 
-**`proxy.ts`, not `middleware.ts`.** Next 16 renamed Middleware to Proxy. The
-Supabase SSR guide still says `middleware.ts`; this project is the newer name.
-It refreshes the session and nothing else — every real authorization decision is
-an RLS policy.
+**`proxy.ts`, not `middleware.ts`.** Next 16 renamed Middleware to Proxy.
+Clerk's guide still says `middleware.ts`; this project uses the newer name. It
+handles the session and one convenience redirect. It decides nothing: a path
+matcher is not authorization, and every real decision happens in the data layer.
 
-**The privacy boundary is in the database.** An employer sees a sponsored
-applicant's completion score, status and destination. There is no policy
-anywhere granting an org member `SELECT` on `documents`, and the console reads
-through the `org_application_progress` view, which has no column that could
-reveal one. This is the promise the marketing page makes. Do not add a join that
-breaks it.
+**Authorization is in the code, not the database.** It used to be row-level
+security, which meant a forgotten ownership check failed closed. It does not any
+more. `src/lib/auth/policy.ts` holds the rules as pure functions;
+`src/lib/auth/guards.ts` applies them to a row that has actually been loaded.
+Nothing may read or write someone's application without passing a guard, and the
+audit at the bottom of `policy.ts` maps every original RLS policy to what
+replaces it — including the features that have neither yet.
+
+**The privacy boundary is `canReadDocuments`.** An employer sees a sponsored
+applicant's completion score, status and destination. That predicate has no
+sponsorship branch, and the employer console reads through the
+`org_application_progress` view, which has no column that could reveal a
+document. This is the promise the marketing page makes. `guards.test.ts` fails if
+either half is broken. Do not add a join, a column or a branch that breaks it.
 
 **Design tokens are the API.** `globals.css` defines theme (light/dark) and brand
 (toplance/beorchid) as two independent axes. Nothing hard-codes a hue. shadcn's
@@ -126,7 +133,7 @@ Working end to end:
 - Email one-time-code auth for all three personas, with session refresh
 - The intake conversation — eleven topics, editable answers, checklist rebuild
 - Corridor resolution and the versioned requirements engine
-- Document upload to Supabase Storage, with per-application path isolation
+- Document upload to an S3-compatible bucket, read back via signed URLs
 - Completion scoring, and submission gated on it
 - The employer roster, reading through the privacy-safe view
 - The operations queue with SLA ageing
@@ -150,8 +157,10 @@ Scaffolded, needs the next pass:
 | `npm run build` | Production build |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
-| `npm run db:start` / `db:stop` | Local Supabase in Docker |
-| `npm run db:reset` | Re-apply migrations and reseed |
-| `npm run db:types` | Regenerate database types from the local schema |
-| `npm run db:diff -- <name>` | Capture schema changes as a new migration |
-| `npm run db:push` | Apply migrations to the linked hosted project |
+| `npm test` | Vitest — policy rules, guards, storage |
+| `npm run db:up` / `db:down` | Postgres and MinIO in Docker |
+| `npm run db:generate` | Turn a schema change into a migration |
+| `npm run db:migrate` | Apply migrations, then the hand-written SQL objects |
+| `npm run db:seed` | Reload the corridor rule sets |
+| `npm run db:bucket` | Create the documents bucket |
+| `npm run db:studio` | Drizzle Studio |

@@ -11,25 +11,33 @@ export function SetupNotice() {
       <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--warning)_16%,var(--mix))] text-warning-ink">
         <Database className="size-5" />
       </span>
-      <h1 className="t-h2 mt-4">Supabase is not connected yet</h1>
+      <h1 className="t-h2 mt-4">The database is not connected yet</h1>
       <p className="t-body-lg mt-3 text-ink-2">
-        The public site runs without a database, but this screen needs one. Three
+        The public site runs without a database, but this screen needs one. Five
         commands and you are through:
       </p>
 
       <ol className="mt-6 flex flex-col gap-4">
         {[
           {
-            cmd: "npm run db:start",
-            note: "Boots Postgres, Auth and Storage in Docker, then prints your API URL and anon key.",
+            cmd: "npm run db:up",
+            note: "Boots Postgres and the object store in Docker.",
           },
           {
             cmd: "cp .env.local.example .env.local",
-            note: "Paste the two values it printed into the new file.",
+            note: "Then paste in your two Clerk keys — sign-in needs them.",
           },
           {
-            cmd: "npm run db:reset",
-            note: "Applies the migration and seeds the four corridor rule sets.",
+            cmd: "npm run db:migrate",
+            note: "Applies the schema, the completion function and the triggers.",
+          },
+          {
+            cmd: "npm run db:seed",
+            note: "Loads the four corridor rule sets and their requirements.",
+          },
+          {
+            cmd: "npm run db:bucket",
+            note: "Creates the private bucket documents are uploaded to.",
           },
         ].map((step, i) => (
           <li key={step.cmd} className="flex gap-4">

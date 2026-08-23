@@ -63,11 +63,16 @@ Pre-launch, so no production data is at risk.
 | Convention | Current state | Notes |
 |---|---|---|
 | `toplance.*` schema | every table is in `public` | needs a schema move |
-| `core.users` | local `profiles` table, FK to `auth.users` | duplicates shared identity |
+| `core.users` | local `profiles` table, keyed on the Clerk user id | identity is Clerk's; `profiles` holds the visa-specific fields. No FK to a shared table yet |
 | `core.organizations` | `organisations` (British spelling) | convention is the `z` spelling |
 | `core.memberships` | `org_members` | |
 | plural table names | `audit_log` is singular | should be `audit_logs` |
 | `<app>-<surface>` repo | remote is `toplance-mono` | does not match the pattern |
+
+Every table and column name lives in one file, `src/lib/db/schema.ts`. With no
+production data, adopting the conventions above is an edit plus a regenerated
+migration — which is why deferring them costs little, and why they should not be
+changed unilaterally in the meantime.
 
 Do not migrate these unilaterally — the schema move is part of BeOrchid Core
 work and gets planned with the platform team.

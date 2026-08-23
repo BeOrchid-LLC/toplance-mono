@@ -1,0 +1,41 @@
+# Local development only. Staging and production run on Coolify.
+#
+# Ports are deliberately not the Supabase defaults: another project on
+# this machine already holds 54322.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: toplance_postgres
+    environment:
+      POSTGRES_USER: toplance
+      POSTGRES_PASSWORD: toplance
+      POSTGRES_DB: toplance
+    ports:
+      - "54329:5432"
+    volumes:
+      - toplance_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U toplance"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Stands in for whatever S3-compatible store production uses. The app
+  # talks to it through the S3 SDK, so swapping MinIO for R2 or S3 is an
+  # endpoint and a pair of credentials.
+  minio:
+    image: minio/minio:latest
+    container_name: toplance_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: toplance
+      MINIO_ROOT_PASSWORD: toplance123
+    ports:
+      - "54330:9000"
+      - "54331:9001"
+    volumes:
+      - toplance_minio:/data
+
+volumes:
+  toplance_pgdata:
+  toplance_minio:

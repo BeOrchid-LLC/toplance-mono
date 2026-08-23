@@ -7,6 +7,13 @@
 -- trusts. Verify against the mission before going live.
 -- ============================================================
 
+-- Reference data is replaced wholesale on each run, so seeding twice
+-- does not double the corridors. Applications reference a corridor with
+-- `on delete set null`, so a re-seed during development detaches a
+-- checklist rather than destroying the application behind it.
+delete from corridor_requirements;
+delete from corridors;
+
 -- ---------- United Kingdom · Skilled Worker ----------
 with c as (
   insert into corridors (

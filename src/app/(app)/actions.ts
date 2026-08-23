@@ -28,6 +28,7 @@ import {
 } from "@/lib/domain/corridors";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { resolveRuleSet } from "@/lib/visa";
+import { track } from "@/lib/analytics/track";
 
 /**
  * Record one intake answer. Re-answering an earlier question clears
@@ -40,7 +41,10 @@ export async function answerQuestion(
   value: string
 ) {
   try {
-    await requireApplicationAccess(applicationId, canWriteIntakeAnswers);
+    const { actor } = await requireApplicationAccess(
+      applicationId,
+      canWriteIntakeAnswers
+    );
 
     const index = INTAKE_QUESTIONS.findIndex((q) => q.key === questionKey);
     if (index === -1) return { error: "Unknown question." };
@@ -79,7 +83,8 @@ export async function answerQuestion(
     const complete = INTAKE_QUESTIONS.every((q) => map[q.key]);
 
     if (complete) {
-      await buildChecklist(applicationId, map);
+      await buildChecklist(applicationId, map, actor.userId);
+      await track("toplance.intake_completed", { applicationId }, actor.userId);
     } else {
       await db
         .update(applications)
@@ -109,13 +114,26 @@ export async function answerQuestion(
  */
 async function buildChecklist(
   applicationId: string,
-  answers: Record<string, string>
+  answers: Record<string, string>,
+  userId: string
 ) {
   const nationality = NATIONALITY_ISO[answers.nationality] ?? "ng";
   const destination = DESTINATION_ISO[answers.destination];
   const purpose = PURPOSE_ISO[answers.purpose];
 
   if (!destination || !purpose) {
+    // An answer we have no code for is still demand. Record what they
+    // typed, not a blank.
+    await track(
+      "toplance.corridor_requested",
+      {
+        nationality: answers.nationality,
+        destination: answers.destination,
+        purpose: answers.purpose,
+      },
+      userId
+    );
+
     await db
       .update(applications)
       .set({ intakeComplete: true, status: "collecting_documents" })
@@ -131,7 +149,18 @@ async function buildChecklist(
 
   if (!ruleSet) {
     // A corridor we do not serve yet. The intake still completes; the
-    // requirements screen explains that it is in the build queue.
+    // requirements screen tells the traveller their request has been
+    // counted towards it, and this is what counts it.
+    await track(
+      "toplance.corridor_requested",
+      {
+        nationalityIso: nationality,
+        destinationIso: destination,
+        purpose,
+      },
+      userId
+    );
+
     await db
       .update(applications)
       .set({
@@ -142,6 +171,17 @@ async function buildChecklist(
       .where(eq(applications.id, applicationId));
     return;
   }
+
+  await track(
+    "toplance.corridor_resolved",
+    {
+      corridorId: ruleSet.corridorId,
+      provider: "curated",
+      destinationIso: destination,
+      purpose,
+    },
+    userId
+  );
 
   const requirements = ruleSet.requirements;
 
@@ -201,10 +241,15 @@ export async function uploadDocument(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
   const docKey = String(formData.get("doc_key") ?? "");
 
+  let actorId: string;
   try {
     // Before the file is read, so an unauthorized caller never causes an
     // upload — not even one that is deleted a moment later.
-    await requireApplicationAccess(applicationId, canWriteDocuments);
+    const { actor } = await requireApplicationAccess(
+      applicationId,
+      canWriteDocuments
+    );
+    actorId = actor.userId;
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
@@ -268,6 +313,12 @@ export async function uploadDocument(formData: FormData) {
     await deleteDocument(previous.storagePath).catch(() => {});
   }
 
+  await track(
+    "toplance.document_uploaded",
+    { applicationId, docKey, replaced: previous.storagePath !== null },
+    actorId
+  );
+
   revalidatePath("/app", "layout");
   return { ok: true };
 }
@@ -310,7 +361,10 @@ export async function documentUrl(applicationId: string, docKey: string) {
 
 export async function removeDocument(applicationId: string, docKey: string) {
   try {
-    await requireApplicationAccess(applicationId, canWriteDocuments);
+    const { actor } = await requireApplicationAccess(
+      applicationId,
+      canWriteDocuments
+    );
 
     const [doc] = await db
       .select({ storagePath: documents.storagePath })
@@ -337,6 +391,12 @@ export async function removeDocument(applicationId: string, docKey: string) {
         )
       );
 
+    await track(
+      "toplance.document_removed",
+      { applicationId, docKey },
+      actor.userId
+    );
+
     revalidatePath("/app", "layout");
     return { ok: true };
   } catch (error) {
@@ -356,10 +416,22 @@ export async function removeDocument(applicationId: string, docKey: string) {
  */
 export async function submitApplication(applicationId: string) {
   try {
-    await requireApplicationAccess(applicationId, canWriteApplication);
+    const { actor } = await requireApplicationAccess(
+      applicationId,
+      canWriteApplication
+    );
 
     const result = await submitApplicationTx(applicationId);
-    if ("ok" in result) revalidatePath("/app", "layout");
+
+    if ("ok" in result) {
+      await track(
+        "toplance.application_submitted",
+        { applicationId },
+        actor.userId
+      );
+      revalidatePath("/app", "layout");
+    }
+
     return result;
   } catch (error) {
     const message = toActionError(error);

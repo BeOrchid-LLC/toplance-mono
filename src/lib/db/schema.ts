@@ -360,6 +360,33 @@ export const auditLog = pgTable(
 );
 
 /**
+ * Product analytics. Separate from `audit_log`, which answers "who
+ * touched this application" for compliance and is read by staff; this
+ * answers "how many people asked for a corridor we do not serve" and is
+ * read by whoever prioritises the roadmap.
+ *
+ * Written to Postgres behind `track()` rather than to a vendor, because
+ * no analytics vendor has been chosen. Adopting one later is a second
+ * implementation behind the same function, not a change at every call
+ * site.
+ *
+ * Plural per the BeOrchid table-naming convention. Do not copy the
+ * `audit_log` singular above — AGENTS.md records it as a deviation to be
+ * fixed, not a precedent.
+ */
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    name: text().notNull(),
+    userId: text().references(() => profiles.id, { onDelete: "set null" }),
+    props: jsonb().notNull().default({}),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("analytics_events_name_idx").on(t.name, t.createdAt)]
+);
+
+/**
  * Everything an employer is allowed to see about a sponsored
  * application, and nothing more. Created in
  * `src/lib/db/sql-objects.sql`; declared here as `.existing()` so the

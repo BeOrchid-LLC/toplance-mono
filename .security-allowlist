@@ -1,0 +1,9 @@
+# Paths the pre-commit security scanner may skip.
+#
+# One exact path per line. Never add a pattern that could match a real
+# secrets file: `.env.local` itself must stay scanned and untracked.
+
+# The committed template. Every value in it is empty by definition — it
+# exists to tell a new developer which variables to set, and it is
+# tracked in git precisely because it holds no secrets.
+.env.local.example

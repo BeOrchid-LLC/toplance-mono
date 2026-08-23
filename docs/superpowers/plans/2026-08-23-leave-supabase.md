@@ -690,7 +690,19 @@ git commit -m "Define the schema in Drizzle"
 npm run db:generate
 ```
 
-Expected: a new file under `drizzle/`. Read it and confirm every table from Task 2 is present.
+Expected: a new file under `drizzle/`, reporting 13 tables. Read it and confirm
+every table from Task 2 is present.
+
+Then add the extension by hand, as the first statement of the generated file.
+Drizzle Kit does not model extensions, and the `invitations.token` default calls
+`gen_random_bytes`, which `pgcrypto` provides — without it the migration fails
+at the first `CREATE TABLE` that depends on it:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";--> statement-breakpoint
+```
+
+(`gen_random_uuid` is built in from Postgres 13 and needs nothing.)
 
 - [ ] **Step 2: Add the SQL objects Drizzle does not model**
 
@@ -774,7 +786,25 @@ npm run db:migrate
 docker exec -i toplance_postgres psql -U toplance -d toplance -v ON_ERROR_STOP=1 < drizzle/9999_sql_objects.sql
 ```
 
-Expected: both succeed with no error.
+Expected: `migrations applied successfully!`, then three "trigger does not
+exist, skipping" notices.
+
+**If `db:migrate` exits non-zero, it will not tell you why** — the spinner
+overwrites the error. Get the real message by applying the file directly:
+
+```bash
+docker exec -i toplance_postgres psql -U toplance -d toplance \
+  -v ON_ERROR_STOP=1 -q < drizzle/0000_*.sql
+```
+
+Note that psql applies statements one at a time with no surrounding
+transaction, so a failure part-way leaves the database half-built. Reset before
+retrying — there is no data to lose:
+
+```bash
+docker exec toplance_postgres psql -U toplance -d toplance \
+  -c "drop schema public cascade; create schema public; drop schema if exists drizzle cascade;"
+```
 
 - [ ] **Step 4: Verify the shape**
 

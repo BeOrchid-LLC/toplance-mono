@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { AuthPanel } from "@/components/auth/auth-panel";
 import { PhoneField } from "@/components/auth/phone-field";
 import { useLocale } from "@/components/locale-provider";
 import { completeProfile } from "@/app/(auth)/actions";
@@ -189,11 +190,11 @@ export function AuthForm({
 
   if (state.sent) {
     return (
-      <div className="mx-auto w-full max-w-[440px] rounded-md border border-border bg-surface p-6 shadow-[var(--shadow)]">
+      <AuthPanel eyebrow="Verification" className="mx-auto w-full max-w-[440px]">
         <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_12%,var(--mix))] text-brand-text">
           <Mail className="size-5" />
         </span>
-        <h1 className="t-h3 mt-4">Enter the code we emailed you</h1>
+        <h1 className="d-md mt-4">Enter the code we emailed you</h1>
         <p className="t-muted mt-2">
           Sent to <b className="text-ink">{state.email}</b>. It expires in ten
           minutes and can be used once.
@@ -250,13 +251,22 @@ export function AuthForm({
             Resend code
           </button>
         </div>
-      </div>
+      </AuthPanel>
     );
   }
 
   return (
-    <div className="mx-auto w-full max-w-[560px]">
-      <h1 className="t-h3">
+    <AuthPanel
+      eyebrow={
+        audience === "employer"
+          ? "Organisation"
+          : audience === "operations"
+            ? "Toplance operations"
+            : "Traveller"
+      }
+      className="mx-auto w-full max-w-[560px]"
+    >
+      <h1 className="d-md">
         {mode === "sign-up" ? "Create your account" : "Sign in"}
       </h1>
       {audience !== "traveller" && (
@@ -341,6 +351,6 @@ export function AuthForm({
           </p>
         )}
       </form>
-    </div>
+    </AuthPanel>
   );
 }

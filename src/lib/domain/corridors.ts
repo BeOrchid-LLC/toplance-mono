@@ -69,3 +69,41 @@ export const ORIGINS: CorridorChip[] = [
   { name: "Cameroon", flag: "🇨🇲" },
   { name: "South Africa", flag: "🇿🇦" },
 ];
+
+/**
+ * ISO 3166-1 alpha-3, which is what a passport prints — the two-letter
+ * codes above are for the requirements engine, these are for anything a
+ * traveller reads. `NGA` on their own data page is `NGA` here.
+ *
+ * Every corridor and origin name in this file has an entry; `iso3()`
+ * falls back to the first three letters rather than throwing, because a
+ * marketing surface should not blank out over a missing code.
+ */
+const ISO3: Record<string, string> = {
+  Nigeria: "NGA",
+  Ghana: "GHA",
+  Kenya: "KEN",
+  Cameroon: "CMR",
+  "South Africa": "ZAF",
+  "United Kingdom": "GBR",
+  Canada: "CAN",
+  "United Arab Emirates": "ARE",
+  Germany: "DEU",
+  "United States": "USA",
+  Türkiye: "TUR",
+  Ireland: "IRL",
+  Netherlands: "NLD",
+  Australia: "AUS",
+  "Saudi Arabia": "SAU",
+  France: "FRA",
+  Portugal: "PRT",
+};
+
+export function iso3(name: string): string {
+  return ISO3[name] ?? name.slice(0, 3).toUpperCase();
+}
+
+/** The purposes the intake agent can resolve, in the order it offers them. */
+export const PURPOSES = ["Work", "Study", "Relocation", "Medical", "Tourism"] as const;
+
+export type Purpose = (typeof PURPOSES)[number];

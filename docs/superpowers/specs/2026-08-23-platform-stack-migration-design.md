@@ -293,9 +293,94 @@ redistribution — the very things the caching strategy depends on.
 
 **Needed before deployment, not before the work starts:**
 
-2. Document storage: MinIO on Coolify (recommended, no new vendor) versus
-   external S3 or R2. Building against the S3 SDK means this is an endpoint and
-   a set of credentials, not an architecture.
-3. Deployment target for the Next.js app: Coolify, matching Thrivo, versus
-   Vercel.
+2. ~~Document storage: MinIO on Coolify versus external S3 or R2.~~
+   **Decided 2026-08-23 (Ali): Cloudflare R2**, which BeOrchid already has.
+   Briefly settled on MinIO on Coolify earlier the same day, before the
+   existing R2 account came up. R2 wins on the two things that matter for
+   this bucket: durability is Cloudflare's problem rather than one Contabo
+   volume's, and egress is free, which matters when every document view is a
+   signed GET. Because `src/lib/storage/documents.ts` targets the S3 API
+   rather than a vendor SDK, adopting it was `S3_ENDPOINT`, `S3_REGION=auto`
+   and a key pair — no code change.
+
+   Two constraints that come with it:
+
+   - The R2 API token is scoped to the documents bucket alone. Both
+     `removeDocument` and the replace path in `uploadDocument` call
+     DeleteObject, so this credential can destroy passport scans; it must not
+     also reach the backup bucket.
+   - The bucket's public development URL stays disabled and no custom domain
+     is attached. Either serves every object unsigned, and neither the
+     application nor `ensure-bucket.mts` would notice. `documents.test.ts`
+     asserts an unsigned request is refused — run it against R2 once.
+3. ~~Deployment target for the Next.js app: Coolify versus Vercel.~~
+   **Decided 2026-08-23 (Ali): Coolify**, matching Thrivo. The repo is not
+   ready for it: `next.config.ts` carries no `output: "standalone"` and there
+   is no Dockerfile or `.dockerignore`. Both are needed before a Coolify build
+   is worth attempting.
 4. Backups and connection pooling for the Coolify Postgres.
+
+## Clerk instance — resolved 2026-08-23
+
+The Phase 0 credential gate is cleared. The platform lead approved **a separate
+Clerk application for Toplance**: "a separate instance is alright, and it can be
+customized to fit Toplance better since BeOrchid Core is not ready yet."
+
+This was not a preference. The settings that broke Toplance sign-up on the
+shared **BeOrchid** instance — organizations enabled with
+`force_organization_selection`, and Google/Apple social login — are
+instance-level, so one instance cannot serve both products. Thrivo needs Clerk
+organizations; Toplance deliberately has none, because sponsorship lives in the
+`org_members` Postgres table per platform convention. Toplance is also
+client-locked to email one-time code with no social login.
+
+**Configuration the new instance needs**, all three of which the shared one had
+wrong:
+
+- Email verification code as the only factor. No password, no social provider.
+- Organizations disabled.
+- Its publishable and secret keys in `.env.local`, replacing the BeOrchid pair.
+
+**What it defers to BeOrchid Core.** Separate instances mean one person signing
+up for both products holds two Clerk user IDs. Identity is unified at
+`core.users`, not at Clerk, and Core will need to reconcile them — realistically
+on email address. This is the accepted cost of letting each product have the
+auth its users need, and it is why the shared-identity convention specifies a
+database table rather than an identity provider.
+
+## Considered and rejected, 2026-08-23: Supabase as the Postgres host
+
+Raised while Coolify access was blocked, and worth recording so it is not
+re-litigated from memory.
+
+**The case for it** was that the blocker was live and unowned, and that managed
+backups and point-in-time recovery would arrive without anyone maintaining
+them — not nothing, for a database holding passport scans.
+
+**Why it was rejected** once the Coolify connection string arrived:
+
+- `core.*` shared identity assumes Thrivo and Toplance reach the same Postgres.
+  Same cluster, it is another schema. Split across hosts, it is replication or
+  an internal API — a project, not a join.
+- AGENTS.md forbids per-app variants of platform conventions, and Toplance
+  alone on a different host is one.
+- The Contabo server is already paid for.
+
+A fourth reason was given at the time — that documents were going to Coolify
+MinIO, so splitting the object store from the database would span two networks.
+It is struck rather than quietly left standing: documents went to R2 hours
+later, so the stack spans Contabo and Cloudflare regardless. The first reason
+carries the decision on its own.
+
+**What was inherited from considering it.** Nothing in the code, because
+nothing in the code was ever host-specific: `src/lib/db/client.ts` is a `pg`
+pool over `DATABASE_URL`. That portability is the reason this decision stayed
+cheap in both directions, and is worth preserving.
+
+**What it leaves behind as work.** Backups and PITR are now ours (decision 4).
+Coolify's scheduled Postgres backup takes an S3 destination, and R2 is the
+obvious one now that it is in the stack — but as a **separate bucket with its
+own API token**, not the documents bucket. The application's token can delete
+objects, so a leaked deploy credential must not be able to reach the backups it
+would otherwise be the recovery from. A restore into a scratch database has to
+be tested before launch: an untested backup is a hypothesis.

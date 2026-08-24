@@ -88,6 +88,17 @@ Nothing may read or write someone's application without passing a guard, and the
 audit at the bottom of `policy.ts` maps every original RLS policy to what
 replaces it — including the features that have neither yet.
 
+**Documents are on R2, and the bucket must stay private.** MinIO locally,
+Cloudflare R2 in staging and production — `S3_ENDPOINT`, `S3_REGION=auto` and a
+key pair, no code difference. Two things are easy to get wrong and neither
+raises an error. R2's **public development URL must stay disabled** and no
+custom domain attached, or every passport scan is served unsigned and every
+signed URL in the app becomes decoration. And the **API token is scoped to the
+documents bucket only**: `removeDocument` and the replace path in
+`uploadDocument` both delete objects, so a leaked deploy credential must not
+also reach the backups. `documents.test.ts` asserts the unsigned request fails —
+point `S3_*` at R2 and run it once against the real bucket.
+
 **The privacy boundary is `canReadDocuments`.** An employer sees a sponsored
 applicant's completion score, status and destination. That predicate has no
 sponsorship branch, and the employer console reads through the

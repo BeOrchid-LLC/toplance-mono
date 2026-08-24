@@ -16,21 +16,55 @@ import { cn } from "@/lib/utils";
  *
  * The knob sits under the active icon, so whichever icon it covers
  * switches to a colour that reads against it.
+ *
+ * `variant="icon"` is the marketing surface's version: one square button
+ * showing the mode you are in, sized and bordered to match the language
+ * menu beside it. A 60px sliding track next to a primary call to action
+ * reads as a piece of furniture competing with the thing people came to
+ * press — in chrome, the switch should be the quietest control there.
+ * The product screens keep the track, where there is no CTA to lose to.
  */
-export function ThemeSwitch({ className }: { className?: string }) {
+export function ThemeSwitch({
+  className,
+  variant = "track",
+}: {
+  className?: string;
+  variant?: "track" | "icon";
+}) {
   const { resolvedTheme, setTheme } = useTheme();
+
+  const shared = {
+    type: "button",
+    role: "switch",
+    // Undefined until next-themes resolves, so the server and client
+    // can disagree for one frame on this attribute alone.
+    suppressHydrationWarning: true,
+    "aria-checked": resolvedTheme === "dark",
+    "aria-label": "Dark mode",
+    title: "Dark mode",
+    onClick: () => setTheme(resolvedTheme === "dark" ? "light" : "dark"),
+  } as const;
+
+  if (variant === "icon") {
+    return (
+      <button
+        {...shared}
+        className={cn(
+          "grid size-9 shrink-0 place-items-center rounded-sm border border-border-strong bg-surface text-ink-2 transition-colors duration-[var(--dur-toggle)] ease-[var(--ease-out)] hover:border-brand hover:text-ink",
+          className
+        )}
+      >
+        {/* Both icons ship; `dark:` decides. Same reason as the track —
+            the correct one is painted before hydration, not after. */}
+        <Sun className="size-4 dark:hidden" aria-hidden />
+        <Moon className="hidden size-4 dark:block" aria-hidden />
+      </button>
+    );
+  }
 
   return (
     <button
-      type="button"
-      role="switch"
-      // Undefined until next-themes resolves, so the server and client
-      // can disagree for one frame on this attribute alone.
-      suppressHydrationWarning
-      aria-checked={resolvedTheme === "dark"}
-      aria-label="Dark mode"
-      title="Dark mode"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      {...shared}
       className={cn(
         "inline-flex min-h-[var(--row-h)] shrink-0 items-center justify-center rounded-[var(--radius-pill)] px-1",
         className

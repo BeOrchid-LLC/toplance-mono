@@ -13,7 +13,8 @@ import { HeroCopy } from "@/components/site/hero-copy";
 import { CorridorBar } from "@/components/site/corridor-bar";
 import { CorridorBoard } from "@/components/site/corridor-board";
 import { CorridorProvider } from "@/components/site/corridor-state";
-import { CORRIDORS_LIVE, CORRIDORS_SOON } from "@/lib/domain/corridors";
+import { Shell } from "@/components/shared/shell";
+import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,7 +29,12 @@ export const dynamic = "force-static";
    of the claim and leaves the value visibly empty — a blank reads as
    honest, a fabricated statistic is a liability the moment it is public. */
 const REGISTER = [
-  { label: "Corridors live", value: String(CORRIDORS_LIVE.length), note: "Counted from the corridor table" },
+  // Corridors, not destinations. This counted `CORRIDORS_LIVE`, a list of
+  // countries, under a label reading "Corridors live" and a note claiming
+  // it came from the corridor table — three ways of saying eight when the
+  // table holds four. `LIVE_CORRIDORS` is asserted against `seed.sql`, so
+  // the note is now true as well as the figure.
+  { label: "Corridors live", value: String(LIVE_CORRIDORS.length), note: "Counted from the corridor table" },
   { label: "Applications guided", value: null, note: "Since launch" },
   { label: "Approved on first submission", value: null, note: "Across live corridors" },
   { label: "Median time to a complete checklist", value: null, note: "From first question" },
@@ -183,18 +189,6 @@ const FAQ = [
     a: "Usually yes. Run the intake conversation, upload what you already have, and the checklist will show you only the gap that is left rather than asking you to gather everything again.",
   },
 ];
-
-function Shell({
-  children,
-  className,
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("mx-auto max-w-[1240px] px-6", className)}>{children}</div>
-  );
-}
 
 /**
  * Every section is one entry in a register, and its name lives in the
@@ -446,7 +440,7 @@ export default function HomePage() {
       <Section
         id="where"
         label="Where we work"
-        datum={`${CORRIDORS_LIVE.length} live · ${CORRIDORS_SOON.length} in build`}
+        datum={`${LIVE_CORRIDORS.length} live · more in build`}
       >
         <Head
           title="Corridors, not countries"

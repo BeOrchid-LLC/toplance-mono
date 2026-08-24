@@ -9,6 +9,7 @@ import {
   CORRIDORS_LIVE,
   CORRIDORS_SOON,
   ORIGINS,
+  isCorridorLive,
   iso3,
 } from "@/lib/domain/corridors";
 import { useCorridor } from "@/components/site/corridor-state";
@@ -23,12 +24,18 @@ import { useCorridor } from "@/components/site/corridor-state";
  * the same state.
  */
 export function CorridorBoard() {
-  const { origin, destination, set } = useCorridor();
+  const { origin, destination, purpose, set } = useCorridor();
 
-  const rows = [
-    ...CORRIDORS_LIVE.map((c) => ({ ...c, soon: false })),
-    ...CORRIDORS_SOON.map((c) => ({ ...c, soon: true })),
-  ];
+  // Every destination we offer, each labelled by whether *this* corridor
+  // is live — the passport and the purpose included. The board used to
+  // split the list into two fixed halves, which made "Live" a property
+  // of the country: true for a Nigerian going to Canada to study, and
+  // the same green word for a Ghanaian going there on holiday, which we
+  // cannot build at all.
+  const rows = [...CORRIDORS_LIVE, ...CORRIDORS_SOON].map((c) => ({
+    ...c,
+    soon: !isCorridorLive(origin, c.name, purpose),
+  }));
 
   return (
     <div>
@@ -50,6 +57,10 @@ export function CorridorBoard() {
             ))}
           </select>
         </div>
+        {/* The status column now depends on the purpose as well as the
+            passport, so the purpose has to be readable here — otherwise
+            a row flips between Live and In build for no visible reason. */}
+        <span className="tag">for {purpose.toLowerCase()}</span>
       </div>
 
       <div className="mt-6 border-b border-border">

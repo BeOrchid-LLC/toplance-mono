@@ -13,7 +13,8 @@ import {
   PURPOSES,
   type Purpose,
 } from "@/lib/domain/corridors";
-import { MrzBand, useCorridor } from "@/components/site/corridor-state";
+import { MrzBand } from "@/components/shared/mrz-band";
+import { useCorridor } from "@/components/site/corridor-state";
 
 /**
  * One slot of the bar. A real `<select>` sits transparent across the whole
@@ -175,11 +176,17 @@ export function CorridorBar({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
 
+      {/* Names all three answers, not just the destination: the corridor
+          may be closed because of the passport or the purpose, and
+          "Canada is not open yet" is simply false when Canada is live for
+          study. The promise to write on the day it opens is gone — there
+          is no mailer behind it. */}
       {soon && !compact && (
         <p className="t-muted mt-3 max-w-[52ch] text-[15px]">
-          {destination} is not open yet. Tell us you want it and it enters the
-          build queue with your demand attached — we will write to you the day
-          that corridor goes live.
+          {origin} → {destination} for {purpose.toLowerCase()} is not open
+          yet — a corridor is all three, so switching any one of them may
+          land on a live one. Ask for this one and it enters the build queue
+          with your demand attached.
         </p>
       )}
     </div>

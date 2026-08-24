@@ -14,6 +14,17 @@ import { cn } from "@/lib/utils";
  * Camera first. Most applicants are photographing a paper document on a
  * phone, so "Take a photo" is the primary action on small screens and
  * the file picker is the fallback — not the other way round.
+ *
+ * A ruled row, never a card and never glass. This is the exact thing
+ * guideline §4 names in its deny list: a repeated element down a scroll.
+ * Twelve bordered boxes stacked in a column read as twelve objects to
+ * decide about; twelve ruled rows read as one list — which is what a
+ * checklist is.
+ *
+ * A row needing attention is marked by a rule down its left edge in the
+ * semantic colour, not by turning the row into a tinted box. The state
+ * badge beside the name still says it in words, so the colour is never
+ * carrying the meaning alone (§8).
  */
 export function DocumentRow({
   doc,
@@ -71,27 +82,30 @@ export function DocumentRow({
   return (
     <div
       className={cn(
-        "rounded-md border p-5",
-        needsAttention
-          ? doc.state === "failed"
-            ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_7%,var(--mix))]"
-            : "border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_8%,var(--mix))]"
-          : "border-border bg-surface"
+        "border-b border-border py-5 last:border-b-0",
+        /* The tint mixes toward `transparent`, not toward `--mix`. These
+           rows sit on the ruled ground the laminate above them refracts;
+           an opaque tint would punch a solid rectangle through it. */
+        needsAttention && "border-l-2 pl-5",
+        needsAttention &&
+          (doc.state === "failed"
+            ? "border-l-danger bg-[color-mix(in_srgb,var(--danger)_7%,transparent)]"
+            : "border-l-warning bg-[color-mix(in_srgb,var(--warning)_9%,transparent)]")
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
         <div className="min-w-[280px] flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="t-h3">{doc.name}</h3>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h3 className="t-title">{doc.name}</h3>
             <DocStateBadge state={doc.state} />
             {!doc.isRequired && (
-              <span className="special">ONLY IF IT APPLIES TO YOU</span>
+              <span className="special-caps">Only if it applies to you</span>
             )}
           </div>
           {doc.reason ? (
-            <p className="t-body mt-2 text-ink-2">{doc.reason}</p>
+            <p className="t-body mt-2 max-w-[74ch] text-ink-2">{doc.reason}</p>
           ) : description ? (
-            <p className="t-muted mt-2">{description}</p>
+            <p className="t-muted mt-2 max-w-[74ch]">{description}</p>
           ) : null}
         </div>
 

@@ -3,6 +3,11 @@
  * product — the same number drives the traveller's next action, the
  * reviewer's queue order and the employer's roster — so it gets a
  * deliberate piece of the layout rather than a bar in a corner.
+ *
+ * A solid `--brand` arc, not a gradient. The gradient needed an SVG
+ * `<defs>` with a fixed id, which silently collides the moment two rings
+ * share a page — and §1 is that this product does not decorate. The arc
+ * carries the figure; the sweep across it was carrying nothing.
  */
 export function CompletionRing({
   pct,
@@ -24,12 +29,6 @@ export function CompletionRing({
       aria-label={`${pct}% of required documents verified`}
     >
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
-        <defs>
-          <linearGradient id="ring-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--brand)" />
-            <stop offset="100%" stopColor="var(--brand-2)" />
-          </linearGradient>
-        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -43,7 +42,7 @@ export function CompletionRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="url(#ring-grad)"
+          stroke="var(--brand)"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -52,10 +51,9 @@ export function CompletionRing({
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[28px] font-bold leading-none tracking-tight">
-          {pct}%
-        </span>
-        <span className="special mt-1">complete</span>
+        {/* On the scale, not a one-off size. */}
+        <span className="t-h2 leading-none">{pct}%</span>
+        <span className="special-caps mt-1.5">complete</span>
       </span>
     </div>
   );

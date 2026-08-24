@@ -117,13 +117,19 @@ async function buildChecklist(
   answers: Record<string, string>,
   userId: string
 ) {
-  const nationality = NATIONALITY_ISO[answers.nationality] ?? "ng";
+  const nationality = NATIONALITY_ISO[answers.nationality];
   const destination = DESTINATION_ISO[answers.destination];
   const purpose = PURPOSE_ISO[answers.purpose];
 
-  if (!destination || !purpose) {
+  if (!nationality || !destination || !purpose) {
     // An answer we have no code for is still demand. Record what they
     // typed, not a blank.
+    //
+    // Nationality used to fall back to `ng` here. Every question accepts
+    // free text, so someone answering "Senegal" was handed the Nigerian
+    // rule set under a heading that reads "as the mission publishes it".
+    // A checklist built from the wrong passport is worse than no
+    // checklist: a missing mark is honest, an invented one is not.
     await track(
       "toplance.corridor_requested",
       {

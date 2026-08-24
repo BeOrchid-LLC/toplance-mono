@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Mic, RotateCcw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +19,13 @@ type Answers = Record<string, string>;
 /**
  * Intake is a conversation, not a 40-field form: one question at a time,
  * in the traveller's own language, with every answer editable in place.
+ *
+ * This is the one `(app)` route with no laminate above it. The corridor
+ * header in the layout only renders once a corridor exists, and finding
+ * out what the corridor *is* is precisely this screen's job — a card
+ * announcing the corridor is unknown, sitting directly on top of the
+ * conversation asking about it, would be the product talking to itself.
+ * So the signature moment here is the conversation.
  */
 export function IntakeAgent({
   applicationId,
@@ -82,27 +90,34 @@ export function IntakeAgent({
     toast.info("Answer reopened. Anything after it will be asked again.");
   }
 
+  // The chat owns the viewport under the chrome. Below `lg` the chrome
+  // is two bars — the app bar plus the nav rail that replaced the nav
+  // that bar hides — so the subtraction has to account for both, or the
+  // composer lands just off the bottom of a phone.
   return (
-    <div className="flex h-[calc(100dvh-var(--bar-h))] flex-col lg:flex-row">
+    <div className="flex h-[calc(100dvh-var(--bar-h)-var(--row-h)-1px)] flex-col lg:h-[calc(100dvh-var(--bar-h))] lg:flex-row">
       {/* ---- conversation ---- */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 sm:px-6">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[image:var(--brand-grad)] text-white">
+          {/* A flat brand tint, not the brand gradient. The gradient is
+              the slab device the auth surface removed, and one circle of
+              it here is the beginning of putting it back. */}
+          <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_14%,var(--mix))] text-brand-text">
             <Sparkles className="size-5" />
           </span>
           <div className="min-w-0">
             <p className="t-title">Toplance Agent</p>
-            <p className="special">
+            <p className="special-caps">
               {done
-                ? "PROFILE COMPLETE"
-                : `LISTENING · QUESTION ${answeredCount + 1} OF ${INTAKE_QUESTIONS.length}`}
+                ? "Profile complete"
+                : `Listening · question ${answeredCount + 1} of ${INTAKE_QUESTIONS.length}`}
             </p>
           </div>
         </div>
 
         <div className="h-1 shrink-0 bg-surface-2">
           <div
-            className="h-full bg-[image:var(--brand-grad)] transition-[width] duration-[var(--dur-ring)] ease-[var(--ease-out)]"
+            className="h-full bg-brand transition-[width] duration-[var(--dur-ring)] ease-[var(--ease-out)]"
             style={{ width: `${(answeredCount / INTAKE_QUESTIONS.length) * 100}%` }}
           />
         </div>
@@ -114,9 +129,7 @@ export function IntakeAgent({
           aria-label="Conversation with the Toplance agent"
         >
           <div className="mx-auto flex max-w-[720px] flex-col gap-4">
-            <p className="special mx-auto rounded-[var(--radius-pill)] bg-surface-2 px-4 py-2">
-              CONVERSATION STARTED
-            </p>
+            <p className="special-caps mx-auto">Conversation started</p>
 
             <Bubble from="agent">
               {`Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`}
@@ -163,22 +176,29 @@ export function IntakeAgent({
             )}
 
             {current?.key === "history" && (
-              <p className="t-muted rounded-md border border-border bg-surface-2 p-4">
+              <p className="t-muted border-l-2 border-border-strong py-1 pl-4">
                 {HISTORY_NOTE}
               </p>
             )}
 
             {done && (
-              <div className="rounded-md border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,var(--mix))] p-5">
-                <p className="t-title">Profile complete</p>
+              /* A real boundary — before it the corridor is unknown,
+                 after it there is a checklist — so it gets §8's 3px
+                 rule rather than a tinted box. */
+              <div className="mt-2">
+                <span
+                  aria-hidden
+                  className="block h-[3px] w-16 rounded-[var(--radius-pill)] bg-success"
+                />
+                <p className="t-title mt-4">Profile complete</p>
                 <p className="t-muted mt-2">
-                  Your checklist is built from these answers. You can change any of
-                  them later and it rebuilds.
+                  Your checklist is built from these answers. You can change any
+                  of them later and it rebuilds.
                 </p>
                 <Button asChild className="mt-4">
-                  <a href="/app/requirements">
+                  <Link href="/app/requirements">
                     See my requirements <ArrowRight />
-                  </a>
+                  </Link>
                 </Button>
               </div>
             )}
@@ -269,7 +289,15 @@ export function IntakeAgent({
                       : "text-ink-3"
                 )}
               >
-                {answers[q.key] ?? (i === answeredCount ? "asking now" : "—")}
+                {answers[q.key] ??
+                  (i === answeredCount ? (
+                    "asking now"
+                  ) : (
+                    <span
+                      aria-label="Not answered yet"
+                      className="inline-block w-[56px] border-b-2 border-dashed border-border-strong align-middle"
+                    />
+                  ))}
               </dd>
             </div>
           ))}

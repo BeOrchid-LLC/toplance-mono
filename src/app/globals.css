@@ -11,20 +11,27 @@
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
 :root {
-  /* neutrals — light */
-  --bg: #fafafc;
+  /* neutrals — light.
+     One ramp, one hue. Every step carries the same cool blue-grey cast,
+     so text does not drift warm as it lightens. The previous ramp mixed
+     a cool --ink with warm mid-tones, which read as muddy rather than
+     as a deliberate temperature. */
+  --bg: #f6f7fa;
   --surface: #ffffff;
-  --surface-2: #f4f4f8;
-  --surface-inset: #f0eff5;
-  --border: #e7e6ee;
-  --border-strong: #d4d2de;
-  --ink: #1a1a2e;
-  --ink-2: #57545f;
-  --ink-3: #86838f;
+  --surface-2: #eef0f5;
+  --surface-inset: #e7eaf1;
+  --border: #e1e5ed;
+  --border-strong: #ccd2de;
+  --ink: #10131c;
+  --ink-2: #4a5163;
+  --ink-3: #7b8296;
 
-  --shadow: 0 1px 2px rgb(26 26 46 / 0.06), 0 8px 24px rgb(26 26 46 / 0.06);
-  --shadow-sm: 0 1px 2px rgb(26 26 46 / 0.08);
-  --shadow-lg: 0 2px 6px rgb(26 26 46 / 0.08), 0 18px 44px rgb(26 26 46 / 0.12);
+  /* Elevation is a real tool now. At 6% on a near-white ground the old
+     values were invisible, so every card had to fall back to a 1px
+     border — which is what turned the page into a grid of boxes. */
+  --shadow-sm: 0 1px 2px rgb(16 19 28 / 0.06);
+  --shadow: 0 1px 3px rgb(16 19 28 / 0.08), 0 12px 28px -8px rgb(16 19 28 / 0.10);
+  --shadow-lg: 0 2px 8px rgb(16 19 28 / 0.10), 0 24px 56px -12px rgb(16 19 28 / 0.18);
 
   /* semantics — shared across brands, never a brand accent */
   --success: #18935a;
@@ -50,11 +57,13 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* radius — 12px is the system default */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 18px;
+  /* radius — 14px is the system default.
+     Softened across the board. Paired with real elevation this lets a
+     card read as a surface rather than as an outlined box. */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
   --radius: var(--radius-md);
 
@@ -77,19 +86,19 @@
    the .dark class next-themes toggles, and the un-stamped system default. */
 :root[data-theme="dark"],
 .dark {
-  --bg: #121218;
-  --surface: #1b1b24;
-  --surface-2: #23232e;
-  --surface-inset: #191921;
-  --border: #2c2c38;
-  --border-strong: #3b3a48;
-  --ink: #f2f1f6;
-  --ink-2: #b6b4c0;
-  --ink-3: #827f8c;
+  --bg: #0b0d13;
+  --surface: #141822;
+  --surface-2: #1d222e;
+  --surface-inset: #101420;
+  --border: #262c3a;
+  --border-strong: #38404f;
+  --ink: #f3f5fa;
+  --ink-2: #aab2c4;
+  --ink-3: #767e91;
 
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px rgb(0 0 0 / 0.35);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 2px 8px rgb(0 0 0 / 0.5), 0 20px 48px rgb(0 0 0 / 0.45);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 12px 28px -8px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 2px 8px rgb(0 0 0 / 0.55), 0 24px 56px -12px rgb(0 0 0 / 0.55);
 
   --success: #3cc57e;
   --success-ink: #7fe0ac;
@@ -100,7 +109,7 @@
   --info: #5e90f0;
   --info-ink: #9dbaf6;
 
-  --mix: #1b1b24;
+  --mix: #141822;
 }
 
 /* ---------- brand axis ---------- */
@@ -135,6 +144,153 @@
 :root[data-theme="dark"] [data-brand="beorchid"],
 .dark [data-brand="beorchid"] {
   --brand-text: #35d3c3;
+}
+
+/* ---------- laminate axis ----------
+   A passport data page is sealed under polycarbonate, and that material
+   is the honest source for the glass on this page: it refracts the ground
+   beneath it, its edge carries optically-variable ink that shifts blue to
+   gold with the viewing angle, and it throws a specular band when tilted.
+
+   Held as tokens rather than literals because the tint has to survive a
+   theme flip: on a near-white ground glass is mostly white and barely
+   tinted, on the dark ground it is mostly dark and the edge highlight has
+   to drop to a tenth of its light-mode strength or it reads as a stroke. */
+:root {
+  --glass-tint: 76%;
+  --glass-edge: rgb(255 255 255 / 0.75);
+  --glass-under: rgb(16 19 28 / 0.07);
+  --glass-sheen: rgb(255 255 255 / 0.6);
+}
+:root[data-theme="dark"],
+.dark {
+  --glass-tint: 60%;
+  --glass-edge: rgb(255 255 255 / 0.1);
+  --glass-under: rgb(0 0 0 / 0.42);
+  --glass-sheen: rgb(255 255 255 / 0.13);
+}
+
+/* Ruled security paper, at the threshold of visible. Official documents
+   are printed on a ground, never on blank white, and the hero is the one
+   place on the page with room to say so before any text does. */
+@utility security-paper {
+  background-image: repeating-linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--ink-3) 13%, transparent) 0 1px,
+    transparent 1px 11px
+  );
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 62%);
+}
+
+/* The laminate itself. Three things stacked, in the order real
+   polycarbonate does them:
+
+   1. `backdrop-filter` refracts the ground. `saturate` is what separates
+      glass from fog — blur alone reads as a smeared overlay, blur plus
+      saturation reads as something with a refractive index.
+   2. A tint carries the text. Legibility is not negotiable against a
+      moving ground, so the tint is high enough that 13px MRZ stays
+      readable over the ruled paper beneath it.
+   3. Two inset hairlines light the edge: bright along the top where a
+      real bevel catches the room, dark along the bottom where it does
+      not. This is what makes the card read as having a thickness.
+
+   Kept to `blur(14px)`, on one element per page. The comment in
+   `corridor-bar.tsx` is not decorative — this page is mostly read on
+   mid-range Android, where a wide backdrop-filter is a real frame cost,
+   and the `@supports` fallback below is for the same reason. */
+@utility laminate {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--surface) var(--glass-tint), transparent),
+    color-mix(
+      in srgb,
+      var(--surface) calc(var(--glass-tint) - 12%),
+      transparent
+    )
+  );
+  /* Unprefixed only. Lightning CSS adds the `-webkit-` twin from the
+     project's browser targets; writing it by hand here does not
+     supplement that, it replaces it — a hand-written prefixed copy that
+     comes second wins the dedupe and the standard property is dropped
+     from the build entirely, which is silent and costs you the effect in
+     every browser that only speaks the standard name. */
+  backdrop-filter: blur(14px) saturate(175%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 var(--glass-under),
+    var(--shadow);
+}
+
+/* No backdrop-filter: fall back to the opaque surface the bar used
+   before. A half-transparent card over ruled paper with nothing
+   refracting it is unreadable, which is worse than no effect at all. */
+@supports not (backdrop-filter: blur(1px)) {
+  .laminate {
+    background: var(--surface);
+  }
+}
+
+/* The optically-variable edge. A single 1px ring, blue at the top-left
+   corner and gold at the bottom-right, transparent through the middle —
+   the shift real OVI makes as you turn a document to the light. Drawn as
+   a padding-box/border-box mask exclusion because a gradient cannot be a
+   `border-color`, and the alternative (a second inset element) would sit
+   inside the overflow clip and round differently at the corners. */
+.laminate::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-2) 60%, transparent),
+    color-mix(in srgb, var(--border-strong) 55%, transparent) 32%,
+    color-mix(in srgb, var(--border-strong) 55%, transparent) 68%,
+    color-mix(in srgb, var(--brand-accent) 50%, transparent)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+/* The tilt. One specular band crossing the card, skewed so it reads as
+   light raking across a surface rather than a bar sliding over one.
+   Mounted keyed on the corridor, so it fires on the same state change
+   that re-runs the MRZ resolve — the gesture of turning a passport to
+   check it is the gesture of changing where you are going. */
+@keyframes laminate-tilt {
+  from {
+    transform: translateX(-140%) skewX(-18deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(260%) skewX(-18deg);
+    opacity: 0;
+  }
+}
+.laminate-sheen {
+  position: absolute;
+  inset: -1px;
+  z-index: 3;
+  width: 38%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    var(--glass-sheen),
+    transparent
+  );
+  animation: laminate-tilt 900ms var(--ease-out) both;
 }
 
 /* The client-locked scrim for text over the brand gradient (~5.5:1). */
@@ -204,6 +360,7 @@
 
   --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
 
   --ease-out: var(--ease-out);
   --ease-inout: var(--ease-inout);
@@ -217,10 +374,26 @@
     @apply border-border;
   }
 
+  /*
+   * The three font stacks, declared here rather than read from the
+   * `@theme inline` block above. `inline` means Tailwind substitutes the
+   * value into the utilities it generates and does NOT emit the custom
+   * property, so `var(--font-sans)` in hand-written CSS resolves to
+   * nothing and the declaration is dropped — which is why body copy was
+   * silently rendering in system-ui rather than Inter.
+   *
+   * They live on `body` and not `:root` because that is where next/font
+   * puts `--font-inter` and friends; a `:root` declaration would resolve
+   * them before they exist.
+   */
   body {
+    --sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
+    --data: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--font-sans);
+    font-family: var(--sans);
     font-size: 16px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
@@ -250,6 +423,19 @@
    metadata. Never put it on a button, link or input.
    ============================================================ */
 @layer components {
+  /* Additive, not a change to a locked role. The client locked the 16px
+     body floor and `.special` as the only sub-16 role; both still hold.
+     `.t-h1` and every other role below keeps its exact size. This adds
+     one step ABOVE the scale, because a 40px hero headline does not
+     out-weigh a 40px section heading, and that flatness is a large part
+     of why the page reads as one long undifferentiated column. */
+  .t-display {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
   .t-h1 {
     font-size: 40px;
     font-weight: 700;
@@ -315,7 +501,17 @@
     max-width: 70ch;
   }
 
+  @media (max-width: 900px) {
+    .t-display {
+      font-size: 44px;
+    }
+  }
+
   @media (max-width: 520px) {
+    .t-display {
+      font-size: 34px;
+      letter-spacing: -0.025em;
+    }
     .t-h1 {
       font-size: 32px;
     }
@@ -323,6 +519,151 @@
       font-size: 26px;
     }
   }
+}
+
+/* ============================================================
+   MARKETING SURFACE — display and data roles
+   Additive. The `.t-*` roles above are unchanged and still own
+   every product screen; nothing here is used outside `(site)`.
+
+   Two faces, two jobs. Archivo carries the width axis, so display
+   type can be genuinely expanded rather than merely large — that
+   width is what stops it reading as Inter at a bigger size.
+   JetBrains stops being a footnote and becomes the data face: every
+   code, count and status on the page is set in it, because those are
+   the parts a traveller reads as fact rather than as marketing.
+
+   `font-variation-settings` rather than `font-weight` throughout:
+   the two do not compose, and the `wdth` axis is only reachable the
+   long way round.
+   ============================================================ */
+@layer components {
+  .d-hero {
+    font-family: var(--display);
+    font-size: clamp(33px, 4.4vw, 57px);
+    font-variation-settings: "wght" 780, "wdth" 114;
+    letter-spacing: -0.028em;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+  .d-lg {
+    font-family: var(--display);
+    font-size: clamp(25px, 2.9vw, 39px);
+    font-variation-settings: "wght" 720, "wdth" 110;
+    letter-spacing: -0.022em;
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+  .d-md {
+    font-family: var(--display);
+    font-size: 21px;
+    font-variation-settings: "wght" 680, "wdth" 108;
+    letter-spacing: -0.008em;
+    line-height: 1.24;
+  }
+  .d-sm {
+    font-family: var(--display);
+    font-size: 17px;
+    font-variation-settings: "wght" 660, "wdth" 104;
+    line-height: 1.35;
+  }
+
+  /* The data face. 13px matches `.special` so the page keeps one
+     metadata size, and like `.special` it never lands on a control. */
+  .tag {
+    font-family: var(--data);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    line-height: 1.4;
+    color: var(--ink-3);
+  }
+  .num {
+    font-family: var(--data);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+
+  /* The machine-readable zone. A passport's own typography, used as
+     the page's structural rule — it separates sections the way the
+     band separates the data page from everything above it. The `<`
+     fillers are the real thing, not invented ornament. */
+  .mrz {
+    font-family: var(--data);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    color: var(--ink-3);
+    user-select: none;
+  }
+}
+
+/* The one orchestrated moment: the hero settles in sequence on load.
+   `both` keeps the end state under the reduced-motion rule in the base
+   layer, which collapses the duration rather than cancelling the fill. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 620ms var(--ease-out) both;
+}
+
+/* The code resolving out of its field of `<` fillers.
+   The two layers are clipped to exact complements — the filler retreats
+   from the left at the same rate the code advances — so they never paint
+   over one another. Stacking them and letting the top layer occlude only
+   works if it has an opaque background, which would tie the band to
+   whatever ground it happens to sit on. */
+@keyframes mrz-code-in {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+@keyframes mrz-filler-out {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+.mrz-code {
+  animation: mrz-code-in 700ms var(--ease-out) both;
+}
+.mrz-filler {
+  animation: mrz-filler-out 700ms var(--ease-out) both;
+}
+
+/* The padding that takes the code out to a passport's 44 columns.
+   It was previously part of the code string, so it inherited the brand
+   colour and 26 of 44 characters — the majority of the object — were
+   rendered in the loudest accent on the page while encoding nothing.
+   Real fillers are quiet; they are what the payload is NOT.
+
+   The fade is masked on the pad itself rather than on `.mrz`, so it is
+   measured from where the padding starts rather than from a fixed
+   percentage of the band. `TPL<NGA<<GBR<<RELOCATION` is the longest
+   payload at 24 of 44 columns, and a container mask tuned for it would
+   sit two characters from clipping the word. */
+.mrz-pad {
+  display: inline-block;
+  color: color-mix(in srgb, var(--ink-3) 42%, transparent);
+  mask-image: linear-gradient(to right, #000 0 24%, transparent 92%);
+  -webkit-mask-image: linear-gradient(to right, #000 0 24%, transparent 92%);
 }
 
 /* Text sitting on the brand gradient, behind the locked scrim. */

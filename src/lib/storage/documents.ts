@@ -9,9 +9,11 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
- * Documents live in an S3-compatible bucket: MinIO locally, whatever the
- * platform team provisions in production. Talking to the S3 API rather
- * than a vendor SDK keeps that a matter of configuration.
+ * Documents live in an S3-compatible bucket: MinIO locally, Cloudflare
+ * R2 in staging and production. Talking to the S3 API rather than a
+ * vendor SDK keeps that a matter of configuration — the store has been
+ * answered three different ways and this file has not changed for any of
+ * them.
  *
  * Nothing here decides who may touch an object. Callers reach it only
  * through guarded server actions, which is where the per-application
@@ -27,8 +29,9 @@ function client() {
 
   return new S3Client({
     endpoint,
+    // R2 wants "auto" and rejects AWS region names; MinIO ignores this.
     region: process.env.S3_REGION ?? "us-east-1",
-    // MinIO serves buckets as a path, not a subdomain.
+    // MinIO and R2 both serve buckets as a path, not a subdomain.
     forcePathStyle: true,
     credentials: {
       accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "",

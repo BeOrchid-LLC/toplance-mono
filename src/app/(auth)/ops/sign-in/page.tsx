@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { AuthForm } from "@/components/auth/auth-form";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -13,31 +13,34 @@ export default function OpsSignInPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   return (
-    <div className="mx-auto grid max-w-[940px] items-center gap-12 lg:grid-cols-[1fr_420px]">
+    <div className="mx-auto grid max-w-[1000px] items-center gap-14 lg:grid-cols-[1fr_460px]">
+      {/* Stated as conditions of access rather than as features. This is
+          the one door where the reader is being told what is recorded
+          about them, not sold anything. */}
       <div className="hidden lg:block">
-        <h2 className="t-h2">Staff access only</h2>
-        <p className="t-muted mt-3 measure">
-          This console holds identity documents for every applicant. Sessions are
-          logged and every document view is recorded against your account.
+        <p className="tag">Staff entrance</p>
+        <h2 className="d-lg mt-3 max-w-[16ch]">Staff access only</h2>
+        <p className="t-body-lg mt-5 max-w-[52ch] text-ink-2">
+          This console holds identity documents for every applicant. Sessions
+          are logged and every document view is recorded against your account.
         </p>
-        <div className="mt-6 flex flex-col gap-3">
+        <ul className="mt-8 flex flex-col gap-3">
           {[
             "A one-time code is emailed on every sign-in",
             "Sessions expire after 30 minutes idle",
             "Full audit trail on document access",
           ].map((x) => (
-            <span key={x} className="flex items-start gap-3">
-              <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success-ink" />
-              <span className="t-body text-ink-2">{x}</span>
-            </span>
+            <li key={x} className="flex items-start gap-3">
+              <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
+              <span className="text-[15px] text-ink-2">{x}</span>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
-      <div className="rounded-md border border-border bg-surface p-6 shadow-[var(--shadow)]">
-        <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
-          <AuthForm mode="sign-in" audience="operations" />
-        </Suspense>
-      </div>
+
+      <Suspense fallback={<Skeleton className="h-[340px] w-full rounded-lg" />}>
+        <AuthForm mode="sign-in" audience="operations" />
+      </Suspense>
     </div>
   );
 }

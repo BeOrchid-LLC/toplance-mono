@@ -20,6 +20,7 @@ import {
   putDocument,
   signedDocumentUrl,
 } from "@/lib/storage/documents";
+import { adoptRuleSet } from "@/lib/data/checklist";
 import { submitApplicationTx } from "@/lib/data/submissions";
 import {
   DESTINATION_ISO,
@@ -189,51 +190,11 @@ async function buildChecklist(
     userId
   );
 
-  const requirements = ruleSet.requirements;
-
-  const existing = await db
-    .select({ docKey: documents.docKey, state: documents.state })
-    .from(documents)
-    .where(eq(documents.applicationId, applicationId));
-
-  const keep = new Set(existing.map((d) => d.docKey));
-
-  const rows = requirements
-    .filter((r) => !keep.has(r.docKey))
-    .map((r) => ({
-      applicationId,
-      docKey: r.docKey,
-      name: r.name,
-      isRequired: r.isRequired,
-      sortOrder: r.sortOrder,
-    }));
-
-  if (rows.length) await db.insert(documents).values(rows);
-
-  // Drop rows this corridor no longer asks for, unless already uploaded.
-  const wanted = new Set(requirements.map((r) => r.docKey));
-  const stale = existing
-    .filter((d) => !wanted.has(d.docKey) && d.state === "not_started")
-    .map((d) => d.docKey);
-
-  if (stale.length) {
-    await db
-      .delete(documents)
-      .where(
-        and(
-          eq(documents.applicationId, applicationId),
-          inArray(documents.docKey, stale)
-        )
-      );
-  }
+  await adoptRuleSet(applicationId, ruleSet);
 
   await db
     .update(applications)
-    .set({
-      intakeComplete: true,
-      corridorId: ruleSet.corridorId,
-      status: "collecting_documents",
-    })
+    .set({ intakeComplete: true, status: "collecting_documents" })
     .where(eq(applications.id, applicationId));
 }
 

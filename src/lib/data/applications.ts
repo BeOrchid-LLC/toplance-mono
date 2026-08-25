@@ -109,12 +109,24 @@ export async function getOrCreateApplication(): Promise<Application | null> {
 
   if (existing) return existing;
 
+  // The layout and the page it wraps both resolve the application
+  // concurrently, so first visits race here. Same shape as the profile
+  // provisioning above: whoever loses the insert reads the winner's row.
   const [created] = await db
     .insert(applications)
     .values({ travelerId: profile.id })
+    .onConflictDoNothing()
     .returning();
 
-  return created ?? null;
+  if (created) return created;
+
+  const [raced] = await db
+    .select()
+    .from(applications)
+    .where(eq(applications.travelerId, profile.id))
+    .limit(1);
+
+  return raced ?? null;
 }
 
 export async function getIntakeAnswers(applicationId: string) {

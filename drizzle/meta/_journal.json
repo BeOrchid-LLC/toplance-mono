@@ -15,6 +15,13 @@
       "when": 1787477660482,
       "tag": "0001_watery_chimera",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787654582166,
+      "tag": "0002_military_luminals",
+      "breakpoints": true
     }
   ]
 }

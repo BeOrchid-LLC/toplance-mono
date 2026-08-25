@@ -41,6 +41,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
 COPY --from=builder /app/src/lib/db/sql-objects.sql ./scripts/sql-objects.sql
+COPY --from=builder /app/src/lib/db/seed.sql ./scripts/seed.sql
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

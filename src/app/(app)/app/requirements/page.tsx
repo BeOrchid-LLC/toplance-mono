@@ -12,6 +12,7 @@ import {
   getIntakeAnswers,
   getOrCreateApplication,
 } from "@/lib/data/applications";
+import { adoptRuleSet } from "@/lib/data/checklist";
 import { corridorGap } from "@/lib/domain/corridor-gap";
 import {
   DESTINATION_ISO,
@@ -100,10 +101,11 @@ export default async function RequirementsPage() {
   if (!application) redirect("/sign-in?next=/app/requirements");
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [docs, answers] = await Promise.all([
+  const [initialDocs, answers] = await Promise.all([
     getDocuments(application.id),
     getIntakeAnswers(application.id),
   ]);
+  let docs = initialDocs;
 
   // Resolved from the answers rather than read from the corridors table,
   // so a provider with no row of ours behind it serves this screen the
@@ -135,6 +137,16 @@ export default async function RequirementsPage() {
         purpose={answers.purpose}
       />
     );
+  }
+
+  // Intake complete, rule set resolvable, checklist empty: the corridor
+  // data arrived after this intake finished (an unseeded environment, or
+  // a corridor that opened later). The one-shot build in the intake
+  // action already missed its moment, so materialise here — provisioning
+  // on first sight, the same stance `getProfile` takes.
+  if (docs.length === 0) {
+    await adoptRuleSet(application.id, ruleSet);
+    docs = await getDocuments(application.id);
   }
 
   const required = ruleSet.requirements.filter((r) => r.isRequired);

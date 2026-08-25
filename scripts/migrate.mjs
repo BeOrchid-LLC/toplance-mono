@@ -82,6 +82,31 @@ try {
   ].find(existsSync);
   await client.query(readFileSync(sqlObjects, "utf8"));
   console.log("Applied functions, triggers and views.");
+
+  // Reference data — but only into an empty corridors table. The
+  // requirements engine reads corridors from the database, so a
+  // migrated-but-unseeded environment fails every corridor lookup while
+  // looking healthy from outside; that state should not be reachable
+  // from a deploy. It is guarded because seed.sql replaces the
+  // reference tables wholesale and each run issues new corridor ids,
+  // detaching the checklist of every application pointing at the old
+  // ones — so reseeding a populated environment stays a deliberate,
+  // planned operation (`npm run db:seed`), never a deploy side effect.
+  const seedSql = [
+    join(here, "seed.sql"),
+    join(root, "src", "lib", "db", "seed.sql"),
+  ].find(existsSync);
+  if (seedSql) {
+    const {
+      rows: [{ count }],
+    } = await client.query(`SELECT count(*)::int AS count FROM corridors`);
+    if (count === 0) {
+      await client.query(readFileSync(seedSql, "utf8"));
+      console.log("Corridors table was empty — seeded reference data.");
+    } else {
+      console.log(`Reference data present (${count} corridors) — seed skipped.`);
+    }
+  }
 } finally {
   await client.end();
 }

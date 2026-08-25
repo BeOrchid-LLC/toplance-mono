@@ -35,3 +35,38 @@ describe.skipIf(!process.env.DATABASE_URL)("org_application_progress", async () 
     ]);
   });
 });
+
+/**
+ * One application per traveller, enforced by the database.
+ *
+ * The `(app)` layout and every page under it call
+ * `getOrCreateApplication` concurrently in the same request, and on a
+ * traveller's very first visit both used to find nothing and both
+ * insert — leaving two applications, with the intake agent writing
+ * answers to one while the requirements screen read the other. The
+ * constraint makes that race lose loudly instead of forking silently.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("one application per traveller", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { applications, profiles } = await import("@/lib/db/schema");
+
+  const TRAVELLER = "test_unique_app_traveller";
+
+  it("rejects a second application for the same traveller", async () => {
+    await db
+      .insert(profiles)
+      .values({ id: TRAVELLER, email: "unique@test.invalid", fullName: "Ada" });
+
+    try {
+      await db.insert(applications).values({ travelerId: TRAVELLER });
+      await expect(
+        db.insert(applications).values({ travelerId: TRAVELLER })
+      ).rejects.toThrow();
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+    }
+  });
+});

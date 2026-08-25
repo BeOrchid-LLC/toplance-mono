@@ -246,7 +246,16 @@ export const applications = pgTable(
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    index("applications_traveler_idx").on(t.travelerId),
+    /**
+     * One application per traveller — the invariant every surface
+     * already assumes. The layout and each page under it resolve "the
+     * traveller's application" independently and concurrently, and
+     * without this a first visit could create two, splitting the
+     * intake's writes from the requirements screen's reads. Supporting
+     * a second application later (history, a new trip) is schema work
+     * anyway; until then the race must lose loudly.
+     */
+    unique("applications_traveler_key").on(t.travelerId),
     index("applications_org_idx").on(t.orgId),
     index("applications_status_idx").on(t.status, t.slaDueAt),
   ]

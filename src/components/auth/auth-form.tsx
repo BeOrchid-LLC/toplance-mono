@@ -16,6 +16,7 @@ import { AuthPanel } from "@/components/auth/auth-panel";
 import { PhoneField } from "@/components/auth/phone-field";
 import { useLocale } from "@/components/locale-provider";
 import { completeProfile } from "@/app/(auth)/actions";
+import { isInternalPath } from "@/lib/auth/routes";
 
 type Mode = "sign-up" | "sign-in";
 
@@ -50,9 +51,10 @@ export function AuthForm({
   const { locale } = useLocale();
   const router = useRouter();
   const params = useSearchParams();
-  const next =
-    params.get("next") ??
-    (audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/app");
+  const requested = params.get("next");
+  const next = isInternalPath(requested)
+    ? requested
+    : audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/app";
 
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
@@ -113,6 +115,15 @@ export function AuthForm({
 
       const failure = steps.find((s) => s.error)?.error;
       if (failure) {
+        // Single-session mode: Clerk refuses to start a second sign-in
+        // (or sign-up) while one session is active. The proxy redirects
+        // signed-in visitors off this page, but a tab rendered before
+        // the session existed elsewhere can still submit. The visitor
+        // is signed in — sending them along is the only useful outcome.
+        if (failure.code === "session_exists") {
+          router.push(next);
+          return;
+        }
         const message = messageFor(failure, fallback);
         setState({ error: message });
         toast.error(message);

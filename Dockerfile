@@ -33,6 +33,14 @@ RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Migration runner for Coolify's post-deployment command
+# (`node scripts/migrate.mjs`). Uses the standalone build's `pg`; the
+# SQL objects file rides along because drizzle/ is generated output and
+# would drop it on regeneration.
+COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder /app/src/lib/db/sql-objects.sql ./scripts/sql-objects.sql
 USER nextjs
 EXPOSE 3000
 CMD ["node", "server.js"]

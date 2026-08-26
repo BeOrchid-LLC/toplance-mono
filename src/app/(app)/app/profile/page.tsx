@@ -15,15 +15,18 @@ import {
   getIntakeAnswers,
   getItinerary,
   getOrCreateApplication,
+  getOrgName,
   getProfile,
   getStatusEvents,
 } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
 import { listTravelRecords } from "@/lib/data/travel-records";
 import {
+  EditableDigest,
   EditableLanguage,
   EditableName,
   EditablePhone,
+  type CompanionDigest,
 } from "@/components/app/profile-fields";
 import { TravelHistory } from "@/components/app/travel-history";
 import { STATUS } from "@/lib/domain/status";
@@ -94,7 +97,7 @@ export default async function ProfilePage() {
   // The profile is the intake's output; before it there is nothing to show.
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [docs, answers, corridor, trips, notes, events, itinerary] =
+  const [docs, answers, corridor, trips, notes, events, itinerary, sponsorName] =
     await Promise.all([
       getDocuments(application.id),
       getIntakeAnswers(application.id),
@@ -103,7 +106,18 @@ export default async function ProfilePage() {
       getCaseNotes(application.id),
       getStatusEvents(application.id),
       getItinerary(application.id),
+      getOrgName(application.orgId),
     ]);
+
+  // Unset reads as "weekly" — the default the schema comment on
+  // `notificationPrefs` documents, and the same value `EditableDigest`
+  // shows until someone actually changes it.
+  const prefs =
+    profile.notificationPrefs && typeof profile.notificationPrefs === "object"
+      ? (profile.notificationPrefs as Record<string, unknown>)
+      : {};
+  const companionDigest: CompanionDigest =
+    prefs.companionDigest === "off" ? "off" : "weekly";
 
   // The stored phone is E.164; the inline editor wants national digits
   // with the dial code supplied by the country picker.
@@ -196,6 +210,12 @@ export default async function ProfilePage() {
                   </span>
                 </Badge>
               </div>
+              {sponsorName && (
+                <p className="t-muted mt-3">
+                  Sponsored by <strong className="text-ink">{sponsorName}</strong> —
+                  they see your progress, never your documents.
+                </p>
+              )}
             </div>
             <Button asChild variant="neutral" size="sm" className="sm:ml-auto">
               <Link href="/app/agent">Edit trip answers</Link>
@@ -222,6 +242,7 @@ export default async function ProfilePage() {
                   <DetailRow label="Email" value={profile.email} />
                   <EditablePhone countryIso={countryIso} digits={phoneDigits} />
                   <EditableLanguage locale={locale} />
+                  <EditableDigest digest={companionDigest} />
                   <DetailRow label="Nationality" value={answers.nationality} />
                   <DetailRow label="Currently in" value={answers.residence} />
                 </div>

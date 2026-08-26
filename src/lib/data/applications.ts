@@ -11,6 +11,7 @@ import {
   intakeAnswers,
   itineraries,
   orgMembers,
+  organisations,
   profiles,
   statusEvents,
   type Application,
@@ -242,4 +243,23 @@ export async function getCorridorFor(applicationId: string) {
     .limit(1);
 
   return row?.corridor ?? null;
+}
+
+/**
+ * The sponsoring organisation's name, for the one line the profile page
+ * shows a traveller whose application carries an `orgId` — "Sponsored by
+ * «name»". A `null` `orgId` (the common case: most travellers pay for
+ * themselves) short-circuits before touching the database, since there
+ * is nothing to look up.
+ */
+export async function getOrgName(orgId: string | null): Promise<string | null> {
+  if (!orgId) return null;
+
+  const [row] = await db
+    .select({ name: organisations.name })
+    .from(organisations)
+    .where(eq(organisations.id, orgId))
+    .limit(1);
+
+  return row?.name ?? null;
 }

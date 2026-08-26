@@ -516,6 +516,30 @@ export async function updateProfile(formData: FormData) {
       set.locale = locale;
     }
 
+    if (formData.has("companion_digest")) {
+      const digest = String(formData.get("companion_digest"));
+      if (digest !== "weekly" && digest !== "off") {
+        return { error: "Unsupported digest setting." };
+      }
+
+      // A read-modify-write on the jsonb column: `notificationPrefs`
+      // carries more than this one switch (or will), so a blind
+      // overwrite here would erase every other preference the moment
+      // someone changes this one.
+      const [current] = await db
+        .select({ notificationPrefs: profiles.notificationPrefs })
+        .from(profiles)
+        .where(eq(profiles.id, actor.userId))
+        .limit(1);
+
+      const existingPrefs =
+        current?.notificationPrefs && typeof current.notificationPrefs === "object"
+          ? (current.notificationPrefs as Record<string, unknown>)
+          : {};
+
+      set.notificationPrefs = { ...existingPrefs, companionDigest: digest };
+    }
+
     if (Object.keys(set).length === 0) return {};
 
     await db

@@ -70,6 +70,17 @@ export const EVENT_NAMES = [
 
   /** A message sent on a case thread. Not emitted yet — the messaging slice will. */
   "toplance.message_sent",
+
+  /** A new employer names their organisation and becomes its owner. */
+  "toplance.organisation_created",
+
+  /**
+   * The invitation lifecycle. Not emitted yet — the next slice, which
+   * adds invitations on top of organisation sign-up, will.
+   */
+  "toplance.invitation_sent",
+  "toplance.invitation_revoked",
+  "toplance.invitation_accepted",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

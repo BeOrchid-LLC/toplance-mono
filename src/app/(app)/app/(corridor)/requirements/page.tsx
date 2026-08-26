@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import { ArrowRight, ExternalLink, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Shell } from "@/components/shared/shell";
-import { RailSection } from "@/components/shared/rail";
+import { Panel, PanelHeader } from "@/components/shared/panel";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   getDocuments,
@@ -139,12 +140,17 @@ export default async function RequirementsPage() {
     );
   }
 
-  // Intake complete, rule set resolvable, checklist empty: the corridor
-  // data arrived after this intake finished (an unseeded environment, or
-  // a corridor that opened later). The one-shot build in the intake
-  // action already missed its moment, so materialise here — provisioning
-  // on first sight, the same stance `getProfile` takes.
-  if (docs.length === 0) {
+  // Intake complete, rule set resolvable, but the application is not
+  // wired to it: either the checklist is empty (the corridor data arrived
+  // after this intake finished — an unseeded environment, or a corridor
+  // that opened later), or the corridor link is gone (a re-seed replaces
+  // corridors wholesale and `on delete set null` detaches applications,
+  // leaving a checklist with no card and no descriptions). The one-shot
+  // build in the intake action already missed its moment, so materialise
+  // here — provisioning on first sight, the same stance `getProfile`
+  // takes. `adoptRuleSet` is idempotent, so re-running it over a
+  // surviving checklist adds nothing and keeps uploads.
+  if (docs.length === 0 || !application.corridorId) {
     await adoptRuleSet(application.id, ruleSet);
     docs = await getDocuments(application.id);
   }
@@ -160,89 +166,91 @@ export default async function RequirementsPage() {
 
   return (
     <main>
-      <Shell className="py-10 md:py-12">
-        {/* The corridor is named on the card above this screen, so the
-            heading is what the rule set *is* rather than a second
+      <Shell className="py-8 md:py-10">
+        {/* The corridor is named on the laminate above this screen, so
+            the heading is what the rule set *is* rather than a second
             printing of the same three facts. */}
         <h1 className="t-h2 max-w-[26ch]">{ruleSet.visaName}</h1>
-        <p className="t-body-lg mt-4 max-w-[62ch] text-ink-2">
+        <p className="t-body-lg mt-3 max-w-[62ch] text-ink-2">
           The rule set that built your checklist, as the mission publishes
           it. Nothing here is our interpretation.
         </p>
 
-        {/* Three facts, ruled apart. They were three bordered boxes, which
-            made the fee — the one figure that may be missing — look as
-            settled as the count that never is. */}
-        <dl className="mt-10 grid gap-x-16 border-t border-border-strong sm:grid-cols-3">
-          {[
-            {
-              label: "Documents required",
-              value: String(required.length),
-              sub: `${optional.length} more only if they apply to you`,
-            },
-            {
-              label: "Typical decision time",
-              value:
-                ruleSet.processingWeeksMin && ruleSet.processingWeeksMax
-                  ? `${ruleSet.processingWeeksMin}–${ruleSet.processingWeeksMax} weeks`
-                  : null,
-              sub: "from the date the mission receives your file",
-            },
-            {
-              label: "Government fee",
-              value: formatFee(
-                ruleSet.governmentFeeMinor,
-                ruleSet.governmentFeeCurrency
-              ),
-              sub: "paid to the mission, not to Toplance",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="border-b border-border py-5 sm:border-b-0"
-            >
-              <dt className="special-caps">{stat.label}</dt>
-              <dd className="t-h3 mt-3">
-                <Figure value={stat.value} label={stat.label} />
-              </dd>
-              <dd className="t-muted mt-1.5">{stat.sub}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Three facts on one sheet. The dividers keep the fee — the one
+            figure that may be missing — from looking more settled than
+            the count that never is. The provenance row is the sheet's
+            footer: every figure above it is traceable to that line. */}
+        <Panel className="mt-8">
+          <dl className="grid sm:grid-cols-3">
+            {[
+              {
+                label: "Documents required",
+                value: String(required.length),
+                sub: `${optional.length} more only if they apply to you`,
+              },
+              {
+                label: "Typical decision time",
+                value:
+                  ruleSet.processingWeeksMin && ruleSet.processingWeeksMax
+                    ? `${ruleSet.processingWeeksMin}–${ruleSet.processingWeeksMax} weeks`
+                    : null,
+                sub: "from the date the mission receives your file",
+              },
+              {
+                label: "Government fee",
+                value: formatFee(
+                  ruleSet.governmentFeeMinor,
+                  ruleSet.governmentFeeCurrency
+                ),
+                sub: "paid to the mission, not to Toplance",
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="border-b border-border px-5 py-5 last:border-b-0 sm:border-b-0 sm:border-r sm:px-6 sm:last:border-r-0"
+              >
+                <dt className="special-caps">{stat.label}</dt>
+                <dd className="t-h3 num mt-3">
+                  <Figure value={stat.value} label={stat.label} />
+                </dd>
+                <dd className="t-muted mt-1.5">{stat.sub}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-surface-2/60 px-5 py-3.5 sm:px-6">
+            <span className="kicker">Rule set v{ruleSet.version}</span>
+            <span aria-hidden className="h-3 w-px bg-border-strong" />
+            <span className="t-muted">In effect since {effective}</span>
+            {ruleSet.sourceUrl && (
+              <a
+                href={ruleSet.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="ml-auto inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
+              >
+                {ruleSet.sourceName ?? "Source"}
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            )}
+          </div>
+        </Panel>
 
-        {/* Every figure above is traceable to the line below it. A
-            checklist nobody can trace is a checklist nobody trusts. */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border py-4">
-          <span className="kicker">Rule set v{ruleSet.version}</span>
-          <span aria-hidden className="h-3 w-px bg-border-strong" />
-          <span className="t-muted">In effect since {effective}</span>
-          {ruleSet.sourceUrl && (
-            <a
-              href={ruleSet.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-auto inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
-            >
-              {ruleSet.sourceName ?? "Source"}
-              <ExternalLink className="size-4" aria-hidden />
-            </a>
-          )}
-        </div>
-
-        {/* A rule set is exactly the long scrolling document §6 keeps the
-            rail for: you lose track of which of the two lists you are in
-            somewhere around the sixth requirement. */}
-        <RailSection
-          label="What you must provide"
-          datum={`${required.length} documents`}
-        >
+        <Panel className="mt-6">
+          <PanelHeader
+            label="What you must provide"
+            aside={
+              <Badge variant="brand">
+                <span className="num">{required.length}</span> documents
+              </Badge>
+            }
+          />
           <ol>
             {required.map((r, i) => (
               <li
                 key={r.docKey}
-                className="flex gap-5 border-b border-border py-5 first:pt-0 last:border-0"
+                className="flex gap-5 border-b border-border px-5 py-5 last:border-0 sm:px-6"
               >
-                <span className="special shrink-0 pt-0.5">
+                <span className="num shrink-0 pt-0.5 text-[13px] font-semibold text-ink-3">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0">
@@ -256,18 +264,23 @@ export default async function RequirementsPage() {
               </li>
             ))}
           </ol>
-        </RailSection>
+        </Panel>
 
         {optional.length > 0 && (
-          <RailSection
-            label="Only if it applies"
-            datum={`${optional.length} conditional`}
-          >
-            <ol>
+          <Panel className="mt-6">
+            <PanelHeader
+              label="Only if it applies"
+              aside={
+                <Badge variant="outline">
+                  <span className="num">{optional.length}</span> conditional
+                </Badge>
+              }
+            />
+            <ul>
               {optional.map((r) => (
                 <li
                   key={r.docKey}
-                  className="border-b border-dashed border-border-strong py-5 first:pt-0 last:border-0"
+                  className="border-b border-dashed border-border-strong px-5 py-5 last:border-0 sm:px-6"
                 >
                   <p className="t-title">{r.name}</p>
                   {r.description && (
@@ -277,11 +290,11 @@ export default async function RequirementsPage() {
                   )}
                 </li>
               ))}
-            </ol>
-          </RailSection>
+            </ul>
+          </Panel>
         )}
 
-        <div className="border-t border-border pt-10">
+        <div className="mt-8">
           <Button asChild>
             <Link href="/app/documents">
               Start uploading ({docs.length} on your checklist) <ArrowRight />

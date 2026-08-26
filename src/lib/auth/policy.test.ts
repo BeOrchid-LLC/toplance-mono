@@ -5,10 +5,13 @@ import {
   type ApplicationRef,
   canReadApplication,
   canReadAuditLog,
+  canReadCaseNotes,
   canReadDocuments,
   canReadIntakeAnswers,
+  canReadItinerary,
   canReadStatusEvents,
   canWriteApplication,
+  canWriteCaseNotes,
   canWriteCorridors,
   canWriteDocuments,
   canWriteIntakeAnswers,
@@ -188,6 +191,42 @@ describe("status events", () => {
 
   it("is hidden from an unrelated traveller", () => {
     expect(canReadStatusEvents(otherTraveller, sponsored)).toBe(false);
+  });
+});
+
+describe("case notes", () => {
+  it("lets staff write notes and the traveller read them", () => {
+    expect(canWriteCaseNotes(reviewer, sponsored)).toBe(true);
+    expect(canReadCaseNotes(traveller, sponsored)).toBe(true);
+    expect(canReadCaseNotes(reviewer, sponsored)).toBe(true);
+  });
+
+  it("never lets the traveller author a note on their own case", () => {
+    expect(canWriteCaseNotes(traveller, sponsored)).toBe(false);
+    expect(canWriteCaseNotes(traveller, selfFunded)).toBe(false);
+  });
+
+  // Notes discuss documents, so they sit behind the same privacy
+  // boundary: an organisation sees progress, never the review desk.
+  it("hides notes from a sponsoring org entirely", () => {
+    expect(canReadCaseNotes(hrAdmin, sponsored)).toBe(false);
+    expect(canWriteCaseNotes(hrAdmin, sponsored)).toBe(false);
+  });
+
+  it("denies notes to an unrelated traveller", () => {
+    expect(canReadCaseNotes(otherTraveller, sponsored)).toBe(false);
+  });
+});
+
+describe("itineraries", () => {
+  it("is readable by the traveller who owns it and by staff", () => {
+    expect(canReadItinerary(traveller, sponsored)).toBe(true);
+    expect(canReadItinerary(reviewer, sponsored)).toBe(true);
+  });
+
+  it("is hidden from a sponsoring org and unrelated travellers", () => {
+    expect(canReadItinerary(hrAdmin, sponsored)).toBe(false);
+    expect(canReadItinerary(otherTraveller, sponsored)).toBe(false);
   });
 });
 

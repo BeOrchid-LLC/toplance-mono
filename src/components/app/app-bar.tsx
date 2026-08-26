@@ -16,10 +16,10 @@ export type { NavItem };
  * argued for it, and a second bar treatment is the fastest way to make
  * it look like a different one.
  *
- * The active item is a rule under the tab rather than a tinted pill.
- * Guideline §6 is rules over boxes, and a pill here would be the third
- * rounded object in the top 120px of every screen, competing with the
- * one card that is meant to be the signature moment.
+ * The active item is a soft brand-tinted pill. The tint mixes toward
+ * transparent, so it sits on the same surface as the bar rather than
+ * punching an opaque shape through it — the bar's own colours are
+ * unchanged.
  */
 export function AppBar({
   nav,
@@ -27,23 +27,21 @@ export function AppBar({
   email,
   subtitle,
   showAgentButton = false,
+  profileHref,
 }: {
   nav: NavItem[];
   name: string;
   email: string;
   subtitle?: string;
   showAgentButton?: boolean;
+  profileHref?: string;
 }) {
   return (
     <>
       <header className="sticky top-0 z-40 flex h-[var(--bar-h)] items-center gap-6 border-b border-border bg-surface px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-6">
           <Wordmark href={nav[0]?.href ?? "/app"} />
-          <AppNav
-            nav={nav}
-            className="hidden items-center gap-1 lg:flex"
-            itemClassName="relative after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-[var(--radius-pill)] aria-[current=page]:after:bg-brand"
-          />
+          <AppNav nav={nav} className="hidden items-center gap-1 lg:flex" />
         </div>
 
         <div className="ml-auto flex items-center gap-3">
@@ -60,7 +58,12 @@ export function AppBar({
           <span className="hidden md:inline-flex">
             <LocaleMenu />
           </span>
-          <AccountMenu name={name} email={email} subtitle={subtitle} />
+          <AccountMenu
+            name={name}
+            email={email}
+            subtitle={subtitle}
+            profileHref={profileHref}
+          />
         </div>
       </header>
 
@@ -72,8 +75,7 @@ export function AppBar({
         <div className="sticky top-[var(--bar-h)] z-30 border-b border-border bg-surface lg:hidden">
           <AppNav
             nav={nav}
-            className="flex items-center gap-1 overflow-x-auto px-4 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            itemClassName="relative after:absolute after:inset-x-3 after:bottom-0 after:h-[2px] after:rounded-[var(--radius-pill)] aria-[current=page]:after:bg-brand"
+            className="flex min-h-[var(--row-h)] items-center gap-1 overflow-x-auto px-4 py-1 sm:px-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           />
         </div>
       )}

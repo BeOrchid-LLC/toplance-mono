@@ -37,10 +37,12 @@ export default function NotFound() {
             Nothing has happened to your application.
           </p>
 
-          <div className="mt-10 border-t border-border-strong">
+          {/* The two ways back, on one sheet — the same card the product
+              is built from, so even the dead end looks like the product. */}
+          <div className="mt-10 max-w-[560px] overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]">
             <Link
               href="/"
-              className="group flex items-center justify-between gap-6 border-b border-border py-5 transition-colors hover:text-brand-text"
+              className="group flex items-center justify-between gap-6 border-b border-border px-5 py-5 transition-colors hover:bg-surface-2 hover:text-brand-text sm:px-6"
             >
               <span>
                 <span className="t-title block">Start from the beginning</span>
@@ -55,7 +57,7 @@ export default function NotFound() {
             </Link>
             <Link
               href="/app"
-              className="group flex items-center justify-between gap-6 border-b border-border py-5 transition-colors hover:text-brand-text"
+              className="group flex items-center justify-between gap-6 px-5 py-5 transition-colors hover:bg-surface-2 hover:text-brand-text sm:px-6"
             >
               <span>
                 <span className="t-title block">Go to my application</span>

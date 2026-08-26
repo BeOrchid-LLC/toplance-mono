@@ -46,8 +46,10 @@ export function AppNav({
             aria-disabled={item.locked}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex min-h-[var(--row-h)] shrink-0 items-center px-3 text-base font-medium transition-colors",
-              active ? "text-brand-text" : "text-ink-2 hover:text-ink",
+              "flex h-10 shrink-0 items-center rounded-[var(--radius-pill)] px-4 text-base font-medium transition-colors",
+              active
+                ? "bg-[color-mix(in_srgb,var(--brand)_11%,transparent)] font-semibold text-brand-text"
+                : "text-ink-2 hover:bg-surface-2 hover:text-ink",
               item.locked && "pointer-events-none text-ink-3",
               itemClassName
             )}

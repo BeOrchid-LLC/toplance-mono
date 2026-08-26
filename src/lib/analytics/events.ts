@@ -26,7 +26,18 @@ export const EVENT_NAMES = [
 
   "toplance.document_uploaded",
   "toplance.document_removed",
+
+  /** A reviewer's verdict — the transitions out of `checking`. */
+  "toplance.document_verified",
+  "toplance.document_flagged",
   "toplance.application_submitted",
+
+  /** A past trip on the traveller's own travel history. */
+  "toplance.travel_record_added",
+  "toplance.travel_record_removed",
+
+  /** A reviewer's note on a case — the traveller reads these too. */
+  "toplance.case_note_added",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

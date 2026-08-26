@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { asc, eq, inArray } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
 import { Badge } from "@/components/ui/badge";
+import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import {
@@ -169,15 +171,24 @@ export default async function OpsQueuePage() {
 
       <main>
         <Shell className="py-12">
-          <h2 className="special-caps border-t border-border-strong pt-4">
-            Sorted by age, oldest first
-          </h2>
+          <Panel>
+            <PanelHeader
+              label="Sorted by age, oldest first"
+              aside={
+                <Badge variant="brand">
+                  <span className="num">{rows.length}</span>
+                  {rows.length === 1 ? "case" : "cases"}
+                </Badge>
+              }
+            />
 
           {rows.length === 0 ? (
-            <p className="t-muted mt-8 max-w-[62ch]">
-              Nothing in the queue. Cases appear here once a traveller finishes
-              intake.
-            </p>
+            <PanelBody>
+              <p className="t-muted max-w-[62ch]">
+                Nothing in the queue. Cases appear here once a traveller
+                finishes intake.
+              </p>
+            </PanelBody>
           ) : (
             /*
               A table, deviating from §6's preference for ruled rows — the
@@ -196,7 +207,7 @@ export default async function OpsQueuePage() {
               sideways at 390px. Staff are on desktop, but the quality
               floor is not conditional.
             */
-            <div className="mt-4 overflow-x-auto">
+            <div className="overflow-x-auto px-2 pb-2">
               <Table className="min-w-[720px]">
                 <TableHeader>
                   <TableRow>
@@ -214,12 +225,17 @@ export default async function OpsQueuePage() {
                     return (
                       <TableRow key={r.id}>
                         <TableCell>
-                          <span className="t-title block truncate">
-                            {r.travelerName || "Unnamed"}
-                          </span>
-                          <span className="special">
-                            {r.travelerCountryIso.toUpperCase()} · {r.caseRef}
-                          </span>
+                          <Link
+                            href={`/ops/cases/${r.id}`}
+                            className="group block"
+                          >
+                            <span className="t-title block truncate group-hover:underline">
+                              {r.travelerName || "Unnamed"}
+                            </span>
+                            <span className="special">
+                              {r.travelerCountryIso.toUpperCase()} · {r.caseRef}
+                            </span>
+                          </Link>
                         </TableCell>
                         <TableCell>
                           <span className="t-body block truncate">
@@ -277,6 +293,7 @@ export default async function OpsQueuePage() {
               </Table>
             </div>
           )}
+          </Panel>
         </Shell>
       </main>
     </div>

@@ -6,6 +6,8 @@ import { DocumentRow } from "@/components/app/document-row";
 import { SubmitButton } from "@/components/app/submit-button";
 import { CompletionRing } from "@/components/app/completion-ring";
 import { Shell } from "@/components/shared/shell";
+import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { Badge } from "@/components/ui/badge";
 import { VERIFIED_MEANS } from "@/lib/domain/status";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import { corridorRequirements } from "@/lib/db/schema";
@@ -16,6 +18,7 @@ import {
   type DocumentRow as Doc,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
+import type { BadgeVariant } from "@/lib/domain/status";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -54,19 +57,22 @@ export default async function DocumentsPage() {
    * `sortOrder` alone buries a rejected passport scan under nine done
    * rows.
    */
-  const sets: { label: string; docs: Doc[] }[] = [
+  const sets: { label: string; variant: BadgeVariant; docs: Doc[] }[] = [
     {
       label: "Needs attention",
+      variant: "warning",
       docs: docs.filter((d) => d.state === "flagged" || d.state === "failed"),
     },
     {
       label: "Still to upload",
+      variant: "neutral",
       docs: docs.filter(
         (d) => d.state === "not_started" || d.state === "uploaded"
       ),
     },
     {
       label: "Done",
+      variant: "success",
       docs: docs.filter(
         (d) => d.state === "verified" || d.state === "checking"
       ),
@@ -75,7 +81,7 @@ export default async function DocumentsPage() {
 
   return (
     <main>
-      <Shell className="py-10 md:py-12">
+      <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
           <div className="max-w-[62ch]">
             <h1 className="t-h2">Your documents</h1>
@@ -88,17 +94,15 @@ export default async function DocumentsPage() {
           <CompletionRing pct={completion.pct} size={120} />
         </div>
 
-        {completion.pct === 100 && (
-          /* The 3px rule is §8's boundary mark, and this is a real
-             boundary: everything above it is collecting, everything
-             after it is a file in someone else's hands. It is the only
-             place on this screen that earns one. */
-          <section className="mt-12">
-            <span
-              aria-hidden
-              className="block h-[3px] w-16 rounded-[var(--radius-pill)] bg-success"
-            />
-            <h2 className="t-h3 mt-4">Everything is verified</h2>
+        {/* The ring reaches 100% when everything is uploaded; this
+            section needs the stronger condition — every required
+            document past review — because that is what the submit
+            transaction checks. This is a real boundary: everything above
+            it is collecting, everything after it is a file in someone
+            else's hands, so it is the one tinted sheet on the screen. */}
+        {completion.total > 0 && completion.verified === completion.total && (
+          <section className="mt-8 rounded-lg border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] px-5 py-5 sm:px-6">
+            <h2 className="t-h3">Everything is verified</h2>
             <p className="t-muted mt-2 max-w-[74ch]">
               Submitting sends your file to the review team and notifies them
               immediately.
@@ -110,11 +114,17 @@ export default async function DocumentsPage() {
         {sets.map(
           (set) =>
             set.docs.length > 0 && (
-              <section key={set.label} className="mt-12">
-                <h2 className="special-caps border-t border-border-strong pt-4">
-                  {set.label}
-                </h2>
-                <div className="mt-2">
+              <Panel key={set.label} className="mt-6">
+                <PanelHeader
+                  label={set.label}
+                  aside={
+                    <Badge variant={set.variant}>
+                      <span className="num">{set.docs.length}</span>
+                      {set.docs.length === 1 ? "document" : "documents"}
+                    </Badge>
+                  }
+                />
+                <div>
                   {set.docs.map((doc) => (
                     <DocumentRow
                       key={doc.id}
@@ -124,15 +134,19 @@ export default async function DocumentsPage() {
                     />
                   ))}
                 </div>
-              </section>
+              </Panel>
             )
         )}
 
         {docs.length === 0 && (
-          <p className="t-muted mt-12 max-w-[62ch]">
-            No checklist yet. Finish the intake conversation and it appears
-            here.
-          </p>
+          <Panel className="mt-6">
+            <PanelBody>
+              <p className="t-muted max-w-[62ch]">
+                No checklist yet. Finish the intake conversation and it
+                appears here.
+              </p>
+            </PanelBody>
+          </Panel>
         )}
       </Shell>
     </main>

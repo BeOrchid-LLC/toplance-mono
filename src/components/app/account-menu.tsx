@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { LogOut, UserRound } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -29,10 +30,17 @@ export function AccountMenu({
   name,
   email,
   subtitle,
+  profileHref,
 }: {
   name: string;
   email: string;
   subtitle?: string;
+  /**
+   * Only the traveller surface has a profile page, so the item exists
+   * only where a caller can name one — the employer and ops consoles
+   * share this menu and must not link into `/app`.
+   */
+  profileHref?: string;
 }) {
   const { signOut } = useClerk();
 
@@ -62,6 +70,14 @@ export function AccountMenu({
         </div>
 
         <DropdownMenuSeparator className="md:hidden" />
+
+        {profileHref && (
+          <DropdownMenuItem asChild>
+            <Link href={profileHref}>
+              <UserRound /> Profile
+            </Link>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuItem asChild>
           <button

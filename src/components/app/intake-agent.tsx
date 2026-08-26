@@ -99,10 +99,10 @@ export function IntakeAgent({
       {/* ---- conversation ---- */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 sm:px-6">
-          {/* A flat brand tint, not the brand gradient. The gradient is
-              the slab device the auth surface removed, and one circle of
-              it here is the beginning of putting it back. */}
-          <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_14%,var(--mix))] text-brand-text">
+          {/* The one drop of the brand gradient on the screen: the agent
+              itself. Everything else stays flat so the speaker is the
+              most saturated thing in the conversation. */}
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[image:var(--brand-grad)] text-white shadow-[var(--shadow-sm)]">
             <Sparkles className="size-5" />
           </span>
           <div className="min-w-0">
@@ -163,7 +163,7 @@ export function IntakeAgent({
               <div
                 role="status"
                 aria-label="Agent is typing"
-                className="flex w-fit gap-1 rounded-md rounded-bl-sm border border-border bg-surface px-4 py-3"
+                className="flex w-fit gap-1 rounded-[18px] rounded-bl-[6px] border border-border bg-surface px-4 py-3 shadow-[var(--shadow-sm)]"
               >
                 {[0, 1, 2].map((i) => (
                   <span
@@ -236,7 +236,7 @@ export function IntakeAgent({
                   onChange={(e) => setDraft(e.target.value)}
                   placeholder="Type your answer, or tap a suggestion"
                   aria-label="Your answer"
-                  className="h-[var(--control-h)] min-w-0 flex-1 rounded-md border border-border-strong bg-surface px-4 text-base outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]"
+                  className="h-[var(--control-h)] min-w-0 flex-1 rounded-[var(--radius-pill)] border border-border-strong bg-surface px-5 text-base outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]"
                 />
                 <Button type="submit" size="sm" disabled={pending || !draft.trim()}>
                   <Send /> Send
@@ -261,10 +261,14 @@ export function IntakeAgent({
       </div>
 
       {/* ---- live profile ---- */}
-      <aside className="w-full shrink-0 overflow-y-auto border-t border-border bg-surface p-4 lg:w-[320px] lg:border-l lg:border-t-0 lg:p-5">
+      {/* A sheet from the case file rather than a flat attached column:
+          the same card the profile page is built from, so the record
+          being assembled here already looks like where it ends up. */}
+      <aside className="w-full shrink-0 overflow-y-auto border-t border-border bg-bg p-4 lg:w-[340px] lg:border-l lg:border-t-0 lg:p-5">
+        <div className="rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-sm)]">
         <div className="flex items-center justify-between">
           <h2 className="t-title">Your profile</h2>
-          <span className="special">
+          <span className="num special">
             {answeredCount} / {INTAKE_QUESTIONS.length}
           </span>
         </div>
@@ -276,7 +280,7 @@ export function IntakeAgent({
           {INTAKE_QUESTIONS.map((q, i) => (
             <div
               key={q.key}
-              className="flex items-baseline justify-between gap-4 border-b border-border py-3"
+              className="flex items-baseline justify-between gap-4 border-b border-border py-3 last:border-0 last:pb-0"
             >
               <dt className="t-body text-ink-2">{LABELS[q.key]}</dt>
               <dd
@@ -302,6 +306,7 @@ export function IntakeAgent({
             </div>
           ))}
         </dl>
+        </div>
       </aside>
     </div>
   );
@@ -330,10 +335,10 @@ function Bubble({
   return (
     <div
       className={cn(
-        "max-w-[85%] rounded-md px-4 py-3 text-base",
+        "max-w-[85%] rounded-[18px] px-4 py-3 text-base",
         from === "agent"
-          ? "self-start rounded-bl-sm border border-border bg-surface text-ink"
-          : "self-end rounded-br-sm bg-brand font-semibold text-on-brand"
+          ? "self-start rounded-bl-[6px] border border-border bg-surface text-ink shadow-[var(--shadow-sm)]"
+          : "self-end rounded-br-[6px] bg-brand font-semibold text-on-brand"
       )}
     >
       {from === "agent" && typeof children === "string" ? (

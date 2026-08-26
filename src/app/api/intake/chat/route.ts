@@ -10,10 +10,13 @@ import {
   type UIDataTypes,
   type UIMessage,
 } from "ai";
-import { z } from "zod";
 
 import { INTAKE_MODEL, aiEnabled } from "@/lib/ai/models";
 import { buildIntakeSystemPrompt } from "@/lib/ai/intake-prompt";
+import {
+  INTAKE_TOOL_DESCRIPTION,
+  intakeAnswerSchema,
+} from "@/lib/ai/intake-tool";
 import { requireApplicationAccess, toActionError } from "@/lib/auth/guards";
 import { canWriteIntakeAnswers } from "@/lib/auth/policy";
 import { getIntakeAnswers, getProfile } from "@/lib/data/applications";
@@ -66,13 +69,10 @@ const MAX_TEXT_CHARS = 4000;
 function intakeTools(applicationId: string, userId: string) {
   return {
     record_answer: tool({
-      description:
-        "Save one intake answer. Call this the moment the traveller " +
-        "answers a topic, before replying to them.",
-      inputSchema: z.object({
-        questionKey: z.enum(INTAKE_QUESTIONS.map((q) => q.key)),
-        value: z.string().min(1).max(500),
-      }),
+      description: INTAKE_TOOL_DESCRIPTION,
+      // Shared with the voice agent, which describes the same tool to a
+      // different SDK — see `@/lib/ai/intake-tool`.
+      inputSchema: intakeAnswerSchema,
       execute: async ({ questionKey, value }) => {
         const recorded = await recordIntakeAnswer(
           applicationId,

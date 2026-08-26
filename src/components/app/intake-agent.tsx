@@ -3,7 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Mic, RotateCcw, Send, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Loader2,
+  Mic,
+  RotateCcw,
+  Send,
+  Sparkles,
+  Square,
+} from "lucide-react";
 import { toast } from "sonner";
 import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
 import { useChat } from "@ai-sdk/react";
@@ -12,10 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useLocale, useT } from "@/components/locale-provider";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
+import {
+  useVoiceIntake,
+  type VoiceStatus,
+} from "@/components/app/use-voice-intake";
 import { answerQuestion } from "@/app/(app)/actions";
 import {
   INTAKE_QUESTIONS,
   HISTORY_NOTE,
+  truncateAnswersAt,
   type IntakeQuestion,
 } from "@/lib/domain/intake";
 import type { Locale } from "@/lib/i18n/locales";
@@ -103,6 +116,12 @@ function LiveIntake({
     key: string;
     afterWrites: number;
   } | null>(null);
+  // What the voice session has recorded. The chat's writes can be read
+  // back off the transcript; a spoken one leaves no message behind, so
+  // it is kept here and replayed over the same rail.
+  const [spoken, setSpoken] = React.useState<
+    { key: string; value: string }[]
+  >([]);
   const { locale } = useLocale();
   const router = useRouter();
   const endRef = React.useRef<HTMLDivElement>(null);
@@ -151,20 +170,31 @@ function LiveIntake({
         const input = part.input as { questionKey?: string; value?: string };
         if (!input?.questionKey || !input.value) continue;
 
-        answers = truncateAt(answers, input.questionKey);
+        answers = truncateAnswersAt(answers, input.questionKey);
         answers[input.questionKey] = input.value;
         writes += 1;
       }
     }
 
+    // The spoken writes replay last, which is safe because the two
+    // agents never interleave: the composer and the chips are disabled
+    // for as long as a voice session is live, so only one of them is
+    // ever writing. Replaying them over a refreshed `initialAnswers`
+    // reaches the same rail, so nothing has to be cleared afterwards.
+    for (const write of spoken) {
+      answers = truncateAnswersAt(answers, write.key);
+      answers[write.key] = write.value;
+      writes += 1;
+    }
+
     return { answers, writes };
-  }, [messages, initialAnswers]);
+  }, [messages, initialAnswers, spoken]);
 
   // A reopened answer is the traveller's intent, not a write — it holds
   // only until the model records something, which is the real clear.
   const answers =
     reopened && reopened.afterWrites === writes
-      ? truncateAt(recorded, reopened.key)
+      ? truncateAnswersAt(recorded, reopened.key)
       : recorded;
 
   const answeredCount = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
@@ -172,9 +202,36 @@ function LiveIntake({
   const done = answeredCount === INTAKE_QUESTIONS.length;
   const busy = status === "submitted" || status === "streaming";
 
+  // The session has to be ended from inside its own `onComplete`, which
+  // is built before the session exists.
+  const stopVoice = React.useRef<() => void>(undefined);
+
+  const voice = useVoiceIntake({
+    applicationId,
+    answers,
+    firstName,
+    locale,
+    // No live transcript bubbles, deliberately: the rail filling in is
+    // the feedback, and it is the only feedback that is also the record.
+    // Speech the traveller can already hear does not need repeating on
+    // screen, and a transcript we would have to persist is a thicker cut
+    // than a demo needs.
+    onAnswerRecorded: React.useCallback((key: string, value: string) => {
+      setSpoken((writes) => [...writes, { key, value }]);
+    }, []),
+    // The tenth answer ends the call rather than leaving the agent
+    // talking over a screen that has moved on. The refresh is the
+    // `done` effect above, which this write is about to trigger.
+    onComplete: React.useCallback(() => stopVoice.current?.(), []),
+    onError: React.useCallback((message: string) => toast.error(message), []),
+  });
+
+  const speaking = voice.status !== "idle";
+
   React.useEffect(() => {
     answersRef.current = answers;
-  }, [answers]);
+    stopVoice.current = voice.stop;
+  }, [answers, voice.stop]);
 
   // The last answer is what builds the checklist, and the corridor
   // header lives in the layout above this screen — same refresh the
@@ -252,7 +309,11 @@ function LiveIntake({
             <Chips
               chips={current.chips}
               locale={locale}
-              disabled={busy}
+              // Typing and speaking are two separate conversations with
+              // two separate models. Letting both run would put two
+              // agents on the same ten questions, so the written half
+              // closes for as long as the spoken one is open.
+              disabled={busy || speaking}
               // The traveller taps a word in their own language and the
               // model reads it as if they had typed it; the canonical
               // label is the model's job, from the prompt's list.
@@ -262,7 +323,14 @@ function LiveIntake({
               draft={draft}
               onDraftChange={setDraft}
               onSubmit={() => send(draft)}
-              disabled={busy}
+              disabled={busy || speaking}
+              voice={{
+                status: voice.status,
+                onToggle:
+                  voice.status === "idle"
+                    ? () => void voice.start()
+                    : voice.stop,
+              }}
             />
           </>
         ) : null
@@ -328,7 +396,7 @@ function ScriptedIntake({
 
   /** Reopening an answer truncates the conversation from that point. */
   function editFrom(key: string) {
-    setAnswers((a) => truncateAt(a, key));
+    setAnswers((a) => truncateAnswersAt(a, key));
     toast.info("Answer reopened. Anything after it will be asked again.");
   }
 
@@ -528,20 +596,6 @@ function AgentLayout({
   );
 }
 
-/**
- * Everything the intake knows up to, but not including, one topic —
- * the client-side shadow of what `recordIntakeAnswer` does in the
- * database when an earlier question is answered again.
- */
-function truncateAt(answers: Answers, key: string): Answers {
-  const index = INTAKE_QUESTIONS.findIndex((q) => q.key === key);
-  const next: Answers = {};
-  INTAKE_QUESTIONS.slice(0, index).forEach((q) => {
-    if (answers[q.key]) next[q.key] = answers[q.key];
-  });
-  return next;
-}
-
 /** The opening line, before either agent has said anything of its own. */
 function greeting(firstName: string) {
   return `Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`;
@@ -582,11 +636,14 @@ function Composer({
   onDraftChange,
   onSubmit,
   disabled,
+  voice,
 }: {
   draft: string;
   onDraftChange: (value: string) => void;
   onSubmit: () => void;
   disabled: boolean;
+  /** Omitted where there is no model to speak to. */
+  voice?: { status: VoiceStatus; onToggle: () => void };
 }) {
   return (
     <form
@@ -606,20 +663,83 @@ function Composer({
       <Button type="submit" size="sm" disabled={disabled || !draft.trim()}>
         <Send /> Send
       </Button>
+      <VoiceButton voice={voice} />
+    </form>
+  );
+}
+
+/**
+ * The mic. Idle it starts a call; while one is connecting it spins and
+ * can be pressed again to give up; while one is live it is the only way
+ * to end it, and it says so — a control that opens a microphone must be
+ * unmistakably the control that closes it.
+ *
+ * The ring is the one place the brand gradient's colour appears outside
+ * the speaker's avatar, because a live microphone is worth exactly that
+ * much attention.
+ */
+function VoiceButton({
+  voice,
+}: {
+  voice?: { status: VoiceStatus; onToggle: () => void };
+}) {
+  if (!voice) {
+    return (
       <Button
         type="button"
         variant="neutral"
         size="icon"
+        disabled
         aria-label="Answer by voice"
-        onClick={() =>
-          toast.info(
-            "Voice mode streams speech both ways in the full build. Keep typing here."
-          )
-        }
+        title="Speaking needs the agent, which is not running here. Type your answers instead."
       >
         <Mic />
       </Button>
-    </form>
+    );
+  }
+
+  const live = voice.status === "live";
+  const label = live
+    ? "Stop speaking to the agent"
+    : voice.status === "connecting"
+      ? "Cancel connecting the microphone"
+      : "Answer by voice";
+
+  return (
+    <span className="relative inline-flex shrink-0">
+      {live && (
+        <span
+          aria-hidden
+          className="absolute inset-0 animate-ping rounded-md bg-brand opacity-60"
+        />
+      )}
+      <Button
+        type="button"
+        variant={live ? "primary" : "neutral"}
+        size="icon"
+        onClick={voice.onToggle}
+        aria-label={label}
+        title={label}
+        className="relative"
+      >
+        {voice.status === "connecting" ? (
+          <Loader2 className="animate-spin" />
+        ) : live ? (
+          <Square />
+        ) : (
+          <Mic />
+        )}
+      </Button>
+      {/* The ring says the microphone is open to everyone who can see
+          it; this says the same thing to everyone who cannot. */}
+      <span role="status" className="sr-only">
+        {live
+          ? "The microphone is on. The agent is listening."
+          : voice.status === "connecting"
+            ? "Connecting the microphone."
+            : ""}
+      </span>
+    </span>
   );
 }
 

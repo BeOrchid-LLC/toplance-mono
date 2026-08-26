@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildIntakeSystemPrompt } from "@/lib/ai/intake-prompt";
+import {
+  buildIntakeSystemPrompt,
+  buildVoiceIntakeInstructions,
+} from "@/lib/ai/intake-prompt";
 import { INTAKE_QUESTIONS, HISTORY_NOTE } from "@/lib/domain/intake";
 
 /**
@@ -134,5 +137,51 @@ describe("buildIntakeSystemPrompt", () => {
 
   it("greets the traveller by the name they gave", () => {
     expect(prompt({ firstName: "Chidi" })).toContain("Chidi");
+  });
+});
+
+/**
+ * Voice is the same intake with the screen taken away, so the thing
+ * worth pinning is that it is genuinely the same prompt — a second
+ * hand-written set of instructions is how the spoken agent quietly loses
+ * a guardrail the typed one keeps.
+ */
+describe("buildVoiceIntakeInstructions", () => {
+  const spoken = (
+    overrides: Partial<Parameters<typeof buildVoiceIntakeInstructions>[0]> = {}
+  ) =>
+    buildVoiceIntakeInstructions({
+      answers: {},
+      locale: "en",
+      firstName: "Ada",
+      ...overrides,
+    });
+
+  it("carries the whole written prompt, guardrails included", () => {
+    const args = { answers: { nationality: "Ghana" }, locale: "ha" as const, firstName: "Ada" };
+
+    expect(spoken(args)).toContain(buildIntakeSystemPrompt(args));
+  });
+
+  it("still forbids stating requirements, fees or eligibility", () => {
+    const text = spoken().toLowerCase();
+
+    expect(text).toContain("never state visa requirements");
+    expect(text).toContain("never invent");
+  });
+
+  it("says the traveller is listening, not reading", () => {
+    const text = spoken().toLowerCase();
+
+    expect(text).toContain("spoken conversation");
+    expect(text).toContain("markdown");
+  });
+
+  it("asks the agent to say back what it heard before recording", () => {
+    expect(spoken().toLowerCase()).toContain("say back what you heard");
+  });
+
+  it("leaves the way back to typing open", () => {
+    expect(spoken().toLowerCase()).toContain("finish by typing");
   });
 });

@@ -132,3 +132,31 @@ If they correct an earlier answer, call \`record_answer\` again with that topic'
 Question 10 asks about previous refusals. Some people are afraid to say. Reassure them in your own words, carrying this meaning: ${HISTORY_NOTE}
 `;
 }
+
+/**
+ * The same intake, said out loud.
+ *
+ * Voice is the identical job in a different medium, so it is the
+ * identical prompt plus the handful of rules that only bite when there
+ * is no screen: a spoken turn cannot be skimmed or scrolled back, a
+ * misheard city is invisible until it is already recorded, and Markdown
+ * read aloud is noise. Nothing here relaxes a guardrail — the model
+ * still asks one question at a time and still refuses to state a fee.
+ */
+export function buildVoiceIntakeInstructions(args: {
+  answers: Record<string, string>;
+  locale: Locale;
+  firstName: string;
+}): string {
+  return `${buildIntakeSystemPrompt(args)}
+## You are speaking aloud
+
+This is a spoken conversation, not a chat window. The traveller hears you; they cannot read you, and they cannot scroll back.
+
+- One or two short sentences per turn. Never read a list aloud.
+- Speak in plain words. No Markdown, no headings, no bullets, no emoji — every character you produce is spoken.
+- You can mishear. Before you record a name, a place, a date or an amount, say back what you heard in a few words and let them correct you. Record it as soon as they confirm.
+- If the line is unclear or they went quiet, say so plainly and ask again. Never guess at what you did not catch.
+- They can stop speaking and finish by typing whenever they like. Do not talk them out of it.
+`;
+}

@@ -192,3 +192,31 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
  */
 export const HISTORY_NOTE =
   "A previous refusal must be declared. Hiding one is the single fastest way to lose the next application.";
+
+/**
+ * Everything the intake knows up to, but not including, one topic — the
+ * shadow of what `recordIntakeAnswer` does in the database when an
+ * earlier question is answered again.
+ *
+ * Shared rather than kept beside one screen because three callers need
+ * the same shadow: the scripted transcript, the model-driven rail, and
+ * the voice hook, which has to know what is still unanswered before it
+ * can tell the model what to ask next. A second copy of this rule is a
+ * rail that disagrees with the checklist.
+ */
+export function truncateAnswersAt(
+  answers: Record<string, string>,
+  key: string
+): Record<string, string> {
+  const index = INTAKE_QUESTIONS.findIndex((q) => q.key === key);
+  // A key the intake does not ask is what `recordIntakeAnswer` refuses
+  // outright, so the shadow of it is nothing happening. Spelled out
+  // because `slice(0, -1)` would otherwise quietly drop the last answer.
+  if (index === -1) return { ...answers };
+
+  const next: Record<string, string> = {};
+  INTAKE_QUESTIONS.slice(0, index).forEach((q) => {
+    if (answers[q.key]) next[q.key] = answers[q.key];
+  });
+  return next;
+}

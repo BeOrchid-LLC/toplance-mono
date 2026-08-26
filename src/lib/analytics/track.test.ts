@@ -1,8 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 /**
  * Skipped without a database. Run `npm run db:up` to include these.
+ *
+ * Every read here is scoped to this file's own actor. `analytics_events`
+ * is one table shared by every suite that exercises a code path which
+ * emits — `recordIntakeAnswer` writes `corridor_requested` too — and
+ * Vitest runs those files at the same time, against the same database.
  */
 describe.skipIf(!process.env.DATABASE_URL)("track", async () => {
   const { db } = await import("@/lib/db/client");
@@ -14,7 +19,12 @@ describe.skipIf(!process.env.DATABASE_URL)("track", async () => {
   afterEach(async () => {
     await db
       .delete(analyticsEvents)
-      .where(eq(analyticsEvents.name, "toplance.corridor_requested"));
+      .where(
+        and(
+          eq(analyticsEvents.name, "toplance.corridor_requested"),
+          isNull(analyticsEvents.userId)
+        )
+      );
     await db.delete(profiles).where(inArray(profiles.id, [USER]));
     vi.restoreAllMocks();
   });
@@ -29,7 +39,12 @@ describe.skipIf(!process.env.DATABASE_URL)("track", async () => {
     const [row] = await db
       .select()
       .from(analyticsEvents)
-      .where(eq(analyticsEvents.name, "toplance.corridor_requested"));
+      .where(
+        and(
+          eq(analyticsEvents.name, "toplance.corridor_requested"),
+          eq(analyticsEvents.userId, USER)
+        )
+      );
 
     expect(row.name).toBe("toplance.corridor_requested");
     expect(row.props).toEqual({ destinationIso: "jp" });
@@ -42,7 +57,12 @@ describe.skipIf(!process.env.DATABASE_URL)("track", async () => {
     const [row] = await db
       .select()
       .from(analyticsEvents)
-      .where(eq(analyticsEvents.name, "toplance.corridor_requested"));
+      .where(
+        and(
+          eq(analyticsEvents.name, "toplance.corridor_requested"),
+          isNull(analyticsEvents.userId)
+        )
+      );
 
     expect(row.userId).toBeNull();
   });

@@ -13,6 +13,16 @@
 export const EVENT_NAMES = [
   "toplance.intake_completed",
 
+  /**
+   * One turn of the intake conversation, whichever way the traveller
+   * spoke: `mode` is "text" or "voice". Counted per request rather than
+   * per message, so it measures conversations, not tokens.
+   */
+  "toplance.intake_message_sent",
+
+  /** A traveller opened the voice intake and a realtime session began. */
+  "toplance.voice_session_started",
+
   /** A corridor resolved to a rule set the traveller can act on. */
   "toplance.corridor_resolved",
 

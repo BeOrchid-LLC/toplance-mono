@@ -37,6 +37,11 @@ import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { isLocale } from "@/lib/i18n/locales";
 import { resolveRuleSet } from "@/lib/visa";
 import { track } from "@/lib/analytics/track";
+import {
+  appUrl,
+  markNotificationsRead as markOwnNotificationsRead,
+  notifyStaff,
+} from "@/lib/notifications/notify";
 
 /**
  * Record one intake answer. Re-answering an earlier question clears
@@ -403,6 +408,25 @@ export async function submitApplication(applicationId: string) {
         { applicationId },
         actor.userId
       );
+
+      // A cheap select rather than widening `submitApplicationTx`'s
+      // return shape — that function's tests assert on it with
+      // `toEqual({ ok: true })`, and this is the only caller that needs
+      // the case reference.
+      const [app] = await db
+        .select({ caseRef: applications.caseRef })
+        .from(applications)
+        .where(eq(applications.id, applicationId))
+        .limit(1);
+
+      if (app) {
+        await notifyStaff(
+          "application_submitted",
+          { caseRef: app.caseRef, url: appUrl(`/ops/cases/${applicationId}`) },
+          applicationId
+        );
+      }
+
       revalidatePath("/app", "layout");
     }
 
@@ -511,6 +535,24 @@ export async function updateProfile(formData: FormData) {
 
     revalidatePath("/app", "layout");
     return {};
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Opening the bell marks everything in it read. Always the signed-in
+ * user's own rows — there is no id to check, the same shape as
+ * `updateProfile`. The menu calls this and then `router.refresh()`
+ * itself, so there is nothing to revalidate here.
+ */
+export async function markNotificationsRead() {
+  try {
+    const actor = await requireActor();
+    await markOwnNotificationsRead(actor.userId);
+    return { ok: true };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

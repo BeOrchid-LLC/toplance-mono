@@ -5,6 +5,7 @@ import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { asc, eq, inArray } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
+import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -22,6 +23,7 @@ import { applications, corridors, profiles } from "@/lib/db/schema";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getActor, getProfile } from "@/lib/data/applications";
+import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { isStaff } from "@/lib/auth/policy";
 import { cn } from "@/lib/utils";
 
@@ -60,30 +62,34 @@ export default async function OpsQueuePage() {
     );
   }
 
-  const rows = await db
-    .select({
-      id: applications.id,
-      caseRef: applications.caseRef,
-      status: applications.status,
-      assigneeId: applications.assigneeId,
-      createdAt: applications.createdAt,
-      travelerName: profiles.fullName,
-      travelerCountryIso: profiles.countryIso,
-      visaName: corridors.visaName,
-      destinationIso: corridors.destinationIso,
-    })
-    .from(applications)
-    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
-    .leftJoin(corridors, eq(corridors.id, applications.corridorId))
-    .where(
-      inArray(applications.status, [
-        "collecting_documents",
-        "submitted",
-        "under_review",
-        "additional_documents",
-      ])
-    )
-    .orderBy(asc(applications.createdAt));
+  const [rows, notifications, unreadCount] = await Promise.all([
+    db
+      .select({
+        id: applications.id,
+        caseRef: applications.caseRef,
+        status: applications.status,
+        assigneeId: applications.assigneeId,
+        createdAt: applications.createdAt,
+        travelerName: profiles.fullName,
+        travelerCountryIso: profiles.countryIso,
+        visaName: corridors.visaName,
+        destinationIso: corridors.destinationIso,
+      })
+      .from(applications)
+      .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+      .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+      .where(
+        inArray(applications.status, [
+          "collecting_documents",
+          "submitted",
+          "under_review",
+          "additional_documents",
+        ])
+      )
+      .orderBy(asc(applications.createdAt)),
+    getNotifications(actor.userId),
+    unreadNotificationCount(actor.userId),
+  ]);
 
   const counters = [
     {
@@ -119,6 +125,13 @@ export default async function OpsQueuePage() {
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        notifications={
+          <NotificationsMenu
+            notifications={notifications}
+            unreadCount={unreadCount}
+            fallbackHref="/ops"
+          />
+        }
       />
 
       <div className="relative isolate">

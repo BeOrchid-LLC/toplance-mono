@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
+import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
 import { ReviewRow } from "@/components/ops/review-row";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ import {
   getProfile,
 } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
+import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { isStaff } from "@/lib/auth/policy";
 
 // Reads a session, so it is never prerendered.
@@ -74,9 +76,11 @@ export default async function OpsCasePage({
 
   if (!row) notFound();
 
-  const [docs, notes] = await Promise.all([
+  const [docs, notes, notifications, unreadCount] = await Promise.all([
     getDocuments(row.id),
     getCaseNotes(row.id),
+    getNotifications(actor.userId),
+    unreadNotificationCount(actor.userId),
   ]);
   const completion = completionOf(docs);
   const destination = countryFromIso2(row.destinationIso);
@@ -114,6 +118,13 @@ export default async function OpsCasePage({
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        notifications={
+          <NotificationsMenu
+            notifications={notifications}
+            unreadCount={unreadCount}
+            fallbackHref="/ops"
+          />
+        }
       />
 
       <main>

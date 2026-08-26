@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 
 import { AppBar, type NavItem } from "@/components/app/app-bar";
+import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   getOrCreateApplication,
   getProfile,
 } from "@/lib/data/applications";
+import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 
 export default async function AppLayout({
   children,
@@ -16,7 +18,11 @@ export default async function AppLayout({
   const profile = await getProfile();
   if (!profile) redirect("/sign-in?next=/app");
 
-  const application = await getOrCreateApplication();
+  const [application, notifications, unreadCount] = await Promise.all([
+    getOrCreateApplication(),
+    getNotifications(profile.id),
+    unreadNotificationCount(profile.id),
+  ]);
   const locked = !application?.intakeComplete;
 
   // Profile is reachable from the account menu (`profileHref` below),
@@ -35,6 +41,13 @@ export default async function AppLayout({
         email={profile.email}
         showAgentButton
         profileHref="/app/profile"
+        notifications={
+          <NotificationsMenu
+            notifications={notifications}
+            unreadCount={unreadCount}
+            fallbackHref="/app"
+          />
+        }
       />
 
       {children}

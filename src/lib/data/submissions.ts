@@ -34,6 +34,10 @@ export type SubmitResult = { ok: true } | { error: string };
  * concurrency — an action carries a Clerk session and `revalidatePath`,
  * neither of which exists in a test process. **It decides nothing about
  * access.** Its only caller guards first.
+ *
+ * It also decides nothing about notifying anyone: `submitApplication` in
+ * `@/app/(app)/actions.ts` calls `notifyStaff` once this returns `ok`,
+ * after the transaction has committed.
  */
 export async function submitApplicationTx(
   applicationId: string

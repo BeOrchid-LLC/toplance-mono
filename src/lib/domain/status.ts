@@ -1,10 +1,11 @@
-import type { applicationStatus, documentState } from "@/lib/db/schema";
+import type { applicationStatus, documentState, invitationStatus } from "@/lib/db/schema";
 
 // Still derived from the schema rather than written out, so adding a
 // status to the enum makes the exhaustive maps below fail to compile
 // instead of rendering a blank pill.
 export type ApplicationStatus = (typeof applicationStatus.enumValues)[number];
 export type DocumentState = (typeof documentState.enumValues)[number];
+export type InvitationStatus = (typeof invitationStatus.enumValues)[number];
 export type BadgeVariant =
   | "neutral"
   | "brand"
@@ -123,6 +124,21 @@ export const DOC_STATE: Record<DocumentState, { label: string; variant: BadgeVar
   verified: { label: "Verified", variant: "success" },
   flagged: { label: "Needs re-upload", variant: "warning" },
   failed: { label: "Upload failed", variant: "danger" },
+};
+
+/**
+ * Same shape as `STATUS`, for the roster's other list — an invitation
+ * has no reviewer-facing "short" label, so this map skips it.
+ * `expired` is a status `listInvitations` computes on read (a `pending`
+ * row past `expiresAt`), never written until `acceptInvitationTx` sees
+ * the same row and flips it for real — this pill reads correctly either
+ * way, since both paths land on the same key.
+ */
+export const INVITATION_STATUS: Record<InvitationStatus, { label: string; variant: BadgeVariant }> = {
+  pending: { label: "Pending", variant: "neutral" },
+  accepted: { label: "Accepted", variant: "success" },
+  expired: { label: "Expired", variant: "outline" },
+  revoked: { label: "Revoked", variant: "danger" },
 };
 
 /**

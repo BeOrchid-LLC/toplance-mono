@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Mail, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { desc, eq, inArray } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { InvitationStatusBadge, StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import { CreateOrganisation } from "@/components/employer/create-organisation";
+import { InviteDialog } from "@/components/employer/invite-dialog";
+import { RevokeInvitationButton } from "@/components/employer/revoke-invitation-button";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import {
   orgApplicationProgress,
@@ -20,6 +21,7 @@ import {
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getActor, getProfile } from "@/lib/data/applications";
+import { listInvitations } from "@/lib/data/invitations";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -98,6 +100,13 @@ export default async function EmployerConsolePage() {
         .orderBy(desc(orgApplicationProgress.completionPct))
     : [];
 
+  // Same "no org, no unfiltered read" reasoning as the roster above:
+  // `listInvitations` takes one org id and has nothing to filter by
+  // without it.
+  const orgId = actor.orgIds[0];
+  const invitations = orgId ? await listInvitations(orgId) : [];
+  const pendingInvitations = invitations.filter((i) => i.status === "pending");
+
   const org = membership ?? undefined;
   const used = rows.length;
   const seats = org?.seatsPurchased ?? 0;
@@ -134,6 +143,8 @@ export default async function EmployerConsolePage() {
                 {seats > 0
                   ? `${used} of ${seats} seats in use`
                   : `${used} ${used === 1 ? "person" : "people"} · seat count not set yet`}
+                {pendingInvitations.length > 0 &&
+                  ` · ${pendingInvitations.length} invitation${pendingInvitations.length === 1 ? "" : "s"} pending`}
               </p>
               {seats > 0 && (
                 <Progress
@@ -142,9 +153,7 @@ export default async function EmployerConsolePage() {
                 />
               )}
             </div>
-            <Button disabled title="Invitations arrive in the next slice">
-              <Mail /> Invite someone
-            </Button>
+            <InviteDialog />
           </div>
 
           {/*
@@ -255,6 +264,69 @@ export default async function EmployerConsolePage() {
               })}
             </ul>
           )}
+          </Panel>
+
+          {/* A second sheet, not a section inside the first: invitations
+              and the roster are different objects — one is people who
+              exist, the other is emails nobody has answered yet. */}
+          <Panel className="mt-8">
+            <PanelHeader
+              label="Invitations"
+              aside={
+                <Badge variant="neutral">
+                  <span className="num">{pendingInvitations.length}</span>
+                  pending
+                </Badge>
+              }
+            />
+
+            {invitations.length === 0 ? (
+              <PanelBody>
+                <p className="t-muted max-w-[62ch]">
+                  Nobody has been invited yet. Send an invitation and it
+                  appears here until it is accepted, revoked or expires.
+                </p>
+              </PanelBody>
+            ) : (
+              <ul>
+                {invitations.map((invite) => {
+                  const destination = countryFromIso2(invite.destinationIso);
+                  return (
+                    <li
+                      key={invite.id}
+                      className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto_auto] lg:items-center"
+                    >
+                      <div className="min-w-0">
+                        <p className="t-title truncate" title={invite.email}>
+                          {invite.fullName || invite.email}
+                        </p>
+                        {invite.fullName && (
+                          <p className="special mt-1 truncate">{invite.email}</p>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="t-body truncate">
+                          {destination?.name ??
+                            invite.destinationIso?.toUpperCase() ??
+                            "Not set"}
+                        </p>
+                      </div>
+
+                      <div className="lg:justify-self-end">
+                        <InvitationStatusBadge status={invite.status} />
+                      </div>
+
+                      <div className="lg:justify-self-end">
+                        {invite.status === "pending" && (
+                          <RevokeInvitationButton invitationId={invite.id} />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Panel>
         </Shell>
       </main>

@@ -2,20 +2,25 @@ import { redirect } from "next/navigation";
 
 import { AppBar, type NavItem } from "@/components/app/app-bar";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getOrCreateApplication, getProfile } from "@/lib/data/applications";
+import { hasDatabaseEnv } from "@/lib/db/client";
+import {
+  getOrCreateApplication,
+  getProfile,
+} from "@/lib/data/applications";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   const profile = await getProfile();
   if (!profile) redirect("/sign-in?next=/app");
 
   const application = await getOrCreateApplication();
-  const locked = !application?.intake_complete;
+  const locked = !application?.intakeComplete;
 
+  // Profile is reachable from the account menu (`profileHref` below),
+  // not the navbar — the nav carries the application journey only.
   const nav: NavItem[] = [
     { href: "/app", label: "Dashboard" },
     { href: "/app/requirements", label: "Requirements", locked },
@@ -26,11 +31,12 @@ export default async function AppLayout({
     <div className="min-h-dvh bg-bg">
       <AppBar
         nav={nav}
-        active=""
-        name={profile.full_name}
+        name={profile.fullName}
         email={profile.email}
         showAgentButton
+        profileHref="/app/profile"
       />
+
       {children}
     </div>
   );

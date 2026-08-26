@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Camera, RotateCcw, Trash2, Upload } from "lucide-react";
+import { Camera, Eye, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DocStateBadge } from "@/components/shared/status-badge";
-import { removeDocument, uploadDocument } from "@/app/(app)/actions";
+import { documentUrl, removeDocument, uploadDocument } from "@/app/(app)/actions";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,17 @@ import { cn } from "@/lib/utils";
  * Camera first. Most applicants are photographing a paper document on a
  * phone, so "Take a photo" is the primary action on small screens and
  * the file picker is the fallback — not the other way round.
+ *
+ * A ruled row, never a card and never glass. This is the exact thing
+ * guideline §4 names in its deny list: a repeated element down a scroll.
+ * Twelve bordered boxes stacked in a column read as twelve objects to
+ * decide about; twelve ruled rows read as one list — which is what a
+ * checklist is.
+ *
+ * A row needing attention is marked by a rule down its left edge in the
+ * semantic colour, not by turning the row into a tinted box. The state
+ * badge beside the name still says it in words, so the colour is never
+ * carrying the meaning alone (§8).
  */
 export function DocumentRow({
   doc,
@@ -33,7 +44,7 @@ export function DocumentRow({
   function upload(file: File) {
     const formData = new FormData();
     formData.set("application_id", applicationId);
-    formData.set("doc_key", doc.doc_key);
+    formData.set("doc_key", doc.docKey);
     formData.set("file", file);
 
     startTransition(async () => {
@@ -45,39 +56,74 @@ export function DocumentRow({
 
   function reset() {
     startTransition(async () => {
-      await removeDocument(applicationId, doc.doc_key);
-      toast.info(`${doc.name} removed`);
+      const result = await removeDocument(applicationId, doc.docKey);
+      if (result?.error) toast.error(result.error);
+      else toast.info(`${doc.name} removed`);
+    });
+  }
+
+  /**
+   * The signed URL is minted per click rather than rendered into the
+   * page. It expires in ten minutes, so one baked into the HTML would be
+   * dead by the time most people scrolled to it — and would sit in the
+   * markup for anything reading the page.
+   */
+  function view() {
+    startTransition(async () => {
+      const result = await documentUrl(applicationId, doc.docKey);
+      if (result.error || !result.url) {
+        toast.error(result.error ?? "That file could not be opened.");
+        return;
+      }
+      window.open(result.url, "_blank", "noopener,noreferrer");
     });
   }
 
   return (
     <div
       className={cn(
-        "rounded-md border p-5",
-        needsAttention
-          ? doc.state === "failed"
-            ? "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_7%,var(--mix))]"
-            : "border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_8%,var(--mix))]"
-          : "border-border bg-surface"
+        /* Rows carry their own horizontal padding because they sit
+           full-bleed inside a card: the attention tint below has to run
+           to the card's edge, and a padded wrapper would inset it. */
+        "border-b border-border px-5 py-5 last:border-b-0 sm:px-6",
+        /* The tint mixes toward `transparent`, not toward `--mix`. These
+           rows sit on the ruled ground the laminate above them refracts;
+           an opaque tint would punch a solid rectangle through it. */
+        needsAttention && "border-l-2",
+        needsAttention &&
+          (doc.state === "failed"
+            ? "border-l-danger bg-[color-mix(in_srgb,var(--danger)_7%,transparent)]"
+            : "border-l-warning bg-[color-mix(in_srgb,var(--warning)_9%,transparent)]")
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
         <div className="min-w-[280px] flex-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="t-h3">{doc.name}</h3>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <h3 className="t-title">{doc.name}</h3>
             <DocStateBadge state={doc.state} />
-            {!doc.is_required && (
-              <span className="special">ONLY IF IT APPLIES TO YOU</span>
+            {!doc.isRequired && (
+              <span className="special-caps">Only if it applies to you</span>
             )}
           </div>
           {doc.reason ? (
-            <p className="t-body mt-2 text-ink-2">{doc.reason}</p>
+            <p className="t-body mt-2 max-w-[74ch] text-ink-2">{doc.reason}</p>
           ) : description ? (
-            <p className="t-muted mt-2">{description}</p>
+            <p className="t-muted mt-2 max-w-[74ch]">{description}</p>
           ) : null}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {doc.storagePath && (
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={view}
+              disabled={pending}
+              aria-label={`View ${doc.name}`}
+            >
+              <Eye /> View
+            </Button>
+          )}
           {doc.state === "verified" || doc.state === "checking" ? (
             <Button
               variant="tertiary"

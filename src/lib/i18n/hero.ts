@@ -17,6 +17,7 @@ export const HERO: {
   ctaSecondary: L;
   signIn: L;
   trust: L[];
+  slots: { origin: L; destination: L; purpose: L };
 } = {
   kicker: {
     en: "Visas and relocation, done properly",
@@ -70,4 +71,24 @@ export const HERO: {
       ig: "Bekee, Hausa, Yoruba na Igbo",
     },
   ],
+
+  /**
+   * The three slots of the hero corridor bar. Single words on purpose:
+   * the resolved corridor itself is shown as `NGA → GBR · WORK`, which
+   * needs no grammar and reads the same in every language, so nothing
+   * here has to survive being interpolated into a sentence.
+   *
+   * NEEDS NATIVE REVIEW before launch — these are the only strings on
+   * the page not taken from copy the client supplied.
+   */
+  slots: {
+    origin: { en: "Passport", ha: "Fasfo", yo: "Ìwé ìrìnnà", ig: "Paspọtụ" },
+    destination: {
+      en: "Destination",
+      ha: "Wurin zuwa",
+      yo: "Ibi tí ò ń lọ",
+      ig: "Ebe ị na-aga",
+    },
+    purpose: { en: "Purpose", ha: "Dalili", yo: "Ìdí", ig: "Nzube" },
+  },
 };

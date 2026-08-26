@@ -80,3 +80,6 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Playwright MCP screenshots and snapshots
+.playwright-mcp/

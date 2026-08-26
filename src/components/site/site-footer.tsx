@@ -37,7 +37,7 @@ const COLUMNS = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-surface-2 pb-6 pt-12">
-      <div className="mx-auto max-w-[1140px] px-6">
+      <div className="mx-auto max-w-[1240px] px-6">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div>
             <Wordmark />
@@ -53,7 +53,7 @@ export function SiteFooter() {
 
           {COLUMNS.map((col) => (
             <div key={col.heading}>
-              <h2 className="special-caps mb-3">{col.heading}</h2>
+              <h2 className="tag mb-3">{col.heading}</h2>
               {col.links.map((l) => (
                 <Link
                   key={l.label}
@@ -68,7 +68,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-5">
-          <span className="special">
+          <span className="tag">
             © 2026 BeOrchid · Toplance. Prototype — not a live service.
           </span>
         </div>

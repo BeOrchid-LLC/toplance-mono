@@ -5,7 +5,7 @@ import { ArrowRight, Briefcase, Shield } from "lucide-react";
 
 import { AuthForm } from "@/components/auth/auth-form";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = { title: "Create your account" };
@@ -26,7 +26,7 @@ const ENTRIES = [
 ];
 
 export default function SignUpPage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
   return (
     <div className="mx-auto w-full max-w-[560px]">
@@ -34,23 +34,31 @@ export default function SignUpPage() {
         <AuthForm mode="sign-up" />
       </Suspense>
 
-      <div className="mt-8 border-t border-border pt-6">
-        <p className="special-caps">Not a traveller?</p>
-        <div className="mt-3 flex flex-col gap-3">
+      {/* Ruled rows, not cards. Two bordered boxes under a bordered panel
+          made three nested outlines saying nothing; a rule separates these
+          for free and keeps the panel above as the only surface on the
+          screen. */}
+      <div className="mt-10">
+        <p className="tag">Not a traveller?</p>
+        <div className="mt-4 border-t border-border-strong">
           {ENTRIES.map((e) => (
             <Link
               key={e.href}
               href={e.href}
-              className="flex min-h-[72px] items-center gap-4 rounded-md border border-border bg-surface p-4 transition-colors hover:border-brand hover:bg-[color-mix(in_srgb,var(--brand)_5%,var(--surface))]"
+              className="group flex min-h-[76px] items-center gap-4 border-b border-border py-4 transition-colors hover:bg-[color-mix(in_srgb,var(--brand)_5%,transparent)]"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_12%,var(--mix))] text-brand-text">
-                <e.icon className="size-5" />
-              </span>
+              <e.icon
+                className="size-5 shrink-0 text-brand-text"
+                aria-hidden
+              />
               <span className="min-w-0 flex-1">
-                <span className="t-title block">{e.title}</span>
-                <span className="t-muted block">{e.body}</span>
+                <span className="d-sm block">{e.title}</span>
+                <span className="t-muted mt-0.5 block text-[15px]">{e.body}</span>
               </span>
-              <ArrowRight className="size-5 shrink-0 text-brand-text" />
+              <ArrowRight
+                className="size-5 shrink-0 text-brand-text transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
             </Link>
           ))}
         </div>

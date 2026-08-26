@@ -27,17 +27,20 @@ export function PhoneField({
   name = "phone",
   countryName = "country_iso",
   defaultCountry = "ng",
+  defaultDigits = "",
   label = "Mobile number",
   hint,
 }: {
   name?: string;
   countryName?: string;
   defaultCountry?: string;
+  /** National digits only — the dial code comes from the country. */
+  defaultDigits?: string;
   label?: string;
   hint?: string;
 }) {
   const [iso, setIso] = React.useState(defaultCountry);
-  const [digits, setDigits] = React.useState("");
+  const [digits, setDigits] = React.useState(defaultDigits);
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const wrapRef = React.useRef<HTMLDivElement>(null);

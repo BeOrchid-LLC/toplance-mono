@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { asc, eq, inArray } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
 import { Badge } from "@/components/ui/badge";
+import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { Shell } from "@/components/shared/shell";
 import {
   Table,
   TableBody,
@@ -13,10 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { createClient } from "@/lib/supabase/server";
+import { db, hasDatabaseEnv } from "@/lib/db/client";
+import { applications, corridors, profiles } from "@/lib/db/schema";
+import { countryFromIso2 } from "@/lib/domain/corridors";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
-import { getProfile } from "@/lib/data/applications";
+import { getActor, getProfile } from "@/lib/data/applications";
+import { isStaff } from "@/lib/auth/policy";
 import { cn } from "@/lib/utils";
 
 // Reads a session, so it is never prerendered.
@@ -25,156 +31,270 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Case queue" };
 
 /** Days since a case landed, used for the overdue signal. */
-function ageInDays(iso: string | null) {
-  if (!iso) return 0;
-  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+function ageInDays(at: Date | null) {
+  if (!at) return 0;
+  return Math.floor((Date.now() - at.getTime()) / 86_400_000);
 }
 
 export default async function OpsQueuePage() {
-  if (!hasSupabaseEnv) return <SetupNotice />;
+  if (!hasDatabaseEnv) return <SetupNotice />;
 
-  const profile = await getProfile();
-  if (!profile) redirect("/ops/sign-in?next=/ops");
+  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
+  if (!profile || !actor) redirect("/ops/sign-in?next=/ops");
 
-  // Staff-only. RLS would return nothing anyway, but failing here gives
-  // an honest screen instead of a mysteriously empty table.
-  if (profile.role !== "staff") {
+  // Staff-only, and now the only thing making it so. RLS used to return
+  // an empty table to everyone else; this check is what stands in its
+  // place, and it also gives an honest screen rather than a mysteriously
+  // empty one.
+  if (!isStaff(actor)) {
     return (
       <div className="grid min-h-dvh place-items-center px-6">
         <div className="max-w-[440px] text-center">
           <h1 className="t-h2">This console is for Toplance staff</h1>
           <p className="t-muted mt-3">
-            Your account does not have operations access. If that is wrong, ask a
-            Director to set your role — it cannot be granted from this screen.
+            Your account does not have operations access. If that is wrong, ask
+            a Director to set your role — it cannot be granted from this screen.
           </p>
         </div>
       </div>
     );
   }
 
-  const supabase = await createClient();
-  const { data: cases } = await supabase
-    .from("applications")
-    .select("*, profiles!applications_traveler_id_fkey(full_name, country_iso), corridors(visa_name, destination_iso)")
-    .in("status", ["collecting_documents", "submitted", "under_review", "additional_documents"])
-    .order("created_at", { ascending: true });
+  const rows = await db
+    .select({
+      id: applications.id,
+      caseRef: applications.caseRef,
+      status: applications.status,
+      assigneeId: applications.assigneeId,
+      createdAt: applications.createdAt,
+      travelerName: profiles.fullName,
+      travelerCountryIso: profiles.countryIso,
+      visaName: corridors.visaName,
+      destinationIso: corridors.destinationIso,
+    })
+    .from(applications)
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+    .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+    .where(
+      inArray(applications.status, [
+        "collecting_documents",
+        "submitted",
+        "under_review",
+        "additional_documents",
+      ])
+    )
+    .orderBy(asc(applications.createdAt));
 
-  const rows = cases ?? [];
-  const awaiting = rows.filter((r) => r.status === "submitted").length;
-  const unassigned = rows.filter((r) => !r.assignee_id).length;
-  const overdue = rows.filter((r) => ageInDays(r.created_at) > 5).length;
+  const counters = [
+    {
+      label: "Open cases",
+      value: rows.length,
+      sub: "in the pipeline",
+      tone: "text-ink",
+    },
+    {
+      label: "Awaiting review",
+      value: rows.filter((r) => r.status === "submitted").length,
+      sub: "at 100% completion",
+      tone: "text-info-ink",
+    },
+    {
+      label: "Unassigned",
+      value: rows.filter((r) => !r.assigneeId).length,
+      sub: "no owner yet",
+      tone: "text-warning-ink",
+    },
+    {
+      label: "Overdue",
+      value: rows.filter((r) => ageInDays(r.createdAt) > 5).length,
+      sub: "more than 5 days in queue",
+      tone: "text-danger-ink",
+    },
+  ];
 
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
         nav={[{ href: "/ops", label: "Case queue" }]}
-        active="/ops"
-        name={profile.full_name}
+        name={profile.fullName}
         email={profile.email}
-        subtitle={`Toplance operations · ${profile.staff_role ?? "reviewer"}`}
+        subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
       />
 
-      <main className="mx-auto max-w-[1140px] px-4 py-8 sm:px-6">
-        <h1 className="t-h2">Case queue</h1>
+      <div className="relative isolate">
+        <div
+          aria-hidden
+          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px]"
+        />
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: "Open cases", value: rows.length, sub: "in the pipeline", tone: "" },
-            { label: "Awaiting review", value: awaiting, sub: "at 100% completion", tone: "text-info-ink" },
-            { label: "Unassigned", value: unassigned, sub: "no owner yet", tone: "text-warning-ink" },
-            { label: "Overdue", value: overdue, sub: "more than 5 days in queue", tone: "text-danger-ink" },
-          ].map((s) => (
-            <div key={s.label} className="rounded-md border border-border bg-surface p-5">
-              <p className="special-caps">{s.label}</p>
-              <p className={cn("t-h2 mt-2", s.tone)}>{s.value}</p>
-              <p className="t-muted mt-1">{s.sub}</p>
-            </div>
-          ))}
-        </div>
+        <Shell className="pt-10">
+          <h1 className="t-h2">Case queue</h1>
+          <p className="t-muted mt-2 max-w-[62ch]">
+            Every application a person still has to act on, oldest first.
+          </p>
 
-        <div className="mt-6 rounded-md border border-border bg-surface">
-          <div className="border-b border-border px-6 py-4">
-            <h2 className="t-title">Sorted by age, oldest first</h2>
+          {/*
+            The queue header is this console's signature moment (§4), and
+            the four counters are what it should carry: they are the state
+            of the queue, which is the subject of the screen. As four
+            bordered boxes they were four objects; under one sheet they
+            are one instrument panel.
+
+            The data face is used for the figures because §1 keeps it for
+            anything machine-shaped, and §2 permits it here — inside the
+            signature moment and nowhere below it.
+          */}
+          <div className="laminate mt-8 overflow-hidden rounded-lg">
+            <span aria-hidden className="laminate-sheen" />
+            <dl className="relative z-[1] grid sm:grid-cols-2 lg:grid-cols-4">
+              {counters.map((c, i) => (
+                <div
+                  key={c.label}
+                  className={cn(
+                    "border-border px-5 py-5",
+                    "border-b sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0",
+                    i < counters.length - 1 && "lg:border-r",
+                    i % 2 === 0 && "sm:border-r"
+                  )}
+                >
+                  <dt className="tag">{c.label}</dt>
+                  <dd className={cn("num mt-2 text-[32px] font-semibold leading-none", c.tone)}>
+                    {c.value}
+                  </dd>
+                  <dd className="t-muted mt-2">{c.sub}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
+        </Shell>
+      </div>
+
+      <main>
+        <Shell className="py-12">
+          <Panel>
+            <PanelHeader
+              label="Sorted by age, oldest first"
+              aside={
+                <Badge variant="brand">
+                  <span className="num">{rows.length}</span>
+                  {rows.length === 1 ? "case" : "cases"}
+                </Badge>
+              }
+            />
 
           {rows.length === 0 ? (
-            <p className="t-muted p-6">
-              Nothing in the queue. Cases appear here once a traveller finishes
-              intake.
-            </p>
+            <PanelBody>
+              <p className="t-muted max-w-[62ch]">
+                Nothing in the queue. Cases appear here once a traveller
+                finishes intake.
+              </p>
+            </PanelBody>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[26%]">Applicant</TableHead>
-                  <TableHead className="w-[22%]">Destination</TableHead>
-                  <TableHead className="w-[20%]">Status</TableHead>
-                  <TableHead className="w-[20%]">Owner</TableHead>
-                  <TableHead className="w-[12%]">Age</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((r) => {
-                  const age = ageInDays(r.created_at);
-                  const traveler = r.profiles as { full_name: string; country_iso: string } | null;
-                  const corridor = r.corridors as { visa_name: string; destination_iso: string } | null;
-                  return (
-                    <TableRow key={r.id}>
-                      <TableCell>
-                        <span className="t-title block truncate">
-                          {traveler?.full_name ?? "Unnamed"}
-                        </span>
-                        <span className="special">
-                          {(traveler?.country_iso ?? "").toUpperCase()} · {r.case_ref}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="t-title block">
-                          {(corridor?.destination_iso ?? "—").toUpperCase()}
-                        </span>
-                        <span className="special truncate" title={corridor?.visa_name}>
-                          {corridor?.visa_name ?? "Corridor not set"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={r.status} short />
-                      </TableCell>
-                      <TableCell>
-                        {r.assignee_id ? (
-                          <Badge variant="neutral">Assigned</Badge>
-                        ) : (
-                          <Badge variant="outline">Unassigned</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1.5 font-semibold",
-                            age > 5
-                              ? "text-danger-ink"
-                              : age > 3
-                                ? "text-warning-ink"
-                                : "text-success-ink"
-                          )}
-                          title={`${age} days in the queue`}
-                        >
-                          {age > 5 ? (
-                            <AlertTriangle className="size-4" />
-                          ) : age > 3 ? (
-                            <Clock className="size-4" />
+            /*
+              A table, deviating from §6's preference for ruled rows — the
+              guideline asks for the reason in a comment, and this is it.
+
+              A reviewer works this screen one column at a time: scan Age
+              for what is late, scan Owner for what nobody has, then read
+              across. Column alignment is the whole affordance, and ruled
+              rows destroy it — the same fact lands at a different
+              horizontal position on every row. That is the one case §6
+              carves out, and it does not generalise: the employer roster
+              next door is read one person at a time, so it *is* ruled
+              rows.
+
+              Wrapped in its own scroller so the page body never scrolls
+              sideways at 390px. Staff are on desktop, but the quality
+              floor is not conditional.
+            */
+            <div className="overflow-x-auto px-2 pb-2">
+              <Table className="min-w-[720px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[26%]">Applicant</TableHead>
+                    <TableHead className="w-[22%]">Destination</TableHead>
+                    <TableHead className="w-[20%]">Status</TableHead>
+                    <TableHead className="w-[20%]">Owner</TableHead>
+                    <TableHead className="w-[12%]">Age</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((r) => {
+                    const age = ageInDays(r.createdAt);
+                    const destination = countryFromIso2(r.destinationIso);
+                    return (
+                      <TableRow key={r.id}>
+                        <TableCell>
+                          <Link
+                            href={`/ops/cases/${r.id}`}
+                            className="group block"
+                          >
+                            <span className="t-title block truncate group-hover:underline">
+                              {r.travelerName || "Unnamed"}
+                            </span>
+                            <span className="special">
+                              {r.travelerCountryIso.toUpperCase()} · {r.caseRef}
+                            </span>
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <span className="t-body block truncate">
+                            {destination?.name ??
+                              r.destinationIso?.toUpperCase() ??
+                              "Corridor not set"}
+                          </span>
+                          <span
+                            className="special truncate"
+                            title={r.visaName ?? undefined}
+                          >
+                            {r.visaName ?? "Corridor not set"}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={r.status} short />
+                        </TableCell>
+                        <TableCell>
+                          {r.assigneeId ? (
+                            <Badge variant="neutral">Assigned</Badge>
                           ) : (
-                            <CheckCircle2 className="size-4" />
+                            <Badge variant="outline">Unassigned</Badge>
                           )}
-                          {age}d
-                        </span>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        </TableCell>
+                        <TableCell>
+                          {/* The icon changes with the tone, so the
+                              signal survives greyscale and colour
+                              blindness — §8's rule that colour never
+                              carries a state on its own. */}
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 font-semibold",
+                              age > 5
+                                ? "text-danger-ink"
+                                : age > 3
+                                  ? "text-warning-ink"
+                                  : "text-success-ink"
+                            )}
+                            title={`${age} days in the queue`}
+                          >
+                            {age > 5 ? (
+                              <AlertTriangle className="size-4" aria-hidden />
+                            ) : age > 3 ? (
+                              <Clock className="size-4" aria-hidden />
+                            ) : (
+                              <CheckCircle2 className="size-4" aria-hidden />
+                            )}
+                            {age}d
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
-        </div>
+          </Panel>
+        </Shell>
       </main>
     </div>
   );

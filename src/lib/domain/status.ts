@@ -1,7 +1,10 @@
-import type { Database } from "@/lib/supabase/database.types";
+import type { applicationStatus, documentState } from "@/lib/db/schema";
 
-export type ApplicationStatus = Database["public"]["Enums"]["application_status"];
-export type DocumentState = Database["public"]["Enums"]["document_state"];
+// Still derived from the schema rather than written out, so adding a
+// status to the enum makes the exhaustive maps below fail to compile
+// instead of rendering a blank pill.
+export type ApplicationStatus = (typeof applicationStatus.enumValues)[number];
+export type DocumentState = (typeof documentState.enumValues)[number];
 export type BadgeVariant =
   | "neutral"
   | "brand"

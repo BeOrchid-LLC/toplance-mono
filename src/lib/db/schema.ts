@@ -540,3 +540,4 @@ export type TravelRecord = typeof travelRecords.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type CaseNote = typeof caseNotes.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type CompanionUpdate = typeof companionUpdates.$inferSelect;

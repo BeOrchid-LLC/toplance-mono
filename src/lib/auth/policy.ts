@@ -87,6 +87,14 @@ export const canWriteCaseNotes: Permission = (actor) => isStaff(actor);
 export const canReadItinerary: Permission = (actor, app) =>
   ownsApplication(actor, app) || isStaff(actor);
 
+/**
+ * The post-arrival companion. Same boundary as the itinerary — a
+ * sponsor pays for the seat, it never gets a seat at the traveller's own
+ * arrival plan.
+ */
+export const canReadCompanion: Permission = (actor, app) =>
+  ownsApplication(actor, app) || isStaff(actor);
+
 /** Same privacy boundary as case notes: participants only, sponsors never. */
 export const canReadMessages: Permission = (actor, app) =>
   ownsApplication(actor, app) || isStaff(actor);
@@ -205,6 +213,11 @@ export const canManageInvitations = isOrgMemberOf; // staff deliberately exclude
  *                                 boundary as case notes: traveller and
  *                                 staff both read and write, sponsors
  *                                 never see the thread (post-RLS
+ *                                 addition, not from the original
+ *                                 migration)
+ * companion_updates ............. canReadCompanion — the same boundary
+ *                                 as the itinerary: owning traveller and
+ *                                 staff, no sponsor branch (post-RLS
  *                                 addition, not from the original
  *                                 migration)
  * ============================================================ */

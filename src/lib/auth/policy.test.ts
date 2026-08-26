@@ -6,6 +6,7 @@ import {
   canReadApplication,
   canReadAuditLog,
   canReadCaseNotes,
+  canReadCompanion,
   canReadDocuments,
   canReadIntakeAnswers,
   canReadItinerary,
@@ -231,6 +232,18 @@ describe("itineraries", () => {
   it("is hidden from a sponsoring org and unrelated travellers", () => {
     expect(canReadItinerary(hrAdmin, sponsored)).toBe(false);
     expect(canReadItinerary(otherTraveller, sponsored)).toBe(false);
+  });
+});
+
+describe("companion", () => {
+  it("is readable by the traveller who owns it and by staff", () => {
+    expect(canReadCompanion(traveller, sponsored)).toBe(true);
+    expect(canReadCompanion(reviewer, sponsored)).toBe(true);
+  });
+
+  it("is hidden from a sponsoring org and unrelated travellers", () => {
+    expect(canReadCompanion(hrAdmin, sponsored)).toBe(false);
+    expect(canReadCompanion(otherTraveller, sponsored)).toBe(false);
   });
 });
 

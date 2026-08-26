@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 /**
  * `vitest.setup.mts` loads a developer's real `.env.local`, which could
@@ -50,6 +50,17 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
   });
 
   afterEach(async () => {
+    // `notifyStaff` fans out to EVERY `role: "staff"` profile — when this
+    // suite runs against a developer's dev database, that includes their
+    // real account. The fixture profiles' rows vanish with them via the
+    // FK cascade below, but rows delivered to real staff would outlive
+    // the suite as dead `/ops/cases/1` links in a real bell — so sweep by
+    // the fixture case refs, whoever received them.
+    await db
+      .delete(notifications)
+      .where(
+        sql`${notifications.payload} ->> 'caseRef' in ('TPL-000001', 'TPL-000002')`
+      );
     await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
     await db.delete(profiles).where(eq(profiles.id, OTHER));
     await db.delete(profiles).where(eq(profiles.id, STAFF_A));

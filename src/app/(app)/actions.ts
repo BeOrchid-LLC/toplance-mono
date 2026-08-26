@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
@@ -19,6 +20,8 @@ import {
   isStaff,
 } from "@/lib/auth/policy";
 import { audit } from "@/lib/audit";
+import { aiEnabled } from "@/lib/ai/models";
+import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
 import {
   deleteDocument,
   putDocument,
@@ -115,8 +118,11 @@ export async function uploadDocument(formData: FormData) {
   // docKey that is not on this application would otherwise store an
   // object that no row ever points at, and that nothing can later
   // delete — an unreachable passport scan kept indefinitely.
+  // `name` is pulled alongside `storagePath` for the pre-check's
+  // `expectedName` — the checklist row's own name, seeded from
+  // `corridor_requirements` (staff-curated, never traveller input).
   const [previous] = await db
-    .select({ storagePath: documents.storagePath })
+    .select({ storagePath: documents.storagePath, name: documents.name })
     .from(documents)
     .where(
       and(
@@ -164,6 +170,39 @@ export async function uploadDocument(formData: FormData) {
     { applicationId, docKey, replaced: previous.storagePath !== null },
     actorId
   );
+
+  // The AI pre-check runs after the response — a traveller's upload
+  // latency must never wait on a model call. `precheckDocument` never
+  // throws on its own, but the guard stays for the same reason it does
+  // on the itinerary's `after()` in `@/app/ops/actions.ts`: a background
+  // failure here has nothing to do with the upload that already
+  // succeeded. Skipped entirely (no hook scheduled at all) when there is
+  // no model to run it or the MIME type is one `precheckDocument` would
+  // silently no-op on anyway.
+  if (aiEnabled() && precheckSupports(file.type)) {
+    after(async () => {
+      try {
+        const flagged = await precheckDocument({
+          applicationId,
+          docKey,
+          storagePath: path,
+          fileName: file.name,
+          mimeType: file.type,
+          expectedName: previous.name,
+          actorId,
+        });
+        // Best effort: the traveller sees a flag on their next nav
+        // either way, this just saves them a refresh when the check
+        // lands quickly.
+        if (flagged) revalidatePath("/app", "layout");
+      } catch (error) {
+        console.error(
+          `[actions] pre-check failed for document ${docKey} on application ${applicationId}`,
+          error
+        );
+      }
+    });
+  }
 
   revalidatePath("/app", "layout");
   return { ok: true };

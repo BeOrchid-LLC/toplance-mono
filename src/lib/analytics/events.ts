@@ -40,6 +40,13 @@ export const EVENT_NAMES = [
   /** A reviewer's verdict — the transitions out of `checking`. */
   "toplance.document_verified",
   "toplance.document_flagged",
+
+  /**
+   * The AI pre-check's verdict on one upload, `pass` or `flag` — not a
+   * reviewer's, which stays `document_verified` / `document_flagged`.
+   */
+  "toplance.document_prechecked",
+
   "toplance.application_submitted",
 
   /** A past trip on the traveller's own travel history. */

@@ -171,10 +171,30 @@ export function AuthForm({
     }
 
     if (mode === "sign-up") {
-      const result = await completeProfile({ ...profileFields, locale });
+      // Awaited here — after `finalize()`, before the `router.push()`
+      // below — and that order is the whole of it. This is a POST from
+      // this page: fired without being awaited, or awaited after the
+      // navigation had already started, it can be cancelled in flight,
+      // and the account is then left with no name at all. Clerk's
+      // email-code sign-up never collects one, so `getProfile`'s lazy
+      // provisioning has nothing to fall back on but "".
+      //
+      // Tried twice for the same reason: the action is an idempotent
+      // upsert, and the failure worth a second attempt is the brand-new
+      // session not yet being readable by the server on the very first
+      // request after `finalize()`.
+      let result = await completeProfile({ ...profileFields, locale });
       if (result.error) {
-        toast.error(result.error);
-        return;
+        result = await completeProfile({ ...profileFields, locale });
+      }
+
+      if (result.error) {
+        // Said, then carried on. The session is live and the emailed
+        // code is spent, so keeping them on this screen is a dead end —
+        // a reload would send them into the app regardless, just without
+        // being told anything. `EditableName` on `/app/profile` is where
+        // the name they typed can be put back.
+        toast.error(`${result.error} You can add your name from your profile.`);
       }
     }
 

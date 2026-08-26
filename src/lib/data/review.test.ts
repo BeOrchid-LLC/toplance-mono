@@ -80,7 +80,11 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
       verdict: "verified",
     }, REVIEWER);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({
+      ok: true,
+      documentName: "Passport",
+      travelerId: TRAVELLER,
+    });
     expect(await docState("passport")).toEqual({
       state: "verified",
       reason: null,
@@ -93,7 +97,13 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
       reason: "The photo page is cut off.",
     }, REVIEWER);
 
-    expect(result).toEqual({ ok: true });
+    // The two fields `reviewDocument` needs to tell the traveller their
+    // document was flagged: what to call it, and who to tell.
+    expect(result).toEqual({
+      ok: true,
+      documentName: "Passport",
+      travelerId: TRAVELLER,
+    });
     expect(await docState("passport")).toEqual({
       state: "flagged",
       reason: "The photo page is cut off.",
@@ -160,7 +170,11 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
       verdict: "verified",
     }, REVIEWER);
 
-    expect(result).toEqual({ ok: true });
+    expect(result).toEqual({
+      ok: true,
+      documentName: "Passport",
+      travelerId: TRAVELLER,
+    });
     expect(await docState("passport")).toEqual({
       state: "verified",
       reason: null,

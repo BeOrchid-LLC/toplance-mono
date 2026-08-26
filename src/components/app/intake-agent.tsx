@@ -297,7 +297,7 @@ function LiveIntake({
         <>
           <p className="special-caps mx-auto">Conversation started</p>
 
-          <Bubble from="agent">{greeting(firstName)}</Bubble>
+          <Bubble from="agent" plain>{greeting(firstName)}</Bubble>
 
           {messages.map((message) => {
             const text = message.parts
@@ -429,7 +429,7 @@ function ScriptedIntake({
         <>
           <p className="special-caps mx-auto">Conversation started</p>
 
-          <Bubble from="agent">{greeting(firstName)}</Bubble>
+          <Bubble from="agent" plain>{greeting(firstName)}</Bubble>
 
           {INTAKE_QUESTIONS.map((q, i) => {
             if (i > answeredCount) return null;
@@ -620,7 +620,13 @@ function AgentLayout({
   );
 }
 
-/** The opening line, before either agent has said anything of its own. */
+/**
+ * The opening line, before either agent has said anything of its own.
+ *
+ * Rendered plain (`<Bubble plain>`), not through `ChatMarkdown`: the
+ * traveller's own name is in it, and the shared renderer is for model
+ * output only.
+ */
 function greeting(firstName: string) {
   return `Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`;
 }
@@ -857,9 +863,17 @@ const LABELS: Record<string, string> = {
 
 function Bubble({
   from,
+  plain = false,
   children,
 }: {
   from: "agent" | "user";
+  /**
+   * Renders the bubble's text as text, Markdown and all. For the one
+   * agent line that is not model output: the greeting, which embeds the
+   * traveller's own name. The platform convention is that only
+   * model-authored messages go through `ChatMarkdown`.
+   */
+  plain?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -871,7 +885,7 @@ function Bubble({
           : "self-end rounded-br-[6px] bg-brand font-semibold text-on-brand"
       )}
     >
-      {from === "agent" && typeof children === "string" ? (
+      {from === "agent" && !plain && typeof children === "string" ? (
         <ChatMarkdown>{children}</ChatMarkdown>
       ) : (
         children

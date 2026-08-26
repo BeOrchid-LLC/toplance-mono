@@ -134,7 +134,13 @@ export async function changeCaseStatus(formData: FormData) {
     // background failure it has nothing to do with.
     after(async () => {
       try {
-        await generateAndStoreItinerary(applicationId, actor.userId);
+        // `generated` is false on the unset-API-key no-op, the
+        // no-corridor early-out, and any generation failure — none of
+        // those are "your arrival plan is ready", so the notify only
+        // fires once a plan is actually sitting in the database.
+        const generated = await generateAndStoreItinerary(applicationId, actor.userId);
+        if (!generated) return;
+
         await notify(
           travelerId,
           "itinerary_ready",

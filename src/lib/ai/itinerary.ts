@@ -126,16 +126,24 @@ Write only the JSON object — no other text.`;
  * approval itself. On any failure this writes nothing, which is the
  * honest state: the profile page's "Nothing to plan yet" empty state is
  * still true until a plan actually lands.
+ *
+ * Returns whether a plan was actually written — `false` covers the
+ * never-throws catch, but also the two quiet early-outs above it
+ * (`OPENAI_API_KEY` unset, no corridor resolved) that used to look like
+ * success from the outside. The caller gates the "your arrival plan is
+ * ready" notification on this: without it, a traveller was told a plan
+ * was waiting for them on every approval made with no API key
+ * configured, only to land on "Nothing to plan yet".
  */
 export async function generateAndStoreItinerary(
   applicationId: string,
   actorId: string
-): Promise<void> {
+): Promise<boolean> {
   if (!aiEnabled()) {
     console.log(
       `[itinerary] OPENAI_API_KEY not set — skipped application ${applicationId}`
     );
-    return;
+    return false;
   }
 
   try {
@@ -149,7 +157,7 @@ export async function generateAndStoreItinerary(
       console.error(
         `[itinerary] no corridor resolved for application ${applicationId} — nothing to plan against`
       );
-      return;
+      return false;
     }
 
     const locale =
@@ -181,10 +189,12 @@ export async function generateAndStoreItinerary(
       });
 
     await track("toplance.itinerary_generated", { applicationId }, actorId);
+    return true;
   } catch (error) {
     console.error(
       `[itinerary] could not generate a plan for application ${applicationId}`,
       error
     );
+    return false;
   }
 }

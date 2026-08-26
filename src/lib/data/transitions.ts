@@ -4,7 +4,12 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents, statusEvents } from "@/lib/db/schema";
-import { STATUS, STAFF_TRANSITIONS, type ApplicationStatus } from "@/lib/domain/status";
+import {
+  STATUS,
+  STAFF_TRANSITIONS,
+  isTerminalStatus,
+  type ApplicationStatus,
+} from "@/lib/domain/status";
 
 // The map itself lives in `@/lib/domain/status` — pure and I/O-free, so
 // `status-control.tsx` can import it without pulling `db` into the
@@ -78,10 +83,16 @@ export async function changeStatusTx(
       // break the promise the checklist makes, so this re-runs it here
       // rather than trusting the state submission left behind.
       // Rejection makes no such promise, so it has no gate.
+      //
+      // `for("update")` locks these rows too, not just the application's —
+      // `reviewDocumentTx` locks the same document row it updates, so a
+      // reviewer's flag landing between this count and the commit above
+      // waits here instead of slipping through underneath it.
       const docs = await tx
         .select({ state: documents.state, isRequired: documents.isRequired })
         .from(documents)
-        .where(eq(documents.applicationId, applicationId));
+        .where(eq(documents.applicationId, applicationId))
+        .for("update");
 
       const required = docs.filter((d) => d.isRequired);
       const outstanding = required.filter((d) => d.state !== "verified").length;
@@ -99,7 +110,7 @@ export async function changeStatusTx(
         status: to,
         // Only a decision closes the case; `additional_documents` still
         // has a future.
-        ...(to === "approved" || to === "rejected" ? { decidedAt: new Date() } : {}),
+        ...(isTerminalStatus(to) ? { decidedAt: new Date() } : {}),
       })
       .where(eq(applications.id, applicationId));
 

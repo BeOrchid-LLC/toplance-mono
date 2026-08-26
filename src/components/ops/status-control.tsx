@@ -7,7 +7,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { changeCaseStatus } from "@/app/ops/actions";
-import { STAFF_TRANSITIONS, STATUS, type ApplicationStatus } from "@/lib/domain/status";
+import {
+  STAFF_TRANSITIONS,
+  STATUS,
+  isTerminalStatus,
+  type ApplicationStatus,
+} from "@/lib/domain/status";
 
 const ICON: Partial<Record<ApplicationStatus, React.ComponentType<{ className?: string }>>> = {
   under_review: Search,
@@ -61,8 +66,7 @@ export function StatusControl({
   }
 
   function click(to: ApplicationStatus) {
-    const decides = to === "approved" || to === "rejected";
-    if (decides && confirming !== to) {
+    if (isTerminalStatus(to) && confirming !== to) {
       setConfirming(to);
       return;
     }
@@ -88,6 +92,7 @@ export function StatusControl({
         }}
         placeholder="Message to the traveller — every status change sends one."
         rows={3}
+        maxLength={2000}
         disabled={pending}
       />
       <div className="mt-4 flex flex-wrap items-center gap-3">

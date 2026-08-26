@@ -104,6 +104,18 @@ export const STAFF_REACHABLE_STATUSES: readonly ApplicationStatus[] = Array.from
   new Set(Object.values(STAFF_TRANSITIONS).flat())
 );
 
+/**
+ * The two statuses `STAFF_TRANSITIONS` gives no further exit from — a
+ * decision has been made and the case is closed. Named so a decision
+ * check reads as what it means, rather than as two statuses that happen
+ * to be spelled out together each time.
+ */
+export const TERMINAL_STATUSES: readonly ApplicationStatus[] = ["approved", "rejected"];
+
+export function isTerminalStatus(status: ApplicationStatus): boolean {
+  return TERMINAL_STATUSES.includes(status);
+}
+
 export const DOC_STATE: Record<DocumentState, { label: string; variant: BadgeVariant }> = {
   not_started: { label: "Not started", variant: "outline" },
   uploaded: { label: "Uploaded", variant: "info" },

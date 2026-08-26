@@ -91,9 +91,13 @@ export async function notify<K extends keyof NotificationPayload>(
       .where(eq(profiles.id, recipientId))
       .limit(1);
 
-    // The in-app row is the source of truth for the bell (see the schema
-    // comment on `notifications`); a recipient with no profile row still
-    // gets one, it just has nowhere to send an email.
+    // A `recipientId` with no `profiles` row at all never reaches here —
+    // `notifications.recipientId` has a foreign key, so that insert
+    // fails above and is the caught DB error, not this branch. This one
+    // covers the narrower race where the profile is deleted between the
+    // insert and this select: the in-app row still exists (it's the
+    // source of truth for the bell — see the schema comment on
+    // `notifications`), there is just nowhere left to send an email.
     if (!recipient) return;
 
     const template = templateFor(kind, payload);
@@ -107,18 +111,30 @@ export async function notify<K extends keyof NotificationPayload>(
  * The same event to every member of staff. A thin fan-out over `notify`
  * rather than a batched insert — fine at current team size; revisit if
  * the review desk ever grows past a handful of reviewers.
+ *
+ * Also never throws — the staff lookup is wrapped too, not just the
+ * per-recipient `notify` calls it fans out to. `submitApplication` in
+ * `@/app/(app)/actions.ts` calls this inside the same try block as
+ * `submitApplicationTx` and `revalidatePath`, and `toActionError` does
+ * not recognise a raw DB error, so an uncaught failure here would have
+ * surfaced as a submission error to the traveller — after their
+ * submission had already committed.
  */
 export async function notifyStaff<K extends keyof NotificationPayload>(
   kind: K,
   payload: NotificationPayload[K],
   applicationId?: string
 ): Promise<void> {
-  const staff = await db
-    .select({ id: profiles.id })
-    .from(profiles)
-    .where(eq(profiles.role, "staff"));
+  try {
+    const staff = await db
+      .select({ id: profiles.id })
+      .from(profiles)
+      .where(eq(profiles.role, "staff"));
 
-  await Promise.all(staff.map((s) => notify(s.id, kind, payload, applicationId)));
+    await Promise.all(staff.map((s) => notify(s.id, kind, payload, applicationId)));
+  } catch (error) {
+    console.error(`[notifications] could not notify staff of "${kind}"`, error);
+  }
 }
 
 /** The bell's list: newest first, capped. */

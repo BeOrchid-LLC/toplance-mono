@@ -1,15 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 
 /**
- * `RESEND_API_KEY` stays unset for the whole suite (nothing in
- * `.env.local.example` sets it, and nothing here does either), so every
- * `notify()` call below exercises the real "email skipped" path rather
- * than reaching resend.com.
+ * `vitest.setup.mts` loads a developer's real `.env.local`, which could
+ * carry a genuine `RESEND_API_KEY`. Nothing in `.env.local.example` sets
+ * one, but a developer's own file might — so rather than trust it stays
+ * absent, this suite deletes it up front. Every `notify()` call below is
+ * then structurally guaranteed to take the "email skipped" path instead
+ * of reaching resend.com.
  *
  * Skipped without a database. Run `npm run db:up` to include them.
  */
 describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
+  delete process.env.RESEND_API_KEY;
+
   const { db } = await import("@/lib/db/client");
   const { notifications, profiles } = await import("@/lib/db/schema");
   const {
@@ -73,10 +77,26 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     ).resolves.toBeUndefined();
   });
 
-  it("never throws for a recipient with no profile row", async () => {
+  it("swallows the insert's foreign-key violation when the recipient has no profile row at all", async () => {
+    // Not the "select finds nothing" branch inside `notify` — a
+    // `recipientId` with no `profiles` row fails earlier, at the insert
+    // itself, because `notifications.recipientId` carries a foreign key.
+    // This is that DB error being caught, logged and swallowed.
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
     await expect(
       notify("no_such_profile", "itinerary_ready", { url: appUrl("/app") })
     ).resolves.toBeUndefined();
+
+    expect(logged).toHaveBeenCalledOnce();
+
+    const rows = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.recipientId, "no_such_profile"));
+    expect(rows).toHaveLength(0);
+
+    logged.mockRestore();
   });
 
   it("accumulates across calls, newest first from getNotifications", async () => {
@@ -91,6 +111,31 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].kind).toBe("document_flagged");
     expect(rows[1].kind).toBe("itinerary_ready");
+  });
+
+  it("notifyStaff never throws when the staff lookup itself fails", async () => {
+    // `submitApplication` calls `notifyStaff` inside the same try block
+    // as `submitApplicationTx` and `revalidatePath`, and `toActionError`
+    // does not recognise a raw DB error — so if this lookup threw
+    // uncaught, a traveller would see a submission error after their
+    // submission had already committed. Forcing `db.select` to throw
+    // once reproduces exactly the transient-DB-error case.
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const failingSelect = vi.spyOn(db, "select").mockImplementationOnce(() => {
+      throw new Error("connection reset");
+    });
+
+    await expect(
+      notifyStaff("application_submitted", {
+        caseRef: "TPL-000002",
+        url: appUrl("/ops/cases/2"),
+      })
+    ).resolves.toBeUndefined();
+
+    expect(logged).toHaveBeenCalledOnce();
+
+    failingSelect.mockRestore();
+    logged.mockRestore();
   });
 
   it("notifyStaff reaches every staff profile and nobody else", async () => {

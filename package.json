@@ -16,7 +16,8 @@
     "db:bucket": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/storage/ensure-bucket.mts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.47",
@@ -55,7 +56,9 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@clerk/testing": "^2.2.30",
     "@fontsource-variable/archivo": "^5.3.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.23.1",

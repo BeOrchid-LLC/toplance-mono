@@ -66,6 +66,60 @@ links straight there. Travellers and employers never see any of this: no
 traveller or employer role is ever asked for a second factor, in the dashboard
 or in the code.
 
+### End-to-end tests
+
+Four journeys, in `e2e/`, run through a real browser against a real dev
+server, the real Clerk development instance, the local Postgres and the local
+object store:
+
+| Spec | The journey |
+| --- | --- |
+| `traveller.spec.ts` | Sign up → intake → the ng→gb checklist → upload a file → *Checking* |
+| `ops.spec.ts` | Refused → promoted to staff → queue → verify a document → approve |
+| `employer.spec.ts` | Sign up → name an organisation → invite → accept in a second browser → roster |
+| `companion.spec.ts` | Approved → "After you land" appears → the arrival checklist |
+
+```bash
+npm run db:up && npm run db:migrate && npm run db:seed && npm run db:bucket
+npx playwright install chromium
+npm run e2e
+```
+
+`playwright.config.ts` starts the dev server itself, on **port 3100** and in
+its own build directory, with four things about `.env.local` deliberately
+overridden:
+
+- **`OPENAI_API_KEY` blanked**, so the intake runs its scripted path,
+  `aiEnabled()` is false everywhere, and no test can bill a model
+- **`RESEND_API_KEY` blanked**, so no invitation email leaves the machine
+- **`S3_*` pointed at the local MinIO**, so a fixture upload never lands in the
+  R2 staging bucket
+- **`E2E_SKIP_STAFF_2FA=1`**, the seam in `requireStaffConsole` that lets a
+  scripted staff sign-in past an authenticator app it cannot enroll. Off
+  everywhere else, and it widens nothing else that gate checks
+
+Sign-in is the product's own form, driven like any form. The addresses end in
+`+clerk_test`, which Clerk development instances accept with the fixed code
+`424242`; `clerkSetup()` in `e2e/global-setup.ts` fetches the testing token
+that gets a scripted sign-up past bot protection. If a sign-up ever fails with
+"that code did not work" on a fresh instance, check that test mode has not been
+turned off in the Clerk Dashboard.
+
+`e2e/helpers/db.ts` is the suite's own hand into Postgres, for the three things
+a browser cannot honestly do: making an account staff (there is no code path,
+by design), standing up a submitted case for the reviewer to work, and deleting
+what the last run left behind. `e2e/fixtures/passport.jpg` is a generated
+placeholder — 640×400, a few kilobytes, and legibly not a real document.
+
+Two suites can run side by side (a second checkout, a colleague's branch) with
+`E2E_PORT` and `E2E_DIST_DIR` moved together — Next 16 takes an exclusive lock
+on its build directory, so both have to move.
+
+Three things stay manual, and are not pretended at anywhere: the authenticator
+enrollment blocker a staff account without 2FA actually sees (`staff-gate.ts`'s
+`enroll` branch — unit-tested in `staff-gate.test.ts`), anything that needs a
+model behind it, and any email actually arriving.
+
 ---
 
 ## Layout
@@ -196,6 +250,7 @@ Scaffolded, needs the next pass:
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm test` | Vitest — policy rules, guards, storage |
+| `npm run e2e` | Playwright — the four journeys, against a real browser |
 | `npm run db:up` / `db:down` | Postgres and MinIO in Docker |
 | `npm run db:generate` | Turn a schema change into a migration |
 | `npm run db:migrate` | Apply migrations, then the hand-written SQL objects |

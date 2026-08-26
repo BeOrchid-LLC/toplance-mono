@@ -2,9 +2,12 @@ import { after } from "next/server";
 import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
+  safeValidateUIMessages,
   stepCountIs,
   streamText,
   tool,
+  type InferUITools,
+  type UIDataTypes,
   type UIMessage,
 } from "ai";
 import { z } from "zod";
@@ -36,14 +39,85 @@ import { track } from "@/lib/analytics/track";
  * scripted fallback and the model all write to the same rows, and a
  * prompt built from stale client state would have the agent asking for
  * an answer it already has.
+ *
+ * The transcript itself is the exception — it has to come from the
+ * client, because that is where the conversation lives. It is therefore
+ * treated as an untrusted payload: validated, capped, and rejected with
+ * a 400 rather than forwarded on trust.
  */
-export async function POST(request: Request) {
-  const body = (await request.json()) as {
-    applicationId?: string;
-    messages?: UIMessage[];
-  };
 
-  const applicationId = body.applicationId ?? "";
+/**
+ * Ceilings on one request. The transport re-posts the whole conversation
+ * every turn, so without these a signed-in traveller could hand us an
+ * arbitrarily large body and we would pay a model to read it. Intake is
+ * ten questions; forty messages is twenty turns, which is generous even
+ * for someone who changes their mind repeatedly.
+ */
+const MAX_MESSAGES = 40;
+const MAX_TEXT_CHARS = 4000;
+
+/**
+ * The model's one tool, bound to the caller the guard cleared.
+ *
+ * Built per request rather than once at module scope precisely because
+ * of that binding: there is no way to call it for an application the
+ * request was not authorized for, because it never learns another id.
+ */
+function intakeTools(applicationId: string, userId: string) {
+  return {
+    record_answer: tool({
+      description:
+        "Save one intake answer. Call this the moment the traveller " +
+        "answers a topic, before replying to them.",
+      inputSchema: z.object({
+        questionKey: z.enum(INTAKE_QUESTIONS.map((q) => q.key)),
+        value: z.string().min(1).max(500),
+      }),
+      execute: async ({ questionKey, value }) => {
+        const recorded = await recordIntakeAnswer(
+          applicationId,
+          questionKey,
+          value,
+          userId
+        );
+        if ("error" in recorded) return recorded;
+
+        // Read back rather than derived from the tool input: recording
+        // an earlier answer clears everything after it, so the next
+        // question is whatever the truncated row set now lacks.
+        const current = await getIntakeAnswers(applicationId);
+        const next = INTAKE_QUESTIONS.find((q) => !current[q.key]);
+
+        return {
+          recorded: true,
+          complete: recorded.complete,
+          nextQuestionKey: next?.key ?? null,
+        };
+      },
+    }),
+  };
+}
+
+/** What a valid transcript for this route looks like, tool parts included. */
+type IntakeUIMessage = UIMessage<
+  never,
+  UIDataTypes,
+  InferUITools<ReturnType<typeof intakeTools>>
+>;
+
+export async function POST(request: Request) {
+  let body: { applicationId?: unknown; messages?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: "That message did not arrive in one piece. Try sending it again." },
+      { status: 400 }
+    );
+  }
+
+  const applicationId =
+    typeof body?.applicationId === "string" ? body.applicationId : "";
 
   let userId: string;
   try {
@@ -67,6 +141,60 @@ export async function POST(request: Request) {
     );
   }
 
+  const tools = intakeTools(applicationId, userId);
+
+  // The transcript is client-held, so it is checked before it is spent
+  // on. `convertToModelMessages` throws on a malformed part, and an
+  // unhandled throw here is a 500 on what is really a bad request —
+  // which is also how a caller would find the cheapest way to make the
+  // route fall over.
+  const validated = await safeValidateUIMessages<IntakeUIMessage>({
+    messages: body?.messages ?? [],
+    tools,
+  });
+
+  if (!validated.success) {
+    console.error("[intake] rejected a malformed transcript", validated.error);
+    return Response.json(
+      { error: "That conversation could not be read. Reload the page to start again." },
+      { status: 400 }
+    );
+  }
+
+  const tooLong = validated.data.some((message) =>
+    message.parts.some(
+      (part) => part.type === "text" && part.text.length > MAX_TEXT_CHARS
+    )
+  );
+
+  if (tooLong) {
+    return Response.json(
+      { error: "That message is too long. Say it in a few sentences instead." },
+      { status: 400 }
+    );
+  }
+
+  // Oldest messages first, so the cap drops the start of a long
+  // conversation rather than the turn being answered. Tool calls and
+  // their results share one message, so a cut at a message boundary
+  // never orphans one.
+  const messages = validated.data.slice(-MAX_MESSAGES);
+
+  // Validation has already ruled out the shapes this rejects, so a
+  // throw here means an incomplete tool call or some combination the
+  // schema allows and the converter does not. Still the caller's
+  // payload, so still a 400 rather than a 500.
+  let modelMessages;
+  try {
+    modelMessages = await convertToModelMessages(messages, { tools });
+  } catch (error) {
+    console.error("[intake] could not convert a transcript", error);
+    return Response.json(
+      { error: "That conversation could not be read. Reload the page to start again." },
+      { status: 400 }
+    );
+  }
+
   const profile = await getProfile();
   const answers = await getIntakeAnswers(applicationId);
 
@@ -77,43 +205,18 @@ export async function POST(request: Request) {
   const result = streamText({
     model: openai(INTAKE_MODEL),
     system: buildIntakeSystemPrompt({ answers, locale, firstName }),
-    messages: await convertToModelMessages(body.messages ?? []),
-    tools: {
-      record_answer: tool({
-        description:
-          "Save one intake answer. Call this the moment the traveller " +
-          "answers a topic, before replying to them.",
-        inputSchema: z.object({
-          questionKey: z.enum(INTAKE_QUESTIONS.map((q) => q.key)),
-          value: z.string().min(1).max(500),
-        }),
-        execute: async ({ questionKey, value }) => {
-          const recorded = await recordIntakeAnswer(
-            applicationId,
-            questionKey,
-            value,
-            userId
-          );
-          if ("error" in recorded) return recorded;
-
-          // Read back rather than derived from the tool input: recording
-          // an earlier answer clears everything after it, so the next
-          // question is whatever the truncated row set now lacks.
-          const current = await getIntakeAnswers(applicationId);
-          const next = INTAKE_QUESTIONS.find((q) => !current[q.key]);
-
-          return {
-            recorded: true,
-            complete: recorded.complete,
-            nextQuestionKey: next?.key ?? null,
-          };
-        },
-      }),
-    },
+    messages: modelMessages,
+    tools,
     // One tool call, then the reply that acknowledges it. Three is the
     // ceiling, not the plan: without it a model that mis-records an
     // answer can loop on the same tool for as long as the request lives.
     stopWhen: stepCountIs(3),
+    // The client only ever sees "the agent stopped responding", which is
+    // the right thing to tell a traveller and useless to whoever has to
+    // fix it. The provider's own error stays here.
+    onError: ({ error }) => {
+      console.error("[intake] the model call failed", error);
+    },
   });
 
   // A conversation turn, not a token count — and never worth delaying

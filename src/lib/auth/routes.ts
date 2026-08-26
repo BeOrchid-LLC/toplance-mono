@@ -11,6 +11,7 @@
  */
 export const authRoutes = [
   { prefix: "/employer/sign-in", home: "/employer" },
+  { prefix: "/employer/sign-up", home: "/employer" },
   { prefix: "/ops/sign-in", home: "/ops" },
   { prefix: "/sign-in", home: "/app" },
   { prefix: "/sign-up", home: "/app" },

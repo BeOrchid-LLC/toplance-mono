@@ -7,12 +7,14 @@ describe("signedInDestination", () => {
     expect(signedInDestination("/sign-in")).toBe("/app");
     expect(signedInDestination("/sign-up")).toBe("/app");
     expect(signedInDestination("/employer/sign-in")).toBe("/employer");
+    expect(signedInDestination("/employer/sign-up")).toBe("/employer");
     expect(signedInDestination("/ops/sign-in")).toBe("/ops");
   });
 
   it("matches nested auth paths, as the middleware's (.*) patterns do", () => {
     expect(signedInDestination("/sign-in/factor-two")).toBe("/app");
     expect(signedInDestination("/employer/sign-in/anything")).toBe("/employer");
+    expect(signedInDestination("/employer/sign-up/anything")).toBe("/employer");
   });
 
   it("returns null off the auth surface, where no redirect belongs", () => {

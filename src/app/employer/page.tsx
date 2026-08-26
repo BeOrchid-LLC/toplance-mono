@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
+import { CreateOrganisation } from "@/components/employer/create-organisation";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import {
   orgApplicationProgress,
@@ -41,6 +42,42 @@ export default async function EmployerConsolePage() {
     .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
     .where(eq(orgMembers.userId, profile.id))
     .limit(1);
+
+  // No org row for this person yet — sign-up created the account but
+  // not the organisation, or seed data never ran. The roster, seat
+  // count and privacy laminate below all assume an organisation exists;
+  // rendering them here would either crash on `org.name` or show a
+  // "0 people" roster for an org that was never created. This is the
+  // only door in: name one, then the branch below takes over.
+  if (!membership) {
+    return (
+      <div className="min-h-dvh bg-bg">
+        <AppBar
+          nav={[{ href: "/employer", label: "People" }]}
+          name={profile.fullName}
+          email={profile.email}
+          subtitle="Organisation console"
+        />
+        <main>
+          <Shell className="py-12">
+            <Panel className="mx-auto max-w-[560px]">
+              <PanelHeader label="Name your organisation" />
+              <PanelBody>
+                <p className="t-muted max-w-[62ch]">
+                  Once it exists you can sponsor seats and invite your
+                  people by email — they complete their own intake, and
+                  you see their progress here, never their documents.
+                </p>
+                <div className="mt-6">
+                  <CreateOrganisation />
+                </div>
+              </PanelBody>
+            </Panel>
+          </Shell>
+        </main>
+      </div>
+    );
+  }
 
   /**
    * Read through the progress view, never the applications table

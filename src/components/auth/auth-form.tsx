@@ -342,19 +342,25 @@ export function AuthForm({
           Your documents are encrypted at rest and in transit.
         </p>
 
-        {audience === "traveller" && (
+        {(audience === "traveller" || audience === "employer") && (
           <p className="t-muted text-center">
             {mode === "sign-up" ? (
               <>
-                Already have a Toplance account?{" "}
-                <Link href="/sign-in" className="font-semibold text-brand-text hover:underline">
+                Already have an account?{" "}
+                <Link
+                  href={audience === "employer" ? "/employer/sign-in" : "/sign-in"}
+                  className="font-semibold text-brand-text hover:underline"
+                >
                   Sign in
                 </Link>
               </>
             ) : (
               <>
                 New to Toplance?{" "}
-                <Link href="/sign-up" className="font-semibold text-brand-text hover:underline">
+                <Link
+                  href={audience === "employer" ? "/employer/sign-up" : "/sign-up"}
+                  className="font-semibold text-brand-text hover:underline"
+                >
                   Create an account
                 </Link>
               </>

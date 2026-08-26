@@ -1,11 +1,29 @@
 import { and, eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, profiles } from "@/lib/db/schema";
+import { applications, companionUpdates, profiles } from "@/lib/db/schema";
 import { getCorridorFor } from "@/lib/data/applications";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { arrivalChecklist } from "@/lib/domain/companion";
 import { appUrl, notify } from "@/lib/notifications/notify";
+
+/**
+ * How many recipients one invocation processes. Each one is a
+ * potentially serial round trip — a stale-tips check, maybe an OpenAI
+ * call inside `refreshLocalTipsIfStale`, then an email — inside a single
+ * HTTP handler with a function timeout. Unbounded, that loop's cost and
+ * latency both grow with the approved-traveller count; this caps both.
+ *
+ * The query below orders the eligible list oldest-cache-first (nulls —
+ * never generated at all — sort ahead of everything), so the travellers
+ * most overdue for a refresh are the ones a capped run actually reaches.
+ * At more than `CRON_BATCH_LIMIT` eligible travellers, a full sweep
+ * spans more than one weekly run — acceptable for a weekly digest,
+ * where a traveller catching it a week later than another is a mild
+ * ordering effect, not a broken promise. Revisit only if the eligible
+ * count regularly exceeds a handful of runs' worth.
+ */
+const CRON_BATCH_LIMIT = 25;
 
 /**
  * The weekly post-arrival digest: one email per approved traveller who
@@ -35,6 +53,12 @@ export async function GET(request: Request) {
     );
   }
 
+  // A plain string comparison, not a timing-safe one — the same
+  // convention the rest of this codebase uses wherever a bearer value is
+  // checked (there is no other precedent for `crypto.timingSafeEqual`
+  // here); a constant-time compare would be the stricter choice for a
+  // secret this route is the sole guard for, but is left as a possible
+  // future hardening rather than introduced ad hoc in this one route.
   const authorization = request.headers.get("authorization");
   if (authorization !== `Bearer ${secret}`) {
     return Response.json({ error: "Unauthorized." }, { status: 401 });
@@ -47,6 +71,21 @@ export async function GET(request: Request) {
   // `EditableDigest` and the profile page give it, rather than `!= 'off'`
   // which SQL would silently evaluate to NULL (and so exclude) for a
   // key that was never set.
+  const eligible = and(
+    eq(applications.status, "approved"),
+    sql`(${profiles.notificationPrefs}->>'companionDigest') is distinct from 'off'`
+  );
+
+  const [{ count: eligibleCount }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(applications)
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+    .where(eligible);
+
+  // Left-joined to `companion_updates` only to order by it: a `NULL`
+  // (never generated) sorts first via `nulls first`, then the oldest
+  // `generatedAt` — so a capped batch always spends its slots on whoever
+  // has waited longest for a refresh, not an arbitrary id order.
   const recipients = await db
     .select({
       applicationId: applications.id,
@@ -54,12 +93,16 @@ export async function GET(request: Request) {
     })
     .from(applications)
     .innerJoin(profiles, eq(profiles.id, applications.travelerId))
-    .where(
+    .leftJoin(
+      companionUpdates,
       and(
-        eq(applications.status, "approved"),
-        sql`(${profiles.notificationPrefs}->>'companionDigest') is distinct from 'off'`
+        eq(companionUpdates.applicationId, applications.id),
+        eq(companionUpdates.kind, "local_tips")
       )
-    );
+    )
+    .where(eligible)
+    .orderBy(sql`${companionUpdates.generatedAt} asc nulls first`)
+    .limit(CRON_BATCH_LIMIT);
 
   let checked = 0;
   let notified = 0;
@@ -94,7 +137,16 @@ export async function GET(request: Request) {
     }
   }
 
-  return Response.json({ checked, notified });
+  // `eligible` is the true population size (a cheap COUNT, no per-row
+  // work); `skipped` is what this run's cap left for a later run to
+  // pick up — both cheap to report, and what makes a shrinking or
+  // growing backlog visible without querying the database by hand.
+  return Response.json({
+    checked,
+    notified,
+    eligible: eligibleCount,
+    skipped: Math.max(0, eligibleCount - checked),
+  });
 }
 
 /** The checklist's own item titles, when there are no AI tips to summarise instead. */

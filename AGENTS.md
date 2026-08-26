@@ -31,8 +31,14 @@ depend on them. Do not invent per-app variants.
 `app.object_action`, all lowercase — `toplance.document_uploaded`,
 `thrivo.meal_logged`. No other format, for any app.
 
-Nothing in this repo emits analytics yet. The first instrumentation added here
-sets the precedent, so it must follow this shape from the first event.
+The event list is `src/lib/analytics/events.ts` — a union type, so a name that
+does not exist is a compile error, and `events.test.ts` asserts the format. Add
+new events there rather than passing a string at a call site.
+
+Events are written to the `analytics_events` table by `track()`, which never
+throws: no analytics write is worth failing a user's action for. No analytics
+vendor has been chosen; adopting one is a second implementation behind `track()`,
+not a change at every call site.
 
 ## Repositories
 
@@ -45,6 +51,16 @@ sets the precedent, so it must follow this shape from the first event.
 `staging` and `production`. Nothing else — no `dev`, `qa`, `uat` or `preview`
 as a named environment tier.
 
+## AI chat rendering
+
+- Render every model-authored chat message through the shared
+  `src/components/app/chat-markdown.tsx` component.
+- Keep traveller-authored messages as plain text.
+- Do not enable raw HTML, `rehype-raw`, remote Markdown images or
+  `dangerouslySetInnerHTML` for model output.
+- Extend the shared renderer when a new Markdown element is needed; do not create
+  page-specific Markdown implementations.
+
 # Known deviations in this repo
 
 Recorded so they are neither perpetuated nor silently "fixed" without a plan.
@@ -53,11 +69,16 @@ Pre-launch, so no production data is at risk.
 | Convention | Current state | Notes |
 |---|---|---|
 | `toplance.*` schema | every table is in `public` | needs a schema move |
-| `core.users` | local `profiles` table, FK to `auth.users` | duplicates shared identity |
+| `core.users` | local `profiles` table, keyed on the Clerk user id | identity is Clerk's; `profiles` holds the visa-specific fields. No FK to a shared table yet |
 | `core.organizations` | `organisations` (British spelling) | convention is the `z` spelling |
 | `core.memberships` | `org_members` | |
 | plural table names | `audit_log` is singular | should be `audit_logs` |
 | `<app>-<surface>` repo | remote is `toplance-mono` | does not match the pattern |
+
+Every table and column name lives in one file, `src/lib/db/schema.ts`. With no
+production data, adopting the conventions above is an edit plus a regenerated
+migration — which is why deferring them costs little, and why they should not be
+changed unilaterally in the meantime.
 
 Do not migrate these unilaterally — the schema move is part of BeOrchid Core
 work and gets planned with the platform team.

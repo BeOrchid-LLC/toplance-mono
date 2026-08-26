@@ -1,103 +1,62 @@
 "use server";
 
-import { redirect } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/lib/db/client";
+import { profiles } from "@/lib/db/schema";
 import { toE164 } from "@/lib/domain/countries";
 import { isLocale } from "@/lib/i18n/locales";
 
-export type AuthState = { error?: string; sent?: boolean; email?: string };
-
 /**
- * Email one-time code, not a password. The client locked this for the
- * operations console — an authenticator app is a barrier for staff who
- * change devices, and a six-digit email code is the same security story
- * without the support burden. We use it everywhere for consistency.
+ * Clerk holds the email address and the credential; everything a visa
+ * application needs about a person lives in `profiles`. This runs once,
+ * straight after sign-up completes, to write the fields the form
+ * collected that Clerk has no opinion about.
+ *
+ * Sign-in remains an email one-time code, not a password. The client
+ * locked that for the operations console: an authenticator app is a
+ * barrier for staff who change devices, and a six-digit email code is
+ * the same security story without the support burden.
  */
-export async function requestCode(
-  _prev: AuthState,
-  formData: FormData
-): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  const fullName = String(formData.get("full_name") ?? "").trim();
-  const countryIso = String(formData.get("country_iso") ?? "ng");
-  const phoneDigits = String(formData.get("phone") ?? "").replace(/\D/g, "");
-  const localeRaw = String(formData.get("locale") ?? "en");
-  const mode = String(formData.get("mode") ?? "sign-in");
-
-  if (!email || !email.includes("@")) {
-    return { error: "Enter the email address you want the code sent to." };
+export async function completeProfile(input: {
+  fullName: string;
+  phone: string;
+  countryIso: string;
+  locale: string;
+}): Promise<{ error?: string }> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { error: "Your session did not carry through. Sign in again." };
   }
-  if (mode === "sign-up" && !fullName) {
+
+  const fullName = input.fullName.trim();
+  if (!fullName) {
     return { error: "Enter your full name as it appears in your passport." };
   }
 
-  const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      // Sign-in must not quietly create an account for a typo'd address.
-      shouldCreateUser: mode === "sign-up",
-      data:
-        mode === "sign-up"
-          ? {
-              full_name: fullName,
-              phone: phoneDigits ? toE164(countryIso, phoneDigits) : null,
-              country_iso: countryIso,
-              locale: isLocale(localeRaw) ? localeRaw : "en",
-            }
-          : undefined,
-    },
-  });
-
-  if (error) {
-    return {
-      error:
-        error.message === "Signups not allowed for otp"
-          ? "We could not find an account for that address. Create one instead."
-          : error.message,
-    };
+  const email = (await currentUser())?.emailAddresses[0]?.emailAddress;
+  if (!email) {
+    return { error: "Clerk returned no email address for that account." };
   }
 
-  return { sent: true, email };
-}
+  const digits = input.phone.replace(/\D/g, "");
+  const fields = {
+    fullName,
+    phone: digits ? toE164(input.countryIso, digits) : null,
+    countryIso: input.countryIso,
+    locale: isLocale(input.locale) ? input.locale : "en",
+  };
 
-export async function verifyCode(
-  _prev: AuthState,
-  formData: FormData
-): Promise<AuthState> {
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  const token = String(formData.get("token") ?? "").replace(/\D/g, "");
-  const next = String(formData.get("next") ?? "/app");
-
-  if (token.length !== 6) {
-    return { error: "The code is six digits.", email };
-  }
-
-  const supabase = await createClient();
-  const { error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
-
-  if (error) {
-    return {
-      error:
-        "That code did not work. It expires after ten minutes and can only be used once.",
-      email,
-    };
-  }
+  // Upsert rather than update: this is the first write of a brand new
+  // account, and the profile row does not exist yet. Doing it here as
+  // well as in `getProfile` means a sign-up never lands on a screen
+  // that has to invent a name for someone.
+  await db
+    .insert(profiles)
+    .values({ id: userId, email, ...fields })
+    .onConflictDoUpdate({ target: profiles.id, set: fields });
 
   revalidatePath("/", "layout");
-  redirect(next);
-}
-
-export async function signOut() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  revalidatePath("/", "layout");
-  redirect("/");
+  return {};
 }

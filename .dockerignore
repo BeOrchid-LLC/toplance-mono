@@ -1,0 +1,12 @@
+# Keep secrets and local-only state out of the build context. .env files
+# especially: the image must receive configuration from Coolify, never
+# bake a developer's local credentials in.
+.env*
+.git
+.next
+node_modules
+.clerk
+.playwright-mcp
+docs
+*.png
+npm-debug.log*

@@ -17,6 +17,7 @@ import {
   getOrCreateApplication,
   getProfile,
 } from "@/lib/data/applications";
+import { unreadCountFor } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 
@@ -49,9 +50,10 @@ export default async function DashboardPage() {
   // Intake first — there is nothing meaningful to show before it.
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [docs, answers] = await Promise.all([
+  const [docs, answers, unreadMessages] = await Promise.all([
     getDocuments(application.id),
     getIntakeAnswers(application.id),
+    unreadCountFor(application.id, "traveler"),
   ]);
 
   const completion = completionOf(docs);
@@ -129,13 +131,15 @@ export default async function DashboardPage() {
                 message you.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Button
-                  variant="neutral"
-                  size="sm"
-                  disabled
-                  title="Messaging arrives in the next slice"
-                >
-                  <MessageSquare /> Open messages
+                <Button asChild variant="neutral" size="sm">
+                  <Link href="/app/messages">
+                    <MessageSquare /> Open messages
+                    {unreadMessages > 0 && (
+                      <Badge variant="brand">
+                        <span className="num">{unreadMessages}</span>
+                      </Badge>
+                    )}
+                  </Link>
                 </Button>
                 <Button asChild variant="tertiary" size="sm">
                   <Link href="/app/agent">

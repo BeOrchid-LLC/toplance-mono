@@ -15,6 +15,7 @@ import {
   canWriteApplication,
   canWriteDocuments,
   canWriteIntakeAnswers,
+  canWriteMessages,
   isStaff,
 } from "@/lib/auth/policy";
 import { audit } from "@/lib/audit";
@@ -24,6 +25,7 @@ import {
   signedDocumentUrl,
 } from "@/lib/storage/documents";
 import { recordIntakeAnswer } from "@/lib/data/intake";
+import { sendMessageRow } from "@/lib/data/messages";
 import { submitApplicationTx } from "@/lib/data/submissions";
 import {
   addTravelRecord as insertTravelRecord,
@@ -35,6 +37,7 @@ import { track } from "@/lib/analytics/track";
 import {
   appUrl,
   markNotificationsRead as markOwnNotificationsRead,
+  notify,
   notifyStaff,
 } from "@/lib/notifications/notify";
 
@@ -302,6 +305,83 @@ export async function submitApplication(applicationId: string) {
     }
 
     return result;
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * One message on a case thread — the traveller writes from `/app/messages`,
+ * staff from the case screen, and both call this one action. `senderRole`
+ * is never trusted from the form: it comes from the guarded actor, the
+ * same reason `updateProfile` never takes an id.
+ *
+ * The counterpart is notified, not the sender: staff sending means the
+ * traveller hears about it; a traveller sending goes to whoever owns the
+ * case (Task 6 gave `assigneeId` a writer), or every reviewer when nobody
+ * has claimed it yet — the same "assignee if set, else notifyStaff"
+ * routing `submitApplication` uses for the initial submission.
+ */
+export async function sendMessage(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const body = String(formData.get("body") ?? "");
+
+  try {
+    const { actor, application } = await requireApplicationAccess(
+      applicationId,
+      canWriteMessages
+    );
+    const senderRole = actor.role === "staff" ? "staff" : "traveler";
+
+    const result = await sendMessageRow(applicationId, actor.userId, senderRole, body);
+    if ("error" in result) return result;
+
+    await track("toplance.message_sent", { applicationId, senderRole }, actor.userId);
+
+    const [sender] = await db
+      .select({ fullName: profiles.fullName })
+      .from(profiles)
+      .where(eq(profiles.id, actor.userId))
+      .limit(1);
+    const preview = body.trim().slice(0, 140);
+
+    if (senderRole === "staff") {
+      await notify(
+        application.travelerId,
+        "message_received",
+        {
+          senderName: sender?.fullName || "Toplance team",
+          preview,
+          url: appUrl("/app/messages"),
+        },
+        applicationId
+      );
+    } else {
+      const [row] = await db
+        .select({ assigneeId: applications.assigneeId })
+        .from(applications)
+        .where(eq(applications.id, applicationId))
+        .limit(1);
+      const payload = {
+        senderName: sender?.fullName || "Unnamed",
+        preview,
+        url: appUrl(`/ops/cases/${applicationId}`),
+      } as const;
+
+      if (row?.assigneeId) {
+        await notify(row.assigneeId, "message_received", payload, applicationId);
+      } else {
+        await notifyStaff("message_received", payload, applicationId);
+      }
+    }
+
+    // The traveller's messages page and the ops case screen both read
+    // this thread.
+    revalidatePath("/app", "layout");
+    revalidatePath("/ops", "layout");
+    return { ok: true };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

@@ -538,3 +538,4 @@ export type Corridor = typeof corridors.$inferSelect;
 export type TravelRecord = typeof travelRecords.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type CaseNote = typeof caseNotes.$inferSelect;
+export type Message = typeof messages.$inferSelect;

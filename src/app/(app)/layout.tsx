@@ -31,6 +31,7 @@ export default async function AppLayout({
     { href: "/app", label: "Dashboard" },
     { href: "/app/requirements", label: "Requirements", locked },
     { href: "/app/documents", label: "Documents", locked },
+    { href: "/app/messages", label: "Messages", locked },
   ];
 
   return (

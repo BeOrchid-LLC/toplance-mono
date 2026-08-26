@@ -87,6 +87,12 @@ export const canWriteCaseNotes: Permission = (actor) => isStaff(actor);
 export const canReadItinerary: Permission = (actor, app) =>
   ownsApplication(actor, app) || isStaff(actor);
 
+/** Same privacy boundary as case notes: participants only, sponsors never. */
+export const canReadMessages: Permission = (actor, app) =>
+  ownsApplication(actor, app) || isStaff(actor);
+
+export const canWriteMessages: Permission = canReadMessages;
+
 export function canWriteCorridors(actor: Actor): boolean {
   return isOwner(actor);
 }
@@ -177,9 +183,6 @@ export function canReadAuditLog(actor: Actor): boolean {
  *   invitations ................. "org admins manage invitations". The
  *                                 Invite button is disabled. Needs an
  *                                 org-scoped guard before it is enabled
- *   messages .................... "participants read/write messages".
- *                                 Messaging is not built; there is no
- *                                 canRead/canWriteMessages here yet
  *
  * itineraries ................... canReadItinerary guards the profile's
  *                                 read surface. Nothing generates one
@@ -190,4 +193,10 @@ export function canReadAuditLog(actor: Actor): boolean {
  *                                 write, the traveller reads, sponsors
  *                                 never see them (post-RLS addition,
  *                                 not from the original migration)
+ * messages ....................... canRead/canWriteMessages — the same
+ *                                 boundary as case notes: traveller and
+ *                                 staff both read and write, sponsors
+ *                                 never see the thread (post-RLS
+ *                                 addition, not from the original
+ *                                 migration)
  * ============================================================ */

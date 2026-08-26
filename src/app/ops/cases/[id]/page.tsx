@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { after } from "next/server";
 import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { AppBar } from "@/components/app/app-bar";
+import { MessageComposer } from "@/components/app/message-composer";
+import { MessageThread } from "@/components/app/message-thread";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
 import { ClaimButton } from "@/components/ops/claim-button";
@@ -26,6 +29,7 @@ import {
   getProfile,
 } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
+import { listMessages, markThreadRead } from "@/lib/data/messages";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { isOwner, isStaff } from "@/lib/auth/policy";
 
@@ -84,14 +88,20 @@ export default async function OpsCasePage({
 
   if (!row) notFound();
 
-  const [docs, notes, notifications, unreadCount] = await Promise.all([
+  const [docs, notes, thread, notifications, unreadCount] = await Promise.all([
     getDocuments(row.id),
     getCaseNotes(row.id),
+    listMessages(row.id),
     getNotifications(actor.userId),
     unreadNotificationCount(actor.userId),
   ]);
   const completion = completionOf(docs);
   const destination = countryFromIso2(row.destinationIso);
+
+  // A write, not something the case screen's own response should wait
+  // on — moved off the render path, same idiom as the traveller's
+  // messages page.
+  after(() => markThreadRead(row.id, "staff"));
 
   /**
    * The reviewer's working order, which is not the traveller's: what is
@@ -268,6 +278,20 @@ export default async function OpsCasePage({
                 <PanelHeader label="Decision" />
                 <PanelBody>
                   <StatusControl applicationId={row.id} status={row.status} />
+                </PanelBody>
+              </Panel>
+
+              {/* The same thread the traveller reads at `/app/messages`
+                  — one composer, guarded by `canWriteMessages` on the
+                  shared `sendMessage` action, not a staff-only copy of
+                  it. */}
+              <Panel>
+                <PanelHeader label="Messages" />
+                <PanelBody>
+                  <MessageThread messages={thread} />
+                  <div className="mt-5 border-t border-border pt-5">
+                    <MessageComposer applicationId={row.id} />
+                  </div>
                 </PanelBody>
               </Panel>
             </div>

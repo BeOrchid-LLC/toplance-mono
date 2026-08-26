@@ -12,6 +12,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The e2e suite's dev server builds into its own dist dir
+    // (`NEXT_DIST_DIR` in playwright.config.ts) — as much generated
+    // output as `.next`, and as unlintable.
+    ".next-e2e*/**",
+    // Playwright's own output: reports, traces, screenshots.
+    "playwright-report/**",
+    "test-results/**",
   ]),
 ]);
 

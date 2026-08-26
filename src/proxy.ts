@@ -23,6 +23,15 @@ import { authRoutes, signedInDestination } from "@/lib/auth/routes";
 const isPublicRoute = createRouteMatcher([
   "/",
   ...authRoutes.map((r) => `${r.prefix}(.*)`),
+  // Not an auth route: a signed-in traveller must also reach this page
+  // to accept, so it is deliberately absent from `authRoutes` — nothing
+  // here should redirect a signed-in visitor away.
+  "/invite(.*)",
+  // The weekly digest cron: a server calling a server, never a browser
+  // with a Clerk session, so there is no session for this proxy to find
+  // — `CRON_SECRET`, checked inside the route itself, is the actual
+  // guard. Public here only means "do not redirect it to sign-in".
+  "/api/cron/companion",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

@@ -79,6 +79,15 @@ export const invitationStatus = pgEnum("invitation_status", [
   "expired",
 ]);
 
+export const notificationKind = pgEnum("notification_kind", [
+  "application_submitted", // → staff: a file reached 100% and was submitted
+  "status_changed", // → traveller
+  "document_flagged", // → traveller
+  "message_received", // → the other side of the thread
+  "itinerary_ready", // → traveller
+  "companion_digest", // → traveller: weekly post-arrival digest
+]);
+
 /**
  * One row per person, keyed on the Clerk user id.
  *
@@ -96,6 +105,8 @@ export const profiles = pgTable(
     locale: text().notNull().default("en"),
     role: appRole().notNull().default("traveler"),
     staffRole: staffRole(),
+    /** Per-person notification switches, e.g. `{ "companionDigest": "weekly" | "off" }`. */
+    notificationPrefs: jsonb().notNull().default({}),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -154,6 +165,8 @@ export const invitations = pgTable(
       .unique()
       .default(sql`encode(gen_random_bytes(24), 'hex')`),
     invitedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    acceptedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    acceptedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     expiresAt: timestamp({ withTimezone: true })
       .notNull()
@@ -296,6 +309,12 @@ export const documents = pgTable(
     state: documentState().notNull().default("not_started"),
     storagePath: text(),
     reason: text(),
+    /**
+     * Structured result of the AI pre-check that runs after upload; the
+     * traveller-facing sentence goes in `reason`, this column keeps the
+     * full verdict for the ops screen. AI never writes `verified`.
+     */
+    precheck: jsonb(),
     attempts: integer().notNull().default(0),
     isRequired: boolean().notNull().default(true),
     sortOrder: integer().notNull().default(0),
@@ -398,6 +417,49 @@ export const itineraries = pgTable("itineraries", {
   generatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * One row per person per event — the in-app half of a notification; the
+ * email half is sent by the same `notify()` call and recorded nowhere,
+ * so this row is the source of truth for the bell, not a delivery log.
+ * Invitations are deliberately NOT a kind — the invitee has no profiles
+ * row.
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    recipientId: text()
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    kind: notificationKind().notNull(),
+    applicationId: uuid().references(() => applications.id, { onDelete: "cascade" }),
+    payload: jsonb().notNull().default({}),
+    readAt: timestamp({ withTimezone: true }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("notifications_recipient_idx").on(t.recipientId, t.readAt, t.createdAt),
+  ]
+);
+
+/**
+ * Cached AI-generated companion content, regenerated when stale — one
+ * row per application per kind.
+ */
+export const companionUpdates = pgTable(
+  "companion_updates",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    applicationId: uuid()
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    kind: text().notNull().default("local_tips"),
+    payload: jsonb().notNull().default({}),
+    generatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("companion_updates_kind_key").on(t.applicationId, t.kind)]
+);
+
 export const auditLog = pgTable(
   "audit_log",
   {
@@ -471,7 +533,11 @@ export const orgApplicationProgress = pgView("org_application_progress", {
 
 export type Profile = typeof profiles.$inferSelect;
 export type Application = typeof applications.$inferSelect;
+export type Invitation = typeof invitations.$inferSelect;
 export type DocumentRow = typeof documents.$inferSelect;
 export type Corridor = typeof corridors.$inferSelect;
 export type TravelRecord = typeof travelRecords.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 export type CaseNote = typeof caseNotes.$inferSelect;
+export type Message = typeof messages.$inferSelect;
+export type CompanionUpdate = typeof companionUpdates.$inferSelect;

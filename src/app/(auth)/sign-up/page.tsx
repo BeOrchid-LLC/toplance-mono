@@ -12,10 +12,10 @@ export const metadata: Metadata = { title: "Create your account" };
 
 const ENTRIES = [
   {
-    href: "/employer/sign-in",
+    href: "/employer/sign-up",
     icon: Briefcase,
-    title: "Employer sign-in",
-    body: "Sponsor seats, invite your people and track their progress",
+    title: "Employer sign-up",
+    body: "Create your organisation, sponsor seats and invite your people",
   },
   {
     href: "/ops/sign-in",

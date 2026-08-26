@@ -13,6 +13,16 @@
 export const EVENT_NAMES = [
   "toplance.intake_completed",
 
+  /**
+   * One turn of the intake conversation, whichever way the traveller
+   * spoke: `mode` is "text" or "voice". Counted per request rather than
+   * per message, so it measures conversations, not tokens.
+   */
+  "toplance.intake_message_sent",
+
+  /** A traveller opened the voice intake and a realtime session began. */
+  "toplance.voice_session_started",
+
   /** A corridor resolved to a rule set the traveller can act on. */
   "toplance.corridor_resolved",
 
@@ -30,6 +40,13 @@ export const EVENT_NAMES = [
   /** A reviewer's verdict — the transitions out of `checking`. */
   "toplance.document_verified",
   "toplance.document_flagged",
+
+  /**
+   * The AI pre-check's verdict on one upload, `pass` or `flag` — not a
+   * reviewer's, which stays `document_verified` / `document_flagged`.
+   */
+  "toplance.document_prechecked",
+
   "toplance.application_submitted",
 
   /** A past trip on the traveller's own travel history. */
@@ -38,6 +55,39 @@ export const EVENT_NAMES = [
 
   /** A reviewer's note on a case — the traveller reads these too. */
   "toplance.case_note_added",
+
+  /** An arrival plan generated (or refreshed) on approval. */
+  "toplance.itinerary_generated",
+
+  /** A staff decision that moves a case through review — see `changeStatusTx`. */
+  "toplance.application_status_changed",
+
+  /** A reviewer takes a case as theirs. */
+  "toplance.case_claimed",
+
+  /** A reviewer hands a case back to the queue. */
+  "toplance.case_released",
+
+  /** A message sent on a case thread. Not emitted yet — the messaging slice will. */
+  "toplance.message_sent",
+
+  /** A new employer names their organisation and becomes its owner. */
+  "toplance.organisation_created",
+
+  /**
+   * The invitation lifecycle: sent from `inviteTraveller`, revoked from
+   * `revokeInvitation` (both in `@/app/employer/actions.ts`), accepted
+   * from `acceptInvitation` in `@/app/invite/actions.ts`.
+   */
+  "toplance.invitation_sent",
+  "toplance.invitation_revoked",
+  "toplance.invitation_accepted",
+
+  /** An approved traveller opened the post-arrival companion. */
+  "toplance.companion_viewed",
+
+  /** The companion's cached local tips were generated (or refreshed) by AI. */
+  "toplance.companion_generated",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

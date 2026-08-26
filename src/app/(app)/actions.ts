@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { after } from "next/server";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, documents, intakeAnswers, profiles } from "@/lib/db/schema";
+import { applications, documents, profiles } from "@/lib/db/schema";
 import {
   requireActor,
   requireApplicationAccess,
@@ -15,33 +16,41 @@ import {
   canWriteApplication,
   canWriteDocuments,
   canWriteIntakeAnswers,
+  canWriteMessages,
+  isStaff,
 } from "@/lib/auth/policy";
+import { audit } from "@/lib/audit";
+import { aiEnabled } from "@/lib/ai/models";
+import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
 import {
   deleteDocument,
   putDocument,
   signedDocumentUrl,
 } from "@/lib/storage/documents";
-import { adoptRuleSet } from "@/lib/data/checklist";
+import { recordIntakeAnswer } from "@/lib/data/intake";
+import { sendMessageRow } from "@/lib/data/messages";
 import { submitApplicationTx } from "@/lib/data/submissions";
 import {
   addTravelRecord as insertTravelRecord,
   removeTravelRecord as deleteTravelRecord,
 } from "@/lib/data/travel-records";
-import {
-  DESTINATION_ISO,
-  NATIONALITY_ISO,
-  PURPOSE_ISO,
-} from "@/lib/domain/corridors";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
-import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { isLocale } from "@/lib/i18n/locales";
-import { resolveRuleSet } from "@/lib/visa";
 import { track } from "@/lib/analytics/track";
+import {
+  appUrl,
+  markNotificationsRead as markOwnNotificationsRead,
+  notify,
+  notifyStaff,
+} from "@/lib/notifications/notify";
 
 /**
- * Record one intake answer. Re-answering an earlier question clears
- * everything after it and rebuilds the checklist — a mis-tapped chip
- * must never flow silently into the requirements.
+ * Record one intake answer, from the scripted chips.
+ *
+ * The write itself lives in `@/lib/data/intake` — the chat route's
+ * `record_answer` tool calls the same function, so the truncation and
+ * the checklist rebuild cannot differ between the two ways in. This is
+ * the guard and the revalidation around it.
  */
 export async function answerQuestion(
   applicationId: string,
@@ -54,155 +63,21 @@ export async function answerQuestion(
       canWriteIntakeAnswers
     );
 
-    const index = INTAKE_QUESTIONS.findIndex((q) => q.key === questionKey);
-    if (index === -1) return { error: "Unknown question." };
-
-    const laterKeys = INTAKE_QUESTIONS.slice(index + 1).map((q) => q.key);
-
-    await db
-      .insert(intakeAnswers)
-      .values({ applicationId, questionKey, value })
-      .onConflictDoUpdate({
-        target: [intakeAnswers.applicationId, intakeAnswers.questionKey],
-        // Re-answering is a new answer, so it carries a new timestamp.
-        set: { value, answeredAt: new Date() },
-      });
-
-    if (laterKeys.length) {
-      await db
-        .delete(intakeAnswers)
-        .where(
-          and(
-            eq(intakeAnswers.applicationId, applicationId),
-            inArray(intakeAnswers.questionKey, laterKeys)
-          )
-        );
-    }
-
-    const answers = await db
-      .select({
-        questionKey: intakeAnswers.questionKey,
-        value: intakeAnswers.value,
-      })
-      .from(intakeAnswers)
-      .where(eq(intakeAnswers.applicationId, applicationId));
-
-    const map = Object.fromEntries(answers.map((a) => [a.questionKey, a.value]));
-    const complete = INTAKE_QUESTIONS.every((q) => map[q.key]);
-
-    if (complete) {
-      await buildChecklist(applicationId, map, actor.userId);
-      await track("toplance.intake_completed", { applicationId }, actor.userId);
-    } else {
-      await db
-        .update(applications)
-        .set({ intakeComplete: false })
-        .where(eq(applications.id, applicationId));
-    }
+    const result = await recordIntakeAnswer(
+      applicationId,
+      questionKey,
+      value,
+      actor.userId
+    );
+    if ("error" in result) return result;
 
     revalidatePath("/app", "layout");
-    return { complete };
+    return result;
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
     throw error;
   }
-}
-
-/**
- * Resolve the corridor from the answers, then materialise its rule set
- * as this application's checklist. Documents already uploaded keep their
- * state, so switching destination does not throw away a verified
- * passport.
- *
- * Private on purpose: its only caller is `answerQuestion`, which has
- * already established that the caller may write to this application.
- * Exporting it from a "use server" file would publish an unguarded
- * endpoint that rewrites anyone's checklist.
- */
-async function buildChecklist(
-  applicationId: string,
-  answers: Record<string, string>,
-  userId: string
-) {
-  const nationality = NATIONALITY_ISO[answers.nationality];
-  const destination = DESTINATION_ISO[answers.destination];
-  const purpose = PURPOSE_ISO[answers.purpose];
-
-  if (!nationality || !destination || !purpose) {
-    // An answer we have no code for is still demand. Record what they
-    // typed, not a blank.
-    //
-    // Nationality used to fall back to `ng` here. Every question accepts
-    // free text, so someone answering "Senegal" was handed the Nigerian
-    // rule set under a heading that reads "as the mission publishes it".
-    // A checklist built from the wrong passport is worse than no
-    // checklist: a missing mark is honest, an invented one is not.
-    await track(
-      "toplance.corridor_requested",
-      {
-        nationality: answers.nationality,
-        destination: answers.destination,
-        purpose: answers.purpose,
-      },
-      userId
-    );
-
-    await db
-      .update(applications)
-      .set({ intakeComplete: true, status: "collecting_documents" })
-      .where(eq(applications.id, applicationId));
-    return;
-  }
-
-  const ruleSet = await resolveRuleSet({
-    nationalityIso: nationality,
-    destinationIso: destination,
-    purpose,
-  });
-
-  if (!ruleSet) {
-    // A corridor we do not serve yet. The intake still completes; the
-    // requirements screen tells the traveller their request has been
-    // counted towards it, and this is what counts it.
-    await track(
-      "toplance.corridor_requested",
-      {
-        nationalityIso: nationality,
-        destinationIso: destination,
-        purpose,
-      },
-      userId
-    );
-
-    await db
-      .update(applications)
-      .set({
-        intakeComplete: true,
-        corridorId: null,
-        status: "collecting_documents",
-      })
-      .where(eq(applications.id, applicationId));
-    return;
-  }
-
-  await track(
-    "toplance.corridor_resolved",
-    {
-      corridorId: ruleSet.corridorId,
-      provider: "curated",
-      destinationIso: destination,
-      purpose,
-    },
-    userId
-  );
-
-  await adoptRuleSet(applicationId, ruleSet);
-
-  await db
-    .update(applications)
-    .set({ intakeComplete: true, status: "collecting_documents" })
-    .where(eq(applications.id, applicationId));
 }
 
 /**
@@ -243,8 +118,11 @@ export async function uploadDocument(formData: FormData) {
   // docKey that is not on this application would otherwise store an
   // object that no row ever points at, and that nothing can later
   // delete — an unreachable passport scan kept indefinitely.
+  // `name` is pulled alongside `storagePath` for the pre-check's
+  // `expectedName` — the checklist row's own name, seeded from
+  // `corridor_requirements` (staff-curated, never traveller input).
   const [previous] = await db
-    .select({ storagePath: documents.storagePath })
+    .select({ storagePath: documents.storagePath, name: documents.name })
     .from(documents)
     .where(
       and(
@@ -293,6 +171,39 @@ export async function uploadDocument(formData: FormData) {
     actorId
   );
 
+  // The AI pre-check runs after the response — a traveller's upload
+  // latency must never wait on a model call. `precheckDocument` never
+  // throws on its own, but the guard stays for the same reason it does
+  // on the itinerary's `after()` in `@/app/ops/actions.ts`: a background
+  // failure here has nothing to do with the upload that already
+  // succeeded. Skipped entirely (no hook scheduled at all) when there is
+  // no model to run it or the MIME type is one `precheckDocument` would
+  // silently no-op on anyway.
+  if (aiEnabled() && precheckSupports(file.type)) {
+    after(async () => {
+      try {
+        const flagged = await precheckDocument({
+          applicationId,
+          docKey,
+          storagePath: path,
+          fileName: file.name,
+          mimeType: file.type,
+          expectedName: previous.name,
+          actorId,
+        });
+        // Best effort: the traveller sees a flag on their next nav
+        // either way, this just saves them a refresh when the check
+        // lands quickly.
+        if (flagged) revalidatePath("/app", "layout");
+      } catch (error) {
+        console.error(
+          `[actions] pre-check failed for document ${docKey} on application ${applicationId}`,
+          error
+        );
+      }
+    });
+  }
+
   revalidatePath("/app", "layout");
   return { ok: true };
 }
@@ -310,7 +221,7 @@ export async function uploadDocument(formData: FormData) {
  */
 export async function documentUrl(applicationId: string, docKey: string) {
   try {
-    await requireApplicationAccess(applicationId, canReadDocuments);
+    const { actor } = await requireApplicationAccess(applicationId, canReadDocuments);
 
     const [doc] = await db
       .select({ storagePath: documents.storagePath })
@@ -324,6 +235,13 @@ export async function documentUrl(applicationId: string, docKey: string) {
       .limit(1);
 
     if (!doc?.storagePath) return { error: "Nothing has been uploaded yet." };
+
+    // Only a staff view is logged — the promise this makes true is
+    // "staff access to a traveller's document is on the record", not a
+    // log of the traveller looking at their own passport scan.
+    if (isStaff(actor)) {
+      await audit(actor.userId, "document.viewed", "document", applicationId, { docKey });
+    }
 
     return { url: await signedDocumentUrl(doc.storagePath) };
   } catch (error) {
@@ -403,10 +321,106 @@ export async function submitApplication(applicationId: string) {
         { applicationId },
         actor.userId
       );
+
+      // A cheap select rather than widening `submitApplicationTx`'s
+      // return shape — that function's tests assert on it with
+      // `toEqual({ ok: true })`, and this is the only caller that needs
+      // the case reference.
+      const [app] = await db
+        .select({ caseRef: applications.caseRef })
+        .from(applications)
+        .where(eq(applications.id, applicationId))
+        .limit(1);
+
+      if (app) {
+        await notifyStaff(
+          "application_submitted",
+          { caseRef: app.caseRef, url: appUrl(`/ops/cases/${applicationId}`) },
+          applicationId
+        );
+      }
+
       revalidatePath("/app", "layout");
     }
 
     return result;
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * One message on a case thread — the traveller writes from `/app/messages`,
+ * staff from the case screen, and both call this one action. `senderRole`
+ * is never trusted from the form: it comes from the guarded actor, the
+ * same reason `updateProfile` never takes an id.
+ *
+ * The counterpart is notified, not the sender: staff sending means the
+ * traveller hears about it; a traveller sending goes to whoever owns the
+ * case (Task 6 gave `assigneeId` a writer), or every reviewer when nobody
+ * has claimed it yet — the same "assignee if set, else notifyStaff"
+ * routing `submitApplication` uses for the initial submission.
+ */
+export async function sendMessage(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const body = String(formData.get("body") ?? "");
+
+  try {
+    const { actor, application } = await requireApplicationAccess(
+      applicationId,
+      canWriteMessages
+    );
+    const senderRole = actor.role === "staff" ? "staff" : "traveler";
+
+    const result = await sendMessageRow(applicationId, actor.userId, senderRole, body);
+    if ("error" in result) return result;
+
+    await track("toplance.message_sent", { applicationId, senderRole }, actor.userId);
+
+    const [sender] = await db
+      .select({ fullName: profiles.fullName })
+      .from(profiles)
+      .where(eq(profiles.id, actor.userId))
+      .limit(1);
+    const preview = body.trim().slice(0, 140);
+
+    if (senderRole === "staff") {
+      await notify(
+        application.travelerId,
+        "message_received",
+        {
+          senderName: sender?.fullName || "Toplance team",
+          preview,
+          url: appUrl("/app/messages"),
+        },
+        applicationId
+      );
+    } else {
+      const [row] = await db
+        .select({ assigneeId: applications.assigneeId })
+        .from(applications)
+        .where(eq(applications.id, applicationId))
+        .limit(1);
+      const payload = {
+        senderName: sender?.fullName || "Unnamed",
+        preview,
+        url: appUrl(`/ops/cases/${applicationId}`),
+      } as const;
+
+      if (row?.assigneeId) {
+        await notify(row.assigneeId, "message_received", payload, applicationId);
+      } else {
+        await notifyStaff("message_received", payload, applicationId);
+      }
+    }
+
+    // The traveller's messages page and the ops case screen both read
+    // this thread.
+    revalidatePath("/app", "layout");
+    revalidatePath("/ops", "layout");
+    return { ok: true };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
@@ -502,6 +516,30 @@ export async function updateProfile(formData: FormData) {
       set.locale = locale;
     }
 
+    if (formData.has("companion_digest")) {
+      const digest = String(formData.get("companion_digest"));
+      if (digest !== "weekly" && digest !== "off") {
+        return { error: "Unsupported digest setting." };
+      }
+
+      // A read-modify-write on the jsonb column: `notificationPrefs`
+      // carries more than this one switch (or will), so a blind
+      // overwrite here would erase every other preference the moment
+      // someone changes this one.
+      const [current] = await db
+        .select({ notificationPrefs: profiles.notificationPrefs })
+        .from(profiles)
+        .where(eq(profiles.id, actor.userId))
+        .limit(1);
+
+      const existingPrefs =
+        current?.notificationPrefs && typeof current.notificationPrefs === "object"
+          ? (current.notificationPrefs as Record<string, unknown>)
+          : {};
+
+      set.notificationPrefs = { ...existingPrefs, companionDigest: digest };
+    }
+
     if (Object.keys(set).length === 0) return {};
 
     await db
@@ -511,6 +549,24 @@ export async function updateProfile(formData: FormData) {
 
     revalidatePath("/app", "layout");
     return {};
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Opening the bell marks everything in it read. Always the signed-in
+ * user's own rows — there is no id to check, the same shape as
+ * `updateProfile`. The menu calls this and then `router.refresh()`
+ * itself, so there is nothing to revalidate here.
+ */
+export async function markNotificationsRead() {
+  try {
+    const actor = await requireActor();
+    await markOwnNotificationsRead(actor.userId);
+    return { ok: true };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

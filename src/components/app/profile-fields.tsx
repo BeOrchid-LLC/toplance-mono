@@ -236,3 +236,56 @@ function LanguageEditor({
     </form>
   );
 }
+
+/** The two values `updateProfile` accepts for `companion_digest` — kept
+ * here rather than imported from the server action, the same way
+ * `LOCALES` is the client's own copy of what the server will accept. */
+const DIGEST_OPTIONS = [
+  { value: "weekly", label: "Weekly email" },
+  { value: "off", label: "Off" },
+] as const;
+
+export type CompanionDigest = (typeof DIGEST_OPTIONS)[number]["value"];
+
+export function EditableDigest({ digest }: { digest: CompanionDigest }) {
+  const current = DIGEST_OPTIONS.find((d) => d.value === digest) ?? DIGEST_OPTIONS[0];
+  return (
+    <Row
+      label="Post-arrival digest"
+      value={current.label}
+      editor={(close) => <DigestEditor digest={digest} close={close} />}
+    />
+  );
+}
+
+function DigestEditor({
+  digest,
+  close,
+}: {
+  digest: CompanionDigest;
+  close: () => void;
+}) {
+  const { pending, save } = useSave(close);
+  return (
+    <form
+      action={save}
+      onKeyDown={(e) => e.key === "Escape" && close()}
+      className="flex flex-col gap-2"
+    >
+      <Label htmlFor="companion_digest">Weekly email after you land</Label>
+      <select
+        id="companion_digest"
+        name="companion_digest"
+        defaultValue={digest}
+        className={inputClass}
+      >
+        {DIGEST_OPTIONS.map((d) => (
+          <option key={d.value} value={d.value}>
+            {d.label}
+          </option>
+        ))}
+      </select>
+      <SaveCancel pending={pending} onCancel={close} />
+    </form>
+  );
+}

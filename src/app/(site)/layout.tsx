@@ -1,4 +1,4 @@
-import { SiteNav } from "@/components/site/site-nav";
+import { SiteChrome } from "@/components/site/site-chrome";
 import { SiteFooter } from "@/components/site/site-footer";
 
 export default function SiteLayout({
@@ -6,7 +6,7 @@ export default function SiteLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="min-h-dvh">
-      <SiteNav />
+      <SiteChrome />
       <main>{children}</main>
       <SiteFooter />
     </div>

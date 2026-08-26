@@ -192,3 +192,103 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
  */
 export const HISTORY_NOTE =
   "A previous refusal must be declared. Hiding one is the single fastest way to lose the next application.";
+
+/**
+ * Everything the intake knows up to, but not including, one topic — the
+ * shadow of what `recordIntakeAnswer` does in the database when an
+ * earlier question is answered again.
+ *
+ * Shared rather than kept beside one screen because three callers need
+ * the same shadow: the scripted transcript, the model-driven rail, and
+ * the voice hook, which has to know what is still unanswered before it
+ * can tell the model what to ask next. A second copy of this rule is a
+ * rail that disagrees with the checklist.
+ */
+export function truncateAnswersAt(
+  answers: Record<string, string>,
+  key: string
+): Record<string, string> {
+  const index = INTAKE_QUESTIONS.findIndex((q) => q.key === key);
+  // A key the intake does not ask is what `recordIntakeAnswer` refuses
+  // outright, so the shadow of it is nothing happening. Spelled out
+  // because `slice(0, -1)` would otherwise quietly drop the last answer.
+  if (index === -1) return { ...answers };
+
+  const next: Record<string, string> = {};
+  INTAKE_QUESTIONS.slice(0, index).forEach((q) => {
+    if (answers[q.key]) next[q.key] = answers[q.key];
+  });
+  return next;
+}
+
+/** One answer being recorded — by whichever agent was listening. */
+export type IntakeWrite = { key: string; value: string };
+
+/**
+ * A spoken answer, and where in the typed conversation it happened.
+ *
+ * `afterWrites` is how many typed answers had been recorded when this
+ * one was spoken, which is the only thing that puts the two streams back
+ * in order later — see `orderIntakeWrites`.
+ */
+export type SpokenIntakeWrite = IntakeWrite & { afterWrites: number };
+
+/**
+ * Put the typed and the spoken answers back into the order they were
+ * actually recorded in.
+ *
+ * The screen has two writers. Typed answers can be read back off the
+ * chat transcript in order; a spoken one leaves no message behind, so it
+ * is kept separately — and simply replaying the separate list last is
+ * wrong in a way that loses data. Speak five answers, stop, type the
+ * sixth, and a spoken replay tacked onto the end truncates back to
+ * answer one and re-applies one to five, silently dropping the sixth:
+ * the rail walks backwards, the agent re-asks a question already
+ * answered, and an intake the database considers finished never reports
+ * itself finished on screen.
+ *
+ * So each spoken answer remembers how much typing preceded it, and this
+ * splices the two streams by that marker. Both are replayed in true
+ * order, and the later answer wins because it is genuinely later.
+ */
+export function orderIntakeWrites(
+  typed: IntakeWrite[],
+  spoken: SpokenIntakeWrite[]
+): IntakeWrite[] {
+  const ordered: IntakeWrite[] = [];
+  let next = 0;
+
+  for (let i = 0; i < typed.length; i++) {
+    while (next < spoken.length && spoken[next].afterWrites <= i) {
+      ordered.push(spoken[next++]);
+    }
+    ordered.push(typed[i]);
+  }
+
+  while (next < spoken.length) ordered.push(spoken[next++]);
+
+  return ordered;
+}
+
+/**
+ * Replay a run of answers over what was already known, truncating at
+ * each one the way the database does.
+ *
+ * Idempotent over an answer that is already in `base` at the same value,
+ * which is what lets the rail survive a refresh: once the server sends
+ * back a record that already contains a spoken answer, replaying that
+ * answer again lands on exactly the same rail.
+ */
+export function applyIntakeWrites(
+  base: Record<string, string>,
+  writes: IntakeWrite[]
+): Record<string, string> {
+  let answers = { ...base };
+
+  for (const write of writes) {
+    answers = truncateAnswersAt(answers, write.key);
+    answers[write.key] = write.value;
+  }
+
+  return answers;
+}

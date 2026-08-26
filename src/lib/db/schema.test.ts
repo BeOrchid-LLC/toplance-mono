@@ -70,3 +70,99 @@ describe.skipIf(!process.env.DATABASE_URL)("one application per traveller", asyn
     }
   });
 });
+
+/**
+ * A row per person per event, with defaults doing most of the work — a
+ * caller only ever supplies `recipientId` and `kind`.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("notifications", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { notifications, profiles } = await import("@/lib/db/schema");
+
+  const RECIPIENT = "test_notifications_recipient";
+
+  it("defaults payload, readAt and createdAt when only the required fields are given", async () => {
+    await db.insert(profiles).values({
+      id: RECIPIENT,
+      email: "notifications@test.invalid",
+      fullName: "Chidi",
+    });
+
+    try {
+      const [row] = await db
+        .insert(notifications)
+        .values({ recipientId: RECIPIENT, kind: "status_changed" })
+        .returning();
+
+      expect(row.payload).toEqual({});
+      expect(row.readAt).toBeNull();
+      expect(row.applicationId).toBeNull();
+      expect(row.createdAt).toBeInstanceOf(Date);
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, RECIPIENT));
+    }
+  });
+});
+
+/**
+ * Cached AI companion content, one row per application per kind.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("companion_updates", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { applications, companionUpdates, profiles } = await import("@/lib/db/schema");
+
+  const TRAVELLER = "test_companion_updates_traveller";
+
+  it("rejects a second row for the same application and kind", async () => {
+    await db.insert(profiles).values({
+      id: TRAVELLER,
+      email: "companion@test.invalid",
+      fullName: "Nkem",
+    });
+
+    try {
+      const [app] = await db
+        .insert(applications)
+        .values({ travelerId: TRAVELLER })
+        .returning({ id: applications.id });
+
+      await db.insert(companionUpdates).values({ applicationId: app.id });
+      await expect(
+        db.insert(companionUpdates).values({ applicationId: app.id })
+      ).rejects.toThrow();
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+    }
+  });
+});
+
+/**
+ * Per-person notification switches. Skipped without a database. Run
+ * `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("profiles.notificationPrefs", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { profiles } = await import("@/lib/db/schema");
+
+  const TRAVELLER = "test_notification_prefs_traveller";
+
+  it("defaults to an empty object", async () => {
+    try {
+      const [row] = await db
+        .insert(profiles)
+        .values({ id: TRAVELLER, email: "prefs@test.invalid", fullName: "Bola" })
+        .returning();
+
+      expect(row.notificationPrefs).toEqual({});
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+    }
+  });
+});

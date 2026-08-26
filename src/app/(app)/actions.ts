@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, documents, intakeAnswers, profiles } from "@/lib/db/schema";
+import { applications, documents, profiles } from "@/lib/db/schema";
 import {
   requireActor,
   requireApplicationAccess,
@@ -21,21 +21,14 @@ import {
   putDocument,
   signedDocumentUrl,
 } from "@/lib/storage/documents";
-import { adoptRuleSet } from "@/lib/data/checklist";
+import { recordIntakeAnswer } from "@/lib/data/intake";
 import { submitApplicationTx } from "@/lib/data/submissions";
 import {
   addTravelRecord as insertTravelRecord,
   removeTravelRecord as deleteTravelRecord,
 } from "@/lib/data/travel-records";
-import {
-  DESTINATION_ISO,
-  NATIONALITY_ISO,
-  PURPOSE_ISO,
-} from "@/lib/domain/corridors";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
-import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { isLocale } from "@/lib/i18n/locales";
-import { resolveRuleSet } from "@/lib/visa";
 import { track } from "@/lib/analytics/track";
 import {
   appUrl,
@@ -44,9 +37,12 @@ import {
 } from "@/lib/notifications/notify";
 
 /**
- * Record one intake answer. Re-answering an earlier question clears
- * everything after it and rebuilds the checklist — a mis-tapped chip
- * must never flow silently into the requirements.
+ * Record one intake answer, from the scripted chips.
+ *
+ * The write itself lives in `@/lib/data/intake` — the chat route's
+ * `record_answer` tool calls the same function, so the truncation and
+ * the checklist rebuild cannot differ between the two ways in. This is
+ * the guard and the revalidation around it.
  */
 export async function answerQuestion(
   applicationId: string,
@@ -59,155 +55,21 @@ export async function answerQuestion(
       canWriteIntakeAnswers
     );
 
-    const index = INTAKE_QUESTIONS.findIndex((q) => q.key === questionKey);
-    if (index === -1) return { error: "Unknown question." };
-
-    const laterKeys = INTAKE_QUESTIONS.slice(index + 1).map((q) => q.key);
-
-    await db
-      .insert(intakeAnswers)
-      .values({ applicationId, questionKey, value })
-      .onConflictDoUpdate({
-        target: [intakeAnswers.applicationId, intakeAnswers.questionKey],
-        // Re-answering is a new answer, so it carries a new timestamp.
-        set: { value, answeredAt: new Date() },
-      });
-
-    if (laterKeys.length) {
-      await db
-        .delete(intakeAnswers)
-        .where(
-          and(
-            eq(intakeAnswers.applicationId, applicationId),
-            inArray(intakeAnswers.questionKey, laterKeys)
-          )
-        );
-    }
-
-    const answers = await db
-      .select({
-        questionKey: intakeAnswers.questionKey,
-        value: intakeAnswers.value,
-      })
-      .from(intakeAnswers)
-      .where(eq(intakeAnswers.applicationId, applicationId));
-
-    const map = Object.fromEntries(answers.map((a) => [a.questionKey, a.value]));
-    const complete = INTAKE_QUESTIONS.every((q) => map[q.key]);
-
-    if (complete) {
-      await buildChecklist(applicationId, map, actor.userId);
-      await track("toplance.intake_completed", { applicationId }, actor.userId);
-    } else {
-      await db
-        .update(applications)
-        .set({ intakeComplete: false })
-        .where(eq(applications.id, applicationId));
-    }
+    const result = await recordIntakeAnswer(
+      applicationId,
+      questionKey,
+      value,
+      actor.userId
+    );
+    if ("error" in result) return result;
 
     revalidatePath("/app", "layout");
-    return { complete };
+    return result;
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
     throw error;
   }
-}
-
-/**
- * Resolve the corridor from the answers, then materialise its rule set
- * as this application's checklist. Documents already uploaded keep their
- * state, so switching destination does not throw away a verified
- * passport.
- *
- * Private on purpose: its only caller is `answerQuestion`, which has
- * already established that the caller may write to this application.
- * Exporting it from a "use server" file would publish an unguarded
- * endpoint that rewrites anyone's checklist.
- */
-async function buildChecklist(
-  applicationId: string,
-  answers: Record<string, string>,
-  userId: string
-) {
-  const nationality = NATIONALITY_ISO[answers.nationality];
-  const destination = DESTINATION_ISO[answers.destination];
-  const purpose = PURPOSE_ISO[answers.purpose];
-
-  if (!nationality || !destination || !purpose) {
-    // An answer we have no code for is still demand. Record what they
-    // typed, not a blank.
-    //
-    // Nationality used to fall back to `ng` here. Every question accepts
-    // free text, so someone answering "Senegal" was handed the Nigerian
-    // rule set under a heading that reads "as the mission publishes it".
-    // A checklist built from the wrong passport is worse than no
-    // checklist: a missing mark is honest, an invented one is not.
-    await track(
-      "toplance.corridor_requested",
-      {
-        nationality: answers.nationality,
-        destination: answers.destination,
-        purpose: answers.purpose,
-      },
-      userId
-    );
-
-    await db
-      .update(applications)
-      .set({ intakeComplete: true, status: "collecting_documents" })
-      .where(eq(applications.id, applicationId));
-    return;
-  }
-
-  const ruleSet = await resolveRuleSet({
-    nationalityIso: nationality,
-    destinationIso: destination,
-    purpose,
-  });
-
-  if (!ruleSet) {
-    // A corridor we do not serve yet. The intake still completes; the
-    // requirements screen tells the traveller their request has been
-    // counted towards it, and this is what counts it.
-    await track(
-      "toplance.corridor_requested",
-      {
-        nationalityIso: nationality,
-        destinationIso: destination,
-        purpose,
-      },
-      userId
-    );
-
-    await db
-      .update(applications)
-      .set({
-        intakeComplete: true,
-        corridorId: null,
-        status: "collecting_documents",
-      })
-      .where(eq(applications.id, applicationId));
-    return;
-  }
-
-  await track(
-    "toplance.corridor_resolved",
-    {
-      corridorId: ruleSet.corridorId,
-      provider: "curated",
-      destinationIso: destination,
-      purpose,
-    },
-    userId
-  );
-
-  await adoptRuleSet(applicationId, ruleSet);
-
-  await db
-    .update(applications)
-    .set({ intakeComplete: true, status: "collecting_documents" })
-    .where(eq(applications.id, applicationId));
 }
 
 /**

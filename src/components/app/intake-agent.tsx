@@ -64,7 +64,7 @@ export function IntakeAgent({
     startTransition(async () => {
       const result = await answerQuestion(applicationId, key, value);
       setTyping(false);
-      if (result?.error) {
+      if ("error" in result) {
         toast.error(result.error);
         setAnswers((a) => {
           const next = { ...a };
@@ -73,7 +73,7 @@ export function IntakeAgent({
         });
         return;
       }
-      if (result?.complete) router.refresh();
+      if (result.complete) router.refresh();
     });
   }
 

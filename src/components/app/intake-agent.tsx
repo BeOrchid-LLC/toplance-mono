@@ -28,8 +28,12 @@ import { answerQuestion } from "@/app/(app)/actions";
 import {
   INTAKE_QUESTIONS,
   HISTORY_NOTE,
+  applyIntakeWrites,
+  orderIntakeWrites,
   truncateAnswersAt,
   type IntakeQuestion,
+  type IntakeWrite,
+  type SpokenIntakeWrite,
 } from "@/lib/domain/intake";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
@@ -118,10 +122,9 @@ function LiveIntake({
   } | null>(null);
   // What the voice session has recorded. The chat's writes can be read
   // back off the transcript; a spoken one leaves no message behind, so
-  // it is kept here and replayed over the same rail.
-  const [spoken, setSpoken] = React.useState<
-    { key: string; value: string }[]
-  >([]);
+  // it is kept here, each one carrying the point in the typed
+  // conversation it happened at so the two streams can be re-ordered.
+  const [spoken, setSpoken] = React.useState<SpokenIntakeWrite[]>([]);
   const { locale } = useLocale();
   const router = useRouter();
   const endRef = React.useRef<HTMLDivElement>(null);
@@ -151,14 +154,11 @@ function LiveIntake({
     },
   });
 
-  // The rail is derived from the tool calls in the transcript rather
-  // than kept alongside it. There is then no second copy to fall out of
-  // step while a reply streams in, and replaying the writes in order
-  // reproduces the truncation the server already performed — a
-  // re-answered topic clears everything after it on both sides.
-  const { answers: recorded, writes } = React.useMemo(() => {
-    let answers: Answers = { ...initialAnswers };
-    let writes = 0;
+  // Every answer the traveller has typed, read back off the transcript
+  // rather than kept alongside it. There is then no second copy to fall
+  // out of step while a reply streams in.
+  const typed = React.useMemo(() => {
+    const writes: IntakeWrite[] = [];
 
     for (const message of messages) {
       for (const part of message.parts) {
@@ -170,25 +170,26 @@ function LiveIntake({
         const input = part.input as { questionKey?: string; value?: string };
         if (!input?.questionKey || !input.value) continue;
 
-        answers = truncateAnswersAt(answers, input.questionKey);
-        answers[input.questionKey] = input.value;
-        writes += 1;
+        writes.push({ key: input.questionKey, value: input.value });
       }
     }
 
-    // The spoken writes replay last, which is safe because the two
-    // agents never interleave: the composer and the chips are disabled
-    // for as long as a voice session is live, so only one of them is
-    // ever writing. Replaying them over a refreshed `initialAnswers`
-    // reaches the same rail, so nothing has to be cleared afterwards.
-    for (const write of spoken) {
-      answers = truncateAnswersAt(answers, write.key);
-      answers[write.key] = write.value;
-      writes += 1;
-    }
+    return writes;
+  }, [messages]);
 
-    return { answers, writes };
-  }, [messages, initialAnswers, spoken]);
+  // The rail is the two streams put back into the order they happened
+  // in, then replayed — which reproduces the truncation the server
+  // already performed, so a re-answered topic clears everything after it
+  // on both sides. Ordering is the whole point: a spoken answer replayed
+  // after a later typed one would truncate the typed one away.
+  const { answers: recorded, writes } = React.useMemo(() => {
+    const ordered = orderIntakeWrites(typed, spoken);
+
+    return {
+      answers: applyIntakeWrites(initialAnswers, ordered),
+      writes: ordered.length,
+    };
+  }, [typed, spoken, initialAnswers]);
 
   // A reopened answer is the traveller's intent, not a write — it holds
   // only until the model records something, which is the real clear.
@@ -206,6 +207,12 @@ function LiveIntake({
   // is built before the session exists.
   const stopVoice = React.useRef<() => void>(undefined);
 
+  // How much typing had happened when a spoken answer landed. Read
+  // through a ref because the callback below outlives the render that
+  // created it, and a stale count would file a spoken answer at the
+  // wrong point in the conversation.
+  const typedCount = React.useRef(typed.length);
+
   const voice = useVoiceIntake({
     applicationId,
     answers,
@@ -217,7 +224,10 @@ function LiveIntake({
     // screen, and a transcript we would have to persist is a thicker cut
     // than a demo needs.
     onAnswerRecorded: React.useCallback((key: string, value: string) => {
-      setSpoken((writes) => [...writes, { key, value }]);
+      setSpoken((writes) => [
+        ...writes,
+        { key, value, afterWrites: typedCount.current },
+      ]);
     }, []),
     // The tenth answer ends the call rather than leaving the agent
     // talking over a screen that has moved on. The refresh is the
@@ -231,7 +241,8 @@ function LiveIntake({
   React.useEffect(() => {
     answersRef.current = answers;
     stopVoice.current = voice.stop;
-  }, [answers, voice.stop]);
+    typedCount.current = typed.length;
+  }, [answers, voice.stop, typed]);
 
   // The last answer is what builds the checklist, and the corridor
   // header lives in the layout above this screen — same refresh the
@@ -248,7 +259,11 @@ function LiveIntake({
 
   function send(value: string) {
     const text = value.trim();
-    if (!text || busy) return;
+    // `speaking` as well as `busy`: the composer being greyed out is
+    // what a mouse obeys, and Enter is not a mouse. A typed turn
+    // starting mid-call would put a second model on the same ten
+    // questions, which is the one thing the greying out exists to stop.
+    if (!text || busy || speaking) return;
     setDraft("");
     void sendMessage({ text });
   }
@@ -273,6 +288,11 @@ function LiveIntake({
       // reliable mapping from a bubble back to a topic. The rail is
       // where an answer is reopened here.
       onEdit={editFrom}
+      // Mid-call the rail's edit button would reopen an answer the agent
+      // has no way of knowing about, and then wait for the traveller to
+      // type — which is exactly what it cannot do right now. Saying it
+      // out loud is the affordance while the microphone is on.
+      editDisabled={speaking}
       log={
         <>
           <p className="special-caps mx-auto">Conversation started</p>
@@ -481,6 +501,7 @@ function AgentLayout({
   log,
   composer,
   onEdit,
+  editDisabled,
 }: {
   answers: Answers;
   answeredCount: number;
@@ -489,6 +510,8 @@ function AgentLayout({
   composer: React.ReactNode;
   /** Reopen one answer from the rail. Omitted where the log does it. */
   onEdit?: (key: string) => void;
+  /** Shown but inert — reopening is something to say, not tap, mid-call. */
+  editDisabled?: boolean;
 }) {
   // The chat owns the viewport under the chrome. Below `lg` the chrome
   // is two bars — the app bar plus the nav rail that replaced the nav
@@ -583,6 +606,7 @@ function AgentLayout({
                 {onEdit && answers[q.key] && (
                   <EditButton
                     label={LABELS[q.key]}
+                    disabled={editDisabled}
                     onClick={() => onEdit(q.key)}
                   />
                 )}
@@ -656,9 +680,16 @@ function Composer({
       <input
         value={draft}
         onChange={(e) => onDraftChange(e.target.value)}
-        placeholder="Type your answer, or tap a suggestion"
+        // The Send button was disabled and the field was not, so Enter
+        // still submitted a turn the rest of the composer was refusing.
+        disabled={disabled}
+        placeholder={
+          voice?.status === "live"
+            ? "Listening — stop the microphone to type"
+            : "Type your answer, or tap a suggestion"
+        }
         aria-label="Your answer"
-        className="h-[var(--control-h)] min-w-0 flex-1 rounded-[var(--radius-pill)] border border-border-strong bg-surface px-5 text-base outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]"
+        className="h-[var(--control-h)] min-w-0 flex-1 rounded-[var(--radius-pill)] border border-border-strong bg-surface px-5 text-base outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)] disabled:opacity-50"
       />
       <Button type="submit" size="sm" disabled={disabled || !draft.trim()}>
         <Send /> Send
@@ -746,17 +777,24 @@ function VoiceButton({
 function EditButton({
   label,
   onClick,
+  disabled,
 }: {
   label: string;
   onClick: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={`Edit your answer to: ${label}`}
-      title="Edit this answer"
-      className="grid size-[var(--row-h)] place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+      title={
+        disabled
+          ? "Say what it should be instead — the agent is listening"
+          : "Edit this answer"
+      }
+      className="grid size-[var(--row-h)] place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
     >
       <RotateCcw className="size-5" />
     </button>

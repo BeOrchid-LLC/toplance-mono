@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { RealtimeAgent, RealtimeSession, tool } from "@openai/agents-realtime";
+import type { RealtimeSession } from "@openai/agents-realtime";
 
 import { answerQuestion } from "@/app/(app)/actions";
 import { buildVoiceIntakeInstructions } from "@/lib/ai/intake-prompt";
@@ -35,6 +35,12 @@ export type VoiceStatus = "idle" | "connecting" | "live";
  * Deliberately dumb about UI. It reports a status, hands back each
  * answer as it lands, and says when the intake finished; what any of
  * that looks like is the component's business.
+ *
+ * The SDK itself is loaded only when someone presses the button. It is
+ * a couple of megabytes of WebRTC machinery, and most travellers finish
+ * intake by typing — importing it at the top of this module would put
+ * that download in front of every one of them for a feature they never
+ * open. Only the type is imported statically, which costs nothing.
  *
  * Cuts, all deliberate: no VAD tuning (the server's own turn detection
  * decides when someone has stopped speaking), no secret refresh (a
@@ -70,6 +76,12 @@ export function useVoiceIntake({
   // still opening when the traveller changes their mind can tell that it
   // has been superseded and close itself instead of going live.
   const attemptRef = React.useRef(0);
+  // Set only once a call is genuinely up. The transport reports
+  // `disconnected` on its way out of a *failed* handshake too, which
+  // arrives before the rejection does — so without this, a refused
+  // microphone was reported as a dropped connection, and the real reason
+  // never reached the traveller.
+  const connectedRef = React.useRef(false);
 
   // The record as the *session* has changed it. A tool call can run
   // before React has re-rendered with the answer it just wrote, so the
@@ -89,6 +101,7 @@ export function useVoiceIntake({
 
   const stop = React.useCallback(() => {
     attemptRef.current += 1;
+    connectedRef.current = false;
     const session = sessionRef.current;
     sessionRef.current = null;
     setStatus("idle");
@@ -110,11 +123,18 @@ export function useVoiceIntake({
     setStatus("connecting");
 
     try {
-      const response = await fetch("/api/intake/realtime", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId }),
-      });
+      // Fetched in parallel with the secret: the SDK chunk and the mint
+      // round trip both have to finish before anything can connect, and
+      // there is no reason for the traveller to wait for them in turn.
+      const [{ RealtimeAgent, RealtimeSession, tool }, response] =
+        await Promise.all([
+          import("@openai/agents-realtime"),
+          fetch("/api/intake/realtime", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applicationId }),
+          }),
+        ]);
 
       const payload = (await response.json().catch(() => null)) as {
         value?: unknown;
@@ -186,8 +206,14 @@ export function useVoiceIntake({
         console.error("[voice] the realtime session reported an error", error);
       });
 
+      // Only a call that was actually up can drop. A handshake that
+      // fails — a refused microphone above all — tears the transport
+      // down too, and it does so *before* `connect()` rejects, so
+      // without `connectedRef` this handler would win the race and
+      // report every startup failure as a lost connection.
       session.transport.on("connection_change", (state) => {
         if (state !== "disconnected") return;
+        if (!connectedRef.current) return;
         if (sessionRef.current !== session) return;
         stop();
         handlers.current.onError(
@@ -209,6 +235,7 @@ export function useVoiceIntake({
       await session.connect({ apiKey: payload.value });
 
       if (attemptRef.current !== attempt) return;
+      connectedRef.current = true;
       setStatus("live");
     } catch (error) {
       // Cancelled rather than failed: `stop()` rejects the handshake it

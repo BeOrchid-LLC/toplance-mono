@@ -6,9 +6,9 @@ import { after } from "next/server";
 import { track } from "@/lib/analytics/track";
 import { generateAndStoreItinerary } from "@/lib/ai/itinerary";
 import { audit } from "@/lib/audit";
-import { isOwner, isStaff } from "@/lib/auth/policy";
+import { isOwner } from "@/lib/auth/policy";
+import { requireStaffAction } from "@/lib/auth/staff-gate";
 import { claimCase as claimCaseTx, releaseCase as releaseCaseTx } from "@/lib/data/assignments";
-import { getActor } from "@/lib/data/applications";
 import { addCaseNote as insertCaseNote } from "@/lib/data/case-notes";
 import { reviewDocumentTx } from "@/lib/data/review";
 import { STAFF_REACHABLE_STATUSES, changeStatusTx } from "@/lib/data/transitions";
@@ -16,9 +16,17 @@ import { STATUS, type ApplicationStatus } from "@/lib/domain/status";
 import { appUrl, notify } from "@/lib/notifications/notify";
 
 /**
+ * Every action here opens with `requireStaffAction()` — the same
+ * staff-plus-second-factor decision the ops screens are gated on, in
+ * the shape an action can return. These are POST endpoints with public
+ * ids, reachable without ever rendering the page whose button posts to
+ * them, so the page gate is not their gate.
+ */
+
+/**
  * A reviewer's verdict on one document, from the case screen.
  *
- * Gated on `isStaff` directly rather than through
+ * Gated on staff identity directly rather than through
  * `requireApplicationAccess(canWriteDocuments)`: the traveller also
  * holds `canWriteDocuments` on their own case, and this is the one
  * write they must never make — a file signed off by its own applicant.
@@ -29,10 +37,9 @@ export async function reviewDocument(formData: FormData) {
   const verdict = String(formData.get("verdict") ?? "");
   const reason = String(formData.get("reason") ?? "");
 
-  const actor = await getActor();
-  if (!actor || !isStaff(actor)) {
-    return { error: "You do not have access to that." };
-  }
+  const gate = await requireStaffAction();
+  if ("error" in gate) return gate;
+  const { actor } = gate;
 
   if (verdict !== "verified" && verdict !== "flagged") {
     return { error: "Choose a verdict." };
@@ -62,6 +69,28 @@ export async function reviewDocument(formData: FormData) {
     { docKey }
   );
 
+  if (verdict === "flagged") {
+    // The same notification the AI pre-check sends when *it* flags a
+    // document (`@/lib/ai/precheck`) — same kind, same payload, same
+    // landing page. A traveller should not have to work out which pair
+    // of eyes found the problem to be told there is one.
+    //
+    // After the transaction, and `notify` never throws: a notification
+    // is not worth costing a reviewer the verdict they just recorded.
+    await notify(
+      result.travelerId,
+      "document_flagged",
+      {
+        documentName: result.documentName,
+        // Trimmed the same way `reviewDocumentTx` trims it before
+        // writing, so the email says exactly what the red badge says.
+        reason: reason.trim(),
+        url: appUrl("/app/documents"),
+      },
+      applicationId
+    );
+  }
+
   // The traveller's ring, dashboard and documents page all read this
   // state; the ops case screen does too.
   revalidatePath("/app", "layout");
@@ -70,9 +99,9 @@ export async function reviewDocument(formData: FormData) {
 }
 
 /**
- * A note on the case file, from the desk. Gated on `isStaff` — the
- * policy is `canWriteCaseNotes`, which is staff-only regardless of the
- * application, so there is nothing per-row to load and check.
+ * A note on the case file, from the desk. Gated on staff identity alone
+ * — the policy is `canWriteCaseNotes`, which is staff-only regardless of
+ * the application, so there is nothing per-row to load and check.
  *
  * The traveller reads these on their profile, so a note is written to
  * them as much as about them.
@@ -81,10 +110,9 @@ export async function addCaseNote(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
   const body = String(formData.get("body") ?? "");
 
-  const actor = await getActor();
-  if (!actor || !isStaff(actor)) {
-    return { error: "You do not have access to that." };
-  }
+  const gate = await requireStaffAction();
+  if ("error" in gate) return gate;
+  const { actor } = gate;
 
   const result = await insertCaseNote(applicationId, actor.userId, body);
   if ("error" in result) return result;
@@ -99,8 +127,8 @@ export async function addCaseNote(formData: FormData) {
 
 /**
  * A staff decision: submitted → under_review, under_review → approved,
- * rejected or additional_documents. Gated on `isStaff` directly rather
- * than through `requireApplicationAccess` — the traveller also holds
+ * rejected or additional_documents. Gated on staff identity directly
+ * rather than through `requireApplicationAccess` — the traveller also holds
  * `canWriteApplication` on their own case, and moving your own case
  * through review is the one write they must never make.
  */
@@ -109,10 +137,9 @@ export async function changeCaseStatus(formData: FormData) {
   const to = String(formData.get("to") ?? "");
   const message = String(formData.get("message") ?? "").trim();
 
-  const actor = await getActor();
-  if (!actor || !isStaff(actor)) {
-    return { error: "You do not have access to that." };
-  }
+  const gate = await requireStaffAction();
+  if ("error" in gate) return gate;
+  const { actor } = gate;
 
   if (!(STAFF_REACHABLE_STATUSES as readonly string[]).includes(to)) {
     return { error: "Choose a status." };
@@ -179,17 +206,16 @@ export async function changeCaseStatus(formData: FormData) {
 }
 
 /**
- * Take an unowned case. Gated on `isStaff` directly, the same idiom as
- * every other action here — there is nothing per-row to check beyond
+ * Take an unowned case. Gated on staff identity alone, the same idiom
+ * as every other action here — there is nothing per-row to check beyond
  * that, `claimCaseTx` decides the rest.
  */
 export async function claimCase(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
 
-  const actor = await getActor();
-  if (!actor || !isStaff(actor)) {
-    return { error: "You do not have access to that." };
-  }
+  const gate = await requireStaffAction();
+  if ("error" in gate) return gate;
+  const { actor } = gate;
 
   const result = await claimCaseTx(applicationId, actor.userId);
   if ("error" in result) return result;
@@ -203,17 +229,16 @@ export async function claimCase(formData: FormData) {
 }
 
 /**
- * Hand a case back to the queue. Gated on `isStaff`; `releaseCaseTx`
+ * Hand a case back to the queue. Gated on staff identity; `releaseCaseTx`
  * decides whether this particular staff member may release this
  * particular case — a reviewer only their own, an owner any of them.
  */
 export async function releaseCase(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
 
-  const actor = await getActor();
-  if (!actor || !isStaff(actor)) {
-    return { error: "You do not have access to that." };
-  }
+  const gate = await requireStaffAction();
+  if ("error" in gate) return gate;
+  const { actor } = gate;
 
   const result = await releaseCaseTx(applicationId, actor.userId, isOwner(actor));
   if ("error" in result) return result;

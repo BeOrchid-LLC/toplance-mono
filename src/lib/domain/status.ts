@@ -71,6 +71,39 @@ export const STATUS: Record<
   },
 };
 
+/**
+ * The staff decision path, as a map from where a case is to where a
+ * reviewer may send it next.
+ *
+ * `draft` and `collecting_documents` have no staff exits — nobody on the
+ * desk touches a case before the traveller submits it.
+ * `additional_documents → submitted` is missing on purpose: that leg is
+ * the traveller's own resubmit, gated by `RESUBMITTABLE` in
+ * `@/lib/data/submissions`, not a staff write. `approved` and `rejected`
+ * are terminal — this product has no un-decide, only a fresh case if the
+ * situation genuinely changes.
+ *
+ * Lives here rather than in `@/lib/data/transitions` (which enforces it
+ * against the database) so `status-control.tsx` — a client component —
+ * can read the same map to draw its buttons without pulling `db` and
+ * `server-only` into the browser bundle. `changeStatusTx` re-exports it
+ * for its own callers.
+ */
+export const STAFF_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
+  draft: [],
+  collecting_documents: [],
+  submitted: ["under_review", "additional_documents"],
+  under_review: ["approved", "rejected", "additional_documents"],
+  additional_documents: [],
+  approved: [],
+  rejected: [],
+};
+
+/** Every status a staff transition can land on — the four buttons the desk ever draws. */
+export const STAFF_REACHABLE_STATUSES: readonly ApplicationStatus[] = Array.from(
+  new Set(Object.values(STAFF_TRANSITIONS).flat())
+);
+
 export const DOC_STATE: Record<DocumentState, { label: string; variant: BadgeVariant }> = {
   not_started: { label: "Not started", variant: "outline" },
   uploaded: { label: "Uploaded", variant: "info" },

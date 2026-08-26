@@ -8,6 +8,7 @@ import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
 import { ReviewRow } from "@/components/ops/review-row";
+import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -165,69 +166,86 @@ export default async function OpsCasePage({
             </div>
           </Panel>
 
-          {/* Notes are traveller-visible, so the panel says so — a
-              reviewer must never mistake this for an internal scratchpad. */}
-          <Panel className="mt-6">
-            <PanelHeader
-              label="Case notes"
-              aside={<Badge variant="neutral">Traveller reads these</Badge>}
-            />
-            <PanelBody>
-              <AddCaseNote applicationId={row.id} />
-              {notes.length > 0 && (
-                <ul className="mt-5 border-t border-border">
-                  {notes.map((note) => (
-                    <li
-                      key={note.id}
-                      className="border-b border-border py-3 last:border-b-0"
-                    >
-                      <p className="t-body max-w-[74ch]">{note.body}</p>
-                      <p className="special mt-1.5">
-                        {note.authorName ?? "Former staff"} ·{" "}
-                        {note.createdAt.toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+            <div className="grid gap-6">
+              {/* Notes are traveller-visible, so the panel says so — a
+                  reviewer must never mistake this for an internal
+                  scratchpad. */}
+              <Panel>
+                <PanelHeader
+                  label="Case notes"
+                  aside={<Badge variant="neutral">Traveller reads these</Badge>}
+                />
+                <PanelBody>
+                  <AddCaseNote applicationId={row.id} />
+                  {notes.length > 0 && (
+                    <ul className="mt-5 border-t border-border">
+                      {notes.map((note) => (
+                        <li
+                          key={note.id}
+                          className="border-b border-border py-3 last:border-b-0"
+                        >
+                          <p className="t-body max-w-[74ch]">{note.body}</p>
+                          <p className="special mt-1.5">
+                            {note.authorName ?? "Former staff"} ·{" "}
+                            {note.createdAt.toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </PanelBody>
+              </Panel>
+
+              {docs.length === 0 && (
+                <p className="t-muted max-w-[62ch]">
+                  No checklist yet — this traveller has not finished intake.
+                </p>
               )}
-            </PanelBody>
-          </Panel>
 
-          {docs.length === 0 && (
-            <p className="t-muted mt-12 max-w-[62ch]">
-              No checklist yet — this traveller has not finished intake.
-            </p>
-          )}
-
-          {sets.map(
-            (set) =>
-              set.docs.length > 0 && (
-                <Panel key={set.label} className="mt-6">
-                  <PanelHeader
-                    label={set.label}
-                    aside={
-                      <Badge variant="neutral">
-                        <span className="num">{set.docs.length}</span>
-                        {set.docs.length === 1 ? "document" : "documents"}
-                      </Badge>
-                    }
-                  />
-                  <div>
-                    {set.docs.map((doc) => (
-                      <ReviewRow
-                        key={doc.id}
-                        doc={doc}
-                        applicationId={row.id}
+              {sets.map(
+                (set) =>
+                  set.docs.length > 0 && (
+                    <Panel key={set.label}>
+                      <PanelHeader
+                        label={set.label}
+                        aside={
+                          <Badge variant="neutral">
+                            <span className="num">{set.docs.length}</span>
+                            {set.docs.length === 1 ? "document" : "documents"}
+                          </Badge>
+                        }
                       />
-                    ))}
-                  </div>
-                </Panel>
-              )
-          )}
+                      <div>
+                        {set.docs.map((doc) => (
+                          <ReviewRow
+                            key={doc.id}
+                            doc={doc}
+                            applicationId={row.id}
+                          />
+                        ))}
+                      </div>
+                    </Panel>
+                  )
+              )}
+            </div>
+
+            <div className="grid gap-6">
+              {/* The decision, kept in the rail so it stays in view as
+                  the reviewer scrolls the checklist — the whole reason
+                  this screen exists. */}
+              <Panel>
+                <PanelHeader label="Decision" />
+                <PanelBody>
+                  <StatusControl applicationId={row.id} status={row.status} />
+                </PanelBody>
+              </Panel>
+            </div>
+          </div>
         </Shell>
       </main>
     </div>

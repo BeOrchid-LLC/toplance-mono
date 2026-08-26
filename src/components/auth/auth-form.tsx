@@ -21,7 +21,18 @@ import { isInternalPath } from "@/lib/auth/routes";
 type Mode = "sign-up" | "sign-in";
 
 /** Local to this component now that the server no longer returns it. */
-type AuthState = { error?: string; sent?: boolean; email?: string };
+type AuthState = {
+  error?: string;
+  sent?: boolean;
+  email?: string;
+  /**
+   * Staff-only, in practice: a fresh sign-up has nothing enrolled to ask
+   * for, so only a returning staff account with 2FA turned on ever
+   * leaves `signIn.status` at `needs_second_factor` after the email code
+   * verifies.
+   */
+  secondFactor?: boolean;
+};
 
 /**
  * Clerk's Future API resolves with `{ error }` instead of throwing, so
@@ -48,6 +59,9 @@ export function AuthForm({
   const [state, setState] = React.useState<AuthState>({});
   const [pending, startTransition] = React.useTransition();
   const [code, setCode] = React.useState("");
+  const [totpCode, setTotpCode] = React.useState("");
+  const [useBackupCode, setUseBackupCode] = React.useState(false);
+  const [backupCode, setBackupCode] = React.useState("");
   const { locale } = useLocale();
   const router = useRouter();
   const params = useSearchParams();
@@ -135,6 +149,36 @@ export function AuthForm({
     });
   }
 
+  // `finalize` turns the completed attempt into the active session. Its
+  // `navigate` callback is explicitly invoked *before* the session is
+  // set, so the profile write cannot go in there — it would run
+  // unauthenticated. Await the plain call instead, then write, then
+  // navigate. Shared by the direct path (no second factor) and the one
+  // that verifies a TOTP or backup code first.
+  async function finalizeAndContinue() {
+    const finalized = await (mode === "sign-up" ? signUp : signIn)?.finalize();
+
+    if (finalized?.error) {
+      const message = messageFor(
+        finalized.error,
+        "We verified the code but could not start your session. Try signing in again."
+      );
+      setState((s) => ({ ...s, error: message }));
+      toast.error(message);
+      return;
+    }
+
+    if (mode === "sign-up") {
+      const result = await completeProfile({ ...profileFields, locale });
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+    }
+
+    router.push(next);
+  }
+
   function onVerify() {
     startTransition(async () => {
       const badCode =
@@ -153,32 +197,38 @@ export function AuthForm({
         return;
       }
 
-      // `finalize` turns the completed attempt into the active session.
-      // Its `navigate` callback is explicitly invoked *before* the
-      // session is set, so the profile write cannot go in there — it
-      // would run unauthenticated. Await the plain call instead, then
-      // write, then navigate.
-      const finalized = await (mode === "sign-up" ? signUp : signIn)?.finalize();
+      // A staff account with 2FA enrolled leaves `signIn.status` at
+      // `needs_second_factor` rather than `complete` here — everyone
+      // else's email code is the whole sign-in. Sign-up can never land
+      // in this branch: a brand-new account has nothing enrolled yet.
+      if (mode === "sign-in" && signIn?.status === "needs_second_factor") {
+        setState((s) => ({ ...s, error: undefined, secondFactor: true }));
+        return;
+      }
 
-      if (finalized?.error) {
-        const message = messageFor(
-          finalized.error,
-          "We verified the code but could not start your session. Try signing in again."
-        );
+      await finalizeAndContinue();
+    });
+  }
+
+  function onVerifySecondFactor() {
+    startTransition(async () => {
+      const badCode = useBackupCode
+        ? "That backup code did not work. Each one can only be used once."
+        : "That code did not work. Check your authenticator app and try again.";
+
+      const verified = useBackupCode
+        ? await signIn?.mfa.verifyBackupCode({ code: backupCode })
+        : await signIn?.mfa.verifyTOTP({ code: totpCode });
+
+      if (!verified) return;
+      if (verified.error) {
+        const message = messageFor(verified.error, badCode);
         setState((s) => ({ ...s, error: message }));
         toast.error(message);
         return;
       }
 
-      if (mode === "sign-up") {
-        const result = await completeProfile({ ...profileFields, locale });
-        if (result.error) {
-          toast.error(result.error);
-          return;
-        }
-      }
-
-      router.push(next);
+      await finalizeAndContinue();
     });
   }
 
@@ -197,6 +247,96 @@ export function AuthForm({
       }
       toast.success("New code sent.");
     });
+  }
+
+  if (state.secondFactor) {
+    // Only offered once Clerk says this account actually has backup
+    // codes to fall back to — `supportedSecondFactors` is populated as
+    // soon as the first factor verifies, which it just did.
+    const backupCodeAvailable = signIn?.supportedSecondFactors?.some(
+      (f) => f.strategy === "backup_code"
+    );
+
+    return (
+      <AuthPanel eyebrow="Verification" className="mx-auto w-full max-w-[440px]">
+        <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_12%,var(--mix))] text-brand-text">
+          <Lock className="size-5" />
+        </span>
+        <h1 className="d-md mt-4">
+          {useBackupCode ? "Enter a backup code" : "Enter your authenticator code"}
+        </h1>
+        <p className="t-muted mt-2">
+          {useBackupCode
+            ? "One of the backup codes you saved when you set up two-factor authentication. Each one works once."
+            : "This account needs a second factor. Enter the 6-digit code from your authenticator app."}
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onVerifySecondFactor();
+          }}
+          className="mt-6"
+        >
+          {useBackupCode ? (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="backup_code">Backup code</Label>
+              <Input
+                id="backup_code"
+                value={backupCode}
+                onChange={(e) => setBackupCode(e.target.value.trim())}
+                placeholder="xxxxx-xxxxx"
+                autoComplete="one-time-code"
+              />
+            </div>
+          ) : (
+            <InputOTP
+              maxLength={6}
+              value={totpCode}
+              onChange={setTotpCode}
+              aria-label="Six-digit authenticator code"
+              containerClassName="justify-center"
+            >
+              <InputOTPGroup>
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <InputOTPSlot key={i} index={i} />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          )}
+
+          <Button
+            type="submit"
+            size="block"
+            className="mt-6"
+            disabled={
+              pending ||
+              (useBackupCode ? backupCode.length === 0 : totpCode.length !== 6)
+            }
+          >
+            {pending ? "Checking…" : "Verify and continue"}
+          </Button>
+        </form>
+
+        {backupCodeAvailable && (
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setUseBackupCode((v) => !v);
+                setTotpCode("");
+                setBackupCode("");
+              }}
+              className="min-h-[var(--row-h)] text-base text-brand-text hover:underline"
+            >
+              {useBackupCode
+                ? "Use your authenticator app instead"
+                : "Use a backup code instead"}
+            </button>
+          </div>
+        )}
+      </AuthPanel>
+    );
   }
 
   if (state.sent) {

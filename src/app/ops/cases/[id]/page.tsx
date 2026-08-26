@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
@@ -12,6 +12,7 @@ import { MessageThread } from "@/components/app/message-thread";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
 import { ClaimButton } from "@/components/ops/claim-button";
+import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { ReviewRow } from "@/components/ops/review-row";
 import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
@@ -22,16 +23,12 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import { applications, corridors, profiles } from "@/lib/db/schema";
 import { countryFromIso2 } from "@/lib/domain/corridors";
-import {
-  completionOf,
-  getActor,
-  getDocuments,
-  getProfile,
-} from "@/lib/data/applications";
+import { completionOf, getDocuments } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
-import { isOwner, isStaff } from "@/lib/auth/policy";
+import { isOwner } from "@/lib/auth/policy";
+import { requireStaffConsole } from "@/lib/auth/staff-gate";
 
 const assignee = alias(profiles, "assignee");
 
@@ -49,23 +46,13 @@ export default async function OpsCasePage({
 
   const { id } = await params;
 
-  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
-  if (!profile || !actor) redirect(`/ops/sign-in?next=/ops`);
-
-  // The same honest refusal the queue shows — see /ops.
-  if (!isStaff(actor)) {
-    return (
-      <div className="grid min-h-dvh place-items-center px-6">
-        <div className="max-w-[440px] text-center">
-          <h1 className="t-h2">This console is for Toplance staff</h1>
-          <p className="t-muted mt-3">
-            Your account does not have operations access. If that is wrong, ask
-            a Director to set your role — it cannot be granted from this screen.
-          </p>
-        </div>
-      </div>
-    );
+  // The same gate the queue applies — see /ops.
+  const gate = await requireStaffConsole();
+  if (gate.decision === "refuse") return <StaffAccessRefused />;
+  if (gate.decision === "enroll") {
+    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
   }
+  const { profile, actor } = gate;
 
   const [row] = await db
     .select({

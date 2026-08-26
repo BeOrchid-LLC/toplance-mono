@@ -45,6 +45,27 @@ Run it with `npm run db:studio`, or:
 docker exec -it toplance_postgres psql -U toplance -d toplance
 ```
 
+### Staff two-factor authentication
+
+The ops console holds passport scans, so a staff sign-in needs two independent
+proofs, not one. This is enforced in code (`requireStaffConsole` in
+`src/lib/auth/staff-gate.ts`) rather than in Clerk's own session rules, but the
+*second factor itself* — an authenticator app — has to exist on the Clerk side
+first. In the Clerk Dashboard, under **User & Authentication → Multi-factor**,
+turn on:
+
+- **Authenticator application** (TOTP)
+- **Backup codes**, so a staff member who loses their device is not locked out
+
+Nothing else needs configuring — this app never marks a role "requires 2FA" in
+Clerk; it just asks `currentUser().twoFactorEnabled` and refuses the console
+until that is true. Until a staff account enrolls an authenticator app (from
+its Account Portal, linked to from the blocker screen it sees), it can sign in
+but cannot open `/ops` or `/ops/cases/*` — the blocker screen explains why and
+links straight there. Travellers and employers never see any of this: no
+traveller or employer role is ever asked for a second factor, in the dashboard
+or in the code.
+
 ---
 
 ## Layout
@@ -61,7 +82,8 @@ src/
     ui/              shadcn primitives, carrying BeOrchid tokens
     site/ auth/ app/ shared/
   lib/
-    auth/            policy (pure rules), guards (rules applied to rows)
+    auth/            policy (pure rules), guards (rules applied to rows),
+                     staff-gate (staff role + 2FA, gating the ops console)
     db/              schema, pooled client, SQL objects, seed
     storage/         S3-compatible document store
     domain/          intake questions, corridors, countries, status model
@@ -141,7 +163,9 @@ will land in the same place and pick up the tokens.
 Working end to end:
 
 - The public home page, in four languages for the hero and calls to action
-- Email one-time-code auth for all three personas, with session refresh
+- Email one-time-code auth for all three personas, with session refresh, plus a
+  required authenticator-app second factor for staff before the ops console
+  opens
 - The intake conversation — eleven topics, editable answers, checklist rebuild
 - Corridor resolution and the versioned requirements engine, behind a
   `VisaDataProvider` so a data vendor is one more entry in a list

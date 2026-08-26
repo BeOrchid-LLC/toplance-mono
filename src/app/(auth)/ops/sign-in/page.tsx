@@ -27,6 +27,7 @@ export default function OpsSignInPage() {
         <ul className="mt-8 flex flex-col gap-3">
           {[
             "A one-time code is emailed on every sign-in",
+            "An authenticator app is required as a second factor",
             "Sessions expire after 30 minutes idle",
             "Full audit trail on document access",
           ].map((x) => (

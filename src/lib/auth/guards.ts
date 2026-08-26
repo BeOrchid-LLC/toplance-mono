@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { applications } from "@/lib/db/schema";
 import { getActor } from "@/lib/data/applications";
 import { ForbiddenError, UnauthenticatedError } from "@/lib/auth/errors";
+import { isUuid } from "@/lib/domain/uuid";
 import { canManageInvitations } from "@/lib/auth/policy";
 import type { Actor, ApplicationRef, Permission } from "@/lib/auth/policy";
 
@@ -51,6 +52,11 @@ export async function requireApplicationAccess(
   permission: Permission
 ): Promise<{ actor: Actor; application: ApplicationRef }> {
   const actor = await requireActor();
+
+  // A malformed id would make Postgres throw on the uuid cast below —
+  // a raw DB error where a wrong-but-well-formed id is a clean refusal.
+  // Same answer for both: garbage in a form field is not a server fault.
+  if (!isUuid(applicationId)) throw new ForbiddenError();
 
   const [row] = await db
     .select({

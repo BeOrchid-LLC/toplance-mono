@@ -23,6 +23,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import { applications, corridors, profiles } from "@/lib/db/schema";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import { isUuid } from "@/lib/domain/uuid";
 import { completionOf, getDocuments } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
@@ -45,6 +46,11 @@ export default async function OpsCasePage({
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const { id } = await params;
+
+  // A typed URL like /ops/cases/1 would make Postgres throw on the uuid
+  // cast below — a 500 where a wrong-but-well-formed id is already a
+  // 404. A malformed id is the same answer as a missing one.
+  if (!isUuid(id)) notFound();
 
   // The same gate the queue applies — see /ops.
   const gate = await requireStaffConsole();

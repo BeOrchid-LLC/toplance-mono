@@ -66,9 +66,11 @@ export function AuthForm({
   const router = useRouter();
   const params = useSearchParams();
   const requested = params.get("next");
+  // The audience doors name their destination; the generic door cannot
+  // know who signed in, so it resolves through the /go role dispatcher.
   const next = isInternalPath(requested)
     ? requested
-    : audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/app";
+    : audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/go";
 
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();

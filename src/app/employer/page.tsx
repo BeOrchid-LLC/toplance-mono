@@ -28,6 +28,32 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Organisation console" };
 
+function formatDay(value: Date) {
+  return value.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** One line of lifecycle per invitation — the dates its status makes true. */
+function invitationTimeline(invite: {
+  status: string;
+  createdAt: Date;
+  expiresAt: Date;
+  acceptedAt: Date | null;
+}): string {
+  switch (invite.status) {
+    case "pending":
+      return `Invited ${formatDay(invite.createdAt)} · expires ${formatDay(invite.expiresAt)}`;
+    case "accepted":
+      return `Accepted ${formatDay(invite.acceptedAt ?? invite.createdAt)}`;
+    case "expired":
+      return `Expired ${formatDay(invite.expiresAt)}`;
+    default:
+      return `Invited ${formatDay(invite.createdAt)}`;
+  }
+}
+
 export default async function EmployerConsolePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
@@ -309,7 +335,10 @@ export default async function EmployerConsolePage() {
                         <p className="t-body truncate">
                           {destination?.name ??
                             invite.destinationIso?.toUpperCase() ??
-                            "Not set"}
+                            "Destination not set"}
+                        </p>
+                        <p className="special mt-1 truncate">
+                          {invitationTimeline(invite)}
                         </p>
                       </div>
 

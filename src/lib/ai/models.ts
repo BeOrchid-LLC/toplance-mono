@@ -13,5 +13,16 @@ export const INTAKE_MODEL = "gpt-5.4-mini";
 export const PRECHECK_MODEL = "gpt-5.4-mini";
 export const ITINERARY_MODEL = "gpt-5.4";
 export const REALTIME_MODEL = "gpt-realtime-mini";
+/**
+ * Local orientation tips for the post-arrival companion — plain
+ * markdown, no structured output, and lower stakes than the itinerary
+ * (no first-seven-days plan, no packing list). Its own export rather
+ * than reusing `PRECHECK_MODEL` even though the value is identical
+ * today: the two jobs have nothing to do with each other, and giving
+ * "which model does the companion's tips" its own name is what lets it
+ * move independently later without touching an unrelated document
+ * pre-check.
+ */
+export const COMPANION_MODEL = "gpt-5.4-mini";
 
 export const aiEnabled = () => !!process.env.OPENAI_API_KEY;

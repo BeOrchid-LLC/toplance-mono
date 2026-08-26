@@ -82,6 +82,12 @@ export const EVENT_NAMES = [
   "toplance.invitation_sent",
   "toplance.invitation_revoked",
   "toplance.invitation_accepted",
+
+  /** An approved traveller opened the post-arrival companion. */
+  "toplance.companion_viewed",
+
+  /** The companion's cached local tips were generated (or refreshed) by AI. */
+  "toplance.companion_generated",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

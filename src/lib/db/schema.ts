@@ -533,6 +533,7 @@ export const orgApplicationProgress = pgView("org_application_progress", {
 
 export type Profile = typeof profiles.$inferSelect;
 export type Application = typeof applications.$inferSelect;
+export type Invitation = typeof invitations.$inferSelect;
 export type DocumentRow = typeof documents.$inferSelect;
 export type Corridor = typeof corridors.$inferSelect;
 export type TravelRecord = typeof travelRecords.$inferSelect;

@@ -28,6 +28,7 @@ export function AppBar({
   subtitle,
   showAgentButton = false,
   profileHref,
+  notifications,
 }: {
   nav: NavItem[];
   name: string;
@@ -35,6 +36,8 @@ export function AppBar({
   subtitle?: string;
   showAgentButton?: boolean;
   profileHref?: string;
+  /** The bell, built by the caller — AppBar stays dumb about what it is. */
+  notifications?: React.ReactNode;
 }) {
   return (
     <>
@@ -52,6 +55,7 @@ export function AppBar({
               </Link>
             </Button>
           )}
+          {notifications}
           <span className="hidden md:inline-flex">
             <ThemeSwitch />
           </span>

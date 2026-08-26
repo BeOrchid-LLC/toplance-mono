@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { Mail, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { desc, eq, inArray } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { InvitationStatusBadge, StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
+import { CreateOrganisation } from "@/components/employer/create-organisation";
+import { InviteDialog } from "@/components/employer/invite-dialog";
+import { RevokeInvitationButton } from "@/components/employer/revoke-invitation-button";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import {
   orgApplicationProgress,
@@ -19,11 +21,38 @@ import {
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getActor, getProfile } from "@/lib/data/applications";
+import { listInvitations } from "@/lib/data/invitations";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Organisation console" };
+
+function formatDay(value: Date) {
+  return value.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** One line of lifecycle per invitation — the dates its status makes true. */
+function invitationTimeline(invite: {
+  status: string;
+  createdAt: Date;
+  expiresAt: Date;
+  acceptedAt: Date | null;
+}): string {
+  switch (invite.status) {
+    case "pending":
+      return `Invited ${formatDay(invite.createdAt)} · expires ${formatDay(invite.expiresAt)}`;
+    case "accepted":
+      return `Accepted ${formatDay(invite.acceptedAt ?? invite.createdAt)}`;
+    case "expired":
+      return `Expired ${formatDay(invite.expiresAt)}`;
+    default:
+      return `Invited ${formatDay(invite.createdAt)}`;
+  }
+}
 
 export default async function EmployerConsolePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
@@ -41,6 +70,42 @@ export default async function EmployerConsolePage() {
     .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
     .where(eq(orgMembers.userId, profile.id))
     .limit(1);
+
+  // No org row for this person yet — sign-up created the account but
+  // not the organisation, or seed data never ran. The roster, seat
+  // count and privacy laminate below all assume an organisation exists;
+  // rendering them here would either crash on `org.name` or show a
+  // "0 people" roster for an org that was never created. This is the
+  // only door in: name one, then the branch below takes over.
+  if (!membership) {
+    return (
+      <div className="min-h-dvh bg-bg">
+        <AppBar
+          nav={[{ href: "/employer", label: "People" }]}
+          name={profile.fullName}
+          email={profile.email}
+          subtitle="Organisation console"
+        />
+        <main>
+          <Shell className="py-12">
+            <Panel className="mx-auto max-w-[560px]">
+              <PanelHeader label="Name your organisation" />
+              <PanelBody>
+                <p className="t-muted max-w-[62ch]">
+                  Once it exists you can sponsor seats and invite your
+                  people by email — they complete their own intake, and
+                  you see their progress here, never their documents.
+                </p>
+                <div className="mt-6">
+                  <CreateOrganisation />
+                </div>
+              </PanelBody>
+            </Panel>
+          </Shell>
+        </main>
+      </div>
+    );
+  }
 
   /**
    * Read through the progress view, never the applications table
@@ -60,6 +125,13 @@ export default async function EmployerConsolePage() {
         .where(inArray(orgApplicationProgress.orgId, [...actor.orgIds]))
         .orderBy(desc(orgApplicationProgress.completionPct))
     : [];
+
+  // Same "no org, no unfiltered read" reasoning as the roster above:
+  // `listInvitations` takes one org id and has nothing to filter by
+  // without it.
+  const orgId = actor.orgIds[0];
+  const invitations = orgId ? await listInvitations(orgId) : [];
+  const pendingInvitations = invitations.filter((i) => i.status === "pending");
 
   const org = membership ?? undefined;
   const used = rows.length;
@@ -97,6 +169,8 @@ export default async function EmployerConsolePage() {
                 {seats > 0
                   ? `${used} of ${seats} seats in use`
                   : `${used} ${used === 1 ? "person" : "people"} · seat count not set yet`}
+                {pendingInvitations.length > 0 &&
+                  ` · ${pendingInvitations.length} invitation${pendingInvitations.length === 1 ? "" : "s"} pending`}
               </p>
               {seats > 0 && (
                 <Progress
@@ -105,9 +179,7 @@ export default async function EmployerConsolePage() {
                 />
               )}
             </div>
-            <Button disabled title="Invitations arrive in the next slice">
-              <Mail /> Invite someone
-            </Button>
+            <InviteDialog />
           </div>
 
           {/*
@@ -218,6 +290,72 @@ export default async function EmployerConsolePage() {
               })}
             </ul>
           )}
+          </Panel>
+
+          {/* A second sheet, not a section inside the first: invitations
+              and the roster are different objects — one is people who
+              exist, the other is emails nobody has answered yet. */}
+          <Panel className="mt-8">
+            <PanelHeader
+              label="Invitations"
+              aside={
+                <Badge variant="neutral">
+                  <span className="num">{pendingInvitations.length}</span>
+                  pending
+                </Badge>
+              }
+            />
+
+            {invitations.length === 0 ? (
+              <PanelBody>
+                <p className="t-muted max-w-[62ch]">
+                  Nobody has been invited yet. Send an invitation and it
+                  appears here until it is accepted, revoked or expires.
+                </p>
+              </PanelBody>
+            ) : (
+              <ul>
+                {invitations.map((invite) => {
+                  const destination = countryFromIso2(invite.destinationIso);
+                  return (
+                    <li
+                      key={invite.id}
+                      className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto_auto] lg:items-center"
+                    >
+                      <div className="min-w-0">
+                        <p className="t-title truncate" title={invite.email}>
+                          {invite.fullName || invite.email}
+                        </p>
+                        {invite.fullName && (
+                          <p className="special mt-1 truncate">{invite.email}</p>
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="t-body truncate">
+                          {destination?.name ??
+                            invite.destinationIso?.toUpperCase() ??
+                            "Destination not set"}
+                        </p>
+                        <p className="special mt-1 truncate">
+                          {invitationTimeline(invite)}
+                        </p>
+                      </div>
+
+                      <div className="lg:justify-self-end">
+                        <InvitationStatusBadge status={invite.status} />
+                      </div>
+
+                      <div className="lg:justify-self-end">
+                        {invite.status === "pending" && (
+                          <RevokeInvitationButton invitationId={invite.id} />
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </Panel>
         </Shell>
       </main>

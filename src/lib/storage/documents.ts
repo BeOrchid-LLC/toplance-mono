@@ -69,3 +69,18 @@ export async function signedDocumentUrl(path: string): Promise<string> {
 export async function deleteDocument(path: string): Promise<void> {
   await client().send(new DeleteObjectCommand({ Bucket: BUCKET, Key: path }));
 }
+
+/**
+ * Read-only sibling of `putDocument`, for the AI pre-check — the only
+ * caller that needs the bytes themselves rather than a link a browser can
+ * follow. Same client and bucket config as everything else in this file.
+ */
+export async function getDocumentBytes(
+  path: string
+): Promise<{ bytes: Uint8Array; contentType: string | null }> {
+  const response = await client().send(
+    new GetObjectCommand({ Bucket: BUCKET, Key: path })
+  );
+  const bytes = (await response.Body?.transformToByteArray()) ?? new Uint8Array();
+  return { bytes, contentType: response.ContentType ?? null };
+}

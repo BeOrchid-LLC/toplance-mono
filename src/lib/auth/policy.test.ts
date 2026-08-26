@@ -6,15 +6,20 @@ import {
   canReadApplication,
   canReadAuditLog,
   canReadCaseNotes,
+  canReadCompanion,
   canReadDocuments,
   canReadIntakeAnswers,
   canReadItinerary,
+  canReadMessages,
   canReadStatusEvents,
   canWriteApplication,
   canWriteCaseNotes,
   canWriteCorridors,
   canWriteDocuments,
   canWriteIntakeAnswers,
+  canWriteMessages,
+  canManageInvitations,
+  isOrgMemberOf,
   isOwner,
   isStaff,
   ownsApplication,
@@ -230,6 +235,50 @@ describe("itineraries", () => {
   });
 });
 
+describe("companion", () => {
+  it("is readable by the traveller who owns it and by staff", () => {
+    expect(canReadCompanion(traveller, sponsored)).toBe(true);
+    expect(canReadCompanion(reviewer, sponsored)).toBe(true);
+  });
+
+  it("is hidden from a sponsoring org and unrelated travellers", () => {
+    expect(canReadCompanion(hrAdmin, sponsored)).toBe(false);
+    expect(canReadCompanion(otherTraveller, sponsored)).toBe(false);
+  });
+});
+
+describe("messages", () => {
+  it("lets the traveller read and write their own thread", () => {
+    expect(canReadMessages(traveller, sponsored)).toBe(true);
+    expect(canWriteMessages(traveller, sponsored)).toBe(true);
+  });
+
+  it("lets staff read and write any thread", () => {
+    expect(canReadMessages(reviewer, sponsored)).toBe(true);
+    expect(canWriteMessages(reviewer, sponsored)).toBe(true);
+    expect(canReadMessages(reviewer, selfFunded)).toBe(true);
+    expect(canWriteMessages(reviewer, selfFunded)).toBe(true);
+  });
+
+  // Same privacy boundary as case notes: an organisation funds the
+  // application, it does not join the conversation.
+  it("hides the thread from a sponsoring org entirely", () => {
+    expect(canReadMessages(hrAdmin, sponsored)).toBe(false);
+    expect(canWriteMessages(hrAdmin, sponsored)).toBe(false);
+  });
+
+  it("denies an unrelated traveller both ways", () => {
+    expect(canReadMessages(otherTraveller, sponsored)).toBe(false);
+    expect(canWriteMessages(otherTraveller, sponsored)).toBe(false);
+  });
+
+  it("does not let a forged staff role read or write someone else's thread", () => {
+    const forged: Actor = { ...otherTraveller, staffRole: "owner" };
+    expect(canReadMessages(forged, sponsored)).toBe(false);
+    expect(canWriteMessages(forged, sponsored)).toBe(false);
+  });
+});
+
 describe("reference data and audit", () => {
   it("lets only owners write corridors", () => {
     expect(canWriteCorridors(owner)).toBe(true);
@@ -242,5 +291,28 @@ describe("reference data and audit", () => {
     expect(canReadAuditLog(owner)).toBe(true);
     expect(canReadAuditLog(hrAdmin)).toBe(false);
     expect(canReadAuditLog(traveller)).toBe(false);
+  });
+});
+
+describe("invitations", () => {
+  it("lets an org member manage invitations for their own org", () => {
+    expect(isOrgMemberOf(hrAdmin, ORG)).toBe(true);
+    expect(canManageInvitations(hrAdmin, ORG)).toBe(true);
+  });
+
+  it("denies an org member managing another org's invitations", () => {
+    expect(isOrgMemberOf(hrAdmin, OTHER_ORG)).toBe(false);
+    expect(canManageInvitations(hrAdmin, OTHER_ORG)).toBe(false);
+  });
+
+  it("denies a traveller and staff, org-scoped or not", () => {
+    expect(canManageInvitations(traveller, ORG)).toBe(false);
+    expect(canManageInvitations(reviewer, ORG)).toBe(false);
+    expect(canManageInvitations(owner, ORG)).toBe(false);
+  });
+
+  it("does not let a forged org_member role manage an org it does not belong to", () => {
+    const forged: Actor = { ...traveller, role: "org_member" };
+    expect(canManageInvitations(forged, ORG)).toBe(false);
   });
 });

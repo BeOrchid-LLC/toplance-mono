@@ -1,0 +1,78 @@
+name: CI
+
+# Every push and every pull request. Nothing here needs a secret: the
+# unit suite talks to a Postgres service container, and the tests that
+# would need Clerk, OpenAI, Resend or an object store skip themselves
+# when their environment is absent (see `e2e.yml` for the ones that
+# cannot).
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: Lint, types and unit tests
+    runs-on: ubuntu-latest
+
+    services:
+      # Same major version as docker-compose.yml, so a migration that
+      # works here works on a developer's machine.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: toplance
+          POSTGRES_PASSWORD: toplance
+          POSTGRES_DB: toplance
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U toplance"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://toplance:toplance@localhost:5432/toplance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # No .nvmrc and no `engines` in package.json; 24 is the current
+          # LTS and covers Next 16's floor.
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Types
+        run: npx tsc --noEmit
+
+      # What README's "First run" does, minus the bucket: migrations,
+      # then the hand-written SQL objects (views and functions the data
+      # layer reads through), then the corridor rule sets.
+      - name: Migrate and seed
+        run: |
+          npm run db:migrate
+          npm run db:seed
+
+      # Storage-backed tests (`documents.test.ts`) skip themselves
+      # without `S3_ENDPOINT`, which is deliberate here: a MinIO service
+      # just to re-prove an SDK round trip is not worth the minutes. The
+      # e2e workflow exercises the real upload path.
+      - name: Unit tests
+        run: npx vitest run
+
+      # TODO: drop `continue-on-error` once the marketing/landing
+      # prerender work in flight lands — the production build currently
+      # fails on it, and this step is here to show the day it stops
+      # doing so rather than to gate every push until then. It also
+      # builds without Clerk keys, which is its own reason to fail
+      # loudly-but-harmlessly for now.
+      - name: Production build (not yet gating)
+        continue-on-error: true
+        run: npm run build

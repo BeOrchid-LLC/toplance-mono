@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { asc, eq, inArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { AppBar } from "@/components/app/app-bar";
+import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import {
@@ -21,14 +23,16 @@ import { db, hasDatabaseEnv } from "@/lib/db/client";
 import { applications, corridors, profiles } from "@/lib/db/schema";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { getActor, getProfile } from "@/lib/data/applications";
-import { isStaff } from "@/lib/auth/policy";
+import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
+import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { cn } from "@/lib/utils";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Case queue" };
+
+const assignee = alias(profiles, "assignee");
 
 /** Days since a case landed, used for the overdue signal. */
 function ageInDays(at: Date | null) {
@@ -39,51 +43,47 @@ function ageInDays(at: Date | null) {
 export default async function OpsQueuePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
-  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
-  if (!profile || !actor) redirect("/ops/sign-in?next=/ops");
-
-  // Staff-only, and now the only thing making it so. RLS used to return
-  // an empty table to everyone else; this check is what stands in its
-  // place, and it also gives an honest screen rather than a mysteriously
-  // empty one.
-  if (!isStaff(actor)) {
-    return (
-      <div className="grid min-h-dvh place-items-center px-6">
-        <div className="max-w-[440px] text-center">
-          <h1 className="t-h2">This console is for Toplance staff</h1>
-          <p className="t-muted mt-3">
-            Your account does not have operations access. If that is wrong, ask
-            a Director to set your role — it cannot be granted from this screen.
-          </p>
-        </div>
-      </div>
-    );
+  // Staff-only, and now the only thing making that so — RLS used to
+  // return an empty table to everyone else. It also gates on a second
+  // factor: this console holds passport scans, so "staff" alone is not
+  // enough. See `requireStaffConsole` for the three-way decision.
+  const gate = await requireStaffConsole();
+  if (gate.decision === "refuse") return <StaffAccessRefused />;
+  if (gate.decision === "enroll") {
+    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
   }
+  const { profile, actor } = gate;
 
-  const rows = await db
-    .select({
-      id: applications.id,
-      caseRef: applications.caseRef,
-      status: applications.status,
-      assigneeId: applications.assigneeId,
-      createdAt: applications.createdAt,
-      travelerName: profiles.fullName,
-      travelerCountryIso: profiles.countryIso,
-      visaName: corridors.visaName,
-      destinationIso: corridors.destinationIso,
-    })
-    .from(applications)
-    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
-    .leftJoin(corridors, eq(corridors.id, applications.corridorId))
-    .where(
-      inArray(applications.status, [
-        "collecting_documents",
-        "submitted",
-        "under_review",
-        "additional_documents",
-      ])
-    )
-    .orderBy(asc(applications.createdAt));
+  const [rows, notifications, unreadCount] = await Promise.all([
+    db
+      .select({
+        id: applications.id,
+        caseRef: applications.caseRef,
+        status: applications.status,
+        assigneeId: applications.assigneeId,
+        assigneeName: assignee.fullName,
+        createdAt: applications.createdAt,
+        travelerName: profiles.fullName,
+        travelerCountryIso: profiles.countryIso,
+        visaName: corridors.visaName,
+        destinationIso: corridors.destinationIso,
+      })
+      .from(applications)
+      .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+      .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+      .leftJoin(assignee, eq(assignee.id, applications.assigneeId))
+      .where(
+        inArray(applications.status, [
+          "collecting_documents",
+          "submitted",
+          "under_review",
+          "additional_documents",
+        ])
+      )
+      .orderBy(asc(applications.createdAt)),
+    getNotifications(actor.userId),
+    unreadNotificationCount(actor.userId),
+  ]);
 
   const counters = [
     {
@@ -119,6 +119,13 @@ export default async function OpsQueuePage() {
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        notifications={
+          <NotificationsMenu
+            notifications={notifications}
+            unreadCount={unreadCount}
+            fallbackHref="/ops"
+          />
+        }
       />
 
       <div className="relative isolate">
@@ -255,7 +262,9 @@ export default async function OpsQueuePage() {
                         </TableCell>
                         <TableCell>
                           {r.assigneeId ? (
-                            <Badge variant="neutral">Assigned</Badge>
+                            <span className="t-body block truncate">
+                              {r.assigneeName ?? "Former staff"}
+                            </span>
                           ) : (
                             <Badge variant="outline">Unassigned</Badge>
                           )}

@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { AppBar } from "@/components/app/app-bar";
+import { MessageComposer } from "@/components/app/message-composer";
+import { MessageThread } from "@/components/app/message-thread";
+import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
+import { ClaimButton } from "@/components/ops/claim-button";
+import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { ReviewRow } from "@/components/ops/review-row";
+import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -15,14 +23,15 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import { applications, corridors, profiles } from "@/lib/db/schema";
 import { countryFromIso2 } from "@/lib/domain/corridors";
-import {
-  completionOf,
-  getActor,
-  getDocuments,
-  getProfile,
-} from "@/lib/data/applications";
+import { isUuid } from "@/lib/domain/uuid";
+import { completionOf, getDocuments } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
-import { isStaff } from "@/lib/auth/policy";
+import { listMessages, markThreadRead } from "@/lib/data/messages";
+import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
+import { isOwner } from "@/lib/auth/policy";
+import { requireStaffConsole } from "@/lib/auth/staff-gate";
+
+const assignee = alias(profiles, "assignee");
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -38,29 +47,26 @@ export default async function OpsCasePage({
 
   const { id } = await params;
 
-  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
-  if (!profile || !actor) redirect(`/ops/sign-in?next=/ops`);
+  // A typed URL like /ops/cases/1 would make Postgres throw on the uuid
+  // cast below — a 500 where a wrong-but-well-formed id is already a
+  // 404. A malformed id is the same answer as a missing one.
+  if (!isUuid(id)) notFound();
 
-  // The same honest refusal the queue shows — see /ops.
-  if (!isStaff(actor)) {
-    return (
-      <div className="grid min-h-dvh place-items-center px-6">
-        <div className="max-w-[440px] text-center">
-          <h1 className="t-h2">This console is for Toplance staff</h1>
-          <p className="t-muted mt-3">
-            Your account does not have operations access. If that is wrong, ask
-            a Director to set your role — it cannot be granted from this screen.
-          </p>
-        </div>
-      </div>
-    );
+  // The same gate the queue applies — see /ops.
+  const gate = await requireStaffConsole();
+  if (gate.decision === "refuse") return <StaffAccessRefused />;
+  if (gate.decision === "enroll") {
+    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
   }
+  const { profile, actor } = gate;
 
   const [row] = await db
     .select({
       id: applications.id,
       caseRef: applications.caseRef,
       status: applications.status,
+      assigneeId: applications.assigneeId,
+      assigneeName: assignee.fullName,
       travelerName: profiles.fullName,
       travelerCountryIso: profiles.countryIso,
       visaName: corridors.visaName,
@@ -69,17 +75,26 @@ export default async function OpsCasePage({
     .from(applications)
     .innerJoin(profiles, eq(profiles.id, applications.travelerId))
     .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+    .leftJoin(assignee, eq(assignee.id, applications.assigneeId))
     .where(eq(applications.id, id))
     .limit(1);
 
   if (!row) notFound();
 
-  const [docs, notes] = await Promise.all([
+  const [docs, notes, thread, notifications, unreadCount] = await Promise.all([
     getDocuments(row.id),
     getCaseNotes(row.id),
+    listMessages(row.id),
+    getNotifications(actor.userId),
+    unreadNotificationCount(actor.userId),
   ]);
   const completion = completionOf(docs);
   const destination = countryFromIso2(row.destinationIso);
+
+  // A write, not something the case screen's own response should wait
+  // on — moved off the render path, same idiom as the traveller's
+  // messages page.
+  after(() => markThreadRead(row.id, "staff"));
 
   /**
    * The reviewer's working order, which is not the traveller's: what is
@@ -114,6 +129,13 @@ export default async function OpsCasePage({
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        notifications={
+          <NotificationsMenu
+            notifications={notifications}
+            unreadCount={unreadCount}
+            fallbackHref="/ops"
+          />
+        }
       />
 
       <main>
@@ -143,6 +165,25 @@ export default async function OpsCasePage({
                     <span className="num">{row.caseRef.toUpperCase()}</span>
                   </Badge>
                 </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <p className="t-muted">
+                    {row.assigneeId ? (
+                      <>
+                        Owned by{" "}
+                        <span className="font-semibold text-ink">
+                          {row.assigneeName ?? "Former staff"}
+                        </span>
+                      </>
+                    ) : (
+                      "Unassigned — no owner yet"
+                    )}
+                  </p>
+                  <ClaimButton
+                    applicationId={row.id}
+                    isAssigned={row.assigneeId !== null}
+                    canRelease={row.assigneeId === actor.userId || isOwner(actor)}
+                  />
+                </div>
               </div>
               <p className="t-muted">
                 <span className="num font-semibold text-ink">
@@ -154,69 +195,100 @@ export default async function OpsCasePage({
             </div>
           </Panel>
 
-          {/* Notes are traveller-visible, so the panel says so — a
-              reviewer must never mistake this for an internal scratchpad. */}
-          <Panel className="mt-6">
-            <PanelHeader
-              label="Case notes"
-              aside={<Badge variant="neutral">Traveller reads these</Badge>}
-            />
-            <PanelBody>
-              <AddCaseNote applicationId={row.id} />
-              {notes.length > 0 && (
-                <ul className="mt-5 border-t border-border">
-                  {notes.map((note) => (
-                    <li
-                      key={note.id}
-                      className="border-b border-border py-3 last:border-b-0"
-                    >
-                      <p className="t-body max-w-[74ch]">{note.body}</p>
-                      <p className="special mt-1.5">
-                        {note.authorName ?? "Former staff"} ·{" "}
-                        {note.createdAt.toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+          <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+            <div className="grid gap-6">
+              {/* Notes are traveller-visible, so the panel says so — a
+                  reviewer must never mistake this for an internal
+                  scratchpad. */}
+              <Panel>
+                <PanelHeader
+                  label="Case notes"
+                  aside={<Badge variant="neutral">Traveller reads these</Badge>}
+                />
+                <PanelBody>
+                  <AddCaseNote applicationId={row.id} />
+                  {notes.length > 0 && (
+                    <ul className="mt-5 border-t border-border">
+                      {notes.map((note) => (
+                        <li
+                          key={note.id}
+                          className="border-b border-border py-3 last:border-b-0"
+                        >
+                          <p className="t-body max-w-[74ch]">{note.body}</p>
+                          <p className="special mt-1.5">
+                            {note.authorName ?? "Former staff"} ·{" "}
+                            {note.createdAt.toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </PanelBody>
+              </Panel>
+
+              {docs.length === 0 && (
+                <p className="t-muted max-w-[62ch]">
+                  No checklist yet — this traveller has not finished intake.
+                </p>
               )}
-            </PanelBody>
-          </Panel>
 
-          {docs.length === 0 && (
-            <p className="t-muted mt-12 max-w-[62ch]">
-              No checklist yet — this traveller has not finished intake.
-            </p>
-          )}
-
-          {sets.map(
-            (set) =>
-              set.docs.length > 0 && (
-                <Panel key={set.label} className="mt-6">
-                  <PanelHeader
-                    label={set.label}
-                    aside={
-                      <Badge variant="neutral">
-                        <span className="num">{set.docs.length}</span>
-                        {set.docs.length === 1 ? "document" : "documents"}
-                      </Badge>
-                    }
-                  />
-                  <div>
-                    {set.docs.map((doc) => (
-                      <ReviewRow
-                        key={doc.id}
-                        doc={doc}
-                        applicationId={row.id}
+              {sets.map(
+                (set) =>
+                  set.docs.length > 0 && (
+                    <Panel key={set.label}>
+                      <PanelHeader
+                        label={set.label}
+                        aside={
+                          <Badge variant="neutral">
+                            <span className="num">{set.docs.length}</span>
+                            {set.docs.length === 1 ? "document" : "documents"}
+                          </Badge>
+                        }
                       />
-                    ))}
+                      <div>
+                        {set.docs.map((doc) => (
+                          <ReviewRow
+                            key={doc.id}
+                            doc={doc}
+                            applicationId={row.id}
+                          />
+                        ))}
+                      </div>
+                    </Panel>
+                  )
+              )}
+            </div>
+
+            <div className="grid gap-6">
+              {/* The decision, kept in the rail so it stays in view as
+                  the reviewer scrolls the checklist — the whole reason
+                  this screen exists. */}
+              <Panel>
+                <PanelHeader label="Decision" />
+                <PanelBody>
+                  <StatusControl applicationId={row.id} status={row.status} />
+                </PanelBody>
+              </Panel>
+
+              {/* The same thread the traveller reads at `/app/messages`
+                  — one composer, guarded by `canWriteMessages` on the
+                  shared `sendMessage` action, not a staff-only copy of
+                  it. */}
+              <Panel>
+                <PanelHeader label="Messages" />
+                <PanelBody>
+                  <MessageThread messages={thread} />
+                  <div className="mt-5 border-t border-border pt-5">
+                    <MessageComposer applicationId={row.id} />
                   </div>
-                </Panel>
-              )
-          )}
+                </PanelBody>
+              </Panel>
+            </div>
+          </div>
         </Shell>
       </main>
     </div>

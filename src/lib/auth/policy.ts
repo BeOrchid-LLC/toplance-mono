@@ -87,6 +87,20 @@ export const canWriteCaseNotes: Permission = (actor) => isStaff(actor);
 export const canReadItinerary: Permission = (actor, app) =>
   ownsApplication(actor, app) || isStaff(actor);
 
+/**
+ * The post-arrival companion. Same boundary as the itinerary — a
+ * sponsor pays for the seat, it never gets a seat at the traveller's own
+ * arrival plan.
+ */
+export const canReadCompanion: Permission = (actor, app) =>
+  ownsApplication(actor, app) || isStaff(actor);
+
+/** Same privacy boundary as case notes: participants only, sponsors never. */
+export const canReadMessages: Permission = (actor, app) =>
+  ownsApplication(actor, app) || isStaff(actor);
+
+export const canWriteMessages: Permission = canReadMessages;
+
 export function canWriteCorridors(actor: Actor): boolean {
   return isOwner(actor);
 }
@@ -94,6 +108,12 @@ export function canWriteCorridors(actor: Actor): boolean {
 export function canReadAuditLog(actor: Actor): boolean {
   return isStaff(actor);
 }
+
+/** Org-scoped, not application-scoped: invitations belong to an organisation. */
+export function isOrgMemberOf(actor: Actor, orgId: string): boolean {
+  return actor.role === "org_member" && actor.orgIds.includes(orgId);
+}
+export const canManageInvitations = isOrgMemberOf; // staff deliberately excluded
 
 /* ============================================================
  * AUDIT: every policy from supabase/migrations/20260821120000_init.sql
@@ -110,6 +130,12 @@ export function canReadAuditLog(actor: Actor): boolean {
  *   members read their org ...... employer page joins via own membership
  *   members read org roster ..... getActor() reads only own memberships
  *   staff read orgs ............. no surface reads organisations as staff
+ *
+ * invitations
+ *   org admins manage invitations canManageInvitations (isOrgMemberOf),
+ *                                 enforced by requireOrgAccess in
+ *                                 `@/lib/auth/guards`; staff deliberately
+ *                                 excluded, same as the roster above
  *
  * corridors / corridor_requirements
  *   signed-in read .............. every caller sits behind a session:
@@ -157,20 +183,22 @@ export function canReadAuditLog(actor: Actor): boolean {
  *                                 cases carried no event at all
  *
  * audit_log
- *   staff read .................. canReadAuditLog; nothing reads or
- *                                 writes the audit log yet
+ *   staff read .................. canReadAuditLog; no surface reads it
+ *                                 yet, but it now has writers:
+ *                                 documentUrl in `(app)/actions.ts` logs
+ *                                 "document.viewed" for a staff caller
+ *                                 only; reviewDocument logs
+ *                                 "document.verified" / "document.flagged";
+ *                                 changeCaseStatus logs
+ *                                 "application.status_changed"; claimCase
+ *                                 / releaseCase log "application.claimed"
+ *                                 / "application.released" — all through
+ *                                 `@/lib/audit`, which never throws
  *
  * GAPS — features whose policies had no code to protect, and still have
  * none. Listed because RLS used to be the backstop for exactly this: a
  * forgotten check now fails open, so whoever builds these must add the
  * guard in the same change.
- *
- *   invitations ................. "org admins manage invitations". The
- *                                 Invite button is disabled. Needs an
- *                                 org-scoped guard before it is enabled
- *   messages .................... "participants read/write messages".
- *                                 Messaging is not built; there is no
- *                                 canRead/canWriteMessages here yet
  *
  * itineraries ................... canReadItinerary guards the profile's
  *                                 read surface. Nothing generates one
@@ -181,4 +209,15 @@ export function canReadAuditLog(actor: Actor): boolean {
  *                                 write, the traveller reads, sponsors
  *                                 never see them (post-RLS addition,
  *                                 not from the original migration)
+ * messages ....................... canRead/canWriteMessages — the same
+ *                                 boundary as case notes: traveller and
+ *                                 staff both read and write, sponsors
+ *                                 never see the thread (post-RLS
+ *                                 addition, not from the original
+ *                                 migration)
+ * companion_updates ............. canReadCompanion — the same boundary
+ *                                 as the itinerary: owning traveller and
+ *                                 staff, no sponsor branch (post-RLS
+ *                                 addition, not from the original
+ *                                 migration)
  * ============================================================ */

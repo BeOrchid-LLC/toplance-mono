@@ -72,6 +72,21 @@ export const canWriteIntakeAnswers: Permission = (actor, app) =>
 
 export const canReadStatusEvents: Permission = canReadApplication;
 
+/**
+ * Case notes are the review desk's running commentary, shown read-only
+ * to the traveller. They discuss documents, so they sit behind the same
+ * privacy boundary as the documents themselves: no sponsorship branch.
+ */
+export const canReadCaseNotes: Permission = (actor, app) =>
+  ownsApplication(actor, app) || isStaff(actor);
+
+/** Only the desk writes notes; a traveller never annotates their own case. */
+export const canWriteCaseNotes: Permission = (actor) => isStaff(actor);
+
+/** "Travellers read own itinerary, staff read itineraries" — as the RLS had it. */
+export const canReadItinerary: Permission = (actor, app) =>
+  ownsApplication(actor, app) || isStaff(actor);
+
 export function canWriteCorridors(actor: Actor): boolean {
   return isOwner(actor);
 }
@@ -156,6 +171,14 @@ export function canReadAuditLog(actor: Actor): boolean {
  *   messages .................... "participants read/write messages".
  *                                 Messaging is not built; there is no
  *                                 canRead/canWriteMessages here yet
- *   itineraries ................. "travellers read own itinerary",
- *                                 "staff read itineraries". Not built
+ *
+ * itineraries ................... canReadItinerary guards the profile's
+ *                                 read surface. Nothing generates one
+ *                                 yet, so every read is an empty state;
+ *                                 whoever builds generation already has
+ *                                 its read policy waiting
+ * case_notes .................... canRead/canWriteCaseNotes — staff
+ *                                 write, the traveller reads, sponsors
+ *                                 never see them (post-RLS addition,
+ *                                 not from the original migration)
  * ============================================================ */

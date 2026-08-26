@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, documents, intakeAnswers } from "@/lib/db/schema";
+import { applications, documents, intakeAnswers, profiles } from "@/lib/db/schema";
 import {
+  requireActor,
   requireApplicationAccess,
   toActionError,
 } from "@/lib/auth/guards";
@@ -23,11 +24,17 @@ import {
 import { adoptRuleSet } from "@/lib/data/checklist";
 import { submitApplicationTx } from "@/lib/data/submissions";
 import {
+  addTravelRecord as insertTravelRecord,
+  removeTravelRecord as deleteTravelRecord,
+} from "@/lib/data/travel-records";
+import {
   DESTINATION_ISO,
   NATIONALITY_ISO,
   PURPOSE_ISO,
 } from "@/lib/domain/corridors";
+import { COUNTRIES, toE164 } from "@/lib/domain/countries";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
+import { isLocale } from "@/lib/i18n/locales";
 import { resolveRuleSet } from "@/lib/visa";
 import { track } from "@/lib/analytics/track";
 
@@ -400,6 +407,110 @@ export async function submitApplication(applicationId: string) {
     }
 
     return result;
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Add one past trip to the signed-in traveller's own history. Like
+ * `updateProfile`, the owner comes from the session, never the form —
+ * there is no id to check because there is no id parameter at all.
+ */
+export async function addTravelRecord(formData: FormData) {
+  try {
+    const actor = await requireActor();
+
+    const result = await insertTravelRecord(actor.userId, {
+      country: String(formData.get("country") ?? ""),
+      purpose: String(formData.get("purpose") ?? ""),
+      startedOn: String(formData.get("started_on") ?? ""),
+      endedOn: String(formData.get("ended_on") ?? ""),
+    });
+    if ("error" in result) return result;
+
+    await track("toplance.travel_record_added", {}, actor.userId);
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+export async function removeTravelRecord(recordId: string) {
+  try {
+    const actor = await requireActor();
+
+    const result = await deleteTravelRecord(actor.userId, recordId);
+    if ("error" in result) return result;
+
+    await track("toplance.travel_record_removed", {}, actor.userId);
+    revalidatePath("/app", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Update the profile fields a traveller owns, one row at a time. The
+ * profile page edits inline, so the form carries only the field being
+ * saved — fields absent from the payload are left untouched rather than
+ * overwritten with blanks.
+ *
+ * Always the signed-in user's own row. There is no id parameter to
+ * check: the target comes from the session, never from the form.
+ */
+export async function updateProfile(formData: FormData) {
+  try {
+    const actor = await requireActor();
+    const set: Partial<typeof profiles.$inferInsert> = {};
+
+    if (formData.has("full_name")) {
+      const fullName = String(formData.get("full_name")).trim();
+      if (!fullName) return { error: "Your name cannot be empty." };
+      if (fullName.length > 160) return { error: "That name is too long." };
+      set.fullName = fullName;
+    }
+
+    if (formData.has("phone")) {
+      const digits = String(formData.get("phone")).replace(/\D/g, "");
+      const iso = String(formData.get("country_iso") || "ng").toLowerCase();
+      // `countryBy` falls back to Nigeria rather than failing, which
+      // would silently file the number under the wrong dial code —
+      // reject an iso we do not list instead.
+      if (!COUNTRIES.some((c) => c.iso === iso)) {
+        return { error: "Pick a country for the number." };
+      }
+      if (digits && (digits.length < 6 || digits.length > 14)) {
+        return { error: "That number does not look complete." };
+      }
+      // Clearing the field is allowed — a phone is optional.
+      set.phone = digits ? toE164(iso, digits) : null;
+      set.countryIso = iso;
+    }
+
+    if (formData.has("locale")) {
+      const locale = String(formData.get("locale"));
+      if (!isLocale(locale)) return { error: "Unsupported language." };
+      set.locale = locale;
+    }
+
+    if (Object.keys(set).length === 0) return {};
+
+    await db
+      .update(profiles)
+      .set({ ...set, updatedAt: new Date() })
+      .where(eq(profiles.id, actor.userId));
+
+    revalidatePath("/app", "layout");
+    return {};
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

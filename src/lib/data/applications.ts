@@ -9,8 +9,10 @@ import {
   corridors,
   documents,
   intakeAnswers,
+  itineraries,
   orgMembers,
   profiles,
+  statusEvents,
   type Application,
   type DocumentRow,
   type Profile,
@@ -19,7 +21,12 @@ import type { Actor } from "@/lib/auth/policy";
 
 export type { Application, DocumentRow, Profile };
 
-export type Completion = { total: number; verified: number; pct: number };
+export type Completion = {
+  total: number;
+  verified: number;
+  collected: number;
+  pct: number;
+};
 
 /**
  * The signed-in user's profile, created on first sight.
@@ -154,16 +161,55 @@ export async function getDocuments(applicationId: string): Promise<DocumentRow[]
  * dashboard, the reviewer's queue and the employer's roster. Optional
  * documents are excluded so an applicant is never held below 100% by a
  * document nobody requires.
+ *
+ * The percentage measures *collecting*: a document counts once it is
+ * uploaded and either awaiting or past review. Keying it on `verified`
+ * alone held the ring at 0% for the whole collecting phase, which reads
+ * as "nothing happened" right after an upload. `verified` is still
+ * reported on its own because submission gates on it — a file full of
+ * `checking` documents is 100% collected and still not submittable.
  */
 export function completionOf(docs: DocumentRow[]): Completion {
   const required = docs.filter((d) => d.isRequired);
   const verified = required.filter((d) => d.state === "verified").length;
+  const collected = required.filter(
+    (d) => d.state === "checking" || d.state === "verified"
+  ).length;
   const total = required.length;
   return {
     total,
     verified,
-    pct: total === 0 ? 0 : Math.round((100 * verified) / total),
+    collected,
+    pct: total === 0 ? 0 : Math.round((100 * collected) / total),
   };
+}
+
+/**
+ * The application's status history, newest first. Written on every
+ * transition (`submitApplicationTx` today); read by the profile's
+ * timeline behind `canReadStatusEvents`.
+ */
+export async function getStatusEvents(applicationId: string) {
+  return db
+    .select()
+    .from(statusEvents)
+    .where(eq(statusEvents.applicationId, applicationId))
+    .orderBy(desc(statusEvents.createdAt));
+}
+
+/**
+ * The application's itinerary, if one has been generated. Nothing
+ * generates one yet — every caller today renders the empty state — but
+ * the read surface and its `canReadItinerary` guard are where itinerary
+ * generation will land its output.
+ */
+export async function getItinerary(applicationId: string) {
+  const [row] = await db
+    .select()
+    .from(itineraries)
+    .where(eq(itineraries.applicationId, applicationId))
+    .limit(1);
+  return row ?? null;
 }
 
 export async function getCorridorFor(applicationId: string) {

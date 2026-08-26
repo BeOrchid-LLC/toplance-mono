@@ -342,6 +342,52 @@ export const statusEvents = pgTable("status_events", {
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Past international trips, one row each — the travel history a visa
+ * form asks for. Keyed on the traveller rather than the application:
+ * history belongs to the person and outlives any one case, which also
+ * keeps it clear of the one-application-per-traveller constraint above.
+ *
+ * Country and purpose are the traveller's own words, stored verbatim
+ * like intake answers — a trip can be to anywhere, for anything, and a
+ * dropdown we curate would invent precision the form does not need.
+ */
+export const travelRecords = pgTable(
+  "travel_records",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    travelerId: text()
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    country: text().notNull(),
+    purpose: text(),
+    startedOn: date(),
+    endedOn: date(),
+    note: text(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("travel_records_traveler_idx").on(t.travelerId, t.startedOn)]
+);
+
+/**
+ * The review desk's running notes on a case: staff write them, the
+ * traveller reads them read-only, sponsors never see them — the same
+ * privacy boundary as `documents`, enforced by `canReadCaseNotes`.
+ */
+export const caseNotes = pgTable(
+  "case_notes",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    applicationId: uuid()
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    authorId: text().references(() => profiles.id, { onDelete: "set null" }),
+    body: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("case_notes_application_idx").on(t.applicationId, t.createdAt)]
+);
+
 export const itineraries = pgTable("itineraries", {
   id: uuid().primaryKey().defaultRandom(),
   applicationId: uuid()
@@ -427,3 +473,5 @@ export type Profile = typeof profiles.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type DocumentRow = typeof documents.$inferSelect;
 export type Corridor = typeof corridors.$inferSelect;
+export type TravelRecord = typeof travelRecords.$inferSelect;
+export type CaseNote = typeof caseNotes.$inferSelect;

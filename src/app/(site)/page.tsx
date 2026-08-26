@@ -340,9 +340,15 @@ export default function HomePage() {
           title="Built around the two things that actually go wrong"
           lead="People submit the wrong documents, and then nobody tells them what is happening. Every item here closes one of those two gaps."
         />
-        <dl className="mt-12 grid gap-x-14 gap-y-10 md:grid-cols-2">
+        {/* The one marketing section drawn as the product's own case-file
+            cards — these six claims are what the signed-in screens
+            actually look like, so they borrow that surface verbatim. */}
+        <dl className="mt-12 grid gap-6 md:grid-cols-2">
           {FEATURES.map((f) => (
-            <div key={f.title} className="border-t border-border pt-6">
+            <div
+              key={f.title}
+              className="rounded-lg border border-border bg-surface p-6 shadow-[var(--shadow-sm)] sm:p-7"
+            >
               <dt className="d-md">{f.title}</dt>
               <dd className="t-muted mt-3">{f.body}</dd>
             </div>

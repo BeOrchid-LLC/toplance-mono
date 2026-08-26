@@ -4,8 +4,10 @@ import { Mail, Shield } from "lucide-react";
 import { desc, eq, inArray } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
@@ -140,18 +142,27 @@ export default async function EmployerConsolePage() {
 
       <main>
         <Shell className="py-12">
-          <div className="border-t border-border-strong pt-4">
-            <h2 className="special-caps">Your people</h2>
-            <p className="t-muted mt-2 max-w-[74ch]">
-              Everyone your organisation has sponsored a seat for.
-            </p>
-          </div>
+          {/* One sheet in the case file: the roster is a single object —
+              the people this organisation is responsible for — so it is
+              one card with ruled rows inside, not a stack of boxes. */}
+          <Panel>
+            <PanelHeader
+              label="Your people"
+              aside={
+                <Badge variant="brand">
+                  <span className="num">{used}</span>
+                  {used === 1 ? "person" : "people"}
+                </Badge>
+              }
+            />
 
           {rows.length === 0 ? (
-            <p className="t-muted mt-8 max-w-[62ch]">
-              Nobody yet. Once you invite someone and they finish intake, they
-              appear here with a live completion score.
-            </p>
+            <PanelBody>
+              <p className="t-muted max-w-[62ch]">
+                Nobody yet. Once you invite someone and they finish intake, they
+                appear here with a live completion score.
+              </p>
+            </PanelBody>
           ) : (
             /*
               Ruled rows, not a table. Four columns with a progress bar in
@@ -159,14 +170,14 @@ export default async function EmployerConsolePage() {
               sideways or collapses into unlabelled fragments — and §6
               prefers rules anyway. Each person is one row that reflows.
             */
-            <ul className="mt-2">
+            <ul>
               {rows.map((r) => {
                 const destination = countryFromIso2(r.destinationIso);
                 const pct = r.completionPct ?? 0;
                 return (
                   <li
                     key={r.id}
-                    className="grid gap-x-8 gap-y-3 border-b border-border py-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center"
+                    className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center"
                   >
                     <div className="min-w-0">
                       <p className="t-title truncate" title={r.fullName ?? ""}>
@@ -207,6 +218,7 @@ export default async function EmployerConsolePage() {
               })}
             </ul>
           )}
+          </Panel>
         </Shell>
       </main>
     </div>

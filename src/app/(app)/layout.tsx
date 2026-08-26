@@ -32,6 +32,13 @@ export default async function AppLayout({
     { href: "/app/requirements", label: "Requirements", locked },
     { href: "/app/documents", label: "Documents", locked },
     { href: "/app/messages", label: "Messages", locked },
+    // Only once there is somewhere to have landed — this item does not
+    // even exist (never mind lock) before approval, the same way the
+    // corridor route group's own layout has nothing to head the screen
+    // with until a corridor has resolved.
+    ...(application?.status === "approved"
+      ? [{ href: "/app/companion", label: "After you land" }]
+      : []),
   ];
 
   return (

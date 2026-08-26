@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { applications } from "@/lib/db/schema";
 import { getActor } from "@/lib/data/applications";
 import { ForbiddenError, UnauthenticatedError } from "@/lib/auth/errors";
+import { canManageInvitations } from "@/lib/auth/policy";
 import type { Actor, ApplicationRef, Permission } from "@/lib/auth/policy";
 
 /**
@@ -65,4 +66,16 @@ export async function requireApplicationAccess(
   if (!permission(actor, row)) throw new ForbiddenError();
 
   return { actor, application: row };
+}
+
+/**
+ * The invitations guard. There is no row to load first — an org has no
+ * single owning record the way an application does — so this only ever
+ * checks membership, never existence: `canManageInvitations` decides
+ * from the actor alone.
+ */
+export async function requireOrgAccess(orgId: string): Promise<Actor> {
+  const actor = await requireActor();
+  if (!canManageInvitations(actor, orgId)) throw new ForbiddenError();
+  return actor;
 }

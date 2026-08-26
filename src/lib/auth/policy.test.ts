@@ -17,6 +17,8 @@ import {
   canWriteDocuments,
   canWriteIntakeAnswers,
   canWriteMessages,
+  canManageInvitations,
+  isOrgMemberOf,
   isOwner,
   isStaff,
   ownsApplication,
@@ -276,5 +278,28 @@ describe("reference data and audit", () => {
     expect(canReadAuditLog(owner)).toBe(true);
     expect(canReadAuditLog(hrAdmin)).toBe(false);
     expect(canReadAuditLog(traveller)).toBe(false);
+  });
+});
+
+describe("invitations", () => {
+  it("lets an org member manage invitations for their own org", () => {
+    expect(isOrgMemberOf(hrAdmin, ORG)).toBe(true);
+    expect(canManageInvitations(hrAdmin, ORG)).toBe(true);
+  });
+
+  it("denies an org member managing another org's invitations", () => {
+    expect(isOrgMemberOf(hrAdmin, OTHER_ORG)).toBe(false);
+    expect(canManageInvitations(hrAdmin, OTHER_ORG)).toBe(false);
+  });
+
+  it("denies a traveller and staff, org-scoped or not", () => {
+    expect(canManageInvitations(traveller, ORG)).toBe(false);
+    expect(canManageInvitations(reviewer, ORG)).toBe(false);
+    expect(canManageInvitations(owner, ORG)).toBe(false);
+  });
+
+  it("does not let a forged org_member role manage an org it does not belong to", () => {
+    const forged: Actor = { ...traveller, role: "org_member" };
+    expect(canManageInvitations(forged, ORG)).toBe(false);
   });
 });

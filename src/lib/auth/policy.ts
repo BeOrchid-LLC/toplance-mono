@@ -101,6 +101,12 @@ export function canReadAuditLog(actor: Actor): boolean {
   return isStaff(actor);
 }
 
+/** Org-scoped, not application-scoped: invitations belong to an organisation. */
+export function isOrgMemberOf(actor: Actor, orgId: string): boolean {
+  return actor.role === "org_member" && actor.orgIds.includes(orgId);
+}
+export const canManageInvitations = isOrgMemberOf; // staff deliberately excluded
+
 /* ============================================================
  * AUDIT: every policy from supabase/migrations/20260821120000_init.sql
  *
@@ -116,6 +122,12 @@ export function canReadAuditLog(actor: Actor): boolean {
  *   members read their org ...... employer page joins via own membership
  *   members read org roster ..... getActor() reads only own memberships
  *   staff read orgs ............. no surface reads organisations as staff
+ *
+ * invitations
+ *   org admins manage invitations canManageInvitations (isOrgMemberOf),
+ *                                 enforced by requireOrgAccess in
+ *                                 `@/lib/auth/guards`; staff deliberately
+ *                                 excluded, same as the roster above
  *
  * corridors / corridor_requirements
  *   signed-in read .............. every caller sits behind a session:
@@ -179,10 +191,6 @@ export function canReadAuditLog(actor: Actor): boolean {
  * none. Listed because RLS used to be the backstop for exactly this: a
  * forgotten check now fails open, so whoever builds these must add the
  * guard in the same change.
- *
- *   invitations ................. "org admins manage invitations". The
- *                                 Invite button is disabled. Needs an
- *                                 org-scoped guard before it is enabled
  *
  * itineraries ................... canReadItinerary guards the profile's
  *                                 read surface. Nothing generates one

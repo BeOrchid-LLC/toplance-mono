@@ -55,10 +55,10 @@ export const EVENT_NAMES = [
   /** A staff decision that moves a case through review — see `changeStatusTx`. */
   "toplance.application_status_changed",
 
-  /** A reviewer takes a case as theirs. Not emitted yet — the assignment slice will. */
+  /** A reviewer takes a case as theirs. */
   "toplance.case_claimed",
 
-  /** A reviewer hands a case back to the queue. Not emitted yet — the assignment slice will. */
+  /** A reviewer hands a case back to the queue. */
   "toplance.case_released",
 
   /** A message sent on a case thread. Not emitted yet — the messaging slice will. */

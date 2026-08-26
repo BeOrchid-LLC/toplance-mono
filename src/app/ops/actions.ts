@@ -5,7 +5,9 @@ import { after } from "next/server";
 
 import { track } from "@/lib/analytics/track";
 import { generateAndStoreItinerary } from "@/lib/ai/itinerary";
-import { isStaff } from "@/lib/auth/policy";
+import { audit } from "@/lib/audit";
+import { isOwner, isStaff } from "@/lib/auth/policy";
+import { claimCase as claimCaseTx, releaseCase as releaseCaseTx } from "@/lib/data/assignments";
 import { getActor } from "@/lib/data/applications";
 import { addCaseNote as insertCaseNote } from "@/lib/data/case-notes";
 import { reviewDocumentTx } from "@/lib/data/review";
@@ -50,6 +52,14 @@ export async function reviewDocument(formData: FormData) {
       : "toplance.document_flagged",
     { applicationId, docKey },
     actor.userId
+  );
+
+  await audit(
+    actor.userId,
+    verdict === "verified" ? "document.verified" : "document.flagged",
+    "document",
+    applicationId,
+    { docKey }
   );
 
   // The traveller's ring, dashboard and documents page all read this
@@ -118,6 +128,11 @@ export async function changeCaseStatus(formData: FormData) {
     actor.userId
   );
 
+  await audit(actor.userId, "application.status_changed", "application", applicationId, {
+    from: result.from,
+    to: nextStatus,
+  });
+
   await notify(
     result.travelerId,
     "status_changed",
@@ -159,6 +174,53 @@ export async function changeCaseStatus(formData: FormData) {
   // The traveller's status pill and timeline read this; the ops case
   // screen and queue do too.
   revalidatePath("/app", "layout");
+  revalidatePath("/ops", "layout");
+  return { ok: true };
+}
+
+/**
+ * Take an unowned case. Gated on `isStaff` directly, the same idiom as
+ * every other action here — there is nothing per-row to check beyond
+ * that, `claimCaseTx` decides the rest.
+ */
+export async function claimCase(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+
+  const actor = await getActor();
+  if (!actor || !isStaff(actor)) {
+    return { error: "You do not have access to that." };
+  }
+
+  const result = await claimCaseTx(applicationId, actor.userId);
+  if ("error" in result) return result;
+
+  await track("toplance.case_claimed", { applicationId }, actor.userId);
+  await audit(actor.userId, "application.claimed", "application", applicationId);
+
+  // The queue's Owner column and the case header both read this.
+  revalidatePath("/ops", "layout");
+  return { ok: true };
+}
+
+/**
+ * Hand a case back to the queue. Gated on `isStaff`; `releaseCaseTx`
+ * decides whether this particular staff member may release this
+ * particular case — a reviewer only their own, an owner any of them.
+ */
+export async function releaseCase(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+
+  const actor = await getActor();
+  if (!actor || !isStaff(actor)) {
+    return { error: "You do not have access to that." };
+  }
+
+  const result = await releaseCaseTx(applicationId, actor.userId, isOwner(actor));
+  if ("error" in result) return result;
+
+  await track("toplance.case_released", { applicationId }, actor.userId);
+  await audit(actor.userId, "application.released", "application", applicationId);
+
   revalidatePath("/ops", "layout");
   return { ok: true };
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import { asc, eq, inArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
@@ -31,6 +32,8 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Case queue" };
+
+const assignee = alias(profiles, "assignee");
 
 /** Days since a case landed, used for the overdue signal. */
 function ageInDays(at: Date | null) {
@@ -69,6 +72,7 @@ export default async function OpsQueuePage() {
         caseRef: applications.caseRef,
         status: applications.status,
         assigneeId: applications.assigneeId,
+        assigneeName: assignee.fullName,
         createdAt: applications.createdAt,
         travelerName: profiles.fullName,
         travelerCountryIso: profiles.countryIso,
@@ -78,6 +82,7 @@ export default async function OpsQueuePage() {
       .from(applications)
       .innerJoin(profiles, eq(profiles.id, applications.travelerId))
       .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+      .leftJoin(assignee, eq(assignee.id, applications.assigneeId))
       .where(
         inArray(applications.status, [
           "collecting_documents",
@@ -268,7 +273,9 @@ export default async function OpsQueuePage() {
                         </TableCell>
                         <TableCell>
                           {r.assigneeId ? (
-                            <Badge variant="neutral">Assigned</Badge>
+                            <span className="t-body block truncate">
+                              {r.assigneeName ?? "Former staff"}
+                            </span>
                           ) : (
                             <Badge variant="outline">Unassigned</Badge>
                           )}

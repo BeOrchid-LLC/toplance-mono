@@ -157,8 +157,17 @@ export function canReadAuditLog(actor: Actor): boolean {
  *                                 cases carried no event at all
  *
  * audit_log
- *   staff read .................. canReadAuditLog; nothing reads or
- *                                 writes the audit log yet
+ *   staff read .................. canReadAuditLog; no surface reads it
+ *                                 yet, but it now has writers:
+ *                                 documentUrl in `(app)/actions.ts` logs
+ *                                 "document.viewed" for a staff caller
+ *                                 only; reviewDocument logs
+ *                                 "document.verified" / "document.flagged";
+ *                                 changeCaseStatus logs
+ *                                 "application.status_changed"; claimCase
+ *                                 / releaseCase log "application.claimed"
+ *                                 / "application.released" — all through
+ *                                 `@/lib/audit`, which never throws
  *
  * GAPS — features whose policies had no code to protect, and still have
  * none. Listed because RLS used to be the backstop for exactly this: a

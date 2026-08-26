@@ -3,10 +3,12 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
+import { ClaimButton } from "@/components/ops/claim-button";
 import { ReviewRow } from "@/components/ops/review-row";
 import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +27,9 @@ import {
 } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
-import { isStaff } from "@/lib/auth/policy";
+import { isOwner, isStaff } from "@/lib/auth/policy";
+
+const assignee = alias(profiles, "assignee");
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -64,6 +68,8 @@ export default async function OpsCasePage({
       id: applications.id,
       caseRef: applications.caseRef,
       status: applications.status,
+      assigneeId: applications.assigneeId,
+      assigneeName: assignee.fullName,
       travelerName: profiles.fullName,
       travelerCountryIso: profiles.countryIso,
       visaName: corridors.visaName,
@@ -72,6 +78,7 @@ export default async function OpsCasePage({
     .from(applications)
     .innerJoin(profiles, eq(profiles.id, applications.travelerId))
     .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+    .leftJoin(assignee, eq(assignee.id, applications.assigneeId))
     .where(eq(applications.id, id))
     .limit(1);
 
@@ -154,6 +161,25 @@ export default async function OpsCasePage({
                   <Badge variant="outline">
                     <span className="num">{row.caseRef.toUpperCase()}</span>
                   </Badge>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <p className="t-muted">
+                    {row.assigneeId ? (
+                      <>
+                        Owned by{" "}
+                        <span className="font-semibold text-ink">
+                          {row.assigneeName ?? "Former staff"}
+                        </span>
+                      </>
+                    ) : (
+                      "Unassigned — no owner yet"
+                    )}
+                  </p>
+                  <ClaimButton
+                    applicationId={row.id}
+                    isAssigned={row.assigneeId !== null}
+                    canRelease={row.assigneeId === actor.userId || isOwner(actor)}
+                  />
                 </div>
               </div>
               <p className="t-muted">

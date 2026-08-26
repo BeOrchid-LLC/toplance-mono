@@ -15,7 +15,9 @@ import {
   canWriteApplication,
   canWriteDocuments,
   canWriteIntakeAnswers,
+  isStaff,
 } from "@/lib/auth/policy";
+import { audit } from "@/lib/audit";
 import {
   deleteDocument,
   putDocument,
@@ -177,7 +179,7 @@ export async function uploadDocument(formData: FormData) {
  */
 export async function documentUrl(applicationId: string, docKey: string) {
   try {
-    await requireApplicationAccess(applicationId, canReadDocuments);
+    const { actor } = await requireApplicationAccess(applicationId, canReadDocuments);
 
     const [doc] = await db
       .select({ storagePath: documents.storagePath })
@@ -191,6 +193,13 @@ export async function documentUrl(applicationId: string, docKey: string) {
       .limit(1);
 
     if (!doc?.storagePath) return { error: "Nothing has been uploaded yet." };
+
+    // Only a staff view is logged — the promise this makes true is
+    // "staff access to a traveller's document is on the record", not a
+    // log of the traveller looking at their own passport scan.
+    if (isStaff(actor)) {
+      await audit(actor.userId, "document.viewed", "document", applicationId, { docKey });
+    }
 
     return { url: await signedDocumentUrl(doc.storagePath) };
   } catch (error) {

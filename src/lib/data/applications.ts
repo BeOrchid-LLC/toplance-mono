@@ -198,10 +198,11 @@ export async function getStatusEvents(applicationId: string) {
 }
 
 /**
- * The application's itinerary, if one has been generated. Nothing
- * generates one yet — every caller today renders the empty state — but
- * the read surface and its `canReadItinerary` guard are where itinerary
- * generation will land its output.
+ * The application's itinerary, if one has been generated.
+ * `generateAndStoreItinerary` in `@/lib/ai/itinerary` is the only
+ * writer; nothing calls it yet, so every caller today still renders the
+ * empty state, but the read surface and its `canReadItinerary` guard are
+ * exactly where that generation lands its output.
  */
 export async function getItinerary(applicationId: string) {
   const [row] = await db
@@ -210,6 +211,26 @@ export async function getItinerary(applicationId: string) {
     .where(eq(itineraries.applicationId, applicationId))
     .limit(1);
   return row ?? null;
+}
+
+/**
+ * A traveller's profile, resolved through the application row rather
+ * than the caller's own session. `getProfile` above only ever answers
+ * "who is signed in"; the itinerary generator runs for the approval
+ * that triggers it, not for the traveller, so it has an application id
+ * and needs the profile on the other end of it.
+ */
+export async function getTravellerProfile(
+  applicationId: string
+): Promise<Profile | null> {
+  const [row] = await db
+    .select({ profile: profiles })
+    .from(applications)
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  return row?.profile ?? null;
 }
 
 export async function getCorridorFor(applicationId: string) {

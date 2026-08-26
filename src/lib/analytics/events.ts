@@ -48,6 +48,9 @@ export const EVENT_NAMES = [
 
   /** A reviewer's note on a case — the traveller reads these too. */
   "toplance.case_note_added",
+
+  /** An arrival plan generated (or refreshed) on approval. */
+  "toplance.itinerary_generated",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

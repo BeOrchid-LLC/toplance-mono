@@ -27,6 +27,7 @@ import {
 } from "@/components/app/profile-fields";
 import { TravelHistory } from "@/components/app/travel-history";
 import { STATUS } from "@/lib/domain/status";
+import { itinerarySections } from "@/lib/domain/itinerary";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryBy } from "@/lib/domain/countries";
@@ -72,27 +73,6 @@ function formatDay(value: Date) {
     month: "short",
     year: "numeric",
   });
-}
-
-/**
- * Whatever shape a generated itinerary lands in, show the parts that
- * read as prose and skip the rest — never invent a section an empty
- * payload does not have.
- */
-function itinerarySections(payload: unknown): { label: string; text: string }[] {
-  if (!payload || typeof payload !== "object") return [];
-  return Object.entries(payload as Record<string, unknown>).flatMap(
-    ([key, value]) => {
-      const text = Array.isArray(value)
-        ? value.filter((v) => typeof v === "string").join(" · ")
-        : typeof value === "string"
-          ? value
-          : null;
-      if (!text) return [];
-      const label = key.replace(/[_-]+/g, " ");
-      return [{ label: label[0].toUpperCase() + label.slice(1), text }];
-    }
-  );
 }
 
 function formatFee(minor: number | null, currency: string | null) {

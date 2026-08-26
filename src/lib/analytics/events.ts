@@ -75,8 +75,9 @@ export const EVENT_NAMES = [
   "toplance.organisation_created",
 
   /**
-   * The invitation lifecycle. Not emitted yet — the next slice, which
-   * adds invitations on top of organisation sign-up, will.
+   * The invitation lifecycle: sent from `inviteTraveller`, revoked from
+   * `revokeInvitation` (both in `@/app/employer/actions.ts`), accepted
+   * from `acceptInvitation` in `@/app/invite/actions.ts`.
    */
   "toplance.invitation_sent",
   "toplance.invitation_revoked",

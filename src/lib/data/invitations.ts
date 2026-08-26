@@ -14,8 +14,14 @@ export type AcceptInvitationResult = { ok: true; orgId: string } | { error: stri
 
 export type MutateInvitationResult = { ok: true } | { error: string };
 
-/** A `pending` row the reader has decided has expired, without writing it. */
-export type ListedInvitation = Invitation & { status: Invitation["status"] };
+/**
+ * The roster's own shape: everything about an invitation except its
+ * bearer token. `listInvitations` renders straight into the employer
+ * console — a row that carried `token` would be one future `{...invite}`
+ * spread away from a live leak of the accept credential, so the token
+ * column is never selected for this path at all.
+ */
+export type ListedInvitation = Omit<Invitation, "token">;
 
 /** What the accept page shows a visitor before they have done anything. */
 export type InvitationPreview = {
@@ -85,10 +91,30 @@ export async function createInvitation(
  * the shape this returns — the roster should never show a dead link as
  * live — but the stored column is untouched: flipping it is
  * `acceptInvitationTx`'s job, the one place that also needs the lock.
+ *
+ * Selects every column except `token` by name, rather than `select()`.
+ * The roster is the one invitation surface with no reason to ever hold
+ * the bearer credential — only `createInvitation` (which just minted it)
+ * and `getInvitationPreview`/`acceptInvitationTx` (both keyed BY the
+ * token, not selecting it out) have any business reading that column.
  */
 export async function listInvitations(orgId: string): Promise<ListedInvitation[]> {
   const rows = await db
-    .select()
+    .select({
+      id: invitations.id,
+      orgId: invitations.orgId,
+      email: invitations.email,
+      fullName: invitations.fullName,
+      jobTitle: invitations.jobTitle,
+      destinationIso: invitations.destinationIso,
+      purpose: invitations.purpose,
+      status: invitations.status,
+      invitedBy: invitations.invitedBy,
+      acceptedBy: invitations.acceptedBy,
+      acceptedAt: invitations.acceptedAt,
+      createdAt: invitations.createdAt,
+      expiresAt: invitations.expiresAt,
+    })
     .from(invitations)
     .where(eq(invitations.orgId, orgId))
     .orderBy(desc(invitations.createdAt));

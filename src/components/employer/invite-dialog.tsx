@@ -64,9 +64,17 @@ export function InviteDialog() {
 
   async function copyLink() {
     if (!inviteUrl) return;
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    // `navigator.clipboard` throws (or is simply absent) outside a
+    // secure context — an http, non-localhost deploy, say. Uncaught,
+    // that is a dead button with no feedback; caught, the link is still
+    // right there in the dialog to select by hand.
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Copy failed — select the link text instead.");
+    }
   }
 
   return (

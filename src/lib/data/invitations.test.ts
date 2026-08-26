@@ -153,6 +153,18 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const stored = await invitationOf(older.invitation.id);
       expect(stored.status).toBe("pending");
     });
+
+    it("never selects the bearer token", async () => {
+      const orgId = await makeOrg("Acme Logistics Ltd");
+      const inviterId = "test_invite_inviter_no_token";
+      await makeProfile(inviterId, { role: "org_member" });
+
+      await createInvitation(orgId, inviterId, { email: "no-token-leak@example.com" });
+
+      const rows = await listInvitations(orgId);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).not.toHaveProperty("token");
+    });
   });
 
   describe("revokeInvitation", () => {

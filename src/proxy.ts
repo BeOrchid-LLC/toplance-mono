@@ -23,6 +23,10 @@ import { authRoutes, signedInDestination } from "@/lib/auth/routes";
 const isPublicRoute = createRouteMatcher([
   "/",
   ...authRoutes.map((r) => `${r.prefix}(.*)`),
+  // Not an auth route: a signed-in traveller must also reach this page
+  // to accept, so it is deliberately absent from `authRoutes` — nothing
+  // here should redirect a signed-in visitor away.
+  "/invite(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

@@ -221,6 +221,17 @@ export function truncateAnswersAt(
   return next;
 }
 
+/**
+ * The question the intake should ask next — the first one without an
+ * answer. Truncation keeps answers a prefix of the question order, so
+ * "first gap" and "where the conversation is" are the same thing.
+ */
+export function nextIntakeQuestion(
+  answers: Record<string, string>
+): IntakeQuestion | undefined {
+  return INTAKE_QUESTIONS.find((q) => !answers[q.key]);
+}
+
 /** One answer being recorded — by whichever agent was listening. */
 export type IntakeWrite = { key: string; value: string };
 

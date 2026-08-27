@@ -17,6 +17,7 @@ import { PhoneField } from "@/components/auth/phone-field";
 import { useLocale } from "@/components/locale-provider";
 import { completeProfile } from "@/app/(auth)/actions";
 import { isInternalPath } from "@/lib/auth/routes";
+import { splitFullName } from "@/lib/domain/name";
 
 type Mode = "sign-up" | "sign-in";
 
@@ -117,7 +118,12 @@ export function AuthForm({
 
       if (mode === "sign-up") {
         if (!signUp) return;
-        steps.push(await signUp.create({ emailAddress: email }));
+        // The name goes to Clerk at creation as well as to `profiles`
+        // later: if the profile write is ever lost, `getProfile`'s lazy
+        // provisioning can still recover the name from Clerk.
+        steps.push(
+          await signUp.create({ emailAddress: email, ...splitFullName(fullName) })
+        );
         if (!steps.at(-1)?.error) {
           steps.push(await signUp.verifications.sendEmailCode());
         }
@@ -175,9 +181,9 @@ export function AuthForm({
       // below — and that order is the whole of it. This is a POST from
       // this page: fired without being awaited, or awaited after the
       // navigation had already started, it can be cancelled in flight,
-      // and the account is then left with no name at all. Clerk's
-      // email-code sign-up never collects one, so `getProfile`'s lazy
-      // provisioning has nothing to fall back on but "".
+      // and the phone, country and locale are then lost. The name alone
+      // survives that: `signUp.create` sent it to Clerk, and
+      // `getProfile`'s lazy provisioning falls back to it.
       //
       // Tried twice for the same reason: the action is an idempotent
       // upsert, and the failure worth a second attempt is the brand-new

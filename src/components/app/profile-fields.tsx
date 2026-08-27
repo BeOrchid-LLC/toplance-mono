@@ -46,9 +46,11 @@ function Absent() {
 }
 
 /**
- * Display mode matches the read-only `DetailRow` geometry exactly, plus
- * a pencil that swaps the row for its editor. The editor block carries
- * its own label, so the row heading does not double up.
+ * Display mode matches the read-only `DetailField` geometry exactly —
+ * caps label over a wrapping value — plus a pencil that swaps the field
+ * for its editor. The editor block carries its own label, so the field
+ * heading does not double up; while editing, the field takes the full
+ * width of the sheet so the input has room to breathe.
  */
 function Row({
   label,
@@ -63,17 +65,17 @@ function Row({
 
   if (editing) {
     return (
-      <div className="border-b border-border py-4">
+      <div className="border-b border-border py-4 sm:col-span-2">
         {editor(() => setEditing(false))}
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-between gap-6 border-b border-border py-3">
-      <dt className="t-body shrink-0 text-ink-2">{label}</dt>
-      <dd className="flex min-w-0 items-center gap-1">
-        <span className="min-w-0 truncate text-right text-base font-semibold">
+    <div className="border-b border-border py-3">
+      <dt className="special-caps">{label}</dt>
+      <dd className="mt-1 flex items-center justify-between gap-2">
+        <span className="min-w-0 break-words text-base font-semibold">
           {value}
         </span>
         <button

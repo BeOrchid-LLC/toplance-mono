@@ -5,11 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
+  ArrowUp,
+  ChevronDown,
   Loader2,
   Mic,
   RotateCcw,
-  Send,
-  Sparkles,
   Square,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,6 @@ import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
 import { useChat } from "@ai-sdk/react";
 
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { useLocale, useT } from "@/components/locale-provider";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import {
@@ -217,7 +216,7 @@ function LiveIntake({
     ? INTAKE_QUESTIONS.find((q) => q.key === reopened.key)
     : undefined;
   const reasked = reopenedQuestion ? (
-    <Bubble from="agent">{t(reopenedQuestion.prompt)}</Bubble>
+    <Turn from="agent">{t(reopenedQuestion.prompt)}</Turn>
   ) : null;
 
   const answeredCount = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
@@ -324,16 +323,14 @@ function LiveIntake({
       editDisabled={speaking}
       log={
         <>
-          <p className="special-caps mx-auto">Conversation started</p>
-
-          <Bubble from="agent" plain>{greeting(firstName)}</Bubble>
+          <Turn from="agent" plain>{greeting(firstName)}</Turn>
 
           {/* The model only speaks once the traveller has, so the
             * conversation's first question is asked from the local list
             * — the same wording the scripted flow uses. Captured at
             * mount: it is the opening line of this transcript, and it
             * would be wrong for it to change under a finished one. */}
-          {opening && <Bubble from="agent">{t(opening.prompt)}</Bubble>}
+          {opening && <Turn from="agent">{t(opening.prompt)}</Turn>}
 
           {messages.map((message, i) => {
             const text = message.parts
@@ -351,11 +348,9 @@ function LiveIntake({
                   * message, so nothing else asks the question again. */}
                 {reopened?.afterMessages === i && reasked}
                 {text && (
-                  <Bubble
-                    from={message.role === "assistant" ? "agent" : "user"}
-                  >
+                  <Turn from={message.role === "assistant" ? "agent" : "user"}>
                     {text}
-                  </Bubble>
+                  </Turn>
                 )}
               </React.Fragment>
             );
@@ -363,7 +358,7 @@ function LiveIntake({
 
           {reasked && (reopened?.afterMessages ?? 0) >= messages.length && reasked}
 
-          {status === "submitted" && <TypingDots />}
+          {status === "submitted" && <Thinking />}
 
           {done && <ProfileComplete />}
 
@@ -474,33 +469,35 @@ function ScriptedIntake({
       done={done}
       log={
         <>
-          <p className="special-caps mx-auto">Conversation started</p>
-
-          <Bubble from="agent" plain>{greeting(firstName)}</Bubble>
+          <Turn from="agent" plain>{greeting(firstName)}</Turn>
 
           {INTAKE_QUESTIONS.map((q, i) => {
             if (i > answeredCount) return null;
             const answer = answers[q.key];
             return (
               <React.Fragment key={q.key}>
-                <Bubble from="agent">{t(q.prompt)}</Bubble>
+                <Turn from="agent">{t(q.prompt)}</Turn>
                 {answer && (
-                  <div className="flex items-center justify-end gap-2">
-                    <EditButton
-                      label={t(q.prompt)}
-                      onClick={() => editFrom(q.key)}
-                    />
-                    <Bubble from="user">{answer}</Bubble>
-                  </div>
+                  <Turn
+                    from="user"
+                    action={
+                      <EditButton
+                        label={t(q.prompt)}
+                        onClick={() => editFrom(q.key)}
+                      />
+                    }
+                  >
+                    {answer}
+                  </Turn>
                 )}
               </React.Fragment>
             );
           })}
 
-          {typing && <TypingDots />}
+          {typing && <Thinking />}
 
           {current?.key === "history" && (
-            <p className="t-muted border-l-2 border-border-strong py-1 pl-4">
+            <p className="border-l-2 border-border-strong pl-4 text-base leading-[1.7] text-ink-2">
               {HISTORY_NOTE}
             </p>
           )}
@@ -560,109 +557,241 @@ function AgentLayout({
   /** Shown but inert — reopening is something to say, not tap, mid-call. */
   editDisabled?: boolean;
 }) {
+  // Only consulted below `lg`, where the rail is a drawer. On a desktop
+  // the column is always open, by CSS, so this never runs.
+  const [railOpen, setRailOpen] = React.useState(false);
+
   // The chat owns the viewport under the chrome. Below `lg` the chrome
   // is two bars — the app bar plus the nav rail that replaced the nav
   // that bar hides — so the subtraction has to account for both, or the
   // composer lands just off the bottom of a phone.
   return (
     <div className="flex h-[calc(100dvh-var(--bar-h)-var(--row-h)-1px)] flex-col lg:h-[calc(100dvh-var(--bar-h))] lg:flex-row">
-      {/* ---- conversation ---- */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 sm:px-6">
-          {/* The one drop of the brand gradient on the screen: the agent
-              itself. Everything else stays flat so the speaker is the
-              most saturated thing in the conversation. */}
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[image:var(--brand-grad)] text-white shadow-[var(--shadow-sm)]">
-            <Sparkles className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="t-title">Toplance Agent</p>
-            <p className="special-caps">
-              {done
-                ? "Profile complete"
-                : `Listening · question ${answeredCount + 1} of ${INTAKE_QUESTIONS.length}`}
-            </p>
+      {/* ---- conversation ----
+          `min-h-0` is what lets the log scroll instead of the page. A
+          flex child defaults to `min-height: auto`, which refuses to
+          shrink below its content — so the transcript pushed the column
+          past the container, the container past the viewport, and the
+          composer 600px down a phone. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-bg">
+        {/* No speaker card, no avatar, no percentage bar. A conversation
+            does not need to be introduced by a header announcing who is
+            in it — the first line does that, and does it in words. What
+            is left is the one fact the transcript cannot show you: how
+            far through the ten questions you are. */}
+        <div className="flex h-[var(--row-h)] shrink-0 items-center border-b border-border px-4 sm:px-6">
+          <div className="mx-auto flex w-full max-w-[720px] items-center justify-between gap-4">
+            <p className="special-caps truncate">Toplance agent</p>
+            <div className="flex shrink-0 items-center gap-3">
+              <TickMeter answered={answeredCount} />
+              {/* Two readings of one fact. Sighted, the count sits beside
+                  ten ticks that say what it counts; read aloud, the ticks
+                  are not there and "8 / 10" on its own could be anything,
+                  so the spoken version says which question you are on. */}
+              <span className="num special text-ink-2">
+                <span className="sr-only">
+                  {done
+                    ? "Profile complete"
+                    : `Question ${answeredCount + 1} of ${INTAKE_QUESTIONS.length}`}
+                </span>
+                <span aria-hidden>
+                  {done
+                    ? "Complete"
+                    : `${answeredCount} / ${INTAKE_QUESTIONS.length}`}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="h-1 shrink-0 bg-surface-2">
-          <div
-            className="h-full bg-brand transition-[width] duration-[var(--dur-ring)] ease-[var(--ease-out)]"
-            style={{ width: `${(answeredCount / INTAKE_QUESTIONS.length) * 100}%` }}
-          />
-        </div>
-
         <div
-          className="flex-1 overflow-y-auto bg-bg p-4 sm:p-6"
+          className="flex-1 overflow-y-auto px-4 pb-2 pt-8 sm:px-6"
           role="log"
           aria-live="polite"
           aria-label="Conversation with the Toplance agent"
         >
-          <div className="mx-auto flex max-w-[720px] flex-col gap-4">{log}</div>
+          {/* Bottom-aligned, the way every message thread is. The
+              question being asked belongs next to the box you answer it
+              in — top-aligning it left the opening question stranded at
+              the top of an empty screen with 500px between it and the
+              composer. Once the transcript is taller than the viewport
+              `min-h-full` stops binding and it scrolls normally. */}
+          <div className="mx-auto flex min-h-full max-w-[720px] flex-col justify-end gap-7">
+            {log}
+          </div>
         </div>
 
         {composer && (
-          <div className="border-t border-border bg-surface p-4 sm:p-6">
+          <div className="relative shrink-0 px-4 pb-4 sm:px-6 sm:pb-6">
+            {/* The transcript runs out under the composer rather than
+                stopping dead against a border. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 -top-8 h-8 bg-gradient-to-b from-transparent to-bg"
+            />
             <div className="mx-auto max-w-[720px]">{composer}</div>
           </div>
         )}
       </div>
 
-      {/* ---- live profile ---- */}
-      {/* A sheet from the case file rather than a flat attached column:
-          the same card the profile page is built from, so the record
-          being assembled here already looks like where it ends up. */}
-      <aside className="w-full shrink-0 overflow-y-auto border-t border-border bg-bg p-4 lg:w-[340px] lg:border-l lg:border-t-0 lg:p-5">
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-sm)]">
-        <div className="flex items-center justify-between">
-          <h2 className="t-title">Your profile</h2>
-          <span className="num special">
-            {answeredCount} / {INTAKE_QUESTIONS.length}
-          </span>
-        </div>
-        <Progress
-          value={(answeredCount / INTAKE_QUESTIONS.length) * 100}
-          className="mt-3"
-        />
-        <dl className="mt-4">
+      {/* ---- live profile ----
+          The record being assembled, on the surface colour so it reads as
+          the document the conversation is filling in rather than a card
+          floating on the same ground the chat sits on.
+
+          A permanent column on a desktop, a drawer on a phone. Ten rows
+          is most of a phone screen, and a screen split evenly between the
+          conversation and a read-only summary of it gives neither one
+          enough room — so below `lg` it collapses to its own heading and
+          opens on a tap, above the conversation where a summary belongs
+          rather than stranded under the composer. */}
+      <aside className="order-first flex w-full shrink-0 flex-col overflow-hidden border-b border-border bg-surface lg:order-none lg:w-[320px] lg:overflow-y-auto lg:border-b-0 lg:border-l">
+        {/* Same height and same rule as the conversation's strip, so the
+            two headings sit on one line across the whole screen. */}
+        <button
+          type="button"
+          onClick={() => setRailOpen((open) => !open)}
+          aria-expanded={railOpen}
+          aria-controls="intake-profile"
+          className="special-caps sticky top-0 z-10 flex h-[var(--row-h)] shrink-0 items-center justify-between gap-2 border-b border-border bg-surface px-4 text-left hover:text-ink-2 lg:pointer-events-none lg:px-6 lg:hover:text-ink-3"
+        >
+          <span>Your profile</span>
+          <ChevronDown
+            aria-hidden
+            className={cn(
+              "size-4 transition-transform duration-[var(--dur-toggle)] lg:hidden",
+              railOpen && "rotate-180"
+            )}
+          />
+        </button>
+        <dl
+          id="intake-profile"
+          className={cn(
+            "overflow-y-auto px-4 py-3 lg:block lg:px-6",
+            railOpen ? "block max-h-[46dvh] lg:max-h-none" : "hidden"
+          )}
+        >
           {INTAKE_QUESTIONS.map((q, i) => (
-            <div
+            <ProfileRow
               key={q.key}
-              className="flex items-baseline justify-between gap-4 border-b border-border py-3 last:border-0 last:pb-0"
-            >
-              <dt className="t-body text-ink-2">{LABELS[q.key]}</dt>
-              <dd
-                className={cn(
-                  "flex items-baseline gap-1 text-right text-base font-semibold",
-                  answers[q.key]
-                    ? "text-ink"
-                    : i === answeredCount
-                      ? "text-brand-text"
-                      : "text-ink-3"
-                )}
-              >
-                {answers[q.key] ??
-                  (i === answeredCount ? (
-                    "asking now"
-                  ) : (
-                    <span
-                      aria-label="Not answered yet"
-                      className="inline-block w-[56px] border-b-2 border-dashed border-border-strong align-middle"
-                    />
-                  ))}
-                {onEdit && answers[q.key] && (
+              label={LABELS[q.key]}
+              value={answers[q.key]}
+              asking={!answers[q.key] && i === answeredCount}
+              edit={
+                onEdit && answers[q.key] ? (
                   <EditButton
                     label={LABELS[q.key]}
                     disabled={editDisabled}
                     onClick={() => onEdit(q.key)}
                   />
-                )}
-              </dd>
-            </div>
+                ) : null
+              }
+            />
           ))}
         </dl>
-        </div>
       </aside>
+    </div>
+  );
+}
+
+/**
+ * Ten questions, ten ticks. Not a percentage bar: the thing being
+ * measured is a countable list of ten discrete answers, and a continuous
+ * bar would round it into something the traveller cannot check against
+ * the rail beside it. The tick that pulses is the question being asked,
+ * which is the same beat the rail's "asking now" row keeps.
+ */
+function TickMeter({ answered }: { answered: number }) {
+  return (
+    <span
+      aria-hidden
+      className="hidden items-center gap-[3px] sm:flex"
+    >
+      {INTAKE_QUESTIONS.map((q, i) => (
+        <span
+          key={q.key}
+          className={cn(
+            "h-[3px] w-3.5 rounded-[var(--radius-pill)] transition-colors duration-[var(--dur-ring)] ease-[var(--ease-out)]",
+            i < answered
+              ? "bg-brand"
+              : i === answered
+                ? "intake-pulse bg-brand"
+                : "bg-border-strong"
+          )}
+        />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * One line of the record. The label sits above the value rather than
+ * opposite it: half these answers are phrases — "Partner and children",
+ * "A medical condition" — and a label-left/value-right row forces those
+ * to wrap into a ragged right-aligned column two words wide.
+ */
+function ProfileRow({
+  label,
+  value,
+  asking,
+  edit,
+}: {
+  label: string;
+  value?: string;
+  asking: boolean;
+  edit: React.ReactNode;
+}) {
+  // The wash fires on the render the answer first appears in, and only
+  // then — a row that was already filled when the page loaded has not
+  // just been answered, and animating it would be inventing an event.
+  //
+  // Adjusting state during render rather than in an effect, which is the
+  // supported way to derive from a changed prop: the row paints filled
+  // and washing in one pass. An effect would paint it filled and unwashed
+  // first, and the wash would arrive a frame late as a flicker. A ref
+  // cannot do this job at all — it is read during render, and React is
+  // free to render without committing, which would spend the animation on
+  // a paint that never happened.
+  const [prev, setPrev] = React.useState(value);
+  const [landed, setLanded] = React.useState(false);
+  if (value !== prev) {
+    setPrev(value);
+    // Only filling counts. Clearing one on an edit takes the class off
+    // again, which is what lets the wash replay when it is re-answered —
+    // a CSS animation only restarts if its class actually leaves.
+    setLanded(Boolean(value) && !prev);
+  }
+
+  return (
+    <div
+      className={cn(
+        "group/row -mx-2 rounded-sm px-2 py-2.5",
+        landed && "intake-settle"
+      )}
+    >
+      <dt className="special">{label}</dt>
+      <dd className="mt-0.5 flex min-h-[22px] items-center justify-between gap-2">
+        {value ? (
+          <span className="t-title text-ink">{value}</span>
+        ) : asking ? (
+          <span className="t-title flex items-center gap-2 text-brand-text">
+            <span className="intake-pulse size-1.5 rounded-full bg-brand" />
+            Asking now
+          </span>
+        ) : (
+          /* A ruled line across the whole field, not a 56px stub. This
+             column is a record being filled in, and a blank line is what
+             an unfilled record looks like — nine short dashes floating
+             under nine labels just looked like the page had failed to
+             load. It also holds the row to the same height as a filled
+             one, so the list stops looking ragged. */
+          <span
+            aria-label="Not answered yet"
+            className="block h-0 w-full border-b border-dashed border-border-strong"
+          />
+        )}
+        {edit}
+      </dd>
     </div>
   );
 }
@@ -670,7 +799,7 @@ function AgentLayout({
 /**
  * The opening line, before either agent has said anything of its own.
  *
- * Rendered plain (`<Bubble plain>`), not through `ChatMarkdown`: the
+ * Rendered plain (`<Turn plain>`), not through `ChatMarkdown`: the
  * traveller's own name is in it, and the shared renderer is for model
  * output only.
  */
@@ -691,15 +820,26 @@ function Chips({
   disabled: boolean;
   onPick: (chip: Chip) => void;
 }) {
+  // Quiet by default and brand only on hover. These are shortcuts past
+  // the keyboard, not the recommended answer — outlining four of them in
+  // the loudest colour in the system made every question look like it
+  // had four right answers and a text field for wrong ones.
   return (
-    <div className="flex flex-wrap gap-2">
+    // One scrolling row on a phone, wrapped rows once there is width for
+    // them. Five suggestions at 390px wrap to five lines and push the
+    // question that they answer off the top of the screen — the shortcut
+    // costs more room than the thing it is a shortcut past.
+    //
+    // Bled to the screen edge so a half-cut chip is visible at the fold,
+    // which is what says there is more to scroll to.
+    <div className="-mx-4 mb-2.5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-x-visible sm:px-0 sm:pb-0">
       {chips.map((chip) => (
         <button
           key={chip.value}
           type="button"
           disabled={disabled}
           onClick={() => onPick(chip)}
-          className="min-h-[var(--row-h)] rounded-[var(--radius-pill)] border border-brand px-4 text-base font-semibold text-brand-text transition-colors hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)] disabled:opacity-50"
+          className="min-h-[var(--row-h)] shrink-0 whitespace-nowrap rounded-[var(--radius-pill)] border border-border bg-surface px-4 text-base font-medium text-ink-2 transition-colors duration-[var(--dur-tap)] hover:border-brand hover:text-brand-text disabled:opacity-50 disabled:hover:border-border disabled:hover:text-ink-2"
         >
           {chip.label[locale] ?? chip.label.en}
         </button>
@@ -722,32 +862,72 @@ function Composer({
   /** Omitted where there is no model to speak to. */
   voice?: { status: VoiceStatus; onToggle: () => void };
 }) {
+  const field = React.useRef<HTMLTextAreaElement>(null);
+
+  // Grown from the content on every change rather than sized once. The
+  // height has to be cleared first: `scrollHeight` on an element already
+  // holding a taller explicit height reports that height back, so
+  // without the reset the box can only ever grow.
+  React.useEffect(() => {
+    const el = field.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft]);
+
+  const empty = !draft.trim();
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         onSubmit();
       }}
-      className="mt-3 flex items-center gap-3"
+      // One row, not two. A stacked composer with the controls on their
+      // own line below the field is what a long-form assistant needs;
+      // the answers here are a country, a date, a tapped suggestion, and
+      // stacking put 40px of empty box under every one of them. The
+      // field still grows to six lines when someone writes a paragraph,
+      // and the buttons stay pinned to the last line.
+      className="flex items-end gap-1 rounded-[26px] border border-border-strong bg-surface p-1.5 shadow-[var(--shadow)] transition-[border-color,box-shadow] duration-[var(--dur-tap)] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--brand)_20%,transparent)]"
     >
-      <input
+      <VoiceButton voice={voice} />
+      <textarea
+        ref={field}
         value={draft}
+        rows={1}
         onChange={(e) => onDraftChange(e.target.value)}
-        // The Send button was disabled and the field was not, so Enter
-        // still submitted a turn the rest of the composer was refusing.
+        // Enter sends and Shift+Enter breaks the line, which is what a
+        // chat composer means by those keys everywhere else. The guard
+        // matters as much as the shortcut: the Send button was disabled
+        // and the field was not, so Enter used to submit a turn the rest
+        // of the composer was refusing.
+        onKeyDown={(e) => {
+          if (e.key !== "Enter" || e.shiftKey) return;
+          e.preventDefault();
+          if (!disabled && !empty) onSubmit();
+        }}
         disabled={disabled}
+        // The suggestions are sitting directly above the box; a
+        // placeholder that also points at them is one element doing two
+        // jobs, and at 390px it cost a second line of composer to do it.
         placeholder={
-          voice?.status === "live"
-            ? "Listening — stop the microphone to type"
-            : "Type your answer, or tap a suggestion"
+          voice?.status === "live" ? "Listening — stop to type" : "Type your answer"
         }
         aria-label="Your answer"
-        className="h-[var(--control-h)] min-w-0 flex-1 rounded-[var(--radius-pill)] border border-border-strong bg-surface px-5 text-base outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)] disabled:opacity-50"
+        // Padded to sit on the same optical line as the two 44px buttons
+        // beside it while a single line of text is in the box.
+        className="block max-h-40 min-w-0 flex-1 resize-none self-center bg-transparent px-2 py-2 text-base leading-[1.6] outline-none placeholder:text-ink-3 disabled:opacity-50"
       />
-      <Button type="submit" size="sm" disabled={disabled || !draft.trim()}>
-        <Send /> Send
-      </Button>
-      <VoiceButton voice={voice} />
+      <button
+        type="submit"
+        disabled={disabled || empty}
+        aria-label="Send your answer"
+        title="Send your answer"
+        className="grid size-[var(--row-h)] shrink-0 place-items-center rounded-full bg-brand text-on-brand transition-[background,opacity] duration-[var(--dur-tap)] hover:bg-[color-mix(in_srgb,var(--brand)_88%,#fff)] active:bg-brand-press disabled:bg-surface-2 disabled:text-ink-3"
+      >
+        <ArrowUp className="size-5" />
+      </button>
     </form>
   );
 }
@@ -767,18 +947,20 @@ function VoiceButton({
 }: {
   voice?: { status: VoiceStatus; onToggle: () => void };
 }) {
+  const base =
+    "grid size-[var(--row-h)] shrink-0 place-items-center rounded-full transition-colors duration-[var(--dur-tap)]";
+
   if (!voice) {
     return (
-      <Button
+      <button
         type="button"
-        variant="neutral"
-        size="icon"
         disabled
         aria-label="Answer by voice"
         title="Speaking needs the agent, which is not running here. Type your answers instead."
+        className={cn(base, "text-ink-3 disabled:opacity-40")}
       >
-        <Mic />
-      </Button>
+        <Mic className="size-5" />
+      </button>
     );
   }
 
@@ -794,26 +976,30 @@ function VoiceButton({
       {live && (
         <span
           aria-hidden
-          className="absolute inset-0 animate-ping rounded-md bg-brand opacity-60"
+          className="absolute inset-0 animate-ping rounded-full bg-brand opacity-60"
         />
       )}
-      <Button
+      <button
         type="button"
-        variant={live ? "primary" : "neutral"}
-        size="icon"
         onClick={voice.onToggle}
         aria-label={label}
         title={label}
-        className="relative"
+        className={cn(
+          base,
+          "relative",
+          live
+            ? "bg-brand text-on-brand"
+            : "text-ink-2 hover:bg-surface-2 hover:text-ink"
+        )}
       >
         {voice.status === "connecting" ? (
-          <Loader2 className="animate-spin" />
+          <Loader2 className="size-5 animate-spin" />
         ) : live ? (
-          <Square />
+          <Square className="size-5" />
         ) : (
-          <Mic />
+          <Mic className="size-5" />
         )}
-      </Button>
+      </button>
       {/* The ring says the microphone is open to everyone who can see
           it; this says the same thing to everyone who cannot. */}
       <span role="status" className="sr-only">
@@ -847,27 +1033,22 @@ function EditButton({
           ? "Say what it should be instead — the agent is listening"
           : "Edit this answer"
       }
-      className="grid size-[var(--row-h)] place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
+      className="grid size-9 shrink-0 place-items-center rounded-full text-ink-3 opacity-0 transition-[color,background,opacity] duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink focus-visible:opacity-100 group-hover/row:opacity-100 disabled:pointer-events-none disabled:opacity-40 max-lg:opacity-100"
     >
-      <RotateCcw className="size-5" />
+      <RotateCcw className="size-4" />
     </button>
   );
 }
 
-function TypingDots() {
+/**
+ * The agent is composing. One dot, on the page where its words are about
+ * to appear — not three bouncing inside an empty bubble, which drew a
+ * container the reply itself will not have.
+ */
+function Thinking() {
   return (
-    <div
-      role="status"
-      aria-label="Agent is typing"
-      className="flex w-fit gap-1 rounded-[18px] rounded-bl-[6px] border border-border bg-surface px-4 py-3 shadow-[var(--shadow-sm)]"
-    >
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className="size-2 animate-bounce rounded-full bg-ink-3"
-          style={{ animationDelay: `${i * 120}ms` }}
-        />
-      ))}
+    <div role="status" aria-label="The agent is answering">
+      <span className="intake-thinking block size-2.5 rounded-full bg-ink-3" />
     </div>
   );
 }
@@ -908,35 +1089,64 @@ const LABELS: Record<string, string> = {
   history: "Visa history",
 };
 
-function Bubble({
+/**
+ * One turn of the conversation. The two sides are deliberately not
+ * mirror images.
+ *
+ * The agent speaks straight onto the page — no bubble, no border, no
+ * card. Its turns are the ones that carry length: a question plus the
+ * reason behind it, a list, a correction. Boxing them caps them at a
+ * bubble's width and makes every paragraph look like a chat notification
+ * rather than something written to be read. The traveller's turns are
+ * short by construction — a country, a date, a tapped suggestion — so
+ * those keep a bubble, which is what tells the two voices apart now that
+ * the sides no longer differ in shape alone.
+ *
+ * The bubble is neutral rather than brand. An answer read back to you is
+ * a receipt, not a call to action, and there is only one thing on this
+ * screen worth the loudest colour in the system: the button that sends
+ * the next one.
+ */
+function Turn({
   from,
   plain = false,
+  action,
   children,
 }: {
   from: "agent" | "user";
   /**
-   * Renders the bubble's text as text, Markdown and all. For the one
-   * agent line that is not model output: the greeting, which embeds the
+   * Renders the turn's text as text, Markdown and all. For the one agent
+   * line that is not model output: the greeting, which embeds the
    * traveller's own name. The platform convention is that only
    * model-authored messages go through `ChatMarkdown`.
    */
   plain?: boolean;
+  /** Sits outside the bubble, in the gutter. Reopening an answer. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  if (from === "agent") {
+    return (
+      <div className="max-w-full text-base leading-[1.7] text-ink">
+        {plain || typeof children !== "string" ? (
+          children
+        ) : (
+          <ChatMarkdown>{children}</ChatMarkdown>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "max-w-[85%] rounded-[18px] px-4 py-3 text-base",
-        from === "agent"
-          ? "self-start rounded-bl-[6px] border border-border bg-surface text-ink shadow-[var(--shadow-sm)]"
-          : "self-end rounded-br-[6px] bg-brand font-semibold text-on-brand"
-      )}
-    >
-      {from === "agent" && !plain && typeof children === "string" ? (
-        <ChatMarkdown>{children}</ChatMarkdown>
-      ) : (
-        children
-      )}
+    <div className="group/row flex items-start justify-end gap-1">
+      {action}
+      {/* `surface-inset`, not `surface-2`: the transcript ground is
+          already `bg`, and a `surface-2` bubble on it is a two-step
+          difference that disappears at a glance. White is spoken for —
+          it is what the composer and the record are made of. */}
+      <div className="max-w-[80%] rounded-[20px] bg-surface-inset px-4 py-2.5 text-base leading-[1.6] text-ink">
+        {children}
+      </div>
     </div>
   );
 }

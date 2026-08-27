@@ -59,11 +59,18 @@ function Awaiting({ w = 64 }: { w?: number }) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value?: string | null }) {
+/**
+ * One field of the data page: a caps label over its value, the way a
+ * passport labels its fields. Stacking is also the responsive fix — a
+ * label-left/value-right row has nowhere to go at 320px, and a value
+ * (an email, a destination) must wrap rather than truncate, because a
+ * traveller has to be able to read their own record.
+ */
+function DetailField({ label, value }: { label: string; value?: string | null }) {
   return (
-    <div className="flex items-baseline justify-between gap-6 border-b border-border py-3">
-      <dt className="t-body shrink-0 text-ink-2">{label}</dt>
-      <dd className="min-w-0 truncate text-right text-base font-semibold">
+    <div className="border-b border-border py-3">
+      <dt className="special-caps">{label}</dt>
+      <dd className="mt-1 break-words text-base font-semibold">
         {value || <Awaiting />}
       </dd>
     </div>
@@ -185,42 +192,67 @@ export default async function ProfilePage() {
               the document material to say so. */}
           <div
             aria-hidden
-            className="security-paper pointer-events-none absolute inset-x-0 top-0 h-[110px] opacity-60"
+            className="security-paper pointer-events-none absolute inset-x-0 top-0 h-[140px] opacity-60"
           />
-          <PanelBody className="relative flex flex-wrap items-start gap-x-6 gap-y-5 py-6 sm:px-8">
-            <span className="grid size-16 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--brand)_13%,transparent)] text-[20px] font-bold tracking-wide text-brand-text">
-              {initials(profile.fullName)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <h1 className="d-lg text-ink">{profile.fullName || "Traveller"}</h1>
-              <p className="t-muted mt-1">
-                {answers.nationality || <Awaiting w={80} />}
-                {answers.residence && (
-                  <span> · living in {answers.residence}</span>
-                )}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <StatusBadge status={application.status} />
-                <Badge variant="brand">
-                  <span className="num">{completion.pct}%</span> complete
-                </Badge>
-                <Badge variant="outline">
-                  <span className="num">
-                    Case {application.caseRef.toUpperCase()}
-                  </span>
-                </Badge>
-              </div>
-              {sponsorName && (
-                <p className="t-muted mt-3">
-                  Sponsored by <strong className="text-ink">{sponsorName}</strong> —
-                  they see your progress, never your documents.
+          <PanelBody className="relative py-6 sm:px-8 sm:py-7">
+            <div className="flex items-start gap-5 sm:gap-7">
+              {/* The photo window. A passport photo is a portrait
+                  rectangle, not a circle — the avatar keeps that aspect
+                  here, on the one card that is the traveller's data
+                  page. The circle in the app bar stays a circle. */}
+              <span className="grid h-20 w-16 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-border-strong bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] text-[20px] font-bold tracking-wide text-brand-text shadow-[inset_0_1px_3px_rgb(16_19_28/0.08)] sm:h-24 sm:w-20 sm:text-[22px]">
+                {initials(profile.fullName)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="tag">Traveller</p>
+                <h1 className="d-lg mt-1.5 break-words text-ink">
+                  {profile.fullName || "Traveller"}
+                </h1>
+                <p className="t-muted mt-1.5">
+                  {answers.nationality || <Awaiting w={80} />}
+                  {answers.residence && (
+                    <span> · living in {answers.residence}</span>
+                  )}
                 </p>
-              )}
+                {sponsorName && (
+                  <p className="t-muted mt-3">
+                    Sponsored by <strong className="text-ink">{sponsorName}</strong> —
+                    they see your progress, never your documents.
+                  </p>
+                )}
+              </div>
             </div>
-            <Button asChild variant="neutral" size="sm" className="sm:ml-auto">
+          </PanelBody>
+          {/* The case facts, in a band at the foot of the sheet — the
+              same place the machine-readable strip sits on a data page,
+              and the same place the corridor laminate carries its case
+              reference. Nothing here ever shares a shrinking row with
+              the name above. */}
+          <div className="relative flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border px-5 py-4 sm:px-8">
+            {/* The file's identifier leads the band, labelled like every
+                other field on the sheet — a bare code among pills reads
+                as noise, a labelled one reads as the document number. */}
+            <div className="shrink-0">
+              <p className="special-caps">Case number</p>
+              <p className="num mt-0.5 text-[15px] font-semibold text-ink">
+                {application.caseRef.toUpperCase()}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={application.status} />
+              <Badge variant="brand">
+                <span className="num">{completion.pct}%</span> complete
+              </Badge>
+            </div>
+            <Button
+              asChild
+              variant="neutral"
+              size="sm"
+              className="w-full sm:ml-auto sm:w-auto"
+            >
               <Link href="/app/agent">Edit trip answers</Link>
             </Button>
-          </PanelBody>
+          </div>
         </Panel>
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
@@ -236,50 +268,55 @@ export default async function ProfilePage() {
               }
             />
             <PanelBody className="pt-2">
+              {/* Fields flow across one grid rather than filling two
+                  fixed half-columns, so the sheet reads in rows the way
+                  a data page does and collapses to a single column
+                  without re-ordering. */}
               <dl className="grid gap-x-10 sm:grid-cols-2">
-                <div>
-                  <EditableName fullName={profile.fullName} />
-                  <DetailRow label="Email" value={profile.email} />
-                  <EditablePhone countryIso={countryIso} digits={phoneDigits} />
-                  <EditableLanguage locale={locale} />
-                  <EditableDigest digest={companionDigest} />
-                  <DetailRow label="Nationality" value={answers.nationality} />
-                  <DetailRow label="Currently in" value={answers.residence} />
-                </div>
-                <div>
-                  <DetailRow label="Destination" value={answers.destination} />
-                  <DetailRow label="Purpose" value={answers.purpose} />
-                  <DetailRow label="Target dates" value={answers.dates} />
-                  <DetailRow label="Budget" value={answers.budget} />
-                  <DetailRow label="Travel party" value={answers.companions} />
-                </div>
+                <EditableName fullName={profile.fullName} />
+                <DetailField label="Email" value={profile.email} />
+                <EditablePhone countryIso={countryIso} digits={phoneDigits} />
+                <EditableLanguage locale={locale} />
+                <EditableDigest digest={companionDigest} />
+                <DetailField label="Nationality" value={answers.nationality} />
+                <DetailField label="Currently in" value={answers.residence} />
+                <DetailField label="Destination" value={answers.destination} />
+                <DetailField label="Purpose" value={answers.purpose} />
+                <DetailField label="Target dates" value={answers.dates} />
+                <DetailField label="Budget" value={answers.budget} />
+                <DetailField label="Travel party" value={answers.companions} />
               </dl>
 
-              <div className="mt-5 space-y-5">
-                <div className="border-t border-border pt-4">
+              {/* The field grid above already closes with a hairline, so
+                  the first block here draws no top border of its own —
+                  `divide-y` rules only between blocks. */}
+              <div className="mt-1 grid divide-y divide-border">
+                <div className="py-4">
                   <h3 className="t-title">Food and support needs</h3>
                   <p className="t-muted mt-1.5">
                     {answers.needs || <Awaiting w={120} />}
                   </p>
                 </div>
-                <div className="border-t border-border pt-4">
+                <div className="py-4">
                   <h3 className="t-title">Prior visa history</h3>
                   <p className="t-muted mt-1.5">
                     {answers.history || <Awaiting w={120} />}
                   </p>
                 </div>
                 {corridor && (
-                  <div className="border-t border-border pt-4">
+                  <div className="py-4 pb-0">
                     <h3 className="t-title">Matched requirement</h3>
                     <p className="t-muted mt-1.5">
                       {corridor.visaName}
                       {fee && <span className="num"> · {fee}</span>}
                       {weeks && <span className="num"> · {weeks}</span>}
                     </p>
-                    <p className="special mt-2 flex items-center gap-1.5">
-                      <Clock3 className="size-4" aria-hidden />
-                      {corridor.sourceName ?? "Official source"} · rule set v
-                      {corridor.version} · in effect since {effective}
+                    <p className="special mt-2 flex items-start gap-1.5">
+                      <Clock3 className="mt-px size-4 shrink-0" aria-hidden />
+                      <span>
+                        {corridor.sourceName ?? "Official source"} · rule set
+                        v{corridor.version} · in effect since {effective}
+                      </span>
                     </p>
                   </div>
                 )}
@@ -319,9 +356,9 @@ export default async function ProfilePage() {
             <PanelBody>
               {itinerary ? (
                 <>
-                  <p className="special flex items-center gap-1.5">
-                    <Clock3 className="size-4" aria-hidden />
-                    Generated {formatDay(itinerary.generatedAt)}
+                  <p className="special flex items-start gap-1.5">
+                    <Clock3 className="mt-px size-4 shrink-0" aria-hidden />
+                    <span>Generated {formatDay(itinerary.generatedAt)}</span>
                   </p>
                   <dl className="mt-2">
                     {itinerarySections(itinerary.payload).map((section) => (

@@ -9,6 +9,7 @@ import {
   getProfile,
 } from "@/lib/data/applications";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
+import { signedDocumentUrl } from "@/lib/storage/documents";
 
 export default async function AppLayout({
   children,
@@ -18,11 +19,15 @@ export default async function AppLayout({
   const profile = await getProfile();
   if (!profile) redirect("/sign-in?next=/app");
 
-  const [application, notifications, unreadCount] = await Promise.all([
-    getOrCreateApplication(),
-    getNotifications(profile.id),
-    unreadNotificationCount(profile.id),
-  ]);
+  const [application, notifications, unreadCount, avatarUrl] =
+    await Promise.all([
+      getOrCreateApplication(),
+      getNotifications(profile.id),
+      unreadNotificationCount(profile.id),
+      // Private bucket, so the photo is signed fresh per render — the
+      // same stance the profile page takes.
+      profile.avatarPath ? signedDocumentUrl(profile.avatarPath) : null,
+    ]);
   const locked = !application?.intakeComplete;
 
   // Profile is reachable from the account menu (`profileHref` below),
@@ -47,6 +52,7 @@ export default async function AppLayout({
         nav={nav}
         name={profile.fullName}
         email={profile.email}
+        avatarUrl={avatarUrl}
         showAgentButton
         profileHref="/app/profile"
         notifications={

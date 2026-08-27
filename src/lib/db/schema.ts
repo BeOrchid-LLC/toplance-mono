@@ -102,6 +102,13 @@ export const profiles = pgTable(
     email: text().notNull(),
     phone: text(),
     countryIso: text().notNull().default("ng"),
+    /**
+     * Storage key of the profile photo — MinIO locally, Cloudflare R2 in
+     * staging and production, the same bucket as documents. A key rather
+     * than a URL: the bucket is private, so every render signs a fresh
+     * short-lived link.
+     */
+    avatarPath: text(),
     locale: text().notNull().default("en"),
     role: appRole().notNull().default("traveler"),
     staffRole: staffRole(),

@@ -24,16 +24,25 @@ export function buildIntakeSystemPrompt({
   answers,
   locale,
   firstName,
+  reopenedKey,
 }: {
   answers: Record<string, string>;
   locale: Locale;
   firstName: string;
+  /**
+   * A topic the traveller reopened from the answers rail. The reopen
+   * never writes anything by itself, so the database still holds the
+   * old answer — without this line the model has no way to know a bare
+   * "Germany" is a destination correction and not a nationality.
+   */
+  reopenedKey?: string;
 }): string {
   const language =
     LOCALES.find((l) => l.code === locale) ??
     LOCALES.find((l) => l.code === DEFAULT_LOCALE)!;
 
   const next = INTAKE_QUESTIONS.find((q) => !answers[q.key]);
+  const reopened = INTAKE_QUESTIONS.find((q) => q.key === reopenedKey);
 
   const topics = INTAKE_QUESTIONS.map(
     (q, i) => `${i + 1}. \`${q.key}\` — ${q.prompt.en}`
@@ -99,9 +108,11 @@ ${travellerData}
 Greet them by \`firstName\` if it is set; otherwise do not use a name at all.
 
 ${
-  next
-    ? `The next unanswered topic is \`${next.key}\`. Ask about that one now.`
-    : `Every topic is answered. Tell them their checklist is ready and point them to the requirements page at /app/requirements. Do not start the questions again — but if they want to change one of their answers, record the correction as usual.`
+  reopened
+    ? `The traveller has just reopened \`${reopened.key}\` from their answers panel to change it. Their next message answers that topic: record it under \`${reopened.key}\`, whatever the JSON above still says for it. Everything after it is then cleared and asked again — say so briefly.`
+    : next
+      ? `The next unanswered topic is \`${next.key}\`. Ask about that one now.`
+      : `Every topic is answered. Tell them their checklist is ready and point them to the requirements page at /app/requirements. Do not start the questions again — but if they want to change one of their answers, record the correction as usual.`
 }
 
 ## Recording an answer

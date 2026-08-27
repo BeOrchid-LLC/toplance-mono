@@ -3,11 +3,34 @@ import { describe, expect, it } from "vitest";
 import {
   INTAKE_QUESTIONS,
   applyIntakeWrites,
+  nextIntakeQuestion,
   orderIntakeWrites,
   truncateAnswersAt,
 } from "@/lib/domain/intake";
 
 const KEYS = INTAKE_QUESTIONS.map((q) => q.key);
+
+/**
+ * The live intake shows this question locally under the greeting: the
+ * model only speaks once the traveller has, so without it question one
+ * — or, after a reload, whichever question is next — is never asked.
+ */
+describe("nextIntakeQuestion", () => {
+  it("opens a fresh intake with the first question", () => {
+    expect(nextIntakeQuestion({})?.key).toBe("nationality");
+  });
+
+  it("resumes a part-answered intake at the first gap", () => {
+    expect(
+      nextIntakeQuestion({ nationality: "Nigeria", residence: "Lagos" })?.key
+    ).toBe("destination");
+  });
+
+  it("returns nothing once every question is answered", () => {
+    const all = Object.fromEntries(KEYS.map((key) => [key, "answered"]));
+    expect(nextIntakeQuestion(all)).toBeUndefined();
+  });
+});
 
 /**
  * `truncateAnswersAt` is the client-side shadow of what

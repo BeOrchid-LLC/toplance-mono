@@ -29,6 +29,7 @@ import {
   INTAKE_QUESTIONS,
   HISTORY_NOTE,
   applyIntakeWrites,
+  nextIntakeQuestion,
   orderIntakeWrites,
   truncateAnswersAt,
   type IntakeQuestion,
@@ -119,6 +120,8 @@ function LiveIntake({
   const [reopened, setReopened] = React.useState<{
     key: string;
     afterWrites: number;
+    /** Where in the transcript it happened, so the re-asked question renders there. */
+    afterMessages: number;
   } | null>(null);
   // What the voice session has recorded. The chat's writes can be read
   // back off the transcript; a spoken one leaves no message behind, so
@@ -126,6 +129,7 @@ function LiveIntake({
   // conversation it happened at so the two streams can be re-ordered.
   const [spoken, setSpoken] = React.useState<SpokenIntakeWrite[]>([]);
   const { locale } = useLocale();
+  const t = useT();
   const router = useRouter();
   const endRef = React.useRef<HTMLDivElement>(null);
 
@@ -142,6 +146,12 @@ function LiveIntake({
   // close over the rail — the scripted flow would inherit whatever was
   // on it when the chat was first set up.
   const answersRef = React.useRef(initialAnswers);
+
+  // The question this conversation opens on. State, not derived: it is
+  // the first line of the transcript, and rewriting a transcript's
+  // opening because later answers moved the frontier would be lying
+  // about what was asked.
+  const [opening] = React.useState(() => nextIntakeQuestion(initialAnswers));
 
   const { messages, sendMessage, status } = useChat({
     transport,
@@ -193,10 +203,22 @@ function LiveIntake({
 
   // A reopened answer is the traveller's intent, not a write — it holds
   // only until the model records something, which is the real clear.
-  const answers =
-    reopened && reopened.afterWrites === writes
-      ? truncateAnswersAt(recorded, reopened.key)
-      : recorded;
+  const reopenPending =
+    reopened && reopened.afterWrites === writes ? reopened : null;
+  const answers = reopenPending
+    ? truncateAnswersAt(recorded, reopenPending.key)
+    : recorded;
+
+  // The reopened topic's question, in the traveller's own language —
+  // built from `reopened` rather than `reopenPending`, so the question
+  // stays in the transcript after the correction is recorded, the way
+  // any asked question would.
+  const reopenedQuestion = reopened
+    ? INTAKE_QUESTIONS.find((q) => q.key === reopened.key)
+    : undefined;
+  const reasked = reopenedQuestion ? (
+    <Bubble from="agent">{t(reopenedQuestion.prompt)}</Bubble>
+  ) : null;
 
   const answeredCount = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
   const current = INTAKE_QUESTIONS[answeredCount];
@@ -255,7 +277,7 @@ function LiveIntake({
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, status]);
+  }, [messages, status, reopened]);
 
   function send(value: string) {
     const text = value.trim();
@@ -265,7 +287,14 @@ function LiveIntake({
     // questions, which is the one thing the greying out exists to stop.
     if (!text || busy || speaking) return;
     setDraft("");
-    void sendMessage({ text });
+    // The reopen never wrote anything, so the server still holds the old
+    // answer — this is what tells the model which topic the correction
+    // is for. Without it a bare "Germany" is ambiguous between two
+    // country-shaped topics, and the model files it under the wrong one.
+    void sendMessage(
+      { text },
+      reopenPending ? { body: { reopenedKey: reopenPending.key } } : undefined
+    );
   }
 
   /**
@@ -274,7 +303,7 @@ function LiveIntake({
    * model records it, and that write is what actually clears the rest.
    */
   function editFrom(key: string) {
-    setReopened({ key, afterWrites: writes });
+    setReopened({ key, afterWrites: writes, afterMessages: messages.length });
     toast.info("Answer reopened. Tell the agent what it should say instead.");
   }
 
@@ -299,22 +328,40 @@ function LiveIntake({
 
           <Bubble from="agent" plain>{greeting(firstName)}</Bubble>
 
-          {messages.map((message) => {
+          {/* The model only speaks once the traveller has, so the
+            * conversation's first question is asked from the local list
+            * — the same wording the scripted flow uses. Captured at
+            * mount: it is the opening line of this transcript, and it
+            * would be wrong for it to change under a finished one. */}
+          {opening && <Bubble from="agent">{t(opening.prompt)}</Bubble>}
+
+          {messages.map((message, i) => {
             const text = message.parts
               .filter((part) => part.type === "text")
               .map((part) => part.text)
               .join("");
-            if (!text) return null;
+            if (!text && !(reasked && reopened?.afterMessages === i)) {
+              return null;
+            }
 
             return (
-              <Bubble
-                key={message.id}
-                from={message.role === "assistant" ? "agent" : "user"}
-              >
-                {text}
-              </Bubble>
+              <React.Fragment key={message.id}>
+                {/* Re-asked locally at the point the rail edit happened:
+                  * the model is only told about the reopen on the next
+                  * message, so nothing else asks the question again. */}
+                {reopened?.afterMessages === i && reasked}
+                {text && (
+                  <Bubble
+                    from={message.role === "assistant" ? "agent" : "user"}
+                  >
+                    {text}
+                  </Bubble>
+                )}
+              </React.Fragment>
             );
           })}
+
+          {reasked && (reopened?.afterMessages ?? 0) >= messages.length && reasked}
 
           {status === "submitted" && <TypingDots />}
 

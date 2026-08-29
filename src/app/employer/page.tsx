@@ -12,8 +12,10 @@ import { Shell } from "@/components/shared/shell";
 import { CreateOrganisation } from "@/components/employer/create-organisation";
 import { InviteDialog } from "@/components/employer/invite-dialog";
 import { RevokeInvitationButton } from "@/components/employer/revoke-invitation-button";
+import { homeFor } from "@/lib/auth/routes";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import {
+  applications,
   orgApplicationProgress,
   orgMembers,
   organisations,
@@ -78,6 +80,26 @@ export default async function EmployerConsolePage() {
   // "0 people" roster for an org that was never created. This is the
   // only door in: name one, then the branch below takes over.
   if (!membership) {
+    // …but not everyone holding a session belongs at that door. The role
+    // is still `traveler` here for a legitimate new employer — the flip
+    // happens inside `createOrganisationTx` — so this cannot simply
+    // demand `org_member`, which would wall off the whole sign-up.
+    //
+    // What it can do is refuse the two accounts that transaction refuses
+    // anyway, rather than hand them a form guaranteed to fail at submit:
+    // staff, who may never own an organisation, and a traveller already
+    // mid-case, whose account is committed to the other side of the
+    // privacy boundary. Keep the two lists in step — a rule relaxed
+    // there and not here shows a dead form; the reverse hides a live one.
+    if (actor.role === "staff") redirect(homeFor(actor.role));
+
+    const [ownCase] = await db
+      .select({ id: applications.id })
+      .from(applications)
+      .where(eq(applications.travelerId, profile.id))
+      .limit(1);
+    if (ownCase) redirect(homeFor("traveler"));
+
     return (
       <div className="min-h-dvh bg-bg">
         <AppBar

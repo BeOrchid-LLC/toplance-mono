@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   INTAKE_QUESTIONS,
   applyIntakeWrites,
+  intakeFrontier,
   nextIntakeQuestion,
   orderIntakeWrites,
   truncateAnswersAt,
@@ -29,6 +30,47 @@ describe("nextIntakeQuestion", () => {
   it("returns nothing once every question is answered", () => {
     const all = Object.fromEntries(KEYS.map((key) => [key, "answered"]));
     expect(nextIntakeQuestion(all)).toBeUndefined();
+  });
+
+  /**
+   * The whole reason this is one shared function. Both agents ask at the
+   * first gap; the screen used to count what was filled and index the
+   * list with the total, which is the same number only while the answers
+   * are a contiguous prefix. Nothing guarantees that: `record_answer`
+   * accepts any of the ten keys, and the prompt tells the model to use it
+   * the moment a topic is answered — so a traveller who volunteers their
+   * destination while being asked their nationality leaves a hole, and a
+   * count then points one question past the one being asked.
+   */
+  it("asks at the gap when an answer landed out of order", () => {
+    const answers: Record<string, string> = { destination: "Germany" };
+    const counted = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
+
+    expect(nextIntakeQuestion(answers)?.key).toBe("nationality");
+    expect(INTAKE_QUESTIONS[counted].key).not.toBe("nationality");
+  });
+});
+
+describe("intakeFrontier", () => {
+  it("starts at the first question", () => {
+    expect(intakeFrontier({})).toBe(0);
+  });
+
+  it("sits on the first gap, not on the number answered", () => {
+    expect(intakeFrontier({ destination: "Germany" })).toBe(0);
+    expect(intakeFrontier({ nationality: "Nigeria", purpose: "Work" })).toBe(1);
+  });
+
+  it("runs off the end of the list once every question is answered", () => {
+    const all = Object.fromEntries(KEYS.map((key) => [key, "answered"]));
+    expect(intakeFrontier(all)).toBe(INTAKE_QUESTIONS.length);
+  });
+
+  it("agrees with the question it names", () => {
+    const answers = { nationality: "Nigeria", residence: "Lagos" };
+    expect(INTAKE_QUESTIONS[intakeFrontier(answers)]).toBe(
+      nextIntakeQuestion(answers)
+    );
   });
 });
 

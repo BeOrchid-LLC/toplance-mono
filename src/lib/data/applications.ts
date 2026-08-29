@@ -117,6 +117,13 @@ export async function getOrCreateApplication(): Promise<Application | null> {
 
   if (existing) return existing;
 
+  // Only a traveller owns an application. The `(app)` layout already
+  // turns anyone else away, but a layout's `redirect()` does not stop
+  // the segments beneath it — Next renders them concurrently, and they
+  // call this too — so the invariant is kept here, at the write, rather
+  // than at one of nine call sites.
+  if (profile.role !== "traveler") return null;
+
   // The layout and the page it wraps both resolve the application
   // concurrently, so first visits race here. Same shape as the profile
   // provisioning above: whoever loses the insert reads the winner's row.

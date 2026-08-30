@@ -90,6 +90,8 @@ const pairSchema = z.object({
     })
     .nullish(),
   visa_info_link: z.string().nullish(),
+  evisa_link: z.string().nullish(),
+  allowed_stay_days: z.number().nullish(),
   last_verified_at: z.string().nullish(),
 });
 
@@ -145,6 +147,18 @@ export function toRuleSet(payload: unknown): CorridorRuleSet | null {
     attribution:
       "Rule data from DoINeedVisa, MIT licence, incorporating Passport Index data.",
     contributions: [],
+    // Stated the way a mission states it, not parsed into a number —
+    // "90 days" is the fact; 90 is an interpretation of it.
+    allowedStay:
+      pair.allowed_stay_days != null ? `${pair.allowed_stay_days} days` : null,
+    // Not returned by this vendor: passport validity is absent from the
+    // response entirely, and its one info link is a government page
+    // rather than a structured embassy contact.
+    passportValidity: null,
+    embassyUrl: null,
+    evisaUrl: pair.evisa_link ?? null,
+    registrationName: null,
+    registrationUrl: null,
     processingWeeksMin: weeksFrom(pair.processing_time?.min_days),
     processingWeeksMax: weeksFrom(pair.processing_time?.max_days),
     governmentFeeMinor:
@@ -189,6 +203,7 @@ let keyRejected = false;
 
 export const doINeedVisaProvider: VisaDataProvider = {
   name: "doineedvisa",
+  canLead: true,
 
   async fetch(query: CorridorQuery): Promise<CorridorRuleSet | null> {
     const apiKey = process.env.DINV_API_KEY;

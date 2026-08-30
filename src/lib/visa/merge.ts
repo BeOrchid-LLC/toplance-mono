@@ -23,9 +23,14 @@ import type { Contribution, CorridorRuleSet } from "@/lib/visa/types";
  *    come from exactly one provider, always.
  */
 
-/** The figures a second provider is allowed to supply, and their labels. */
+/** The figures a second provider may supply, as the screen labels them. */
 const FEE = "Government fee";
 const PROCESSING = "Typical decision time";
+const STAY = "Allowed stay";
+const VALIDITY = "Passport validity";
+const EMBASSY = "Embassy contact";
+const EVISA = "Official eVisa portal";
+const REGISTRATION = "Arrival registration";
 
 /**
  * Whether anything is still missing that another provider could supply.
@@ -33,15 +38,21 @@ const PROCESSING = "Typical decision time";
  * This is the gate that keeps a complete corridor free: every provider
  * consulted behind the spine costs a request against a metered quota
  * (Travel Buddy's free tier is 120 a month, DoINeedVisa's 300), so the
- * resolver stops walking the moment there is nothing left to fill. All
- * four seeded corridors carry a fee and a processing window, which is
- * why merging changes neither their output nor their cost.
+ * resolver stops walking the moment there is nothing left to fill.
+ *
+ * The eVisa portal and the arrival registration are deliberately not
+ * gaps. Plenty of routes have neither, so counting them would send
+ * every corridor shopping for a figure that does not exist — and spend
+ * a metered request discovering that, on every page view.
  */
 export function hasGaps(ruleSet: CorridorRuleSet): boolean {
   return (
     ruleSet.governmentFeeMinor == null ||
     ruleSet.processingWeeksMin == null ||
-    ruleSet.processingWeeksMax == null
+    ruleSet.processingWeeksMax == null ||
+    ruleSet.allowedStay == null ||
+    ruleSet.passportValidity == null ||
+    ruleSet.embassyUrl == null
   );
 }
 
@@ -51,7 +62,8 @@ export function hasGaps(ruleSet: CorridorRuleSet): boolean {
  *
  * Returns a new object; the spine passed in is never modified, so a
  * cached rule set cannot be quietly rewritten by a merge downstream of
- * it.
+ * it. One provider produces one contribution however many figures it
+ * supplied — the sheet names a source once, not once per figure.
  */
 export function fillGaps(
   spine: CorridorRuleSet,
@@ -60,9 +72,17 @@ export function fillGaps(
   const merged: CorridorRuleSet = { ...spine };
   const fields: string[] = [];
 
-  // A fee and its currency move together or not at all — an amount
-  // without a currency is a number, not a price, and the requirements
-  // screen would render it against whatever default it has to hand.
+  /** Fill one nullable field, naming it if it was actually taken. */
+  const take = <K extends keyof CorridorRuleSet>(key: K, label: string) => {
+    if (merged[key] == null && other[key] != null) {
+      merged[key] = other[key];
+      fields.push(label);
+    }
+  };
+
+  // A fee and its currency move together — an amount without a currency
+  // is a number, not a price, and the screen would render it against
+  // whatever default it has to hand.
   if (
     merged.governmentFeeMinor == null &&
     other.governmentFeeMinor != null &&
@@ -84,6 +104,23 @@ export function fillGaps(
     merged.processingWeeksMin = other.processingWeeksMin;
     merged.processingWeeksMax = other.processingWeeksMax;
     fields.push(PROCESSING);
+  }
+
+  take("allowedStay", STAY);
+  take("passportValidity", VALIDITY);
+  take("embassyUrl", EMBASSY);
+  take("evisaUrl", EVISA);
+
+  // A registration is a name and the form to do it. Half of that is a
+  // traveller told they must register somewhere, with nowhere to go.
+  if (
+    merged.registrationName == null &&
+    other.registrationName != null &&
+    other.registrationUrl != null
+  ) {
+    merged.registrationName = other.registrationName;
+    merged.registrationUrl = other.registrationUrl;
+    fields.push(REGISTRATION);
   }
 
   if (fields.length === 0) return merged;

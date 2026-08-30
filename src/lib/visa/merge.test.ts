@@ -13,6 +13,14 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   sourceUrl: "https://www.gov.uk/skilled-worker-visa",
   attribution: null,
   contributions: [],
+  allowedStay: "5 years",
+  passportValidity: "valid for the whole period of stay",
+  embassyUrl: "https://example.gov/embassy",
+  // Neither is a gap: not every route has an eVisa portal, and most
+  // have no arrival registration at all.
+  evisaUrl: null,
+  registrationName: null,
+  registrationUrl: null,
   processingWeeksMin: 3,
   processingWeeksMax: 8,
   governmentFeeMinor: 71900,
@@ -41,6 +49,27 @@ describe("hasGaps", () => {
 
   it("is true when the processing window is missing", () => {
     expect(hasGaps(ruleSet({ processingWeeksMin: null }))).toBe(true);
+  });
+
+  it.each([
+    ["allowedStay", { allowedStay: null }],
+    ["passportValidity", { passportValidity: null }],
+    ["embassyUrl", { embassyUrl: null }],
+  ])("is true when %s is missing", (_label, over) => {
+    expect(hasGaps(ruleSet(over))).toBe(true);
+  });
+
+  /**
+   * Absent is not the same as not applicable. Plenty of routes have no
+   * eVisa portal and no arrival registration, so treating either as a
+   * gap would send every corridor shopping for a figure that does not
+   * exist — and spend a metered request finding that out, every time.
+   */
+  it.each([
+    ["an eVisa portal", { evisaUrl: null }],
+    ["arrival registration", { registrationName: null, registrationUrl: null }],
+  ])("does not count a missing %s as a gap", (_label, over) => {
+    expect(hasGaps(ruleSet(over))).toBe(false);
   });
 
   /**
@@ -142,6 +171,78 @@ describe("fillGaps", () => {
 
     expect(merged.governmentFeeMinor).toBeNull();
     expect(merged.contributions).toEqual([]);
+  });
+
+  it.each([
+    ["Allowed stay", { allowedStay: "6 months" }, "allowedStay"],
+    [
+      "Passport validity",
+      { passportValidity: "6 months beyond stay" },
+      "passportValidity",
+    ],
+    ["Embassy contact", { embassyUrl: "https://other.gov/embassy" }, "embassyUrl"],
+    ["Official eVisa portal", { evisaUrl: "https://other.gov/evisa" }, "evisaUrl"],
+  ])("takes %s when the spine lacks it", (label, over, key) => {
+    const spine = ruleSet({ [key]: null });
+    const merged = fillGaps(spine, ruleSet({ provider: "travelbuddy", ...over }));
+
+    expect(merged[key as keyof typeof merged]).toBe(
+      over[key as keyof typeof over]
+    );
+    expect(merged.contributions[0].fields).toEqual([label]);
+  });
+
+  /**
+   * A registration is a name and the form to do it. Half of that is a
+   * traveller told they must register, with nowhere to go.
+   */
+  it("takes an arrival registration only with its form link", () => {
+    const spine = ruleSet();
+    const partial = fillGaps(
+      spine,
+      ruleSet({ provider: "travelbuddy", registrationName: "e-Arrival" })
+    );
+    expect(partial.registrationName).toBeNull();
+
+    const whole = fillGaps(
+      spine,
+      ruleSet({
+        provider: "travelbuddy",
+        registrationName: "e-Arrival",
+        registrationUrl: "https://other.gov/arrival",
+      })
+    );
+    expect(whole.registrationName).toBe("e-Arrival");
+    expect(whole.contributions[0].fields).toEqual(["Arrival registration"]);
+  });
+
+  it("names every figure one provider supplied in a single contribution", () => {
+    const spine = ruleSet({
+      allowedStay: null,
+      embassyUrl: null,
+      governmentFeeMinor: null,
+      governmentFeeCurrency: null,
+    });
+    const merged = fillGaps(
+      spine,
+      ruleSet({
+        provider: "travelbuddy",
+        sourceName: "Travel Buddy",
+        allowedStay: "6 months",
+        embassyUrl: "https://other.gov/embassy",
+        governmentFeeMinor: 5160,
+        governmentFeeCurrency: "GBP",
+      })
+    );
+
+    // One provider, one line on the sheet — not three. Passport
+    // validity is absent from the list because the spine already had it.
+    expect(merged.contributions).toHaveLength(1);
+    expect(merged.contributions[0].fields).toEqual([
+      "Government fee",
+      "Allowed stay",
+      "Embassy contact",
+    ]);
   });
 
   it("records nothing when the other provider adds nothing", () => {

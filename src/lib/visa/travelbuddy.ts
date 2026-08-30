@@ -2,24 +2,32 @@ import "server-only";
 
 import { z } from "zod";
 
-import type { CorridorQuery } from "@/lib/visa/types";
+import type {
+  CorridorQuery,
+  CorridorRuleSet,
+  VisaDataProvider,
+} from "@/lib/visa/types";
 
 /**
- * Travel Buddy as a source of *destination facts* — currency, capital,
- * timezone, dialling code, embassy link — for the Phase 5 arrival plan.
+ * Travel Buddy, read twice from one response.
  *
- * Deliberately NOT a `VisaDataProvider`. Travel Buddy never returns a
- * required-documents list, so a rule set built from it would carry an
- * empty `requirements` array, and `adoptRuleSet` would materialise that
- * as an application with no upload slots, no completion score and no
- * 100%-complete trigger. The rule-set path stays curated-first and never
- * learns this module exists; the only consumer is `@/lib/ai/itinerary`.
+ * `fetchCountryContext` takes the *destination facts* — currency,
+ * capital, timezone, dialling code, embassy link — for the Phase 5
+ * arrival plan. `travelBuddyProvider` takes the *entry rules* — allowed
+ * stay, passport validity, embassy and eVisa links, arrival
+ * registration — for the requirements screen.
  *
- * The same response carries entry rules. This module reads none of them.
- * That is what keeps the curated table the source of record, and it also
- * keeps us clear of the vendor's storage terms: nothing rule-shaped is
- * read, cached or persisted — only country metadata, and only for the
- * lifetime of one process.
+ * Two shapes because the two screens may say different things. The
+ * itinerary is forbidden from stating an entry requirement, so
+ * `passport_validity` is dropped on that path; the requirements screen
+ * exists to state exactly that, so it is kept on this one. One cached
+ * call serves both, which matters on a 120-request month.
+ *
+ * The provider declares `canLead: false`. Travel Buddy returns no
+ * document list, so a rule set from it carries no checklist — and a
+ * checklist with no rows means no upload slots, no completion score and
+ * no 100%-complete trigger. It fills figures on someone else's rule
+ * set; it is never the rule set.
  */
 
 const HOST = "visa-requirement.p.rapidapi.com";
@@ -59,6 +67,29 @@ const metadataSchema = z.object({
   phone_code: z.string().nullish(),
   capital: z.string().nullish(),
   embassy_url: z.string().nullish(),
+});
+
+/**
+ * The rule half of the same payload. Everything nullish: a route with no
+ * eVisa portal and no arrival registration is ordinary, not malformed.
+ */
+const ruleSchema = z.object({
+  destination: metadataSchema
+    .extend({ passport_validity: z.string().nullish() })
+    .nullish(),
+  visa_rules: z
+    .object({
+      primary_rule: z
+        .object({ name: z.string().nullish(), duration: z.string().nullish() })
+        .nullish(),
+      secondary_rule: z
+        .object({ name: z.string().nullish(), link: z.string().nullish() })
+        .nullish(),
+    })
+    .nullish(),
+  mandatory_registration: z
+    .object({ name: z.string().nullish(), link: z.string().nullish() })
+    .nullish(),
 });
 
 /**
@@ -102,14 +133,79 @@ export function toCountryContext(payload: unknown): CountryContext | null {
 }
 
 /**
- * The free tier is 120 requests a month — tighter than DoINeedVisa's
- * 300. Country facts change on the order of years (the exchange rate
- * aside, which the prompt presents as indicative, never as a quote), so
- * a day-old answer is still an answer. Module state, so each server
- * instance warms its own; a restart is the refresh lever.
+ * The same payload as a rule set carrying only entry rules — no
+ * documents, no fee, no decision time.
+ *
+ * It claims neither a fee nor a processing window even though a vendor
+ * might guess at both: the curated table is the real source for those,
+ * and a contributor that claims a figure it has not checked would fill
+ * a blank the merge is meant to leave for someone who has.
+ *
+ * Null when there is no entry rule worth adding — otherwise a payload
+ * carrying none of the six figures would put "Travel Buddy" on the
+ * requirements sheet beside an empty list of what it supplied.
  */
-const TTL_MS = 24 * 60 * 60 * 1000;
-const cache = new Map<string, { at: number; value: CountryContext | null }>();
+export function toEntryRules(payload: unknown): CorridorRuleSet | null {
+  const parsed = ruleSchema.safeParse(payload);
+  if (!parsed.success) return null;
+  const { destination, visa_rules: rules, mandatory_registration } = parsed.data;
+
+  const registrationName = mandatory_registration?.name ?? null;
+  const registrationUrl = mandatory_registration?.link ?? null;
+
+  const ruleSet: CorridorRuleSet = {
+    corridorId: null,
+    provider: "travelbuddy",
+    visaName: rules?.primary_rule?.name ?? "Entry rules",
+    version: 1,
+    effectiveFrom: new Date().toISOString().slice(0, 10),
+    sourceName: "Travel Buddy",
+    sourceUrl: destination?.embassy_url ?? null,
+    attribution: null,
+    contributions: [],
+    allowedStay: rules?.primary_rule?.duration ?? null,
+    passportValidity: destination?.passport_validity ?? null,
+    embassyUrl: destination?.embassy_url ?? null,
+    evisaUrl: rules?.secondary_rule?.link ?? null,
+    // Both or neither — a traveller told to register with nowhere to do
+    // it is worse served than one not told at all.
+    registrationName: registrationUrl ? registrationName : null,
+    registrationUrl: registrationName ? registrationUrl : null,
+    // Not ours to state. See above.
+    processingWeeksMin: null,
+    processingWeeksMax: null,
+    governmentFeeMinor: null,
+    governmentFeeCurrency: null,
+    requirements: [],
+  };
+
+  const carries =
+    ruleSet.allowedStay ??
+    ruleSet.passportValidity ??
+    ruleSet.embassyUrl ??
+    ruleSet.evisaUrl ??
+    ruleSet.registrationName;
+
+  return carries ? ruleSet : null;
+}
+
+/**
+ * Seven days, not one.
+ *
+ * This cache used to serve only the itinerary, which runs once per
+ * approval — a rare call, where a short TTL cost nothing. It now also
+ * serves the requirements screen, which is a page view: with four live
+ * corridors a daily TTL would spend roughly the entire 120-request
+ * month on refreshing figures that change on the order of years. Entry
+ * rules and country facts are stable enough that a week-old answer is
+ * still an answer; the exchange rate is the one volatile field, and the
+ * itinerary prompt presents it as indicative rather than as a quote.
+ *
+ * Module state, so each server instance warms its own; a restart is the
+ * refresh lever.
+ */
+const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const cache = new Map<string, { at: number; value: unknown }>();
 
 /**
  * Set after the API rejects our key. A 401 cannot heal until the key
@@ -120,20 +216,19 @@ const cache = new Map<string, { at: number; value: CountryContext | null }>();
 let keyRejected = false;
 
 /**
- * Destination facts for one corridor, or null when we have none.
+ * The raw payload for one corridor, cached, or null when we have none.
  *
- * Never throws. This runs inside the approve action's `after()`, where
- * the itinerary is generated for a traveller who has just been approved:
- * a vendor outage must cost them nothing more than the ungrounded
- * wording they would have got anyway.
+ * Never throws. This is called from the approve action's `after()` and
+ * from the requirements screen: a vendor outage must cost a traveller
+ * nothing more than the ungrounded wording — or the missing rows — they
+ * would have had anyway.
  *
- * `purpose` is part of the query type but unused — destination facts do
- * not vary by why someone is travelling. Taking the whole
- * `CorridorQuery` anyway keeps one query shape across every call site.
+ * `purpose` is part of the query type but unused: Travel Buddy has no
+ * purpose parameter, which is the ❌ on its own row of the matrix.
+ * Taking the whole `CorridorQuery` keeps one query shape across every
+ * call site, and keeps the cache keyed on what actually varies.
  */
-export async function fetchCountryContext(
-  query: CorridorQuery
-): Promise<CountryContext | null> {
+async function fetchPayload(query: CorridorQuery): Promise<unknown> {
   const apiKey = process.env.TRAVEL_BUDDY_API_KEY;
   if (!apiKey || keyRejected) return null;
 
@@ -150,11 +245,11 @@ export async function fetchCountryContext(
       headers: {
         "Content-Type": "application/json",
         // The RapidAPI consumer contract, verified against the live
-        // endpoint: an unauthenticated POST here answers 401 with
-        // RapidAPI's own "Invalid API key" body, so it is the gateway
-        // checking this header. The vendor's docs show
-        // `X-RapidAPI-Proxy-Secret` instead, but that is the
-        // proxy→origin hop, not the one we make.
+        // endpoint: an unauthenticated POST answers 401 with RapidAPI's
+        // own "Invalid API key" body, so it is the gateway checking
+        // this header. The vendor's docs show `X-RapidAPI-Proxy-Secret`
+        // instead, but that is the proxy→origin hop, not the one we
+        // make.
         "X-RapidAPI-Key": apiKey,
         "X-RapidAPI-Host": HOST,
       },
@@ -175,28 +270,52 @@ export async function fetchCountryContext(
 
     // A pair the vendor does not cover is a normal no, and cached like
     // one. Anything else unexpected is an outage: logged, not cached,
-    // so it heals on the next approval rather than in 24 hours.
+    // so it heals on the next view rather than in a week.
     if (response.status === 404) {
       cache.set(key, { at: Date.now(), value: null });
       return null;
     }
     if (!response.ok) {
       console.error(
-        `[visa] travel buddy answered ${response.status} for ${key} — ` +
-          "the arrival plan will be written without destination facts"
+        `[visa] travel buddy answered ${response.status} for ${key}`
       );
       return null;
     }
 
-    const context = toCountryContext(await response.json());
-    cache.set(key, { at: Date.now(), value: context });
-    return context;
+    const payload = await response.json();
+    cache.set(key, { at: Date.now(), value: payload });
+    return payload;
   } catch (error) {
     console.error(
-      `[visa] travel buddy could not be reached for ${key} — the arrival ` +
-        "plan will be written without destination facts",
+      `[visa] travel buddy could not be reached for ${key}`,
       error
     );
     return null;
   }
 }
+
+/**
+ * Destination facts for the arrival plan. Entry rules are deliberately
+ * not among them — see the note at the top of this module.
+ */
+export async function fetchCountryContext(
+  query: CorridorQuery
+): Promise<CountryContext | null> {
+  return toCountryContext(await fetchPayload(query));
+}
+
+/**
+ * Entry rules for the requirements screen, as a contributor.
+ *
+ * `canLead: false` is the load-bearing part: this provider has no
+ * documents, so it may fill figures on a rule set someone else opened
+ * and may never open one itself.
+ */
+export const travelBuddyProvider: VisaDataProvider = {
+  name: "travelbuddy",
+  canLead: false,
+
+  async fetch(query: CorridorQuery): Promise<CorridorRuleSet | null> {
+    return toEntryRules(await fetchPayload(query));
+  },
+};

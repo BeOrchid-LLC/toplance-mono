@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchCountryContext, toCountryContext } from "@/lib/visa/travelbuddy";
+import {
+  fetchCountryContext,
+  toCountryContext,
+  toEntryRules,
+} from "@/lib/visa/travelbuddy";
 
 /**
  * The destination metadata block, with the field names the vendor
@@ -203,5 +207,100 @@ describe("fetchCountryContext gates", () => {
       })
     ).resolves.toBeNull();
     consoleSpy.mockRestore();
+  });
+});
+
+
+/** The visa-rule half of the same payload, as the vendor documents it. */
+const rules = (over: Record<string, unknown> = {}) => ({
+  destination: destination(),
+  visa_rules: {
+    primary_rule: { name: "Visa required", duration: "5 years", color: "red" },
+    secondary_rule: {
+      name: "eVisa",
+      duration: null,
+      color: "blue",
+      link: "https://example.gov/evisa",
+    },
+  },
+  mandatory_registration: {
+    name: "e-Arrival",
+    color: "yellow",
+    link: "https://example.gov/arrival",
+  },
+  ...over,
+});
+
+describe("toEntryRules", () => {
+  it("maps the documented rule payload into a rule set", () => {
+    const rs = toEntryRules(rules())!;
+
+    expect(rs.provider).toBe("travelbuddy");
+    expect(rs.sourceName).toBe("Travel Buddy");
+    expect(rs.allowedStay).toBe("5 years");
+    expect(rs.evisaUrl).toBe("https://example.gov/evisa");
+    expect(rs.registrationName).toBe("e-Arrival");
+    expect(rs.registrationUrl).toBe("https://example.gov/arrival");
+    expect(rs.passportValidity).toBe("3 months beyond the period of stay");
+    expect(rs.embassyUrl).toBe("https://example.gov/embassy");
+  });
+
+  /**
+   * The whole reason this provider cannot lead. Travel Buddy returns no
+   * document list, so a rule set from it carries no checklist — and
+   * `canLead: false` is what stops that reaching `adoptRuleSet`.
+   */
+  it("carries no documents and no corridor of ours", () => {
+    const rs = toEntryRules(rules())!;
+
+    expect(rs.requirements).toEqual([]);
+    expect(rs.corridorId).toBeNull();
+  });
+
+  /**
+   * It has neither, and claiming otherwise would let it fill a figure
+   * the curated table is the only real source for.
+   */
+  it("never claims a fee or a decision time", () => {
+    const rs = toEntryRules(rules())!;
+
+    expect(rs.governmentFeeMinor).toBeNull();
+    expect(rs.governmentFeeCurrency).toBeNull();
+    expect(rs.processingWeeksMin).toBeNull();
+    expect(rs.processingWeeksMax).toBeNull();
+  });
+
+  it("survives a payload with no registration and no secondary rule", () => {
+    const rs = toEntryRules(
+      rules({ mandatory_registration: null, visa_rules: {
+        primary_rule: { name: "Visa free", duration: "90 days", color: "green" },
+      } })
+    )!;
+
+    expect(rs.allowedStay).toBe("90 days");
+    expect(rs.evisaUrl).toBeNull();
+    expect(rs.registrationName).toBeNull();
+    expect(rs.registrationUrl).toBeNull();
+  });
+
+  it("answers null rather than throwing on a reshaped payload", () => {
+    expect(toEntryRules({ nonsense: true })).toBeNull();
+    expect(toEntryRules(null)).toBeNull();
+    expect(toEntryRules("<html>")).toBeNull();
+  });
+
+  /**
+   * Nothing to contribute is not a contribution. A payload carrying none
+   * of the six figures would otherwise put "Travel Buddy" on the sheet
+   * beside an empty list of what it supplied.
+   */
+  it("answers null when it has no entry rule worth adding", () => {
+    expect(
+      toEntryRules({
+        destination: { code: "ID", name: "Indonesia" },
+        visa_rules: {},
+        mandatory_registration: null,
+      })
+    ).toBeNull();
   });
 });

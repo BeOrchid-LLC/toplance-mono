@@ -32,6 +32,10 @@ export async function resolveWith(
   query: CorridorQuery
 ): Promise<CorridorRuleSet | null> {
   let resolved: CorridorRuleSet | null = null;
+  // Contributors that answered before any spine did. Precedence order
+  // should put contributors last, but the list is configuration and a
+  // resolver that only worked in one ordering would be a trap.
+  const held: CorridorRuleSet[] = [];
 
   for (const provider of providers) {
     // Nothing left worth paying for.
@@ -51,7 +55,26 @@ export async function resolveWith(
 
     if (!answer) continue;
 
-    resolved = resolved ? fillGaps(resolved, answer) : answer;
+    if (resolved) {
+      resolved = fillGaps(resolved, answer);
+      continue;
+    }
+
+    // A provider with no documents cannot open a rule set — see
+    // `canLead`. Its figures are kept only if a spine turns up later,
+    // which is why they are held rather than discarded.
+    if (provider.canLead) {
+      resolved = answer;
+    } else {
+      held.push(answer);
+    }
+  }
+
+  if (!resolved) return null;
+
+  for (const early of held) {
+    if (!hasGaps(resolved)) break;
+    resolved = fillGaps(resolved, early);
   }
 
   return resolved;

@@ -204,6 +204,32 @@ export default async function RequirementsPage() {
                 ),
                 sub: "paid to the mission, not to Toplance",
               },
+              // The entry rules the brief's item 6 names. Curated
+              // corridors carry none of them, so in practice these are
+              // whatever a contributor filled — and the provenance rows
+              // in the footer say which one. Rendered only when a rule
+              // set actually has them: a dashed rule under "Allowed
+              // stay" is honest for a figure the mission publishes and
+              // we lack, but this is a strip that simply does not apply
+              // to every corridor.
+              ...(ruleSet.allowedStay
+                ? [
+                    {
+                      label: "Allowed stay",
+                      value: ruleSet.allowedStay,
+                      sub: "on this visa, per entry",
+                    },
+                  ]
+                : []),
+              ...(ruleSet.passportValidity
+                ? [
+                    {
+                      label: "Passport validity",
+                      value: ruleSet.passportValidity,
+                      sub: "a common reason a file is refused",
+                    },
+                  ]
+                : []),
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -218,6 +244,43 @@ export default async function RequirementsPage() {
             ))}
           </dl>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-surface-2/60 px-5 py-3.5 sm:px-6">
+            {/* Official places to go, when a corridor has them. Not
+                every route has an eVisa portal or an arrival form, so
+                these are links or nothing — never a disabled control
+                implying a step that does not exist. */}
+            {ruleSet.evisaUrl && (
+              <a
+                href={ruleSet.evisaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
+              >
+                Official eVisa portal
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            )}
+            {ruleSet.registrationName && ruleSet.registrationUrl && (
+              <a
+                href={ruleSet.registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
+              >
+                {ruleSet.registrationName} registration
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            )}
+            {ruleSet.embassyUrl && (
+              <a
+                href={ruleSet.embassyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
+              >
+                Embassy contact
+                <ExternalLink className="size-4" aria-hidden />
+              </a>
+            )}
             <span className="kicker">Rule set v{ruleSet.version}</span>
             <span aria-hidden className="h-3 w-px bg-border-strong" />
             <span className="t-muted">In effect since {effective}</span>

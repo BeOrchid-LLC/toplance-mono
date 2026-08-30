@@ -82,6 +82,23 @@ export type CorridorRuleSet = {
    * case and renders exactly as it always did.
    */
   contributions: Contribution[];
+  /**
+   * The entry rules the brief's item 6 names, beyond the fee and the
+   * decision time. Every one is nullable and every one is fillable by a
+   * contributor: curated corridors carry none of them today, and Travel
+   * Buddy is the only source that does.
+   *
+   * `allowedStay` and `passportValidity` are human strings — "30 days",
+   * "3 months beyond stay" — because that is how the missions state
+   * them and how they must be read back. Parsing them into numbers
+   * would invent a precision the source does not have.
+   */
+  allowedStay: string | null;
+  passportValidity: string | null;
+  embassyUrl: string | null;
+  evisaUrl: string | null;
+  registrationName: string | null;
+  registrationUrl: string | null;
   processingWeeksMin: number | null;
   processingWeeksMax: number | null;
   governmentFeeMinor: number | null;
@@ -99,5 +116,16 @@ export type CorridorRuleSet = {
  */
 export interface VisaDataProvider {
   readonly name: string;
+  /**
+   * Whether this provider may be the spine — the one whose documents
+   * become the checklist.
+   *
+   * `false` for a provider that returns entry rules but no document
+   * list. If such a provider ever led, `adoptRuleSet` would materialise
+   * a checklist with no rows: no upload slots, no completion score, and
+   * no 100%-complete trigger for the review queue. It may fill figures
+   * on someone else's rule set; it may never be the rule set.
+   */
+  readonly canLead: boolean;
   fetch(query: CorridorQuery): Promise<CorridorRuleSet | null>;
 }

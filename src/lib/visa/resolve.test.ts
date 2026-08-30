@@ -23,6 +23,14 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   sourceUrl: "https://www.gov.uk/skilled-worker-visa",
   attribution: null,
   contributions: [],
+  allowedStay: "5 years",
+  passportValidity: "valid for the whole period of stay",
+  embassyUrl: "https://example.gov/embassy",
+  // Neither is a gap: not every route has an eVisa portal, and most
+  // have no arrival registration at all.
+  evisaUrl: null,
+  registrationName: null,
+  registrationUrl: null,
   processingWeeksMin: 3,
   processingWeeksMax: 8,
   governmentFeeMinor: 71900,
@@ -41,13 +49,18 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
 });
 
 /** A provider that answers with whatever it was handed. */
-function stub(name: string, answer: CorridorRuleSet | null): VisaDataProvider {
-  return { name, fetch: vi.fn(async () => answer) };
+function stub(
+  name: string,
+  answer: CorridorRuleSet | null,
+  canLead = true
+): VisaDataProvider {
+  return { name, canLead, fetch: vi.fn(async () => answer) };
 }
 
 function broken(name: string): VisaDataProvider {
   return {
     name,
+    canLead: true,
     fetch: vi.fn(async () => {
       throw new Error("vendor down");
     }),
@@ -184,6 +197,58 @@ describe("resolveWith", () => {
     const resolved = await resolveWith([broken("a"), stub("curated", ruleSet())], QUERY);
 
     expect(resolved!.provider).toBe("curated");
+  });
+
+  /**
+   * Travel Buddy returns entry rules and no documents. If it ever led,
+   * `adoptRuleSet` would materialise a checklist with no rows — no
+   * upload slots, no completion score, no 100%% trigger. It may fill
+   * figures on someone else's rule set; it may never be the rule set.
+   */
+  it("never makes a provider that has no documents the spine", async () => {
+    const contributor = stub(
+      "travelbuddy",
+      ruleSet({ provider: "travelbuddy", requirements: [] }),
+      false
+    );
+    const curated = stub("curated", ruleSet({ embassyUrl: null }));
+
+    const resolved = await resolveWith([contributor, curated], QUERY);
+
+    expect(resolved!.provider).toBe("curated");
+    expect(resolved!.requirements).toHaveLength(1);
+  });
+
+  /**
+   * And with nobody to lead, a contributor's figures are not a corridor.
+   * The gap screen is the honest outcome, exactly as before.
+   */
+  it("answers null when only contributors reply", async () => {
+    const contributor = stub(
+      "travelbuddy",
+      ruleSet({ provider: "travelbuddy", requirements: [] }),
+      false
+    );
+
+    expect(await resolveWith([contributor], QUERY)).toBeNull();
+  });
+
+  it("still consults a contributor that sits ahead of the spine", async () => {
+    const contributor = stub(
+      "travelbuddy",
+      ruleSet({
+        provider: "travelbuddy",
+        requirements: [],
+        embassyUrl: "https://tb.example/embassy",
+      }),
+      false
+    );
+    const curated = stub("curated", ruleSet({ embassyUrl: null }));
+
+    const resolved = await resolveWith([contributor, curated], QUERY);
+
+    expect(resolved!.embassyUrl).toBe("https://tb.example/embassy");
+    expect(resolved!.contributions[0].provider).toBe("travelbuddy");
   });
 
   it("never lets a later provider replace the spine's documents", async () => {

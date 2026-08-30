@@ -1,8 +1,5 @@
-import { and, eq, sql } from "drizzle-orm";
-
-import { db } from "@/lib/db/client";
-import { applications, companionUpdates, profiles } from "@/lib/db/schema";
 import { getCorridorFor } from "@/lib/data/applications";
+import { countDueForDigest, travellersDueForDigest } from "@/lib/data/digest";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { arrivalChecklist } from "@/lib/domain/companion";
 import { appUrl, notify } from "@/lib/notifications/notify";
@@ -26,15 +23,22 @@ import { appUrl, notify } from "@/lib/notifications/notify";
 const CRON_BATCH_LIMIT = 25;
 
 /**
- * The weekly post-arrival digest: one email per approved traveller who
- * has not turned it off, pointing them back at `/app/companion`.
+ * The post-arrival digest: one email per approved traveller who is due
+ * one, pointing them back at `/app/companion`.
  *
  * *Scheduling this route is deploy-time config, not this file's job.*
- * Nothing here decides when it runs — a Vercel Cron entry in
- * `vercel.json` (or an external scheduler hitting this URL with `curl`
- * on a timer) is what actually triggers a Tuesday-morning request.
- * Whichever it is, it must send the `Authorization` header this route
- * checks below.
+ * Nothing here decides when it runs — this repo deploys as a container
+ * (see `Dockerfile`), so the trigger is a Coolify scheduled task, or any
+ * scheduler hitting this URL on a timer. Whichever it is, it must send
+ * the `Authorization` header this route checks below.
+ *
+ * But the schedule is only a *poll*, not the cadence. Each traveller
+ * chooses daily, weekly or monthly (brief item 16), and the query below
+ * sends only to those whose last digest is older than their own
+ * interval. Point a scheduler at this daily and every frequency is
+ * honoured; point it hourly by mistake and nobody is spammed. The one
+ * part of this system that cannot be tested — external config — is
+ * therefore also the part that cannot get the cadence wrong.
  *
  * `CRON_SECRET` is the only guard — this route is reachable with no
  * Clerk session at all (it is a server calling a server, not a browser),
@@ -64,45 +68,11 @@ export async function GET(request: Request) {
     return Response.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  // Approved, and not opted out. `notificationPrefs` defaults to `{}`,
-  // so a traveller who has never touched the setting has no
-  // `companionDigest` key at all — `IS DISTINCT FROM 'off'` reads that
-  // missing key as the documented default (weekly), the same read
-  // `EditableDigest` and the profile page give it, rather than `!= 'off'`
-  // which SQL would silently evaluate to NULL (and so exclude) for a
-  // key that was never set.
-  const eligible = and(
-    eq(applications.status, "approved"),
-    sql`(${profiles.notificationPrefs}->>'companionDigest') is distinct from 'off'`
-  );
-
-  const [{ count: eligibleCount }] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(applications)
-    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
-    .where(eligible);
-
-  // Left-joined to `companion_updates` only to order by it: a `NULL`
-  // (never generated) sorts first via `nulls first`, then the oldest
-  // `generatedAt` — so a capped batch always spends its slots on whoever
-  // has waited longest for a refresh, not an arbitrary id order.
-  const recipients = await db
-    .select({
-      applicationId: applications.id,
-      travelerId: applications.travelerId,
-    })
-    .from(applications)
-    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
-    .leftJoin(
-      companionUpdates,
-      and(
-        eq(companionUpdates.applicationId, applications.id),
-        eq(companionUpdates.kind, "local_tips")
-      )
-    )
-    .where(eligible)
-    .orderBy(sql`${companionUpdates.generatedAt} asc nulls first`)
-    .limit(CRON_BATCH_LIMIT);
+  // Who is owed one, and how many in total. Both live in
+  // `@/lib/data/digest` because the cadence is SQL a database test can
+  // reach, and this handler is not.
+  const eligibleCount = await countDueForDigest();
+  const recipients = await travellersDueForDigest(CRON_BATCH_LIMIT);
 
   let checked = 0;
   let notified = 0;

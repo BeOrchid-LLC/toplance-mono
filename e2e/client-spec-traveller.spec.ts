@@ -556,15 +556,16 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
    * dashboard, and the upload above moved it. One of ten required
    * documents is in, so the ring reads 10%.
    *
-   * The ring's own label says "verified" — see the `fixme` below for
-   * why that word is doing more work than the number behind it.
+   * The ring's label says "collected", which is what the number is:
+   * uploaded and awaiting or past review. The `fixme` below is the
+   * remaining half — the brief asks for a stricter count.
    */
   test("item 5 — the completion score is on the dashboard and rises with an upload", async () => {
     await page.goto("/app");
 
-    await expect(page.getByRole("img", { name: /% of required documents verified/ })).toBeVisible();
+    await expect(page.getByRole("img", { name: /% of required documents collected/ })).toBeVisible();
     await expect(
-      page.getByRole("img", { name: "10% of required documents verified" })
+      page.getByRole("img", { name: "10% of required documents collected" })
     ).toBeVisible();
     await expect(page.getByText("10%")).toBeVisible();
   });
@@ -576,11 +577,14 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
    * looked at a single document — which is why the test above expects
    * 10% from an upload nobody has judged.
    *
-   * It is a defensible product decision (the ring measures what the
+   * It is a defensible product decision — the ring measures what the
    * traveller still has to do, and submission is separately gated on
-   * `verified === total`) but it is not what the sentence says, and the
-   * ring's own label — "% of required documents verified" — describes
-   * the stricter number rather than the one it is drawing.
+   * `verified === total` — but it is not what the sentence says.
+   *
+   * Half of this gap is closed: the label used to say "verified" while
+   * drawing the looser number, and now says "collected". What remains
+   * is a product decision, not a defect: does the client want the ring
+   * to hold at 0% through the whole collecting phase?
    */
   test.fixme("item 9 — the score counts only documents a person has verified", async () => {
     await page.goto("/app");
@@ -755,10 +759,10 @@ test.describe("phases 5 & 6 · after approval", () => {
     await page.goto("/app/profile");
 
     await expect(page.getByText("Post-arrival digest")).toBeVisible();
-    await expect(page.getByText("Weekly email", { exact: true })).toBeVisible();
+    await expect(page.getByText("Weekly", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Edit post-arrival digest" }).click();
-    const digest = page.getByLabel("Weekly email after you land");
+    const digest = page.getByLabel("How often, after you land");
     await expect(digest).toBeVisible();
 
     await digest.selectOption("off");
@@ -778,18 +782,34 @@ test.describe("phases 5 & 6 · after approval", () => {
   });
 
   /**
-   * The scheduler itself. Two values is not a frequency, and there is
-   * a second half to this: nothing in the repository invokes
-   * `/api/cron/companion`. The route is built, guarded and batched —
-   * but no `vercel.json` entry, no scheduled job, so "weekly" is a
-   * label on a preference rather than a cadence anything keeps.
+   * The scheduler. Four frequencies now, and the cadence is enforced in
+   * `travellersDueForDigest` rather than by whatever interval the
+   * deployment polls on — so a monthly traveller gets one a month even
+   * if the scheduler runs nightly.
+   *
+   * What is still deploy-time config, and cannot be asserted here: the
+   * scheduled task that calls `/api/cron/companion` at all. This repo
+   * ships as a container (see `Dockerfile`), so that is a Coolify
+   * scheduled task, documented in the README rather than committed as a
+   * `vercel.json` this deployment would never read.
    */
-  test.fixme("item 16 — the traveller chooses how often updates arrive", async () => {
+  test("item 16 — the traveller chooses how often updates arrive", async () => {
     await page.goto("/app/profile");
     await page.getByRole("button", { name: "Edit post-arrival digest" }).click();
-    const digest = page.getByLabel("Weekly email after you land");
-    await expect(digest.getByRole("option", { name: "Daily" })).toBeVisible();
-    await expect(digest.getByRole("option", { name: "Monthly" })).toBeVisible();
+    const digest = page.getByLabel("How often, after you land");
+
+    // Not `toBeVisible` on the options: inside a collapsed native
+    // select they resolve but report hidden. Choosing one and reading
+    // the row back is the stronger claim anyway — it proves the value
+    // survives the action, which a DOM check never would.
+    await expect(digest.locator("option")).toHaveCount(4);
+
+    await digest.selectOption("monthly");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText("Monthly", { exact: true })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByText("Monthly", { exact: true })).toBeVisible();
   });
 });
 
@@ -812,7 +832,7 @@ test.describe("technical requirements", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     try {
       await page.goto("/app");
-      await expect(page.getByRole("img", { name: /% of required documents verified/ })).toBeVisible();
+      await expect(page.getByRole("img", { name: /% of required documents collected/ })).toBeVisible();
 
       await page.goto("/app/documents");
       await expect(page.getByRole("heading", { name: "Your documents" })).toBeVisible();

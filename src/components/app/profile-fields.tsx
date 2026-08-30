@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { PhoneField } from "@/components/auth/phone-field";
 import { updateProfile } from "@/app/(app)/actions";
 import { formatPhone } from "@/lib/domain/countries";
+import { DIGEST_OPTIONS, type DigestFrequency } from "@/lib/domain/digest";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 
 /**
@@ -239,15 +240,13 @@ function LanguageEditor({
   );
 }
 
-/** The two values `updateProfile` accepts for `companion_digest` — kept
- * here rather than imported from the server action, the same way
- * `LOCALES` is the client's own copy of what the server will accept. */
-const DIGEST_OPTIONS = [
-  { value: "weekly", label: "Weekly email" },
-  { value: "off", label: "Off" },
-] as const;
-
-export type CompanionDigest = (typeof DIGEST_OPTIONS)[number]["value"];
+/**
+ * Re-exported under its old name so the profile page keeps one import
+ * for the editor and the type it takes. The list itself now lives in
+ * `@/lib/domain/digest` — the cron route enforces the same cadences,
+ * and two copies of "how often" would drift the day one is widened.
+ */
+export type CompanionDigest = DigestFrequency;
 
 export function EditableDigest({ digest }: { digest: CompanionDigest }) {
   const current = DIGEST_OPTIONS.find((d) => d.value === digest) ?? DIGEST_OPTIONS[0];
@@ -274,7 +273,7 @@ function DigestEditor({
       onKeyDown={(e) => e.key === "Escape" && close()}
       className="flex flex-col gap-2"
     >
-      <Label htmlFor="companion_digest">Weekly email after you land</Label>
+      <Label htmlFor="companion_digest">How often, after you land</Label>
       <select
         id="companion_digest"
         name="companion_digest"

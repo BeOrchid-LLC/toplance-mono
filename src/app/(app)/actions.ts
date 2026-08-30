@@ -37,6 +37,7 @@ import {
 } from "@/lib/data/travel-records";
 import { avatarKey, validateAvatarFile } from "@/lib/domain/avatar";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
+import { isDigestFrequency } from "@/lib/domain/digest";
 import { isLocale } from "@/lib/i18n/locales";
 import { track } from "@/lib/analytics/track";
 import {
@@ -532,7 +533,7 @@ export async function updateProfile(formData: FormData) {
 
     if (formData.has("companion_digest")) {
       const digest = String(formData.get("companion_digest"));
-      if (digest !== "weekly" && digest !== "off") {
+      if (!isDigestFrequency(digest)) {
         return { error: "Unsupported digest setting." };
       }
 

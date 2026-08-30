@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import { httpUrl } from "@/lib/visa/url";
 import type {
   CorridorQuery,
   CorridorRuleSet,
@@ -138,8 +139,12 @@ export function toRuleSet(payload: unknown): CorridorRuleSet | null {
     version: 1,
     effectiveFrom: (verified ?? new Date().toISOString()).slice(0, 10),
     sourceName: "DoINeedVisa",
+    // Checked, not merely preferred: a vendor link lands in an `href`,
+    // and a documents link that fails the check falls through to the
+    // info link rather than taking the whole source line down with it.
     sourceUrl:
-      pair.required_documents?.source_url ?? pair.visa_info_link ?? null,
+      httpUrl(pair.required_documents?.source_url) ??
+      httpUrl(pair.visa_info_link),
     // Required by the vendor's terms: the MIT notice plus the Passport
     // Index credit its base data derives from. Shipping a DoINeedVisa
     // rule set without this on screen is a licence breach, which is why
@@ -156,7 +161,7 @@ export function toRuleSet(payload: unknown): CorridorRuleSet | null {
     // rather than a structured embassy contact.
     passportValidity: null,
     embassyUrl: null,
-    evisaUrl: pair.evisa_link ?? null,
+    evisaUrl: httpUrl(pair.evisa_link),
     registrationName: null,
     registrationUrl: null,
     processingWeeksMin: weeksFrom(pair.processing_time?.min_days),

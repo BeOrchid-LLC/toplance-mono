@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import { httpUrl } from "@/lib/visa/url";
 import type {
   CorridorQuery,
   CorridorRuleSet,
@@ -122,7 +123,7 @@ export function toCountryContext(payload: unknown): CountryContext | null {
     timezone: m.timezone ?? null,
     phoneCode: m.phone_code ?? null,
     capital: m.capital ?? null,
-    embassyUrl: m.embassy_url ?? null,
+    embassyUrl: httpUrl(m.embassy_url),
   };
 
   // All-null would still flip the prompt into its "verified facts"
@@ -151,7 +152,10 @@ export function toEntryRules(payload: unknown): CorridorRuleSet | null {
   const { destination, visa_rules: rules, mandatory_registration } = parsed.data;
 
   const registrationName = mandatory_registration?.name ?? null;
-  const registrationUrl = mandatory_registration?.link ?? null;
+  // Every link here is a vendor string bound for an `href`. See
+  // `httpUrl` for why a scheme check belongs at the parse, not the JSX.
+  const registrationUrl = httpUrl(mandatory_registration?.link);
+  const embassyUrl = httpUrl(destination?.embassy_url);
 
   const ruleSet: CorridorRuleSet = {
     corridorId: null,
@@ -160,13 +164,13 @@ export function toEntryRules(payload: unknown): CorridorRuleSet | null {
     version: 1,
     effectiveFrom: new Date().toISOString().slice(0, 10),
     sourceName: "Travel Buddy",
-    sourceUrl: destination?.embassy_url ?? null,
+    sourceUrl: embassyUrl,
     attribution: null,
     contributions: [],
     allowedStay: rules?.primary_rule?.duration ?? null,
     passportValidity: destination?.passport_validity ?? null,
-    embassyUrl: destination?.embassy_url ?? null,
-    evisaUrl: rules?.secondary_rule?.link ?? null,
+    embassyUrl,
+    evisaUrl: httpUrl(rules?.secondary_rule?.link),
     // Both or neither — a traveller told to register with nowhere to do
     // it is worse served than one not told at all.
     registrationName: registrationUrl ? registrationName : null,

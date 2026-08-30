@@ -103,6 +103,22 @@ describe("toCountryContext", () => {
   it("answers null for a block with nothing worth grounding", () => {
     expect(toCountryContext({ destination: { code: "ID", name: "Indonesia" } })).toBeNull();
   });
+
+  /**
+   * The embassy link is rendered as an `href` and handed to the
+   * itinerary prompt as a sourced fact. A vendor field is not a
+   * trusted URL, and a `javascript:` scheme in an `href` runs in our
+   * origin — so it must not survive the parse.
+   */
+  it("drops an embassy link that is not http(s)", () => {
+    const ctx = toCountryContext(
+      destination({ embassy_url: "javascript:alert(document.cookie)" })
+    );
+
+    expect(ctx!.embassyUrl).toBeNull();
+    // The rest of the block is still perfectly good grounding.
+    expect(ctx!.capital).toBe("Jakarta");
+  });
 });
 
 describe("fetchCountryContext gates", () => {
@@ -302,5 +318,27 @@ describe("toEntryRules", () => {
         mandatory_registration: null,
       })
     ).toBeNull();
+  });
+
+  it("drops every link that is not http(s)", () => {
+    const rs = toEntryRules(
+      rules({
+        destination: destination({ embassy_url: "javascript:alert(1)" }),
+        visa_rules: {
+          primary_rule: { name: "Visa required", duration: "5 years" },
+          secondary_rule: { name: "eVisa", link: "data:text/html,<script>" },
+        },
+        mandatory_registration: { name: "e-Arrival", link: "/app/documents" },
+      })
+    )!;
+
+    expect(rs.embassyUrl).toBeNull();
+    expect(rs.sourceUrl).toBeNull();
+    expect(rs.evisaUrl).toBeNull();
+    // Half a registration is worse than none — see the mapper.
+    expect(rs.registrationName).toBeNull();
+    expect(rs.registrationUrl).toBeNull();
+    // Still a rule set: the stay and validity it carries are unaffected.
+    expect(rs.allowedStay).toBe("5 years");
   });
 });

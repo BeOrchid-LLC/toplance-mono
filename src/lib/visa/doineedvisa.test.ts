@@ -76,6 +76,30 @@ describe("toRuleSet", () => {
     expect(rs!.governmentFeeMinor).toBeNull();
     expect(rs!.processingWeeksMin).toBeNull();
   });
+
+  /**
+   * Both links reach an `href` on the requirements sheet. A vendor
+   * string is not a trusted URL; a `javascript:` scheme there would
+   * run in our origin on click.
+   */
+  it("drops links that are not http(s)", () => {
+    const rs = toRuleSet(
+      pair({
+        required_documents: {
+          items: ["Valid passport"],
+          note: null,
+          source_url: "javascript:alert(1)",
+        },
+        visa_info_link: "javascript:alert(2)",
+        evisa_link: "data:text/html,<script>alert(3)</script>",
+      })
+    )!;
+
+    expect(rs.sourceUrl).toBeNull();
+    expect(rs.evisaUrl).toBeNull();
+    // Still a usable rule set — the checklist is what it is for.
+    expect(rs.requirements).toHaveLength(1);
+  });
 });
 
 describe("doINeedVisaProvider gates", () => {

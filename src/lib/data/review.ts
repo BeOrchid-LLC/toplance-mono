@@ -3,13 +3,23 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { documents } from "@/lib/db/schema";
+import { applications, documents } from "@/lib/db/schema";
 
 export type ReviewVerdict =
   | { verdict: "verified" }
   | { verdict: "flagged"; reason: string };
 
-export type ReviewResult = { ok: true } | { error: string };
+/**
+ * `documentName` and `travelerId` are what the caller needs to tell the
+ * traveller a document was flagged — the checklist row's staff-curated
+ * name, and who to send it to. Both are read inside the transaction that
+ * writes the verdict, so the notification is about the row that was
+ * actually judged; the caller sends it only once that transaction has
+ * committed. `applyPrecheckTx` returns `travelerId` for the same reason.
+ */
+export type ReviewResult =
+  | { ok: true; documentName: string; travelerId: string }
+  | { error: string };
 
 /**
  * The states a reviewer can pass judgement on: there is a file to look
@@ -44,7 +54,7 @@ export async function reviewDocumentTx(
 
   return db.transaction(async (tx) => {
     const [doc] = await tx
-      .select({ state: documents.state })
+      .select({ state: documents.state, name: documents.name })
       .from(documents)
       .where(
         and(
@@ -88,6 +98,18 @@ export async function reviewDocumentTx(
         )
       );
 
-    return { ok: true };
+    // Read rather than joined onto the select above: that one takes
+    // `FOR UPDATE`, and a join would extend the row lock to
+    // `applications` — a second table locked in an order no other writer
+    // here uses, which is how two writers deadlock instead of one losing
+    // cleanly. `travelerId` never changes once an application exists, so
+    // there is nothing to lock it against.
+    const [app] = await tx
+      .select({ travelerId: applications.travelerId })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1);
+
+    return { ok: true, documentName: doc.name, travelerId: app.travelerId };
   });
 }

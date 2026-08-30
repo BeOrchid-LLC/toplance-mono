@@ -122,9 +122,17 @@ async function buildChecklist(
       userId
     );
 
+    // `corridorId` cleared for the same reason as the unserved branch
+    // below: a correction can land here after a corridor had already
+    // resolved, and the laminate header reads whatever this row points
+    // at.
     await db
       .update(applications)
-      .set({ intakeComplete: true, status: "collecting_documents" })
+      .set({
+        intakeComplete: true,
+        corridorId: null,
+        status: "collecting_documents",
+      })
       .where(eq(applications.id, applicationId));
     return;
   }
@@ -164,7 +172,7 @@ async function buildChecklist(
     "toplance.corridor_resolved",
     {
       corridorId: ruleSet.corridorId,
-      provider: "curated",
+      provider: ruleSet.provider,
       destinationIso: destination,
       purpose,
     },

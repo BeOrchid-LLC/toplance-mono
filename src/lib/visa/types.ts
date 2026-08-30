@@ -33,6 +33,12 @@ export type RequirementSpec = {
  */
 export type CorridorRuleSet = {
   corridorId: string | null;
+  /**
+   * Which provider produced this rule set — the provider's own `name`.
+   * Analytics used to hardcode "curated" at the call site, which became
+   * a lie the moment a second provider could answer.
+   */
+  provider: string;
   visaName: string;
   version: number;
   effectiveFrom: string;

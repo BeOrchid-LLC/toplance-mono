@@ -3,40 +3,29 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  Loader2,
-  Mic,
-  RotateCcw,
-  Send,
-  Sparkles,
-  Square,
-} from "lucide-react";
+import { ArrowRight, Check, MessagesSquare, X } from "lucide-react";
 import { toast } from "sonner";
 import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
 import { useChat } from "@ai-sdk/react";
 
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { useLocale, useT } from "@/components/locale-provider";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
-import {
-  useVoiceIntake,
-  type VoiceStatus,
-} from "@/components/app/use-voice-intake";
+import { AgentDock, Chips, Composer } from "@/components/app/intake-dock";
+import { EditButton, RecordDocument } from "@/components/app/intake-record";
+import { useVoiceIntake } from "@/components/app/use-voice-intake";
 import { answerQuestion } from "@/app/(app)/actions";
 import {
   INTAKE_QUESTIONS,
   HISTORY_NOTE,
   applyIntakeWrites,
+  intakeFrontier,
+  nextIntakeQuestion,
   orderIntakeWrites,
   truncateAnswersAt,
-  type IntakeQuestion,
   type IntakeWrite,
   type SpokenIntakeWrite,
 } from "@/lib/domain/intake";
-import type { Locale } from "@/lib/i18n/locales";
-import { cn } from "@/lib/utils";
 
 type Answers = Record<string, string>;
 
@@ -119,6 +108,8 @@ function LiveIntake({
   const [reopened, setReopened] = React.useState<{
     key: string;
     afterWrites: number;
+    /** Where in the transcript it happened, so the re-asked question renders there. */
+    afterMessages: number;
   } | null>(null);
   // What the voice session has recorded. The chat's writes can be read
   // back off the transcript; a spoken one leaves no message behind, so
@@ -126,6 +117,7 @@ function LiveIntake({
   // conversation it happened at so the two streams can be re-ordered.
   const [spoken, setSpoken] = React.useState<SpokenIntakeWrite[]>([]);
   const { locale } = useLocale();
+  const t = useT();
   const router = useRouter();
   const endRef = React.useRef<HTMLDivElement>(null);
 
@@ -135,7 +127,7 @@ function LiveIntake({
         api: "/api/intake/chat",
         body: { applicationId },
       }),
-    [applicationId]
+    [applicationId],
   );
 
   // `onError` fires long after the render that created it, so it cannot
@@ -143,12 +135,18 @@ function LiveIntake({
   // on it when the chat was first set up.
   const answersRef = React.useRef(initialAnswers);
 
+  // The question this conversation opens on. State, not derived: it is
+  // the first line of the transcript, and rewriting a transcript's
+  // opening because later answers moved the frontier would be lying
+  // about what was asked.
+  const [opening] = React.useState(() => nextIntakeQuestion(initialAnswers));
+
   const { messages, sendMessage, status } = useChat({
     transport,
     onError: (error) => {
       console.error("[intake] the conversation failed", error);
       toast.error(
-        "The agent stopped responding. Carrying on with the short questions."
+        "The agent stopped responding. Carrying on with the short questions.",
       );
       onDegrade(answersRef.current);
     },
@@ -193,14 +191,47 @@ function LiveIntake({
 
   // A reopened answer is the traveller's intent, not a write — it holds
   // only until the model records something, which is the real clear.
-  const answers =
-    reopened && reopened.afterWrites === writes
-      ? truncateAnswersAt(recorded, reopened.key)
-      : recorded;
+  const reopenPending =
+    reopened && reopened.afterWrites === writes ? reopened : null;
+  const answers = reopenPending
+    ? truncateAnswersAt(recorded, reopenPending.key)
+    : recorded;
 
-  const answeredCount = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
-  const current = INTAKE_QUESTIONS[answeredCount];
-  const done = answeredCount === INTAKE_QUESTIONS.length;
+  // The reopened topic's question, in the traveller's own language —
+  // built from `reopened` rather than `reopenPending`, so the question
+  // stays in the transcript after the correction is recorded, the way
+  // any asked question would.
+  const reopenedQuestion = reopened
+    ? INTAKE_QUESTIONS.find((q) => q.key === reopened.key)
+    : undefined;
+  const reasked = reopenedQuestion ? (
+    <Turn from="agent">{t(reopenedQuestion.prompt)}</Turn>
+  ) : null;
+
+  // The newest thing the model actually said, which is the dock's line.
+  // Read off the transcript for the same reason the answers are: there
+  // is then no second copy to fall out of step while a reply streams in.
+  const latest = React.useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.role !== "assistant") continue;
+      const text = message.parts
+        .filter((part) => part.type === "text")
+        .map((part) => part.text)
+        .join("");
+      if (text) return text;
+    }
+    return "";
+  }, [messages]);
+
+  // The gap the agent is asking at, which is what the server built its
+  // prompt from this turn. Not a count of what is filled: `record_answer`
+  // takes any of the ten keys, so an answer can land out of order and
+  // leave a hole behind it, and a count would then offer the chips for
+  // the question *after* the one being asked.
+  const frontier = intakeFrontier(answers);
+  const current = INTAKE_QUESTIONS[frontier];
+  const done = frontier === INTAKE_QUESTIONS.length;
   const busy = status === "submitted" || status === "streaming";
 
   // The session has to be ended from inside its own `onComplete`, which
@@ -255,7 +286,7 @@ function LiveIntake({
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, status]);
+  }, [messages, status, reopened]);
 
   function send(value: string) {
     const text = value.trim();
@@ -265,7 +296,14 @@ function LiveIntake({
     // questions, which is the one thing the greying out exists to stop.
     if (!text || busy || speaking) return;
     setDraft("");
-    void sendMessage({ text });
+    // The reopen never wrote anything, so the server still holds the old
+    // answer — this is what tells the model which topic the correction
+    // is for. Without it a bare "Germany" is ambiguous between two
+    // country-shaped topics, and the model files it under the wrong one.
+    void sendMessage(
+      { text },
+      reopenPending ? { body: { reopenedKey: reopenPending.key } } : undefined,
+    );
   }
 
   /**
@@ -274,20 +312,51 @@ function LiveIntake({
    * model records it, and that write is what actually clears the rest.
    */
   function editFrom(key: string) {
-    setReopened({ key, afterWrites: writes });
+    setReopened({ key, afterWrites: writes, afterMessages: messages.length });
     toast.info("Answer reopened. Tell the agent what it should say instead.");
   }
+
+  // Whether the locally re-asked question is still the live one. After
+  // the traveller replies the model answers for itself, and the dock has
+  // to follow it there — `reopenPending` alone stays true until a write
+  // lands, which would pin a stale question under a newer reply.
+  const reaskingNow =
+    Boolean(reopenPending && reasked) &&
+    (reopened?.afterMessages ?? 0) >= messages.length;
 
   return (
     <AgentLayout
       answers={answers}
-      answeredCount={answeredCount}
+      frontier={frontier}
       done={done}
-      // The log is the model's own words, so it carries no per-question
-      // edit button the way the scripted transcript does — there is no
-      // reliable mapping from a bubble back to a topic. The rail is
-      // where an answer is reopened here.
+      // The document is the only place an answer is reopened here: the
+      // log is the model's own words, and there is no reliable mapping
+      // from a bubble back to a topic.
       onEdit={editFrom}
+      reopenedKey={reopenPending?.key}
+      // What the field said before, struck through while the
+      // replacement is asked for. Off `recorded` rather than `answers`,
+      // which the reopen has already truncated.
+      reopenedPrevious={reopenPending ? recorded[reopenPending.key] : undefined}
+      say={
+        status === "submitted" ? (
+          <Thinking />
+        ) : (
+          <>
+            {messages.length === 0 && <p>{greeting(firstName)}</p>}
+            {reaskingNow && reopenedQuestion ? (
+              <p className="font-semibold">{t(reopenedQuestion.prompt)}</p>
+            ) : latest ? (
+              /* Model output, so it goes through the shared renderer —
+                 the platform rule, and the reason the dock's line is a
+                 node rather than a string. */
+              <ChatMarkdown>{latest}</ChatMarkdown>
+            ) : opening ? (
+              <p className="font-semibold">{t(opening.prompt)}</p>
+            ) : null}
+          </>
+        )
+      }
       // Mid-call the rail's edit button would reopen an answer the agent
       // has no way of knowing about, and then wait for the traveller to
       // type — which is exactly what it cannot do right now. Saying it
@@ -295,30 +364,46 @@ function LiveIntake({
       editDisabled={speaking}
       log={
         <>
-          <p className="special-caps mx-auto">Conversation started</p>
+          <Turn from="agent" plain>
+            {greeting(firstName)}
+          </Turn>
 
-          <Bubble from="agent">{greeting(firstName)}</Bubble>
+          {/* The model only speaks once the traveller has, so the
+           * conversation's first question is asked from the local list
+           * — the same wording the scripted flow uses. Captured at
+           * mount: it is the opening line of this transcript, and it
+           * would be wrong for it to change under a finished one. */}
+          {opening && <Turn from="agent">{t(opening.prompt)}</Turn>}
 
-          {messages.map((message) => {
+          {messages.map((message, i) => {
             const text = message.parts
               .filter((part) => part.type === "text")
               .map((part) => part.text)
               .join("");
-            if (!text) return null;
+            if (!text && !(reasked && reopened?.afterMessages === i)) {
+              return null;
+            }
 
             return (
-              <Bubble
-                key={message.id}
-                from={message.role === "assistant" ? "agent" : "user"}
-              >
-                {text}
-              </Bubble>
+              <React.Fragment key={message.id}>
+                {/* Re-asked locally at the point the rail edit happened:
+                 * the model is only told about the reopen on the next
+                 * message, so nothing else asks the question again. */}
+                {reopened?.afterMessages === i && reasked}
+                {text && (
+                  <Turn from={message.role === "assistant" ? "agent" : "user"}>
+                    {text}
+                  </Turn>
+                )}
+              </React.Fragment>
             );
           })}
 
-          {status === "submitted" && <TypingDots />}
+          {reasked &&
+            (reopened?.afterMessages ?? 0) >= messages.length &&
+            reasked}
 
-          {done && <ProfileComplete />}
+          {status === "submitted" && <Thinking />}
 
           <div ref={endRef} />
         </>
@@ -376,19 +461,34 @@ function ScriptedIntake({
   const [answers, setAnswers] = React.useState<Answers>(initialAnswers);
   const [typing, setTyping] = React.useState(false);
   const [draft, setDraft] = React.useState("");
+  // Held only so the record can say a topic is being asked *again*
+  // rather than for the first time. The live agent gets this for free
+  // from its pending reopen; here the truncation is immediate, so
+  // without this the field would be indistinguishable from one nobody
+  // had reached yet — and the two agents are supposed to be telling the
+  // traveller the same story.
+  const [reopened, setReopened] = React.useState<{
+    key: string;
+    previous: string;
+  } | null>(null);
   const [pending, startTransition] = React.useTransition();
   const t = useT();
   const { locale } = useLocale();
   const router = useRouter();
   const endRef = React.useRef<HTMLDivElement>(null);
 
-  const answeredCount = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
-  const current = INTAKE_QUESTIONS[answeredCount];
-  const done = answeredCount === INTAKE_QUESTIONS.length;
+  // Same gap the live conversation asks at, and for a sharper reason: the
+  // handover answers come from a model-driven session that may have left
+  // a hole, and `submit` files the reply under `current.key`. Counting
+  // here would not merely mislabel the screen — it would save the
+  // traveller's answer under the wrong question.
+  const frontier = intakeFrontier(answers);
+  const current = INTAKE_QUESTIONS[frontier];
+  const done = frontier === INTAKE_QUESTIONS.length;
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [answeredCount, typing]);
+  }, [frontier, typing]);
 
   function submit(value: string) {
     if (!current || !value.trim()) return;
@@ -397,6 +497,7 @@ function ScriptedIntake({
     setAnswers((a) => ({ ...a, [key]: value }));
     setDraft("");
     setTyping(true);
+    setReopened(null);
 
     startTransition(async () => {
       const result = await answerQuestion(applicationId, key, value);
@@ -416,49 +517,68 @@ function ScriptedIntake({
 
   /** Reopening an answer truncates the conversation from that point. */
   function editFrom(key: string) {
+    const previous = answers[key];
     setAnswers((a) => truncateAnswersAt(a, key));
+    setReopened(previous ? { key, previous } : null);
     toast.info("Answer reopened. Anything after it will be asked again.");
   }
+
+  const fresh = INTAKE_QUESTIONS.every((q) => !answers[q.key]);
 
   return (
     <AgentLayout
       answers={answers}
-      answeredCount={answeredCount}
+      frontier={frontier}
       done={done}
+      onEdit={editFrom}
+      reopenedKey={reopened?.key}
+      reopenedPrevious={reopened?.previous}
+      say={
+        typing ? (
+          <Thinking />
+        ) : (
+          <>
+            {fresh && <p>{greeting(firstName)}</p>}
+            {current && <p className="font-semibold">{t(current.prompt)}</p>}
+            {/* Attached to the question it qualifies rather than left in
+                the transcript. It is guidance for the answer being given
+                now, not a turn that was taken. */}
+            {current?.key === "history" && (
+              <p className="text-ink-2">{HISTORY_NOTE}</p>
+            )}
+          </>
+        )
+      }
       log={
         <>
-          <p className="special-caps mx-auto">Conversation started</p>
-
-          <Bubble from="agent">{greeting(firstName)}</Bubble>
+          <Turn from="agent" plain>
+            {greeting(firstName)}
+          </Turn>
 
           {INTAKE_QUESTIONS.map((q, i) => {
-            if (i > answeredCount) return null;
+            if (i > frontier) return null;
             const answer = answers[q.key];
             return (
               <React.Fragment key={q.key}>
-                <Bubble from="agent">{t(q.prompt)}</Bubble>
+                <Turn from="agent">{t(q.prompt)}</Turn>
                 {answer && (
-                  <div className="flex items-center justify-end gap-2">
-                    <EditButton
-                      label={t(q.prompt)}
-                      onClick={() => editFrom(q.key)}
-                    />
-                    <Bubble from="user">{answer}</Bubble>
-                  </div>
+                  <Turn
+                    from="user"
+                    action={
+                      <EditButton
+                        label={t(q.prompt)}
+                        onClick={() => editFrom(q.key)}
+                      />
+                    }
+                  >
+                    {answer}
+                  </Turn>
                 )}
               </React.Fragment>
             );
           })}
 
-          {typing && <TypingDots />}
-
-          {current?.key === "history" && (
-            <p className="t-muted border-l-2 border-border-strong py-1 pl-4">
-              {HISTORY_NOTE}
-            </p>
-          )}
-
-          {done && <ProfileComplete />}
+          {typing && <Thinking />}
 
           <div ref={endRef} />
         </>
@@ -489,393 +609,350 @@ function ScriptedIntake({
 }
 
 /**
- * The chrome both conversations sit in: the speaker, the progress of the
- * ten questions, the scrolling log, and the rail showing the record as
- * it is assembled. Identical either way — the traveller should not be
- * able to tell from the furniture which agent they are talking to.
+ * The chrome both conversations sit in: the record being assembled, and
+ * the agent docked under it asking the next question.
+ *
+ * The record is the subject of this screen, not a summary beside it.
+ * Ten labelled fields are the same amount of structure on an empty
+ * intake as on a finished one, so the opening screen has something to be
+ * — where a bottom-aligned transcript in a bordered sheet had a single
+ * greeting pinned to the foot of several hundred pixels of nothing.
+ *
+ * What that trades away is the thread. The back-and-forth is still the
+ * whole mechanism — every answer is recorded by the agent, corrections
+ * included — but it is working material now, behind `Transcript`, and
+ * the durable thing is the document it produced. That trade is right
+ * here and would be wrong in an open-ended assistant, where the thread
+ * is the artefact.
+ *
+ * Identical for both agents. The traveller should not be able to tell
+ * from the furniture which one they are talking to.
  */
 function AgentLayout({
   answers,
-  answeredCount,
+  frontier,
   done,
+  say,
   log,
   composer,
   onEdit,
   editDisabled,
+  reopenedKey,
+  reopenedPrevious,
 }: {
   answers: Answers;
-  answeredCount: number;
+  /** Index of the question being asked — see `intakeFrontier`. */
+  frontier: number;
   done: boolean;
+  /** What the agent is saying right now. The dock's line, not the log. */
+  say: React.ReactNode;
+  /** The full transcript, shown when the traveller opens it. */
   log: React.ReactNode;
   composer: React.ReactNode;
-  /** Reopen one answer from the rail. Omitted where the log does it. */
+  /** Reopen one answer from the record. Omitted where the log does it. */
   onEdit?: (key: string) => void;
   /** Shown but inert — reopening is something to say, not tap, mid-call. */
   editDisabled?: boolean;
+  reopenedKey?: string;
+  reopenedPrevious?: string;
 }) {
-  // The chat owns the viewport under the chrome. Below `lg` the chrome
-  // is two bars — the app bar plus the nav rail that replaced the nav
-  // that bar hides — so the subtraction has to account for both, or the
-  // composer lands just off the bottom of a phone.
+  const [transcript, setTranscript] = React.useState(false);
+
+  // The record owns the viewport height under the chrome. Below `lg` the
+  // chrome is two bars — the app bar plus the nav rail that replaced the
+  // nav that bar hides — so the subtraction accounts for both, or the
+  // dock lands just off the bottom of a phone.
   return (
-    <div className="flex h-[calc(100dvh-var(--bar-h)-var(--row-h)-1px)] flex-col lg:h-[calc(100dvh-var(--bar-h))] lg:flex-row">
-      {/* ---- conversation ---- */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-3 border-b border-border bg-surface px-4 py-3 sm:px-6">
-          {/* The one drop of the brand gradient on the screen: the agent
-              itself. Everything else stays flat so the speaker is the
-              most saturated thing in the conversation. */}
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[image:var(--brand-grad)] text-white shadow-[var(--shadow-sm)]">
-            <Sparkles className="size-5" />
-          </span>
-          <div className="min-w-0">
-            <p className="t-title">Toplance Agent</p>
-            <p className="special-caps">
-              {done
-                ? "Profile complete"
-                : `Listening · question ${answeredCount + 1} of ${INTAKE_QUESTIONS.length}`}
-            </p>
-          </div>
-        </div>
-
-        <div className="h-1 shrink-0 bg-surface-2">
-          <div
-            className="h-full bg-brand transition-[width] duration-[var(--dur-ring)] ease-[var(--ease-out)]"
-            style={{ width: `${(answeredCount / INTAKE_QUESTIONS.length) * 100}%` }}
-          />
-        </div>
-
+    <div className="mx-auto flex h-[calc(100dvh-var(--bar-h)-var(--row-h)-1px)] w-full max-w-[1240px] flex-col lg:h-[calc(100dvh-var(--bar-h))]">
+      <div className="relative isolate flex min-h-0 flex-1 flex-col">
+        {/* Ruled security stock. Official documents are printed on a
+            ground, never on blank white, and the document above it is
+            now literally a data page — so the stock is doing the job it
+            was written for rather than showing in a 20px gutter beside a
+            white sheet that covered it. */}
         <div
-          className="flex-1 overflow-y-auto bg-bg p-4 sm:p-6"
-          role="log"
-          aria-live="polite"
-          aria-label="Conversation with the Toplance agent"
-        >
-          <div className="mx-auto flex max-w-[720px] flex-col gap-4">{log}</div>
+          aria-hidden
+          className="security-paper pointer-events-none absolute inset-0 -z-10"
+        />
+
+        {/* Centred in whatever room is left, which is safe precisely
+            because the document does not grow: all ten fields render
+            from the first paint, so its height only moves when a value
+            wraps. Top-aligning it instead left several hundred pixels of
+            ruled nothing between the record and the dock — the same void
+            this layout replaced, one surface further along.
+
+            `min-h-full` on the inner box rather than centring the
+            scroller itself: a flex child centred inside a fixed-height
+            scroll container has its overflow clipped at the top, so a
+            long record would lose its first fields with no way to reach
+            them. This grows past the viewport instead and scrolls. */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="flex min-h-full items-center px-4 py-5 sm:px-6 sm:py-7">
+            <RecordDocument
+              answers={answers}
+              frontier={frontier}
+              done={done}
+              onEdit={onEdit}
+              editDisabled={editDisabled}
+              reopenedKey={reopenedKey}
+              reopenedPrevious={reopenedPrevious}
+            />
+          </div>
         </div>
 
-        {composer && (
-          <div className="border-t border-border bg-surface p-4 sm:p-6">
-            <div className="mx-auto max-w-[720px]">{composer}</div>
-          </div>
+        {transcript && (
+          <TranscriptPanel onClose={() => setTranscript(false)}>
+            {log}
+          </TranscriptPanel>
         )}
       </div>
 
-      {/* ---- live profile ---- */}
-      {/* A sheet from the case file rather than a flat attached column:
-          the same card the profile page is built from, so the record
-          being assembled here already looks like where it ends up. */}
-      <aside className="w-full shrink-0 overflow-y-auto border-t border-border bg-bg p-4 lg:w-[340px] lg:border-l lg:border-t-0 lg:p-5">
-        <div className="rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-sm)]">
-        <div className="flex items-center justify-between">
-          <h2 className="t-title">Your profile</h2>
-          <span className="num special">
-            {answeredCount} / {INTAKE_QUESTIONS.length}
-          </span>
-        </div>
-        <Progress
-          value={(answeredCount / INTAKE_QUESTIONS.length) * 100}
-          className="mt-3"
+      {/* A dock is a place to answer. Once the tenth answer lands there
+          is nothing to answer, so the furniture changes rather than
+          emptying out — the composer and the suggestions go, and what is
+          left says what happened and what to do next. */}
+      {done ? (
+        <CompletionBar
+          transcriptOpen={transcript}
+          onToggleTranscript={() => setTranscript((open) => !open)}
         />
-        <dl className="mt-4">
-          {INTAKE_QUESTIONS.map((q, i) => (
-            <div
-              key={q.key}
-              className="flex items-baseline justify-between gap-4 border-b border-border py-3 last:border-0 last:pb-0"
-            >
-              <dt className="t-body text-ink-2">{LABELS[q.key]}</dt>
-              <dd
-                className={cn(
-                  "flex items-baseline gap-1 text-right text-base font-semibold",
-                  answers[q.key]
-                    ? "text-ink"
-                    : i === answeredCount
-                      ? "text-brand-text"
-                      : "text-ink-3"
-                )}
-              >
-                {answers[q.key] ??
-                  (i === answeredCount ? (
-                    "asking now"
-                  ) : (
-                    <span
-                      aria-label="Not answered yet"
-                      className="inline-block w-[56px] border-b-2 border-dashed border-border-strong align-middle"
-                    />
-                  ))}
-                {onEdit && answers[q.key] && (
-                  <EditButton
-                    label={LABELS[q.key]}
-                    disabled={editDisabled}
-                    onClick={() => onEdit(q.key)}
-                  />
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
-        </div>
-      </aside>
+      ) : (
+        <AgentDock
+          say={say}
+          composer={composer}
+          transcriptOpen={transcript}
+          onToggleTranscript={() => setTranscript((open) => !open)}
+        />
+      )}
     </div>
-  );
-}
-
-/** The opening line, before either agent has said anything of its own. */
-function greeting(firstName: string) {
-  return `Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`;
-}
-
-type Chip = IntakeQuestion["chips"][number];
-
-function Chips({
-  chips,
-  locale,
-  disabled,
-  onPick,
-}: {
-  chips: Chip[];
-  locale: Locale;
-  disabled: boolean;
-  onPick: (chip: Chip) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {chips.map((chip) => (
-        <button
-          key={chip.value}
-          type="button"
-          disabled={disabled}
-          onClick={() => onPick(chip)}
-          className="min-h-[var(--row-h)] rounded-[var(--radius-pill)] border border-brand px-4 text-base font-semibold text-brand-text transition-colors hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)] disabled:opacity-50"
-        >
-          {chip.label[locale] ?? chip.label.en}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function Composer({
-  draft,
-  onDraftChange,
-  onSubmit,
-  disabled,
-  voice,
-}: {
-  draft: string;
-  onDraftChange: (value: string) => void;
-  onSubmit: () => void;
-  disabled: boolean;
-  /** Omitted where there is no model to speak to. */
-  voice?: { status: VoiceStatus; onToggle: () => void };
-}) {
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-      className="mt-3 flex items-center gap-3"
-    >
-      <input
-        value={draft}
-        onChange={(e) => onDraftChange(e.target.value)}
-        // The Send button was disabled and the field was not, so Enter
-        // still submitted a turn the rest of the composer was refusing.
-        disabled={disabled}
-        placeholder={
-          voice?.status === "live"
-            ? "Listening — stop the microphone to type"
-            : "Type your answer, or tap a suggestion"
-        }
-        aria-label="Your answer"
-        className="h-[var(--control-h)] min-w-0 flex-1 rounded-[var(--radius-pill)] border border-border-strong bg-surface px-5 text-base outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)] disabled:opacity-50"
-      />
-      <Button type="submit" size="sm" disabled={disabled || !draft.trim()}>
-        <Send /> Send
-      </Button>
-      <VoiceButton voice={voice} />
-    </form>
   );
 }
 
 /**
- * The mic. Idle it starts a call; while one is connecting it spins and
- * can be pressed again to give up; while one is live it is the only way
- * to end it, and it says so — a control that opens a microphone must be
- * unmistakably the control that closes it.
+ * The conversation that produced the record, over the record.
  *
- * The ring is the one place the brand gradient's colour appears outside
- * the speaker's avatar, because a live microphone is worth exactly that
- * much attention.
+ * Mounted only while open, which is what lets it come up scrolled to the
+ * newest turn: the intakes’ own `endRef` effects fire on new messages,
+ * not on this panel appearing, so opening it a hundred turns in would
+ * otherwise land at the greeting.
+ *
+ * It is deliberately not a live region any more. That role moved to the
+ * dock’s line, which is the one thing always on screen — a live region
+ * that is usually unmounted announces nothing.
  */
-function VoiceButton({
-  voice,
+function TranscriptPanel({
+  onClose,
+  children,
 }: {
-  voice?: { status: VoiceStatus; onToggle: () => void };
+  onClose: () => void;
+  children: React.ReactNode;
 }) {
-  if (!voice) {
-    return (
-      <Button
-        type="button"
-        variant="neutral"
-        size="icon"
-        disabled
-        aria-label="Answer by voice"
-        title="Speaking needs the agent, which is not running here. Type your answers instead."
-      >
-        <Mic />
-      </Button>
-    );
-  }
+  const box = React.useRef<HTMLDivElement>(null);
 
-  const live = voice.status === "live";
-  const label = live
-    ? "Stop speaking to the agent"
-    : voice.status === "connecting"
-      ? "Cancel connecting the microphone"
-      : "Answer by voice";
+  React.useEffect(() => {
+    const el = box.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
 
-  return (
-    <span className="relative inline-flex shrink-0">
-      {live && (
-        <span
-          aria-hidden
-          className="absolute inset-0 animate-ping rounded-md bg-brand opacity-60"
-        />
-      )}
-      <Button
-        type="button"
-        variant={live ? "primary" : "neutral"}
-        size="icon"
-        onClick={voice.onToggle}
-        aria-label={label}
-        title={label}
-        className="relative"
-      >
-        {voice.status === "connecting" ? (
-          <Loader2 className="animate-spin" />
-        ) : live ? (
-          <Square />
-        ) : (
-          <Mic />
-        )}
-      </Button>
-      {/* The ring says the microphone is open to everyone who can see
-          it; this says the same thing to everyone who cannot. */}
-      <span role="status" className="sr-only">
-        {live
-          ? "The microphone is on. The agent is listening."
-          : voice.status === "connecting"
-            ? "Connecting the microphone."
-            : ""}
-      </span>
-    </span>
-  );
-}
-
-function EditButton({
-  label,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={`Edit your answer to: ${label}`}
-      title={
-        disabled
-          ? "Say what it should be instead — the agent is listening"
-          : "Edit this answer"
-      }
-      className="grid size-[var(--row-h)] place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink disabled:pointer-events-none disabled:opacity-40"
-    >
-      <RotateCcw className="size-5" />
-    </button>
-  );
-}
-
-function TypingDots() {
   return (
     <div
-      role="status"
-      aria-label="Agent is typing"
-      className="flex w-fit gap-1 rounded-[18px] rounded-bl-[6px] border border-border bg-surface px-4 py-3 shadow-[var(--shadow-sm)]"
+      id="intake-transcript"
+      className="absolute inset-0 z-20 flex animate-in flex-col bg-surface fade-in-0 slide-in-from-bottom-4 duration-[var(--dur-sheet)]"
     >
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className="size-2 animate-bounce rounded-full bg-ink-3"
-          style={{ animationDelay: `${i * 120}ms` }}
-        />
-      ))}
+      <div className="flex h-[var(--row-h)] shrink-0 items-center justify-between gap-3 border-b border-border px-4 sm:px-6">
+        <p className="special-caps">Conversation</p>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close the conversation and go back to your record"
+          className="-mr-2 grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+        >
+          <X aria-hidden className="size-4" />
+        </button>
+      </div>
+      <div
+        ref={box}
+        role="log"
+        aria-label="Conversation with the Toplance agent"
+        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+      >
+        <div className="mx-auto flex w-full max-w-[720px] flex-col gap-7">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
 
-function ProfileComplete() {
-  /* A real boundary — before it the corridor is unknown, after it there
-     is a checklist — so it gets §8's 3px rule rather than a tinted box. */
+/**
+ * The opening line, before either agent has said anything of its own.
+ *
+ * Rendered plain (`<Turn plain>`), not through `ChatMarkdown`: the
+ * traveller's own name is in it, and the shared renderer is for model
+ * output only.
+ */
+function greeting(firstName: string) {
+  return `Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`;
+}
+
+/**
+ * The agent is composing. One dot, on the page where its words are about
+ * to appear — not three bouncing inside an empty bubble, which drew a
+ * container the reply itself will not have.
+ */
+function Thinking() {
   return (
-    <div className="mt-2">
-      <span
-        aria-hidden
-        className="block h-[3px] w-16 rounded-[var(--radius-pill)] bg-success"
-      />
-      <p className="t-title mt-4">Profile complete</p>
-      <p className="t-muted mt-2">
-        Your checklist is built from these answers. You can change any of them
-        later and it rebuilds.
-      </p>
-      <Button asChild className="mt-4">
-        <Link href="/app/requirements">
-          See my requirements <ArrowRight />
-        </Link>
-      </Button>
+    <div role="status" aria-label="The agent is answering">
+      <span className="intake-thinking block size-2.5 rounded-full bg-ink-3" />
     </div>
   );
 }
 
-const LABELS: Record<string, string> = {
-  nationality: "Nationality",
-  residence: "Living in",
-  destination: "Destination",
-  purpose: "Purpose",
-  dates: "Travel dates",
-  budget: "Budget",
-  accommodation: "Accommodation",
-  companions: "Travel party",
-  needs: "Food & support",
-  history: "Visa history",
-};
+/**
+ * The end of the intake. A real boundary — before it the corridor is
+ * unknown, after it there is a checklist — and the screen should look
+ * like it crossed one.
+ *
+ * What stood here was the transcript's completion block wedged into the
+ * dock's composer slot, under an agent line saying "that is everything I
+ * need". Two announcements of the same fact, stacked: the line, then a
+ * rule, then a heading repeating it. The rule was §8's boundary marker,
+ * which is right in a scrolling log where a boundary needs drawing and
+ * wrong in a bar that *is* one. And the block sat flush left while the
+ * line above it was indented past the agent's mark, so the two things
+ * saying the same thing did not even line up.
+ *
+ * One statement now, on the same 720px measure the dock and the record
+ * both use, so nothing shifts sideways as the screen changes state.
+ * The success disc is the ring treatment `/app/profile` already uses for
+ * a finished step, rather than a fourth way of drawing "done".
+ *
+ * The transcript keeps a button here because this is the last screen
+ * that has one: after the traveller follows the CTA there is no other
+ * way back to what was said.
+ */
+function CompletionBar({
+  transcriptOpen,
+  onToggleTranscript,
+}: {
+  transcriptOpen: boolean;
+  onToggleTranscript: () => void;
+}) {
+  return (
+    // The same card the dock was, so the tenth answer changes what the
+    // panel says without changing what it is. See `AgentDock`.
+    <div className="shrink-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-7">
+      {/* A grid rather than a row, so the sentence can run the full
+          measure underneath the buttons instead of being squeezed into
+          whatever they leave. Laid out flat it wrapped into a ~210px
+          column with half the bar empty beside it, which reads as text
+          that did not fit rather than as a line anybody chose. */}
+      <div className="ovi-edge mx-auto grid w-full max-w-[720px] grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:grid-cols-[auto_1fr_auto] sm:gap-y-1.5 sm:px-7 sm:py-5">
+        <span
+          aria-hidden
+          className="grid size-8 place-items-center rounded-full bg-success text-white ring-4 ring-[color-mix(in_srgb,var(--success)_16%,transparent)]"
+        >
+          <Check className="size-4" />
+        </span>
 
-function Bubble({
+        <p className="t-title">Profile complete</p>
+
+        <p className="t-muted col-span-2 text-[15px] sm:col-start-2 sm:row-start-2">
+          Your checklist is ready. You can change any answer later and it
+          rebuilds.
+        </p>
+
+        {/* Stacked and full-width on a phone, where two buttons side by
+            side would each be too narrow to read; a row from `sm`, with
+            the quiet one first so the primary keeps the outside edge. */}
+        <div className="col-span-2 flex flex-col-reverse gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1 sm:flex-row sm:items-center sm:gap-3">
+          <button
+            type="button"
+            onClick={onToggleTranscript}
+            aria-expanded={transcriptOpen}
+            aria-controls="intake-transcript"
+            className="special flex h-[var(--row-h)] items-center justify-center gap-1.5 rounded-[var(--radius-pill)] px-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+          >
+            {transcriptOpen ? (
+              <X aria-hidden className="size-4" />
+            ) : (
+              <MessagesSquare aria-hidden className="size-4" />
+            )}
+            {transcriptOpen ? "Close" : "Transcript"}
+          </button>
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/app/requirements">
+              See my requirements <ArrowRight />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * One turn of the conversation. The two sides are deliberately not
+ * mirror images.
+ *
+ * The agent speaks straight onto the page — no bubble, no border, no
+ * card. Its turns are the ones that carry length: a question plus the
+ * reason behind it, a list, a correction. Boxing them caps them at a
+ * bubble's width and makes every paragraph look like a chat notification
+ * rather than something written to be read. The traveller's turns are
+ * short by construction — a country, a date, a tapped suggestion — so
+ * those keep a bubble, which is what tells the two voices apart now that
+ * the sides no longer differ in shape alone.
+ *
+ * The bubble is neutral rather than brand. An answer read back to you is
+ * a receipt, not a call to action, and there is only one thing on this
+ * screen worth the loudest colour in the system: the button that sends
+ * the next one.
+ */
+function Turn({
   from,
+  plain = false,
+  action,
   children,
 }: {
   from: "agent" | "user";
+  /**
+   * Renders the turn's text as text, Markdown and all. For the one agent
+   * line that is not model output: the greeting, which embeds the
+   * traveller's own name. The platform convention is that only
+   * model-authored messages go through `ChatMarkdown`.
+   */
+  plain?: boolean;
+  /** Sits outside the bubble, in the gutter. Reopening an answer. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  if (from === "agent") {
+    return (
+      <div className="max-w-full text-base leading-[1.7] text-ink">
+        {plain || typeof children !== "string" ? (
+          children
+        ) : (
+          <ChatMarkdown>{children}</ChatMarkdown>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={cn(
-        "max-w-[85%] rounded-[18px] px-4 py-3 text-base",
-        from === "agent"
-          ? "self-start rounded-bl-[6px] border border-border bg-surface text-ink shadow-[var(--shadow-sm)]"
-          : "self-end rounded-br-[6px] bg-brand font-semibold text-on-brand"
-      )}
-    >
-      {from === "agent" && typeof children === "string" ? (
-        <ChatMarkdown>{children}</ChatMarkdown>
-      ) : (
-        children
-      )}
+    <div className="group/row flex items-start justify-end gap-1">
+      {action}
+      {/* `surface-inset`, not `surface-2`. It was chosen when the
+          transcript ground was `--bg`, where `surface-2` was a step too
+          small to see; the sheet has since made that ground `--surface`,
+          which only widens the gap — `#e7eaf1` on white in light, and in
+          dark an inset that goes darker than the surface it sits on. The
+          bubble reads better here than it did before, so the token
+          stands. */}
+      <div className="max-w-[80%] rounded-[20px] bg-surface-inset px-4 py-2.5 text-base leading-[1.6] text-ink">
+        {children}
+      </div>
     </div>
   );
 }

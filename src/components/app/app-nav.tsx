@@ -44,6 +44,12 @@ export function AppNav({
             key={item.href}
             href={item.locked ? "#" : item.href}
             aria-disabled={item.locked}
+            // `pointer-events-none` below only stops a mouse. Without
+            // this the locked item stays in the tab order, and Enter
+            // still follows `href="#"` — jumping a keyboard user to the
+            // top of the page with no explanation. `aria-disabled`
+            // announces the state; this one enforces it.
+            tabIndex={item.locked ? -1 : undefined}
             aria-current={active ? "page" : undefined}
             className={cn(
               "flex h-10 shrink-0 items-center rounded-[var(--radius-pill)] px-4 text-base font-medium transition-colors",

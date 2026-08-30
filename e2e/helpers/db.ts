@@ -116,6 +116,43 @@ export async function promoteToStaff(
   });
 }
 
+/**
+ * How many applications an account owns.
+ *
+ * Zero is the interesting number. The traveller console provisions a
+ * draft on sight, so a staff account holding one is proof it was let
+ * into a console that is not its own.
+ */
+export async function applicationCountFor(email: string): Promise<number> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ count: number }>(
+      `select count(*)::int as count
+         from applications a
+         join profiles p on p.id = a.traveler_id
+        where p.email = $1`,
+      [email]
+    );
+    return Number(rows[0]?.count ?? 0);
+  });
+}
+
+/**
+ * Wipes an account's applications.
+ *
+ * Sign-up already leaves a draft behind while the account is still a
+ * traveller, so a spec proving that the traveller console provisions
+ * nothing for staff has to start the reviewer from nothing — otherwise
+ * the row that is already there hides the write under test.
+ */
+export async function clearApplicationsFor(email: string): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(
+      "delete from applications where traveler_id in (select id from profiles where email = $1)",
+      [email]
+    );
+  });
+}
+
 export type SeededCase = { applicationId: string; caseRef: string; travellerName: string };
 
 /**

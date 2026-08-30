@@ -41,6 +41,23 @@ function accountsBaseUrl(): string {
   return buildAccountsBaseUrl(frontendApi);
 }
 
+/**
+ * Test seam only: e2e needs staff fixtures it can sign in as without
+ * walking a real authenticator-app enrollment. Off by default, and it
+ * widens nothing else either gate checks — a non-staff account is still
+ * refused, and the account still needs a real Clerk session to get this
+ * far. Never set outside the e2e webServer's own environment.
+ *
+ * Inert in a production build whatever the environment says, so a
+ * variable that leaks into a deployed environment cannot stand the
+ * second factor down. The e2e suite runs `next dev`, so `NODE_ENV` is
+ * `development` there and the seam still works.
+ */
+function staffTwoFactorSkipped(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return process.env.E2E_SKIP_STAFF_2FA === "1";
+}
+
 export type StaffGateResult =
   | { decision: "ok"; profile: Profile; actor: Actor }
   | { decision: "refuse" }
@@ -68,18 +85,52 @@ export async function requireStaffConsole(): Promise<StaffGateResult> {
   // enrolled, which nothing in the session token carries.
   const user = await currentUser();
 
-  // Test seam only: e2e needs staff fixtures it can sign in as without
-  // walking a real authenticator-app enrollment. Off by default, and it
-  // widens nothing else this gate checks — a non-staff account is still
-  // refused, and this account still needs a real Clerk session to get
-  // this far. Never set outside the e2e webServer's own environment.
-  const skipForE2e = process.env.E2E_SKIP_STAFF_2FA === "1";
-
   const decision = decideStaffGate({
     isStaff: true,
-    twoFactorEnabled: skipForE2e || (user?.twoFactorEnabled ?? false),
+    twoFactorEnabled: staffTwoFactorSkipped() || (user?.twoFactorEnabled ?? false),
   });
 
   if (decision === "enroll") return { decision: "enroll", accountsUrl: accountsBaseUrl() };
   return { decision: "ok", profile, actor };
+}
+
+export type StaffActionResult = { actor: Actor } | { error: string };
+
+const NOT_STAFF = "You do not have access to that.";
+const NEEDS_SECOND_FACTOR =
+  "Turn on two-step verification on your Toplance account before you can act on a case.";
+
+/**
+ * The same gate as `requireStaffConsole`, for the writes rather than the
+ * screens.
+ *
+ * A server action is a POST endpoint with a public id, not a private
+ * function of the page that renders its button — so gating the ops
+ * screens on a second factor while gating their actions on `isStaff`
+ * alone leaves every staff write (and every signed passport-scan URL)
+ * reachable from a session that never enrolled one. This closes that:
+ * same three-way decision, same seam, phrased as an `{ error }` the
+ * actions already know how to surface.
+ *
+ * Pass `known` when the caller has already resolved the actor, so a
+ * gate never costs a second round of profile and membership queries.
+ */
+export async function requireStaffAction(
+  known?: Actor | null
+): Promise<StaffActionResult> {
+  const actor = known ?? (await getActor());
+  if (!actor) return { error: NOT_STAFF };
+
+  // Only asked of staff: a traveller is refused on the role alone, and
+  // has no reason to cost a Clerk backend call.
+  const user = isStaff(actor) ? await currentUser() : null;
+
+  const decision = decideStaffGate({
+    isStaff: isStaff(actor),
+    twoFactorEnabled: staffTwoFactorSkipped() || (user?.twoFactorEnabled ?? false),
+  });
+
+  if (decision === "refuse") return { error: NOT_STAFF };
+  if (decision === "enroll") return { error: NEEDS_SECOND_FACTOR };
+  return { actor };
 }

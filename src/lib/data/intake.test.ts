@@ -154,6 +154,20 @@ describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
     expect(checklist).toHaveLength(0);
   });
 
+  it("clears a resolved corridor when a correction lands on an unserved one", async () => {
+    await answerAll();
+    expect((await application()).corridorId).not.toBeNull();
+
+    // Correcting nationality to a passport we have no code for must not
+    // leave the old corridor on the application — the laminate header
+    // reads `corridorId`, and a stale link shows the traveller a
+    // corridor their answers no longer describe.
+    const result = await answerAll({ nationality: "Uzbekistan" });
+
+    expect(result).toEqual({ complete: true });
+    expect((await application()).corridorId).toBeNull();
+  });
+
   it("reopens a completed intake when an earlier answer changes", async () => {
     await answerAll();
 

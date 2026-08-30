@@ -19,6 +19,7 @@ import {
   canWriteMessages,
   isStaff,
 } from "@/lib/auth/policy";
+import { requireStaffAction } from "@/lib/auth/staff-gate";
 import { audit } from "@/lib/audit";
 import { aiEnabled } from "@/lib/ai/models";
 import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
@@ -222,6 +223,18 @@ export async function uploadDocument(formData: FormData) {
 export async function documentUrl(applicationId: string, docKey: string) {
   try {
     const { actor } = await requireApplicationAccess(applicationId, canReadDocuments);
+
+    // Staff read every traveller's documents, which is exactly what the
+    // ops console asks a second factor for. This is a POST endpoint with
+    // a public id — a staff session that never enrolled one could mint
+    // signed passport-scan URLs here without ever loading a gated page.
+    // A traveller reading their own file is untouched.
+    if (isStaff(actor)) {
+      const gate = await requireStaffAction(actor);
+      // Re-wrapped rather than returned as-is so this stays one union of
+      // object literals — the callers read `result.error` directly.
+      if ("error" in gate) return { error: gate.error };
+    }
 
     const [doc] = await db
       .select({ storagePath: documents.storagePath })

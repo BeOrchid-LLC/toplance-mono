@@ -106,7 +106,11 @@ type IntakeUIMessage = UIMessage<
 >;
 
 export async function POST(request: Request) {
-  let body: { applicationId?: unknown; messages?: unknown };
+  let body: {
+    applicationId?: unknown;
+    messages?: unknown;
+    reopenedKey?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -202,9 +206,20 @@ export async function POST(request: Request) {
     profile && isLocale(profile.locale) ? profile.locale : DEFAULT_LOCALE;
   const firstName = profile?.fullName.split(" ")[0] ?? "";
 
+  // Client state, like the transcript: believed only as far as it names
+  // a question the intake actually asks. Reopening writes nothing, so
+  // the answers read above still hold the value being corrected — this
+  // is the one line that tells the model which topic the correction is
+  // for. The prompt builder drops any key it does not recognize.
+  const reopenedKey =
+    typeof body.reopenedKey === "string" &&
+    INTAKE_QUESTIONS.some((q) => q.key === body.reopenedKey)
+      ? body.reopenedKey
+      : undefined;
+
   const result = streamText({
     model: openai(INTAKE_MODEL),
-    system: buildIntakeSystemPrompt({ answers, locale, firstName }),
+    system: buildIntakeSystemPrompt({ answers, locale, firstName, reopenedKey }),
     messages: modelMessages,
     tools,
     // One tool call, then the reply that acknowledges it. Three is the
@@ -225,5 +240,14 @@ export async function POST(request: Request) {
     track("toplance.intake_message_sent", { applicationId, mode: "text" }, userId)
   );
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    // The default masks every server error as "An error occurred." —
+    // right for production, where the message may carry provider
+    // details, and useless while developing, where the dev server's
+    // terminal is not always in view. Unmask in development only.
+    onError: (error) =>
+      process.env.NODE_ENV === "development"
+        ? String(error)
+        : "An error occurred.",
+  });
 }

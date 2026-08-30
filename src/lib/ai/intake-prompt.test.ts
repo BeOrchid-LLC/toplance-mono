@@ -58,6 +58,26 @@ describe("buildIntakeSystemPrompt", () => {
     expect(text).toContain("next unanswered topic is `nationality`");
   });
 
+  it("carries a reopened topic so the correction lands under the right key", () => {
+    const text = prompt({
+      answers: { nationality: "Nigeria", residence: "Lagos", destination: "Germany" },
+      reopenedKey: "destination",
+    });
+
+    expect(text).toContain("reopened `destination`");
+    // The reopen overrides the "next unanswered" pointer — with every
+    // earlier topic answered there is otherwise nothing to point at,
+    // and a bare country name is ambiguous between two topics.
+    expect(text).toContain("record it under `destination`");
+  });
+
+  it("ignores a reopened key the intake does not ask", () => {
+    const text = prompt({ reopenedKey: "favourite_colour" });
+
+    expect(text).not.toContain("favourite_colour");
+    expect(text).toContain("next unanswered topic is `nationality`");
+  });
+
   it("says the intake is finished once every topic has an answer", () => {
     const answers = Object.fromEntries(
       INTAKE_QUESTIONS.map((q) => [q.key, "something"])

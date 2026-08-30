@@ -1,6 +1,7 @@
 import "server-only";
 
 import { curatedProvider } from "@/lib/visa/curated";
+import { doINeedVisaProvider } from "@/lib/visa/doineedvisa";
 import type {
   CorridorQuery,
   CorridorRuleSet,
@@ -20,7 +21,7 @@ export type {
  * checked it against the mission; an API provider would go after, to
  * widen coverage rather than to override what we already trust.
  */
-const PROVIDERS: VisaDataProvider[] = [curatedProvider];
+const PROVIDERS: VisaDataProvider[] = [curatedProvider, doINeedVisaProvider];
 
 /**
  * The first provider with an answer wins. A provider that throws is

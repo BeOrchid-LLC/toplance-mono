@@ -14,9 +14,12 @@ export const EVENT_NAMES = [
   "toplance.intake_completed",
 
   /**
-   * One turn of the intake conversation, whichever way the traveller
-   * spoke: `mode` is "text" or "voice". Counted per request rather than
-   * per message, so it measures conversations, not tokens.
+   * One turn of the typed intake conversation — `mode` is "text", the
+   * only value emitted. Counted per request rather than per message, so
+   * it measures conversations, not tokens. The voice intake does not
+   * emit a turn per spoken exchange (the realtime session runs between
+   * the browser and OpenAI, so the server never sees them); it is
+   * counted once per session by `voice_session_started` below.
    */
   "toplance.intake_message_sent",
 
@@ -68,7 +71,11 @@ export const EVENT_NAMES = [
   /** A reviewer hands a case back to the queue. */
   "toplance.case_released",
 
-  /** A message sent on a case thread. Not emitted yet — the messaging slice will. */
+  /**
+   * A message sent on a case thread, from either side — `senderRole` is
+   * "traveler" or "staff". Emitted by `sendMessage` in
+   * `@/app/(app)/actions.ts`, the one action both ends post to.
+   */
   "toplance.message_sent",
 
   /** A new employer names their organisation and becomes its owner. */

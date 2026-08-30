@@ -3,8 +3,9 @@
 import * as React from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
 
-import { AppBar, type NavItem } from "@/components/app/app-bar";
+import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
+import { travellerNav } from "@/components/app/traveller-nav";
 import { SiteNav } from "@/components/site/site-nav";
 import {
   getSignedInChrome,
@@ -83,15 +84,12 @@ export function SiteChrome() {
     );
   }
 
-  const nav: NavItem[] = [
-    { href: "/app", label: "Dashboard" },
-    { href: "/app/requirements", label: "Requirements", locked: chrome.locked },
-    { href: "/app/documents", label: "Documents", locked: chrome.locked },
-  ];
-
   return (
     <AppBar
-      nav={nav}
+      nav={travellerNav({
+        intakeComplete: chrome.intakeComplete,
+        status: chrome.status,
+      })}
       name={chrome.name || fallbackName}
       email={chrome.email || fallbackEmail}
       showAgentButton

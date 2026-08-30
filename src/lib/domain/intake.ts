@@ -221,6 +221,34 @@ export function truncateAnswersAt(
   return next;
 }
 
+/**
+ * Where the conversation is: the position of the first unanswered topic,
+ * or `INTAKE_QUESTIONS.length` once every one is answered.
+ *
+ * The first *gap*, never a tally of what is filled. Truncation only ever
+ * clears answers *after* the one being written — it does not fill in the
+ * ones before it — so a topic recorded out of order leaves a hole, and
+ * the answers are no longer a prefix of the question order. Both agents
+ * ask at the gap. A screen that counted instead would sit one question
+ * past it for every hole, asking about residence under a question about
+ * nationality; the scripted flow would then file the reply under the
+ * wrong key outright.
+ *
+ * So it is defined once, here, and everything that needs to know which
+ * question is live reads it from this function.
+ */
+export function intakeFrontier(answers: Record<string, string>): number {
+  const index = INTAKE_QUESTIONS.findIndex((q) => !answers[q.key]);
+  return index === -1 ? INTAKE_QUESTIONS.length : index;
+}
+
+/** The question the intake should ask next — the one at the frontier. */
+export function nextIntakeQuestion(
+  answers: Record<string, string>
+): IntakeQuestion | undefined {
+  return INTAKE_QUESTIONS[intakeFrontier(answers)];
+}
+
 /** One answer being recorded — by whichever agent was listening. */
 export type IntakeWrite = { key: string; value: string };
 

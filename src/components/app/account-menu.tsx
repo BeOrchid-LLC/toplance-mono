@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocaleMenu } from "@/components/shared/locale-menu";
 import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { useClerk } from "@clerk/nextjs";
@@ -30,11 +30,14 @@ export function AccountMenu({
   name,
   email,
   subtitle,
+  avatarUrl,
   profileHref,
 }: {
   name: string;
   email: string;
   subtitle?: string;
+  /** A short-lived signed link to the profile photo, when one exists. */
+  avatarUrl?: string | null;
   /**
    * Only the traveller surface has a profile page, so the item exists
    * only where a caller can name one — the employer and ops consoles
@@ -48,6 +51,7 @@ export function AccountMenu({
     <DropdownMenu>
       <DropdownMenuTrigger aria-label="Account menu" className="rounded-full">
         <Avatar>
+          {avatarUrl && <AvatarImage src={avatarUrl} alt="" />}
           <AvatarFallback>{initials(name)}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>

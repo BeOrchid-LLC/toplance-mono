@@ -11,6 +11,7 @@ import {
   getProfile,
 } from "@/lib/data/applications";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
+import { signedDocumentUrl } from "@/lib/storage/documents";
 
 export default async function AppLayout({
   children,
@@ -27,11 +28,16 @@ export default async function AppLayout({
   // opens a draft on sight and a reviewer must never come to own one.
   if (profile.role !== "traveler") redirect(homeFor(profile.role));
 
-  const [application, notifications, unreadCount] = await Promise.all([
-    getOrCreateApplication(),
-    getNotifications(profile.id),
-    unreadNotificationCount(profile.id),
-  ]);
+  const [application, notifications, unreadCount, avatarUrl] =
+    await Promise.all([
+      getOrCreateApplication(),
+      getNotifications(profile.id),
+      unreadNotificationCount(profile.id),
+      // Private bucket, so the photo is signed fresh per render — the
+      // same stance the profile page takes.
+      profile.avatarPath ? signedDocumentUrl(profile.avatarPath) : null,
+    ]);
+
   // Profile is reachable from the account menu (`profileHref` below),
   // not the navbar — the nav carries the application journey only.
   const nav = travellerNav({
@@ -45,6 +51,7 @@ export default async function AppLayout({
         nav={nav}
         name={profile.fullName}
         email={profile.email}
+        avatarUrl={avatarUrl}
         showAgentButton
         profileHref="/app/profile"
         notifications={

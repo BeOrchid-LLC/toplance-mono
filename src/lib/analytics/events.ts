@@ -90,6 +90,9 @@ export const EVENT_NAMES = [
   "toplance.invitation_revoked",
   "toplance.invitation_accepted",
 
+  /** A traveller put a photo on their own profile, or replaced it. */
+  "toplance.avatar_uploaded",
+
   /** An approved traveller opened the post-arrival companion. */
   "toplance.companion_viewed",
 

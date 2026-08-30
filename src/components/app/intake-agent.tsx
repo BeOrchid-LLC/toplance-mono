@@ -658,12 +658,11 @@ function AgentLayout({
 }) {
   const [transcript, setTranscript] = React.useState(false);
 
-  // The record owns the viewport height under the chrome. Below `lg` the
-  // chrome is two bars — the app bar plus the nav rail that replaced the
-  // nav that bar hides — so the subtraction accounts for both, or the
-  // dock lands just off the bottom of a phone.
+  // The record owns the viewport height under the chrome, which is now a
+  // single bar at every width — the phone nav lives in the bar's
+  // hamburger, not in a second rail below it.
   return (
-    <div className="mx-auto flex h-[calc(100dvh-var(--bar-h)-var(--row-h)-1px)] w-full max-w-[1240px] flex-col lg:h-[calc(100dvh-var(--bar-h))]">
+    <div className="mx-auto flex h-[calc(100dvh-var(--bar-h))] w-full max-w-[1240px] flex-col">
       <div className="relative isolate flex min-h-0 flex-1 flex-col">
         {/* Ruled security stock. Official documents are printed on a
             ground, never on blank white, and the document above it is

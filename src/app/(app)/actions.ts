@@ -35,6 +35,7 @@ import {
   addTravelRecord as insertTravelRecord,
   removeTravelRecord as deleteTravelRecord,
 } from "@/lib/data/travel-records";
+import { avatarKey, validateAvatarFile } from "@/lib/domain/avatar";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
 import { isLocale } from "@/lib/i18n/locales";
 import { track } from "@/lib/analytics/track";
@@ -559,6 +560,65 @@ export async function updateProfile(formData: FormData) {
       .update(profiles)
       .set({ ...set, updatedAt: new Date() })
       .where(eq(profiles.id, actor.userId));
+
+    revalidatePath("/app", "layout");
+    return {};
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Put a photo on the signed-in user's own profile. Same storage as
+ * documents — MinIO locally, Cloudflare R2 deployed — under an
+ * `avatars/<userId>/` key the session alone decides, and the same
+ * replace-then-cleanup order as `uploadDocument`: the old object is
+ * deleted only after the row points at the new one, so a failure leaves
+ * a spare file rather than a profile pointing at nothing.
+ */
+export async function uploadAvatar(formData: FormData) {
+  try {
+    const actor = await requireActor();
+
+    const file = formData.get("file");
+    if (!(file instanceof File)) return { error: "Choose a photo first." };
+
+    const invalid = validateAvatarFile(file.type, file.size);
+    if (invalid) return { error: invalid };
+
+    const [current] = await db
+      .select({ avatarPath: profiles.avatarPath })
+      .from(profiles)
+      .where(eq(profiles.id, actor.userId))
+      .limit(1);
+
+    const path = avatarKey(actor.userId, file.type, Date.now());
+
+    try {
+      await putDocument(path, file);
+    } catch {
+      return {
+        error:
+          "That upload did not complete. Try again when you have signal.",
+      };
+    }
+
+    await db
+      .update(profiles)
+      .set({ avatarPath: path, updatedAt: new Date() })
+      .where(eq(profiles.id, actor.userId));
+
+    if (current?.avatarPath && current.avatarPath !== path) {
+      await deleteDocument(current.avatarPath).catch(() => {});
+    }
+
+    await track(
+      "toplance.avatar_uploaded",
+      { replaced: current?.avatarPath != null },
+      actor.userId
+    );
 
     revalidatePath("/app", "layout");
     return {};

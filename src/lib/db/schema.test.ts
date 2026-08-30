@@ -166,3 +166,39 @@ describe.skipIf(!process.env.DATABASE_URL)("profiles.notificationPrefs", async (
     }
   });
 });
+
+/**
+ * The profile photo's storage key. Nullable — a profile without a photo
+ * shows initials, never a placeholder image. Skipped without a database.
+ * Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("profiles.avatarPath", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { profiles } = await import("@/lib/db/schema");
+
+  const TRAVELLER = "test_avatar_path_traveller";
+
+  it("round-trips a storage key and defaults to null", async () => {
+    try {
+      const [row] = await db
+        .insert(profiles)
+        .values({ id: TRAVELLER, email: "avatar@test.invalid", fullName: "Eze" })
+        .returning();
+
+      expect(row.avatarPath).toBeNull();
+
+      const [updated] = await db
+        .update(profiles)
+        .set({ avatarPath: "avatars/test_avatar_path_traveller/1.jpg" })
+        .where(eq(profiles.id, TRAVELLER))
+        .returning();
+
+      expect(updated.avatarPath).toBe(
+        "avatars/test_avatar_path_traveller/1.jpg"
+      );
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+    }
+  });
+});

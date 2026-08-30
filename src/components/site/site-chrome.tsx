@@ -92,7 +92,6 @@ export function SiteChrome() {
       })}
       name={chrome.name || fallbackName}
       email={chrome.email || fallbackEmail}
-      showAgentButton
       profileHref="/app/profile"
       notifications={
         <NotificationsMenu

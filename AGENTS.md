@@ -10,6 +10,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- Content below is maintained by hand. `next dev` only regenerates the block above. -->
 
+# What is being built
+
+The client's original brief is `docs/client-brief.md` — six phases, verbatim as
+received. The build plan that scopes it against this repo, with the decisions
+taken on 2026-08-26, is
+`docs/superpowers/specs/2026-08-26-toplance-prd-build-design.md`. Read the brief
+for intent; treat the build plan as what is actually being built.
+
 # BeOrchid platform conventions
 
 Locked 2026-08-21 and shared across every BeOrchid product. Changing any of

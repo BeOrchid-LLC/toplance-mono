@@ -561,12 +561,11 @@ function AgentLayout({
   // the column is always open, by CSS, so this never runs.
   const [railOpen, setRailOpen] = React.useState(false);
 
-  // The chat owns the viewport under the chrome. Below `lg` the chrome
-  // is two bars — the app bar plus the nav rail that replaced the nav
-  // that bar hides — so the subtraction has to account for both, or the
-  // composer lands just off the bottom of a phone.
+  // The chat owns the viewport under the chrome, which is now a single
+  // bar at every width — the phone nav lives in the bar's hamburger, not
+  // in a second rail below it.
   return (
-    <div className="flex h-[calc(100dvh-var(--bar-h)-var(--row-h)-1px)] flex-col lg:h-[calc(100dvh-var(--bar-h))] lg:flex-row">
+    <div className="flex h-[calc(100dvh-var(--bar-h))] flex-col lg:flex-row">
       {/* ---- conversation ----
           `min-h-0` is what lets the log scroll instead of the page. A
           flex child defaults to `min-height: auto`, which refuses to

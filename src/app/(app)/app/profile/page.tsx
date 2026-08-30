@@ -28,7 +28,9 @@ import {
   EditablePhone,
   type CompanionDigest,
 } from "@/components/app/profile-fields";
+import { AvatarUpload } from "@/components/app/avatar-upload";
 import { TravelHistory } from "@/components/app/travel-history";
+import { signedDocumentUrl } from "@/lib/storage/documents";
 import { STATUS } from "@/lib/domain/status";
 import { itinerarySections } from "@/lib/domain/itinerary";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -41,12 +43,6 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Traveller profile" };
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return "T";
-  return (parts[0][0] + (parts[1]?.[0] ?? "")).toUpperCase();
-}
 
 /** An answer nobody has given yet — an absence, never an invented value. */
 function Awaiting({ w = 64 }: { w?: number }) {
@@ -115,6 +111,13 @@ export default async function ProfilePage() {
       getItinerary(application.id),
       getOrgName(application.orgId),
     ]);
+
+  // The bucket is private, so the photo is a fresh short-lived link on
+  // every render — same stance as documents, and this page is already
+  // force-dynamic.
+  const avatarUrl = profile.avatarPath
+    ? await signedDocumentUrl(profile.avatarPath)
+    : null;
 
   // Unset reads as "weekly" — the default the schema comment on
   // `notificationPrefs` documents, and the same value `EditableDigest`
@@ -200,9 +203,7 @@ export default async function ProfilePage() {
                   rectangle, not a circle — the avatar keeps that aspect
                   here, on the one card that is the traveller's data
                   page. The circle in the app bar stays a circle. */}
-              <span className="grid h-20 w-16 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-border-strong bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] text-[20px] font-bold tracking-wide text-brand-text shadow-[inset_0_1px_3px_rgb(16_19_28/0.08)] sm:h-24 sm:w-20 sm:text-[22px]">
-                {initials(profile.fullName)}
-              </span>
+              <AvatarUpload fullName={profile.fullName} avatarUrl={avatarUrl} />
               <div className="min-w-0 flex-1">
                 <p className="tag">Traveller</p>
                 <h1 className="d-lg mt-1.5 break-words text-ink">

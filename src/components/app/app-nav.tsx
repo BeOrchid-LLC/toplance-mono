@@ -18,7 +18,7 @@ export type NavItem = { href: string; label: string; locked?: boolean };
  * it matches exactly. Everything else also matches its children, which
  * is what keeps `Documents` lit on a document's own page.
  */
-function isActive(pathname: string, href: string, root: string) {
+export function isActive(pathname: string, href: string, root: string) {
   if (href === root) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }

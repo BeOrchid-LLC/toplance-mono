@@ -26,6 +26,11 @@ describe("toRuleSet", () => {
     expect(rs!.corridorId).toBeNull();
     expect(rs!.visaName).toBe("eVisa");
     expect(rs!.sourceName).toBe("DoINeedVisa");
+    // The vendor's terms require both the MIT notice and the Passport
+    // Index credit to be carried in the product UI, so the rule set
+    // carries the text the requirements screen must render.
+    expect(rs!.attribution).toContain("MIT");
+    expect(rs!.attribution).toContain("Passport Index");
     expect(rs!.sourceUrl).toBe("https://example.gov/evisa");
     expect(rs!.effectiveFrom).toBe("2026-05-08");
     // 10 and 21 days → 2 and 3 weeks, never rounded down to zero.

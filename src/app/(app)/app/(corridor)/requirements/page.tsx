@@ -232,6 +232,14 @@ export default async function RequirementsPage() {
                 <ExternalLink className="size-4" aria-hidden />
               </a>
             )}
+            {/*
+              A licence credit the provider obliges us to display, not
+              decoration — `basis-full` keeps it on its own line rather
+              than competing with the source link for the same row.
+            */}
+            {ruleSet.attribution && (
+              <p className="t-muted basis-full">{ruleSet.attribution}</p>
+            )}
           </div>
         </Panel>
 

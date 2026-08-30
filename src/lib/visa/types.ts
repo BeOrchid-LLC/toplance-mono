@@ -44,6 +44,17 @@ export type CorridorRuleSet = {
   effectiveFrom: string;
   sourceName: string | null;
   sourceUrl: string | null;
+  /**
+   * A credit the provider's licence obliges the product to display,
+   * rendered verbatim on the requirements screen beside the source.
+   *
+   * Carried on the rule set rather than decided at the render site so
+   * that a licence obligation travels with the data it attaches to: a
+   * provider added later states its own terms here, and cannot be wired
+   * up without a reviewer seeing whether it needs one. `null` means the
+   * provider mandates no credit, which is the common case.
+   */
+  attribution: string | null;
   processingWeeksMin: number | null;
   processingWeeksMax: number | null;
   governmentFeeMinor: number | null;

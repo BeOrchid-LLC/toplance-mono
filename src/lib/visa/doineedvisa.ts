@@ -138,6 +138,12 @@ export function toRuleSet(payload: unknown): CorridorRuleSet | null {
     sourceName: "DoINeedVisa",
     sourceUrl:
       pair.required_documents?.source_url ?? pair.visa_info_link ?? null,
+    // Required by the vendor's terms: the MIT notice plus the Passport
+    // Index credit its base data derives from. Shipping a DoINeedVisa
+    // rule set without this on screen is a licence breach, which is why
+    // the text travels with the rule set rather than living in a page.
+    attribution:
+      "Rule data from DoINeedVisa, MIT licence, incorporating Passport Index data.",
     processingWeeksMin: weeksFrom(pair.processing_time?.min_days),
     processingWeeksMax: weeksFrom(pair.processing_time?.max_days),
     governmentFeeMinor:

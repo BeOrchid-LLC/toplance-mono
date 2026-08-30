@@ -172,7 +172,7 @@ async function buildChecklist(
     "toplance.corridor_resolved",
     {
       corridorId: ruleSet.corridorId,
-      provider: "curated",
+      provider: ruleSet.provider,
       destinationIso: destination,
       purpose,
     },

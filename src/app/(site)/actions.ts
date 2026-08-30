@@ -10,6 +10,7 @@ import {
   type Notification,
 } from "@/lib/db/schema";
 import { getActor, getProfile } from "@/lib/data/applications";
+import type { ApplicationStatus } from "@/lib/domain/status";
 import {
   getNotifications,
   unreadNotificationCount,
@@ -27,8 +28,15 @@ export type SignedInChrome =
       persona: "traveler";
       name: string;
       email: string;
-      /** Mirrors the app layout: requirements/documents lock until intake is done. */
-      locked: boolean;
+      /**
+       * The two facts `travellerNav` builds the journey nav from, passed
+       * raw rather than pre-reduced to a `locked` flag: the landing page
+       * renders the same list the `(app)` layout does, and the item for
+       * the post-arrival companion depends on the status, not the lock.
+       * `status` is null when no application exists yet.
+       */
+      intakeComplete: boolean;
+      status: ApplicationStatus | null;
       notifications: Notification[];
       unreadCount: number;
     }
@@ -94,7 +102,10 @@ export async function getSignedInChrome(): Promise<SignedInChrome | null> {
 
   const [[application], notifications, unreadCount] = await Promise.all([
     db
-      .select({ intakeComplete: applications.intakeComplete })
+      .select({
+        intakeComplete: applications.intakeComplete,
+        status: applications.status,
+      })
       .from(applications)
       .where(eq(applications.travelerId, profile.id))
       .limit(1),
@@ -106,7 +117,8 @@ export async function getSignedInChrome(): Promise<SignedInChrome | null> {
     persona: "traveler",
     name: profile.fullName,
     email: profile.email,
-    locked: !application?.intakeComplete,
+    intakeComplete: !!application?.intakeComplete,
+    status: application?.status ?? null,
     notifications,
     unreadCount,
   };

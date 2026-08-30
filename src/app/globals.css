@@ -239,7 +239,19 @@
    a padding-box/border-box mask exclusion because a gradient cannot be a
    `border-color`, and the alternative (a second inset element) would sit
    inside the overflow clip and round differently at the corners. */
-.laminate::before {
+/* `.ovi-edge` carries the same hairline without the blur. The intake
+   record is a tall, scrolling card on a page that is mostly read on
+   mid-range Android, and a `backdrop-filter` re-blurring that area every
+   scroll frame is the exact cost the comment above warns about. The edge
+   is the part of the effect that says "document"; the refraction is the
+   part that costs. */
+@utility ovi-edge {
+  position: relative;
+  isolation: isolate;
+}
+
+.laminate::before,
+.ovi-edge::before {
   content: "";
   position: absolute;
   inset: 0;

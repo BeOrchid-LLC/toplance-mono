@@ -48,6 +48,7 @@ export const curatedProvider: VisaDataProvider = {
 
     return {
       corridorId: corridor.id,
+      provider: "curated",
       visaName: corridor.visaName,
       version: corridor.version,
       effectiveFrom: corridor.effectiveFrom,

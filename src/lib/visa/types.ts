@@ -19,6 +19,22 @@ export type RequirementSpec = {
 };
 
 /**
+ * One provider's fill into someone else's rule set: who it was, how to
+ * cite it, and which figures it supplied.
+ *
+ * `fields` carries the requirements screen's own labels rather than
+ * property names, because its only job is to be read on that screen —
+ * "Government fee", not `governmentFeeMinor`.
+ */
+export type Contribution = {
+  provider: string;
+  sourceName: string | null;
+  sourceUrl: string | null;
+  attribution: string | null;
+  fields: string[];
+};
+
+/**
  * What every provider must return, whoever it is.
  *
  * `corridorId` is set only when the rule set came from a row in our own
@@ -55,6 +71,17 @@ export type CorridorRuleSet = {
    * provider mandates no credit, which is the common case.
    */
   attribution: string | null;
+  /**
+   * Providers other than the spine that filled a figure this rule set
+   * would otherwise have left blank, and which figure each one filled.
+   *
+   * Provenance has to be per-field once a rule set can be composed. The
+   * requirements screen promises "Nothing here is our interpretation"
+   * over a single source line; if the fee quietly came from a different
+   * vendor than the documents, that line is false. Empty is the common
+   * case and renders exactly as it always did.
+   */
+  contributions: Contribution[];
   processingWeeksMin: number | null;
   processingWeeksMax: number | null;
   governmentFeeMinor: number | null;

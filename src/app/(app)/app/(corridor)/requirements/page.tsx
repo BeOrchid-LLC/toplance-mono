@@ -240,6 +240,37 @@ export default async function RequirementsPage() {
             {ruleSet.attribution && (
               <p className="t-muted basis-full">{ruleSet.attribution}</p>
             )}
+
+            {/*
+              Where a figure came from, when it did not come from the
+              source named above. The heading over this sheet promises
+              "Nothing here is our interpretation", and a single source
+              line under a composed rule set would make that false — so
+              each provider that filled a blank says which blank it
+              filled. Empty for every single-provider rule set, which is
+              all of them until a corridor has a gap.
+            */}
+            {ruleSet.contributions.map((c) => (
+              <p key={c.provider} className="t-muted basis-full">
+                {c.fields.join(" and ")}{" "}
+                {c.fields.length > 1 ? "come" : "comes"} from{" "}
+                {c.sourceUrl ? (
+                  <a
+                    href={c.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-brand-text hover:underline"
+                  >
+                    {c.sourceName ?? c.provider}
+                  </a>
+                ) : (
+                  <span className="font-semibold">
+                    {c.sourceName ?? c.provider}
+                  </span>
+                )}
+                .{c.attribution ? ` ${c.attribution}` : ""}
+              </p>
+            ))}
           </div>
         </Panel>
 

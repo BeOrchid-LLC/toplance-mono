@@ -2,13 +2,11 @@ import "server-only";
 
 import { curatedProvider } from "@/lib/visa/curated";
 import { doINeedVisaProvider } from "@/lib/visa/doineedvisa";
-import type {
-  CorridorQuery,
-  CorridorRuleSet,
-  VisaDataProvider,
-} from "@/lib/visa/types";
+import { resolveWith } from "@/lib/visa/resolve";
+import type { CorridorQuery, CorridorRuleSet, VisaDataProvider } from "@/lib/visa/types";
 
 export type {
+  Contribution,
   CorridorQuery,
   CorridorRuleSet,
   RequirementSpec,
@@ -18,32 +16,20 @@ export type {
 
 /**
  * Order is precedence. Curated embassy data first, because someone
- * checked it against the mission; an API provider would go after, to
- * widen coverage rather than to override what we already trust.
+ * checked it against the mission; API providers follow, to widen
+ * coverage and to fill a figure curated leaves blank — never to
+ * override one it carries.
  */
 const PROVIDERS: VisaDataProvider[] = [curatedProvider, doINeedVisaProvider];
 
 /**
- * The first provider with an answer wins. A provider that throws is
- * logged and skipped rather than allowed to take down the requirements
- * screen: one vendor being down must not stop a traveller seeing a
- * corridor another provider covers.
+ * The rule set for one corridor, composed from whichever providers
+ * answer. The walk itself lives in `@/lib/visa/resolve` so it can be
+ * tested against stubs; this module's job is only to say who is in it
+ * and in what order.
  */
 export async function resolveRuleSet(
   query: CorridorQuery
 ): Promise<CorridorRuleSet | null> {
-  for (const provider of PROVIDERS) {
-    try {
-      const ruleSet = await provider.fetch(query);
-      if (ruleSet) return ruleSet;
-    } catch (error) {
-      console.error(
-        `[visa] provider "${provider.name}" failed for ` +
-          `${query.nationalityIso}→${query.destinationIso}/${query.purpose}`,
-        error
-      );
-    }
-  }
-
-  return null;
+  return resolveWith(PROVIDERS, query);
 }

@@ -144,6 +144,7 @@ export function toRuleSet(payload: unknown): CorridorRuleSet | null {
     // the text travels with the rule set rather than living in a page.
     attribution:
       "Rule data from DoINeedVisa, MIT licence, incorporating Passport Index data.",
+    contributions: [],
     processingWeeksMin: weeksFrom(pair.processing_time?.min_days),
     processingWeeksMax: weeksFrom(pair.processing_time?.max_days),
     governmentFeeMinor:

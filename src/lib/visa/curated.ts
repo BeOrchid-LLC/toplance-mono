@@ -57,6 +57,7 @@ export const curatedProvider: VisaDataProvider = {
       // Our own curation of public embassy guidance: no licence, and so
       // nothing to credit.
       attribution: null,
+      contributions: [],
       processingWeeksMin: corridor.processingWeeksMin,
       processingWeeksMax: corridor.processingWeeksMax,
       governmentFeeMinor: corridor.governmentFeeMinor,

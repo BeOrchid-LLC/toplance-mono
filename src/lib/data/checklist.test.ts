@@ -27,6 +27,7 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
 
   const ruleSet = (requirements: Array<[string, string, number]>) => ({
     corridorId,
+    provider: "curated",
     visaName: "Test Visa",
     version: 1,
     effectiveFrom: "2026-01-01",

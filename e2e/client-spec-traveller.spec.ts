@@ -215,19 +215,48 @@ test.describe("phase 1 · the intake agent", () => {
 
   /**
    * Item 2 is about manner, and manner is hard to assert. What can be
-   * asserted is the shape the manner needs: a conversation log that
-   * addresses the traveller by name and is read as speech by a screen
-   * reader, rather than a page of labelled inputs.
+   * asserted is the shape the manner needs: one turn at a time, spoken
+   * by a named party, read as speech by a screen reader, and answered in
+   * a single box rather than a page of labelled inputs.
+   *
+   * The docked record surface moved where those live. The agent's turn
+   * is now the dock's own live region — the one thing always on screen,
+   * which is what makes it announce at all — and the full conversation
+   * became a transcript the traveller opens. This asserts both halves,
+   * because "reads as a conversation" needs the current turn to be
+   * spoken *and* the history to remain reachable.
    */
   test("item 2 — the intake reads as a conversation, not as a form", async () => {
     await page.goto("/app/agent");
 
+    // The turn being taken, in the live region that announces it.
+    const agent = page.getByRole("status", { name: "The agent", exact: true });
+    await expect(agent).toBeVisible();
+    await expect(agent).toContainText(`Nice to meet you, ${NAME.split(" ")[0]}`);
+
+    // One box to answer in, whatever the question — not ten fields.
+    // `exact`, because the default is a substring match and the composer
+    // sits beside a "Send your answer" button (and, once a question has
+    // been answered, "Edit your answer to: …") — all of which contain
+    // this label and would count as extra fields.
+    await expect(page.getByLabel("Your answer", { exact: true })).toHaveCount(1);
+
+    // The conversation behind the turn is one tap away, and it is the
+    // log a screen reader reads back.
+    await page.getByRole("button", { name: "Transcript" }).click();
     await expect(
       page.getByRole("log", { name: "Conversation with the Toplance agent" })
     ).toBeVisible();
-    await expect(page.getByText(`Nice to meet you, ${NAME.split(" ")[0]}`)).toBeVisible();
-    // One box to answer in, whatever the question — not ten fields.
-    await expect(page.getByLabel("Your answer")).toHaveCount(1);
+
+    // Left as found. These tests share one page in a serial describe,
+    // and the transcript is an overlay — leaving it open would hand the
+    // next journey a covered record.
+    // `exact` again: the panel's own dismiss button is labelled "Close
+    // the conversation and go back to your record", which contains this.
+    await page.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(
+      page.getByRole("log", { name: "Conversation with the Toplance agent" })
+    ).toBeHidden();
   });
 
   /**
@@ -245,7 +274,7 @@ test.describe("phase 1 · the intake agent", () => {
     await page.goto("/app/agent");
     await expect(page.getByText("I will ask a few short questions")).toBeVisible();
 
-    const rail = page.locator("#intake-profile");
+    const rail = page.locator("#intake-record");
 
     for (const [index, question] of INTAKE.entries()) {
       await expect(
@@ -365,8 +394,17 @@ test.describe("phase 2 · the travel profile", () => {
     }
 
     // "Current application status", in the case band under the name.
-    await expect(page.getByText(/^TPL-/)).toBeVisible();
-    await expect(page.getByText("In progress")).toBeVisible();
+    // Scoped, not page-wide: the same status reads twice on this page —
+    // once here as the file's current state, once in "Status history" as
+    // the latest entry — and the brief's item 4 is about this one.
+    const caseBand = page
+      .locator("div")
+      .filter({ has: page.getByText("Case number") })
+      .filter({ has: page.getByRole("link", { name: "Edit trip answers" }) })
+      .last();
+
+    await expect(caseBand.getByText(/^TPL-/)).toBeVisible();
+    await expect(caseBand.getByText("In progress")).toBeVisible();
   });
 
   /**
@@ -454,6 +492,22 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
         row.locator('input[type="file"]'),
         `"${name}" should have somewhere to upload to`
       ).not.toHaveCount(0);
+    }
+
+    // "Somewhere to upload to" means a camera on a phone, not only a
+    // file picker. Asserted here because this is the last point in the
+    // journey where a document is still outstanding — after the upload
+    // and the approval below, every row offers "Replace" instead.
+    await page.setViewportSize({ width: 390, height: 844 });
+    try {
+      await expect(
+        documentRow(page, "International passport (bio page)").getByRole(
+          "button",
+          { name: "Take a photo" }
+        )
+      ).toBeVisible();
+    } finally {
+      await page.setViewportSize({ width: 1280, height: 720 });
     }
 
     // Personal to the corridor: a UK requirement, and not a UAE one.
@@ -710,6 +764,15 @@ test.describe("phases 5 & 6 · after approval", () => {
     await digest.selectOption("off");
     await page.getByRole("button", { name: "Save", exact: true }).click();
 
+    // Wait for the write to land before reloading. `useSave` closes the
+    // editor once the action resolves, so the row reading "Off" is the
+    // signal that there is something to reload *into* — reloading
+    // straight after the click raced the server action and reliably
+    // re-read the old value.
+    await expect(page.getByText("Off", { exact: true })).toBeVisible();
+
+    // Then the actual claim: it survives a round trip, rather than being
+    // an optimistic render.
     await page.reload();
     await expect(page.getByText("Off", { exact: true })).toBeVisible();
   });
@@ -739,7 +802,7 @@ test.describe("technical requirements", () => {
    * "Accessible via web browser and mobile browser (fully responsive)."
    * The whole suite runs at Desktop Chrome's 1280×720; this runs the
    * screens a traveller actually lives in at a phone's, where the
-   * intake rail becomes a drawer and the checklist rows restack.
+   * record narrows under a pinned dock and the checklist rows restack.
    *
    * A viewport change on the shared page rather than a second context,
    * so the session comes with it. It is put back at the end because
@@ -755,11 +818,24 @@ test.describe("technical requirements", () => {
       await expect(page.getByRole("heading", { name: "Your documents" })).toBeVisible();
       const passport = documentRow(page, "International passport (bio page)");
       await expect(passport).toBeVisible();
-      // The phone-only affordance: a camera, not just a file picker.
-      await expect(passport.getByRole("button", { name: "Take a photo" })).toBeVisible();
 
+      // Actionable at this width, not merely present. Deliberately not
+      // the camera: this runs after approval, when every document is
+      // verified, and a supplied document offers "Replace" rather than
+      // another way to supply it. The phone-only camera is asserted in
+      // item 7 — the last point in the journey with an outstanding row.
+      await expect(
+        passport.getByRole("button", {
+          name: "Replace International passport (bio page)",
+        })
+      ).toBeVisible();
+
+      // The record itself, not a drawer toggle: the docked record
+      // surface replaced the phone drawer, so at this width the ten
+      // fields are on screen rather than behind a "Your profile" button.
       await page.goto("/app/agent");
-      await expect(page.getByRole("button", { name: "Your profile" })).toBeVisible();
+      await expect(page.locator("#intake-record")).toBeVisible();
+      await expect(page.getByText("Traveller record")).toBeVisible();
     } finally {
       await page.setViewportSize({ width: 1280, height: 720 });
     }

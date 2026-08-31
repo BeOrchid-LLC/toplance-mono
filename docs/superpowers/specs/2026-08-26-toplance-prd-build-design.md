@@ -394,7 +394,7 @@ application will report.
 verified domain is `thrivo.fit`, which belongs to the other product; sending a Toplance
 invitation from it is mis-branded, and borrowing another product's domain also means
 Toplance's bounce and complaint rates land on `thrivo.fit`'s reputation. Convention is a
-dedicated subdomain — `mail.toplance.com` or `send.toplance.com` — rather than the root,
+dedicated subdomain — `mail.toplance.ca` or `send.toplance.ca` — rather than the root,
 so transactional sending cannot damage the reputation of the domain that carries the
 company's ordinary mail.
 

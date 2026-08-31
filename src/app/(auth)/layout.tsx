@@ -49,7 +49,7 @@ export default function AuthLayout({
             className="flex min-h-[var(--row-h)] items-center gap-2 text-[15px] font-medium text-ink-2 transition-colors hover:text-brand-text"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Back to toplance.com
+            Back to toplance.ca
           </Link>
         </div>
       </footer>

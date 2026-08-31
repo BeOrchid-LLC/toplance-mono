@@ -167,7 +167,7 @@ export default async function InvitePage({
           href="/"
           className="mt-6 inline-block font-semibold text-brand-text hover:underline"
         >
-          Back to toplance.com
+          Back to toplance.ca
         </Link>
       </InvitationDeadEnd>
     </InviteChrome>

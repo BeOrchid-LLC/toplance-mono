@@ -22,6 +22,7 @@ import type {
  */
 export const curatedProvider: VisaDataProvider = {
   name: "curated",
+  canLead: true,
 
   async fetch(query: CorridorQuery): Promise<CorridorRuleSet | null> {
     const [corridor] = await db
@@ -54,6 +55,19 @@ export const curatedProvider: VisaDataProvider = {
       effectiveFrom: corridor.effectiveFrom,
       sourceName: corridor.sourceName,
       sourceUrl: corridor.sourceUrl,
+      // Our own curation of public embassy guidance: no licence, and so
+      // nothing to credit.
+      attribution: null,
+      contributions: [],
+      // No columns for these yet — `corridors` predates them, so every
+      // one is a gap a contributor may fill. Adding them to the table is
+      // a schema change and belongs with the platform team.
+      allowedStay: null,
+      passportValidity: null,
+      embassyUrl: null,
+      evisaUrl: null,
+      registrationName: null,
+      registrationUrl: null,
       processingWeeksMin: corridor.processingWeeksMin,
       processingWeeksMax: corridor.processingWeeksMax,
       governmentFeeMinor: corridor.governmentFeeMinor,

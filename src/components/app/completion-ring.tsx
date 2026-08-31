@@ -8,6 +8,11 @@
  * `<defs>` with a fixed id, which silently collides the moment two rings
  * share a page — and §1 is that this product does not decorate. The arc
  * carries the figure; the sweep across it was carrying nothing.
+ *
+ * The label says "collected" because that is what `completionOf`
+ * counts: a document uploaded and either awaiting or past review. It
+ * used to say "verified", which described a stricter number the ring
+ * has never drawn — submission gates on that one separately.
  */
 export function CompletionRing({
   pct,
@@ -26,7 +31,7 @@ export function CompletionRing({
       className="relative shrink-0"
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`${pct}% of required documents verified`}
+      aria-label={`${pct}% of required documents collected`}
     >
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
         <circle

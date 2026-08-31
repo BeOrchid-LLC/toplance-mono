@@ -99,7 +99,14 @@ export function RecordDocument({
   }, [frontier, reopenedKey]);
 
   return (
-    <div className="ovi-edge mx-auto w-full max-w-[720px] rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5">
+    // Addressable as one region, the way `intake-transcript` is: the
+    // record and the transcript hold the same ten answers, so anything
+    // reading "the answer to question 4" — a journey test, a future
+    // `aria-controls` — needs to say which surface it means.
+    <div
+      id="intake-record"
+      className="ovi-edge mx-auto w-full max-w-[720px] rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5"
+    >
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
         <p className="special-caps truncate">Traveller record</p>
         {/* Two readings of one fact, as the tick meter used to carry.

@@ -125,6 +125,27 @@ export type Purpose = (typeof PURPOSES)[number];
  * declaration cannot drift from the rows it claims to describe: adding a
  * corridor in one place and not the other fails the suite rather than
  * shipping a promise nobody can keep.
+ *
+ * **This list is not a gate.** Nothing consults it before resolving a
+ * corridor: `/app/requirements` calls `resolveRuleSet` for whatever
+ * three answers the intake captured, and reaches `corridorGap` only
+ * once resolution has actually returned null. So a corridor no row of
+ * ours covers is served the moment a provider can answer it — no edit
+ * here, no seed, no deploy. What this list describes is the *curated*
+ * set, which is what the marketing board and the dead-end copy speak
+ * for.
+ *
+ * The consequence worth knowing before a provider key is bought: those
+ * two surfaces read this list, so they describe curated coverage rather
+ * than real coverage. With a key live they would under-state it — the
+ * board saying "Soon" for a corridor the product will happily serve.
+ * That is a copy problem, not a gate, and it cannot be fixed from here:
+ * which corridors a metered vendor answers is only knowable by asking.
+ *
+ * Not to be confused with `CORRIDORS_LIVE` below, which despite the name
+ * is a list of *destinations* for the picker, ranked ahead of
+ * `CORRIDORS_SOON` — the board labels each row live or soon per corridor
+ * by calling `isCorridorLive`, so being in that list claims nothing.
  */
 export const LIVE_CORRIDORS: ReadonlyArray<{
   nationalityIso: string;

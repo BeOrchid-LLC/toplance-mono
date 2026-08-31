@@ -230,14 +230,49 @@ Working end to end:
 - The employer roster, reading through the privacy-safe view
 - The operations queue with SLA ageing
 
-Scaffolded, needs the next pass:
+- Messaging between traveller and case handler
+- The document reviewer screen and staff status transitions
+- Invitations and organisation onboarding, accepted at `/invite/<token>`
+- The post-arrival companion, and the digest each traveller sets the frequency
+  of
 
-- Messaging between traveller and case handler (`messages` table exists)
-- The document reviewer screen and status transitions from the ops side
-- Invitations and seat management for organisations
-- Itinerary generation after approval (`itineraries` table exists)
-- Automated document checks — currently a file lands in `checking` and stays
-  there until a reviewer moves it
+Built, but inert without a key — every one degrades to an honest empty state
+rather than an error:
+
+- The LLM intake agent and realtime voice (`OPENAI_API_KEY`; without it the
+  intake falls back to the scripted flow)
+- Automated document pre-checks (`OPENAI_API_KEY`; a file lands in `checking`
+  and waits for a reviewer instead)
+- Itinerary generation after approval (`OPENAI_API_KEY`)
+- Every email (`RESEND_API_KEY`; `sendEmail` logs and returns)
+- Live visa data beyond the four curated corridors (`TRAVEL_BUDDY_API_KEY`,
+  `DINV_API_KEY`)
+
+Not built:
+
+- Any voice or SMS channel out — no telephony dependency, so the brief's voice
+  summaries and voice digests have nothing to carry them
+- Jobs, housing, weather or safety feeds on the companion
+- Corridors beyond the four seeded ones (see `LIVE_CORRIDORS`)
+
+### Scheduling the post-arrival digest
+
+`/api/cron/companion` is not self-triggering. It needs a scheduler calling it
+with the `CRON_SECRET` as a bearer token:
+
+```
+curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/cron/companion
+```
+
+In Coolify (which is what the `Dockerfile` builds for) that is a **Scheduled
+Task** on the application, set to run daily — `0 8 * * *`.
+
+Daily is deliberate, and it is not the cadence. Each traveller chooses daily,
+weekly or monthly on their profile, and `travellersDueForDigest` sends only to
+those whose last digest is older than their own interval. So the schedule is a
+poll: running it more often than the shortest frequency costs a query and sends
+nothing extra, and a missed run makes the next digest late rather than lost.
+Without `CRON_SECRET` set the route answers 503 and sends nothing at all.
 
 ---
 

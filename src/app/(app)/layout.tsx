@@ -52,7 +52,6 @@ export default async function AppLayout({
         name={profile.fullName}
         email={profile.email}
         avatarUrl={avatarUrl}
-        showAgentButton
         profileHref="/app/profile"
         notifications={
           <NotificationsMenu

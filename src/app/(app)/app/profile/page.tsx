@@ -31,6 +31,7 @@ import {
 import { AvatarUpload } from "@/components/app/avatar-upload";
 import { TravelHistory } from "@/components/app/travel-history";
 import { signedDocumentUrl } from "@/lib/storage/documents";
+import { readDigestFrequency } from "@/lib/domain/digest";
 import { STATUS } from "@/lib/domain/status";
 import { itinerarySections } from "@/lib/domain/itinerary";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -119,15 +120,12 @@ export default async function ProfilePage() {
     ? await signedDocumentUrl(profile.avatarPath)
     : null;
 
-  // Unset reads as "weekly" — the default the schema comment on
-  // `notificationPrefs` documents, and the same value `EditableDigest`
-  // shows until someone actually changes it.
-  const prefs =
-    profile.notificationPrefs && typeof profile.notificationPrefs === "object"
-      ? (profile.notificationPrefs as Record<string, unknown>)
-      : {};
-  const companionDigest: CompanionDigest =
-    prefs.companionDigest === "off" ? "off" : "weekly";
+  // Unset reads as the documented default. The cron route reads the
+  // same column through the same function, so the frequency this page
+  // shows and the cadence that actually sends cannot disagree.
+  const companionDigest: CompanionDigest = readDigestFrequency(
+    profile.notificationPrefs
+  );
 
   // The stored phone is E.164; the inline editor wants national digits
   // with the dial code supplied by the country picker.

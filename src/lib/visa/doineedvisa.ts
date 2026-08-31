@@ -2,6 +2,7 @@ import "server-only";
 
 import { z } from "zod";
 
+import { httpUrl } from "@/lib/visa/url";
 import type {
   CorridorQuery,
   CorridorRuleSet,
@@ -90,6 +91,8 @@ const pairSchema = z.object({
     })
     .nullish(),
   visa_info_link: z.string().nullish(),
+  evisa_link: z.string().nullish(),
+  allowed_stay_days: z.number().nullish(),
   last_verified_at: z.string().nullish(),
 });
 
@@ -136,8 +139,31 @@ export function toRuleSet(payload: unknown): CorridorRuleSet | null {
     version: 1,
     effectiveFrom: (verified ?? new Date().toISOString()).slice(0, 10),
     sourceName: "DoINeedVisa",
+    // Checked, not merely preferred: a vendor link lands in an `href`,
+    // and a documents link that fails the check falls through to the
+    // info link rather than taking the whole source line down with it.
     sourceUrl:
-      pair.required_documents?.source_url ?? pair.visa_info_link ?? null,
+      httpUrl(pair.required_documents?.source_url) ??
+      httpUrl(pair.visa_info_link),
+    // Required by the vendor's terms: the MIT notice plus the Passport
+    // Index credit its base data derives from. Shipping a DoINeedVisa
+    // rule set without this on screen is a licence breach, which is why
+    // the text travels with the rule set rather than living in a page.
+    attribution:
+      "Rule data from DoINeedVisa, MIT licence, incorporating Passport Index data.",
+    contributions: [],
+    // Stated the way a mission states it, not parsed into a number —
+    // "90 days" is the fact; 90 is an interpretation of it.
+    allowedStay:
+      pair.allowed_stay_days != null ? `${pair.allowed_stay_days} days` : null,
+    // Not returned by this vendor: passport validity is absent from the
+    // response entirely, and its one info link is a government page
+    // rather than a structured embassy contact.
+    passportValidity: null,
+    embassyUrl: null,
+    evisaUrl: httpUrl(pair.evisa_link),
+    registrationName: null,
+    registrationUrl: null,
     processingWeeksMin: weeksFrom(pair.processing_time?.min_days),
     processingWeeksMax: weeksFrom(pair.processing_time?.max_days),
     governmentFeeMinor:
@@ -182,6 +208,7 @@ let keyRejected = false;
 
 export const doINeedVisaProvider: VisaDataProvider = {
   name: "doineedvisa",
+  canLead: true,
 
   async fetch(query: CorridorQuery): Promise<CorridorRuleSet | null> {
     const apiKey = process.env.DINV_API_KEY;

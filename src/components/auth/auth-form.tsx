@@ -483,7 +483,7 @@ export function AuthForm({
         </div>
 
         {mode === "sign-up" && audience === "traveller" && (
-          <PhoneField hint="Used for the voice agent and travel alerts. You can turn both off later." />
+          <PhoneField hint="Optional. Kept on your record so a reviewer can reach you — nothing is sent to it." />
         )}
 
         <Button type="submit" size="block" className="mt-2" disabled={pending}>

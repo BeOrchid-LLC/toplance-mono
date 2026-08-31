@@ -208,9 +208,10 @@ export async function getStatusEvents(applicationId: string) {
 /**
  * The application's itinerary, if one has been generated.
  * `generateAndStoreItinerary` in `@/lib/ai/itinerary` is the only
- * writer; nothing calls it yet, so every caller today still renders the
- * empty state, but the read surface and its `canReadItinerary` guard are
- * exactly where that generation lands its output.
+ * writer, called from the approve action inside `after()`. Without an
+ * `OPENAI_API_KEY` it writes nothing and every caller renders the empty
+ * state, which is the honest result — an approval is never failed by a
+ * plan that could not be generated.
  */
 export async function getItinerary(applicationId: string) {
   const [row] = await db

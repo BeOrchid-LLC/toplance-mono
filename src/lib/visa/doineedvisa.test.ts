@@ -26,6 +26,11 @@ describe("toRuleSet", () => {
     expect(rs!.corridorId).toBeNull();
     expect(rs!.visaName).toBe("eVisa");
     expect(rs!.sourceName).toBe("DoINeedVisa");
+    // The vendor's terms require both the MIT notice and the Passport
+    // Index credit to be carried in the product UI, so the rule set
+    // carries the text the requirements screen must render.
+    expect(rs!.attribution).toContain("MIT");
+    expect(rs!.attribution).toContain("Passport Index");
     expect(rs!.sourceUrl).toBe("https://example.gov/evisa");
     expect(rs!.effectiveFrom).toBe("2026-05-08");
     // 10 and 21 days → 2 and 3 weeks, never rounded down to zero.
@@ -70,6 +75,30 @@ describe("toRuleSet", () => {
     const rs = toRuleSet(pair({ fee: null, processing_time: null }));
     expect(rs!.governmentFeeMinor).toBeNull();
     expect(rs!.processingWeeksMin).toBeNull();
+  });
+
+  /**
+   * Both links reach an `href` on the requirements sheet. A vendor
+   * string is not a trusted URL; a `javascript:` scheme there would
+   * run in our origin on click.
+   */
+  it("drops links that are not http(s)", () => {
+    const rs = toRuleSet(
+      pair({
+        required_documents: {
+          items: ["Valid passport"],
+          note: null,
+          source_url: "javascript:alert(1)",
+        },
+        visa_info_link: "javascript:alert(2)",
+        evisa_link: "data:text/html,<script>alert(3)</script>",
+      })
+    )!;
+
+    expect(rs.sourceUrl).toBeNull();
+    expect(rs.evisaUrl).toBeNull();
+    // Still a usable rule set — the checklist is what it is for.
+    expect(rs.requirements).toHaveLength(1);
   });
 });
 

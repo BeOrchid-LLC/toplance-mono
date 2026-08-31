@@ -245,8 +245,8 @@ rather than an error:
   and waits for a reviewer instead)
 - Itinerary generation after approval (`OPENAI_API_KEY`)
 - Every email (`RESEND_API_KEY`; `sendEmail` logs and returns)
-- Live visa data beyond the four curated corridors (`TRAVEL_BUDDY_API_KEY`,
-  `DINV_API_KEY`)
+- Entry rules on top of the four curated corridors — allowed stay, passport
+  validity, embassy and eVisa links (`TRAVEL_BUDDY_API_KEY`)
 
 Not built:
 

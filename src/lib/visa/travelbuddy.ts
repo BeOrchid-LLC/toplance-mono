@@ -74,7 +74,7 @@ const metadataSchema = z.object({
  * The rule half of the same payload. Everything nullish: a route with no
  * eVisa portal and no arrival registration is ordinary, not malformed.
  */
-const ruleSchema = z.object({
+const ruleBodySchema = z.object({
   destination: metadataSchema
     .extend({ passport_validity: z.string().nullish() })
     .nullish(),
@@ -94,15 +94,34 @@ const ruleSchema = z.object({
 });
 
 /**
- * The vendor documents these field names but not the envelope they sit
- * in, and this was written without a verified live response. Both
- * readings are therefore accepted — nested under `destination`, or flat
- * at the top level — so whichever shape production sends is understood.
+ * Everything the vendor returns sits under `data`; `meta` beside it
+ * carries the response version and generation time, which nothing here
+ * reads. Unwrapped at the parse so both mappers below work on the body
+ * and never mention the envelope.
  */
-const envelopeSchema = z.union([
-  z.object({ destination: metadataSchema }).transform((v) => v.destination),
-  metadataSchema,
-]);
+const ruleSchema = z
+  .object({ data: ruleBodySchema })
+  .transform((v) => v.data);
+
+/**
+ * The metadata block, unwrapped from the envelope.
+ *
+ * This module previously accepted two *guessed* readings — nested under
+ * `destination`, or flat at the top level — because it was written
+ * before anyone had made a live call. Verified against the API on
+ * 2026-08-31 across all four seeded corridors: neither guess was right.
+ * The real shape is `{ data: { destination, ... }, meta }`.
+ *
+ * The failure mode is worth recording, because it was silent. Every
+ * field in `metadataSchema` is optional, so the flat guess *parsed*
+ * against the real payload rather than rejecting it — it simply matched
+ * nothing and produced an object of undefineds, which both mappers then
+ * turned into null. A schema loose enough to accept anything cannot
+ * report that it understood nothing.
+ */
+const envelopeSchema = z
+  .object({ data: z.object({ destination: metadataSchema.nullish() }) })
+  .transform((v) => v.data.destination ?? null);
 
 /**
  * The payload's metadata block as a country context, or null when there
@@ -115,6 +134,7 @@ export function toCountryContext(payload: unknown): CountryContext | null {
   const parsed = envelopeSchema.safeParse(payload);
   if (!parsed.success) return null;
   const m = parsed.data;
+  if (!m) return null;
 
   const context: CountryContext = {
     currencyCode: m.currency_code ?? null,

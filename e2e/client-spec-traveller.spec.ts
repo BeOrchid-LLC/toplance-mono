@@ -230,8 +230,17 @@ test.describe("phase 1 · the intake agent", () => {
     await page.goto("/app/agent");
 
     // The turn being taken, in the live region that announces it.
+    //
+    // `aria-live` is asserted as a literal attribute rather than left to
+    // the implicit `polite` that `role="status"` already carries. The
+    // dock swaps its text in place as each turn lands, so whether a
+    // screen reader speaks the new turn unprompted is the whole of item
+    // 2's "reads as a conversation" — and a refactor that kept the role
+    // while dropping the announcement would be invisible to a test that
+    // only checked the role.
     const agent = page.getByRole("status", { name: "The agent", exact: true });
     await expect(agent).toBeVisible();
+    await expect(agent).toHaveAttribute("aria-live", "polite");
     await expect(agent).toContainText(`Nice to meet you, ${NAME.split(" ")[0]}`);
 
     // One box to answer in, whatever the question — not ten fields.
@@ -243,7 +252,20 @@ test.describe("phase 1 · the intake agent", () => {
 
     // The conversation behind the turn is one tap away, and it is the
     // log a screen reader reads back.
-    await page.getByRole("button", { name: "Transcript" }).click();
+    //
+    // The toggle states which it is. Its label already changes with the
+    // panel ("Transcript" / "Close"), but the label is `sr-only` below
+    // `sm`, so on a phone `aria-expanded` is the only thing saying
+    // whether the conversation is open.
+    // Located twice on purpose: it is one button, but its accessible
+    // name changes with its state, so a single locator cannot hold it
+    // across the click.
+    const transcript = page.getByRole("button", { name: "Transcript" });
+    await expect(transcript).toHaveAttribute("aria-expanded", "false");
+    await transcript.click();
+    await expect(
+      page.getByRole("button", { name: "Close", exact: true })
+    ).toHaveAttribute("aria-expanded", "true");
     await expect(
       page.getByRole("log", { name: "Conversation with the Toplance agent" })
     ).toBeVisible();

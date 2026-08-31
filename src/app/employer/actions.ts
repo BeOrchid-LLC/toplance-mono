@@ -9,6 +9,7 @@ import { db } from "@/lib/db/client";
 import { organisations } from "@/lib/db/schema";
 import {
   createInvitation,
+  resendableInvitation,
   revokeInvitation as revokeInvitationTx,
 } from "@/lib/data/invitations";
 import { createOrganisationTx } from "@/lib/data/organisations";
@@ -117,6 +118,59 @@ export async function inviteTraveller(formData: FormData) {
 
     revalidatePath("/employer");
     return { ok: true, inviteUrl };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Sends the same invitation again, to the same address.
+ *
+ * The link an employer was shown when they first invited someone lives
+ * only in that dialog — `listInvitations` never selects the token — so
+ * before this existed, an invitation email that silently failed to send
+ * could not be recovered at all. Under invite-only that is a traveller
+ * with no way in, and the only remedy was to revoke and start again.
+ *
+ * The same token, deliberately: a second live link would mean two ways
+ * into one account, and rotating would kill a first email that was
+ * merely slow. `resendableInvitation` decides whether there is anything
+ * to send, scoped to the caller's own organisation.
+ */
+export async function resendInvitation(formData: FormData) {
+  try {
+    const actor = await requireActor();
+    const orgId = actor.orgIds[0];
+    if (!orgId) return { error: "You do not have access to that." };
+    await requireOrgAccess(orgId);
+
+    const invitationId = String(formData.get("invitation_id") ?? "");
+    const invitation = await resendableInvitation(orgId, invitationId);
+    if (!invitation) {
+      return { error: "That invitation can no longer be resent. Send a new one." };
+    }
+
+    const [org] = await db
+      .select({ name: organisations.name })
+      .from(organisations)
+      .where(eq(organisations.id, orgId))
+      .limit(1);
+
+    await sendEmail({
+      to: invitation.email,
+      ...invitationEmail({
+        orgName: org?.name ?? "Your organisation",
+        inviteUrl: appUrl(`/invite/${invitation.token}`),
+        fullName: invitation.fullName || undefined,
+      }),
+    });
+
+    await track("toplance.invitation_resent", { orgId }, actor.userId);
+
+    revalidatePath("/employer");
+    return { ok: true };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

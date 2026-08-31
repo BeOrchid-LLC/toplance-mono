@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { Shield } from "lucide-react";
 import { desc, eq, inArray } from "drizzle-orm";
 
@@ -11,8 +12,10 @@ import { InvitationStatusBadge, StatusBadge } from "@/components/shared/status-b
 import { Shell } from "@/components/shared/shell";
 import { CreateOrganisation } from "@/components/employer/create-organisation";
 import { InviteDialog } from "@/components/employer/invite-dialog";
+import { ResendInvitationButton } from "@/components/employer/resend-invitation-button";
 import { RevokeInvitationButton } from "@/components/employer/revoke-invitation-button";
 import { homeFor } from "@/lib/auth/routes";
+import { provisionEmployerProfile } from "@/lib/data/organisations";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import {
   applications,
@@ -56,11 +59,46 @@ function invitationTimeline(invite: {
   }
 }
 
+/**
+ * Finish the profile write the sign-up form started, for a session that
+ * arrived here holding credentials and nothing else. Returns whatever
+ * exists afterwards, so the caller's own `/go` fallback still catches a
+ * session Clerk cannot even name.
+ */
+async function recoverEmployer(): Promise<
+  [Awaited<ReturnType<typeof getProfile>>, Awaited<ReturnType<typeof getActor>>]
+> {
+  const { userId } = await auth();
+  if (!userId) return [null, null];
+
+  const user = await currentUser();
+  const email = user?.emailAddresses[0]?.emailAddress;
+  if (!email) return [null, null];
+
+  await provisionEmployerProfile(
+    userId,
+    email,
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ")
+  );
+
+  return Promise.all([getProfile(), getActor()]);
+}
+
 export default async function EmployerConsolePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
-  const [profile, actor] = await Promise.all([getProfile(), getActor()]);
-  if (!profile || !actor) redirect("/employer/sign-in?next=/employer");
+  let [profile, actor] = await Promise.all([getProfile(), getActor()]);
+
+  // A sign-up whose profile write was cancelled lands here moments after
+  // creating an account, so try to finish that write before giving up on
+  // it — see `provisionEmployerProfile`. Only then is `/go` the honest
+  // answer, and `/go` rather than the employer door because the proxy
+  // walks a signed-in visitor off every auth page and the two would
+  // bounce at each other forever.
+  if (!profile || !actor) {
+    [profile, actor] = await recoverEmployer();
+  }
+  if (!profile || !actor) redirect("/go");
 
   const [membership] = await db
     .select({
@@ -80,10 +118,11 @@ export default async function EmployerConsolePage() {
   // "0 people" roster for an org that was never created. This is the
   // only door in: name one, then the branch below takes over.
   if (!membership) {
-    // …but not everyone holding a session belongs at that door. The role
-    // is still `traveler` here for a legitimate new employer — the flip
-    // happens inside `createOrganisationTx` — so this cannot simply
-    // demand `org_member`, which would wall off the whole sign-up.
+    // …but not everyone holding a session belongs at that door. Since
+    // travellers became invite-only (2026-08-31) a new employer arrives
+    // already holding `org_member`, written by `completeProfile` — but
+    // the membership row still begins in `createOrganisationTx`, so the
+    // role alone cannot decide who belongs here.
     //
     // What it can do is refuse the two accounts that transaction refuses
     // anyway, rather than hand them a form guaranteed to fail at submit:
@@ -370,7 +409,13 @@ export default async function EmployerConsolePage() {
 
                       <div className="lg:justify-self-end">
                         {invite.status === "pending" && (
-                          <RevokeInvitationButton invitationId={invite.id} />
+                          <div className="flex items-center gap-1">
+                            <ResendInvitationButton
+                              invitationId={invite.id}
+                              email={invite.email}
+                            />
+                            <RevokeInvitationButton invitationId={invite.id} />
+                          </div>
                         )}
                       </div>
                     </li>

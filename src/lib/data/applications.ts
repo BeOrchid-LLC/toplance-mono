@@ -1,6 +1,6 @@
 import "server-only";
 
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
@@ -30,12 +30,22 @@ export type Completion = {
 };
 
 /**
- * The signed-in user's profile, created on first sight.
+ * The signed-in user's profile, or `null` — a read, never a write.
  *
- * Provisioning happens here rather than in a Clerk webhook so a user can
- * never reach the app without a profile row: a webhook that is slow,
- * retried or misconfigured would leave them in exactly that state, and
- * every foreign key in this schema points at `profiles.id`.
+ * This used to provision on first sight, so that no request could reach
+ * the app before a row existed for the foreign keys to point at. Since
+ * travellers became invite-only (client decision, 2026-08-31) that
+ * convenience was the bypass: it defaulted to the schema's
+ * `role: "traveler"`, so any Clerk account plus one request to `/app`
+ * minted a traveller and made `completeProfile`'s invitation check
+ * decorative. Nothing else in the codebase could have stopped it, since
+ * every guard downstream reads the row this function had just created.
+ *
+ * `completeProfile` is now the only path from a Clerk session to a
+ * `profiles` row, because it is the only one that can see an invitation
+ * token. A session with no row is someone who has not finished signing
+ * up, and `null` sends them back through the door rather than around
+ * it.
  */
 export async function getProfile(): Promise<Profile | null> {
   const { userId } = await auth();
@@ -47,34 +57,7 @@ export async function getProfile(): Promise<Profile | null> {
     .where(eq(profiles.id, userId))
     .limit(1);
 
-  if (existing) return existing;
-
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress;
-  if (!email) return null;
-
-  const [created] = await db
-    .insert(profiles)
-    .values({
-      id: userId,
-      email,
-      fullName: [user?.firstName, user?.lastName].filter(Boolean).join(" "),
-    })
-    .onConflictDoNothing()
-    .returning();
-
-  // `onConflictDoNothing` returns nothing when another request won the
-  // race, so fall back to reading the row it wrote rather than telling
-  // the caller there is no profile.
-  if (created) return created;
-
-  const [raced] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.id, userId))
-    .limit(1);
-
-  return raced ?? null;
+  return existing ?? null;
 }
 
 /**

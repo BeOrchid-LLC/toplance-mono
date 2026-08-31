@@ -76,7 +76,7 @@ export function SiteNav() {
             <Link href="/sign-in">{t(HERO.signIn)}</Link>
           </Button>
           <Button asChild size="sm">
-            <Link href="/sign-up">{t(HERO.ctaShort)}</Link>
+            <Link href="/employer/sign-up">{t(HERO.ctaSecondary)}</Link>
           </Button>
         </div>
       </Shell>

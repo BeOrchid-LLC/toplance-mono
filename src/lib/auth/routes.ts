@@ -47,16 +47,45 @@ export function isInternalPath(next: string | null | undefined): next is string 
 }
 
 /**
+ * Invitation tokens are hex from the database. Anything else in that
+ * slot is a stranger's string, and `/invite/${it}` would happily build a
+ * path out of `../ops` or `a/b` that this module never meant to name.
+ */
+function isTokenShaped(token: string | null | undefined): token is string {
+  return !!token && /^[A-Za-z0-9_-]+$/.test(token);
+}
+
+/**
  * Where a signed-in visitor at `pathname` should land, or `null` when
  * the path is not an auth surface and no redirect belongs.
+ *
+ * `token` exists for one case, and it is not a nicety. Clerk activating
+ * a brand-new session refreshes the router, which re-requests whatever
+ * URL the visitor is still standing on — mid-sign-up, that is the
+ * sign-up page itself, and this function answers it. The invite-only
+ * traveller door carries its destination in `?token=` rather than
+ * `?next=`, so without this it resolves to `/go`, which for an account
+ * whose profile row has not been written yet is a dead end rather than a
+ * dispatcher.
+ *
+ * On that door the token outranks `next`. The door derives where to land
+ * from a token it already resolved against the database and never sets
+ * `next` itself, so anything arriving there is someone else's opinion
+ * about where an invitation belongs.
  */
 export function signedInDestination(
   pathname: string,
-  next?: string | null
+  next?: string | null,
+  token?: string | null
 ): string | null {
   const route = authRoutes.find(
     (r) => pathname === r.prefix || pathname.startsWith(`${r.prefix}/`)
   );
   if (!route) return null;
+
+  if (route.prefix === "/sign-up" && isTokenShaped(token)) {
+    return `/invite/${token}`;
+  }
+
   return isInternalPath(next) ? next : route.home;
 }

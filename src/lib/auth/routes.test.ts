@@ -20,6 +20,38 @@ describe("signedInDestination", () => {
     expect(signedInDestination("/sign-up")).toBe("/go");
   });
 
+  // The reason this exists: Clerk activating a brand-new session
+  // refreshes the router, which re-requests the sign-up URL the visitor
+  // is still standing on. The proxy answers that request, so if it
+  // cannot work out where an invited traveller belongs, it sends them to
+  // /go — which for an account whose profile write has not landed yet is
+  // a dead end, not a dispatcher.
+  it("sends a mid-sign-up invitee to the invitation their token names", () => {
+    expect(signedInDestination("/sign-up", null, "abc123")).toBe("/invite/abc123");
+  });
+
+  it("lets the token decide even when a next is also present", () => {
+    // The invite door derives its destination from the token and never
+    // sets `next`. Anything else arriving in that slot is a stranger's
+    // suggestion about where an invitation should land.
+    expect(signedInDestination("/sign-up", "/app/documents", "abc123")).toBe(
+      "/invite/abc123"
+    );
+  });
+
+  it("ignores a token that is not shaped like one", () => {
+    // Tokens are hex from the database. A crafted one with a slash or a
+    // dot segment would build a path this function never meant to name.
+    expect(signedInDestination("/sign-up", null, "../ops")).toBe("/go");
+    expect(signedInDestination("/sign-up", null, "a/b")).toBe("/go");
+    expect(signedInDestination("/sign-up", null, "")).toBe("/go");
+  });
+
+  it("only reads a token on the door that issues one", () => {
+    expect(signedInDestination("/sign-in", null, "abc123")).toBe("/go");
+    expect(signedInDestination("/employer/sign-up", null, "abc123")).toBe("/employer");
+  });
+
   it("sends a signed-in visitor on an audience door to that audience's home", () => {
     expect(signedInDestination("/employer/sign-in")).toBe("/employer");
     expect(signedInDestination("/employer/sign-up")).toBe("/employer");
@@ -36,6 +68,12 @@ describe("signedInDestination", () => {
     expect(signedInDestination("/")).toBeNull();
     expect(signedInDestination("/app")).toBeNull();
     expect(signedInDestination("/employer")).toBeNull();
+    // The property that lets /go be a terminal surface rather than a
+    // bounce: a signed-in visitor sent there by a console that could not
+    // find their profile must be allowed to stay and read the reason. If
+    // the proxy ever forwarded /go, that console and this page would
+    // redirect at each other forever.
+    expect(signedInDestination("/go")).toBeNull();
     // A prefix must match on a path boundary, not as a substring.
     expect(signedInDestination("/sign-innocuous")).toBeNull();
   });

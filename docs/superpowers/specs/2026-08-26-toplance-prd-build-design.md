@@ -302,3 +302,109 @@ B3 messaging. Everything above that line is the PRD's core loop.
   required) → traveller gets itinerary email + profile arrival plan → companion page live.
 - **Definition of done per phase**: each phase's acceptance line from the PRD checked
   against staging (never production), with `OPENAI_API_KEY`/`RESEND_API_KEY` set there.
+
+## Amendment — travellers are invite-only (2026-08-31)
+
+Appended rather than folded into the sections above, so the record of what changed and
+when survives. Everything before this heading describes the build as scoped on
+2026-08-26; where the two disagree, this section wins.
+
+**The client's decision, verbatim from the thread:** *"Travellers should only be invited
+through B2B accounts."* Self-serve traveller sign-up is withdrawn. There is no
+traveller-facing purchase and no traveller-facing account creation.
+
+### What changed
+
+- **`/sign-up` is token-gated.** It resolves `?token=` against `getInvitationPreview` and
+  renders the form only for a live, pending invitation; every other case is a dead end
+  naming its reason. `next` is derived from the token rather than read from the query
+  string, so the door cannot be pointed anywhere else.
+- **`completeProfile` carries the invariant.** It takes a `SignUpIntent` — `{ intent:
+  "invited", token }` or `{ intent: "employer" }` — verifies the token names a pending
+  invitation addressed to the email Clerk just verified, and writes `traveler` only then.
+  The page gate is a courtesy; this is the enforcement.
+- **The invitation check is asked twice, and the early one is the useful one.**
+  `completeProfile` remains the enforcement, but it answers only after Clerk has created
+  the account and the emailed code has been spent — at which point `auth-form` pushes the
+  visitor off the form to the destination the token names. A traveller who mistyped the one
+  address their invitation will accept therefore had no way to correct it and, under
+  invite-only, no other door to try. `checkInvitedEmail` asks the same question before
+  `signUp.create()`, so a typo costs a correction rather than an account. Both callers
+  share `checkInvitedAddress` and one pair of error strings, since the early answer is a
+  promise about what the later one will decide.
+  - It takes no session, deliberately: it runs before one exists.
+  - It confirms or denies an address the caller supplied and never returns the invited one
+    — the same oracle `completeProfile` has always been, minus the burnt code, and it keeps
+    the rule that the invited address is never rendered to whoever holds the link.
+  - The two text fields on that form became controlled in the same change. `<form
+    action={fn}>` resets an uncontrolled form once the action returns, which was harmless
+    while every refusal was terminal; it is not harmless when the refusal exists so the
+    field can be fixed.
+
+- **Employer sign-up writes `org_member` immediately**, before any organisation exists.
+  It previously wrote `traveler` and relied on `createOrganisationTx` to flip it, which
+  left every employer who never named an organisation as an org-less traveller with the
+  whole traveller product open to them.
+- **`getProfile` no longer provisions.** It was creating a row — defaulting to the
+  schema's `role: "traveler"` — for any Clerk session it had not seen. That made every
+  check above decorative: a Clerk account plus one request to `/app` minted a traveller.
+  `completeProfile` is now the only path from a session to a `profiles` row.
+- **The public site sells seats, not applications.** The Self-serve and Guided tiers are
+  gone (their features merged into the seat plan, since "Everything in Guided" no longer
+  resolved to anything) and every CTA points at `/employer/sign-up`.
+
+### Deliberately not done
+
+Copy still written to a traveller who pays, left for the client rather than rewritten:
+
+- The pricing FAQ — *"What does it cost to find out what I need?" → "Nothing… You pay when
+  you ask us to handle an application."* Under sponsorship the traveller never pays at all.
+- The `paid: true/false` markers on the "how it works" steps, which draw a free/paid line
+  that no longer falls anywhere a traveller can see.
+- The `LEDGER` rows, which argue against paying an agent — an argument aimed at a
+  self-serve buyer.
+- The site's second person throughout is still the traveller, not the HR buyer who is now
+  the only person who can act on it.
+
+### Consequence for the e2e suite
+
+`/sign-up` is no longer a way to make an arbitrary account, so specs needing one that is
+about to become staff use `/employer/sign-up` (now `signUp`'s default door), and specs
+needing a traveller use `signUpInvited` with a token from `seedInvitation`. Traveller
+entry is two acts now — the sign-up and the accept — and `signUpInvited` carries both.
+
+### Invitation delivery, and what each environment needs
+
+Invite-only changed the severity of every email failure. While travellers could
+self-serve, an invitation email that did not arrive was an inconvenience; it is now the
+only way a traveller learns the URL, so a failed send is a person who cannot get in at
+all. Three variables decide whether that happens, and all three fail quietly.
+
+| Variable | Unset | Consequence |
+|---|---|---|
+| `RESEND_API_KEY` | `sendEmail` logs `[email] … skipped` and returns | employer sees a successful invite; nothing is sent |
+| `EMAIL_FROM` | Resend answers `422`, logged only to the console | same, one layer further along |
+| `APP_URL` | `appUrl()` falls back to `http://localhost:3000` | the email arrives carrying a link nobody can open |
+
+`sendEmail` never throwing is deliberate and stays that way — no email is worth failing a
+user's action for. The consequence is that these are operational checks, not things the
+application will report.
+
+**`EMAIL_FROM` needs a verified Toplance sending domain.** The Resend account's only
+verified domain is `thrivo.fit`, which belongs to the other product; sending a Toplance
+invitation from it is mis-branded, and borrowing another product's domain also means
+Toplance's bounce and complaint rates land on `thrivo.fit`'s reputation. Convention is a
+dedicated subdomain — `mail.toplance.com` or `send.toplance.com` — rather than the root,
+so transactional sending cannot damage the reputation of the domain that carries the
+company's ordinary mail.
+
+**The e2e suite is deliberately excluded.** `playwright.config.ts` sets
+`RESEND_API_KEY: ""` in `webServer.env`, so no test can send. This is load-bearing rather
+than tidy: every run invites `…@example.com` addresses, and a reserved domain hard-bounces
+every one of them. Do not remove it to "test the email path".
+
+**Recovery.** `resendInvitation` sends the same token to the same address again. It is the
+only route back to a link once the invite dialog has closed, because `listInvitations`
+never selects the token. It does not rotate the token (a slow first email should still
+work) and does not extend `expiresAt` (a resend should not quietly lengthen the life of a
+bearer credential). An expired invitation is refused — that one needs inviting again.

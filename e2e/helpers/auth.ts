@@ -34,15 +34,25 @@ export async function resetFixtures(
  * Sign up through the real form: name, email, the six-digit code, and
  * whatever `completeProfile` writes on the way through.
  *
- * `path` decides which door — `/sign-up` for a traveller, and
- * `/employer/sign-up` for the organisation console, whose form asks for
- * no phone number and lands on `/employer`. `?next=/` is the way to
- * sign an account up without sending it to `/app`, which would create a
- * draft application for someone who is about to become staff.
+ * `path` decides which door. Since travellers became invite-only
+ * (2026-08-31) the only two that open are `/employer/sign-up` and
+ * `/sign-up?token=…`, so specs that just need *an account* — the staff
+ * ones, which promote it afterwards — go through the employer door.
+ * That door asks for no phone number and lands on `/employer`, which
+ * unlike `/app` opens no draft application for an account that is about
+ * to become staff.
+ *
+ * For a traveller, use `signUpInvited` rather than composing the token
+ * URL by hand: signing up is only half of it, and the half that leaves
+ * the account attached to an organisation is the accept.
  */
 export async function signUp(
   page: Page,
-  { email, fullName, path = "/sign-up" }: { email: string; fullName: string; path?: string }
+  {
+    email,
+    fullName,
+    path = "/employer/sign-up",
+  }: { email: string; fullName: string; path?: string }
 ): Promise<void> {
   // Replays the testing token on every Frontend API call this browser
   // makes, which is what gets a scripted sign-up past bot protection.
@@ -78,4 +88,28 @@ export async function completeSignUpForm(
   // underneath it, so the write and the navigation race. Nothing here
   // waits on the row — `promoteToStaff` does, where a spec needs it.
   await page.waitForURL((url) => !url.pathname.includes("sign-up"));
+}
+
+/**
+ * The whole traveller entry, which is now two acts rather than one: the
+ * invitation's token opens `/sign-up`, and the accept on `/invite/<token>`
+ * is what attaches the organisation and lands them on the agent.
+ *
+ * Specs used to reach the same place with `?next=/app/agent`. That query
+ * parameter is gone from this door — the destination is derived from the
+ * token — so waiting for the agent here keeps every caller's next line
+ * true without each of them knowing why.
+ */
+export async function signUpInvited(
+  page: Page,
+  { email, fullName, token }: { email: string; fullName: string; token: string }
+): Promise<void> {
+  await setupClerkTestingToken({ page });
+
+  await page.goto(`/sign-up?token=${encodeURIComponent(token)}`);
+  await completeSignUpForm(page, { email, fullName });
+
+  await page.waitForURL(`**/invite/${token}`);
+  await page.getByRole("button", { name: "Accept invitation" }).click();
+  await page.waitForURL("**/app/agent");
 }

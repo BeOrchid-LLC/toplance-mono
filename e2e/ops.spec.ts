@@ -35,13 +35,17 @@ test("a reviewer takes a submitted case through review to approved", async ({ pa
   await resetFixtures([EMAIL]);
   const seeded = await seedSubmittedCase(TRAVELLER);
 
-  // `?next=/` keeps the new account off `/app`, which would create a
-  // draft application for someone who is about to become staff.
-  await signUp(page, { email: EMAIL, fullName: NAME, path: "/sign-up?next=/" });
+  // The employer door, `signUp`'s default: it lands on `/employer` rather
+  // than `/app`, so no draft application is opened for an account that is
+  // about to become staff, and no invitation is minted just to be thrown
+  // away.
+  await signUp(page, { email: EMAIL, fullName: NAME });
 
-  // The `refuse` branch, and the reason this visit comes before the
-  // promotion: `requireStaffConsole` provisions the profile row on first
-  // sight, and the row is what the Director's SQL below updates.
+  // The `refuse` branch. It no longer has to come before the promotion
+  // to provision anything — `getProfile` stopped creating rows when
+  // travellers became invite-only, and `completeProfile` wrote this one
+  // during the sign-up above. It stays here because the refusal is worth
+  // proving on the way past.
   await page.goto("/ops");
   await expect(
     page.getByRole("heading", { name: "This console is for Toplance staff" })

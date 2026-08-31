@@ -15,11 +15,13 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { PhoneField } from "@/components/auth/phone-field";
 import { useLocale } from "@/components/locale-provider";
-import { completeProfile } from "@/app/(auth)/actions";
+import {
+  checkInvitedEmail,
+  completeProfile,
+  type SignUpIntent,
+} from "@/app/(auth)/actions";
 import { isInternalPath } from "@/lib/auth/routes";
 import { splitFullName } from "@/lib/domain/name";
-
-type Mode = "sign-up" | "sign-in";
 
 /** Local to this component now that the server no longer returns it. */
 type AuthState = {
@@ -50,13 +52,22 @@ function messageFor(error: NonNullable<ClerkResult["error"]>, fallback: string) 
   return error.longMessage ?? fallback;
 }
 
-export function AuthForm({
-  mode,
-  audience = "traveller",
-}: {
-  mode: Mode;
-  audience?: "traveller" | "employer" | "operations";
-}) {
+type Audience = "traveller" | "employer" | "operations";
+
+/**
+ * A sign-up must name its `SignUpIntent`; a sign-in has nothing to
+ * declare. Splitting the props into a union is what turns "this form
+ * forgot to say why the account may exist" into a compile error —
+ * `completeProfile` refuses to guess, and that refusal is worth catching
+ * at the call site rather than in a toast after the code is spent.
+ */
+type AuthFormProps = { next?: string } & (
+  | { mode: "sign-in"; audience?: Audience }
+  | { mode: "sign-up"; audience?: Audience; intent: SignUpIntent }
+);
+
+export function AuthForm(props: AuthFormProps) {
+  const { mode, audience = "traveller" } = props;
   const [state, setState] = React.useState<AuthState>({});
   const [pending, startTransition] = React.useTransition();
   const [code, setCode] = React.useState("");
@@ -69,9 +80,17 @@ export function AuthForm({
   const requested = params.get("next");
   // The audience doors name their destination; the generic door cannot
   // know who signed in, so it resolves through the /go role dispatcher.
-  const next = isInternalPath(requested)
-    ? requested
-    : audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/go";
+  //
+  // `props.next` wins over the query string and is never validated,
+  // because it is not user input: the invite-only sign-up door derives
+  // it from a token it has already resolved against the database. The
+  // `isInternalPath` guard below still stands over `?next=`, which
+  // anyone can type.
+  const next =
+    props.next ??
+    (isInternalPath(requested)
+      ? requested
+      : audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/go");
 
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
@@ -86,6 +105,20 @@ export function AuthForm({
     phone: "",
     countryIso: "ng",
   });
+
+  /**
+   * The two text fields, controlled rather than read off the DOM at
+   * submit time.
+   *
+   * `<form action={fn}>` resets an uncontrolled form once the action
+   * returns — React's own behaviour, and harmless while every refusal
+   * here was terminal anyway. The invitation check is not terminal: it
+   * exists so the visitor can fix a typo, and a form that empties both
+   * fields at the moment it asks them to correct one takes back most of
+   * what the check was for. `PhoneField` already holds its own state,
+   * so it survives a reset without help.
+   */
+  const [typed, setTyped] = React.useState({ fullName: "", email: "" });
 
   function onRequest(formData: FormData) {
     const email = String(formData.get("email") ?? "")
@@ -118,6 +151,25 @@ export function AuthForm({
 
       if (mode === "sign-up") {
         if (!signUp) return;
+
+        // Asked before Clerk is told anything, and this order is the
+        // whole point. `completeProfile` refuses an address the
+        // invitation does not name, but it runs after the account
+        // exists and the emailed code has been spent, by which time
+        // this form is gone and the visitor is being pushed to `next` —
+        // so a single mistyped character used to cost a traveller the
+        // only route they have into the product. Here it costs them a
+        // correction. The server still enforces it; this only moves the
+        // answer to where it can still be acted on.
+        if (props.mode === "sign-up" && props.intent.intent === "invited") {
+          const invited = await checkInvitedEmail(props.intent.token, email);
+          if (invited.error) {
+            setState({ error: invited.error });
+            toast.error(invited.error);
+            return;
+          }
+        }
+
         // The name goes to Clerk at creation as well as to `profiles`
         // later: if the profile write is ever lost, `getProfile`'s lazy
         // provisioning can still recover the name from Clerk.
@@ -176,7 +228,7 @@ export function AuthForm({
       return;
     }
 
-    if (mode === "sign-up") {
+    if (props.mode === "sign-up") {
       // Awaited here — after `finalize()`, before the `router.push()`
       // below — and that order is the whole of it. This is a POST from
       // this page: fired without being awaited, or awaited after the
@@ -189,18 +241,26 @@ export function AuthForm({
       // upsert, and the failure worth a second attempt is the brand-new
       // session not yet being readable by the server on the very first
       // request after `finalize()`.
-      let result = await completeProfile({ ...profileFields, locale });
+      const submission = { ...profileFields, locale, ...props.intent };
+      let result = await completeProfile(submission);
       if (result.error) {
-        result = await completeProfile({ ...profileFields, locale });
+        result = await completeProfile(submission);
       }
 
       if (result.error) {
         // Said, then carried on. The session is live and the emailed
-        // code is spent, so keeping them on this screen is a dead end —
-        // a reload would send them into the app regardless, just without
-        // being told anything. `EditableName` on `/app/profile` is where
-        // the name they typed can be put back.
-        toast.error(`${result.error} You can add your name from your profile.`);
+        // code is spent, so keeping them on this screen is a dead end:
+        // the form cannot be resubmitted and has nothing left to offer.
+        //
+        // The error is passed through as written, with nothing appended.
+        // Every error this action can return — no session, no name, no
+        // Clerk email, an invitation that does not name this address —
+        // means no profile row was written, so "you can add it from your
+        // profile" is advice to visit a page that does not exist for
+        // them yet. `next` is where the explanation lives: for the
+        // invite-only door that is the invitation itself, which says
+        // which account they are signed in as and how to get out of it.
+        toast.error(result.error);
       }
     }
 
@@ -465,6 +525,8 @@ export function AuthForm({
               name="full_name"
               autoComplete="name"
               placeholder="As shown in your passport"
+              value={typed.fullName}
+              onChange={(e) => setTyped((t) => ({ ...t, fullName: e.target.value }))}
               required
             />
           </div>
@@ -478,6 +540,8 @@ export function AuthForm({
             type="email"
             autoComplete="email"
             placeholder="you@email.com"
+            value={typed.email}
+            onChange={(e) => setTyped((t) => ({ ...t, email: e.target.value }))}
             required
           />
         </div>

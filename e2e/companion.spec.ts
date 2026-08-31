@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
-import { resetFixtures, signUp, testEmail } from "./helpers/auth";
-import { approveApplicationFor } from "./helpers/db";
+import { resetFixtures, signUpInvited, testEmail } from "./helpers/auth";
+import { approveApplicationFor, seedInvitation } from "./helpers/db";
 
 /**
  * Journey four: what approval unlocks.
@@ -20,15 +20,18 @@ import { approveApplicationFor } from "./helpers/db";
 
 const EMAIL = testEmail("companion");
 const NAME = "Tunde Bakare";
+const ORG = "Companion Spec Sponsor";
 
 test("an approved traveller gets the arrival companion", async ({ page }) => {
-  await resetFixtures([EMAIL]);
+  await resetFixtures([EMAIL], [ORG]);
 
-  await signUp(page, { email: EMAIL, fullName: NAME, path: "/sign-up?next=/app" });
+  const token = await seedInvitation(EMAIL, ORG);
+  await signUpInvited(page, { email: EMAIL, fullName: NAME, token });
 
-  // `/app` provisions the profile and the draft application on first
-  // sight (and redirects to the agent, since intake has not run) — which
-  // is the row the approval below moves.
+  // `/app` opens the draft application on first sight (and redirects to
+  // the agent, since intake has not run) — which is the row the approval
+  // below moves. The profile already exists: `completeProfile` wrote it
+  // during the sign-up, which is now the only thing that ever does.
   await page.goto("/app");
   await approveApplicationFor(EMAIL);
 

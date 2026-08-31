@@ -131,7 +131,7 @@ export function CorridorBar({ compact = false }: { compact?: boolean }) {
               act of starting it are the same column. Stopping it at the
               first row left the card with an unanchored corner. */}
           <Link
-            href="/sign-up"
+            href="/employer/sign-up"
             className={cn(
               "group flex items-center justify-between gap-3 px-6 py-5 text-base font-semibold transition-colors lg:justify-center",
               "lg:row-span-2",
@@ -140,7 +140,7 @@ export function CorridorBar({ compact = false }: { compact?: boolean }) {
                 : "bg-brand text-on-brand hover:bg-[color-mix(in_srgb,var(--brand)_88%,#fff)]"
             )}
           >
-            {soon ? "Request this corridor" : t(HERO.ctaPrimary)}
+            {soon ? "Request this corridor" : t(HERO.ctaSecondary)}
             <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
           </Link>
 

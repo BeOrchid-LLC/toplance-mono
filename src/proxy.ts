@@ -39,7 +39,11 @@ export default clerkMiddleware(async (auth, request) => {
   const { pathname, searchParams } = request.nextUrl;
 
   if (userId) {
-    const destination = signedInDestination(pathname, searchParams.get("next"));
+    const destination = signedInDestination(
+      pathname,
+      searchParams.get("next"),
+      searchParams.get("token")
+    );
     return destination
       ? NextResponse.redirect(new URL(destination, request.url))
       : NextResponse.next();

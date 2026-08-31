@@ -45,7 +45,7 @@ export default function EmployerSignUpPage() {
       {/* No card wrapper: `AuthForm` brings its own laminate panel, and
           two nested surfaces would put a box inside a box. */}
       <Suspense fallback={<Skeleton className="h-[420px] w-full rounded-lg" />}>
-        <AuthForm mode="sign-up" audience="employer" />
+        <AuthForm mode="sign-up" audience="employer" intent={{ intent: "employer" }} />
       </Suspense>
     </div>
   );

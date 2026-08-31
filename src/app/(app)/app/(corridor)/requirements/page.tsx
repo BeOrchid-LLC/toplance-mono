@@ -20,7 +20,8 @@ import {
   NATIONALITY_ISO,
   PURPOSE_ISO,
 } from "@/lib/domain/corridors";
-import { resolveRuleSet } from "@/lib/visa";
+import { resolveEntryCheck, resolveRuleSet } from "@/lib/visa";
+import type { EntryCheck } from "@/lib/visa";
 import { SetupNotice } from "@/components/shared/setup-notice";
 
 // Needs a session, so it is never prerendered.
@@ -63,10 +64,17 @@ function CorridorGap({
   nationality,
   destination,
   purpose,
+  entry,
 }: {
   nationality: string;
   destination: string;
   purpose: string;
+  /**
+   * What a live provider knows about this corridor, when it knows
+   * anything we are willing to repeat. Null is the common case and
+   * renders exactly as this screen always did.
+   */
+  entry: EntryCheck | null;
 }) {
   const gap = corridorGap({ nationality, destination, purpose });
 
@@ -78,6 +86,54 @@ function CorridorGap({
         </span>
         <h1 className="t-h2 mt-5 max-w-[26ch]">{gap.heading}</h1>
         <p className="t-body-lg mt-4 max-w-[62ch] text-ink-2">{gap.lead}</p>
+
+        {/*
+          The one question we can answer for a corridor nobody has
+          curated: does this passport need a visa at all? Sourced, live,
+          and carefully not a checklist — see `entryCheck` for which
+          vendor verdicts are repeatable and why "Not admitted" is not
+          among them.
+
+          It sits below the gap copy rather than above it because it does
+          not change the outcome: there is still no application to file
+          here. It is the consolation, not the headline.
+        */}
+        {entry && (
+          <div className="mt-8 rounded-sm border border-border-strong p-5">
+            <p className="t-body-lg max-w-[62ch]">{entry.headline}</p>
+            <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3">
+              {entry.allowedStay && (
+                <div>
+                  <dt className="special-caps">Allowed stay</dt>
+                  <dd className="num text-base">{entry.allowedStay}</dd>
+                </div>
+              )}
+              {entry.passportValidity && (
+                <div>
+                  <dt className="special-caps">Passport validity</dt>
+                  <dd className="text-base">{entry.passportValidity}</dd>
+                </div>
+              )}
+            </dl>
+            <p className="t-muted mt-4 max-w-[62ch]">
+              Entry rules from{" "}
+              {entry.embassyUrl ? (
+                <a
+                  href={entry.embassyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-brand-text hover:underline"
+                >
+                  Travel Buddy
+                </a>
+              ) : (
+                <span className="font-semibold">Travel Buddy</span>
+              )}
+              . We cannot build your document checklist for {destination} yet
+              — that needs guidance we have checked against the mission.
+            </p>
+          </div>
+        )}
         {/* This used to promise an email. Nothing in the repo can send
             one — no mailer, no list to mail — so it now offers only what
             the demand event actually delivers. */}
@@ -131,11 +187,25 @@ export default async function RequirementsPage() {
   // A corridor we do not serve yet. Say so plainly rather than showing
   // a half-built checklist and letting someone act on it.
   if (!ruleSet) {
+    // Free: `resolveRuleSet` already asked Travel Buddy about this
+    // corridor and discarded the answer, and the provider caches it for
+    // seven days. Skipped entirely when the answers did not map to ISO
+    // codes, because there is no corridor to ask about.
+    const entry =
+      nationality && destination && purpose
+        ? await resolveEntryCheck({
+            nationalityIso: nationality,
+            destinationIso: destination,
+            purpose,
+          })
+        : null;
+
     return (
       <CorridorGap
         nationality={answers.nationality}
         destination={answers.destination}
         purpose={answers.purpose}
+        entry={entry}
       />
     );
   }

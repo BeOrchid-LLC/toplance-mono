@@ -1,9 +1,13 @@
 import "server-only";
 
 import { curatedProvider } from "@/lib/visa/curated";
+import { entryCheck } from "@/lib/visa/entry-check";
 import { travelBuddyProvider } from "@/lib/visa/travelbuddy";
 import { resolveWith } from "@/lib/visa/resolve";
+import type { EntryCheck } from "@/lib/visa/entry-check";
 import type { CorridorQuery, CorridorRuleSet, VisaDataProvider } from "@/lib/visa/types";
+
+export type { EntryCheck } from "@/lib/visa/entry-check";
 
 export type {
   Contribution,
@@ -45,4 +49,36 @@ export async function resolveRuleSet(
   query: CorridorQuery
 ): Promise<CorridorRuleSet | null> {
   return resolveWith(PROVIDERS, query);
+}
+
+/**
+ * The lesser answer, for a corridor `resolveRuleSet` cannot serve: does
+ * this passport need a visa for this destination at all?
+ *
+ * Only ever called after `resolveRuleSet` has returned null, and that
+ * ordering is what makes it free. The walk in `resolveWith` already
+ * asked Travel Buddy about this corridor and threw the answer away —
+ * there was no spine for it to fill — and the provider caches a payload
+ * for seven days, keyed on the country pair. So this is a cache hit, not
+ * a second metered request.
+ *
+ * Returns null for a verdict `entryCheck` will not repeat, and null if
+ * the vendor is unreachable. Both mean the same thing to the caller:
+ * show the plain gap copy, which promises nothing.
+ */
+export async function resolveEntryCheck(
+  query: CorridorQuery
+): Promise<EntryCheck | null> {
+  try {
+    return entryCheck(await travelBuddyProvider.fetch(query));
+  } catch (error) {
+    // A dead end that still renders beats a 500. The traveller sees the
+    // same copy they saw before this tier existed.
+    console.error(
+      `[visa] entry check failed for ` +
+        `${query.nationalityIso}→${query.destinationIso}`,
+      error
+    );
+    return null;
+  }
 }

@@ -83,6 +83,40 @@ export async function resetAccounts(
 }
 
 /**
+ * An organisation and a pending invitation addressed to `email`, with
+ * the token that opens `/sign-up`.
+ *
+ * Since travellers became invite-only (2026-08-31) a spec that wants a
+ * traveller needs one of these first — there is no other way through the
+ * door. Written straight into Postgres rather than driven through the
+ * employer console on purpose: `employer.spec.ts` already covers the
+ * real invite loop end to end, and chaining every other spec to it would
+ * turn one employer bug into five red specs pointing at the wrong place.
+ *
+ * `resetAccounts` clears both rows — invitations by email, the
+ * organisation by name — so callers must pass `organisationName` to
+ * `resetFixtures` too.
+ */
+export async function seedInvitation(
+  email: string,
+  organisationName: string
+): Promise<string> {
+  return withClient(async (client) => {
+    const org = await client.query<{ id: string }>(
+      "insert into organisations (name) values ($1) returning id",
+      [organisationName]
+    );
+
+    const { rows } = await client.query<{ token: string }>(
+      "insert into invitations (org_id, email) values ($1, $2) returning token",
+      [org.rows[0].id, email.toLowerCase()]
+    );
+
+    return rows[0].token;
+  });
+}
+
+/**
  * Staff, the way the README grants it — no UI, no action, no seam in the
  * app. Fails loudly if the account is not there yet: a spec that reaches
  * `/ops` believing it was promoted and quietly seeing the refusal screen

@@ -19,7 +19,11 @@ export default async function AppLayout({
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const profile = await getProfile();
-  if (!profile) redirect("/sign-in?next=/app");
+  // `/go`, not `/sign-in`. The proxy walks a signed-in visitor off the
+  // auth pages, so sending a session that has no profile row back there
+  // bounces it straight here again — an endless redirect rather than an
+  // explanation. `/go` is where that chain is allowed to stop.
+  if (!profile) redirect("/go");
 
   // Holding a profile is not the same as belonging here. `/go` sends
   // each role to its own console, but nothing routed someone who typed

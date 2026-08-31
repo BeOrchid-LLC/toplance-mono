@@ -19,6 +19,8 @@ import { completeSignUpForm, resetFixtures, signUp, testEmail } from "./helpers/
 
 const EMPLOYER_EMAIL = testEmail("employer");
 const INVITEE_EMAIL = testEmail("invitee");
+/** Somebody the invitation was not sent to, who opens the link anyway. */
+const FORWARDED_EMAIL = testEmail("invitee.forwarded");
 const ORG = "Kaduna Freight E2E";
 const INVITEE_NAME = "Ifeoma Nwosu";
 
@@ -57,7 +59,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   page,
   browser,
 }) => {
-  await resetFixtures([EMPLOYER_EMAIL, INVITEE_EMAIL], [ORG]);
+  await resetFixtures([EMPLOYER_EMAIL, INVITEE_EMAIL, FORWARDED_EMAIL], [ORG]);
 
   // ---- the organisation ----
   await signUp(page, {
@@ -83,6 +85,53 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   const inviteUrl = await readInviteUrl(dialog);
   expect(inviteUrl).toContain("/invite/");
 
+  // ---- resending it, which is the only way back to a sent link ----
+  // The dialog's copy of the URL is the last time anyone sees it: the
+  // roster deliberately never selects the token. So an employer whose
+  // invitation email did not arrive has exactly one remedy, and this is
+  // it — the same invitation, sent again, rather than a second live one.
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Resend" }).click();
+  await expect(page.getByText(`Invitation sent again to ${INVITEE_EMAIL}`)).toBeVisible();
+
+  // Still one invitation, still pending — a resend must not mint a row.
+  await expect(page.getByRole("button", { name: "Resend" })).toHaveCount(1);
+
+  // ---- somebody else, who was forwarded the link ----
+  // The invited address is binding. A link is a bearer credential, so
+  // holding one proves it was received and nothing about who is holding
+  // it.
+  //
+  // The refusal now arrives on the form, before Clerk has been told
+  // anything. It used to arrive after an account existed and the emailed
+  // code had been spent — correct, and far too late to act on, which
+  // under invite-only cost a traveller who merely mistyped the only
+  // route they have into the product.
+  const forwardedContext = await browser.newContext();
+  const forwarded = await forwardedContext.newPage();
+  await setupClerkTestingToken({ page: forwarded });
+
+  await forwarded.goto(inviteUrl);
+  await forwarded.getByRole("link", { name: "Set up your account" }).click();
+
+  await forwarded.getByLabel("Full name", { exact: true }).fill("Chidi Balogun");
+  await forwarded.getByLabel("Email", { exact: true }).fill(FORWARDED_EMAIL);
+  await forwarded.getByRole("button", { name: "Continue" }).click();
+
+  // Scoped to the form: Next mounts its own `role="alert"` route
+  // announcer on every page, so an unscoped alert role matches two.
+  await expect(forwarded.getByRole("main").getByRole("alert")).toHaveText(
+    "That invitation was sent to a different email address."
+  );
+  // The negative is the whole of it: no code screen means no account was
+  // made and no code was spent. The invited address is still never named
+  // back at whoever is holding the link.
+  await expect(
+    forwarded.getByRole("heading", { name: "Enter the code we emailed you" })
+  ).toBeHidden();
+  await expect(forwarded.locator("main")).not.toContainText(INVITEE_EMAIL);
+  await forwardedContext.close();
+
   // ---- the invitee, in a browser of their own ----
   const inviteeContext = await browser.newContext();
   const invitee = await inviteeContext.newPage();
@@ -93,13 +142,49 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
     invitee.getByRole("heading", { name: `${ORG} is sponsoring your visa application` })
   ).toBeVisible();
 
-  await invitee.getByRole("link", { name: "Create an account" }).click();
+  await invitee.getByRole("link", { name: "Set up your account" }).click();
   await completeSignUpForm(invitee, { email: INVITEE_EMAIL, fullName: INVITEE_NAME });
 
-  // Signing up carried the `next` through, so the invitation is waiting.
+  // The sign-up door derived its destination from the token it was
+  // opened with, so the invitation is waiting.
   await invitee.waitForURL("**/invite/**");
   await invitee.getByRole("button", { name: "Accept invitation" }).click();
   await invitee.waitForURL("**/app/agent");
+
+  // ---- the screen a traveller who already has an account still meets ----
+  // Sign-up refuses a wrong address outright now, so the way to arrive
+  // signed in as somebody an invitation does not name is to already have
+  // an account — the colleague case this page was built for, and the one
+  // route to it that survives. A second invitation, to a different
+  // address, opened by the traveller who just accepted the first.
+  await page.reload();
+  await page.getByRole("button", { name: "Invite someone" }).click();
+  const second = page.getByRole("dialog");
+  await second.getByLabel("Email", { exact: true }).fill(FORWARDED_EMAIL);
+  await second.getByLabel("Full name", { exact: true }).fill("Chidi Balogun");
+  await second.getByRole("button", { name: "Send invitation" }).click();
+  const secondUrl = await readInviteUrl(second);
+  await page.keyboard.press("Escape");
+
+  await invitee.goto(secondUrl);
+  await expect(
+    invitee.getByRole("heading", { name: "This invitation is for a different account" })
+  ).toBeVisible();
+  // Told which account they are on. The invited address is never named
+  // back at them — this page needs no session, so it would be printing a
+  // third party's email to whoever holds the link.
+  await expect(invitee.locator("main")).toContainText(INVITEE_EMAIL);
+  await expect(invitee.locator("main")).not.toContainText(FORWARDED_EMAIL);
+  // No button whose only outcome is an error toast, and none of the
+  // anonymous doors that lead back here.
+  await expect(invitee.getByRole("button", { name: "Accept invitation" })).toHaveCount(0);
+  await expect(invitee.getByRole("link", { name: "Set up your account" })).toHaveCount(0);
+
+  // The way out is the one that changes something, and it lands back on
+  // the invitation rather than on the marketing page.
+  await invitee.getByRole("button", { name: "Sign out and use another address" }).click();
+  await invitee.waitForURL("**/invite/**");
+  await expect(invitee.getByRole("link", { name: "Set up your account" })).toBeVisible();
   await inviteeContext.close();
 
   // ---- and on the roster, from the other side of the privacy boundary ----

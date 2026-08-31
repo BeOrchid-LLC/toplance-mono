@@ -2,8 +2,8 @@ import { join } from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { resetFixtures, signUp, testEmail } from "./helpers/auth";
-import { approveApplicationFor } from "./helpers/db";
+import { resetFixtures, signUpInvited, testEmail } from "./helpers/auth";
+import { approveApplicationFor, seedInvitation } from "./helpers/db";
 
 /**
  * The client's brief, item by item.
@@ -47,6 +47,7 @@ import { approveApplicationFor } from "./helpers/db";
 test.describe.configure({ mode: "serial" });
 
 const EMAIL = testEmail("clientspec");
+const ORG = "Client Spec Sponsor";
 const NAME = "Chidinma Eze";
 const FIXTURE = join(__dirname, "fixtures/passport.jpg");
 
@@ -164,9 +165,10 @@ function documentRow(page: Page, name: string) {
 let page: Page;
 
 test.beforeAll(async ({ browser }) => {
-  await resetFixtures([EMAIL]);
+  await resetFixtures([EMAIL], [ORG]);
   page = await browser.newPage();
-  await signUp(page, { email: EMAIL, fullName: NAME, path: "/sign-up?next=/app/agent" });
+  const token = await seedInvitation(EMAIL, ORG);
+  await signUpInvited(page, { email: EMAIL, fullName: NAME, token });
 });
 
 test.afterAll(async () => {

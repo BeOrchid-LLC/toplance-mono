@@ -116,52 +116,36 @@ const ROSTER = [
   { name: "Emeka Obi", dest: "CAN", pct: 0, state: "Draft" },
 ];
 
-const PLANS = [
-  {
-    name: "Self-serve",
-    price: "Free",
-    sub: "to see your checklist",
-    featured: false,
-    features: [
-      "The full intake conversation",
-      "Your exact document checklist",
-      "Automatic checks on every upload",
-      "Pay only when you submit",
-    ],
-    cta: "Start now",
-    href: "/sign-up",
-  },
-  {
-    name: "Guided",
-    price: "₦00,000",
-    sub: "per application",
-    featured: true,
-    features: [
-      "Everything in Self-serve",
-      "A named Toplance case handler",
-      "Human review before submission",
-      "Arrival plan and alerts after approval",
-      "Priority replies within one working day",
-    ],
-    cta: "Start now",
-    href: "/sign-up",
-  },
-  {
-    name: "Organisations",
-    price: "By seat",
-    sub: "billed annually",
-    featured: false,
-    features: [
-      "Everything in Guided for each person",
-      "Seats, invitations and a roster view",
-      "Progress without document access",
-      "Consolidated invoicing",
-      "A named account contact",
-    ],
-    cta: "Talk to us",
-    href: "/employer/sign-in",
-  },
-];
+/**
+ * One plan, since travellers became invite-only (client decision,
+ * 2026-08-31): nobody can buy a seat for themselves, so the Self-serve
+ * and Guided tiers had no buyer left. Their feature lists are not
+ * discarded — they are merged in here, because what those tiers
+ * described is still exactly what a sponsored traveller gets, and
+ * "Everything in Guided" no longer resolved to anything on the page.
+ *
+ * The price stays a placeholder. Figures are the client's to supply.
+ */
+const SEAT_PLAN = {
+  name: "Organisations",
+  price: "By seat",
+  sub: "billed annually",
+  features: [
+    "The full intake conversation, in their own language",
+    "Their exact document checklist",
+    "Automatic checks on every upload",
+    "A named Toplance case handler",
+    "Human review before submission",
+    "Arrival plan and alerts after approval",
+    "Priority replies within one working day",
+    "Seats, invitations and a roster view",
+    "Progress without document access",
+    "Consolidated invoicing",
+    "A named account contact",
+  ],
+  cta: "Sponsor your team",
+  href: "/employer/sign-up",
+};
 
 const FAQ = [
   {
@@ -524,53 +508,36 @@ export default function HomePage() {
       </Section>
 
       {/* ---------- pricing ---------- */}
-      <Section id="pricing" label="Pricing" datum="Free until you ask us to work">
+      <Section id="pricing" label="Pricing" datum="Billed by seat, annually">
         <Head
-          title="Free until you ask us to do the work"
-          lead="The conversation and the checklist cost nothing, and you can walk away with the list. You pay when you want a handler, a human review and a submission. Plan names and structure are ours to propose; the amounts below are placeholders for the client to set."
+          title="One seat for each person you sponsor"
+          lead="Organisations buy seats and invite the people who need visas; nobody buys a seat for themselves. Every seat carries the whole product — the conversation, the checklist, a named case handler and human review before submission. The amount below is a placeholder for the client to set."
         />
 
-        <div className="mt-11 grid divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface lg:grid-cols-3 lg:divide-x lg:divide-y-0">
-          {PLANS.map((p) => (
-            <div
-              key={p.name}
-              className={cn(
-                "flex flex-col p-7",
-                p.featured &&
-                  "bg-[color-mix(in_srgb,var(--brand-accent)_7%,var(--surface))]"
-              )}
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "block h-[3px] rounded-[var(--radius-pill)]",
-                  p.featured ? "bg-brand-accent" : "bg-border-strong"
-                )}
-              />
-              <div className="mt-4 flex items-baseline justify-between gap-3">
-                <span className="tag">{p.name}</span>
-                {p.featured && <span className="tag text-warning-ink">Most chosen</span>}
-              </div>
-              <p className="d-lg mt-4">{p.price}</p>
-              <p className="t-muted text-[15px]">{p.sub}</p>
-              <ul className="mb-8 mt-7 flex flex-col gap-3">
-                {p.features.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
-                    <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
-                    <span className="text-[15px] text-ink-2">{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button
-                asChild
-                size="block"
-                variant={p.featured ? "primary" : "secondary"}
-                className="mt-auto"
-              >
-                <Link href={p.href}>{p.cta}</Link>
-              </Button>
-            </div>
-          ))}
+        {/* One panel, not a lonely card in a three-column grid. The
+            feature list runs in two columns on wide screens because a
+            single tier absorbed three tiers' worth of rows. */}
+        <div className="mt-11 overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="flex flex-col p-7 lg:p-9">
+            <span
+              aria-hidden
+              className="block h-[3px] rounded-[var(--radius-pill)] bg-brand-accent"
+            />
+            <span className="tag mt-4 block">{SEAT_PLAN.name}</span>
+            <p className="d-lg mt-4">{SEAT_PLAN.price}</p>
+            <p className="t-muted text-[15px]">{SEAT_PLAN.sub}</p>
+            <ul className="mb-8 mt-7 grid gap-3 lg:grid-cols-2 lg:gap-x-10">
+              {SEAT_PLAN.features.map((f) => (
+                <li key={f} className="flex items-start gap-3">
+                  <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
+                  <span className="text-[15px] text-ink-2">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <Button asChild size="block" variant="primary" className="mt-auto lg:max-w-[320px]">
+              <Link href={SEAT_PLAN.href}>{SEAT_PLAN.cta}</Link>
+            </Button>
+          </div>
         </div>
       </Section>
 

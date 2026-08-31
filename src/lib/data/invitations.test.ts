@@ -19,9 +19,12 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
   );
   const {
     acceptInvitationTx,
+    checkInvitedAddress,
     createInvitation,
     getInvitationPreview,
     listInvitations,
+    provisionInvitedProfile,
+    resendableInvitation,
     revokeInvitation,
   } = await import("@/lib/data/invitations");
 
@@ -269,6 +272,279 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
     });
   });
 
+  describe("checkInvitedAddress", () => {
+    /**
+     * The question the sign-up form should ask before it spends
+     * anything.
+     *
+     * `roleFor` already refuses to mint a traveller for an address the
+     * invitation does not name — but by the time it runs, Clerk has
+     * created an account and the emailed code has been used, and the
+     * form the visitor would retype into is gone. Asking the same
+     * question first is what turns a typo into a corrected field rather
+     * than a dead end.
+     *
+     * Three answers rather than a boolean: the two failures want
+     * different sentences, and a caller holding only `false` would have
+     * to guess which one it was looking at.
+     */
+    const EMAIL = "invited@test.invalid";
+
+    async function invite(
+      overrides: Partial<typeof invitations.$inferInsert> = {}
+    ) {
+      const orgId = await makeOrg("Check Address Test Org");
+      const [row] = await db
+        .insert(invitations)
+        .values({ orgId, email: EMAIL, ...overrides })
+        .returning();
+      return row;
+    }
+
+    it("refuses an address the invitation does not name", async () => {
+      const invitation = await invite();
+      expect(
+        await checkInvitedAddress(invitation.token, "someone.else@test.invalid")
+      ).toBe("mismatch");
+    });
+  });
+
+  describe("provisionInvitedProfile", () => {
+    /**
+     * The safety net under a sign-up that got torn down.
+     *
+     * `completeProfile` runs in the browser, and Clerk activating the new
+     * session navigates the page out from under it — the write can be
+     * cancelled in flight. That was survivable while `getProfile`
+     * provisioned a row for anybody; it is not now that it does not. This
+     * is the same write, done server-side on the page the token names, so
+     * it cannot be interrupted by a navigation.
+     *
+     * It is not a second door. It writes only what the invitation already
+     * entitles that email to, and never touches an existing row.
+     */
+    const USER = "test_provision_invited";
+
+    async function profileOf(id: string) {
+      const [row] = await db.select().from(profiles).where(eq(profiles.id, id));
+      return row;
+    }
+
+    it("writes the traveller the invitation names", async () => {
+      const orgId = await makeOrg("Provision Test Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid", fullName: "Ada Nwosu" })
+        .returning();
+      createdProfileIds.push(USER);
+
+      expect(
+        await provisionInvitedProfile(invitation.token, USER, "invitee@test.invalid")
+      ).toBe(true);
+
+      const profile = await profileOf(USER);
+      expect(profile.role).toBe("traveler");
+      expect(profile.fullName).toBe("Ada Nwosu");
+      expect(profile.email).toBe("invitee@test.invalid");
+    });
+
+    it("prefers the name the traveller gave over the one the employer typed", async () => {
+      // The employer types a name into the invite dialog; the traveller
+      // types the one in their passport. `signUp.create` hands theirs to
+      // Clerk before the session exists, so it is the one name on this
+      // path that cannot be lost to a cancelled write — and it is the
+      // name the intake agent greets them by.
+      const orgId = await makeOrg("Provision Name Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid", fullName: "A. Nwosu" })
+        .returning();
+      createdProfileIds.push(USER);
+
+      await provisionInvitedProfile(
+        invitation.token,
+        USER,
+        "invitee@test.invalid",
+        "Adaeze Nwosu"
+      );
+
+      expect((await profileOf(USER)).fullName).toBe("Adaeze Nwosu");
+    });
+
+    it("falls back to the invitation when Clerk holds no name", async () => {
+      const orgId = await makeOrg("Provision Fallback Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid", fullName: "Ada Nwosu" })
+        .returning();
+      createdProfileIds.push(USER);
+
+      await provisionInvitedProfile(invitation.token, USER, "invitee@test.invalid", "  ");
+
+      expect((await profileOf(USER)).fullName).toBe("Ada Nwosu");
+    });
+
+    it("matches the address case-insensitively, as the sign-up gate does", async () => {
+      const orgId = await makeOrg("Provision Case Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "mixed@test.invalid" })
+        .returning();
+      createdProfileIds.push(USER);
+
+      expect(
+        await provisionInvitedProfile(invitation.token, USER, "Mixed@Test.Invalid")
+      ).toBe(true);
+    });
+
+    it("refuses an address the invitation was not sent to", async () => {
+      const orgId = await makeOrg("Provision Wrong Email Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid" })
+        .returning();
+
+      expect(
+        await provisionInvitedProfile(invitation.token, USER, "someone.else@test.invalid")
+      ).toBe(false);
+      expect(await profileOf(USER)).toBeUndefined();
+    });
+
+    it("refuses a revoked invitation", async () => {
+      const orgId = await makeOrg("Provision Revoked Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({
+          orgId,
+          email: "invitee@test.invalid",
+          status: "revoked",
+        })
+        .returning();
+
+      expect(
+        await provisionInvitedProfile(invitation.token, USER, "invitee@test.invalid")
+      ).toBe(false);
+      expect(await profileOf(USER)).toBeUndefined();
+    });
+
+    it("refuses a token matching nothing", async () => {
+      expect(
+        await provisionInvitedProfile("no-such-token", USER, "invitee@test.invalid")
+      ).toBe(false);
+      expect(await profileOf(USER)).toBeUndefined();
+    });
+
+    it("never overwrites a profile that already exists", async () => {
+      // An employer or a staff account opening an invitation link must
+      // not be quietly demoted to a traveller by the safety net.
+      const orgId = await makeOrg("Provision Existing Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "existing@test.invalid" })
+        .returning();
+      await makeProfile(USER, { email: "existing@test.invalid", role: "org_member" });
+
+      await provisionInvitedProfile(invitation.token, USER, "existing@test.invalid");
+
+      const profile = await profileOf(USER);
+      expect(profile.role).toBe("org_member");
+      expect(profile.fullName).toBe("Test Person");
+    });
+  });
+
+  describe("resendableInvitation", () => {
+    /**
+     * What a resend needs and nothing else: the token, so the same link
+     * goes out again rather than a second live one, plus the address and
+     * name the email is addressed to.
+     *
+     * It exists because `listInvitations` deliberately never selects the
+     * token — the roster has no business holding the bearer credential —
+     * which leaves an employer whose invitation email silently failed
+     * with no way to reach the link at all. Scoped to the caller's own
+     * org in the same query as the id, exactly as `revokeInvitation` is:
+     * the guard checks membership, this checks the row belongs to that
+     * org, and a mismatch must return nothing rather than another org's
+     * live token.
+     */
+    it("returns the token, address and name for a live invitation", async () => {
+      const orgId = await makeOrg("Resend Live Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid", fullName: "Ada Nwosu" })
+        .returning();
+
+      expect(await resendableInvitation(orgId, invitation.id)).toEqual({
+        token: invitation.token,
+        email: "invitee@test.invalid",
+        fullName: "Ada Nwosu",
+      });
+    });
+
+    it("returns nothing for an invitation belonging to another org", async () => {
+      const orgId = await makeOrg("Resend Owner Org");
+      const otherOrgId = await makeOrg("Resend Stranger Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid" })
+        .returning();
+
+      expect(await resendableInvitation(otherOrgId, invitation.id)).toBeNull();
+    });
+
+    it("returns nothing for a revoked invitation", async () => {
+      const orgId = await makeOrg("Resend Revoked Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid", status: "revoked" })
+        .returning();
+
+      expect(await resendableInvitation(orgId, invitation.id)).toBeNull();
+    });
+
+    it("returns nothing for one already accepted", async () => {
+      const orgId = await makeOrg("Resend Accepted Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid", status: "accepted" })
+        .returning();
+
+      expect(await resendableInvitation(orgId, invitation.id)).toBeNull();
+    });
+
+    it("returns nothing once expired — that one needs inviting again", async () => {
+      const orgId = await makeOrg("Resend Expired Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({
+          orgId,
+          email: "invitee@test.invalid",
+          expiresAt: new Date(Date.now() - 1000),
+        })
+        .returning();
+
+      expect(await resendableInvitation(orgId, invitation.id)).toBeNull();
+    });
+
+    it("is a read — the token and expiry are untouched", async () => {
+      // Rotating the token on a resend would kill a first email that was
+      // merely slow, and extending the expiry would quietly lengthen the
+      // window a bearer link is live for. Neither is this function's call.
+      const orgId = await makeOrg("Resend Read Only Org");
+      const [invitation] = await db
+        .insert(invitations)
+        .values({ orgId, email: "invitee@test.invalid" })
+        .returning();
+
+      await resendableInvitation(orgId, invitation.id);
+
+      const after = await invitationOf(invitation.id);
+      expect(after.token).toBe(invitation.token);
+      expect(after.expiresAt).toEqual(invitation.expiresAt);
+      expect(after.status).toBe("pending");
+    });
+  });
+
   describe("acceptInvitationTx", () => {
     async function invite(orgId: string, inviterId: string, email: string) {
       const created = await createInvitation(orgId, inviterId, { email });
@@ -283,7 +559,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const invitation = await invite(orgId, inviterId, "no-app-yet@example.com");
 
       const travelerId = "test_accept_traveller_1";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "no-app-yet@example.com" });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({ ok: true, orgId });
@@ -304,7 +580,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const invitation = await invite(orgId, inviterId, "has-app-already@example.com");
 
       const travelerId = "test_accept_traveller_2";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "has-app-already@example.com" });
       await db.insert(applications).values({ travelerId });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
@@ -325,7 +601,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
         .where(eq(invitations.id, invitation.id));
 
       const travelerId = "test_accept_traveller_3";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "overdue@example.com" });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({ error: "This invitation has expired." });
@@ -345,7 +621,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       await revokeInvitation(orgId, invitation.id);
 
       const travelerId = "test_accept_traveller_4";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "revoked@example.com" });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({ error: "This invitation has been revoked." });
@@ -358,11 +634,11 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const invitation = await invite(orgId, inviterId, "twice@example.com");
 
       const firstTraveler = "test_accept_traveller_5a";
-      await makeProfile(firstTraveler);
+      await makeProfile(firstTraveler, { email: "twice@example.com" });
       await acceptInvitationTx(invitation.token, firstTraveler);
 
       const secondTraveler = "test_accept_traveller_5b";
-      await makeProfile(secondTraveler);
+      await makeProfile(secondTraveler, { email: "twice@example.com" });
       const result = await acceptInvitationTx(invitation.token, secondTraveler);
 
       expect(result).toEqual({ error: "This invitation has already been accepted." });
@@ -385,7 +661,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const invitation = await invite(orgId, inviterId, "race@example.com");
 
       const travelerId = "test_accept_traveller_6";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "race@example.com" });
 
       const [first, second] = await Promise.all([
         acceptInvitationTx(invitation.token, travelerId),
@@ -408,7 +684,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const invitation = await invite(orgId, inviterId, "cross-org@example.com");
 
       const travelerId = "test_accept_traveller_7";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "cross-org@example.com" });
       await db.insert(applications).values({ travelerId, orgId: otherOrgId });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
@@ -423,6 +699,53 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(stored.status).toBe("pending");
     });
 
+    it("refuses a traveller signed in as a different address", async () => {
+      // The invited address is binding. Whoever holds the link is not
+      // automatically whoever the employer meant to invite, and the
+      // roster names one person — accepting as somebody else would put a
+      // name on the employer's list that never belongs to the account
+      // doing the work.
+      const orgId = await makeOrg("Acme Logistics Ltd");
+      const inviterId = "test_accept_inviter_9";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await invite(orgId, inviterId, "invited@example.com");
+
+      const travelerId = "test_accept_traveller_9";
+      await makeProfile(travelerId, { email: "someone.else@example.com" });
+
+      const result = await acceptInvitationTx(invitation.token, travelerId);
+      expect(result).toEqual({
+        error: "This invitation was sent to a different email address.",
+      });
+
+      // Refused, not consumed: the invitation is still there for the
+      // person it names.
+      const stored = await invitationOf(invitation.id);
+      expect(stored.status).toBe("pending");
+      expect(stored.acceptedBy).toBeNull();
+
+      const app = await applicationOf(travelerId);
+      expect(app).toBeUndefined();
+    });
+
+    it("matches the invited address regardless of case", async () => {
+      // `createInvitation` lowercases what the employer typed; Clerk
+      // keeps whatever case the traveller signed up with. Neither is
+      // wrong, so neither may decide this.
+      const orgId = await makeOrg("Acme Logistics Ltd");
+      const inviterId = "test_accept_inviter_10";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await invite(orgId, inviterId, "Mixed.Case@Example.com");
+
+      const travelerId = "test_accept_traveller_10";
+      await makeProfile(travelerId, { email: "MIXED.CASE@example.com" });
+
+      expect(await acceptInvitationTx(invitation.token, travelerId)).toEqual({
+        ok: true,
+        orgId,
+      });
+    });
+
     it("re-accepting the same org for an already-sponsored traveller is a no-op success", async () => {
       const orgId = await makeOrg("Acme Logistics Ltd");
       const inviterId = "test_accept_inviter_8";
@@ -430,7 +753,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const invitation = await invite(orgId, inviterId, "same-org@example.com");
 
       const travelerId = "test_accept_traveller_8";
-      await makeProfile(travelerId);
+      await makeProfile(travelerId, { email: "same-org@example.com" });
       await db.insert(applications).values({ travelerId, orgId });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);

@@ -82,11 +82,19 @@ export const EVENT_NAMES = [
   "toplance.organisation_created",
 
   /**
-   * The invitation lifecycle: sent from `inviteTraveller`, revoked from
-   * `revokeInvitation` (both in `@/app/employer/actions.ts`), accepted
-   * from `acceptInvitation` in `@/app/invite/actions.ts`.
+   * The invitation lifecycle: sent from `inviteTraveller`, resent from
+   * `resendInvitation`, revoked from `revokeInvitation` (all three in
+   * `@/app/employer/actions.ts`), accepted from `acceptInvitation` in
+   * `@/app/invite/actions.ts`.
+   *
+   * A resend is counted apart from a send rather than folded into it.
+   * The two mean different things: one is an employer adding a person,
+   * the other is an employer telling us the first email did not arrive,
+   * and conflating them would hide exactly the signal worth watching now
+   * that the email is the only way a traveller can get in.
    */
   "toplance.invitation_sent",
+  "toplance.invitation_resent",
   "toplance.invitation_revoked",
   "toplance.invitation_accepted",
 

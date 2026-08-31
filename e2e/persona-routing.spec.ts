@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-import { resetFixtures, signUp, testEmail } from "./helpers/auth";
+import { resetFixtures, signUp, signUpInvited, testEmail } from "./helpers/auth";
 import {
   applicationCountFor,
-  clearApplicationsFor,
+  seedInvitation,
   promoteToStaff,
 } from "./helpers/db";
 
@@ -26,6 +26,8 @@ const STAFF_ON_APP_EMAIL = testEmail("routing.staff.onapp");
 const STAFF_ON_EMPLOYER_EMAIL = testEmail("routing.staff.onemployer");
 const EMPLOYER_EMAIL = testEmail("routing.employer");
 const ORG = "Routing Proof Ltd";
+const TRAVELLER_ORG = "Routing Traveller Sponsor";
+const MIDCASE_ORG = "Routing Midcase Sponsor";
 
 test("a signed-out visitor sees the marketing nav, not a console bar", async ({
   page,
@@ -40,11 +42,42 @@ test("a signed-out visitor sees the marketing nav, not a console bar", async ({
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 });
 
+/**
+ * The generic sign-in door names the other two.
+ *
+ * Travellers became invite-only, so `/sign-in` is where everyone who
+ * already has an account arrives — including the two audiences whose
+ * consoles it is not. Before this, crossing to either meant knowing the
+ * URL: the ops door was a footer entry and the employer door was named
+ * only from `/employer/sign-up`.
+ *
+ * Signed out and asserted on the hrefs, so it needs no account and
+ * cannot be satisfied by a link that merely reads right.
+ */
+test("the generic sign-in door names the organisation and operations doors", async ({
+  page,
+}) => {
+  await page.goto("/sign-in");
+
+  const main = page.getByRole("main");
+  await expect(
+    main.getByRole("link", { name: /Organisation sign-in/ })
+  ).toHaveAttribute("href", "/employer/sign-in");
+  await expect(
+    main.getByRole("link", { name: /Toplance operations sign-in/ })
+  ).toHaveAttribute("href", "/ops/sign-in");
+});
+
 test("a traveller sees their own nav on the landing page and the generic door leads home", async ({
   page,
 }) => {
-  await resetFixtures([TRAVELLER_EMAIL]);
-  await signUp(page, { email: TRAVELLER_EMAIL, fullName: "Adaeze Nwosu" });
+  await resetFixtures([TRAVELLER_EMAIL], [TRAVELLER_ORG]);
+  const token = await seedInvitation(TRAVELLER_EMAIL, TRAVELLER_ORG);
+  await signUpInvited(page, {
+    email: TRAVELLER_EMAIL,
+    fullName: "Adaeze Nwosu",
+    token,
+  });
 
   await page.goto("/");
   // The console bar, not the pitch: journey nav present, and the top
@@ -65,13 +98,12 @@ test("a reviewer sees the ops bar on the landing page and never the traveller su
   page,
 }) => {
   await resetFixtures([STAFF_EMAIL]);
-  // `?next=/` keeps the new account off `/app`, which would create a
-  // draft application for someone who is about to become staff.
-  await signUp(page, {
-    email: STAFF_EMAIL,
-    fullName: "Ngozi Adeyemi",
-    path: "/sign-up?next=/",
-  });
+  // The employer door, which is `signUp`'s default now that the
+  // traveller one needs an invitation. It lands on `/employer` rather
+  // than `/app`, so no draft application is opened for an account that
+  // is about to become staff — and no invitation has to be minted and
+  // thrown away just to get a session.
+  await signUp(page, { email: STAFF_EMAIL, fullName: "Ngozi Adeyemi" });
   await promoteToStaff(STAFF_EMAIL);
 
   await page.goto("/");
@@ -102,16 +134,11 @@ test("a reviewer who opens the traveller console is sent to their own", async ({
   page,
 }) => {
   await resetFixtures([STAFF_ON_APP_EMAIL]);
-  await signUp(page, {
-    email: STAFF_ON_APP_EMAIL,
-    fullName: "Chidi Okonkwo",
-    path: "/sign-up?next=/",
-  });
+  await signUp(page, { email: STAFF_ON_APP_EMAIL, fullName: "Chidi Okonkwo" });
   await promoteToStaff(STAFF_ON_APP_EMAIL);
-  // Sign-up leaves a draft behind while the account is still a
-  // traveller. Clearing it is what lets the assertion below mean
-  // "nothing was written" rather than "nothing changed".
-  await clearApplicationsFor(STAFF_ON_APP_EMAIL);
+  // Nothing to clear first any more: the employer door never opened a
+  // draft, so the assertion below now means "no application has ever
+  // existed for this account" rather than "none was added back".
 
   await page.goto("/app");
   await expect(page).toHaveURL(/\/ops$/);
@@ -123,27 +150,28 @@ test("a reviewer who opens the traveller console is sent to their own", async ({
 });
 
 /**
- * The employer console's own version of the guard above, and the reason
- * it cannot simply demand `org_member`: a legitimate new employer is
- * still a `traveler` when they arrive, because the role flips inside
- * `createOrganisationTx`. So `/employer` turns away exactly the two
- * accounts that transaction refuses — no more, or the sign-up below
- * would be walled off, and no fewer, or they get a form that fails at
- * submit.
+ * The employer console's own version of the guard above. A new employer
+ * now arrives already holding `org_member` — `completeProfile` writes it
+ * at sign-up — but with no membership row, so `/employer` still cannot
+ * decide by role alone. It turns away exactly the two accounts
+ * `createOrganisationTx` refuses: no more, or the sign-up below would be
+ * walled off, and no fewer, or they get a form that fails at submit.
  */
 test("a traveller mid-case who opens the employer console is sent back to their own", async ({
   page,
 }) => {
-  await resetFixtures([TRAVELLER_ON_EMPLOYER_EMAIL]);
-  // The default door lands on /app, which opens the draft application —
-  // which is precisely what makes this account ineligible to found an
-  // organisation on the same email.
-  await signUp(page, {
+  await resetFixtures([TRAVELLER_ON_EMPLOYER_EMAIL], [MIDCASE_ORG]);
+  // Accepting an invitation lands on the agent, which opens the draft
+  // application — which is precisely what makes this account ineligible
+  // to found an organisation on the same email.
+  const token = await seedInvitation(TRAVELLER_ON_EMPLOYER_EMAIL, MIDCASE_ORG);
+  await signUpInvited(page, {
     email: TRAVELLER_ON_EMPLOYER_EMAIL,
     fullName: "Amara Eze",
+    token,
   });
-  // Polled, not read once: `signUp` returns as soon as the browser
-  // leaves the auth surface, and the layout's write lands a beat later.
+  // Polled, not read once: the helper returns as soon as the browser
+  // reaches the agent, and the layout's write lands a beat later.
   // The precondition is what makes the redirect below mean anything, so
   // it waits for the row rather than racing it.
   await expect
@@ -162,13 +190,8 @@ test("a reviewer who opens the employer console is sent to the case queue", asyn
   page,
 }) => {
   await resetFixtures([STAFF_ON_EMPLOYER_EMAIL]);
-  await signUp(page, {
-    email: STAFF_ON_EMPLOYER_EMAIL,
-    fullName: "Ifeoma Balogun",
-    path: "/sign-up?next=/",
-  });
+  await signUp(page, { email: STAFF_ON_EMPLOYER_EMAIL, fullName: "Ifeoma Balogun" });
   await promoteToStaff(STAFF_ON_EMPLOYER_EMAIL);
-  await clearApplicationsFor(STAFF_ON_EMPLOYER_EMAIL);
 
   await page.goto("/employer");
   await expect(page).toHaveURL(/\/ops$/);

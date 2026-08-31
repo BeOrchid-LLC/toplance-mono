@@ -17,7 +17,9 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
   const { applications, orgMembers, organisations, profiles } = await import(
     "@/lib/db/schema"
   );
-  const { createOrganisationTx } = await import("@/lib/data/organisations");
+  const { createOrganisationTx, provisionEmployerProfile } = await import(
+    "@/lib/data/organisations"
+  );
 
   const createdProfileIds: string[] = [];
   const createdOrgIds: string[] = [];
@@ -62,6 +64,73 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
       .where(eq(orgMembers.userId, userId));
   }
 
+  describe("provisionEmployerProfile", () => {
+    /**
+     * The employer half of the same safety net as
+     * `provisionInvitedProfile`. `completeProfile` is a write from the
+     * sign-up page, and Clerk activating the new session navigates that
+     * page away mid-request; the employer who blinked used to be caught
+     * by `getProfile`'s lazy provisioning and now lands on `/go` with no
+     * account at all.
+     *
+     * There is no token to check here, and there does not need to be:
+     * the employer door is open by design, so anyone reaching it could
+     * have obtained this row through the form anyway. What matters is
+     * that it writes `org_member` and never `traveler` — the invite-only
+     * invariant lives in the role, not in this door.
+     */
+    const USER = "test_provision_employer";
+
+    async function profileOf(id: string) {
+      const [row] = await db.select().from(profiles).where(eq(profiles.id, id));
+      return row;
+    }
+
+    it("writes an org_member with no membership, never a traveller", async () => {
+      createdProfileIds.push(USER);
+
+      expect(
+        await provisionEmployerProfile(USER, "founder@test.invalid", "Folake Adebayo")
+      ).toBe(true);
+
+      const profile = await profileOf(USER);
+      expect(profile.role).toBe("org_member");
+      expect(profile.fullName).toBe("Folake Adebayo");
+      expect(profile.email).toBe("founder@test.invalid");
+      expect(await membershipsOf(USER)).toEqual([]);
+    });
+
+    it("leaves the row alone when one already exists", async () => {
+      // A traveller or a staff account opening /employer must not be
+      // quietly turned into an employer by the safety net.
+      await makeProfile(USER, { email: "existing@test.invalid", role: "traveler" });
+
+      expect(
+        await provisionEmployerProfile(USER, "existing@test.invalid", "Someone Else")
+      ).toBe(true);
+
+      const profile = await profileOf(USER);
+      expect(profile.role).toBe("traveler");
+      expect(profile.fullName).toBe("Test Person");
+    });
+
+    it("hands the new account straight on to naming an organisation", async () => {
+      // The whole point: the row it writes must satisfy
+      // `createOrganisationTx`, or the employer is still stuck.
+      createdProfileIds.push(USER);
+      await provisionEmployerProfile(USER, "founder@test.invalid", "Folake Adebayo");
+
+      const result = await createOrganisationTx(USER, "Recovered Freight Ltd");
+
+      expect(result).toMatchObject({ ok: true });
+      if (!("ok" in result)) throw new Error("unreachable");
+      createdOrgIds.push(result.orgId);
+      expect(await membershipsOf(USER)).toEqual([
+        { orgId: result.orgId, role: "owner" },
+      ]);
+    });
+  });
+
   it("creates the organisation, an owner membership, and flips traveler to org_member", async () => {
     const userId = "test_org_traveller";
     await makeProfile(userId);
@@ -77,6 +146,26 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
       .from(organisations)
       .where(eq(organisations.id, result.orgId));
     expect(org).toEqual({ name: "Acme Logistics Ltd", seatsPurchased: 0 });
+
+    expect(await membershipsOf(userId)).toEqual([
+      { orgId: result.orgId, role: "owner" },
+    ]);
+    expect(await roleOf(userId)).toBe("org_member");
+  });
+
+  it("names an organisation for the org_member sign-up leaves behind", async () => {
+    // Since travellers became invite-only (2026-08-31) this is the
+    // normal employer path, not an oddity: `completeProfile` writes
+    // `org_member` at sign-up so no window exists in which an employer
+    // reads as a traveller, and the membership arrives here.
+    const userId = "test_org_member_no_membership";
+    await makeProfile(userId, { role: "org_member" });
+
+    const result = await createOrganisationTx(userId, "Beorchid Freight");
+
+    expect(result).toMatchObject({ ok: true });
+    if (!("ok" in result)) throw new Error("unreachable");
+    createdOrgIds.push(result.orgId);
 
     expect(await membershipsOf(userId)).toEqual([
       { orgId: result.orgId, role: "owner" },

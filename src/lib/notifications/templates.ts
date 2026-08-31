@@ -2,27 +2,22 @@
  * Every email `notify()` can send, as pure functions — no I/O, nothing
  * async. `notify()` decides who and when; these decide only what it says.
  *
- * Plain semantic HTML: a heading, a paragraph, one link. No react-email,
- * no images, no styling beyond what keeps a message readable in a plain
- * inbox — a lot of these land on low-bandwidth connections.
+ * Each template supplies a heading, a paragraph or two, and one call to
+ * action, then hands them to `renderEmail` in `./layout`. The layout owns
+ * every decision about markup: templates contain no HTML at all, which is
+ * what keeps the seven of them looking like one product and means a
+ * change to the shell is a change to one file.
  *
- * Every user-authored value (a staff message, a flag reason, a sender's
- * name, an organisation's name) is passed through `escapeHtml` before it
- * reaches the HTML body. Links are absolute URLs the caller already
- * built with `appUrl()`, not user text, so they are not escaped.
+ * The values passed in are raw. `renderEmail` escapes them at the
+ * boundary — a staff message, a flag reason, a sender's name and an
+ * organisation's name all originate in a form somewhere, and escaping in
+ * one place is the only version of that rule nobody can forget to follow.
+ * Subject lines are a header rather than HTML, so they stay unescaped.
  */
 
-export type EmailContent = { subject: string; html: string; text: string };
+import { renderEmail } from "@/lib/notifications/layout";
 
-/** Applied to every user-authored value before it reaches an HTML string. */
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+export type EmailContent = { subject: string; html: string; text: string };
 
 function truncate(value: string, max: number): string {
   return value.length > max ? `${value.slice(0, max)}…` : value;
@@ -36,11 +31,13 @@ export function submissionEmail({
   caseRef: string;
   url: string;
 }): EmailContent {
-  const ref = escapeHtml(caseRef);
   return {
     subject: `${caseRef} is ready for review`,
-    html: `<h1>${ref} is ready for review</h1><p>A traveller finished their checklist and submitted their file.</p><p><a href="${url}">Open the case</a></p>`,
-    text: `${caseRef} is ready for review.\n\nA traveller finished their checklist and submitted their file.\n\nOpen the case: ${url}`,
+    ...renderEmail({
+      heading: `${caseRef} is ready for review`,
+      paragraphs: ["A traveller finished their checklist and submitted their file."],
+      cta: { href: url, label: "Open the case" },
+    }),
   };
 }
 
@@ -54,12 +51,13 @@ export function statusChangedEmail({
   message: string;
   url: string;
 }): EmailContent {
-  const label = escapeHtml(statusLabel);
-  const body = escapeHtml(message);
   return {
     subject: `Your application is now: ${statusLabel}`,
-    html: `<h1>${label}</h1><p>${body}</p><p><a href="${url}">See your application</a></p>`,
-    text: `${statusLabel}\n\n${message}\n\nSee your application: ${url}`,
+    ...renderEmail({
+      heading: statusLabel,
+      paragraphs: [message],
+      cta: { href: url, label: "See your application" },
+    }),
   };
 }
 
@@ -73,12 +71,13 @@ export function documentFlaggedEmail({
   reason: string;
   url: string;
 }): EmailContent {
-  const name = escapeHtml(documentName);
-  const why = escapeHtml(reason);
   return {
     subject: `${documentName} needs another look`,
-    html: `<h1>${name} needs another look</h1><p>${why}</p><p><a href="${url}">Re-upload it</a></p>`,
-    text: `${documentName} needs another look.\n\n${reason}\n\nRe-upload it: ${url}`,
+    ...renderEmail({
+      heading: `${documentName} needs another look`,
+      paragraphs: [reason],
+      cta: { href: url, label: "Re-upload it" },
+    }),
   };
 }
 
@@ -92,13 +91,13 @@ export function messageReceivedEmail({
   preview: string;
   url: string;
 }): EmailContent {
-  const short = truncate(preview, 140);
-  const name = escapeHtml(senderName);
-  const body = escapeHtml(short);
   return {
     subject: `New message from ${senderName}`,
-    html: `<h1>New message from ${name}</h1><p>${body}</p><p><a href="${url}">Read and reply</a></p>`,
-    text: `New message from ${senderName}\n\n${short}\n\nRead and reply: ${url}`,
+    ...renderEmail({
+      heading: `New message from ${senderName}`,
+      paragraphs: [truncate(preview, 140)],
+      cta: { href: url, label: "Read and reply" },
+    }),
   };
 }
 
@@ -106,8 +105,11 @@ export function messageReceivedEmail({
 export function itineraryReadyEmail({ url }: { url: string }): EmailContent {
   return {
     subject: "Your arrival plan is ready",
-    html: `<h1>Your arrival plan is ready</h1><p>We have put together an itinerary for your trip.</p><p><a href="${url}">Open it</a></p>`,
-    text: `Your arrival plan is ready.\n\nWe have put together an itinerary for your trip.\n\nOpen it: ${url}`,
+    ...renderEmail({
+      heading: "Your arrival plan is ready",
+      paragraphs: ["We have put together an itinerary for your trip."],
+      cta: { href: url, label: "Open it" },
+    }),
   };
 }
 
@@ -115,6 +117,13 @@ export function itineraryReadyEmail({ url }: { url: string }): EmailContent {
  * To an invitee who has NO account. Deliberately not routed through
  * `notify()` — there is no `profiles` row to attach it to, which is also
  * why `invitation` is not a `notification_kind`.
+ *
+ * The only email in this file that reaches a cold inbox. Everyone else
+ * has an account and knows what Toplance is; this recipient is deciding
+ * whether an organisation they may not recognise, and a product they
+ * have never heard of, are worth handing a visa application to. That is
+ * why the layout prints the destination URL in full underneath the
+ * button rather than hiding it behind link text.
  */
 export function invitationEmail({
   orgName,
@@ -125,13 +134,16 @@ export function invitationEmail({
   inviteUrl: string;
   fullName?: string;
 }): EmailContent {
-  const org = escapeHtml(orgName);
-  const greeting = fullName ? `${escapeHtml(fullName)}, y` : "Y";
-  const greetingText = fullName ? `${fullName}, y` : "Y";
+  const greeting = fullName ? `${fullName}, y` : "Y";
   return {
     subject: `${orgName} has invited you to Toplance`,
-    html: `<h1>${org} has invited you to Toplance</h1><p>${greeting}ou have been invited to start a visa application sponsored by ${org}.</p><p><a href="${inviteUrl}">Accept the invitation</a></p>`,
-    text: `${orgName} has invited you to Toplance.\n\n${greetingText}ou have been invited to start a visa application sponsored by ${orgName}.\n\nAccept the invitation: ${inviteUrl}`,
+    ...renderEmail({
+      heading: `${orgName} has invited you to Toplance`,
+      paragraphs: [
+        `${greeting}ou have been invited to start a visa application sponsored by ${orgName}.`,
+      ],
+      cta: { href: inviteUrl, label: "Open your invitation" },
+    }),
   };
 }
 
@@ -143,10 +155,12 @@ export function companionDigestEmail({
   url: string;
   highlights: string[];
 }): EmailContent {
-  const items = highlights.map((h) => escapeHtml(h));
   return {
     subject: "Your weekly Toplance digest",
-    html: `<h1>Your weekly digest</h1><ul>${items.map((h) => `<li>${h}</li>`).join("")}</ul><p><a href="${url}">Open your companion</a></p>`,
-    text: `Your weekly digest\n\n${highlights.map((h) => `- ${h}`).join("\n")}\n\nOpen your companion: ${url}`,
+    ...renderEmail({
+      heading: "Your weekly digest",
+      list: highlights,
+      cta: { href: url, label: "Open your companion" },
+    }),
   };
 }

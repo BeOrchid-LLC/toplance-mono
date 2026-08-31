@@ -3,7 +3,13 @@ import "server-only";
 import { and, desc, eq, isNull, or } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, invitations, organisations, type Invitation } from "@/lib/db/schema";
+import {
+  applications,
+  invitations,
+  organisations,
+  profiles,
+  type Invitation,
+} from "@/lib/db/schema";
 import type { TravelPurpose } from "@/lib/visa/types";
 
 export type CreateInvitationResult =
@@ -167,6 +173,181 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
 }
 
 /**
+ * The invited address behind a token, and `null` for every reason a
+ * token might not entitle its bearer to anything: it matches no row, it
+ * has been revoked or already accepted, or it is past `expiresAt`.
+ *
+ * Deliberately not `getInvitationPreview`. That one feeds a page and
+ * returns dead rows on purpose, so the page can say *which* kind of
+ * dead. This one is a gate, and a gate wants one answer — it is the
+ * check standing between a stranger and a traveller account, so it
+ * collapses every dead state into the same `null` rather than inviting
+ * a caller to interpret a status enum correctly.
+ */
+export async function pendingInvitationEmail(token: string): Promise<string | null> {
+  if (!token) return null;
+
+  const [row] = await db
+    .select({
+      email: invitations.email,
+      status: invitations.status,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(eq(invitations.token, token))
+    .limit(1);
+
+  if (!row || row.status !== "pending" || row.expiresAt < new Date()) return null;
+  return row.email;
+}
+
+/** Whether an invitation is live, and whether it names this address. */
+export type InvitedAddressCheck = "ok" | "dead" | "mismatch";
+
+/**
+ * The one comparison behind "is this the person the invitation names",
+ * so the three places that ask cannot drift apart.
+ *
+ * `roleFor` asks it to decide a role, `provisionInvitedProfile` to
+ * decide whether to write a row, and the sign-up form asks it *before*
+ * `signUp.create()` — the case this exists for. Until then the answer
+ * arrived only after Clerk had made an account and spent an emailed
+ * code, by which point the form the visitor would fix their typo in no
+ * longer existed.
+ *
+ * Three answers rather than a boolean, because "no live invitation" and
+ * "not your address" are different sentences to a person and a caller
+ * holding `false` would have to guess which it had.
+ *
+ * It answers about an address the caller already supplied and never
+ * returns the invited one. That matters here more than in the callers
+ * above: this is reachable from the browser, on a page whose whole
+ * premise is that the link may have been forwarded, and the invited
+ * address is the one fact on an invitation belonging to somebody who
+ * may not be the reader.
+ */
+export async function checkInvitedAddress(
+  token: string,
+  email: string
+): Promise<InvitedAddressCheck> {
+  const invited = await pendingInvitationEmail(token);
+  if (!invited) return "dead";
+  return invited.toLowerCase() === email.trim().toLowerCase() ? "ok" : "mismatch";
+}
+
+/**
+ * The profile a torn-down sign-up did not manage to write.
+ *
+ * `completeProfile` runs from the browser, and Clerk activating the
+ * brand-new session navigates the page out from under it — the write can
+ * be cancelled mid-flight. That was survivable while `getProfile`
+ * provisioned a row for anyone holding a session; since travellers
+ * became invite-only it is not, and the traveller lands on their own
+ * invitation as a stranger.
+ *
+ * So the same write happens again here, server-side, on the page the
+ * token names, where no client navigation can interrupt it. This is not
+ * a second door: it writes only what the invitation already entitles
+ * that address to, applying the same checks as the sign-up gate, and
+ * `onConflictDoNothing` means it can never overwrite a row that exists —
+ * an employer or a staff account opening an invitation link is left
+ * exactly as it was.
+ *
+ * `fullName` is the name Clerk holds, and it is preferred over the one
+ * the employer typed into the invite dialog. `signUp.create` sends it
+ * before the session exists, which makes it the one field on this path
+ * that a cancelled write cannot lose — and the name the intake agent
+ * greets the traveller by, so getting it from the wrong place is not
+ * cosmetic. The invitation's name is the fallback.
+ *
+ * Phone and country are not recoverable here; a profile written by this
+ * path goes without them until `/app/profile`. That is the trade: a
+ * traveller who can act beats a dead end.
+ */
+export async function provisionInvitedProfile(
+  token: string,
+  userId: string,
+  email: string,
+  fullName?: string
+): Promise<boolean> {
+  const invited = await pendingInvitationEmail(token);
+  if (!invited || invited.toLowerCase() !== email.toLowerCase()) return false;
+
+  const [row] = await db
+    .select({ fullName: invitations.fullName })
+    .from(invitations)
+    .where(eq(invitations.token, token))
+    .limit(1);
+
+  await db
+    .insert(profiles)
+    .values({
+      id: userId,
+      email,
+      fullName: fullName?.trim() || row?.fullName || "",
+      role: "traveler",
+    })
+    .onConflictDoNothing();
+
+  return true;
+}
+
+/** Everything an invitation email needs, and nothing else. */
+export type ResendableInvitation = {
+  token: string;
+  email: string;
+  fullName: string;
+};
+
+/**
+ * The one read that hands a live token back to the employer who sent it.
+ *
+ * `listInvitations` refuses to select the token on purpose — the roster
+ * has no business carrying the bearer credential into every render — but
+ * that leaves an employer whose invitation email silently failed with no
+ * way to reach the link at all, which under invite-only means a
+ * traveller who can never get in. This is the deliberate exception:
+ * narrow, keyed on one id, and returning only what the email needs.
+ *
+ * Scoped to the caller's own org in the same `where` as the id, the same
+ * shape as `revokeInvitation` — the guard checks membership, this checks
+ * the row belongs to that org, and the two must agree or a member of one
+ * org could read another's live token by guessing an id.
+ *
+ * A read, not a write: the token is not rotated, because a first email
+ * that was merely slow should still work, and `expiresAt` is not
+ * extended, because quietly lengthening the life of a bearer link is not
+ * a side effect a resend button should have. Once expired the answer is
+ * `null` — that invitation needs sending again, not resending.
+ */
+export async function resendableInvitation(
+  orgId: string,
+  invitationId: string
+): Promise<ResendableInvitation | null> {
+  const [row] = await db
+    .select({
+      token: invitations.token,
+      email: invitations.email,
+      fullName: invitations.fullName,
+      status: invitations.status,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.id, invitationId),
+        eq(invitations.orgId, orgId),
+        eq(invitations.status, "pending")
+      )
+    )
+    .limit(1);
+
+  if (!row || row.expiresAt < new Date()) return null;
+
+  return { token: row.token, email: row.email, fullName: row.fullName };
+}
+
+/**
  * `status='revoked'` only where currently `pending`, scoped to the
  * caller's own org in the same `where` — the guard checks membership,
  * this checks the row actually belongs to that org, and the two must
@@ -198,12 +379,22 @@ export async function revokeInvitation(
  * `createOrganisationTx`: a second accept on the same token blocks here,
  * then reads the first one's write and refuses instead of racing it.
  *
- * Deliberate trade-off: the token is the bearer credential (48 hex
- * characters, mailed to the invited address) — whoever holds the link
- * accepts it. Accepting does NOT require the signed-in email to match
- * the invited one; someone might reasonably accept from a different
- * personal address than the one HR typed in. `acceptedBy` is the
- * record of who actually joined, independent of `invitations.email`.
+ * The invited address is binding, and it is checked here rather than
+ * only at sign-up (client decision, 2026-08-31). The token is a bearer
+ * credential — 48 hex characters, mailed to one address — so holding it
+ * proves the link was received, never that the holder is the person it
+ * names. A forwarded link is the ordinary case, not the exotic one.
+ *
+ * Enforcing it in both places is the point. `completeProfile` refuses to
+ * mint a traveller for an unmatched address, so this check should be
+ * unreachable through the accept button; it stands anyway, because that
+ * one guards a role and this one guards a roster. An account that
+ * became a traveller through some other invitation must not be able to
+ * walk onto a second employer's list by opening their link.
+ *
+ * The email comes from `profiles`, read inside this transaction, rather
+ * than from an argument. A caller that could pass the email is a caller
+ * that could pass the wrong one.
  *
  * Attaching the org handles both orders an application can arrive in:
  * an invitee with no account yet (the insert below wins, carrying the
@@ -247,6 +438,22 @@ export async function acceptInvitationTx(
         .set({ status: "expired" })
         .where(eq(invitations.id, invitation.id));
       return { error: "This invitation has expired." };
+    }
+
+    // After the status checks, deliberately: a dead token is dead for
+    // everyone, and "expired" is the more useful thing to be told than
+    // "wrong address". Refusing here leaves the row `pending`, so the
+    // invitation is still there for the person it actually names.
+    const [profile] = await tx
+      .select({ email: profiles.email })
+      .from(profiles)
+      .where(eq(profiles.id, travelerId))
+      .limit(1);
+
+    // `createInvitation` lowercases what the employer typed; Clerk keeps
+    // whatever case the traveller signed up with.
+    if (!profile || profile.email.toLowerCase() !== invitation.email.toLowerCase()) {
+      return { error: "This invitation was sent to a different email address." };
     }
 
     const created = await tx

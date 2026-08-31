@@ -10,6 +10,41 @@ export type CreateOrganisationResult = { ok: true; orgId: string } | { error: st
 const NAME_MAX = 160;
 
 /**
+ * The profile a torn-down employer sign-up did not manage to write.
+ *
+ * `completeProfile` runs from the browser, and Clerk activating the
+ * brand-new session navigates the page out from under it, cancelling the
+ * write. That used to be invisible: `getProfile` provisioned a row for
+ * anyone holding a session. Since travellers became invite-only it does
+ * not, so the employer arrived at `/employer`, was found to have no
+ * profile, and was sent to `/go` to be told they had no account —
+ * moments after creating one.
+ *
+ * The mirror of `provisionInvitedProfile`, minus the token: that door is
+ * gated by an invitation because a traveller needs one, and this door is
+ * open by design, so anyone reaching it could have obtained this row
+ * through the form anyway. The invariant lives in the role, and the role
+ * written here is `org_member` — never `traveler`, which is why this
+ * cannot become a way around the invitation.
+ *
+ * `onConflictDoNothing`, so a traveller or a staff account that opens
+ * `/employer` is left exactly as it was rather than quietly becoming an
+ * employer. `true` means a row exists now, not that this call wrote it.
+ */
+export async function provisionEmployerProfile(
+  userId: string,
+  email: string,
+  fullName: string
+): Promise<boolean> {
+  await db
+    .insert(profiles)
+    .values({ id: userId, email, fullName: fullName.trim(), role: "org_member" })
+    .onConflictDoNothing();
+
+  return true;
+}
+
+/**
  * A new employer's first act: name an organisation and become its
  * owner, in one transaction — the idiom of `submitApplicationTx`. The
  * profile row is locked for the duration, so a double-click (or two
@@ -78,9 +113,12 @@ export async function createOrganisationTx(
     await tx.insert(orgMembers).values({ orgId: org.id, userId, role: "owner" });
 
     // Flip ONLY traveler → org_member, keyed on this session's userId.
-    // An account that reaches here with any other role (org_member with
-    // no membership row, somehow) is left alone — this is a signup step,
-    // not a general role editor.
+    // Since travellers became invite-only (2026-08-31) the common case
+    // is that there is nothing to flip: `completeProfile` already wrote
+    // `org_member` at sign-up, so an employer never spends a moment
+    // reading as a traveller. The clause stays for the accounts that
+    // predate that and for staff, who are refused above — this is a
+    // signup step, not a general role editor.
     await tx
       .update(profiles)
       .set({ role: "org_member", updatedAt: new Date() })

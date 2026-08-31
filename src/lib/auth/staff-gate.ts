@@ -76,7 +76,10 @@ export type StaffGateResult =
  */
 export async function requireStaffConsole(): Promise<StaffGateResult> {
   const [profile, actor] = await Promise.all([getProfile(), getActor()]);
-  if (!profile || !actor) redirect("/ops/sign-in?next=/ops");
+  // `/go` rather than the ops door, for the reason on `GoPage`: the
+  // proxy bounces a signed-in visitor off every auth page, so a session
+  // with no profile row would ricochet between the two.
+  if (!profile || !actor) redirect("/go");
 
   if (!isStaff(actor)) return { decision: "refuse" };
 

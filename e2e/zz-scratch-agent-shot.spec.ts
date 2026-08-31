@@ -1,16 +1,19 @@
 import { test } from "@playwright/test";
 
-import { resetFixtures, signUp, testEmail } from "./helpers/auth";
+import { resetFixtures, signUpInvited, testEmail } from "./helpers/auth";
+import { seedInvitation } from "./helpers/db";
 
 /** THROWAWAY — visual check of the agent page. Delete after use. */
 const EMAIL = testEmail("scratch.agentshot");
+const ORG = "Scratch Shot Sponsor";
 
 test("record document: fresh / answered / reopened / transcript / dark / mobile", async ({
   page,
 }) => {
-  await resetFixtures([EMAIL]);
+  await resetFixtures([EMAIL], [ORG]);
   await page.setViewportSize({ width: 1440, height: 900 });
-  await signUp(page, { email: EMAIL, fullName: "Amara Okonkwo" });
+  const token = await seedInvitation(EMAIL, ORG);
+  await signUpInvited(page, { email: EMAIL, fullName: "Amara Okonkwo", token });
 
   await page.goto("/app/agent");
   await page.getByText("which country's passport").waitFor();

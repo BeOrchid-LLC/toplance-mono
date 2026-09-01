@@ -37,6 +37,16 @@ export const EVENT_NAMES = [
    */
   "toplance.corridor_requested",
 
+  /**
+   * The staleness sweep (`npm run visa:drift`) found a live corridor
+   * whose "a visa is required" assumption the vendor no longer repeats.
+   * A flag for human re-verification, never an automatic edit: the
+   * vendor's verdict is a short-stay default, so it may prompt a check
+   * against the mission but cannot overrule one. Written by the runner
+   * with raw SQL — the one emitter that cannot go through `track()`.
+   */
+  "toplance.corridor_drift_detected",
+
   "toplance.document_uploaded",
   "toplance.document_removed",
 

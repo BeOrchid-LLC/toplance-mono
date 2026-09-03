@@ -107,6 +107,40 @@ try {
       console.log(`Reference data present (${count} corridors) — seed skipped.`);
     }
   }
+
+  /**
+   * Corridors drafted through the review gate.
+   *
+   * Applied on **every** deploy, unlike the seed above, because this
+   * file is additive by construction: each insert is `on conflict do
+   * nothing` on the corridor's natural key, so it adds what is missing
+   * and touches nothing that exists. Re-running it over an environment
+   * where somebody has approved drafts leaves their decisions alone —
+   * which is the property that lets it be a deploy step at all.
+   *
+   * Deliberately after the seed. On an empty database the seed writes
+   * its four corridors first and this file skips those four on
+   * conflict; on a populated one the seed is skipped and this fills the
+   * gaps. Both paths land on the same set.
+   *
+   * Corridors are data, so without this they only ever exist wherever
+   * someone happened to draft them.
+   */
+  const corridorsSql = [
+    join(here, "corridors.sql"),
+    join(root, "src", "lib", "db", "corridors.sql"),
+  ].find(existsSync);
+  if (corridorsSql) {
+    const before = await client.query(`SELECT count(*)::int AS count FROM corridors`);
+    await client.query(readFileSync(corridorsSql, "utf8"));
+    const after = await client.query(`SELECT count(*)::int AS count FROM corridors`);
+    const added = after.rows[0].count - before.rows[0].count;
+    console.log(
+      added === 0
+        ? `Corridors up to date (${after.rows[0].count} present).`
+        : `Added ${added} corridors — ${after.rows[0].count} present.`
+    );
+  }
 } finally {
   await client.end();
 }

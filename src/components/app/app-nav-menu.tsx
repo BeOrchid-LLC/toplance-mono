@@ -41,9 +41,14 @@ export function AppNavMenu({ nav }: { nav: NavItem[] }) {
                 href={item.locked ? "#" : item.href}
                 aria-disabled={item.locked}
                 aria-current={active ? "page" : undefined}
+                // The bar marks the current page with a rule on its
+                // bottom edge; in a vertical list the same rule turns on
+                // its side and marks the leading one. Same signal, same
+                // colour, rotated to suit the axis — rather than the
+                // tinted fill the bar itself no longer uses.
                 className={cn(
-                  active &&
-                    "bg-[color-mix(in_srgb,var(--brand)_11%,transparent)] font-semibold text-brand-text",
+                  "nav-label border-l-2 border-transparent",
+                  active && "border-brand font-semibold text-ink",
                   item.locked && "pointer-events-none text-ink-3",
                 )}
               >

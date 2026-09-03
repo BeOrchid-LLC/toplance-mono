@@ -1,6 +1,5 @@
-import { LocaleMenu } from "@/components/shared/locale-menu";
+import { SettingsCluster } from "@/components/shared/settings-cluster";
 import { Shell } from "@/components/shared/shell";
-import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { Wordmark } from "@/components/shared/wordmark";
 import { AccountMenu } from "@/components/app/account-menu";
 import { AppNav, type NavItem } from "@/components/app/app-nav";
@@ -9,15 +8,17 @@ import { AppNavMenu } from "@/components/app/app-nav-menu";
 export type { NavItem };
 
 /**
- * The product chrome. A hairline rule and a plain surface, matching
- * `site-nav` — a signed-in screen is the same product as the page that
- * argued for it, and a second bar treatment is the fastest way to make
- * it look like a different one.
+ * The product chrome, matching `site-nav` to the pixel — a signed-in
+ * screen is the same product as the page that argued for it, and a
+ * second bar treatment is the fastest way to make it look like a
+ * different one.
  *
- * The active item is a soft brand-tinted pill. The tint mixes toward
- * transparent, so it sits on the same surface as the bar rather than
- * punching an opaque shape through it — the bar's own colours are
- * unchanged.
+ * It closes on `bar-edge`, the optically-variable laminate hairline the
+ * documents in this product already use, and the current page marks that
+ * edge. It used to close on a flat `border-b border-border` and mark the
+ * page with a brand-tinted pill — which is the chrome any dashboard
+ * ships with, on the only surface here that carried no material of its
+ * own.
  */
 export function AppBar({
   nav,
@@ -47,9 +48,9 @@ export function AppBar({
     // `px-4 sm:px-6` on the header itself, which put the avatar hard
     // against the right edge of a wide monitor with the content it
     // belongs to centred a couple of hundred pixels away.
-    <header className="sticky top-0 z-40 border-b border-border bg-surface">
+    <header className="bar-edge sticky top-0 z-40 bg-surface">
       <Shell className="flex h-[var(--bar-h)] items-center gap-6">
-        <div className="flex min-w-0 items-center gap-3 lg:gap-6">
+        <div className="flex h-full min-w-0 items-center gap-3 lg:gap-6">
           {/* Below `lg` the bar hides its nav, and the items move into a
               hamburger — a scrolling rail used to sit under the bar
               instead, but it cost a row of phone height and hid how many
@@ -60,17 +61,18 @@ export function AppBar({
             </span>
           )}
           <Wordmark href={nav[0]?.href ?? "/app"} />
-          <AppNav nav={nav} className="hidden items-center gap-1 lg:flex" />
+          {/* `h-full` is load-bearing, not tidiness: `AppNav` marks the
+              bar's bottom edge with a pseudo-element pinned to each
+              item's own bottom, so the items have to be as tall as the
+              bar for the marks to land on the rule. */}
+          <AppNav nav={nav} className="hidden h-full items-stretch lg:flex" />
         </div>
 
         <div className="ml-auto flex items-center gap-3">
           {notifications}
-          <span className="hidden md:inline-flex">
-            <ThemeSwitch />
-          </span>
-          <span className="hidden md:inline-flex">
-            <LocaleMenu />
-          </span>
+          {/* Below `md` both settings move into `AccountMenu`, where they
+              get named rows instead of icons. */}
+          <SettingsCluster className="hidden md:inline-flex" />
           <AccountMenu
             name={name}
             email={email}

@@ -5,8 +5,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LocaleMenu } from "@/components/shared/locale-menu";
-import { ThemeSwitch } from "@/components/shared/theme-switch";
+import { SettingsCluster } from "@/components/shared/settings-cluster";
 import { Shell } from "@/components/shared/shell";
 import { Wordmark } from "@/components/shared/wordmark";
 import { useT } from "@/components/locale-provider";
@@ -41,6 +40,12 @@ export function SiteNav() {
    * itself over a dark field — it only has to stop floating once the page
    * moves under it. At the top it is invisible; after that it is the
    * surface it always was, with a rule to sit on.
+   *
+   * The rule is `bar-edge` now, the same optically-variable laminate
+   * hairline `AppBar` closes on and the documents in this product already
+   * carry. Its opacity rides `--bar-edge-o` rather than the header's own,
+   * so the wordmark and the call to action stay at full strength while
+   * only the rule fades in.
    */
   const [lifted, setLifted] = React.useState(false);
 
@@ -62,21 +67,27 @@ export function SiteNav() {
     // agree to the pixel or signing in nudges the whole bar sideways.
     <nav
       className={cn(
-        "sticky top-0 z-90 border-b transition-colors duration-[var(--dur-toggle)] ease-[var(--ease-out)]",
+        "bar-edge sticky top-0 z-90 transition-colors duration-[var(--dur-toggle)] ease-[var(--ease-out)]",
         lifted
-          ? "border-border bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur-md"
-          : "border-transparent bg-transparent"
+          ? "bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] backdrop-blur-md"
+          : "bg-transparent [--bar-edge-o:0]"
       )}
     >
       <Shell className="flex h-[var(--bar-h)] items-center gap-4">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
 
-        <div className="hidden min-w-0 items-center overflow-hidden lg:flex">
+        {/* `items-stretch` and `h-full` for the same reason as `AppBar`:
+            each link marks the bar's bottom edge from its own bottom, so
+            a link shorter than the bar would leave its mark floating in
+            mid-air. These are anchors into the page rather than routes,
+            so none of them is ever the current one — the hover mark is
+            the whole of the treatment here. */}
+        <div className="hidden h-full min-w-0 items-stretch overflow-hidden lg:flex">
           {LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="flex min-h-[var(--row-h)] items-center whitespace-nowrap rounded-sm px-3 text-[15px] font-medium text-ink-2 transition-colors hover:text-brand-text"
+              className="nav-label relative flex h-full items-center whitespace-nowrap px-3.5 text-[15px] font-semibold text-ink-2 transition-colors after:absolute after:inset-x-2 after:bottom-0 after:z-10 after:h-px after:rounded-full after:bg-transparent after:transition-colors after:duration-[var(--dur-toggle)] hover:text-ink hover:after:bg-border-strong"
             >
               {l.label}
             </Link>
@@ -84,8 +95,7 @@ export function SiteNav() {
         </div>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <ThemeSwitch variant="icon" />
-          <LocaleMenu size="sm" className="max-[400px]:[&_.lang-label]:hidden" />
+          <SettingsCluster />
           <Button asChild variant="tertiary" size="sm" className="hidden xl:inline-flex">
             <Link href="/sign-in">{t(HERO.signIn)}</Link>
           </Button>

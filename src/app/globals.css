@@ -70,7 +70,13 @@
   /* fixed dimensions — locked */
   --control-h: 52px;
   --row-h: 44px;
-  --bar-h: 56px;
+  /* 64, not 56. The wordmark's mark is 32px tall, so a 56px bar left it
+     12px of air top and bottom — tight enough that the logo read as
+     jammed into the rule beneath it. Every consumer reads the token
+     (`scroll-mt`, the sticky offsets in `rail.tsx` and `section.tsx`,
+     the intake agent's `100dvh` subtraction), so the change propagates
+     rather than needing a sweep. */
+  --bar-h: 64px;
 
   /* motion — locked */
   --dur-tap: 120ms;
@@ -303,6 +309,75 @@
     transparent
   );
   animation: laminate-tilt 900ms var(--ease-out) both;
+}
+
+/* The chrome's own laminate edge.
+
+   Both bars used to close with `border-b border-border` — a flat
+   hairline, and the one surface in the product that carried no material
+   at all while twenty-six other files reached for `laminate`,
+   `ovi-edge` or `security-paper`. That is what made the chrome read as
+   generic: not its proportions, but that it could have come from any
+   repository.
+
+   So the bar closes on the same optically-variable hairline the
+   documents do — blue at the leading edge, neutral through the middle,
+   gold at the trailing one. It is one pixel, and it is the only
+   decoration either bar gets; everything else in there was made quieter
+   to pay for it.
+
+   `--bar-edge-o` exists because the marketing bar is transparent until
+   the page scrolls under it. Fading the pseudo-element rather than the
+   header keeps the row's own contents at full opacity — an `opacity` on
+   the parent would take the wordmark and the call to action down with
+   the rule. */
+@utility bar-edge {
+  position: relative;
+}
+
+.bar-edge::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  pointer-events: none;
+  opacity: var(--bar-edge-o, 1);
+  transition: opacity var(--dur-toggle) var(--ease-out);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-2) 70%, transparent) 0%,
+    var(--border) 26%,
+    var(--border) 74%,
+    color-mix(in srgb, var(--brand-accent) 60%, transparent) 100%
+  );
+}
+
+/* Dark drops the two accents to roughly half. Same reasoning as
+   `--glass-edge`: on the dark ground a mix that reads as a tint in light
+   mode reads as a drawn stroke, and a stroke across the full width of
+   the viewport is a stripe, not an edge. */
+:root[data-theme="dark"] .bar-edge::after,
+.dark .bar-edge::after {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand-2) 42%, transparent) 0%,
+    var(--border) 26%,
+    var(--border) 74%,
+    color-mix(in srgb, var(--brand-accent) 34%, transparent) 100%
+  );
+}
+
+/* Wayfinding labels. Archivo was already loaded and already paid for —
+   it just never left the display sizes. Held at 88% width it reads the
+   way transit and airport signage does, which is the honest register for
+   a bar whose entire job is telling you where you are in a corridor.
+   `--display` is declared on `body`, not `:root`, because that is where
+   next/font puts `--font-archivo`. */
+@utility nav-label {
+  font-family: var(--display);
+  font-stretch: 88%;
+  letter-spacing: 0.01em;
 }
 
 /* The client-locked scrim for text over the brand gradient (~5.5:1). */

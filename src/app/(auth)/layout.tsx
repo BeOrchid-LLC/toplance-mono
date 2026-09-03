@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-import { LocaleMenu } from "@/components/shared/locale-menu";
-import { ThemeSwitch } from "@/components/shared/theme-switch";
+import { SettingsCluster } from "@/components/shared/settings-cluster";
 import { Wordmark } from "@/components/shared/wordmark";
 
 /**
@@ -25,11 +24,10 @@ export default function AuthLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-90 flex h-[var(--bar-h)] items-center gap-4 border-b border-border bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-[max(16px,calc((100%-1140px)/2))] backdrop-blur-md">
+      <header className="bar-edge sticky top-0 z-90 flex h-[var(--bar-h)] items-center gap-4 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-[max(16px,calc((100%-1140px)/2))] backdrop-blur-md">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <ThemeSwitch variant="icon" />
-          <LocaleMenu size="sm" className="max-[400px]:[&_.lang-label]:hidden" />
+          <SettingsCluster />
         </div>
       </header>
 

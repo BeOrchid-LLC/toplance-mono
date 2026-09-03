@@ -17,19 +17,30 @@ import { cn } from "@/lib/utils";
  * The knob sits under the active icon, so whichever icon it covers
  * switches to a colour that reads against it.
  *
- * `variant="icon"` is the marketing surface's version: one square button
- * showing the mode you are in, sized and bordered to match the language
- * menu beside it. A 60px sliding track next to a primary call to action
- * reads as a piece of furniture competing with the thing people came to
- * press — in chrome, the switch should be the quietest control there.
- * The product screens keep the track, where there is no CTA to lose to.
+ * Three variants, for three amounts of room.
+ *
+ * `track` is the full 60px slider. It survives only inside the account
+ * menu on mobile, where appearance is a named setting on its own row and
+ * a switch is what a setting looks like.
+ *
+ * `bare` is what both bars use now: the icon alone, no border of its
+ * own, because it sits inside `SettingsCluster` and shares that shell
+ * with the language control. Two settings, one object — the bars used to
+ * spend two identical bordered boxes side by side on them, which bound
+ * them into a unit that competed with the call to action next to it.
+ *
+ * There used to be a third, `icon`: a bordered square sized to match
+ * the boxed language menu next to it. Both bars, the auth layout and the
+ * invite page were its only callers, and all four now set the pair down
+ * as one `SettingsCluster` instead — so it went with them rather than
+ * staying on as a variant nothing reaches for.
  */
 export function ThemeSwitch({
   className,
   variant = "track",
 }: {
   className?: string;
-  variant?: "track" | "icon";
+  variant?: "track" | "bare";
 }) {
   const { resolvedTheme, setTheme } = useTheme();
 
@@ -45,12 +56,15 @@ export function ThemeSwitch({
     onClick: () => setTheme(resolvedTheme === "dark" ? "light" : "dark"),
   } as const;
 
-  if (variant === "icon") {
+  if (variant === "bare") {
     return (
       <button
         {...shared}
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-sm border border-border-strong bg-surface text-ink-2 transition-colors duration-[var(--dur-toggle)] ease-[var(--ease-out)] hover:border-brand hover:text-ink",
+          // Rounded only on the leading edge: the cluster's own radius
+          // is on the wrapper, and a fully rounded child would show its
+          // corners against the divider on the other side.
+          "grid size-9 shrink-0 place-items-center rounded-l-[var(--radius-sm)] text-ink-2 transition-colors duration-[var(--dur-toggle)] ease-[var(--ease-out)] hover:bg-surface-2 hover:text-ink",
           className
         )}
       >

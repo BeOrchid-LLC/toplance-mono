@@ -52,11 +52,33 @@ export function AppNav({
             tabIndex={item.locked ? -1 : undefined}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex h-10 shrink-0 items-center rounded-[var(--radius-pill)] px-4 text-base font-medium transition-colors",
+              // Full bar height, so the mark below lands on the bar's own
+              // bottom edge rather than on the bottom of a pill floating
+              // inside it. That is the whole idea: the current page marks
+              // the laminate hairline the bar closes on.
+              "nav-label relative flex h-full shrink-0 items-center px-3.5 text-[15px] font-semibold transition-colors",
+              // `z-10` because `.bar-edge::after` is a pseudo-element of
+              // the header and therefore paints after its children in DOM
+              // order — at auto z-index the 1px edge would draw over the
+              // 2px mark. Colour is the only thing that animates; the
+              // mark holds its box whether lit or not, so nothing reflows
+              // and nothing grows on hover.
+              "after:absolute after:inset-x-2 after:bottom-0 after:z-10 after:rounded-full after:transition-colors after:duration-[var(--dur-toggle)] after:ease-[var(--ease-out)]",
               active
-                ? "bg-[color-mix(in_srgb,var(--brand)_11%,transparent)] font-semibold text-brand-text"
-                : "text-ink-2 hover:bg-surface-2 hover:text-ink",
-              item.locked && "pointer-events-none text-ink-3",
+                ? // Text goes to full --ink rather than brand. Brand-coloured
+                  // labels plus a brand-tinted pill said the same thing
+                  // twice; the mark says it once, and the weight of the
+                  // ink is what makes the word itself feel current.
+                  "text-ink after:h-0.5 after:bg-brand"
+                : // Hover is the same signal at lower intensity — thinner,
+                  // neutral — so it reads as a preview of becoming active.
+                  // It used to be a `bg-surface-2` pill, a second shape at
+                  // nearly the lightness of the active one, which is why
+                  // hovering an inactive item looked so much like arriving
+                  // at it.
+                  "text-ink-2 after:h-px after:bg-transparent hover:text-ink hover:after:bg-border-strong",
+              item.locked &&
+                "pointer-events-none text-ink-3 hover:after:bg-transparent",
               itemClassName
             )}
           >

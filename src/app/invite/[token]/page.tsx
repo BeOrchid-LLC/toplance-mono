@@ -6,11 +6,10 @@ import { Shield } from "lucide-react";
 import { AcceptInvitationForm } from "@/components/invite/accept-invitation-form";
 import { SignOutLink } from "@/components/auth/sign-out-link";
 import { DEAD_END_MESSAGE, InvitationDeadEnd } from "@/components/invite/dead-end";
-import { LocaleMenu } from "@/components/shared/locale-menu";
+import { SettingsCluster } from "@/components/shared/settings-cluster";
 import { Panel, PanelBody } from "@/components/shared/panel";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { Shell } from "@/components/shared/shell";
-import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { Wordmark } from "@/components/shared/wordmark";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getProfile } from "@/lib/data/applications";
@@ -39,11 +38,10 @@ function purposeLabel(purpose: string): string {
 function InviteChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex h-[var(--bar-h)] items-center gap-4 border-b border-border px-[max(16px,calc((100%-1140px)/2))]">
+      <header className="bar-edge flex h-[var(--bar-h)] items-center gap-4 px-[max(16px,calc((100%-1140px)/2))]">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
         <div className="ml-auto flex items-center gap-2">
-          <ThemeSwitch variant="icon" />
-          <LocaleMenu size="sm" />
+          <SettingsCluster />
         </div>
       </header>
       <main className="relative isolate flex-1 px-6 py-14 md:py-20">

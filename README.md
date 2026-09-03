@@ -280,18 +280,12 @@ in"). The form sends them to `/go`, the proxy sends them back, and the visitor
 loops between the two. A staging instance also shares its user pool with every
 developer's laptop, which is its own reason not to.
 
-`src/instrumentation.ts` guards the common way this happens: `CLERK_SECRET_KEY`
-is runtime-only and always present, so `register()` checks it against `APP_URL`
-at server startup and refuses to come up if a `sk_test_` key is paired with a
-non-local host, rather than let it surface as a login loop discovered later.
-
 Creating the instance for a domain:
 
 1. In the Clerk Dashboard, create a separate **application** for the
    environment — an application has one development and one production
    instance, so staging and production cannot share one.
-2. Open its production instance and add the domain (`staging.toplance.ca` for
-   staging — the actual host the app is served on, not the apex).
+2. Open its production instance and add the domain (`toplance.ca` for staging).
 3. Add the DNS records Clerk lists. Take the exact targets from the dashboard —
    they are per-instance — but expect CNAMEs for `clerk.` and `accounts.` (the
    Frontend API and the hosted account portal) plus `clkmail.` and two

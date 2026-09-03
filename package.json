@@ -13,6 +13,8 @@
     "db:migrate": "drizzle-kit migrate && node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/sql-objects.mts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/seed.mts",
+    "db:corridors": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/corridors.mts",
+    "corridors:export": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/export-corridors.mts",
     "corridor:draft": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/draft-corridor.mts",
     "db:bucket": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/storage/ensure-bucket.mts",
     "typecheck": "tsc --noEmit",

@@ -31,22 +31,20 @@ import {
  * and not here — or here and not there — fails this test instead of
  * shipping a promise nobody can keep.
  */
-const SEED = readFileSync(
-  new URL("../db/seed.sql", import.meta.url),
-  "utf8"
-);
-
-/** The first three values of every `insert into corridors` in the seed. */
-function seededCorridors() {
-  const pattern =
-    /insert\s+into\s+corridors\s*\([^)]*\)\s*values\s*\(\s*'([a-z]{2})'\s*,\s*'([a-z]{2})'\s*,\s*'([a-z_]+)'/gi;
-
-  return [...SEED.matchAll(pattern)].map(([, nationalityIso, destinationIso, purpose]) => ({
-    nationalityIso,
-    destinationIso,
-    purpose,
-  }));
-}
+/**
+ * The live set as actually exported from a working database, written by
+ * `npm run corridors:export` beside the SQL it describes.
+ *
+ * This used to parse `seed.sql` with a regex. That stopped telling the
+ * truth once corridors were *drafted* and approved rather than
+ * hand-written: China was approved through the review gate, lived in the
+ * database, and appeared in no seed file — so the assertion passed while
+ * the board said "Soon" for a corridor we serve. A generated manifest
+ * cannot silently match nothing, which is what the guard below was
+ * defending against.
+ */
+const liveCorridors: { nationalityIso: string; destinationIso: string; purpose: string }[] =
+  JSON.parse(readFileSync(new URL("../db/corridors.live.json", import.meta.url), "utf8"));
 
 const key = (c: { nationalityIso: string; destinationIso: string; purpose: string }) =>
   `${c.nationalityIso}->${c.destinationIso}:${c.purpose}`;
@@ -96,15 +94,17 @@ describe("DESTINATION_ISO", () => {
 });
 
 describe("LIVE_CORRIDORS", () => {
-  it("finds corridors in the seed to compare against", () => {
-    // Guards the regex itself: a parser that silently matches nothing
-    // would make every assertion below vacuously true.
-    expect(seededCorridors().length).toBeGreaterThan(0);
+  it("finds corridors in the export to compare against", () => {
+    // A manifest that came back empty would make every assertion below
+    // vacuously true.
+    expect(liveCorridors.length).toBeGreaterThan(0);
   });
 
-  it("matches the seeded corridors exactly", () => {
+  it("matches the corridors the database actually serves live", () => {
+    // The declaration and the export are two hands writing the same
+    // fact. This is the only thing keeping them in agreement.
     expect(LIVE_CORRIDORS.map(key).sort()).toEqual(
-      seededCorridors().map(key).sort()
+      liveCorridors.map(key).sort()
     );
   });
 
@@ -167,7 +167,7 @@ describe("livePurposesFor", () => {
 describe("liveDestinationsFor", () => {
   it("lists where a passport can actually go", () => {
     expect(liveDestinationsFor("Nigeria").sort()).toEqual(
-      ["Canada", "Germany", "United Arab Emirates", "United Kingdom"].sort()
+      ["Canada", "China", "Germany", "United Arab Emirates", "United Kingdom"].sort()
     );
   });
 

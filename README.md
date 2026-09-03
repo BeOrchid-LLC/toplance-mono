@@ -255,6 +255,52 @@ Not built:
 - Jobs, housing, weather or safety feeds on the companion
 - Corridors beyond the four seeded ones (see `LIVE_CORRIDORS`)
 
+### Clerk, one instance per environment
+
+Every environment gets its own Clerk instance, and the two keys reach the
+container by different routes:
+
+| Key | Kind | Where it goes in Coolify |
+| --- | --- | --- |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | build-time | **Build argument** — `NEXT_PUBLIC_*` is inlined into the client bundle by `npm run build`, so setting it as an environment variable does nothing |
+| `CLERK_SECRET_KEY` | runtime | Environment variable |
+
+They must be a pair from the same instance. Changing the publishable key
+requires a **rebuild**, not a restart: the old value is already baked into the
+JavaScript that browsers download.
+
+Do not point a deployed environment at a development instance. A `pk_test_`
+instance runs in `cookieless_dev` mode with `url_based_session_syncing`: the
+session lives on the `*.clerk.accounts.dev` domain and is carried in a
+`__clerk_db_jwt` query parameter rather than in a first-party cookie on ours.
+The browser then holds a session the server cannot read, and the two disagree —
+`proxy.ts` sees a signed-out visitor and renders `/sign-in`, while clerk-js
+answers the submitted form with `400 session_exists` ("You're already signed
+in"). The form sends them to `/go`, the proxy sends them back, and the visitor
+loops between the two. A staging instance also shares its user pool with every
+developer's laptop, which is its own reason not to.
+
+Creating the instance for a domain:
+
+1. In the Clerk Dashboard, create a separate **application** for the
+   environment — an application has one development and one production
+   instance, so staging and production cannot share one.
+2. Open its production instance and add the domain (`toplance.ca` for staging).
+3. Add the DNS records Clerk lists. Take the exact targets from the dashboard —
+   they are per-instance — but expect CNAMEs for `clerk.` and `accounts.` (the
+   Frontend API and the hosted account portal) plus `clkmail.` and two
+   `clk._domainkey.` records for email delivery. Clerk verifies them before it
+   issues live keys.
+4. Put the `pk_live_…` in Coolify as a build argument and the `sk_live_…` as an
+   environment variable, then trigger a rebuild.
+5. Confirm it took: sign in on the deployed site and check for a `__session`
+   cookie on our own domain in DevTools → Application → Cookies. A development
+   instance will not set one.
+
+Turning on the settings this app depends on is per instance and does not carry
+over from development — email verification code as a first factor, single
+session mode, and staff TOTP (see **Staff two-factor authentication** above).
+
 ### Scheduling the post-arrival digest
 
 `/api/cron/companion` is not self-triggering. It needs a scheduler calling it

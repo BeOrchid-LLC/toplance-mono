@@ -176,6 +176,23 @@ describe("foreign jurisdiction detection", () => {
     }
   });
 
+  it("reads PNG as a country, not as the image format", () => {
+    // Both readings turn up in real rows. The contamination above says
+    // "visa status in PNG"; an ordinary photo row says "JPG or PNG".
+    // Naming another image format is what separates them.
+    const noise = normaliseDraft(
+      withRows("Two passport photographs (JPG or PNG, 45x35mm)"),
+      { nationalityIso: "ng", destinationIso: "ie" }
+    );
+    expect(noise.foreignJurisdiction).toEqual([]);
+
+    const real = normaliseDraft(withRows("Proof of PNG residency"), {
+      nationalityIso: "ng",
+      destinationIso: "ie",
+    });
+    expect(real.foreignJurisdiction.map((f) => f.country)).toContain("png");
+  });
+
   it("does not flag the corridor's own two ends", () => {
     // A corridor to India will legitimately say "India" — flagging that
     // would make the check noise, and noise gets switched off.

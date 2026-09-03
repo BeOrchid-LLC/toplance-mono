@@ -128,6 +128,30 @@ const JURISDICTION_TELLS: Record<string, string> = {
 };
 
 
+/**
+ * Tells that a bare substring test gets wrong, and the extra question to
+ * ask before believing one.
+ *
+ * `png` is the only such tell so far, and it is genuinely ambiguous: it
+ * is both Papua New Guinea and an image format. Both readings appear in
+ * real requirement rows —
+ *
+ *   "Evidence of your visa status in PNG / Solomon Islands"  ← the tell
+ *   "Two passport photographs (JPG or PNG, 45×35mm)"         ← noise
+ *
+ * — so neither dropping the tell nor matching on word boundaries works:
+ * PNG is a standalone word in both. What separates them is that the
+ * false positive names *another image format* alongside it, and the real
+ * contamination never does. Cheap, and it fails toward flagging.
+ *
+ * The alternative was deleting `png` and relying on "papua new guinea",
+ * which the contamination above does not spell out — it would have gone
+ * straight through.
+ */
+const TELL_GUARDS: Record<string, (haystack: string) => boolean> = {
+  png: (haystack) => !/\b(jpe?g|tiff?|bmp|gif|heic|webp)\b/.test(haystack),
+};
+
 export type NormalisedDraft = {
   draft: Draft;
   /** Requirements thrown away, and why — printed for the operator. */
@@ -293,7 +317,10 @@ export function normaliseDraft(
     const haystack =
       `${r.docKey} ${r.name} ${r.description ?? ""}`.replace(/_/g, " ").toLowerCase();
     const hit = Object.entries(JURISDICTION_TELLS).find(
-      ([tell, iso]) => haystack.includes(tell) && !own.has(iso)
+      ([tell, iso]) =>
+        haystack.includes(tell) &&
+        !own.has(iso) &&
+        (TELL_GUARDS[tell]?.(haystack) ?? true)
     );
     return hit ? [{ name: r.name, country: hit[0] }] : [];
   });

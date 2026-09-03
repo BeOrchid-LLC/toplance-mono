@@ -8,6 +8,8 @@ import {
   NATIONALITY_ISO,
   PURPOSE_ISO,
   PURPOSES,
+  corridorMrz,
+  countryFromIso2,
   isCorridorLive,
   liveDestinationsFor,
   liveNationalities,
@@ -208,5 +210,51 @@ describe("business as a purpose", () => {
   it("keeps every purpose label mapping to a distinct code", () => {
     const codes = Object.values(PURPOSE_ISO);
     expect(new Set(codes).size).toBe(codes.length);
+  });
+});
+
+/**
+ * `BY_ISO2` is built with an `if (three)` guard, so a name missing from
+ * `ISO3` is not a missing alpha-3 code — the destination drops out of
+ * the lookup entirely. `DESTINATION_ISO` widened from 8 to 50 while
+ * `ISO3` stayed at 17, which left 34 destinations resolving to null:
+ * the ops corridor heading rendered "Nigeria → IN" rather than
+ * "Nigeria → India", and `corridorMrz` returned null so the traveller's
+ * MRZ band vanished instead of degrading.
+ *
+ * Asserted over the maps themselves rather than a written-down list, so
+ * widening the menu again fails here rather than in the UI.
+ */
+describe("every code the menus offer resolves to a country", () => {
+  it.each(Object.entries(DESTINATION_ISO))(
+    "resolves %s (%s) to a name and an alpha-3",
+    (name, code) => {
+      const country = countryFromIso2(code);
+      expect(country, `${name} (${code}) has no ISO3 entry`).not.toBeNull();
+      expect(country?.name).toBe(name);
+      expect(country?.iso3).toMatch(/^[A-Z]{3}$/);
+    }
+  );
+
+  it.each(Object.entries(NATIONALITY_ISO))(
+    "resolves the %s passport (%s)",
+    (name, code) => {
+      expect(countryFromIso2(code), `${name} has no ISO3 entry`).not.toBeNull();
+    }
+  );
+
+  it("builds an MRZ for a corridor to a newly added destination", () => {
+    // India was one of the 34. A null here is the MRZ band disappearing.
+    expect(corridorMrz("ng", "in", "business")).not.toBeNull();
+    expect(corridorMrz("ng", "in", "business")).toContain("NGA");
+    expect(corridorMrz("ng", "in", "business")).toContain("IND");
+  });
+
+  it("still refuses a code no menu offers, rather than inventing one", () => {
+    // `iso3()` falls back to the first three letters for marketing copy;
+    // this path must not, or an unknown `xx` prints as `XX` on a
+    // traveller's own data page.
+    expect(countryFromIso2("xx")).toBeNull();
+    expect(corridorMrz("ng", "xx", "business")).toBeNull();
   });
 });

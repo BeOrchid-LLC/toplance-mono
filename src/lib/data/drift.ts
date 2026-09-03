@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 
-import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { corridorRequirements, corridors } from "@/lib/db/schema";
@@ -199,9 +199,24 @@ export async function recheckCorridors({
     })
     .from(corridors)
     .where(scope)
-    // Never-hashed first, then the oldest-known — the same
-    // most-overdue-first ordering the digest cron uses.
-    .orderBy(corridors.sourceHash, desc(corridors.version))
+    /**
+     * Never-hashed first, then least-recently-verified.
+     *
+     * `nulls first` is explicit because it has to be: Postgres defaults
+     * ASC to NULLS LAST, so a plain `.orderBy(corridors.sourceHash)`
+     * sorted un-baselined rows *behind* every hashed one. With 52
+     * corridors and a default limit of 25, the sweep spent its whole
+     * budget on rows it had already seen and never reached the ones it
+     * exists to baseline — silently, with a healthy-looking log.
+     *
+     * The tiebreak is `last_verified_at`, not `version`: ordering by a
+     * sha256 digest and then by version is arbitrary twice over, since
+     * neither says anything about how overdue a corridor is.
+     */
+    .orderBy(
+      sql`${corridors.sourceHash} asc nulls first`,
+      sql`${corridors.lastVerifiedAt} asc nulls first`
+    )
     .limit(limit);
 
   const result: DriftResult = {

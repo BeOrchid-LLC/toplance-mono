@@ -180,6 +180,55 @@ const ISO3: Record<string, string> = {
   "Saudi Arabia": "SAU",
   France: "FRA",
   Portugal: "PRT",
+
+  /**
+   * The rest of `DESTINATION_ISO`, which widened to 50 without this map
+   * following it. `BY_ISO2` below is built with an `if (three)` guard, so
+   * a destination missing here is not a missing alpha-3 — it is dropped
+   * from the lookup entirely: `countryFromIso2("in")` returned null, the
+   * ops corridor heading read "Nigeria → IN" instead of "Nigeria →
+   * India", and `corridorMrz` returned null so the traveller's MRZ band
+   * disappeared rather than degrading. Thirty-four destinations were in
+   * that state.
+   */
+  Egypt: "EGY",
+  Morocco: "MAR",
+  Rwanda: "RWA",
+  Ethiopia: "ETH",
+  Tanzania: "TZA",
+  Senegal: "SEN",
+  "Ivory Coast": "CIV",
+  Benin: "BEN",
+  Togo: "TGO",
+  Uganda: "UGA",
+
+  Italy: "ITA",
+  Spain: "ESP",
+  Belgium: "BEL",
+  Sweden: "SWE",
+  Norway: "NOR",
+  Denmark: "DNK",
+  Switzerland: "CHE",
+  Austria: "AUT",
+  Poland: "POL",
+  Czechia: "CZE",
+  Greece: "GRC",
+  Malta: "MLT",
+
+  Qatar: "QAT",
+  Kuwait: "KWT",
+  Bahrain: "BHR",
+  Oman: "OMN",
+  Jordan: "JOR",
+
+  China: "CHN",
+  India: "IND",
+  Japan: "JPN",
+  Singapore: "SGP",
+  Malaysia: "MYS",
+
+  Brazil: "BRA",
+  Mexico: "MEX",
 };
 
 export function iso3(name: string): string {

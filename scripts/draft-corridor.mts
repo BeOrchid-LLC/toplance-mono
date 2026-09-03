@@ -194,6 +194,16 @@ try {
   const transcripts: Source[] = sourceTexts.map((path) => {
     const raw = readFileSync(path, "utf8");
     const newline = raw.indexOf("\n");
+    // A transcript with no newline at all would otherwise slice(0, -1):
+    // the URL silently loses its last character, still passes the http(s)
+    // test below, and every requirement in the corridor is then written
+    // citing a link that 404s — the exact provenance a reviewer is meant
+    // to click through before approving.
+    if (newline === -1) {
+      throw new Error(
+        `${path}: expected the source URL on the first line and the page text below it, but the file is a single line`
+      );
+    }
     const url = raw.slice(0, newline).trim();
     if (!/^https?:\/\//i.test(url)) {
       throw new Error(

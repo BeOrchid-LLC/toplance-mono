@@ -24,8 +24,14 @@ import { fileURLToPath } from "node:url";
  * checklist names many different things and an overview page names the
  * same one repeatedly.
  *
- *   npm run sources:verify           # every row that has a URL
- *   npm run sources:verify -- --all  # including unresearched (reports gaps)
+ *   npm run sources:verify           # every row with a URL, except `unusable`
+ *   npm run sources:verify -- --all  # re-probe `unusable` rows too
+ *
+ * `--all` does not widen the set to unresearched rows — those already
+ * carry a URL and are already in scope. What it adds is `unusable`, on
+ * the assumption that a page which failed once may have been rewritten.
+ * Rows whose `unusable` verdict was written by hand are held back even
+ * then; see `isMachineEvidence`.
  */
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -80,11 +86,45 @@ async function probe(url: string) {
   return { status: response.status, chars: text.length, ...score(text) };
 }
 
+/**
+ * Evidence this script wrote itself, as opposed to a verdict a person
+ * recorded by hand.
+ *
+ * The distinction matters because a probe cannot reproduce a *drafting*
+ * outcome. The EUR-Lex rows are the case: they score well on nouns and
+ * are marked `unusable` anyway, with the hand-written reason "probe
+ * passed but DRAFTING FAILED … A legal instrument is not a checklist
+ * page." Re-probing them flips them back to `verified` and overwrites
+ * that sentence, sending the next operator to draft from a source
+ * already proven to fail — with the proof deleted.
+ */
+function isMachineEvidence(evidence: string | undefined): boolean {
+  if (!evidence) return true;
+  return (
+    /^\d{3} · \d+ch · \d+ distinct document nouns$/.test(evidence) ||
+    /^unreachable \(/.test(evidence)
+  );
+}
+
 const rows: Row[] = JSON.parse(readFileSync(REGISTRY, "utf8"));
 const all = process.argv.includes("--all");
-const todo = rows.filter((r) => r.sourceUrl && (all || r.status !== "unusable"));
 
-console.log(`Probing ${todo.length} of ${rows.length} corridor sources...\n`);
+/** A hand-written verdict is sticky — `--all` re-probes, it does not overrule. */
+const isManualVerdict = (r: Row) =>
+  r.status === "unusable" && !isMachineEvidence(r.evidence);
+
+const held = rows.filter((r) => r.sourceUrl && all && isManualVerdict(r));
+const todo = rows.filter(
+  (r) => r.sourceUrl && !isManualVerdict(r) && (all || r.status !== "unusable")
+);
+
+console.log(`Probing ${todo.length} of ${rows.length} corridor sources...`);
+if (held.length) {
+  console.log(
+    `Holding ${held.length} row(s) with a hand-written verdict — re-probe them by clearing their evidence.`
+  );
+}
+console.log();
 
 for (let i = 0; i < todo.length; i += 6) {
   await Promise.all(

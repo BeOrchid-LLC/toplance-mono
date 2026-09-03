@@ -1,4 +1,8 @@
-import type { Contribution, CorridorRuleSet } from "@/lib/visa/types";
+import type {
+  Contribution,
+  CorridorRuleSet,
+  GapField,
+} from "@/lib/visa/types";
 
 /**
  * Composing one rule set out of several providers, without letting any
@@ -33,27 +37,46 @@ const EVISA = "Official eVisa portal";
 const REGISTRATION = "Arrival registration";
 
 /**
- * Whether anything is still missing that another provider could supply.
+ * Every figure worth spending a metered request on, in one list so that
+ * `gapsIn` and a provider's `fills` cannot drift apart.
  *
- * This is the gate that keeps a complete corridor free: every provider
- * consulted behind the spine costs a request against a metered quota
- * (Travel Buddy's free tier is 120 a month, DoINeedVisa's 300), so the
- * resolver stops walking the moment there is nothing left to fill.
+ * The eVisa portal and the arrival registration are deliberately absent.
+ * Plenty of routes have neither, so counting them would send every
+ * corridor shopping for a figure that does not exist — and spend a
+ * metered request discovering that, on every page view.
+ */
+export const GAP_FIELDS = [
+  "governmentFeeMinor",
+  "processingWeeksMin",
+  "processingWeeksMax",
+  "allowedStay",
+  "passportValidity",
+  "embassyUrl",
+] as const satisfies readonly GapField[];
+
+/**
+ * Which figures this rule set is still missing.
  *
- * The eVisa portal and the arrival registration are deliberately not
- * gaps. Plenty of routes have neither, so counting them would send
- * every corridor shopping for a figure that does not exist — and spend
- * a metered request discovering that, on every page view.
+ * The resolver needs the names, not just a yes or no: knowing *that*
+ * something is missing says nothing about whether anyone left in the
+ * walk could supply it, and asking a vendor for a figure it never holds
+ * is the whole cost of the bug this replaced.
+ */
+export function gapsIn(ruleSet: CorridorRuleSet): GapField[] {
+  return GAP_FIELDS.filter((field) => ruleSet[field] == null);
+}
+
+/**
+ * Whether anything is still missing at all, regardless of who could
+ * supply it.
+ *
+ * Kept for callers that only want to know whether a rule set is whole —
+ * the resolver's cost gate needs `gapsIn` instead, because "incomplete"
+ * and "worth another request" stopped being the same question once it
+ * turned out no provider can fill every field.
  */
 export function hasGaps(ruleSet: CorridorRuleSet): boolean {
-  return (
-    ruleSet.governmentFeeMinor == null ||
-    ruleSet.processingWeeksMin == null ||
-    ruleSet.processingWeeksMax == null ||
-    ruleSet.allowedStay == null ||
-    ruleSet.passportValidity == null ||
-    ruleSet.embassyUrl == null
-  );
+  return gapsIn(ruleSet).length > 0;
 }
 
 /**

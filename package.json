@@ -13,11 +13,13 @@
     "db:migrate": "drizzle-kit migrate && node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/sql-objects.mts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/seed.mts",
+    "corridor:draft": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/draft-corridor.mts",
     "db:bucket": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/storage/ensure-bucket.mts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "sources:verify": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-sources.mts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.47",

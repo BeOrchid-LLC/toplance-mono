@@ -7,6 +7,11 @@
       "esnext"
     ],
     "allowJs": true,
+    // `scripts/*.mts` run under plain Node, which resolves neither the
+    // `@/` alias nor an extensionless import — so they reach into `src`
+    // with an explicit `.ts`. Legal here only because `noEmit` is set:
+    // nothing is compiled, so nothing can emit an unresolvable path.
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,

@@ -10,6 +10,7 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   visaName: "Visa required",
   version: 1,
   effectiveFrom: "2026-08-31",
+  lastVerifiedAt: null,
   sourceName: "Travel Buddy",
   sourceUrl: null,
   attribution: null,
@@ -113,5 +114,70 @@ describe("entryCheck", () => {
     expect(check.passportValidity).toBeNull();
     expect(check.allowedStay).toBeNull();
     expect(check.embassyUrl).toBeNull();
+  });
+});
+
+/**
+ * VisaList's four category names, which is what its rule sets carry in
+ * `visaName`. Added to the allowlist so the gap screen can say something
+ * on the 238 destinations it covers — the screen this product shows most
+ * often, because curated coverage is four corridors.
+ */
+describe("entryCheck for VisaList categories", () => {
+  const withName = (visaName: string) => ruleSet({ provider: "visalist", visaName });
+
+  it("repeats each of the four categories in our own words", () => {
+    expect(entryCheck(withName("Visa Required"))?.headline).toBe(
+      "A visa is required for your passport."
+    );
+    expect(entryCheck(withName("Visa Free"))?.headline).toBe(
+      "No visa is required for your passport."
+    );
+    expect(entryCheck(withName("E-visa"))?.headline).toBe(
+      "An online visa is required for your passport."
+    );
+    expect(entryCheck(withName("Visa on Arrival"))?.headline).toBe(
+      "A visa is required, and is issued on arrival rather than beforehand."
+    );
+  });
+
+  it("still refuses a verdict nobody put on the list", () => {
+    // The allowlist's whole reason for existing: an unanticipated
+    // category is declined rather than rendered raw.
+    expect(entryCheck(withName("Not admitted"))).toBeNull();
+    expect(entryCheck(withName("Refused"))).toBeNull();
+  });
+});
+
+/**
+ * Attribution. This screen hardcoded "Travel Buddy" in its copy, and the
+ * moment a second contributor could answer it, that became a citation
+ * pointing at a vendor the figure never came from — which is worse than
+ * no citation at all.
+ */
+describe("entryCheck attribution", () => {
+  it("names whoever actually answered", () => {
+    expect(
+      entryCheck(ruleSet({ provider: "visalist", sourceName: "VisaList" }))
+        ?.sourceName
+    ).toBe("VisaList");
+
+    expect(
+      entryCheck(ruleSet({ provider: "travelbuddy", sourceName: "Travel Buddy" }))
+        ?.sourceName
+    ).toBe("Travel Buddy");
+  });
+
+  it("falls back to the provider id rather than crediting nobody", () => {
+    expect(
+      entryCheck(ruleSet({ provider: "somevendor", sourceName: null }))?.sourceName
+    ).toBe("somevendor");
+  });
+
+  it("carries a licence credit through to the screen", () => {
+    expect(
+      entryCheck(ruleSet({ attribution: "Visa data provided by VisaList." }))
+        ?.attribution
+    ).toBe("Visa data provided by VisaList.");
   });
 });

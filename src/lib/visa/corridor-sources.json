@@ -1,0 +1,2042 @@
+[
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.gov.uk/standard-visitor/documents-you-must-provide",
+    "checkedAt": "2026-09-03",
+    "evidence": "200 \u00b7 7502ch \u00b7 4 distinct document nouns"
+  },
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.uk/skilled-worker-visa/documents-you-must-provide",
+    "checkedAt": "2026-09-03",
+    "evidence": "200 \u00b7 6482ch \u00b7 7 distinct document nouns | DRAFTED successfully"
+  },
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.uk/student-visa/documents-you-must-provide",
+    "checkedAt": "2026-09-03",
+    "evidence": "200 \u00b7 7130ch \u00b7 6 distinct document nouns | DRAFTED successfully"
+  },
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gr",
+    "destinationName": "Greece",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "gr",
+    "destinationName": "Greece",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gr",
+    "destinationName": "Greece",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gr",
+    "destinationName": "Greece",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "gr",
+    "destinationName": "Greece",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "in",
+    "destinationName": "India",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "200 \u00b7 46936ch \u00b7 8 distinct document nouns | DRAFTED successfully"
+  },
+  {
+    "destinationIso": "in",
+    "destinationName": "India",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "in",
+    "destinationName": "India",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "in",
+    "destinationName": "India",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "in",
+    "destinationName": "India",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unresearched",
+    "sourceUrl": null
+  }
+]

@@ -183,6 +183,11 @@ export function toEntryRules(payload: unknown): CorridorRuleSet | null {
     visaName: rules?.primary_rule?.name ?? "Entry rules",
     version: 1,
     effectiveFrom: new Date().toISOString().slice(0, 10),
+    // A live answer is as fresh as the moment it arrived. This provider
+    // never leads, so in practice the figure a traveller reads is the
+    // spine's — but a contributor that reported nothing here would look
+    // unchecked rather than current.
+    lastVerifiedAt: new Date().toISOString(),
     sourceName: "Travel Buddy",
     sourceUrl: embassyUrl,
     attribution: null,
@@ -229,7 +234,78 @@ export function toEntryRules(payload: unknown): CorridorRuleSet | null {
  * refresh lever.
  */
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const cache = new Map<string, { at: number; value: unknown }>();
+
+/**
+ * How long a *failed* call is remembered.
+ *
+ * A failure used to be cached for no time at all, which is the bug that
+ * emptied a month's quota: nothing was written, so the next render of
+ * the same screen asked again, and the render after that. RapidAPI does
+ * not meter a 429 — but it does meter the call that times out, and the
+ * 500 a vendor answers from its own origin, so an error path with no
+ * cache turns one broken corridor into unbounded spend.
+ *
+ * An hour, not a week: a real answer is stable for years, whereas an
+ * outage is expected to heal on its own and a corridor should not stay
+ * dark for days because of one bad afternoon.
+ */
+const FAILURE_TTL_MS = 60 * 60 * 1000;
+
+/**
+ * The ceiling on a vendor-dictated stand-down. Nothing should silence a
+ * provider for longer than its quota month, however large a number the
+ * headers carry.
+ */
+const MAX_FAILURE_TTL_MS = 31 * 24 * 60 * 60 * 1000;
+
+const cache = new Map<string, { at: number; value: unknown; ttl: number }>();
+
+/** Remember an answer — or the absence of one — for `ttl`. */
+function remember(key: string, value: unknown, ttl: number): void {
+  cache.set(key, { at: Date.now(), value, ttl });
+}
+
+/**
+ * How long to stand down after a 429, read from the vendor rather than
+ * guessed.
+ *
+ * A 429 here is usually the monthly quota, not a burst: the plan allows
+ * 120 requests and the response says exactly how many remain and how
+ * many seconds until the window resets. Retrying hourly against a quota
+ * that resets in four weeks is 670 pointless calls and 670 lines of
+ * console noise, so when the vendor states the reset we honour it.
+ * `Retry-After` is checked first because it is the standard answer to
+ * this question; the RapidAPI header is the fallback that this endpoint
+ * actually sends.
+ */
+function standDownFor(response: Response): number {
+  const retryAfter = Number(response.headers.get("retry-after"));
+  const quotaReset = Number(
+    response.headers.get("x-ratelimit-requests-reset")
+  );
+  const seconds = [retryAfter, quotaReset].find((n) => Number.isFinite(n) && n > 0);
+
+  if (seconds === undefined) return FAILURE_TTL_MS;
+  return Math.min(seconds * 1000, MAX_FAILURE_TTL_MS);
+}
+
+/**
+ * A stand-down in the largest unit that still reads as a duration.
+ *
+ * The quota window is four weeks, which the previous fixed-minutes
+ * wording announced as "40489 minutes" — a true figure that nobody can
+ * convert at a glance, in a line whose whole job is telling a developer
+ * how long the vendor is dark for.
+ */
+function humanDuration(ms: number): string {
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 90) return `${minutes} minutes`;
+
+  const hours = Math.round(ms / (60 * 60_000));
+  if (hours < 48) return `${hours} hours`;
+
+  return `${Math.round(ms / (24 * 60 * 60_000))} days`;
+}
 
 /**
  * Set after the API rejects our key. A 401 cannot heal until the key
@@ -261,7 +337,7 @@ async function fetchPayload(query: CorridorQuery): Promise<unknown> {
   const key = `${passport}:${destination}`;
 
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
+  if (hit && Date.now() - hit.at < hit.ttl) return hit.value;
 
   try {
     const response = await fetch(ENDPOINT, {
@@ -296,20 +372,41 @@ async function fetchPayload(query: CorridorQuery): Promise<unknown> {
     // one. Anything else unexpected is an outage: logged, not cached,
     // so it heals on the next view rather than in a week.
     if (response.status === 404) {
-      cache.set(key, { at: Date.now(), value: null });
+      remember(key, null, TTL_MS);
       return null;
     }
     if (!response.ok) {
-      console.error(
-        `[visa] travel buddy answered ${response.status} for ${key}`
-      );
+      // A 429 is this vendor's quota month ending, and that is an
+      // expected state rather than a fault: the response is not metered,
+      // the reset window arrives in the headers, and the screen falls
+      // back to whatever the curated table already serves. Next's dev
+      // overlay promotes *any* server-side `console.error` into a red
+      // Console Error dialog, so reporting it at that severity put a
+      // fault report over the requirements screen for a case this
+      // function handles by design. `warn` still reaches the terminal
+      // and the browser console; it just does not claim the app broke.
+      // Every other bad status is a genuine outage and stays an error.
+      const quotaSpent = response.status === 429;
+      const ttl = quotaSpent ? standDownFor(response) : FAILURE_TTL_MS;
+      // Cached before the log line, so the log line is the thing that
+      // happens once rather than once per page view.
+      remember(key, null, ttl);
+      const line =
+        `[visa] travel buddy answered ${response.status} for ${key} — ` +
+        `not asking again for ${humanDuration(ttl)}`;
+      if (quotaSpent) console.warn(line);
+      else console.error(line);
       return null;
     }
 
     const payload = await response.json();
-    cache.set(key, { at: Date.now(), value: payload });
+    remember(key, payload, TTL_MS);
     return payload;
   } catch (error) {
+    // A timeout still reached the vendor and was still metered, so this
+    // is remembered exactly like a bad status. Trying again on the next
+    // render spends the quota twice for an answer nobody received.
+    remember(key, null, FAILURE_TTL_MS);
     console.error(
       `[visa] travel buddy could not be reached for ${key}`,
       error
@@ -338,6 +435,11 @@ export async function fetchCountryContext(
 export const travelBuddyProvider: VisaDataProvider = {
   name: "travelbuddy",
   canLead: false,
+  // The mirror image of curated's list. `evisaUrl` and the arrival
+  // registration are not here because they are not gap fields at all —
+  // most routes have neither, so no request is ever worth spending to
+  // go looking for one.
+  fills: ["allowedStay", "passportValidity", "embassyUrl"],
 
   async fetch(query: CorridorQuery): Promise<CorridorRuleSet | null> {
     return toEntryRules(await fetchPayload(query));

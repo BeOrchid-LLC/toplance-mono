@@ -1,4 +1,4 @@
-import { fillGaps, hasGaps } from "@/lib/visa/merge";
+import { fillGaps, gapsIn, hasGaps } from "@/lib/visa/merge";
 import type {
   CorridorQuery,
   CorridorRuleSet,
@@ -19,10 +19,20 @@ import type {
  *    answered, and nothing later revises them.
  * 2. **Later providers fill blanks only.** See `fillGaps` for what may
  *    be filled and why the checklist may not.
- * 3. **Stop when there is nothing left to fill.** Each provider behind
- *    the spine costs a metered request, so a complete rule set ends the
- *    walk. This is the live path for every seeded corridor, which is
- *    why composition costs nothing until a corridor actually has a gap.
+ * 3. **Stop when nobody left can fill anything.** Each provider behind
+ *    the spine costs a metered request, so the walk ends as soon as the
+ *    figures still missing are ones no remaining provider declares it
+ *    can supply — including the case where nothing is missing at all.
+ *
+ *    This used to test the spine for completeness alone, which read
+ *    correctly and never once fired. Our providers are exact
+ *    complements: `corridors` has no column for allowed stay, passport
+ *    validity or embassy contact, so a curated spine is missing all
+ *    three on every row, forever. The gate therefore never closed, and
+ *    a screen that the curated table could already serve bought the
+ *    same vendor answer again on every page view — against a quota of
+ *    120 a month. Comparing gaps to what remains in the walk is what
+ *    makes the stop reachable.
  *
  * A provider that throws is logged and skipped: one vendor being down
  * must not take down a screen the curated table can already serve.
@@ -37,9 +47,18 @@ export async function resolveWith(
   // resolver that only worked in one ordering would be a trap.
   const held: CorridorRuleSet[] = [];
 
-  for (const provider of providers) {
-    // Nothing left worth paying for.
-    if (resolved && !hasGaps(resolved)) break;
+  for (const [index, provider] of providers.entries()) {
+    // Nothing left worth paying for: either the spine is whole, or the
+    // holes in it are ones nobody still to come has ever claimed to
+    // fill. `held` is not consulted — those providers already answered,
+    // so they cost nothing more and are merged after the walk.
+    if (resolved) {
+      const gaps = gapsIn(resolved);
+      const reachable = providers
+        .slice(index)
+        .some((later) => later.fills.some((field) => gaps.includes(field)));
+      if (!reachable) break;
+    }
 
     let answer: CorridorRuleSet | null = null;
     try {

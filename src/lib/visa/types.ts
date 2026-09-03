@@ -16,6 +16,16 @@ export type RequirementSpec = {
   category: string;
   isRequired: boolean;
   sortOrder: number;
+  /**
+   * Where this one requirement was read from, when that is not the
+   * corridor's own source — a visa centre publishes the checklist, the
+   * mission publishes the fee, and a traveller checking a single line
+   * needs the page that stated it, not the page that stated the rest.
+   *
+   * Null for every rule set drafted before requirements carried their
+   * own source; the screen simply shows no link for those.
+   */
+  sourceUrl: string | null;
 };
 
 /**
@@ -58,6 +68,20 @@ export type CorridorRuleSet = {
   visaName: string;
   version: number;
   effectiveFrom: string;
+  /**
+   * When a human last checked this rule set against its source, as an
+   * ISO date — not when the mission's rule took effect, which is
+   * `effectiveFrom` and answers a different question entirely.
+   *
+   * Null means nobody ever has, and the screen says exactly that. A
+   * date invented from `effectiveFrom` would read as a verification
+   * that never happened, which is the failure this field exists to make
+   * visible: a wrong UK fee sat live for months looking merely dated.
+   *
+   * An API provider sets this to the moment it answered — its data is
+   * as fresh as its response.
+   */
+  lastVerifiedAt: string | null;
   sourceName: string | null;
   sourceUrl: string | null;
   /**
@@ -107,6 +131,22 @@ export type CorridorRuleSet = {
 };
 
 /**
+ * A figure the resolver will spend a metered request to go and find.
+ *
+ * Deliberately not every nullable field on a rule set: the eVisa portal
+ * and the arrival registration are absent on plenty of perfectly
+ * ordinary routes, so treating them as gaps would send every corridor
+ * shopping for something that does not exist.
+ */
+export type GapField =
+  | "governmentFeeMinor"
+  | "processingWeeksMin"
+  | "processingWeeksMax"
+  | "allowedStay"
+  | "passportValidity"
+  | "embassyUrl";
+
+/**
  * `name` is stable and is written to analytics and (later) cache rows,
  * so it must not change once a provider ships.
  *
@@ -127,5 +167,26 @@ export interface VisaDataProvider {
    * on someone else's rule set; it may never be the rule set.
    */
   readonly canLead: boolean;
+  /**
+   * The gap fields this provider is capable of supplying — its contract,
+   * not a description of any one answer. A provider that holds no fee
+   * omits `governmentFeeMinor` here even on the corridors where it
+   * happens to know one.
+   *
+   * The resolver reads this *before* calling, so that a request is only
+   * ever spent on a figure somebody left in the walk could actually
+   * return. Without it the cost gate is unreachable: our two providers
+   * are exact complements — curated holds the fee and the decision time
+   * and structurally cannot hold the entry rules, because `corridors`
+   * has no column for them — so a curated spine always looked
+   * incomplete, and every page view bought the same vendor answer
+   * again.
+   *
+   * Declaring capability rather than inferring it from the last answer
+   * is what keeps the gate honest across corridors: a vendor that
+   * returned no stay for Germany may still hold one for Canada, and
+   * must not be written off for the whole table on one null.
+   */
+  readonly fills: readonly GapField[];
   fetch(query: CorridorQuery): Promise<CorridorRuleSet | null>;
 }

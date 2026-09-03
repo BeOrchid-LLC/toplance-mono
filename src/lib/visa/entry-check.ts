@@ -28,6 +28,18 @@ export type EntryCheck = {
   passportValidity: string | null;
   allowedStay: string | null;
   embassyUrl: string | null;
+  /**
+   * Who said so, and any credit their licence obliges us to print.
+   *
+   * Carried rather than hardcoded at the render site: this screen named
+   * "Travel Buddy" in its copy, which became a false attribution the
+   * moment a second provider could answer it — and it silently was one,
+   * crediting Travel Buddy for VisaList's data. A source line that names
+   * the wrong vendor is worse than no source line: it is a citation
+   * pointing somewhere the figure never came from.
+   */
+  sourceName: string;
+  attribution: string | null;
 };
 
 /**
@@ -53,6 +65,20 @@ const VERDICTS: Record<string, string> = {
   "visa required": "A visa is required for your passport.",
   "online visa required": "An online visa is required for your passport.",
   "visa not required": "No visa is required for your passport.",
+
+  // VisaList's four category names. They are added rather than
+  // translated at the provider because this list is the one place the
+  // product decides what it is willing to say, and a mapping hidden in
+  // `visalist.ts` would route around that decision.
+  //
+  // Each is admissible for the same reason the three above are: it is a
+  // scoped, dated statement about paperwork. None is the kind of claim
+  // the allowlist exists to refuse — "Not admitted", a categorical
+  // verdict about a whole nationality with no scope and no source.
+  "visa free": "No visa is required for your passport.",
+  "e-visa": "An online visa is required for your passport.",
+  "visa on arrival":
+    "A visa is required, and is issued on arrival rather than beforehand.",
 };
 
 /**
@@ -73,5 +99,9 @@ export function entryCheck(ruleSet: CorridorRuleSet | null): EntryCheck | null {
     passportValidity: ruleSet.passportValidity,
     allowedStay: ruleSet.allowedStay,
     embassyUrl: ruleSet.embassyUrl,
+    // The provider's own name is the fallback, so a provider added later
+    // that forgets `sourceName` is credited by id rather than anonymously.
+    sourceName: ruleSet.sourceName ?? ruleSet.provider,
+    attribution: ruleSet.attribution,
   };
 }

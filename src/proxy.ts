@@ -32,6 +32,12 @@ const isPublicRoute = createRouteMatcher([
   // — `CRON_SECRET`, checked inside the route itself, is the actual
   // guard. Public here only means "do not redirect it to sign-in".
   "/api/cron/companion",
+  // The VisaList warming job, on the same terms. Listed individually
+  // rather than as `/api/cron(.*)`: a wildcard would make every future
+  // route under that prefix public the moment someone adds one, and the
+  // secret check that makes it safe lives in the route, not here.
+  "/api/cron/visa-warm",
+  "/api/cron/corridor-recheck",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

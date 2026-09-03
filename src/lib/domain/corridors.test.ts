@@ -48,6 +48,50 @@ function seededCorridors() {
 const key = (c: { nationalityIso: string; destinationIso: string; purpose: string }) =>
   `${c.nationalityIso}->${c.destinationIso}:${c.purpose}`;
 
+describe("DESTINATION_ISO", () => {
+  it("offers at least the 50 destinations the launch requires", () => {
+    // Phase 3's headline number. This asserts a traveller can *choose*
+    // fifty destinations, which is not the same as being served for
+    // them — see `LIVE_CORRIDORS` below for what is actually curated.
+    expect(Object.keys(DESTINATION_ISO).length).toBeGreaterThanOrEqual(50);
+  });
+
+  it("maps every destination to a distinct, well-formed code", () => {
+    const codes = Object.values(DESTINATION_ISO);
+
+    for (const code of codes) expect(code).toMatch(/^[a-z]{2}$/);
+    // A duplicate would silently merge two destinations into one
+    // corridor: two names on the menu, one row in the table.
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+
+  it("keeps the codes the app already resolved before the list grew", () => {
+    // Widening the menu must not renumber the corridors that already
+    // exist — `seed.sql`, `LIVE_CORRIDORS` and every seeded application
+    // are keyed on these.
+    expect(DESTINATION_ISO).toMatchObject({
+      "United Kingdom": "gb",
+      Canada: "ca",
+      "United Arab Emirates": "ae",
+      Germany: "de",
+      "United States": "us",
+      Türkiye: "tr",
+      Ireland: "ie",
+      Netherlands: "nl",
+    });
+  });
+
+  it("names every destination the way the reverse lookups expect", () => {
+    // `itinerary.ts` and `companion-tips.ts` build iso → name from this
+    // map and put the result in a model prompt. A blank or duplicated
+    // display name there becomes a sentence about nowhere.
+    const names = Object.keys(DESTINATION_ISO);
+
+    for (const name of names) expect(name.trim()).toBe(name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+});
+
 describe("LIVE_CORRIDORS", () => {
   it("finds corridors in the seed to compare against", () => {
     // Guards the regex itself: a parser that silently matches nothing

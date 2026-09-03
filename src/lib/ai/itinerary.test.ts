@@ -68,12 +68,18 @@ describe("buildItineraryPrompt", () => {
     const prompt = buildItineraryPrompt({
       answers: { destination: MARKER },
       visaName: "Working Holiday visa",
-      destinationIso: "jp",
+      // Deliberately not a real destination. This used to be `jp`,
+      // which stopped testing anything the day the destination menu
+      // grew to fifty and Japan became one of them — the assertion
+      // still passed for the wrong reason, on the mapped-name path.
+      // `zz` is unassigned in ISO 3166-1 and reserved for private use,
+      // so no future widening of the menu can claim it.
+      destinationIso: "zz",
       locale: "en",
     });
 
     const prosePart = prose(prompt);
-    expect(prosePart).toContain("JP");
+    expect(prosePart).toContain("ZZ");
     expect(prosePart).not.toContain(MARKER);
   });
 

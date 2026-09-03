@@ -43,6 +43,20 @@
       "when": 1787823379774,
       "tag": "0005_chunky_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788344126464,
+      "tag": "0006_common_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788354800387,
+      "tag": "0007_known_vargas",
+      "breakpoints": true
     }
   ]
 }

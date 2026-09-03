@@ -25,8 +25,11 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
   let applicationId = "";
   let corridorId = "";
 
-  const ruleSet = (requirements: Array<[string, string, number]>) => ({
-    corridorId,
+  /** `[docKey, name, sortOrder, description?]`. */
+  type Req = [string, string, number, (string | null)?];
+
+  const ruleSet = (requirements: Req[], corridor: string | null = corridorId) => ({
+    corridorId: corridor,
     provider: "curated",
     attribution: null,
     contributions: [],
@@ -39,19 +42,21 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
     visaName: "Test Visa",
     version: 1,
     effectiveFrom: "2026-01-01",
+    lastVerifiedAt: null,
     sourceName: null,
     sourceUrl: null,
     processingWeeksMin: null,
     processingWeeksMax: null,
     governmentFeeMinor: null,
     governmentFeeCurrency: null,
-    requirements: requirements.map(([docKey, name, sortOrder]) => ({
+    requirements: requirements.map(([docKey, name, sortOrder, description]) => ({
       docKey,
       name,
-      description: null,
+      description: description ?? null,
       category: "identity",
       isRequired: true,
       sortOrder,
+      sourceUrl: null,
     })),
   });
 
@@ -138,6 +143,74 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
     const docs = await checklist();
     expect(docs).toHaveLength(2);
     expect(docs.find((d) => d.docKey === "passport")?.state).toBe("verified");
+  });
+
+  /**
+   * The upload screen used to read guidance by joining
+   * `applications.corridor_id` → `corridor_requirements`. That link is
+   * null for every rule set with no row of ours behind it — an API
+   * provider answering, or an application a re-seed detached — and the
+   * traveller silently got bare document names with no instructions.
+   *
+   * The fix is that a checklist row carries its own guidance, so these
+   * three pin the property the screen now depends on.
+   */
+  it("copies each requirement's guidance onto the checklist row", async () => {
+    await adoptRuleSet(
+      applicationId,
+      ruleSet([
+        ["passport", "Passport", 1, "Valid for the whole period of stay."],
+        ["funds", "Bank statements", 2, "Three full months, every page."],
+      ])
+    );
+
+    const docs = await checklist();
+    expect(docs.map((d) => d.description)).toEqual([
+      "Valid for the whole period of stay.",
+      "Three full months, every page.",
+    ]);
+  });
+
+  it("carries guidance for a rule set with no corridor row behind it", async () => {
+    await adoptRuleSet(
+      applicationId,
+      ruleSet([["passport", "Passport", 1, "Bio page only."]], null)
+    );
+
+    const [doc] = await checklist();
+    expect(doc.description).toBe("Bio page only.");
+
+    // The condition that made this a latent bug rather than a visible
+    // one: nothing to join through, and the guidance survives anyway.
+    const [app] = await db
+      .select({ corridorId: applications.corridorId })
+      .from(applications)
+      .where(eq(applications.id, applicationId));
+    expect(app.corridorId).toBeNull();
+  });
+
+  it("refreshes guidance on a row the traveller has already uploaded", async () => {
+    await adoptRuleSet(
+      applicationId,
+      ruleSet([["passport", "Passport", 1, "Old wording."]])
+    );
+
+    await db
+      .update(documents)
+      .set({ state: "verified", storagePath: "somewhere/passport.jpg" })
+      .where(eq(documents.applicationId, applicationId));
+
+    await adoptRuleSet(
+      applicationId,
+      ruleSet([["passport", "Passport", 1, "The mission reworded this."]])
+    );
+
+    const [doc] = await checklist();
+    // Guidance updates for everyone the moment a mission changes it —
+    // the property the old join gave for free and a copy must not lose.
+    expect(doc.description).toBe("The mission reworded this.");
+    // ...without disturbing the upload it describes.
+    expect(doc.state).toBe("verified");
   });
 
   it("drops an untouched row the rule set no longer asks for", async () => {

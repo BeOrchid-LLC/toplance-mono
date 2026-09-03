@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { homeFor, signedInDestination } from "@/lib/auth/routes";
+import { homeFor, signedInDestination, signInDoorFor } from "@/lib/auth/routes";
 
 describe("homeFor", () => {
   it("sends each role to its own console", () => {
@@ -95,5 +95,27 @@ describe("signedInDestination", () => {
   it("ignores an empty ?next=", () => {
     expect(signedInDestination("/sign-in", "")).toBe("/go");
     expect(signedInDestination("/sign-in", null)).toBe("/go");
+  });
+});
+
+describe("signInDoorFor", () => {
+  // A staff or employer session that lapses on a protected page must
+  // bounce back to its own branded door, not the generic traveller one —
+  // that door's "Create an account" is invite-only copy that does not
+  // apply to them.
+  it("sends a lapsed employer session to the employer door", () => {
+    expect(signInDoorFor("/employer")).toBe("/employer/sign-in");
+    expect(signInDoorFor("/employer/people/123")).toBe("/employer/sign-in");
+  });
+
+  it("sends a lapsed staff session to the operations door", () => {
+    expect(signInDoorFor("/ops")).toBe("/ops/sign-in");
+    expect(signInDoorFor("/ops/cases/123")).toBe("/ops/sign-in");
+  });
+
+  // The traveller console has no door of its own — /sign-in is it.
+  it("falls back to the generic door for everything else", () => {
+    expect(signInDoorFor("/app")).toBe("/sign-in");
+    expect(signInDoorFor("/app/documents")).toBe("/sign-in");
   });
 });

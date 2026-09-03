@@ -536,7 +536,9 @@ export function AuthForm(props: AuthFormProps) {
               id="full_name"
               name="full_name"
               autoComplete="name"
-              placeholder="As shown in your passport"
+              placeholder={
+                audience === "traveller" ? "As shown in your passport" : "Full name"
+              }
               value={typed.fullName}
               onChange={(e) => setTyped((t) => ({ ...t, fullName: e.target.value }))}
               required

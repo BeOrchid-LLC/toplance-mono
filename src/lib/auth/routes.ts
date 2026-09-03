@@ -38,6 +38,26 @@ export function homeFor(role: "traveler" | "org_member" | "staff"): string {
 }
 
 /**
+ * Which sign-in door a signed-out visitor at `pathname` should be sent
+ * to. `/employer` and `/ops` are branded, audience-specific doors with
+ * their own copy — a staff member whose 30-minute idle session lapses on
+ * a case page should land back on "Staff access only", not the generic
+ * traveller door with its invite-only "Create an account" link, which
+ * does not apply to them and answers a question they did not ask.
+ * Everything else (including `/app`, which has no console-specific door
+ * of its own) falls back to the generic door.
+ */
+export function signInDoorFor(pathname: string): string {
+  if (pathname === "/employer" || pathname.startsWith("/employer/")) {
+    return "/employer/sign-in";
+  }
+  if (pathname === "/ops" || pathname.startsWith("/ops/")) {
+    return "/ops/sign-in";
+  }
+  return "/sign-in";
+}
+
+/**
  * A `next` value is only trusted when it cannot leave the site: it must
  * be a path, not an absolute URL (`https://…`), a protocol-relative one
  * (`//…`), or a backslash variant browsers normalise into one.

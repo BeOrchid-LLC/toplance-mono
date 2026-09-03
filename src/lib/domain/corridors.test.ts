@@ -7,6 +7,7 @@ import {
   LIVE_CORRIDORS,
   NATIONALITY_ISO,
   PURPOSE_ISO,
+  PURPOSES,
   isCorridorLive,
   liveDestinationsFor,
   liveNationalities,
@@ -187,5 +188,25 @@ describe("liveNationalities", () => {
     expect(liveNationalities().map((n) => NATIONALITY_ISO[n]).sort()).toEqual(
       [...declared].sort()
     );
+  });
+});
+
+describe("business as a purpose", () => {
+  it("is offered by the intake agent and maps to the enum value", () => {
+    // The agent reads `PURPOSE_ISO` for what it will accept, so a
+    // purpose absent here is one a traveller cannot express at all.
+    expect(PURPOSE_ISO.Business).toBe("business");
+    expect(PURPOSES).toContain("Business");
+  });
+
+  it("is offered next to Work rather than beside Tourism", () => {
+    // Travellers here are sponsored by an organisation; a trip for
+    // meetings belongs with employment, not with holidays.
+    expect(PURPOSES.indexOf("Business")).toBe(PURPOSES.indexOf("Work") + 1);
+  });
+
+  it("keeps every purpose label mapping to a distinct code", () => {
+    const codes = Object.values(PURPOSE_ISO);
+    expect(new Set(codes).size).toBe(codes.length);
   });
 });

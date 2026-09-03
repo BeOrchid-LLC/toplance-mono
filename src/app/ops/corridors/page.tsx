@@ -6,6 +6,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { opsNav } from "@/components/ops/ops-nav";
 import { Shell } from "@/components/shared/shell";
 import {
   Table,
@@ -113,10 +114,7 @@ export default async function OpsCorridorsPage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[
-          { href: "/ops", label: "Case queue" },
-          { href: "/ops/corridors", label: "Corridors" },
-        ]}
+        nav={opsNav}
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}

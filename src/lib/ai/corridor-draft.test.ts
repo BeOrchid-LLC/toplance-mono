@@ -145,3 +145,157 @@ describe("buildDraftPrompt", () => {
     expect(prompt).toContain("leave the requirement out entirely");
   });
 });
+
+/**
+ * Wrong-jurisdiction detection.
+ *
+ * Four real contaminations were caught by hand on 2026-09-03 and each was
+ * a single row: a PNG residency line in an Australian checklist, a US
+ * green card in an Egyptian one, an Indian university certificate in a
+ * Polish one, a Turkish family book in an Irish one. Under 5% of rows
+ * every time, in an otherwise correct document from the right government.
+ */
+describe("foreign jurisdiction detection", () => {
+  const withRows = (...names: string[]) =>
+    draft({
+      requirements: names.map((name, i) =>
+        requirement({ docKey: `d${i}`, name })
+      ),
+    });
+
+  it("flags the real contaminations that got through by hand", () => {
+    const cases: [string, string][] = [
+      ["Evidence of your visa status in PNG / Solomon Islands", "png"],
+      ["The original certificate from the university in India", "india"],
+      ["Extract of Turkish family book (Nüfus)", "turkish"],
+    ];
+
+    for (const [row, tell] of cases) {
+      const { foreignJurisdiction } = normaliseDraft(withRows(row), { nationalityIso: "ng", destinationIso: "ie" });
+      expect(foreignJurisdiction.map((f) => f.country)).toContain(tell);
+    }
+  });
+
+  it("does not flag the corridor's own two ends", () => {
+    // A corridor to India will legitimately say "India" — flagging that
+    // would make the check noise, and noise gets switched off.
+    const { foreignJurisdiction } = normaliseDraft(
+      withRows("Copy of letter from the institute in India"),
+      { nationalityIso: "ng", destinationIso: "in" }
+    );
+
+    expect(foreignJurisdiction).toEqual([]);
+  });
+
+  it("stays quiet on a clean checklist", () => {
+    const { foreignJurisdiction } = normaliseDraft(
+      withRows("Passport", "Bank statement", "Letter of acceptance"),
+      { nationalityIso: "ng", destinationIso: "pl" }
+    );
+
+    expect(foreignJurisdiction).toEqual([]);
+  });
+
+  it("reports rather than drops, so a real requirement is not lost", () => {
+    const result = normaliseDraft(withRows("Police certificate from Ghana"), { nationalityIso: "ng", destinationIso: "pl" });
+
+    // Someone who lived in Ghana genuinely may need this. The person
+    // reviewing decides; a word list must not.
+    expect(result.draft.requirements).toHaveLength(1);
+    expect(result.foreignJurisdiction).toHaveLength(1);
+  });
+});
+
+/**
+ * The contamination that named no country.
+ *
+ * An Irish study checklist drawn from the New Delhi Visa Office passed a
+ * country-name check cleanly: its tell was "(inc. DigiLocker)", India's
+ * government document wallet. A checklist written for one jurisdiction
+ * leaks that jurisdiction's infrastructure, not only its name.
+ */
+describe("national-service tells", () => {
+  const row = (name: string) =>
+    normaliseDraft(
+      draft({ requirements: [requirement({ name })] }),
+      { nationalityIso: "ng", destinationIso: "ie" }
+    ).foreignJurisdiction;
+
+  it("catches a service name where no country is mentioned", () => {
+    expect(row("Previous educational qualifications (inc. DigiLocker)")).toHaveLength(1);
+    expect(row("Copy of Aadhaar card")).toHaveLength(1);
+    expect(row("TWO copies of green card (front and back)")).toHaveLength(1);
+  });
+
+  it("still passes an ordinary requirement", () => {
+    expect(row("Detailed bank statements covering 6 months")).toEqual([]);
+  });
+});
+
+/**
+ * The guard's own failure mode: crying wolf.
+ *
+ * The first version compared the word "China" against the ISO string
+ * "cn" and flagged every Chinese corridor for naming China — and Poland
+ * for saying "e-konsulat", its own appointment system. A guard that
+ * fires on correct rows is one somebody switches off, so each tell now
+ * maps to the country it belongs to.
+ */
+describe("jurisdiction guard does not cry wolf", () => {
+  const flags = (name: string, destinationIso: string) =>
+    normaliseDraft(draft({ requirements: [requirement({ name })] }), {
+      nationalityIso: "ng",
+      destinationIso,
+    }).foreignJurisdiction;
+
+  it("allows the destination to name itself", () => {
+    expect(flags("Other materials required by the Consulate of P.R.China", "cn")).toEqual([]);
+    expect(flags("Copy of letter from the institute in India", "in")).toEqual([]);
+  });
+
+  it("allows a destination's own national service", () => {
+    // Poland's appointment system, on a Poland corridor.
+    expect(flags("A visa application form filled via e-konsulat", "pl")).toEqual([]);
+  });
+
+  it("still flags the same service on someone else's corridor", () => {
+    expect(flags("Qualifications (inc. DigiLocker)", "ie")).toHaveLength(1);
+    expect(flags("Other materials required by the Consulate of P.R.China", "ie")).toHaveLength(1);
+  });
+});
+
+describe("the tell can hide in the document key", () => {
+  it("scans the key, not only the prose", () => {
+    // A Danish draft produced "One passport photo" — clean text — under
+    // the key `passport_photo_norwegian_mission`. Norway represents
+    // Denmark where it has no embassy, so the key recorded a
+    // jurisdiction the requirement text never mentioned.
+    const { foreignJurisdiction } = normaliseDraft(
+      draft({
+        requirements: [
+          requirement({
+            docKey: "passport_photo_norwegian_mission",
+            name: "One passport photo",
+          }),
+        ],
+      }),
+      { nationalityIso: "ng", destinationIso: "dk" }
+    );
+
+    expect(foreignJurisdiction).toHaveLength(1);
+    expect(foreignJurisdiction[0].country).toBe("norwegian");
+  });
+
+  it("leaves a Norwegian corridor's own missions alone", () => {
+    const { foreignJurisdiction } = normaliseDraft(
+      draft({
+        requirements: [
+          requirement({ docKey: "photo_norwegian_mission", name: "One passport photo" }),
+        ],
+      }),
+      { nationalityIso: "ng", destinationIso: "no" }
+    );
+
+    expect(foreignJurisdiction).toEqual([]);
+  });
+});

@@ -66,3 +66,29 @@ describe("freshnessOf", () => {
     expect(result.notice).toContain("200 days ago");
   });
 });
+
+/**
+ * `business` was added to the purpose enum after the rest, so these pin
+ * the two things a new purpose can silently get wrong: no staleness
+ * window at all, or one copied from the wrong neighbour.
+ */
+describe("business as a purpose", () => {
+  it("has a staleness window", () => {
+    // `STALE_AFTER_DAYS` is a `Record<TravelPurpose, …>`, so a missing
+    // purpose is a compile error — but a *wrong* one is not.
+    expect(STALE_AFTER_DAYS.business).toBe(90);
+  });
+
+  it("ages like work, not like tourism", () => {
+    // Both turn on sponsor and company evidence and move when a mission
+    // changes what it wants from an employer. Tourism's 180 days would
+    // let a stale business corridor run twice as long unflagged.
+    expect(STALE_AFTER_DAYS.business).toBe(STALE_AFTER_DAYS.work);
+    expect(STALE_AFTER_DAYS.business).toBeLessThan(STALE_AFTER_DAYS.tourism);
+  });
+
+  it("goes stale on the same boundary as every other purpose", () => {
+    const at = new Date(NOW.getTime() - 91 * 86_400_000).toISOString();
+    expect(freshnessOf(at, "business", NOW).state).toBe("stale");
+  });
+});

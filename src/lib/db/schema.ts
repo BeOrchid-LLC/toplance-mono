@@ -86,6 +86,24 @@ export const travelPurpose = pgEnum("travel_purpose", [
   "study",
   "medical",
   "relocation",
+  /**
+   * Meetings, trade, conferences — a distinct visa category almost
+   * everywhere, not a flavour of tourism.
+   *
+   * Appended rather than inserted in purpose order, because Postgres
+   * `ADD VALUE` appends and a reordered enum would be a rewrite rather
+   * than an additive migration. Enum position carries no meaning here;
+   * the order the intake agent offers purposes in is `PURPOSES` in
+   * `@/lib/domain/corridors`.
+   *
+   * Added because the sources say it is first-class: India lists
+   * e-Business among its e-Visa categories, and the EU Visa Code's
+   * Annex II puts business trips *first*, ahead of study and tourism.
+   * It also fits this product better than tourism does — a traveller
+   * here is sponsored by an organisation, and an employee flying out
+   * for meetings is nearer Toplance's customer than a holidaymaker.
+   */
+  "business",
 ]);
 
 export const invitationStatus = pgEnum("invitation_status", [

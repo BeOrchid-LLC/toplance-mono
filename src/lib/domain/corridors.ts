@@ -14,6 +14,7 @@ export type CorridorChip = { name: string; flag: string };
  */
 export const PURPOSE_ISO: Record<string, TravelPurpose> = {
   Work: "work",
+  Business: "business",
   Study: "study",
   Tourism: "tourism",
   Medical: "medical",
@@ -186,7 +187,17 @@ export function iso3(name: string): string {
 }
 
 /** The purposes the intake agent can resolve, in the order it offers them. */
-export const PURPOSES = ["Work", "Study", "Relocation", "Medical", "Tourism"] as const;
+export const PURPOSES = [
+  "Work",
+  // Next to Work rather than beside Tourism: a traveller here is
+  // sponsored by an organisation, so a trip for meetings is closer to
+  // the one above it than to a holiday.
+  "Business",
+  "Study",
+  "Relocation",
+  "Medical",
+  "Tourism",
+] as const;
 
 export type Purpose = (typeof PURPOSES)[number];
 

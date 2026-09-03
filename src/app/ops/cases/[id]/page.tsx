@@ -13,6 +13,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
 import { ClaimButton } from "@/components/ops/claim-button";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { opsNav } from "@/components/ops/ops-nav";
 import { ReviewRow } from "@/components/ops/review-row";
 import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
@@ -125,7 +126,7 @@ export default async function OpsCasePage({
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[{ href: "/ops", label: "Case queue" }]}
+        nav={opsNav}
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}

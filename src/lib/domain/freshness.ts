@@ -31,6 +31,10 @@ export type Freshness =
  */
 export const STALE_AFTER_DAYS: Record<TravelPurpose, number> = {
   work: 90,
+  // Business tracks work rather than tourism: both turn on sponsor and
+  // company evidence, and both move when a mission changes what it
+  // wants from an employer.
+  business: 90,
   relocation: 90,
   medical: 90,
   study: 180,

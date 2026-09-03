@@ -1,23 +1,1172 @@
 [
   {
-    "destinationIso": "gb",
-    "destinationName": "United Kingdom",
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: UAE government domains are NETWORK-UNREACHABLE from this environment \u2014 u.ae, icp.gov.ae, gdrfad.gov.ae and mohre.gov.ae all resolve in DNS (u.ae -> 79.98.126.26) but time out at TCP connect, from Node, curl and a real browser alike. UAE commercial domains on the same network are fine (emirates.com 307, visitdubai.com 302), so this is specific to .gov.ae and u.ae, not a general outage. Distinct from the US/Germany case: those are reachable and refuse (403); these never connect. Retry from a different network before concluding the sources do not exist."
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: UAE government domains are NETWORK-UNREACHABLE from this environment \u2014 u.ae, icp.gov.ae, gdrfad.gov.ae and mohre.gov.ae all resolve in DNS (u.ae -> 79.98.126.26) but time out at TCP connect, from Node, curl and a real browser alike. UAE commercial domains on the same network are fine (emirates.com 307, visitdubai.com 302), so this is specific to .gov.ae and u.ae, not a general outage. Distinct from the US/Germany case: those are reachable and refuse (403); these never connect. Retry from a different network before concluding the sources do not exist."
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: UAE government domains are NETWORK-UNREACHABLE from this environment \u2014 u.ae, icp.gov.ae, gdrfad.gov.ae and mohre.gov.ae all resolve in DNS (u.ae -> 79.98.126.26) but time out at TCP connect, from Node, curl and a real browser alike. UAE commercial domains on the same network are fine (emirates.com 307, visitdubai.com 302), so this is specific to .gov.ae and u.ae, not a general outage. Distinct from the US/Germany case: those are reachable and refuse (403); these never connect. Retry from a different network before concluding the sources do not exist."
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: UAE government domains are NETWORK-UNREACHABLE from this environment \u2014 u.ae, icp.gov.ae, gdrfad.gov.ae and mohre.gov.ae all resolve in DNS (u.ae -> 79.98.126.26) but time out at TCP connect, from Node, curl and a real browser alike. UAE commercial domains on the same network are fine (emirates.com 307, visitdubai.com 302), so this is specific to .gov.ae and u.ae, not a general outage. Distinct from the US/Germany case: those are reachable and refuse (403); these never connect. Retry from a different network before concluding the sources do not exist."
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: UAE government domains are NETWORK-UNREACHABLE from this environment \u2014 u.ae, icp.gov.ae, gdrfad.gov.ae and mohre.gov.ae all resolve in DNS (u.ae -> 79.98.126.26) but time out at TCP connect, from Node, curl and a real browser alike. UAE commercial domains on the same network are fine (emirates.com 307, visitdubai.com 302), so this is specific to .gov.ae and u.ae, not a general outage. Distinct from the US/Germany case: those are reachable and refuse (403); these never connect. Retry from a different network before concluding the sources do not exist."
+  },
+  {
+    "destinationIso": "ae",
+    "destinationName": "United Arab Emirates",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://u.ae/en/information-and-services/visa-and-emirates-id",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: UAE government domains are NETWORK-UNREACHABLE from this environment \u2014 u.ae, icp.gov.ae, gdrfad.gov.ae and mohre.gov.ae all resolve in DNS (u.ae -> 79.98.126.26) but time out at TCP connect, from Node, curl and a real browser alike. UAE commercial domains on the same network are fine (emirates.com 307, visitdubai.com 302), so this is specific to .gov.ae and u.ae, not a general outage. Distinct from the US/Germany case: those are reachable and refuse (403); these never connect. Retry from a different network before concluding the sources do not exist."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: migration.gv.at returns 853ch."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "at",
+    "destinationName": "Austria",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: migration.gv.at returns 853ch."
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+  },
+  {
+    "destinationIso": "au",
+    "destinationName": "Australia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: Belgium routes through a visa centre; dofi.ibz.be long-stay pages return 310ch."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "be",
+    "destinationName": "Belgium",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: Belgium routes through a visa centre; dofi.ibz.be long-stay pages return 310ch."
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.gov.uk/standard-visitor/documents-you-must-provide",
+    "sourceUrl": null,
     "checkedAt": "2026-09-03",
-    "evidence": "200 \u00b7 7502ch \u00b7 4 distinct document nouns"
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "bh",
+    "destinationName": "Bahrain",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "bj",
+    "destinationName": "Benin",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
+    "checkedAt": "2026-09-03",
+    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
+    "checkedAt": "2026-09-03",
+    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
+    "checkedAt": "2026-09-03",
+    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
+    "checkedAt": "2026-09-03",
+    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
+    "checkedAt": "2026-09-03",
+    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+  },
+  {
+    "destinationIso": "br",
+    "destinationName": "Brazil",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
+    "checkedAt": "2026-09-03",
+    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "IRCC checklist PDFs for visitor (IMM5484) and work (IMM5488) 301-redirect to the canada.ca CDN, which refuses the request. Only study-permit forms are reachable on ircc.canada.ca."
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "IRCC checklist PDFs for visitor (IMM5484) and work (IMM5488) 301-redirect to the canada.ca CDN, which refuses the request. Only study-permit forms are reachable on ircc.canada.ca."
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "IRCC checklist PDFs for visitor (IMM5484) and work (IMM5488) 301-redirect to the canada.ca CDN, which refuses the request. Only study-permit forms are reachable on ircc.canada.ca."
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://ircc.canada.ca/english/pdf/kits/forms/IMM5820E.pdf",
+    "evidence": "DRAFTED successfully 2026-09-03 from the official IRCC PDF (13 docs)."
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "IRCC checklist PDFs for visitor (IMM5484) and work (IMM5488) 301-redirect to the canada.ca CDN, which refuses the request. Only study-permit forms are reachable on ircc.canada.ca."
+  },
+  {
+    "destinationIso": "ca",
+    "destinationName": "Canada",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "IRCC checklist PDFs for visitor (IMM5484) and work (IMM5488) 301-redirect to the canada.ca CDN, which refuses the request. Only study-permit forms are reachable on ircc.canada.ca."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+  },
+  {
+    "destinationIso": "ch",
+    "destinationName": "Switzerland",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "ci",
+    "destinationName": "Ivory Coast",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "cm",
+    "destinationName": "Cameroon",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://lagos.china-consulate.gov.cn/eng/zytz/202409/t20240908_11487232.htm",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03. Consulate General Lagos guidelines for Nigerian citizens: 15 distinct document nouns, the richest source found. Yields category-correct documents (JW201/JW202, Work Permit Notification Letter, Invitation TE)."
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://lagos.china-consulate.gov.cn/eng/zytz/202409/t20240908_11487232.htm",
+    "checkedAt": "2026-09-03",
+    "evidence": "L-visa list came back with 4 rows including 'tourist group (more than 5 people)', a condition not a document. Deleted."
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://lagos.china-consulate.gov.cn/eng/zytz/202409/t20240908_11487232.htm",
+    "checkedAt": "2026-09-03",
+    "evidence": "Source covers Q1/S1 family reunion (43 hits) but the draft returned the Z work-visa list instead. Mis-categorised, deleted. Retry needs a prompt that names the visa category."
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://lagos.china-consulate.gov.cn/eng/zytz/202409/t20240908_11487232.htm",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03. Consulate General Lagos guidelines for Nigerian citizens: 15 distinct document nouns, the richest source found. Yields category-correct documents (JW201/JW202, Work Permit Notification Letter, Invitation TE)."
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://lagos.china-consulate.gov.cn/eng/zytz/202409/t20240908_11487232.htm",
+    "checkedAt": "2026-09-03",
+    "evidence": "L-visa list came back with 4 rows including 'tourist group (more than 5 people)', a condition not a document. Deleted."
+  },
+  {
+    "destinationIso": "cn",
+    "destinationName": "China",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://lagos.china-consulate.gov.cn/eng/zytz/202409/t20240908_11487232.htm",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03. Consulate General Lagos guidelines for Nigerian citizens: 15 distinct document nouns, the richest source found. Yields category-correct documents (JW201/JW202, Work Permit Notification Letter, Invitation TE)."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: frs.gov.cz 404."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "cz",
+    "destinationName": "Czechia",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: frs.gov.cz 404."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://home-affairs.ec.europa.eu/system/files/2020-04/c-2020-1764-commission-implementing-decision_en.pdf",
+    "checkedAt": "2026-09-03",
+    "evidence": "SCHENGEN ATTEMPTED TWICE AND FAILED. Visa Code Annex II (legal text) returned no extract; the Commission's Visa Code Handbook PDF returned 5 rows including 'supporting documents' and 'fingerprints' \u2014 category labels, not uploads. EU-level documents are GUIDANCE TO CONSULATES, not applicant checklists. The applicant checklist for Nigeria is held by VFS Global, which returns 403."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://home-affairs.ec.europa.eu/system/files/2020-04/c-2020-1764-commission-implementing-decision_en.pdf",
+    "checkedAt": "2026-09-03",
+    "evidence": "SCHENGEN ATTEMPTED TWICE AND FAILED. Visa Code Annex II (legal text) returned no extract; the Commission's Visa Code Handbook PDF returned 5 rows including 'supporting documents' and 'fingerprints' \u2014 category labels, not uploads. EU-level documents are GUIDANCE TO CONSULATES, not applicant checklists. The applicant checklist for Nigeria is held by VFS Global, which returns 403."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "unusable",
+    "sourceUrl": "https://nigeria.diplo.de/ng-en/2748634-2748634",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: mission pages nigeria.diplo.de/ng-en/2748634 (national) and /2746378 (Schengen) fetch at 200 but are OVERVIEWS \u2014 3-4 distinct document nouns, no enumerated list. make-it-in-germany is JS-rendered (106ch). The real checklists sit on VFS Global, which returns 403 to automated requests. No reachable official source for any German purpose."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "unusable",
+    "sourceUrl": "https://nigeria.diplo.de/ng-en/2748634-2748634",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: mission pages nigeria.diplo.de/ng-en/2748634 (national) and /2746378 (Schengen) fetch at 200 but are OVERVIEWS \u2014 3-4 distinct document nouns, no enumerated list. make-it-in-germany is JS-rendered (106ch). The real checklists sit on VFS Global, which returns 403 to automated requests. No reachable official source for any German purpose."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://home-affairs.ec.europa.eu/system/files/2020-04/c-2020-1764-commission-implementing-decision_en.pdf",
+    "checkedAt": "2026-09-03",
+    "evidence": "SCHENGEN ATTEMPTED TWICE AND FAILED. Visa Code Annex II (legal text) returned no extract; the Commission's Visa Code Handbook PDF returned 5 rows including 'supporting documents' and 'fingerprints' \u2014 category labels, not uploads. EU-level documents are GUIDANCE TO CONSULATES, not applicant checklists. The applicant checklist for Nigeria is held by VFS Global, which returns 403."
+  },
+  {
+    "destinationIso": "de",
+    "destinationName": "Germany",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "unusable",
+    "sourceUrl": "https://nigeria.diplo.de/ng-en/2748634-2748634",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: mission pages nigeria.diplo.de/ng-en/2748634 (national) and /2746378 (Schengen) fetch at 200 but are OVERVIEWS \u2014 3-4 distinct document nouns, no enumerated list. make-it-in-germany is JS-rendered (106ch). The real checklists sit on VFS Global, which returns 403 to automated requests. No reachable official source for any German purpose."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "verified",
+    "sourceUrl": "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Study/Higher%20education",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (10 docs). FIRST Schengen corridor, via the national long-stay route."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "dk",
+    "destinationName": "Denmark",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "verified",
+    "sourceUrl": "https://www.nyidanmark.dk/en-GB/You-want-to-apply/Work/Pay-limit-scheme",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (11 docs). Differentiated from dk/study \u2014 CV, Danish authorisation, employment contract, salary components."
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa2egypt.gov.eg loads (1,019ch) but is a sign-in shell \u2014 the checklist sits behind authentication. Embassy sources found are US-jurisdiction (a 'green card' row). Needs an Egypt-in-Nigeria source."
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa2egypt.gov.eg loads (1,019ch) but is a sign-in shell \u2014 the checklist sits behind authentication. Embassy sources found are US-jurisdiction (a 'green card' row). Needs an Egypt-in-Nigeria source."
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa2egypt.gov.eg loads (1,019ch) but is a sign-in shell \u2014 the checklist sits behind authentication. Embassy sources found are US-jurisdiction (a 'green card' row). Needs an Egypt-in-Nigeria source."
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa2egypt.gov.eg loads (1,019ch) but is a sign-in shell \u2014 the checklist sits behind authentication. Embassy sources found are US-jurisdiction (a 'green card' row). Needs an Egypt-in-Nigeria source."
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa2egypt.gov.eg loads (1,019ch) but is a sign-in shell \u2014 the checklist sits behind authentication. Embassy sources found are US-jurisdiction (a 'green card' row). Needs an Egypt-in-Nigeria source."
+  },
+  {
+    "destinationIso": "eg",
+    "destinationName": "Egypt",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa2egypt.gov.eg loads (1,019ch) but is a sign-in shell \u2014 the checklist sits behind authentication. Embassy sources found are US-jurisdiction (a 'green card' row). Needs an Egypt-in-Nigeria source."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: Spain routes Nigerian applications through BLS International Lagos; no official fetchable checklist."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "es",
+    "destinationName": "Spain",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: Spain routes Nigerian applications through BLS International Lagos; no official fetchable checklist."
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.et/information",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.et/information",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.et/information",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.et/information",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.et/information",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+  },
+  {
+    "destinationIso": "et",
+    "destinationName": "Ethiopia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.et/information",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: france-visas.gouv.fr returns 403; campusfrance 404."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "fr",
+    "destinationName": "France",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: france-visas.gouv.fr returns 403; campusfrance 404."
   },
   {
     "destinationIso": "gb",
     "destinationName": "United Kingdom",
-    "purpose": "work",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "gov.uk publishes eligibility CRITERIA for visitor routes, not an enumerated list. /health-care-visit-uk 404s."
+  },
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "gov.uk publishes eligibility CRITERIA for visitor routes, not an enumerated list. /health-care-visit-uk 404s."
+  },
+  {
+    "destinationIso": "gb",
+    "destinationName": "United Kingdom",
+    "purpose": "relocation",
     "visaType": "national",
     "status": "verified",
-    "sourceUrl": "https://www.gov.uk/skilled-worker-visa/documents-you-must-provide",
+    "sourceUrl": "https://www.gov.uk/uk-family-visa/partner-spouse",
     "checkedAt": "2026-09-03",
-    "evidence": "200 \u00b7 6482ch \u00b7 7 distinct document nouns | DRAFTED successfully"
+    "evidence": "DRAFTED successfully 2026-09-03 (11 docs)."
   },
   {
     "destinationIso": "gb",
@@ -32,1446 +1181,122 @@
   {
     "destinationIso": "gb",
     "destinationName": "United Kingdom",
-    "purpose": "medical",
+    "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.gov.uk/standard-visitor/documents-you-must-provide",
+    "checkedAt": "2026-09-03",
+    "evidence": "gov.uk publishes eligibility CRITERIA for visitor routes, not an enumerated list. /health-care-visit-uk 404s."
   },
   {
     "destinationIso": "gb",
     "destinationName": "United Kingdom",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ca",
-    "destinationName": "Canada",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ca",
-    "destinationName": "Canada",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ca",
-    "destinationName": "Canada",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ca",
-    "destinationName": "Canada",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ca",
-    "destinationName": "Canada",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ae",
-    "destinationName": "United Arab Emirates",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ae",
-    "destinationName": "United Arab Emirates",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ae",
-    "destinationName": "United Arab Emirates",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ae",
-    "destinationName": "United Arab Emirates",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ae",
-    "destinationName": "United Arab Emirates",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "de",
-    "destinationName": "Germany",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.uk/skilled-worker-visa/documents-you-must-provide",
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "de",
-    "destinationName": "Germany",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "de",
-    "destinationName": "Germany",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "de",
-    "destinationName": "Germany",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "de",
-    "destinationName": "Germany",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "us",
-    "destinationName": "United States",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "us",
-    "destinationName": "United States",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "us",
-    "destinationName": "United States",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "us",
-    "destinationName": "United States",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "us",
-    "destinationName": "United States",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tr",
-    "destinationName": "T\u00fcrkiye",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tr",
-    "destinationName": "T\u00fcrkiye",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tr",
-    "destinationName": "T\u00fcrkiye",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tr",
-    "destinationName": "T\u00fcrkiye",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tr",
-    "destinationName": "T\u00fcrkiye",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ie",
-    "destinationName": "Ireland",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ie",
-    "destinationName": "Ireland",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ie",
-    "destinationName": "Ireland",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ie",
-    "destinationName": "Ireland",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ie",
-    "destinationName": "Ireland",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "nl",
-    "destinationName": "Netherlands",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "nl",
-    "destinationName": "Netherlands",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "nl",
-    "destinationName": "Netherlands",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "nl",
-    "destinationName": "Netherlands",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "nl",
-    "destinationName": "Netherlands",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "au",
-    "destinationName": "Australia",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "au",
-    "destinationName": "Australia",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "au",
-    "destinationName": "Australia",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "au",
-    "destinationName": "Australia",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "au",
-    "destinationName": "Australia",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sa",
-    "destinationName": "Saudi Arabia",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sa",
-    "destinationName": "Saudi Arabia",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sa",
-    "destinationName": "Saudi Arabia",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sa",
-    "destinationName": "Saudi Arabia",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sa",
-    "destinationName": "Saudi Arabia",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "fr",
-    "destinationName": "France",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "fr",
-    "destinationName": "France",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "fr",
-    "destinationName": "France",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "fr",
-    "destinationName": "France",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "fr",
-    "destinationName": "France",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pt",
-    "destinationName": "Portugal",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "pt",
-    "destinationName": "Portugal",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pt",
-    "destinationName": "Portugal",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pt",
-    "destinationName": "Portugal",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pt",
-    "destinationName": "Portugal",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
+    "evidence": "200 \u00b7 6482ch \u00b7 7 distinct document nouns | DRAFTED successfully"
   },
   {
     "destinationIso": "gh",
     "destinationName": "Ghana",
-    "purpose": "tourism",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "gh",
-    "destinationName": "Ghana",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "gh",
-    "destinationName": "Ghana",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": "https://evisa.immigration.gov.gh/visa-requirements",
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
     "destinationIso": "gh",
     "destinationName": "Ghana",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": "https://evisa.immigration.gov.gh/visa-requirements",
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
     "destinationIso": "gh",
     "destinationName": "Ghana",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ke",
-    "destinationName": "Kenya",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ke",
-    "destinationName": "Kenya",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ke",
-    "destinationName": "Kenya",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ke",
-    "destinationName": "Kenya",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ke",
-    "destinationName": "Kenya",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "za",
-    "destinationName": "South Africa",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "za",
-    "destinationName": "South Africa",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "za",
-    "destinationName": "South Africa",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "za",
-    "destinationName": "South Africa",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "za",
-    "destinationName": "South Africa",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "eg",
-    "destinationName": "Egypt",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "eg",
-    "destinationName": "Egypt",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "eg",
-    "destinationName": "Egypt",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "eg",
-    "destinationName": "Egypt",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "eg",
-    "destinationName": "Egypt",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ma",
-    "destinationName": "Morocco",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ma",
-    "destinationName": "Morocco",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ma",
-    "destinationName": "Morocco",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ma",
-    "destinationName": "Morocco",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ma",
-    "destinationName": "Morocco",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "rw",
-    "destinationName": "Rwanda",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "rw",
-    "destinationName": "Rwanda",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "rw",
-    "destinationName": "Rwanda",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "rw",
-    "destinationName": "Rwanda",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "rw",
-    "destinationName": "Rwanda",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "et",
-    "destinationName": "Ethiopia",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "et",
-    "destinationName": "Ethiopia",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "et",
-    "destinationName": "Ethiopia",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "et",
-    "destinationName": "Ethiopia",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "et",
-    "destinationName": "Ethiopia",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tz",
-    "destinationName": "Tanzania",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tz",
-    "destinationName": "Tanzania",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tz",
-    "destinationName": "Tanzania",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tz",
-    "destinationName": "Tanzania",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tz",
-    "destinationName": "Tanzania",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sn",
-    "destinationName": "Senegal",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sn",
-    "destinationName": "Senegal",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sn",
-    "destinationName": "Senegal",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sn",
-    "destinationName": "Senegal",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "sn",
-    "destinationName": "Senegal",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ci",
-    "destinationName": "Ivory Coast",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ci",
-    "destinationName": "Ivory Coast",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ci",
-    "destinationName": "Ivory Coast",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ci",
-    "destinationName": "Ivory Coast",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ci",
-    "destinationName": "Ivory Coast",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bj",
-    "destinationName": "Benin",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bj",
-    "destinationName": "Benin",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bj",
-    "destinationName": "Benin",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bj",
-    "destinationName": "Benin",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bj",
-    "destinationName": "Benin",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tg",
-    "destinationName": "Togo",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tg",
-    "destinationName": "Togo",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tg",
-    "destinationName": "Togo",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tg",
-    "destinationName": "Togo",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "tg",
-    "destinationName": "Togo",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cm",
-    "destinationName": "Cameroon",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cm",
-    "destinationName": "Cameroon",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cm",
-    "destinationName": "Cameroon",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cm",
-    "destinationName": "Cameroon",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cm",
-    "destinationName": "Cameroon",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ug",
-    "destinationName": "Uganda",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ug",
-    "destinationName": "Uganda",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ug",
-    "destinationName": "Uganda",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ug",
-    "destinationName": "Uganda",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ug",
-    "destinationName": "Uganda",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "it",
-    "destinationName": "Italy",
-    "purpose": "tourism",
-    "visaType": "C",
     "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "sourceUrl": "https://evisa.immigration.gov.gh/visa-requirements",
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "it",
-    "destinationName": "Italy",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "it",
-    "destinationName": "Italy",
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
     "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "it",
-    "destinationName": "Italy",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "it",
-    "destinationName": "Italy",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "es",
-    "destinationName": "Spain",
-    "purpose": "tourism",
-    "visaType": "C",
+    "visaType": "national",
     "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "sourceUrl": "https://evisa.immigration.gov.gh/visa-requirements",
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "es",
-    "destinationName": "Spain",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "es",
-    "destinationName": "Spain",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "es",
-    "destinationName": "Spain",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "es",
-    "destinationName": "Spain",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "be",
-    "destinationName": "Belgium",
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
     "purpose": "tourism",
-    "visaType": "C",
+    "visaType": "national",
     "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "sourceUrl": "https://evisa.immigration.gov.gh/visa-requirements",
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "be",
-    "destinationName": "Belgium",
+    "destinationIso": "gh",
+    "destinationName": "Ghana",
     "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://evisa.immigration.gov.gh/visa-requirements",
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "be",
-    "destinationName": "Belgium",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
+    "destinationIso": "gr",
+    "destinationName": "Greece",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
   },
   {
-    "destinationIso": "be",
-    "destinationName": "Belgium",
+    "destinationIso": "gr",
+    "destinationName": "Greece",
     "purpose": "medical",
     "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
   },
   {
-    "destinationIso": "be",
-    "destinationName": "Belgium",
+    "destinationIso": "gr",
+    "destinationName": "Greece",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "se",
-    "destinationName": "Sweden",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "status": "thin",
+    "sourceUrl": null,
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
   },
   {
-    "destinationIso": "se",
-    "destinationName": "Sweden",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "se",
-    "destinationName": "Sweden",
+    "destinationIso": "gr",
+    "destinationName": "Greece",
     "purpose": "study",
     "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "se",
-    "destinationName": "Sweden",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "se",
-    "destinationName": "Sweden",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "no",
-    "destinationName": "Norway",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "status": "thin",
+    "sourceUrl": null,
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "no",
-    "destinationName": "Norway",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "no",
-    "destinationName": "Norway",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "no",
-    "destinationName": "Norway",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "no",
-    "destinationName": "Norway",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "dk",
-    "destinationName": "Denmark",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "dk",
-    "destinationName": "Denmark",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "dk",
-    "destinationName": "Denmark",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "dk",
-    "destinationName": "Denmark",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "dk",
-    "destinationName": "Denmark",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ch",
-    "destinationName": "Switzerland",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "ch",
-    "destinationName": "Switzerland",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ch",
-    "destinationName": "Switzerland",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ch",
-    "destinationName": "Switzerland",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "ch",
-    "destinationName": "Switzerland",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "at",
-    "destinationName": "Austria",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "at",
-    "destinationName": "Austria",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "at",
-    "destinationName": "Austria",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "at",
-    "destinationName": "Austria",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "at",
-    "destinationName": "Austria",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pl",
-    "destinationName": "Poland",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "pl",
-    "destinationName": "Poland",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pl",
-    "destinationName": "Poland",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pl",
-    "destinationName": "Poland",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "pl",
-    "destinationName": "Poland",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cz",
-    "destinationName": "Czechia",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
-  },
-  {
-    "destinationIso": "cz",
-    "destinationName": "Czechia",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cz",
-    "destinationName": "Czechia",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cz",
-    "destinationName": "Czechia",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cz",
-    "destinationName": "Czechia",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
+    "evidence": "Schengen long-stay search 2026-09-03: migration.gov.gr 404."
   },
   {
     "destinationIso": "gr",
@@ -1488,314 +1313,107 @@
     "destinationName": "Greece",
     "purpose": "work",
     "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "gr",
-    "destinationName": "Greece",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "gr",
-    "destinationName": "Greece",
-    "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "gr",
-    "destinationName": "Greece",
-    "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "mt",
-    "destinationName": "Malta",
-    "purpose": "tourism",
-    "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "status": "thin",
+    "sourceUrl": null,
     "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "evidence": "Schengen long-stay search 2026-09-03: migration.gov.gr 404."
   },
   {
-    "destinationIso": "mt",
-    "destinationName": "Malta",
-    "purpose": "work",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://assets.ireland.ie/documents/Conference_Checklist_2025.pdf",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (29 docs). Clean \u2014 jurisdiction guard reported nothing."
   },
   {
-    "destinationIso": "mt",
-    "destinationName": "Malta",
-    "purpose": "study",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "mt",
-    "destinationName": "Malta",
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
     "purpose": "medical",
-    "visaType": "C",
-    "status": "unresearched",
-    "sourceUrl": null
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
   },
   {
-    "destinationIso": "mt",
-    "destinationName": "Malta",
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
     "purpose": "relocation",
-    "visaType": "D",
-    "status": "unresearched",
-    "sourceUrl": null
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://assets.ireland.ie/documents/Join_Family_Checklist_2025.pdf",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (30 docs). Clean \u2014 jurisdiction guard reported nothing."
   },
   {
-    "destinationIso": "qa",
-    "destinationName": "Qatar",
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Every Irish STUDY checklist located is a jurisdictional variant. ireland.ie/2901/ and assets.ireland.ie/documents/Study_Checklist_2025.pdf both contain 'Extract of Turkish family book (N\u00fcfus)'; the NDVO version is the New Delhi Visa Office's and cites DigiLocker. Drafted and deleted twice. Ireland's employment, conference and join-family checklists at the same path ARE clean \u2014 study is the exception. Needs an Abuja/Nigeria variant."
+  },
+  {
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://assets.ireland.ie/documents/2025_07_08_VISIT_TOURIST_CHECKLISST.pdf",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (16 docs) from the official DFA checklist PDF."
   },
   {
-    "destinationIso": "qa",
-    "destinationName": "Qatar",
+    "destinationIso": "ie",
+    "destinationName": "Ireland",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
   },
   {
-    "destinationIso": "qa",
-    "destinationName": "Qatar",
-    "purpose": "study",
+    "destinationIso": "in",
+    "destinationName": "India",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "candidate",
+    "sourceUrl": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+    "evidence": "e-Business is a listed e-Visa category on this page (14 mentions)."
   },
   {
-    "destinationIso": "qa",
-    "destinationName": "Qatar",
+    "destinationIso": "in",
+    "destinationName": "India",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+    "evidence": "DRAFTED successfully 2026-09-03 from the e-Visa portal."
   },
   {
-    "destinationIso": "qa",
-    "destinationName": "Qatar",
+    "destinationIso": "in",
+    "destinationName": "India",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "evidence": "India publishes no relocation visa category; the e-Visa page returned the generic tourist list. Drafted and deleted 2026-09-03.",
+    "checkedAt": "2026-09-03"
   },
   {
-    "destinationIso": "kw",
-    "destinationName": "Kuwait",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "kw",
-    "destinationName": "Kuwait",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "kw",
-    "destinationName": "Kuwait",
+    "destinationIso": "in",
+    "destinationName": "India",
     "purpose": "study",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "kw",
-    "destinationName": "Kuwait",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "kw",
-    "destinationName": "Kuwait",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bh",
-    "destinationName": "Bahrain",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bh",
-    "destinationName": "Bahrain",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bh",
-    "destinationName": "Bahrain",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bh",
-    "destinationName": "Bahrain",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "bh",
-    "destinationName": "Bahrain",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "om",
-    "destinationName": "Oman",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "om",
-    "destinationName": "Oman",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "om",
-    "destinationName": "Oman",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "om",
-    "destinationName": "Oman",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "om",
-    "destinationName": "Oman",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "jo",
-    "destinationName": "Jordan",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "jo",
-    "destinationName": "Jordan",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "jo",
-    "destinationName": "Jordan",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "jo",
-    "destinationName": "Jordan",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "jo",
-    "destinationName": "Jordan",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cn",
-    "destinationName": "China",
-    "purpose": "tourism",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cn",
-    "destinationName": "China",
-    "purpose": "work",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cn",
-    "destinationName": "China",
-    "purpose": "study",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cn",
-    "destinationName": "China",
-    "purpose": "medical",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
-  },
-  {
-    "destinationIso": "cn",
-    "destinationName": "China",
-    "purpose": "relocation",
-    "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://indianvisaonline.gov.in/evisa/tvoa.html",
+    "evidence": "DRAFTED successfully 2026-09-03 from the e-Visa portal."
   },
   {
     "destinationIso": "in",
@@ -1805,35 +1423,158 @@
     "status": "verified",
     "sourceUrl": "https://indianvisaonline.gov.in/evisa/tvoa.html",
     "checkedAt": "2026-09-03",
-    "evidence": "200 \u00b7 46936ch \u00b7 8 distinct document nouns | DRAFTED successfully"
+    "evidence": "DRAFTED successfully 2026-09-03 from the e-Visa portal."
   },
   {
     "destinationIso": "in",
     "destinationName": "India",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "evidence": "boi.gov.in work-in-india fetches but yields eligibility CRITERIA not documents (salary threshold, 'highly skilled'). Employment is not an e-Visa category. Draft deleted."
   },
   {
-    "destinationIso": "in",
-    "destinationName": "India",
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: Italian Consulate Lagos routes through VFS; no official fetchable checklist found."
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "it",
+    "destinationName": "Italy",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: Italian Consulate Lagos routes through VFS; no official fetchable checklist found."
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
     "purpose": "study",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
   },
   {
-    "destinationIso": "in",
-    "destinationName": "India",
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "jo",
+    "destinationName": "Jordan",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.mofa.go.jp/j_info/visit/visa/index.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03."
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
     "purpose": "medical",
     "visaType": "national",
     "status": "unresearched",
     "sourceUrl": null
   },
   {
-    "destinationIso": "in",
-    "destinationName": "India",
+    "destinationIso": "jp",
+    "destinationName": "Japan",
     "purpose": "relocation",
     "visaType": "national",
     "status": "unresearched",
@@ -1842,201 +1583,1411 @@
   {
     "destinationIso": "jp",
     "destinationName": "Japan",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.mofa.go.jp/j_info/visit/visa/index.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03."
+  },
+  {
+    "destinationIso": "jp",
+    "destinationName": "Japan",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://www.mofa.go.jp/j_info/visit/visa/index.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03 (8 docs, 1 soft row)."
   },
   {
     "destinationIso": "jp",
     "destinationName": "Japan",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.mofa.go.jp/j_info/visit/visa/index.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "MOFA page yields only 'Certificate of Eligibility' plus label rows for work. Japan's work visa requires a CoE obtained in Japan by the employer first; the applicant-side list is minimal by design. Draft deleted."
   },
   {
-    "destinationIso": "jp",
-    "destinationName": "Japan",
-    "purpose": "study",
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://www.kenyaembassyaddis.org/services/consular-services/visa-services/",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 and genuinely differentiated (business invitation + company registration for work/business; medical letter for medical; resettlement documents for relocation)."
   },
   {
-    "destinationIso": "jp",
-    "destinationName": "Japan",
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://www.kenyaembassyaddis.org/services/consular-services/visa-services/",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 and genuinely differentiated (business invitation + company registration for work/business; medical letter for medical; resettlement documents for relocation)."
   },
   {
-    "destinationIso": "jp",
-    "destinationName": "Japan",
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://www.kenyaembassyaddis.org/services/consular-services/visa-services/",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 and genuinely differentiated (business invitation + company registration for work/business; medical letter for medical; resettlement documents for relocation)."
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Draft carried no admission/acceptance letter \u2014 the base visitor list plus an employment contract. Deleted 2026-09-03."
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.kenyaembassyaddis.org/services/consular-services/visa-services/",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (8 docs). Kenya's eVisa is a single national system, so the embassy page carries national requirements \u2014 inspected, no jurisdiction-specific rows."
+  },
+  {
+    "destinationIso": "ke",
+    "destinationName": "Kenya",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.kenyaembassyaddis.org/services/consular-services/visa-services/",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 and genuinely differentiated (business invitation + company registration for work/business; medical letter for medical; resettlement documents for relocation)."
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "kw",
+    "destinationName": "Kuwait",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "ma",
+    "destinationName": "Morocco",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: identita.gov.mt 2 nouns."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "mt",
+    "destinationName": "Malta",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: identita.gov.mt 2 nouns."
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "mx",
+    "destinationName": "Mexico",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://visa.educationmalaysia.gov.my/guidelines/required-documents",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (16 docs) from EMGS + IMI student pass. Very specific: EMGS Support Letter, MOHA approval, Personal Bond, Pre-VAL Medical Report."
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "my",
+    "destinationName": "Malaysia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: no guessed URL connected. Retry with researched URLs before concluding anything."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: no guessed URL connected. Retry with researched URLs before concluding anything."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: no guessed URL connected. Retry with researched URLs before concluding anything."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: IND 'requirements that apply to everyone' is 3,091ch / 2 nouns; per-permit checklists not reachable."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "nl",
+    "destinationName": "Netherlands",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: IND 'requirements that apply to everyone' is 3,091ch / 2 nouns; per-permit checklists not reachable."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: UDI study/work paths 404."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "no",
+    "destinationName": "Norway",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: UDI study/work paths 404."
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "om",
+    "destinationName": "Oman",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.pl/web/nigeria-en/c-type-schengen-visa",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 from the Polish Embassy in NIGERIA's own gov.pl section \u2014 correct jurisdiction, 0 contaminated rows across 99 requirements. This replaced an earlier draft taken from gov.pl's INDIA attachment, which contained 'certificate from the university in India'."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": "https://www.gov.pl/web/nigeria-en/c-type-schengen-visa",
+    "checkedAt": "2026-09-03",
+    "evidence": "C-type page covers tourism/business; medical not separately enumerated."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.pl/web/nigeria-en/d-type-national-visa",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 from the Polish Embassy in NIGERIA's own gov.pl section \u2014 correct jurisdiction, 0 contaminated rows across 99 requirements. This replaced an earlier draft taken from gov.pl's INDIA attachment, which contained 'certificate from the university in India'."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.pl/web/nigeria-en/d-type-national-visa",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 from the Polish Embassy in NIGERIA's own gov.pl section \u2014 correct jurisdiction, 0 contaminated rows across 99 requirements. This replaced an earlier draft taken from gov.pl's INDIA attachment, which contained 'certificate from the university in India'."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.pl/web/nigeria-en/c-type-schengen-visa",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 from the Polish Embassy in NIGERIA's own gov.pl section \u2014 correct jurisdiction, 0 contaminated rows across 99 requirements. This replaced an earlier draft taken from gov.pl's INDIA attachment, which contained 'certificate from the university in India'."
+  },
+  {
+    "destinationIso": "pl",
+    "destinationName": "Poland",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "verified",
+    "sourceUrl": "https://www.gov.pl/attachment/d186b975-66c7-4b22-a3ec-b0ff2f9730f0",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (19 docs) from an official gov.pl checklist PDF. Content is nationally applicable \u2014 0 jurisdiction-specific rows \u2014 though the attachment's source jurisdiction is unconfirmed."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: imigrante.sef.pt empty."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "pt",
+    "destinationName": "Portugal",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Schengen long-stay search 2026-09-03: imigrante.sef.pt empty."
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: portal.moi.gov.qa navigation DENIED to the browser as well. Only visitqatar.com is reachable, and it yields the 3-row Hayya tourist list."
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: portal.moi.gov.qa navigation DENIED to the browser as well. Only visitqatar.com is reachable, and it yields the 3-row Hayya tourist list."
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: portal.moi.gov.qa navigation DENIED to the browser as well. Only visitqatar.com is reachable, and it yields the 3-row Hayya tourist list."
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: portal.moi.gov.qa navigation DENIED to the browser as well. Only visitqatar.com is reachable, and it yields the 3-row Hayya tourist list."
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://visitqatar.com/intl-en/plan-your-trip/visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (3 docs \u2014 short but all real; Qatar's tourist visa genuinely is light)."
+  },
+  {
+    "destinationIso": "qa",
+    "destinationName": "Qatar",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: portal.moi.gov.qa navigation DENIED to the browser as well. Only visitqatar.com is reachable, and it yields the 3-row Hayya tourist list."
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://support.irembo.gov.rw/en/support/solutions/articles/47001155415-how-to-apply-for-a-visa-on-irembogov",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: migration.gov.rw is reachable. It states a visa waiver for AFRICAN UNION nationals \u2014 so a Nigerian needs no Rwandan visa, and a document corridor would be the wrong answer entirely. This is a 'no corridor needed' destination, like the ECOWAS five, not a sourcing failure."
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://support.irembo.gov.rw/en/support/solutions/articles/47001155415-how-to-apply-for-a-visa-on-irembogov",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: migration.gov.rw is reachable. It states a visa waiver for AFRICAN UNION nationals \u2014 so a Nigerian needs no Rwandan visa, and a document corridor would be the wrong answer entirely. This is a 'no corridor needed' destination, like the ECOWAS five, not a sourcing failure."
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://support.irembo.gov.rw/en/support/solutions/articles/47001155415-how-to-apply-for-a-visa-on-irembogov",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: migration.gov.rw is reachable. It states a visa waiver for AFRICAN UNION nationals \u2014 so a Nigerian needs no Rwandan visa, and a document corridor would be the wrong answer entirely. This is a 'no corridor needed' destination, like the ECOWAS five, not a sourcing failure."
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://support.irembo.gov.rw/en/support/solutions/articles/47001155415-how-to-apply-for-a-visa-on-irembogov",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: migration.gov.rw is reachable. It states a visa waiver for AFRICAN UNION nationals \u2014 so a Nigerian needs no Rwandan visa, and a document corridor would be the wrong answer entirely. This is a 'no corridor needed' destination, like the ECOWAS five, not a sourcing failure."
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://support.irembo.gov.rw/en/support/solutions/articles/47001155415-how-to-apply-for-a-visa-on-irembogov",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: migration.gov.rw is reachable. It states a visa waiver for AFRICAN UNION nationals \u2014 so a Nigerian needs no Rwandan visa, and a document corridor would be the wrong answer entirely. This is a 'no corridor needed' destination, like the ECOWAS five, not a sourcing failure."
+  },
+  {
+    "destinationIso": "rw",
+    "destinationName": "Rwanda",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://support.irembo.gov.rw/en/support/solutions/articles/47001155415-how-to-apply-for-a-visa-on-irembogov",
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: migration.gov.rw is reachable. It states a visa waiver for AFRICAN UNION nationals \u2014 so a Nigerian needs no Rwandan visa, and a document corridor would be the wrong answer entirely. This is a 'no corridor needed' destination, like the ECOWAS five, not a sourcing failure."
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa.mofa.gov.sa navigation DENIED to the browser as well as to fetch. Blocked at this location, not merely unfetchable."
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa.mofa.gov.sa navigation DENIED to the browser as well as to fetch. Blocked at this location, not merely unfetchable."
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa.mofa.gov.sa navigation DENIED to the browser as well as to fetch. Blocked at this location, not merely unfetchable."
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa.mofa.gov.sa navigation DENIED to the browser as well as to fetch. Blocked at this location, not merely unfetchable."
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa.mofa.gov.sa navigation DENIED to the browser as well as to fetch. Blocked at this location, not merely unfetchable."
+  },
+  {
+    "destinationIso": "sa",
+    "destinationName": "Saudi Arabia",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Browser re-check 2026-09-03: visa.mofa.gov.sa navigation DENIED to the browser as well as to fetch. Blocked at this location, not merely unfetchable."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "business",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "medical",
+    "visaType": "C",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "relocation",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "study",
+    "visaType": "D",
+    "status": "verified",
+    "sourceUrl": "https://www.swedenabroad.se/en/about-sweden-non-swedish-citizens/nigeria/going-to-sweden/studying-in-sweden/residence-permit-studies---required-documents/",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (15 docs). Sweden Abroad publishes a NIGERIA-SPECIFIC page \u2014 correct jurisdiction, no contamination."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "tourism",
+    "visaType": "C",
+    "status": "unusable",
+    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
+    "checkedAt": "2026-09-03",
+    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+  },
+  {
+    "destinationIso": "se",
+    "destinationName": "Sweden",
+    "purpose": "work",
+    "visaType": "D",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.ica.gov.sg/enter-transit-depart/entering-singapore/visa_requirements/visa-detail-page/nigeria",
+    "checkedAt": "2026-09-03",
+    "evidence": "ICA publishes a Nigeria-specific page but it is thin (4 nouns). Form 14A is a form, not a checklist. Real checklists sit on VFS."
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.ica.gov.sg/enter-transit-depart/entering-singapore/visa_requirements/visa-detail-page/nigeria",
+    "checkedAt": "2026-09-03",
+    "evidence": "ICA publishes a Nigeria-specific page but it is thin (4 nouns). Form 14A is a form, not a checklist. Real checklists sit on VFS."
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.ica.gov.sg/enter-transit-depart/entering-singapore/visa_requirements/visa-detail-page/nigeria",
+    "checkedAt": "2026-09-03",
+    "evidence": "ICA publishes a Nigeria-specific page but it is thin (4 nouns). Form 14A is a form, not a checklist. Real checklists sit on VFS."
+  },
+  {
+    "destinationIso": "sg",
+    "destinationName": "Singapore",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.ica.gov.sg/enter-transit-depart/entering-singapore/visa_requirements/visa-detail-page/nigeria",
+    "checkedAt": "2026-09-03",
+    "evidence": "ICA publishes a Nigeria-specific page but it is thin (4 nouns). Form 14A is a form, not a checklist. Real checklists sit on VFS."
   },
   {
     "destinationIso": "sg",
     "destinationName": "Singapore",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.ica.gov.sg/enter-transit-depart/entering-singapore/visa_requirements/visa-detail-page/nigeria",
+    "checkedAt": "2026-09-03",
+    "evidence": "ICA publishes a Nigeria-specific page but it is thin (4 nouns). Form 14A is a form, not a checklist. Real checklists sit on VFS."
   },
   {
     "destinationIso": "sg",
     "destinationName": "Singapore",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.ica.gov.sg/enter-transit-depart/entering-singapore/visa_requirements/visa-detail-page/nigeria",
+    "checkedAt": "2026-09-03",
+    "evidence": "ICA publishes a Nigeria-specific page but it is thin (4 nouns). Form 14A is a form, not a checklist. Real checklists sit on VFS."
   },
   {
-    "destinationIso": "sg",
-    "destinationName": "Singapore",
-    "purpose": "study",
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "sg",
-    "destinationName": "Singapore",
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "sg",
-    "destinationName": "Singapore",
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "my",
-    "destinationName": "Malaysia",
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "my",
-    "destinationName": "Malaysia",
+    "destinationIso": "sn",
+    "destinationName": "Senegal",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "my",
-    "destinationName": "Malaysia",
-    "purpose": "study",
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "my",
-    "destinationName": "Malaysia",
+    "destinationIso": "tg",
+    "destinationName": "Togo",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "my",
-    "destinationName": "Malaysia",
+    "destinationIso": "tg",
+    "destinationName": "Togo",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "br",
-    "destinationName": "Brazil",
+    "destinationIso": "tg",
+    "destinationName": "Togo",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
+  },
+  {
+    "destinationIso": "tg",
+    "destinationName": "Togo",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "br",
-    "destinationName": "Brazil",
+    "destinationIso": "tg",
+    "destinationName": "Togo",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "VISA-FREE FOR NIGERIANS \u2014 ECOWAS free movement. Confirmed against the recorded VisaList response: Ghana returns 'Visa Free', 3 months. A curated document checklist here would be WRONG: the eVisa requirements these countries publish apply to non-ECOWAS nationals. This corridor is correctly served by the entry-rules layer (visaListProvider), not by a checklist. A gh/tourism corridor with 9 requirements was drafted and DELETED on 2026-09-03 for exactly this."
   },
   {
-    "destinationIso": "br",
-    "destinationName": "Brazil",
-    "purpose": "study",
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
+    "checkedAt": "2026-09-03",
+    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
   },
   {
-    "destinationIso": "br",
-    "destinationName": "Brazil",
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
+    "checkedAt": "2026-09-03",
+    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
   },
   {
-    "destinationIso": "br",
-    "destinationName": "Brazil",
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
+    "checkedAt": "2026-09-03",
+    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
   },
   {
-    "destinationIso": "mx",
-    "destinationName": "Mexico",
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
+    "checkedAt": "2026-09-03",
+    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+  },
+  {
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
+    "checkedAt": "2026-09-03",
+    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
   },
   {
-    "destinationIso": "mx",
-    "destinationName": "Mexico",
+    "destinationIso": "tr",
+    "destinationName": "T\u00fcrkiye",
     "purpose": "work",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
+    "checkedAt": "2026-09-03",
+    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
   },
   {
-    "destinationIso": "mx",
-    "destinationName": "Mexico",
-    "purpose": "study",
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "verified",
+    "sourceUrl": "https://visa.immigration.go.tz/guidelines",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 via a BROWSER TRANSCRIPT (--source-text). The host is unreachable to Node fetch from this network but loads fine in a browser, and the page scores 10 distinct document nouns with per-visa-type requirements. Reachability and publication quality turned out to be unrelated."
   },
   {
-    "destinationIso": "mx",
-    "destinationName": "Mexico",
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
   },
   {
-    "destinationIso": "mx",
-    "destinationName": "Mexico",
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": null
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://visa.immigration.go.tz/guidelines",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 via a BROWSER TRANSCRIPT (--source-text). The host is unreachable to Node fetch from this network but loads fine in a browser, and the page scores 10 distinct document nouns with per-visa-type requirements. Reachability and publication quality turned out to be unrelated."
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://visa.immigration.go.tz/guidelines",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 via a BROWSER TRANSCRIPT (--source-text). The host is unreachable to Node fetch from this network but loads fine in a browser, and the page scores 10 distinct document nouns with per-visa-type requirements. Reachability and publication quality turned out to be unrelated."
+  },
+  {
+    "destinationIso": "tz",
+    "destinationName": "Tanzania",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "thin",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Source is a GENERAL visa page with no per-purpose requirements \u2014 every purpose drafted to the same base list (passport, photo, police clearance, recommendation letter, yellow fever). Serving that under 'work' would imply a work permit needs only those. Drafted and deleted 2026-09-03. Only the visitor/tourism purpose, which the page actually describes, is kept."
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Source is a GENERAL visa page with no per-purpose requirements \u2014 every purpose drafted to the same base list (passport, photo, police clearance, recommendation letter, yellow fever). Serving that under 'work' would imply a work permit needs only those. Drafted and deleted 2026-09-03. Only the visitor/tourism purpose, which the page actually describes, is kept."
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Source is a GENERAL visa page with no per-purpose requirements \u2014 every purpose drafted to the same base list (passport, photo, police clearance, recommendation letter, yellow fever). Serving that under 'work' would imply a work permit needs only those. Drafted and deleted 2026-09-03. Only the visitor/tourism purpose, which the page actually describes, is kept."
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Source is a GENERAL visa page with no per-purpose requirements \u2014 every purpose drafted to the same base list (passport, photo, police clearance, recommendation letter, yellow fever). Serving that under 'work' would imply a work permit needs only those. Drafted and deleted 2026-09-03. Only the visitor/tourism purpose, which the page actually describes, is kept."
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://immigration.go.ug/node/198",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED 2026-09-03 (10 docs; 3 soft rows to trim)."
+  },
+  {
+    "destinationIso": "ug",
+    "destinationName": "Uganda",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-03",
+    "evidence": "Source is a GENERAL visa page with no per-purpose requirements \u2014 every purpose drafted to the same base list (passport, photo, police clearance, recommendation letter, yellow fever). Serving that under 'work' would imply a work permit needs only those. Drafted and deleted 2026-09-03. Only the visitor/tourism purpose, which the page actually describes, is kept."
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+  },
+  {
+    "destinationIso": "us",
+    "destinationName": "United States",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "unusable",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "checkedAt": "2026-09-03",
+    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "business",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.dha.gov.za/index.php/immigration-services/types-of-visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03. NOTE: identical to tourism \u2014 SA uses one visitor's visa for both short business and tourism."
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "medical",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.dha.gov.za/index.php/immigration-services/types-of-visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03."
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "relocation",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.dha.gov.za/index.php/immigration-services/types-of-visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03."
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "study",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.dha.gov.za/index.php/immigration-services/types-of-visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03 (21 and 18 docs). Richest source found: 8 nouns, 4 checklist signals."
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "tourism",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.dha.gov.za/index.php/immigration-services/types-of-visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03."
+  },
+  {
+    "destinationIso": "za",
+    "destinationName": "South Africa",
+    "purpose": "work",
+    "visaType": "national",
+    "status": "verified",
+    "sourceUrl": "https://www.dha.gov.za/index.php/immigration-services/types-of-visas",
+    "checkedAt": "2026-09-03",
+    "evidence": "DRAFTED successfully 2026-09-03 (21 and 18 docs). Richest source found: 8 nouns, 4 checklist signals."
   }
 ]

@@ -69,10 +69,75 @@ export const draftSchema = z.object({
 export type Draft = z.infer<typeof draftSchema>;
 export type DraftRequirement = Draft["requirements"][number];
 
+/**
+ * Countries whose name in a requirement means the checklist was written
+ * for applicants somewhere else.
+ *
+ * Four contaminations were caught by hand on 2026-09-03 — an Australian
+ * checklist asking for PNG residency, an Egyptian one asking for a US
+ * green card, a Polish one asking for an Indian university certificate,
+ * an Irish one asking for a Turkish family book. Every time it was ONE
+ * row in fourteen to thirty-five, under 5%, and every time the rest of
+ * the document was correct and officially published.
+ *
+ * That is the failure mode that survives a review, because the source is
+ * genuinely the government's and the other rows are genuinely right. The
+ * cause is structural: the countries that publish checklists good enough
+ * to draft from publish a *different variant per applicant jurisdiction*,
+ * on the same domain, distinguishable only by a path segment.
+ *
+ * Deliberately a flag and not a filter. The row may be legitimate — a
+ * corridor to India will say "India" — so `normaliseDraft` reports it and
+ * a person decides, rather than silently dropping a real requirement.
+ */
+const JURISDICTION_TELLS: Record<string, string> = {
+  // country name / demonym -> the ISO code it belongs to
+  afghan: "af", azerbaijan: "az", bangladesh: "bd", belarus: "by",
+  china: "cn", chinese: "cn", egypt: "eg", ethiopia: "et", georgia: "ge",
+  ghana: "gh", india: "in", indian: "in", indonesia: "id", iran: "ir",
+  iraq: "iq", kenya: "ke", morocco: "ma", nepal: "np", pakistan: "pk",
+  philippin: "ph", png: "pg", "papua new guinea": "pg", russia: "ru",
+  solomon: "sb", somalia: "so", "sri lanka": "lk", sudan: "sd",
+  turkey: "tr", turkish: "tr", ukrain: "ua", uzbek: "uz", vietnam: "vn",
+
+  /**
+   * Countries that appear as the *place of application* rather than the
+   * applicant's own. Several states are represented abroad by a
+   * neighbour's mission — a Danish work-permit page names Norwegian
+   * missions, because Norway represents Denmark where it has no embassy.
+   * That is a jurisdiction signal even though neither country is the
+   * traveller's.
+   */
+  norway: "no", norwegian: "no", denmark: "dk", danish: "dk",
+  sweden: "se", swedish: "se", finland: "fi", finnish: "fi",
+
+  /**
+   * National services and documents — the *harder* tell, because they
+   * name no country at all.
+   *
+   * An Irish study checklist taken from the New Delhi Visa Office said
+   * "(inc. DigiLocker)", India's government document wallet. It passed a
+   * country-name check cleanly and was only caught by reading the rows.
+   * A checklist written for one jurisdiction leaks that jurisdiction's
+   * infrastructure, not only its name.
+   */
+  digilocker: "in", aadhaar: "in", "pan card": "in",
+  "nüfus": "tr", nufus: "tr", hukou: "cn", "green card": "us",
+  "social security number": "us", cpf: "br", curp: "mx", nric: "sg",
+  "e-konsulat": "pl", bvn: "ng",
+};
+
+
 export type NormalisedDraft = {
   draft: Draft;
   /** Requirements thrown away, and why — printed for the operator. */
   dropped: { name: string; reason: string }[];
+  /**
+   * Rows naming a country that is neither end of this corridor. Not
+   * dropped — surfaced, because this is the signal that the whole source
+   * may be the wrong jurisdiction's variant.
+   */
+  foreignJurisdiction: { name: string; country: string }[];
 };
 
 /** `Certificate of Sponsorship` → `certificate_of_sponsorship`. */
@@ -166,7 +231,23 @@ export function buildDraftPrompt(input: {
  *   a price, and the requirements screen would render it against
  *   whatever default it has to hand.
  */
-export function normaliseDraft(draft: Draft): NormalisedDraft {
+export function normaliseDraft(
+  draft: Draft,
+  /**
+   * The corridor's own two ends as ISO 3166-1 alpha-2 codes.
+   *
+   * Codes rather than names, and each tell maps to a code, because the
+   * first version compared the word "China" against the string "cn" and
+   * flagged every Chinese corridor for naming China. A guard that cries
+   * wolf on correct rows is a guard someone switches off.
+   */
+  corridor: { nationalityIso?: string; destinationIso?: string } = {}
+): NormalisedDraft {
+  const own = new Set(
+    [corridor.nationalityIso, corridor.destinationIso]
+      .filter(Boolean)
+      .map((c) => c!.toLowerCase())
+  );
   const dropped: { name: string; reason: string }[] = [];
   const seen = new Set<string>();
   const requirements: DraftRequirement[] = [];
@@ -199,7 +280,26 @@ export function normaliseDraft(draft: Draft): NormalisedDraft {
   const hasFee =
     draft.governmentFeeMinor != null && draft.governmentFeeCurrency != null;
 
+  const foreignJurisdiction = requirements.flatMap((r) => {
+    /**
+     * The key is scanned too, not just the prose.
+     *
+     * A Danish draft produced the requirement "One passport photo" under
+     * the key `passport_photo_norwegian_mission`: the row read clean and
+     * the *key* carried the tell. The model names keys from surrounding
+     * context, so the key sometimes records where the checklist came
+     * from when the requirement text does not.
+     */
+    const haystack =
+      `${r.docKey} ${r.name} ${r.description ?? ""}`.replace(/_/g, " ").toLowerCase();
+    const hit = Object.entries(JURISDICTION_TELLS).find(
+      ([tell, iso]) => haystack.includes(tell) && !own.has(iso)
+    );
+    return hit ? [{ name: r.name, country: hit[0] }] : [];
+  });
+
   return {
+    foreignJurisdiction,
     draft: {
       ...draft,
       governmentFeeMinor: hasFee ? draft.governmentFeeMinor : null,

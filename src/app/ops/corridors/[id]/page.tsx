@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CorridorDecision } from "@/components/ops/corridor-decision";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { opsNav } from "@/components/ops/ops-nav";
 import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryFromIso2 } from "@/lib/domain/corridors";
@@ -93,10 +94,7 @@ export default async function ReviewCorridorPage({
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[
-          { href: "/ops", label: "Case queue" },
-          { href: "/ops/corridors", label: "Corridors" },
-        ]}
+        nav={opsNav}
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}

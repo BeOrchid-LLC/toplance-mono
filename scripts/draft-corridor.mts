@@ -1,9 +1,12 @@
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 
 import { openai } from "@ai-sdk/openai";
 import { Output, generateText } from "ai";
 import { Pool } from "pg";
+
+import { travelPurpose } from "../src/lib/db/schema.ts";
 
 import { CORRIDOR_DRAFT_MODEL } from "../src/lib/ai/models.ts";
 import {
@@ -44,6 +47,25 @@ const { values } = parseArgs({
     destination: { type: "string" },
     purpose: { type: "string" },
     source: { type: "string", multiple: true },
+    /**
+     * A source this process cannot fetch, supplied as a local file whose
+     * FIRST LINE is the source URL and whose remainder is the page text.
+     *
+     * Needed because reachability and publication quality are unrelated.
+     * Tanzania's official eVisa guidelines score ten distinct document
+     * nouns — better than most sources that produced good corridors — and
+     * `fetch` cannot open the host at all from some networks, while a
+     * browser loads it fine. Without this the only options were to drop
+     * such destinations or to let the drafting script drive a browser,
+     * and the second is a great deal of machinery for a paste.
+     *
+     * Provenance is unchanged: the URL on the first line is what every
+     * requirement cites, so a reviewer still clicks through to the
+     * government's own page. What the operator supplies is a transcript
+     * of it, and the file's first line is the claim about where that
+     * transcript came from.
+     */
+    "source-text": { type: "string", multiple: true },
     "visa-name": { type: "string" },
     "source-name": { type: "string" },
   },
@@ -53,10 +75,24 @@ const nationality = values.nationality?.toLowerCase();
 const destination = values.destination?.toLowerCase();
 const purpose = values.purpose?.toLowerCase();
 const sources = values.source ?? [];
+const sourceTexts = values["source-text"] ?? [];
 
-const PURPOSES = ["tourism", "work", "study", "medical", "relocation"];
+/**
+ * Read from the schema, not restated here.
+ *
+ * This was a hardcoded array and it silently went stale the moment
+ * `business` was added to the enum — the script refused a purpose the
+ * database accepts. A second copy of a closed set is a second thing to
+ * remember, and nobody does.
+ */
+const PURPOSES = travelPurpose.enumValues;
 
-if (!nationality || !destination || !purpose || sources.length === 0) {
+if (
+  !nationality ||
+  !destination ||
+  !purpose ||
+  sources.length + sourceTexts.length === 0
+) {
   console.error(
     "Usage: draft-corridor.mts --nationality ng --destination gb " +
       "--purpose work --source <url> [--source <url>]"
@@ -64,7 +100,10 @@ if (!nationality || !destination || !purpose || sources.length === 0) {
   process.exit(1);
 }
 
-if (!PURPOSES.includes(purpose)) {
+// A widening cast: `purpose` is whatever was typed on the command
+// line, and the point of this check is to find out whether it is one
+// of the enum's values.
+if (!(PURPOSES as readonly string[]).includes(purpose)) {
   console.error(`--purpose must be one of: ${PURPOSES.join(", ")}`);
   process.exit(1);
 }
@@ -146,8 +185,25 @@ type Source =
 const pool = new Pool({ connectionString });
 
 try {
-  console.log(`Fetching ${sources.length} source(s)...`);
-  const fetched = await Promise.all(sources.map(fetchSource));
+  console.log(
+    `Fetching ${sources.length} source(s)` +
+      (sourceTexts.length ? `, reading ${sourceTexts.length} transcript(s)` : "") +
+      "..."
+  );
+
+  const transcripts: Source[] = sourceTexts.map((path) => {
+    const raw = readFileSync(path, "utf8");
+    const newline = raw.indexOf("\n");
+    const url = raw.slice(0, newline).trim();
+    if (!/^https?:\/\//i.test(url)) {
+      throw new Error(
+        `${path}: the first line must be the source URL, got "${url.slice(0, 60)}"`
+      );
+    }
+    return { url, kind: "html", text: raw.slice(newline + 1).replace(/\s+/g, " ").trim() };
+  });
+
+  const fetched = [...(await Promise.all(sources.map(fetchSource))), ...transcripts];
 
   for (const f of fetched) {
     console.log(
@@ -209,10 +265,32 @@ try {
     output: Output.object({ schema: draftSchema }),
   });
 
-  const { draft, dropped } = normaliseDraft(result.output);
+  const { draft, dropped, foreignJurisdiction } = normaliseDraft(result.output, {
+    nationalityIso: nationality,
+    destinationIso: destination,
+  });
 
   for (const d of dropped) {
     console.warn(`  - dropped "${d.name}": ${d.reason}`);
+  }
+
+  /**
+   * The check that catches a wrong-jurisdiction source. Loud, and it
+   * does not stop the draft: the row may be legitimate, and the person
+   * reviewing is better placed to tell than a word list.
+   */
+  if (foreignJurisdiction.length) {
+    console.warn(
+      `\n  !! ${foreignJurisdiction.length} requirement(s) name a country that is ` +
+        `neither ${nationality} nor ${destination}:`
+    );
+    for (const f of foreignJurisdiction) {
+      console.warn(`     [${f.country}] ${f.name}`);
+    }
+    console.warn(
+      "     This usually means the source is another jurisdiction's " +
+        "variant of the checklist. Check before approving.\n"
+    );
   }
 
   if (draft.requirements.length === 0) {

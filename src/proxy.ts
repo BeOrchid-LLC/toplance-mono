@@ -22,6 +22,13 @@ import { authRoutes, signedInDestination } from "@/lib/auth/routes";
 /** Prefixes a signed-out visitor may reach. Everything else redirects. */
 const isPublicRoute = createRouteMatcher([
   "/",
+  // The traveller's landing page, which is marketing and not a console.
+  // It needs naming separately because `"/"` matches only `/` itself —
+  // when the traveller copy moved off the home page it silently became
+  // a protected route, and a signed-out visitor following "For
+  // travellers" from the nav was bounced to `/sign-in`, which is a door
+  // invite-only travellers cannot open.
+  "/travellers",
   ...authRoutes.map((r) => `${r.prefix}(.*)`),
   // Not an auth route: a signed-in traveller must also reach this page
   // to accept, so it is deliberately absent from `authRoutes` — nothing

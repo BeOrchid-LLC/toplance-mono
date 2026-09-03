@@ -76,7 +76,24 @@ function Slot({
  * a reason, and it resolves to one specific list. Everything below the
  * fold is elaboration on this object.
  */
-export function CorridorBar({ compact = false }: { compact?: boolean }) {
+export function CorridorBar({
+  compact = false,
+  ctaLabel,
+}: {
+  compact?: boolean;
+  /**
+   * Overrides the call to action for a live corridor. The default is the
+   * translated "For organisations", which is the right words on the
+   * traveller page and a tautology on the organisations' own page — the
+   * home page passes its own label rather than telling its reader to go
+   * where they already are.
+   *
+   * Deliberately untranslated: only the surfaces that address the
+   * traveller run in four languages, and every caller passing this is an
+   * English-only B2B surface. A translated default stays the default.
+   */
+  ctaLabel?: string;
+}) {
   const t = useT();
   const { origin, destination, purpose, status, code, mrz, set } = useCorridor();
 
@@ -140,7 +157,7 @@ export function CorridorBar({ compact = false }: { compact?: boolean }) {
                 : "bg-brand text-on-brand hover:bg-[color-mix(in_srgb,var(--brand)_88%,#fff)]"
             )}
           >
-            {soon ? "Request this corridor" : t(HERO.ctaSecondary)}
+            {soon ? "Request this corridor" : (ctaLabel ?? t(HERO.ctaSecondary))}
             <ArrowRight className="size-5 transition-transform group-hover:translate-x-0.5" />
           </Link>
 

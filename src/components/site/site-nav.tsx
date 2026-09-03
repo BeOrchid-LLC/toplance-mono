@@ -12,11 +12,25 @@ import { Wordmark } from "@/components/shared/wordmark";
 import { useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
 
+/**
+ * Bare fragments rather than `/#how`, because both landing pages carry
+ * the same section ids — the bar sits above `/` and `/travellers` alike,
+ * and a link that jumped you to the other page's version of the section
+ * you are already reading would be a worse answer than scrolling.
+ *
+ * "For organisations" became "For travellers" rather than being added
+ * beside it: `/` addresses organisations now, so the old entry pointed
+ * the reader at where they already were, and the traveller page is
+ * otherwise unreachable from the chrome. Swapping rather than appending
+ * also keeps the count at four — the strip is `overflow-hidden`, so a
+ * fifth entry clips instead of wrapping between `lg` and roughly 1140px.
+ * `#orgs` keeps its footer entry.
+ */
 const LINKS = [
   { href: "#how", label: "How it works" },
-  { href: "#orgs", label: "For organisations" },
   { href: "#where", label: "Where we work" },
   { href: "#pricing", label: "Pricing" },
+  { href: "/travellers", label: "For travellers" },
 ];
 
 export function SiteNav() {

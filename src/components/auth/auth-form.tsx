@@ -206,6 +206,17 @@ export function AuthForm(props: AuthFormProps) {
         // visitor loops between the two forever. `assign` makes it a
         // document request, the handshake sets the session cookie, and
         // the destination renders.
+        //
+        // That handshake sets a first-party `__session` cookie, which
+        // only a `sk_live_` instance issues. A `sk_test_` instance runs
+        // cookieless (`url_based_session_syncing`): the session lives on
+        // `*.clerk.accounts.dev` in a `__clerk_db_jwt` query parameter,
+        // there is no cookie for the handshake to set, and this branch
+        // cannot close the gap — the visitor loops forever regardless of
+        // `assign` vs `push`. `src/instrumentation.ts` refuses to boot a
+        // deployed environment paired with a `sk_test_` key so this
+        // branch never has to cope with that case; see "Clerk, one
+        // instance per environment" in the README.
         if (failure.code === "session_exists") {
           window.location.assign(next);
           return;

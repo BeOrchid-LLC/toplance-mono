@@ -8,8 +8,8 @@ const COLUMNS = [
   {
     heading: "Product",
     links: [
-      { href: "/employer/sign-up", label: "Sponsor your team" },
       { href: "/#how", label: "How it works" },
+      { href: "/#orgs", label: "The console" },
       { href: "/#where", label: "Where we work" },
       { href: "/#pricing", label: "Pricing" },
     ],
@@ -17,8 +17,8 @@ const COLUMNS = [
   {
     heading: "Organisations",
     links: [
+      { href: "/employer/sign-up", label: "Sponsor your team" },
       { href: "/employer/sign-in", label: "Employer sign-in" },
-      { href: "/#orgs", label: "Sponsor seats" },
       { href: "/#pricing", label: "Talk to sales" },
       { href: "/#where", label: "Request a corridor" },
     ],
@@ -42,9 +42,21 @@ export function SiteFooter() {
           <div>
             <Wordmark />
             <p className="t-muted mt-3 max-w-[38ch]">
-              Visa and relocation support for people leaving West Africa for work,
-              study and treatment — and for the organisations sending them.
+              Visa and relocation support for the organisations moving people
+              out of West Africa for work, study and treatment — and for the
+              people they are moving.
             </p>
+            {/* The traveller page has no column of its own on purpose. It
+                is one page, and four near-duplicate anchors into it would
+                pad the footer rather than help anyone find it; a single
+                line under the blurb is where a reader who is not the buyer
+                actually looks. */}
+            <Link
+              href="/travellers"
+              className="mt-3 inline-flex min-h-[var(--row-h)] items-center text-base font-medium text-brand-text underline underline-offset-4"
+            >
+              Being sponsored? The traveller&apos;s side
+            </Link>
             <div className="mt-5 flex items-center gap-3">
               <LocaleMenu />
               <ThemeSwitch />

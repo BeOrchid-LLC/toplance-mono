@@ -297,6 +297,9 @@ export const LIVE_CORRIDORS: ReadonlyArray<{
   { nationalityIso: "ng", destinationIso: "gb", purpose: "work" },
   { nationalityIso: "ng", destinationIso: "ae", purpose: "work" },
   { nationalityIso: "ng", destinationIso: "ca", purpose: "study" },
+  // Approved through the review gate on 2026-09-03, unlike the four
+  // above, which were hand-seeded before the gate existed.
+  { nationalityIso: "ng", destinationIso: "cn", purpose: "business" },
   { nationalityIso: "ng", destinationIso: "de", purpose: "work" },
 ];
 

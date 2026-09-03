@@ -1,0 +1,27 @@
+[
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ae",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ca",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "cn",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "de",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "gb",
+    "purpose": "work"
+  }
+]

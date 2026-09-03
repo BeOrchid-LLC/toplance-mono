@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-import { authRoutes, signedInDestination } from "@/lib/auth/routes";
+import { authRoutes, signedInDestination, signInDoorFor } from "@/lib/auth/routes";
 
 /**
  * Next 16 renamed Middleware to Proxy. Clerk's own guide still says
@@ -65,7 +65,7 @@ export default clerkMiddleware(async (auth, request) => {
   if (isPublicRoute(request)) return NextResponse.next();
 
   const url = request.nextUrl.clone();
-  url.pathname = "/sign-in";
+  url.pathname = signInDoorFor(pathname);
   url.searchParams.set("next", pathname);
   return NextResponse.redirect(url);
 });

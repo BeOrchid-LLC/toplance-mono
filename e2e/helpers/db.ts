@@ -317,3 +317,67 @@ export async function statusOf(applicationId: string): Promise<string> {
     return rows[0].status;
   });
 }
+
+export type SeededDraft = { corridorId: string; docName: string };
+
+/**
+ * A drafted corridor version awaiting review, on a corridor triple no
+ * other spec or seed touches.
+ *
+ * `is_live = false` at `version = 1`, which is what
+ * `scripts/draft-corridor.mts` writes — so the spec reviewing it is
+ * looking at the same row an operator would.
+ */
+export async function seedPendingCorridor(): Promise<SeededDraft> {
+  return withClient(async (client) => {
+    await client.query(
+      "delete from corridors where nationality_iso = 'zq' and destination_iso = 'zr'"
+    );
+
+    const { rows } = await client.query<{ id: string }>(
+      `insert into corridors (
+         nationality_iso, destination_iso, purpose, visa_name, version,
+         source_name, source_url, processing_weeks_min, processing_weeks_max,
+         government_fee_minor, government_fee_currency, is_live, review_state
+       ) values (
+         'zq', 'zr', 'work', 'E2E Draft Visa', 1,
+         'Example mission', 'https://example.invalid/checklist', 2, 4,
+         12300, 'GBP', false, 'pending'
+       ) returning id`
+    );
+
+    const corridorId = rows[0].id;
+    const docName = "Draft passport requirement";
+
+    await client.query(
+      `insert into corridor_requirements
+         (corridor_id, doc_key, name, description, category, is_required,
+          sort_order, source_url)
+       values ($1, 'passport', $2, 'Bio page only.', 'identity', true, 1,
+               'https://example.invalid/checklist')`,
+      [corridorId, docName]
+    );
+
+    return { corridorId, docName };
+  });
+}
+
+/** Whether a corridor version is being served to travellers. */
+export async function corridorIsLive(corridorId: string): Promise<boolean> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ is_live: boolean }>(
+      "select is_live from corridors where id = $1",
+      [corridorId]
+    );
+    return rows[0]?.is_live ?? false;
+  });
+}
+
+/** Remove a seeded draft and anything that superseded it. */
+export async function clearSeededCorridor(): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(
+      "delete from corridors where nationality_iso = 'zq' and destination_iso = 'zr'"
+    );
+  });
+}

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."travel_purpose" ADD VALUE 'business';

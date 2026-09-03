@@ -14,21 +14,104 @@ export type CorridorChip = { name: string; flag: string };
  */
 export const PURPOSE_ISO: Record<string, TravelPurpose> = {
   Work: "work",
+  Business: "business",
   Study: "study",
   Tourism: "tourism",
   Medical: "medical",
   Relocation: "relocation",
 };
 
+/**
+ * The destinations a traveller may choose, and the code each maps to.
+ *
+ * PROVISIONAL at 50 entries. The launch requirement is a minimum of 50
+ * destination countries, and this is that list — chosen so the product
+ * can be *asked* about all fifty, not a claim that it can answer for
+ * them. It is expected to be revised once the client confirms which
+ * destinations actually matter.
+ *
+ * Every code below is the `alpha2Code` VisaList returned for that
+ * country in the response recorded at `@/lib/visa/visalist.sample`, so
+ * none of them is a guess; the trailing comment on each line is the
+ * visa category that response gave for a Nigerian passport. The keys are
+ * the display names *this repo* uses, which is why Türkiye keeps its
+ * spelling and the United Arab Emirates is not called "United Arab
+ * Emirated" as the vendor has it.
+ *
+ * **Widening this list does not claim coverage.** Nothing here is a
+ * gate: `resolveRuleSet` is still called with whatever three answers the
+ * intake captured, and a corridor no provider can answer still reaches
+ * `corridorGap`. What changes is that a traveller can now *express* a
+ * destination we do not serve — so `toplance.corridor_requested` counts
+ * it, and the roadmap gets demand instead of silence. Curated coverage
+ * is still `LIVE_CORRIDORS` below, and the shop window is still
+ * `CORRIDORS_LIVE` / `CORRIDORS_SOON`; neither was widened here, because
+ * a marketing board is a promise and this is a menu.
+ */
 export const DESTINATION_ISO: Record<string, string> = {
-  "United Kingdom": "gb",
-  Canada: "ca",
-  "United Arab Emirates": "ae",
-  Germany: "de",
-  "United States": "us",
-  Türkiye: "tr",
-  Ireland: "ie",
-  Netherlands: "nl",
+  // Already mapped — unchanged, these keys are what the intake agent already emits.
+  "United Kingdom": "gb",             // Visa Required
+  Canada: "ca",                       // Visa Required
+  "United Arab Emirates": "ae",       // E-visa
+  Germany: "de",                      // Visa Required
+  "United States": "us",              // Visa Required
+  Türkiye: "tr",                      // Visa Required
+  Ireland: "ie",                      // Visa Required
+  Netherlands: "nl",                  // Visa Required
+
+  // Named on the marketing board as coming soon.
+  Australia: "au",                    // E-visa
+  "Saudi Arabia": "sa",               // Visa Required
+  France: "fr",                       // Visa Required
+  Portugal: "pt",                     // Visa Required
+
+  // Africa — where Nigerian passports actually travel most.
+  Ghana: "gh",                        // Visa Free
+  Kenya: "ke",                        // Visa Free
+  "South Africa": "za",               // E-visa
+  Egypt: "eg",                        // Visa Required
+  Morocco: "ma",                      // Visa Required
+  Rwanda: "rw",                       // Visa on Arrival
+  Ethiopia: "et",                     // E-visa
+  Tanzania: "tz",                     // E-visa
+  Senegal: "sn",                      // Visa Free
+  "Ivory Coast": "ci",                // Visa Free
+  Benin: "bj",                        // Visa Free
+  Togo: "tg",                         // Visa Free
+  Cameroon: "cm",                     // Visa Free
+  Uganda: "ug",                       // E-visa
+
+  // Europe — study and work destinations beyond the four already mapped.
+  Italy: "it",                        // Visa Required
+  Spain: "es",                        // Visa Required
+  Belgium: "be",                      // Visa Required
+  Sweden: "se",                       // Visa Required
+  Norway: "no",                       // Visa Required
+  Denmark: "dk",                      // Visa Required
+  Switzerland: "ch",                  // Visa Required
+  Austria: "at",                      // Visa Required
+  Poland: "pl",                       // Visa Required
+  Czechia: "cz",                      // Visa Required
+  Greece: "gr",                       // Visa Required
+  Malta: "mt",                        // Visa Required
+
+  // Gulf and Middle East — work and medical.
+  Qatar: "qa",                        // E-visa
+  Kuwait: "kw",                       // Visa on Arrival
+  Bahrain: "bh",                      // E-visa
+  Oman: "om",                         // Visa Required
+  Jordan: "jo",                       // E-visa
+
+  // Asia-Pacific.
+  China: "cn",                        // Visa Required
+  India: "in",                        // Visa Required
+  Japan: "jp",                        // Visa Required
+  Singapore: "sg",                    // E-visa
+  Malaysia: "my",                     // E-visa
+
+  // Americas.
+  Brazil: "br",                       // Visa Required
+  Mexico: "mx",                       // Visa Required
 };
 
 export const NATIONALITY_ISO: Record<string, string> = {
@@ -97,6 +180,55 @@ const ISO3: Record<string, string> = {
   "Saudi Arabia": "SAU",
   France: "FRA",
   Portugal: "PRT",
+
+  /**
+   * The rest of `DESTINATION_ISO`, which widened to 50 without this map
+   * following it. `BY_ISO2` below is built with an `if (three)` guard, so
+   * a destination missing here is not a missing alpha-3 — it is dropped
+   * from the lookup entirely: `countryFromIso2("in")` returned null, the
+   * ops corridor heading read "Nigeria → IN" instead of "Nigeria →
+   * India", and `corridorMrz` returned null so the traveller's MRZ band
+   * disappeared rather than degrading. Thirty-four destinations were in
+   * that state.
+   */
+  Egypt: "EGY",
+  Morocco: "MAR",
+  Rwanda: "RWA",
+  Ethiopia: "ETH",
+  Tanzania: "TZA",
+  Senegal: "SEN",
+  "Ivory Coast": "CIV",
+  Benin: "BEN",
+  Togo: "TGO",
+  Uganda: "UGA",
+
+  Italy: "ITA",
+  Spain: "ESP",
+  Belgium: "BEL",
+  Sweden: "SWE",
+  Norway: "NOR",
+  Denmark: "DNK",
+  Switzerland: "CHE",
+  Austria: "AUT",
+  Poland: "POL",
+  Czechia: "CZE",
+  Greece: "GRC",
+  Malta: "MLT",
+
+  Qatar: "QAT",
+  Kuwait: "KWT",
+  Bahrain: "BHR",
+  Oman: "OMN",
+  Jordan: "JOR",
+
+  China: "CHN",
+  India: "IND",
+  Japan: "JPN",
+  Singapore: "SGP",
+  Malaysia: "MYS",
+
+  Brazil: "BRA",
+  Mexico: "MEX",
 };
 
 export function iso3(name: string): string {
@@ -104,7 +236,17 @@ export function iso3(name: string): string {
 }
 
 /** The purposes the intake agent can resolve, in the order it offers them. */
-export const PURPOSES = ["Work", "Study", "Relocation", "Medical", "Tourism"] as const;
+export const PURPOSES = [
+  "Work",
+  // Next to Work rather than beside Tourism: a traveller here is
+  // sponsored by an organisation, so a trip for meetings is closer to
+  // the one above it than to a holiday.
+  "Business",
+  "Study",
+  "Relocation",
+  "Medical",
+  "Tourism",
+] as const;
 
 export type Purpose = (typeof PURPOSES)[number];
 

@@ -9,6 +9,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { opsNav } from "@/components/ops/ops-nav";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import {
@@ -115,7 +116,7 @@ export default async function OpsQueuePage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[{ href: "/ops", label: "Case queue" }]}
+        nav={opsNav}
         name={profile.fullName}
         email={profile.email}
         subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}

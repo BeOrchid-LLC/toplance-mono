@@ -194,8 +194,20 @@ export function AuthForm(props: AuthFormProps) {
         // signed-in visitors off this page, but a tab rendered before
         // the session existed elsewhere can still submit. The visitor
         // is signed in — sending them along is the only useful outcome.
+        //
+        // A full page load, not `router.push`, and that is the whole of
+        // it. Reaching this branch means clerk-js holds a session the
+        // server did not see, or the proxy would have redirected before
+        // this form rendered. The only thing that closes that gap is
+        // Clerk's handshake, and `isRequestEligibleForHandshake` in
+        // @clerk/backend runs it for GET document navigations alone —
+        // the RSC fetch behind `router.push` is not eligible, so the
+        // server stays signed-out, bounces back to `/sign-in`, and the
+        // visitor loops between the two forever. `assign` makes it a
+        // document request, the handshake sets the session cookie, and
+        // the destination renders.
         if (failure.code === "session_exists") {
-          router.push(next);
+          window.location.assign(next);
           return;
         }
         const message = messageFor(failure, fallback);

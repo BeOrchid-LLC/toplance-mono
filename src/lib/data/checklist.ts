@@ -29,7 +29,11 @@ export async function adoptRuleSet(
   const requirements = ruleSet.requirements;
 
   const existing = await db
-    .select({ docKey: documents.docKey, state: documents.state })
+    .select({
+      docKey: documents.docKey,
+      state: documents.state,
+      description: documents.description,
+    })
     .from(documents)
     .where(eq(documents.applicationId, applicationId));
 
@@ -41,11 +45,44 @@ export async function adoptRuleSet(
       applicationId,
       docKey: r.docKey,
       name: r.name,
+      // Copied onto the row rather than joined back through
+      // `applications.corridor_id`, which is null whenever the rule set
+      // has no corridor row of ours behind it. See the column comment.
+      description: r.description,
       isRequired: r.isRequired,
       sortOrder: r.sortOrder,
     }));
 
   if (rows.length) await db.insert(documents).values(rows);
+
+  /**
+   * Copying guidance costs what the join gave away: a reworded
+   * requirement no longer reaches an existing checklist by itself. So
+   * re-adopting refreshes it — only where it actually changed, which on
+   * the common path (the requirements screen re-adopting an unchanged
+   * corridor) is nowhere and costs no writes.
+   *
+   * Only the description. `name`, `isRequired` and `sortOrder` were
+   * already snapshots taken at insert and are left that way: renumbering
+   * a checklist someone is halfway through is a bigger decision than
+   * this fix, and belongs with the change-notification work.
+   */
+  const wording = new Map(existing.map((d) => [d.docKey, d.description]));
+  const reworded = requirements.filter(
+    (r) => wording.has(r.docKey) && wording.get(r.docKey) !== r.description
+  );
+
+  for (const r of reworded) {
+    await db
+      .update(documents)
+      .set({ description: r.description })
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, r.docKey)
+        )
+      );
+  }
 
   // Drop rows this corridor no longer asks for, unless already uploaded.
   const wanted = new Set(requirements.map((r) => r.docKey));

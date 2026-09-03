@@ -64,12 +64,46 @@ export const documentState = pgEnum("document_state", [
   "failed",
 ]);
 
+/**
+ * Where a corridor version sits in the review it must pass before a
+ * traveller can be shown it.
+ *
+ * An enum rather than the plan's `text`, because every other closed set
+ * in this file is one and the ops screens switch on the value. The
+ * lifecycle itself is carried by columns that already existed —
+ * `version` and `is_live` — so this records *why* a version is dark,
+ * not whether it is.
+ */
+export const corridorReviewState = pgEnum("corridor_review_state", [
+  "pending",
+  "approved",
+  "rejected",
+]);
+
 export const travelPurpose = pgEnum("travel_purpose", [
   "tourism",
   "work",
   "study",
   "medical",
   "relocation",
+  /**
+   * Meetings, trade, conferences — a distinct visa category almost
+   * everywhere, not a flavour of tourism.
+   *
+   * Appended rather than inserted in purpose order, because Postgres
+   * `ADD VALUE` appends and a reordered enum would be a rewrite rather
+   * than an additive migration. Enum position carries no meaning here;
+   * the order the intake agent offers purposes in is `PURPOSES` in
+   * `@/lib/domain/corridors`.
+   *
+   * Added because the sources say it is first-class: India lists
+   * e-Business among its e-Visa categories, and the EU Visa Code's
+   * Annex II puts business trips *first*, ahead of study and tourism.
+   * It also fits this product better than tourism does — a traveller
+   * here is sponsored by an organisation, and an employee flying out
+   * for meetings is nearer Toplance's customer than a holidaymaker.
+   */
+  "business",
 ]);
 
 export const invitationStatus = pgEnum("invitation_status", [
@@ -86,6 +120,14 @@ export const notificationKind = pgEnum("notification_kind", [
   "message_received", // → the other side of the thread
   "itinerary_ready", // → traveller
   "companion_digest", // → traveller: weekly post-arrival digest
+  /**
+   * → traveller: the corridor they are mid-application on was revised,
+   * and their checklist changed with it. Sent only when a document was
+   * actually added or dropped — a reworded description is not worth an
+   * email, and a corridor revision that changes no row of theirs is not
+   * news to them.
+   */
+  "checklist_changed",
 ]);
 
 /**
@@ -204,6 +246,27 @@ export const corridors = pgTable(
     governmentFeeMinor: bigint({ mode: "number" }),
     governmentFeeCurrency: text().default("NGN"),
     isLive: boolean().notNull().default(true),
+    /**
+     * When a human last read this corridor against its source and said
+     * it still holds.
+     *
+     * Deliberately not `effective_from`, which is when the *mission's*
+     * rule took effect — a different fact, and the one that let a wrong
+     * UK fee sit unnoticed for months because the corridor looked dated
+     * rather than unchecked. Null means nobody has ever verified it.
+     */
+    lastVerifiedAt: timestamp({ withTimezone: true }),
+    reviewState: corridorReviewState().notNull().default("approved"),
+    approvedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    approvedAt: timestamp({ withTimezone: true }),
+    /** Why an owner sent a draft back. Set only on `rejected`. */
+    rejectReason: text(),
+    /**
+     * Digest of the source pages this version was read from, so the
+     * re-check job can tell "the page moved" from "the page is the
+     * same" without paying a model call for every corridor every week.
+     */
+    sourceHash: text(),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -229,6 +292,13 @@ export const corridorRequirements = pgTable(
     category: text().notNull().default("identity"),
     isRequired: boolean().notNull().default(true),
     sortOrder: integer().notNull().default(0),
+    /**
+     * The page this one requirement was read from, which is not always
+     * the corridor's own source: a checklist comes from the visa centre
+     * while the fee comes from the mission. A drafted requirement that
+     * arrives without one is dropped rather than guessed.
+     */
+    sourceUrl: text(),
   },
   (t) => [unique("corridor_requirements_doc_key").on(t.corridorId, t.docKey)]
 );
@@ -313,6 +383,17 @@ export const documents = pgTable(
       .references(() => applications.id, { onDelete: "cascade" }),
     docKey: text().notNull(),
     name: text().notNull(),
+    /**
+     * The guidance shown under the document's name on the upload
+     * screen, copied from the rule set that asked for it.
+     *
+     * Copied rather than joined. The screen used to read this through
+     * `applications.corridor_id`, which is null for any rule set with
+     * no row of ours behind it — an API provider, or an application a
+     * re-seed detached — and the traveller silently lost every line of
+     * guidance. A checklist row must carry its own instructions.
+     */
+    description: text(),
     state: documentState().notNull().default("not_started"),
     storagePath: text(),
     reason: text(),

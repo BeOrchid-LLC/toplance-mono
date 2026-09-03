@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
 
 import { DocumentRow } from "@/components/app/document-row";
 import { SubmitButton } from "@/components/app/submit-button";
@@ -9,8 +8,7 @@ import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
 import { VERIFIED_MEANS } from "@/lib/domain/status";
-import { db, hasDatabaseEnv } from "@/lib/db/client";
-import { corridorRequirements } from "@/lib/db/schema";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   completionOf,
   getDocuments,
@@ -34,22 +32,6 @@ export default async function DocumentsPage() {
 
   const docs = await getDocuments(application.id);
   const completion = completionOf(docs);
-
-  // Descriptions live on the corridor rule set, not on the application,
-  // so guidance updates for everyone the moment a mission changes it.
-  const requirements = application.corridorId
-    ? await db
-        .select({
-          docKey: corridorRequirements.docKey,
-          description: corridorRequirements.description,
-        })
-        .from(corridorRequirements)
-        .where(eq(corridorRequirements.corridorId, application.corridorId))
-    : [];
-
-  const descriptions = Object.fromEntries(
-    requirements.map((r) => [r.docKey, r.description])
-  );
 
   /**
    * Three sets, in the order a person acts on them: what is blocking
@@ -125,12 +107,23 @@ export default async function DocumentsPage() {
                   }
                 />
                 <div>
+                  {/* Guidance comes off the checklist row itself. It was
+                      joined from `corridor_requirements` through
+                      `applications.corridor_id`, which is null for any
+                      rule set with no row of ours behind it — an API
+                      provider answering, or an application a re-seed
+                      detached — and this screen then showed bare
+                      document names while the requirements screen beside
+                      it showed the same list in full. `adoptRuleSet`
+                      copies the wording across and refreshes it when a
+                      mission rewords a requirement, so the live-update
+                      property the join gave is kept without the join. */}
                   {set.docs.map((doc) => (
                     <DocumentRow
                       key={doc.id}
                       doc={doc}
                       applicationId={application.id}
-                      description={descriptions[doc.docKey]}
+                      description={doc.description}
                     />
                   ))}
                 </div>

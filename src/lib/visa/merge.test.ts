@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fillGaps, hasGaps } from "@/lib/visa/merge";
+import { fillGaps, gapsIn, hasGaps } from "@/lib/visa/merge";
 import type { CorridorRuleSet } from "@/lib/visa/types";
 
 const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
@@ -9,6 +9,7 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   visaName: "Skilled Worker Visa",
   version: 1,
   effectiveFrom: "2026-01-15",
+  lastVerifiedAt: null,
   sourceName: "UK Visas and Immigration",
   sourceUrl: "https://www.gov.uk/skilled-worker-visa",
   attribution: null,
@@ -33,6 +34,7 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
       category: "identity",
       isRequired: true,
       sortOrder: 1,
+      sourceUrl: null,
     },
   ],
   ...over,
@@ -73,13 +75,37 @@ describe("hasGaps", () => {
   });
 
   /**
-   * The gate that keeps a complete corridor free. Every provider behind
-   * the spine costs a request against a metered quota — Travel Buddy's
-   * free tier is 120 a month — so a rule set with nothing missing must
-   * stop the walk rather than shop around for a second opinion.
+   * The fixture above is not a rule set any provider can actually build,
+   * and believing it was is how a quota went missing.
+   *
+   * It is tagged `provider: "curated"` and carries an allowed stay, a
+   * passport validity and an embassy URL — but `corridors` has no column
+   * for any of the three, so the real curated provider returns null for
+   * all of them on every row it serves. Every case above therefore
+   * tested `hasGaps` against a shape that has never once reached it in
+   * production, and the "nothing missing" path it certified was
+   * unreachable.
+   *
+   * This case pins the shape that does reach it, so that the day those
+   * columns exist the assertion below fails and asks to be updated.
    */
-  it("is what stops a complete rule set costing a second API call", () => {
-    expect(hasGaps(ruleSet())).toBe(false);
+  it("reports exactly the three figures curated cannot hold", () => {
+    const asCuratedReallyAnswers = ruleSet({
+      allowedStay: null,
+      passportValidity: null,
+      embassyUrl: null,
+    });
+
+    expect(gapsIn(asCuratedReallyAnswers)).toEqual([
+      "allowedStay",
+      "passportValidity",
+      "embassyUrl",
+    ]);
+    expect(hasGaps(asCuratedReallyAnswers)).toBe(true);
+  });
+
+  it("reports no gap for a rule set that answers every figure", () => {
+    expect(gapsIn(ruleSet())).toEqual([]);
   });
 });
 
@@ -280,6 +306,7 @@ describe("fillGaps", () => {
           category: "general",
           isRequired: true,
           sortOrder: 1,
+          sourceUrl: null,
         },
       ],
     });

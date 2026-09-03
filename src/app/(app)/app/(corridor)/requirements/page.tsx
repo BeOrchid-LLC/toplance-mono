@@ -15,6 +15,7 @@ import {
 } from "@/lib/data/applications";
 import { adoptRuleSet } from "@/lib/data/checklist";
 import { corridorGap } from "@/lib/domain/corridor-gap";
+import { freshnessOf } from "@/lib/domain/freshness";
 import {
   DESTINATION_ISO,
   NATIONALITY_ISO,
@@ -51,6 +52,30 @@ function Figure({ value, label }: { value: string | null; label: string }) {
       aria-label={`${label}: awaiting a real figure`}
       className="inline-block w-[88px] border-b-2 border-dashed border-border-strong align-middle"
     />
+  );
+}
+
+/**
+ * The page one requirement was read from, when it differs from — or
+ * simply predates — the corridor's own source line.
+ *
+ * A checklist comes from the visa centre while the fee comes from the
+ * mission, so a single source line at the foot of the sheet cannot cover
+ * every row above it. Renders nothing at all for a requirement without
+ * one: an unlinked line is honest, an invented link is not.
+ */
+function RequirementSource({ url }: { url: string | null }) {
+  if (!url) return null;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-text hover:underline"
+    >
+      Source
+      <ExternalLink className="size-3.5" aria-hidden />
+    </a>
   );
 }
 
@@ -115,6 +140,10 @@ function CorridorGap({
                 </div>
               )}
             </dl>
+            {/* The vendor is named from the answer, not from this file.
+                It used to say "Travel Buddy" whoever had answered, which
+                became a false citation the moment a second provider
+                could — and it silently was one. */}
             <p className="t-muted mt-4 max-w-[62ch]">
               Entry rules from{" "}
               {entry.embassyUrl ? (
@@ -124,14 +153,18 @@ function CorridorGap({
                   rel="noopener noreferrer"
                   className="font-semibold text-brand-text hover:underline"
                 >
-                  Travel Buddy
+                  {entry.sourceName}
                 </a>
               ) : (
-                <span className="font-semibold">Travel Buddy</span>
+                <span className="font-semibold">{entry.sourceName}</span>
               )}
               . We cannot build your document checklist for {destination} yet
               — that needs guidance we have checked against the mission.
             </p>
+            {/* A credit the provider's licence obliges us to display. */}
+            {entry.attribution && (
+              <p className="t-muted mt-2 max-w-[62ch]">{entry.attribution}</p>
+            )}
           </div>
         )}
         {/* This used to promise an email. Nothing in the repo can send
@@ -188,9 +221,13 @@ export default async function RequirementsPage() {
   // a half-built checklist and letting someone act on it.
   if (!ruleSet) {
     // Free: `resolveRuleSet` already asked Travel Buddy about this
-    // corridor and discarded the answer, and the provider caches it for
-    // seven days. Skipped entirely when the answers did not map to ISO
-    // codes, because there is no corridor to ask about.
+    // corridor and discarded the answer, and the provider caches it —
+    // seven days for an answer, an hour for a failure. That second half
+    // is what makes this line true rather than merely hopeful: failures
+    // used to be cached for no time at all, so the "free" call here was
+    // a second live request every time the vendor was unwell. Skipped
+    // entirely when the answers did not map to ISO codes, because there
+    // is no corridor to ask about.
     const entry =
       nationality && destination && purpose
         ? await resolveEntryCheck({
@@ -233,6 +270,11 @@ export default async function RequirementsPage() {
     month: "long",
     year: "numeric",
   });
+
+  // How much of "Nothing here is our interpretation" still holds. The
+  // thresholds are a policy argument, so they live in the domain module
+  // and can be argued with there rather than in this file's JSX.
+  const freshness = freshnessOf(ruleSet.lastVerifiedAt, purpose);
 
   return (
     <main>
@@ -354,6 +396,17 @@ export default async function RequirementsPage() {
             <span className="kicker">Rule set v{ruleSet.version}</span>
             <span aria-hidden className="h-3 w-px bg-border-strong" />
             <span className="t-muted">In effect since {effective}</span>
+            <span aria-hidden className="h-3 w-px bg-border-strong" />
+            {/* Two different facts, deliberately printed side by side.
+                "In effect since" is the mission's date; this is ours,
+                and only this one answers "is anybody still watching?".
+                Conflating them is how a fee stayed £100 wrong for eight
+                months while the screen looked perfectly well sourced. */}
+            <span className="t-muted">
+              {freshness.state === "unverified"
+                ? "Never checked by us"
+                : `We last checked ${freshness.checked}`}
+            </span>
             {ruleSet.sourceUrl && (
               <a
                 href={ruleSet.sourceUrl}
@@ -407,6 +460,21 @@ export default async function RequirementsPage() {
           </div>
         </Panel>
 
+        {/* An age warning, not a withdrawal. Pulling a dated corridor
+            would replace an old checklist with no checklist, which helps
+            nobody — so the traveller keeps the list and is told how much
+            weight to put on it. Absent entirely for a corridor checked
+            inside its window, which is the state every corridor should
+            be in once the re-check job lands. */}
+        {freshness.notice && (
+          <p
+            role="note"
+            className="mt-4 max-w-[74ch] rounded-sm border border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_7%,transparent)] px-5 py-4 text-base text-ink-2"
+          >
+            {freshness.notice}
+          </p>
+        )}
+
         <Panel className="mt-6">
           <PanelHeader
             label="What you must provide"
@@ -432,6 +500,7 @@ export default async function RequirementsPage() {
                       {r.description}
                     </p>
                   )}
+                  <RequirementSource url={r.sourceUrl} />
                 </div>
               </li>
             ))}
@@ -460,6 +529,7 @@ export default async function RequirementsPage() {
                       {r.description}
                     </p>
                   )}
+                  <RequirementSource url={r.sourceUrl} />
                 </li>
               ))}
             </ul>

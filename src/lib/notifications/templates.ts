@@ -164,3 +164,47 @@ export function companionDigestEmail({
     }),
   };
 }
+
+/**
+ * A corridor revision changed what this traveller must produce.
+ *
+ * The email names the documents rather than saying "your checklist has
+ * changed" and making them go and diff it themselves — added and dropped
+ * are different news, and someone who has already gathered a document
+ * needs to be told it is no longer wanted as plainly as they need to be
+ * told about a new one.
+ *
+ * It states outright that nothing they uploaded was destroyed, because
+ * that is the first thing anyone reading "your requirements changed"
+ * will fear, and `adoptRuleSet` guarantees it.
+ */
+export function checklistChangedEmail({
+  visaName,
+  added,
+  removed,
+  url,
+}: {
+  visaName: string;
+  added: string[];
+  removed: string[];
+  url: string;
+}): EmailContent {
+  const list = [
+    ...added.map((name) => `Now needed: ${name}`),
+    ...removed.map((name) => `No longer needed: ${name}`),
+  ];
+
+  return {
+    subject: `Your ${visaName} checklist has changed`,
+    ...renderEmail({
+      heading: "Your checklist has changed",
+      paragraphs: [
+        `The mission has revised what it asks for on your ${visaName}, and ` +
+          "your checklist has been updated to match. Everything you have " +
+          "already uploaded has been kept.",
+      ],
+      list,
+      cta: { href: url, label: "See your documents" },
+    }),
+  };
+}

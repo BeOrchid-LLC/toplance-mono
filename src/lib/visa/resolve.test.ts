@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { GAP_FIELDS } from "@/lib/visa/merge";
 import { resolveWith } from "@/lib/visa/resolve";
 import type {
   CorridorQuery,
   CorridorRuleSet,
+  GapField,
   VisaDataProvider,
 } from "@/lib/visa/types";
 
@@ -19,6 +21,7 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   visaName: "Skilled Worker Visa",
   version: 1,
   effectiveFrom: "2026-01-15",
+  lastVerifiedAt: null,
   sourceName: "UK Visas and Immigration",
   sourceUrl: "https://www.gov.uk/skilled-worker-visa",
   attribution: null,
@@ -43,24 +46,34 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
       category: "identity",
       isRequired: true,
       sortOrder: 1,
+      sourceUrl: null,
     },
   ],
   ...over,
 });
 
-/** A provider that answers with whatever it was handed. */
+/**
+ * A provider that answers with whatever it was handed.
+ *
+ * `fills` defaults to every gap field, which is what the older cases
+ * here assume: a stub that can supply anything is never skipped for
+ * having nothing to offer, so those cases keep testing precedence and
+ * merging rather than the cost gate.
+ */
 function stub(
   name: string,
   answer: CorridorRuleSet | null,
-  canLead = true
+  canLead = true,
+  fills: readonly GapField[] = GAP_FIELDS
 ): VisaDataProvider {
-  return { name, canLead, fetch: vi.fn(async () => answer) };
+  return { name, canLead, fills, fetch: vi.fn(async () => answer) };
 }
 
 function broken(name: string): VisaDataProvider {
   return {
     name,
     canLead: true,
+    fills: GAP_FIELDS,
     fetch: vi.fn(async () => {
       throw new Error("vendor down");
     }),
@@ -96,6 +109,63 @@ describe("resolveWith", () => {
     await resolveWith([first, second], QUERY);
 
     expect(second.fetch).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The gate above only ever fired for a spine with nothing missing,
+   * and no real spine is ever in that state: the `corridors` table has
+   * no column for allowed stay, passport validity or embassy contact,
+   * so the curated provider returns null for all three on every row it
+   * serves. `hasGaps` was therefore true for every curated corridor
+   * forever, and the walk paid a metered request on every page view to
+   * ask a vendor for figures it had already been asked for.
+   *
+   * A gap only justifies the request if someone left in the walk can
+   * actually fill it.
+   */
+  it("does not consult a provider that cannot fill any remaining gap", async () => {
+    // What curated really returns: fee and decision time, no entry rules.
+    const first = stub(
+      "curated",
+      ruleSet({ allowedStay: null, passportValidity: null, embassyUrl: null }),
+      true,
+      ["governmentFeeMinor", "processingWeeksMin", "processingWeeksMax"]
+    );
+    // A vendor that holds only the fee has nothing this spine wants.
+    const second = stub("feesonly", ruleSet({ provider: "feesonly" }), false, [
+      "governmentFeeMinor",
+    ]);
+
+    const resolved = await resolveWith([first, second], QUERY);
+
+    expect(second.fetch).not.toHaveBeenCalled();
+    // Skipping the call must not skip the answer curated already gave.
+    expect(resolved!.provider).toBe("curated");
+    expect(resolved!.governmentFeeMinor).toBe(71900);
+  });
+
+  it("still consults a provider that can fill a remaining gap", async () => {
+    const first = stub(
+      "curated",
+      ruleSet({ allowedStay: null, passportValidity: null, embassyUrl: null }),
+      true,
+      ["governmentFeeMinor", "processingWeeksMin", "processingWeeksMax"]
+    );
+    const second = stub(
+      "travelbuddy",
+      ruleSet({
+        provider: "travelbuddy",
+        sourceName: "Travel Buddy",
+        allowedStay: "90 days",
+      }),
+      false,
+      ["allowedStay", "passportValidity", "embassyUrl"]
+    );
+
+    const resolved = await resolveWith([first, second], QUERY);
+
+    expect(second.fetch).toHaveBeenCalledTimes(1);
+    expect(resolved!.allowedStay).toBe("90 days");
   });
 
   it("fills a figure the spine lacks from the next provider", async () => {
@@ -270,6 +340,7 @@ describe("resolveWith", () => {
             category: "general",
             isRequired: true,
             sortOrder: 1,
+            sourceUrl: null,
           },
         ],
       })

@@ -144,6 +144,10 @@ describe("fetchCountryContext gates", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+    // A console spy left standing by a failing assertion silently
+    // inflates the call counts of the next test, which turns one real
+    // failure into a cascade of unrelated-looking ones.
+    vi.restoreAllMocks();
   });
 
   it("is inert without an API key", async () => {
@@ -241,6 +245,133 @@ describe("fetchCountryContext gates", () => {
         purpose: "work",
       })
     ).resolves.toBeNull();
+    // A 500 is the vendor's origin failing, which is a fault and stays
+    // one. Only the quota case was reclassified.
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    consoleSpy.mockRestore();
+  });
+
+  /**
+   * The quota bug this pair of tests exists to prevent.
+   *
+   * A failed call used to leave the cache untouched, so the next render
+   * of the same screen asked the vendor again — and the render after
+   * that. RapidAPI does not meter a 429, but it does meter the slow
+   * call that times out, and it does meter the 500 that a vendor
+   * answers from its own origin. An error path that never caches turns
+   * one broken corridor into an unbounded spend against a 120-request
+   * month.
+   *
+   * Cached briefly rather than for the success TTL: an outage should
+   * heal on its own within the hour, where a real answer is good for a
+   * week.
+   */
+  it("does not re-ask the vendor after a failed status", async () => {
+    vi.stubEnv("TRAVEL_BUDDY_API_KEY", "test-key");
+    const fetchSpy = vi
+      .fn()
+      .mockResolvedValue(new Response("rate limited", { status: 429 }));
+    vi.stubGlobal("fetch", fetchSpy);
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    vi.resetModules();
+    const { fetchCountryContext: fetchFresh } = await import(
+      "@/lib/visa/travelbuddy"
+    );
+
+    const query = {
+      nationalityIso: "ng",
+      destinationIso: "de",
+      purpose: "work",
+    } as const;
+
+    expect(await fetchFresh(query)).toBeNull();
+    expect(await fetchFresh(query)).toBeNull();
+    expect(await fetchFresh(query)).toBeNull();
+
+    // One attempt, one log line — not one per page view.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    consoleSpy.mockRestore();
+  });
+
+  /**
+   * The dev-overlay regression.
+   *
+   * A 429 from this vendor is its quota month ending, not a fault:
+   * RapidAPI does not meter the response, the reset window comes back in
+   * the headers, and every screen falls back to what the curated table
+   * already serves. But Next's dev overlay promotes *any* server-side
+   * `console.error` into a red Console Error dialog, so reporting a state
+   * this module handles by design put a fault report over the
+   * requirements screen. Severity is the fix: still logged, no longer
+   * claiming something broke.
+   */
+  it("logs an exhausted quota as a warning, not an error", async () => {
+    vi.stubEnv("TRAVEL_BUDDY_API_KEY", "test-key");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("rate limited", {
+          status: 429,
+          // Four weeks, the figure the live endpoint sent on 2026-09-02.
+          headers: { "x-ratelimit-requests-reset": "2429340" },
+        })
+      )
+    );
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    vi.resetModules();
+    const { fetchCountryContext: fetchFresh } = await import(
+      "@/lib/visa/travelbuddy"
+    );
+
+    await expect(
+      fetchFresh({
+        nationalityIso: "ng",
+        destinationIso: "ca",
+        purpose: "work",
+      })
+    ).resolves.toBeNull();
+
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    // In a unit somebody can act on. "40489 minutes" is the same fact
+    // stated so that nobody reads it as four weeks.
+    expect(warnSpy.mock.calls[0]![0]).toContain("28 days");
+
+    errorSpy.mockRestore();
+    warnSpy.mockRestore();
+  });
+
+  it("does not re-ask the vendor after a timeout", async () => {
+    vi.stubEnv("TRAVEL_BUDDY_API_KEY", "test-key");
+    const fetchSpy = vi
+      .fn()
+      .mockRejectedValue(new DOMException("timed out", "TimeoutError"));
+    vi.stubGlobal("fetch", fetchSpy);
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    vi.resetModules();
+    const { fetchCountryContext: fetchFresh } = await import(
+      "@/lib/visa/travelbuddy"
+    );
+
+    const query = {
+      nationalityIso: "ng",
+      destinationIso: "de",
+      purpose: "work",
+    } as const;
+
+    expect(await fetchFresh(query)).toBeNull();
+    expect(await fetchFresh(query)).toBeNull();
+
+    // A timed-out request still reached the vendor's origin and was
+    // still metered. Retrying it on the next render spends the quota
+    // twice for one answer nobody got.
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
     consoleSpy.mockRestore();
   });
 });

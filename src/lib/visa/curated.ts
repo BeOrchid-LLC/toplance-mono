@@ -23,6 +23,13 @@ import type {
 export const curatedProvider: VisaDataProvider = {
   name: "curated",
   canLead: true,
+  // The fee and the decision time are columns on `corridors`; allowed
+  // stay, passport validity and embassy contact are not, which is why
+  // this provider returns null for those three on every row it serves.
+  // Saying so here is what lets the resolver skip a vendor that offers
+  // nothing else — and what will make the skip start covering the entry
+  // rules too, the day those columns exist.
+  fills: ["governmentFeeMinor", "processingWeeksMin", "processingWeeksMax"],
 
   async fetch(query: CorridorQuery): Promise<CorridorRuleSet | null> {
     const [corridor] = await db
@@ -53,6 +60,12 @@ export const curatedProvider: VisaDataProvider = {
       visaName: corridor.visaName,
       version: corridor.version,
       effectiveFrom: corridor.effectiveFrom,
+      // Null until an owner approves a version through the ops console,
+      // which is the only thing that stamps it. The four seeded
+      // corridors therefore report "never checked" rather than
+      // borrowing `effectiveFrom` and claiming a verification nobody
+      // performed — one of them has a fee that is £100 wrong.
+      lastVerifiedAt: corridor.lastVerifiedAt?.toISOString() ?? null,
       sourceName: corridor.sourceName,
       sourceUrl: corridor.sourceUrl,
       // Our own curation of public embassy guidance: no licence, and so
@@ -79,6 +92,7 @@ export const curatedProvider: VisaDataProvider = {
         category: r.category,
         isRequired: r.isRequired,
         sortOrder: r.sortOrder,
+        sourceUrl: r.sourceUrl,
       })),
     };
   },

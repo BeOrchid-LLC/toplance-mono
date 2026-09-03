@@ -25,4 +25,18 @@ export const REALTIME_MODEL = "gpt-realtime-mini";
  */
 export const COMPANION_MODEL = "gpt-5.4-mini";
 
+/**
+ * Transcribing a published visa checklist into a drafted corridor —
+ * `scripts/draft-corridor.mts`.
+ *
+ * The full model rather than mini, and deliberately so. Every other AI
+ * job here is either recoverable by the traveller (intake) or reviewed
+ * before it counts (pre-check flags a human then confirms). This one
+ * writes reference data that, once an owner approves it, is what every
+ * traveller on the corridor is told to bring. The approval gate is the
+ * real safeguard, but a draft that arrives closer to its source is a
+ * gate a person can actually hold.
+ */
+export const CORRIDOR_DRAFT_MODEL = "gpt-5.4";
+
 export const aiEnabled = () => !!process.env.OPENAI_API_KEY;

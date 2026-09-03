@@ -31,6 +31,7 @@ const KIND_COPY: Record<NotificationKind, string> = {
   message_received: "You have a new message",
   itinerary_ready: "Your arrival plan is ready",
   companion_digest: "Your weekly digest is ready",
+  checklist_changed: "Your document checklist changed",
 };
 
 function relativeTime(date: Date): string {

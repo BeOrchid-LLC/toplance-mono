@@ -7,6 +7,9 @@ import {
   LIVE_CORRIDORS,
   NATIONALITY_ISO,
   PURPOSE_ISO,
+  PURPOSES,
+  corridorMrz,
+  countryFromIso2,
   isCorridorLive,
   liveDestinationsFor,
   liveNationalities,
@@ -47,6 +50,50 @@ function seededCorridors() {
 
 const key = (c: { nationalityIso: string; destinationIso: string; purpose: string }) =>
   `${c.nationalityIso}->${c.destinationIso}:${c.purpose}`;
+
+describe("DESTINATION_ISO", () => {
+  it("offers at least the 50 destinations the launch requires", () => {
+    // Phase 3's headline number. This asserts a traveller can *choose*
+    // fifty destinations, which is not the same as being served for
+    // them — see `LIVE_CORRIDORS` below for what is actually curated.
+    expect(Object.keys(DESTINATION_ISO).length).toBeGreaterThanOrEqual(50);
+  });
+
+  it("maps every destination to a distinct, well-formed code", () => {
+    const codes = Object.values(DESTINATION_ISO);
+
+    for (const code of codes) expect(code).toMatch(/^[a-z]{2}$/);
+    // A duplicate would silently merge two destinations into one
+    // corridor: two names on the menu, one row in the table.
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+
+  it("keeps the codes the app already resolved before the list grew", () => {
+    // Widening the menu must not renumber the corridors that already
+    // exist — `seed.sql`, `LIVE_CORRIDORS` and every seeded application
+    // are keyed on these.
+    expect(DESTINATION_ISO).toMatchObject({
+      "United Kingdom": "gb",
+      Canada: "ca",
+      "United Arab Emirates": "ae",
+      Germany: "de",
+      "United States": "us",
+      Türkiye: "tr",
+      Ireland: "ie",
+      Netherlands: "nl",
+    });
+  });
+
+  it("names every destination the way the reverse lookups expect", () => {
+    // `itinerary.ts` and `companion-tips.ts` build iso → name from this
+    // map and put the result in a model prompt. A blank or duplicated
+    // display name there becomes a sentence about nowhere.
+    const names = Object.keys(DESTINATION_ISO);
+
+    for (const name of names) expect(name.trim()).toBe(name);
+    expect(new Set(names).size).toBe(names.length);
+  });
+});
 
 describe("LIVE_CORRIDORS", () => {
   it("finds corridors in the seed to compare against", () => {
@@ -143,5 +190,71 @@ describe("liveNationalities", () => {
     expect(liveNationalities().map((n) => NATIONALITY_ISO[n]).sort()).toEqual(
       [...declared].sort()
     );
+  });
+});
+
+describe("business as a purpose", () => {
+  it("is offered by the intake agent and maps to the enum value", () => {
+    // The agent reads `PURPOSE_ISO` for what it will accept, so a
+    // purpose absent here is one a traveller cannot express at all.
+    expect(PURPOSE_ISO.Business).toBe("business");
+    expect(PURPOSES).toContain("Business");
+  });
+
+  it("is offered next to Work rather than beside Tourism", () => {
+    // Travellers here are sponsored by an organisation; a trip for
+    // meetings belongs with employment, not with holidays.
+    expect(PURPOSES.indexOf("Business")).toBe(PURPOSES.indexOf("Work") + 1);
+  });
+
+  it("keeps every purpose label mapping to a distinct code", () => {
+    const codes = Object.values(PURPOSE_ISO);
+    expect(new Set(codes).size).toBe(codes.length);
+  });
+});
+
+/**
+ * `BY_ISO2` is built with an `if (three)` guard, so a name missing from
+ * `ISO3` is not a missing alpha-3 code — the destination drops out of
+ * the lookup entirely. `DESTINATION_ISO` widened from 8 to 50 while
+ * `ISO3` stayed at 17, which left 34 destinations resolving to null:
+ * the ops corridor heading rendered "Nigeria → IN" rather than
+ * "Nigeria → India", and `corridorMrz` returned null so the traveller's
+ * MRZ band vanished instead of degrading.
+ *
+ * Asserted over the maps themselves rather than a written-down list, so
+ * widening the menu again fails here rather than in the UI.
+ */
+describe("every code the menus offer resolves to a country", () => {
+  it.each(Object.entries(DESTINATION_ISO))(
+    "resolves %s (%s) to a name and an alpha-3",
+    (name, code) => {
+      const country = countryFromIso2(code);
+      expect(country, `${name} (${code}) has no ISO3 entry`).not.toBeNull();
+      expect(country?.name).toBe(name);
+      expect(country?.iso3).toMatch(/^[A-Z]{3}$/);
+    }
+  );
+
+  it.each(Object.entries(NATIONALITY_ISO))(
+    "resolves the %s passport (%s)",
+    (name, code) => {
+      expect(countryFromIso2(code), `${name} has no ISO3 entry`).not.toBeNull();
+    }
+  );
+
+  it("builds an MRZ for a corridor to a newly added destination", () => {
+    // India was one of the 34. A null here is the MRZ band disappearing.
+    expect(corridorMrz("ng", "in", "business")).not.toBeNull();
+    expect(corridorMrz("ng", "in", "business")).toContain("NGA");
+    expect(corridorMrz("ng", "in", "business")).toContain("IND");
+  });
+
+  it("still refuses a code no menu offers, rather than inventing one", () => {
+    // `iso3()` falls back to the first three letters for marketing copy;
+    // this path must not, or an unknown `xx` prints as `XX` on a
+    // traveller's own data page.
+    expect(countryFromIso2("xx")).toBeNull();
+    expect(corridorMrz("ng", "xx", "business")).toBeNull();
   });
 });

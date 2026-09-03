@@ -98,6 +98,26 @@ export const EVENT_NAMES = [
   "toplance.invitation_revoked",
   "toplance.invitation_accepted",
 
+  /**
+   * The corridor review lifecycle. `corridor_drafted` is emitted by the
+   * drafting script, the other two by the ops console.
+   *
+   * Worth counting separately from the audit trail beside them:
+   * `audit_log` answers "who approved this corridor" for accountability,
+   * these answer "how long does a draft wait" — the question the plan's
+   * critical path actually runs through, since 15 corridors cannot go
+   * live faster than one person approves them.
+   */
+  "toplance.corridor_drafted",
+  "toplance.corridor_approved",
+  "toplance.corridor_rejected",
+
+  /**
+   * A source page moved under a live corridor. Reserved for the
+   * re-check job; nothing emits it yet.
+   */
+  "toplance.corridor_drift_detected",
+
   /** A traveller put a photo on their own profile, or replaced it. */
   "toplance.avatar_uploaded",
 

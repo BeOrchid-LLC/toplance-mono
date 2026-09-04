@@ -68,7 +68,7 @@ const LEDGER = [
   },
   {
     alone: "Chasing four clients on WhatsApp for documents you shouldn't have to collect yourself",
-    with: "Toplance collects and checks the documents; you see completion, never the file",
+    with: "Toplance collects and checks the documents; you see completion, not the file",
   },
   {
     alone: "A different process for every corridor, remembered rather than written down",
@@ -116,7 +116,7 @@ const FEATURES = [
   },
   {
     title: "Document review, done for you",
-    body: "You see whether a client is on track and whether they are stuck. Your own team never has to open, download or check a passport, a bank statement or a police certificate line by line — Toplance's reviewers do that, and it is built into how the product works, not a task you assign.",
+    body: "You see whether a client is on track and whether they are stuck. Your own team does not have to open, download or check a passport, a bank statement or a police certificate line by line — Toplance's reviewers do that, and it is built into how the product works, not a task you assign.",
   },
   {
     title: "One system across every corridor",
@@ -204,7 +204,7 @@ const FAQ = [
   },
   {
     q: "Does Toplance decide whether the visa is granted?",
-    a: "No, and we are careful never to imply it. Missions and embassies make the decision. What Toplance controls is that the file is complete, correct and submitted the way that corridor expects — which is the part applications usually fail on. When a document shows as verified it means it has been accepted for review, not that the application has been approved.",
+    a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that the file is complete, correct and submitted the way that corridor expects — which is the part applications usually fail on. When a document shows as verified it means it has been accepted for review, not that the application has been approved.",
   },
   {
     q: "How are we invoiced?",
@@ -245,7 +245,7 @@ export default function HomePage() {
           </p>
 
           <h1 className="d-hero rise mt-5 max-w-[20ch]" style={{ animationDelay: "70ms" }}>
-            Take the case. Track the file. Never chase it by hand.
+            Take the case. Track the file. Stop chasing it by hand.
           </h1>
 
           {/* The control sits directly after the H1, before the
@@ -268,9 +268,8 @@ export default function HomePage() {
               the intake conversation in their own language, the exact document
               checklist for their corridor, human review before submission, and
               a named case handler who owns the file. You get a caseboard, a
-              completion score and a status per client. Your team is never the
-              one combing through a passport or a bank statement to check it —
-              Toplance&apos;s reviewers are.
+              completion score and a status per client. Your team does not comb through a passport or a bank statement to
+              check it — Toplance&apos;s reviewers do.
             </p>
             <ul className="flex flex-col justify-center gap-3">
               {[
@@ -292,7 +291,7 @@ export default function HomePage() {
       <Section label="The problem">
         <Head
           title="Clients don't leave over a refusal. They leave over silence."
-          lead="A case goes wrong in the gap between telling a client what to send you and finding out, weeks later, what they never did."
+          lead="A case goes wrong in the gap between telling a client what to send you and finding out, weeks later, what they did not send."
         />
 
         <div className="mt-11 border-t border-border-strong">

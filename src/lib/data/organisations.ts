@@ -4,10 +4,17 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, orgMembers, organisations, profiles } from "@/lib/db/schema";
+import { ORG_NAME_MAX } from "@/lib/domain/organisations";
+import {
+  EMPTY_PENDING_PROFILE,
+  profileColumnsFrom,
+  type PendingProfile,
+} from "@/lib/domain/pending-profile";
 
 export type CreateOrganisationResult = { ok: true; orgId: string } | { error: string };
 
-const NAME_MAX = 160;
+// One source, shared with the forms — see `@/lib/domain/organisations`.
+const NAME_MAX = ORG_NAME_MAX;
 
 /**
  * The profile a torn-down employer sign-up did not manage to write.
@@ -34,11 +41,21 @@ const NAME_MAX = 160;
 export async function provisionEmployerProfile(
   userId: string,
   email: string,
-  fullName: string
+  fullName: string,
+  pending: PendingProfile = EMPTY_PENDING_PROFILE
 ): Promise<boolean> {
   await db
     .insert(profiles)
-    .values({ id: userId, email, fullName: fullName.trim(), role: "org_member" })
+    .values({
+      id: userId,
+      email,
+      fullName: fullName.trim(),
+      role: "org_member",
+      // Same reasoning as `provisionInvitedProfile`: the sign-up form's
+      // answers reach here through Clerk because the action that used to
+      // carry them is cancelled by the redirect off the sign-up page.
+      ...profileColumnsFrom(pending),
+    })
     .onConflictDoNothing();
 
   return true;

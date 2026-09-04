@@ -18,6 +18,7 @@ import { ReviewRow } from "@/components/ops/review-row";
 import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { TripList } from "@/components/shared/trip-list";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -28,6 +29,7 @@ import { isUuid } from "@/lib/domain/uuid";
 import { completionOf, getDocuments } from "@/lib/data/applications";
 import { getCaseNotes } from "@/lib/data/case-notes";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
+import { listTravelRecords } from "@/lib/data/travel-records";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { isOwner } from "@/lib/auth/policy";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
@@ -68,6 +70,7 @@ export default async function OpsCasePage({
       status: applications.status,
       assigneeId: applications.assigneeId,
       assigneeName: assignee.fullName,
+      travelerId: applications.travelerId,
       travelerName: profiles.fullName,
       travelerCountryIso: profiles.countryIso,
       visaName: corridors.visaName,
@@ -82,13 +85,18 @@ export default async function OpsCasePage({
 
   if (!row) notFound();
 
-  const [docs, notes, thread, notifications, unreadCount] = await Promise.all([
-    getDocuments(row.id),
-    getCaseNotes(row.id),
-    listMessages(row.id),
-    getNotifications(actor.userId),
-    unreadNotificationCount(actor.userId),
-  ]);
+  const [docs, notes, thread, notifications, unreadCount, trips] =
+    await Promise.all([
+      getDocuments(row.id),
+      getCaseNotes(row.id),
+      listMessages(row.id),
+      getNotifications(actor.userId),
+      unreadNotificationCount(actor.userId),
+      // Keyed on the traveller, not the case: a past trip belongs to the
+      // person, and a returning applicant's history should not restart
+      // because this is their second application.
+      listTravelRecords(row.travelerId),
+    ]);
   const completion = completionOf(docs);
   const destination = countryFromIso2(row.destinationIso);
 
@@ -286,6 +294,39 @@ export default async function OpsCasePage({
                   <div className="mt-5 border-t border-border pt-5">
                     <MessageComposer applicationId={row.id} />
                   </div>
+                </PanelBody>
+              </Panel>
+
+              {/* The traveller's declared travel history, which the desk
+                  could not see until now — it existed only on the
+                  traveller's own profile, so a reviewer checking a visa
+                  form's "have you visited before" against the passport in
+                  front of them had to ask for something already recorded.
+
+                  Read-only, and not because staff cannot be trusted: this
+                  is the traveller's own declaration, and a desk that can
+                  quietly edit it destroys the only thing it is good for.
+                  `TripList` takes no `action` here, so there is no
+                  control to press — and `addTravelRecord` and
+                  `removeTravelRecord` scope every write to the session's
+                  own id regardless, so there is no route to one. */}
+              <Panel>
+                <PanelHeader
+                  label="Travel history"
+                  aside={
+                    trips.length > 0 ? (
+                      <Badge variant="neutral">
+                        <span className="num">{trips.length}</span>
+                        {trips.length === 1 ? "trip" : "trips"}
+                      </Badge>
+                    ) : undefined
+                  }
+                />
+                <PanelBody>
+                  <TripList
+                    trips={trips}
+                    empty="This traveller has recorded no past trips."
+                  />
                 </PanelBody>
               </Panel>
             </div>

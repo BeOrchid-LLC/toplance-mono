@@ -7,6 +7,7 @@ import { db } from "@/lib/db/client";
 import { profiles } from "@/lib/db/schema";
 import { checkInvitedAddress } from "@/lib/data/invitations";
 import { toE164 } from "@/lib/domain/countries";
+import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
 import { isLocale } from "@/lib/i18n/locales";
 
 /** The fields the sign-up form collects that Clerk has no opinion about. */
@@ -149,7 +150,21 @@ async function roleFor(
   input: SignUpIntent,
   email: string
 ): Promise<{ role: "traveler" | "org_member" } | { error: string }> {
-  if (input.intent !== "invited") return { role: "org_member" };
+  if (input.intent !== "invited") {
+    // The same rule the director's form applies, repeated here for the
+    // same reason the invitation check below is: that one ran in a
+    // browser and this is the write. Without it the rule was decoration
+    // — anything reaching Clerk another way got an organisation account
+    // on a personal mailbox, and this function returned `org_member`
+    // without ever looking at the address.
+    //
+    // It stays a signal rather than a guarantee: a bought domain proves
+    // nothing, and the licence check after sign-up is what actually
+    // decides whether an agency is real. What this closes is the gap
+    // between what the form promised and what the server enforced.
+    if (!isWorkEmail(email)) return { error: workEmailRefusal(email) };
+    return { role: "org_member" };
+  }
 
   // The same comparison the form already made before sign-up started.
   // Repeated here rather than trusted, because that one ran in a browser

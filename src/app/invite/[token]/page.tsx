@@ -20,6 +20,7 @@ import {
   type InvitationPreview,
 } from "@/lib/data/invitations";
 import { countryFromIso2, PURPOSE_ISO } from "@/lib/domain/corridors";
+import { readPendingProfile } from "@/lib/domain/pending-profile";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -74,7 +75,7 @@ function InvitationSummary({ preview }: { preview: InvitationPreview }) {
       <div className="mt-6 flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
         <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
         <p className="t-muted">
-          {preview.orgName} sees your progress, never your documents.
+          {preview.orgName} sees your progress, not your documents.
           Passports, bank statements and police certificates stay between
           you and Toplance.
         </p>
@@ -135,12 +136,15 @@ async function recoverInvitedProfile(token: string, userId: string) {
 
   // Clerk's name, not the invitation's: `signUp.create` sent the
   // traveller's own passport name before the session existed, so it
-  // survives the cancelled write that brought us here.
+  // survives the cancelled write that brought us here. Phone, country
+  // and language now travel the same way, on the same reasoning — see
+  // `readPendingProfile`.
   const provisioned = await provisionInvitedProfile(
     token,
     userId,
     email,
-    [user?.firstName, user?.lastName].filter(Boolean).join(" ")
+    [user?.firstName, user?.lastName].filter(Boolean).join(" "),
+    readPendingProfile(user?.unsafeMetadata)
   );
   return provisioned ? await getProfile() : null;
 }

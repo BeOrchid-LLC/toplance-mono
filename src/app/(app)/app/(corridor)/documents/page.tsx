@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { DocumentRow } from "@/components/app/document-row";
+import { UploadOutcomeProvider } from "@/components/app/upload-outcome";
 import { SubmitButton } from "@/components/app/submit-button";
 import { CompletionRing } from "@/components/app/completion-ring";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
 import { VERIFIED_MEANS } from "@/lib/domain/status";
+import { UPLOAD_GUIDANCE } from "@/lib/domain/uploads";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   completionOf,
@@ -32,6 +34,26 @@ export default async function DocumentsPage() {
 
   const docs = await getDocuments(application.id);
   const completion = completionOf(docs);
+
+  /**
+   * Whether uploading this row finishes the traveller's part of the
+   * checklist, so its dialog can say so instead of asking for a next
+   * document that does not exist.
+   *
+   * "Collected", matching the ring, not "verified": the traveller has
+   * done everything asked of them the moment the last file is in, and
+   * what happens after that is the review team's to report. The `1` is
+   * this row itself — it is still outstanding as the page renders, and
+   * the upload is what clears it.
+   */
+  const outstandingRequired = docs.filter(
+    (d) => d.isRequired && d.state !== "checking" && d.state !== "verified"
+  ).length;
+  const completesChecklist = (doc: Doc) =>
+    doc.isRequired &&
+    doc.state !== "checking" &&
+    doc.state !== "verified" &&
+    outstandingRequired === 1;
 
   /**
    * Three sets, in the order a person acts on them: what is blocking
@@ -72,6 +94,11 @@ export default async function DocumentsPage() {
               arriving, then confirmed by a person before submission.{" "}
               {VERIFIED_MEANS}
             </p>
+            {/* Said before they photograph anything, not after a refusal.
+                Legibility is the largest single cause of a re-upload and
+                the one thing entirely within the traveller's control at
+                the moment they take the picture. */}
+            <p className="t-muted mt-3">{UPLOAD_GUIDANCE}</p>
           </div>
           <CompletionRing pct={completion.pct} size={120} />
         </div>
@@ -93,21 +120,34 @@ export default async function DocumentsPage() {
           </section>
         )}
 
-        {sets.map(
-          (set) =>
-            set.docs.length > 0 && (
-              <Panel key={set.label} className="mt-6">
-                <PanelHeader
-                  label={set.label}
-                  aside={
-                    <Badge variant={set.variant}>
-                      <span className="num">{set.docs.length}</span>
-                      {set.docs.length === 1 ? "document" : "documents"}
-                    </Badge>
-                  }
-                />
-                <div>
-                  {/* Guidance comes off the checklist row itself. It was
+        {/* The outcome dialog sits outside the sets, because uploading
+            moves a row from one set to another — a dialog owned by the
+            row would be unmounted by that re-sort moments after opening.
+            See `UploadOutcomeProvider`. */}
+        <UploadOutcomeProvider
+          applicationId={application.id}
+          docs={docs.map((d) => ({
+            docKey: d.docKey,
+            name: d.name,
+            state: d.state,
+            reason: d.reason,
+          }))}
+        >
+          {sets.map(
+            (set) =>
+              set.docs.length > 0 && (
+                <Panel key={set.label} className="mt-6">
+                  <PanelHeader
+                    label={set.label}
+                    aside={
+                      <Badge variant={set.variant}>
+                        <span className="num">{set.docs.length}</span>
+                        {set.docs.length === 1 ? "document" : "documents"}
+                      </Badge>
+                    }
+                  />
+                  <div>
+                    {/* Guidance comes off the checklist row itself. It was
                       joined from `corridor_requirements` through
                       `applications.corridor_id`, which is null for any
                       rule set with no row of ours behind it — an API
@@ -118,18 +158,20 @@ export default async function DocumentsPage() {
                       copies the wording across and refreshes it when a
                       mission rewords a requirement, so the live-update
                       property the join gave is kept without the join. */}
-                  {set.docs.map((doc) => (
-                    <DocumentRow
-                      key={doc.id}
-                      doc={doc}
-                      applicationId={application.id}
-                      description={doc.description}
-                    />
-                  ))}
-                </div>
-              </Panel>
-            )
-        )}
+                    {set.docs.map((doc) => (
+                      <DocumentRow
+                        key={doc.id}
+                        doc={doc}
+                        applicationId={application.id}
+                        description={doc.description}
+                        completesChecklist={completesChecklist(doc)}
+                      />
+                    ))}
+                  </div>
+                </Panel>
+              ),
+          )}
+        </UploadOutcomeProvider>
 
         {docs.length === 0 && (
           <Panel className="mt-6">

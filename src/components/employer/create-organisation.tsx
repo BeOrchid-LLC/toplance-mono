@@ -14,7 +14,16 @@ import { createOrganisation } from "@/app/employer/actions";
  * do this, and what it writes — so the form just carries the name and
  * reports the result.
  */
-export function CreateOrganisation() {
+export function CreateOrganisation({
+  defaultName = "",
+}: {
+  /**
+   * The name a director already typed at sign-up, when the transaction
+   * refused it. Prefilled so the fix is an edit rather than a retype of
+   * something long enough to have been rejected for its length.
+   */
+  defaultName?: string;
+}) {
   const [pending, startTransition] = React.useTransition();
 
   function onSubmit(formData: FormData) {
@@ -37,6 +46,7 @@ export function CreateOrganisation() {
           name="name"
           autoComplete="organization"
           placeholder="Acme Logistics Ltd"
+          defaultValue={defaultName}
           maxLength={160}
           required
         />

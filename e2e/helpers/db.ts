@@ -38,11 +38,26 @@ async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
   }
 }
 
-/** The corridor every journey travels: Nigeria → United Kingdom, work. */
+/**
+ * The corridor every journey travels: Nigeria → United Kingdom, work.
+ *
+ * `is_live`, and newest version first. A corridor is published as a new
+ * version rather than edited in place, so this pair has more than one
+ * row the moment it is revised — and an unfiltered `limit 1` returned
+ * whichever the heap happened to hand back. That seeded ops cases from a
+ * superseded checklist about half the time, while the app itself
+ * resolves the live one: the same fixture would agree with the screen or
+ * contradict it depending on row order, which is the worst way for a
+ * suite to be wrong.
+ */
 export async function skilledWorkerCorridorId(): Promise<string> {
   return withClient(async (client) => {
     const { rows } = await client.query<{ id: string }>(
-      "select id from corridors where nationality_iso = 'ng' and destination_iso = 'gb' and purpose = 'work' limit 1"
+      `select id from corridors
+       where nationality_iso = 'ng' and destination_iso = 'gb'
+         and purpose = 'work' and is_live
+       order by version desc
+       limit 1`
     );
     if (!rows[0]) {
       throw new Error(
@@ -157,6 +172,29 @@ export async function promoteToStaff(
  * draft on sight, so a staff account holding one is proof it was let
  * into a console that is not its own.
  */
+/**
+ * The two profile columns a sign-up used to lose.
+ *
+ * Both carry a database default — `country_iso` is `'ng'`, `locale` is
+ * `'en'` — so losing the answer never produced a blank to notice. It
+ * produced a plausible wrong value: a traveller who chose Hausa was
+ * recorded as English and met in English, with nothing on screen to say
+ * why. That is why this reads the columns rather than asserting on the
+ * screen, and why the spec that calls it chooses a non-default.
+ */
+export async function localeAndCountryFor(
+  email: string
+): Promise<{ locale: string; countryIso: string } | null> {
+  return withClient(async (client) => {
+    const { rows } = await client.query(
+      "select locale, country_iso from profiles where email = $1",
+      [email]
+    );
+    const row = rows[0];
+    return row ? { locale: row.locale, countryIso: row.country_iso } : null;
+  });
+}
+
 export async function applicationCountFor(email: string): Promise<number> {
   return withClient(async (client) => {
     const { rows } = await client.query<{ count: number }>(
@@ -187,7 +225,26 @@ export async function clearApplicationsFor(email: string): Promise<void> {
   });
 }
 
-export type SeededCase = { applicationId: string; caseRef: string; travellerName: string };
+export type SeededCase = {
+  applicationId: string;
+  caseRef: string;
+  travellerName: string;
+  /** The one past trip on the seeded traveller's record. */
+  trip: { country: string; purpose: string };
+};
+
+/**
+ * A trip on the seeded traveller, so the case file has a travel history
+ * worth rendering.
+ *
+ * A reviewer reads this against the passport in front of them, so the
+ * spec has to prove the panel shows a real row. An empty-state assertion
+ * would pass just as well with the query removed.
+ */
+export const SEEDED_TRIP = {
+  country: "Ireland",
+  purpose: "Conference",
+} as const;
 
 /**
  * A submitted case for the reviewer to work, complete with a checklist
@@ -227,7 +284,102 @@ export async function seedSubmittedCase(travellerName: string): Promise<SeededCa
       [rows[0].id, corridorId]
     );
 
-    return { applicationId: rows[0].id, caseRef: rows[0].case_ref, travellerName };
+    // Keyed on the traveller rather than the case, the way the product
+    // stores it — which is the part the case page has to get right.
+    await client.query(
+      `insert into travel_records (traveler_id, country, purpose, started_on, ended_on)
+       values ($1, $2, $3, '2024-06-01', '2024-06-08')`,
+      [travellerId, SEEDED_TRIP.country, SEEDED_TRIP.purpose]
+    );
+
+    return {
+      applicationId: rows[0].id,
+      caseRef: rows[0].case_ref,
+      travellerName,
+      trip: { ...SEEDED_TRIP },
+    };
+  });
+}
+
+/**
+ * Stand in for the pre-check's refusal, on whichever document is
+ * currently awaiting one.
+ *
+ * `precheckDocument` is a model call and this suite runs with no
+ * `OPENAI_API_KEY`, so the verdict never arrives on its own. What the
+ * spec needs to prove is not the model's judgement but the *delivery* of
+ * it: the flag is written by a background `after()` hook, whose
+ * `revalidatePath` cannot reach a client that has already rendered.
+ * Writing the same row the hook would write exercises exactly that path.
+ */
+export async function flagCheckingDocument(
+  email: string,
+  reason: string
+): Promise<void> {
+  await withClient(async (client) => {
+    const { rowCount } = await client.query(
+      `update documents d
+          set state = 'flagged', reason = $2
+         from applications a, profiles p
+        where d.application_id = a.id
+          and a.traveler_id = p.id
+          and p.email = $1
+          and d.state = 'checking'`,
+      [email, reason]
+    );
+    if (!rowCount) {
+      throw new Error(`No document awaiting a verdict for ${email}.`);
+    }
+  });
+}
+
+/**
+ * Every required document collected except one, which is left for the
+ * traveller to upload through the UI.
+ *
+ * The "that is everything" dialog only fires on the upload that clears
+ * the last outstanding requirement, and walking a spec through six real
+ * uploads to reach it would buy one assertion for five minutes of
+ * clicking. This buys the first five and tests the sixth.
+ *
+ * Returns the name of the document left outstanding, so the spec can
+ * find its row without knowing the corridor's checklist.
+ */
+export async function collectAllRequiredButOne(email: string): Promise<string> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ id: string; name: string }>(
+      `select d.id, d.name
+         from documents d
+         join applications a on a.id = d.application_id
+         join profiles p on p.id = a.traveler_id
+        where p.email = $1 and d.is_required
+        order by d.sort_order desc
+        limit 1`,
+      [email]
+    );
+    if (!rows[0]) throw new Error(`No required documents found for ${email}.`);
+
+    await client.query(
+      `update documents d
+          set state = 'checking',
+              storage_path = d.application_id::text || '/' || d.doc_key || '/seeded.jpg'
+         from applications a, profiles p
+        where d.application_id = a.id
+          and a.traveler_id = p.id
+          and p.email = $1
+          and d.is_required
+          and d.id <> $2`,
+      [email, rows[0].id]
+    );
+
+    // The one left behind goes back to untouched, so the row offers an
+    // upload control whatever a previous step did to it.
+    await client.query(
+      "update documents set state = 'not_started', storage_path = null, reason = null where id = $1",
+      [rows[0].id]
+    );
+
+    return rows[0].name;
   });
 }
 

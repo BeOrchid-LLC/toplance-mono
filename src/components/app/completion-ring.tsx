@@ -56,9 +56,19 @@ export function CompletionRing({
         />
       </svg>
       <span className="absolute inset-0 flex flex-col items-center justify-center">
-        {/* On the scale, not a one-off size. */}
-        <span className="t-h2 leading-none">{pct}%</span>
-        <span className="special-caps mt-1.5">complete</span>
+        {/* On the scale, not a one-off size. `t-h3`, not `t-h2`: at 32px
+            a three-digit figure spans most of the 96px opening inside a
+            120px ring and crowds the arc it sits in. The ring is the
+            thing being read, and the figure has to sit in it. */}
+        <span className="t-h3 leading-none">{pct}%</span>
+        {/* "collected", matching the `aria-label` and the number the ring
+            actually draws. It read "complete" while the label announced
+            "collected" — so a sighted traveller and a screen-reader user
+            were told two different things about one figure, and the
+            sighted one was told the stronger of the two. 100% collected
+            is true the moment the last required file is uploaded; 100%
+            complete is not, because review has not happened yet. */}
+        <span className="special-caps mt-1.5">collected</span>
       </span>
     </div>
   );

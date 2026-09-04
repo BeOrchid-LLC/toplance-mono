@@ -2,6 +2,7 @@ import { expect, test, type Locator } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 import { completeSignUpForm, resetFixtures, signUp, testEmail } from "./helpers/auth";
+import { localeAndCountryFor } from "./helpers/db";
 
 /**
  * Journey three: an organisation sponsors somebody.
@@ -64,24 +65,44 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await resetFixtures([EMPLOYER_EMAIL, INVITEE_EMAIL, FORWARDED_EMAIL], [ORG]);
 
   // ---- the organisation ----
+  // Named on the sign-up form itself, so the console this lands on
+  // already has one. There used to be a second screen here — an account
+  // that belonged to no organisation until the director filled in one
+  // more form, which is the state they could close the tab in.
   await signUp(page, {
     email: EMPLOYER_EMAIL,
     fullName: "Bola Adeyemi",
     path: "/employer/sign-up",
+    orgName: ORG,
+    locale: "Hausa",
   });
   await page.waitForURL("**/employer");
 
-  await expect(page.getByRole("heading", { name: "Name your organisation" })).toBeVisible();
-  await page.getByLabel("Organisation name").fill(ORG);
-  await page.getByRole("button", { name: "Create organisation" }).click();
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
+
+  /*
+   * The language they chose before typing anything, read back off the
+   * row rather than off the screen.
+   *
+   * `completeProfile` is a POST from the sign-up page, and Clerk
+   * activating the session navigates that page out from under it — so
+   * the write is cancelled, routinely rather than rarely. It carried the
+   * phone, the country and the language, and `locale` defaults to `'en'`
+   * in the schema, so losing it produced no blank to notice: the
+   * traveller who picked Hausa was simply recorded as English.
+   *
+   * A non-default on purpose. Asserting `'en'` here would pass just as
+   * well with the bug back in place.
+   */
+  expect(await localeAndCountryFor(EMPLOYER_EMAIL)).toMatchObject({
+    locale: "ha",
+  });
 
   // ---- the invitation ----
   await page.getByRole("button", { name: "Invite someone" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Email", { exact: true }).fill(INVITEE_EMAIL);
   await dialog.getByLabel("Full name", { exact: true }).fill(INVITEE_NAME);
-  await dialog.getByLabel("Destination").selectOption({ label: "United Kingdom" });
   await dialog.getByRole("button", { name: "Send invitation" }).click();
 
   const inviteUrl = await readInviteUrl(dialog);
@@ -198,5 +219,5 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await expect(page.getByText(/1 person/)).toBeVisible();
   await expect(page.getByText(INVITEE_EMAIL).first()).toBeVisible();
   await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
-  await expect(page.getByText("You see progress, never documents")).toBeVisible();
+  await expect(page.getByText("You see progress, not documents")).toBeVisible();
 });

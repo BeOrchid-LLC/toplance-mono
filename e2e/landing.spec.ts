@@ -6,8 +6,15 @@ import { expect, test } from "@playwright/test";
  * `/` used to address the traveller while its own call to action led to
  * `/employer/sign-up` — a door travellers cannot open, since they became
  * invite-only. The fix turned `/` over to the organisations who actually
- * buy seats and moved the traveller copy, unchanged, to `/travellers`
- * (the client asked for the B2B to be expanded and the B2C kept).
+ * buy, and moved the traveller copy, unchanged, to `/travellers` (the
+ * client asked for the B2B to be expanded and the B2C kept).
+ *
+ * That buyer has since been named more precisely: the page sold "seats"
+ * to employers relocating staff, and now sells case management to travel
+ * agencies running visas for their clients. The vocabulary moved with it
+ * — a seat became a case, and an organisation became an agency with
+ * clients of its own — so the assertions below are pinned to the agency
+ * wording rather than the employer wording they were written in.
  *
  * Both halves of that need pinning. Nothing stops the B2C voice drifting
  * back into `/` one well-meant copy edit at a time, and nothing stops
@@ -19,14 +26,14 @@ import { expect, test } from "@playwright/test";
  * touches the Clerk fixtures the other specs share.
  */
 
-test("the home page sells seats to organisations, not checklists to travellers", async ({
+test("the home page sells case management to agencies, not checklists to travellers", async ({
   page,
 }) => {
   await page.goto("/");
 
   await expect(
     page.getByRole("heading", {
-      name: "Sponsor the seat. See the progress. Never see the passport.",
+      name: "Take the case. Track the file. Stop chasing it by hand.",
       level: 1,
     })
   ).toBeVisible();
@@ -34,14 +41,16 @@ test("the home page sells seats to organisations, not checklists to travellers",
   // The commercial detail the expansion was actually for. A buyer who
   // cannot find the exclusions and the terms has the old page back,
   // whatever the headline says.
-  await expect(page.getByText("What a seat does not cover")).toBeVisible();
+  await expect(page.getByText("What a case does not cover")).toBeVisible();
   await expect(page.getByText("Commercial terms")).toBeVisible();
   await expect(page.getByText("Minimum commitment")).toBeVisible();
 
-  // Both halves of what a seat buys are named, so the page cannot
-  // collapse back to one undifferentiated feature list.
-  await expect(page.getByText("What the traveller gets")).toBeVisible();
-  await expect(page.getByText("What your organisation gets")).toBeVisible();
+  // Both halves of what a case buys are named, so the page cannot
+  // collapse back to one undifferentiated feature list. The agency and
+  // the client it acts for want different things from the same case,
+  // and the page has to say both.
+  await expect(page.getByText("What your client gets")).toBeVisible();
+  await expect(page.getByText("What your agency gets")).toBeVisible();
 });
 
 /**

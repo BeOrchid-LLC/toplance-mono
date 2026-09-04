@@ -23,6 +23,7 @@ import { requireStaffAction } from "@/lib/auth/staff-gate";
 import { audit } from "@/lib/audit";
 import { aiEnabled } from "@/lib/ai/models";
 import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
 import {
   deleteDocument,
   putDocument,
@@ -113,8 +114,10 @@ export async function uploadDocument(formData: FormData) {
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Choose a file or take a photo first." };
   }
-  if (file.size > 10 * 1024 * 1024) {
-    return { error: "That file is over 10MB. Photograph it again at a lower size." };
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return {
+      error: `That file is over ${MAX_UPLOAD_LABEL}. Photograph it again at a lower size.`,
+    };
   }
 
   // What is on the checklist row now, before anything is written. A
@@ -222,6 +225,46 @@ export async function uploadDocument(formData: FormData) {
  * guard runs first, so a signature is never created for a document the
  * caller may not see.
  */
+/**
+ * The state of one checklist row, for a client waiting on a verdict it
+ * cannot be sent.
+ *
+ * `precheckDocument` is scheduled in an `after()` hook, so it finishes
+ * after the upload's response has already been written. Its
+ * `revalidatePath` invalidates the server cache for the *next* request
+ * and reaches nothing that is already on screen — so the upload dialog
+ * had no way to learn that the file it had just called "Received" had
+ * been refused. It waited, said the wrong thing, and the Re-upload/Skip
+ * variant never appeared at all.
+ *
+ * A read, guarded like every other: `canReadDocuments` decides, and only
+ * the state and the traveller-facing reason ever leave — never the
+ * storage path.
+ */
+export async function documentVerdict(applicationId: string, docKey: string) {
+  try {
+    await requireApplicationAccess(applicationId, canReadDocuments);
+
+    const [doc] = await db
+      .select({ state: documents.state, reason: documents.reason })
+      .from(documents)
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, docKey)
+        )
+      )
+      .limit(1);
+
+    if (!doc) return { error: "That document is not on your checklist." };
+    return { state: doc.state, reason: doc.reason };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
 export async function documentUrl(applicationId: string, docKey: string) {
   try {
     const { actor } = await requireApplicationAccess(applicationId, canReadDocuments);

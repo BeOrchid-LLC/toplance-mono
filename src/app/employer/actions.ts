@@ -13,22 +13,9 @@ import {
   revokeInvitation as revokeInvitationTx,
 } from "@/lib/data/invitations";
 import { createOrganisationTx } from "@/lib/data/organisations";
-import { DESTINATION_ISO, PURPOSE_ISO } from "@/lib/domain/corridors";
 import { sendEmail } from "@/lib/notifications/email";
 import { appUrl } from "@/lib/notifications/notify";
 import { invitationEmail } from "@/lib/notifications/templates";
-import type { TravelPurpose } from "@/lib/visa/types";
-
-/**
- * The canonical sets `invite-dialog.tsx`'s two `<select>`s are built
- * from. A hand-crafted POST can send anything, and without this a junk
- * value reaches `createInvitation` and fails as a raw Postgres enum
- * error (`22P02`) — `toActionError` does not recognise that shape, so it
- * would rethrow as an uncaught 500 instead of the honest `{ error }`
- * every other bad input on this form gets.
- */
-const VALID_DESTINATIONS = new Set<string>(Object.values(DESTINATION_ISO));
-const VALID_PURPOSES = new Set<string>(Object.values(PURPOSE_ISO));
 
 /**
  * A new employer's sign-up act: name an organisation and become its
@@ -76,25 +63,16 @@ export async function inviteTraveller(formData: FormData) {
 
     const email = String(formData.get("email") ?? "");
     const fullName = String(formData.get("full_name") ?? "").trim();
-    const jobTitle = String(formData.get("job_title") ?? "").trim();
-    const destinationIso = String(formData.get("destination_iso") ?? "").trim();
-    const purpose = String(formData.get("purpose") ?? "").trim();
 
-    if (destinationIso && !VALID_DESTINATIONS.has(destinationIso)) {
-      return { error: "Choose a destination from the list." };
-    }
-    if (purpose && !VALID_PURPOSES.has(purpose)) {
-      return { error: "Choose a purpose from the list." };
-    }
-
+    // Job title, destination and purpose are no longer asked for. The
+    // form collected them from the agency about a traveller it had not
+    // spoken to yet, and the intake asks the traveller the same three
+    // things first-hand. The columns stay on `invitations` — they are
+    // nullable, nothing reads them, and dropping them is a migration
+    // that belongs with the schema move rather than with a form change.
     const result = await createInvitation(orgId, actor.userId, {
       email,
       fullName: fullName || undefined,
-      jobTitle: jobTitle || undefined,
-      destinationIso: destinationIso || undefined,
-      // Safe: the two checks above already refused anything not in
-      // `VALID_PURPOSES`, which is exactly `TravelPurpose`'s value set.
-      purpose: (purpose || undefined) as TravelPurpose | undefined,
     });
     if ("error" in result) return result;
 

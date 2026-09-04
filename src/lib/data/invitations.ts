@@ -10,6 +10,11 @@ import {
   profiles,
   type Invitation,
 } from "@/lib/db/schema";
+import {
+  EMPTY_PENDING_PROFILE,
+  profileColumnsFrom,
+  type PendingProfile,
+} from "@/lib/domain/pending-profile";
 import type { TravelPurpose } from "@/lib/visa/types";
 
 export type CreateInvitationResult =
@@ -260,15 +265,25 @@ export async function checkInvitedAddress(
  * greets the traveller by, so getting it from the wrong place is not
  * cosmetic. The invitation's name is the fallback.
  *
- * Phone and country are not recoverable here; a profile written by this
- * path goes without them until `/app/profile`. That is the trade: a
- * traveller who can act beats a dead end.
+ * Phone, country and language used to be unrecoverable here, and the
+ * profile went without them until `/app/profile` — the accepted trade
+ * being that a traveller who can act beats a dead end. `pending` ends
+ * that trade: the sign-up form now hands those answers to Clerk before
+ * the session exists, so this path can spend them. Language mattered
+ * most of the three and was the quietest to lose — it decides which
+ * language the intake agent opens in, and a traveller who chose Hausa
+ * was met in English with nothing on screen to explain why.
+ *
+ * Still absent-tolerant. `pending` is validated, every field of it is
+ * optional, and a profile written without any of them is the same row
+ * this wrote before.
  */
 export async function provisionInvitedProfile(
   token: string,
   userId: string,
   email: string,
-  fullName?: string
+  fullName?: string,
+  pending: PendingProfile = EMPTY_PENDING_PROFILE
 ): Promise<boolean> {
   const invited = await pendingInvitationEmail(token);
   if (!invited || invited.toLowerCase() !== email.toLowerCase()) return false;
@@ -286,6 +301,7 @@ export async function provisionInvitedProfile(
       email,
       fullName: fullName?.trim() || row?.fullName || "",
       role: "traveler",
+      ...profileColumnsFrom(pending),
     })
     .onConflictDoNothing();
 

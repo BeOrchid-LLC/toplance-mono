@@ -216,7 +216,7 @@ export default async function ProfilePage() {
                 {sponsorName && (
                   <p className="t-muted mt-3">
                     Sponsored by <strong className="text-ink">{sponsorName}</strong> —
-                    they see your progress, never your documents.
+                    they see your progress, not your documents.
                   </p>
                 )}
               </div>

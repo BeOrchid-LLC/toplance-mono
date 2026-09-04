@@ -6,8 +6,11 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { DocStateBadge } from "@/components/shared/status-badge";
+import { RequirementBadge } from "@/components/shared/requirement-badge";
 import { documentUrl, removeDocument, uploadDocument } from "@/app/(app)/actions";
+import { useUploadOutcome } from "@/components/app/upload-outcome";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
+import { ACCEPT } from "@/lib/domain/uploads";
 import { cn } from "@/lib/utils";
 
 /**
@@ -30,16 +33,36 @@ export function DocumentRow({
   doc,
   applicationId,
   description,
+  completesChecklist = false,
 }: {
   doc: Doc;
   applicationId: string;
   description?: string | null;
+  /**
+   * Whether this row is the last required document still outstanding, so
+   * an upload here finishes the traveller's part. Decided by the page,
+   * which is the only place that can see the whole checklist.
+   */
+  completesChecklist?: boolean;
 }) {
   const [pending, startTransition] = React.useTransition();
   const cameraRef = React.useRef<HTMLInputElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const needsAttention = doc.state === "flagged" || doc.state === "failed";
+
+  /**
+   * The outcome dialog is owned by the page, not by this row: uploading
+   * moves the row between sets, so a dialog living here would be
+   * unmounted moments after it opened. The row reports the upload and
+   * lends its picker; `UploadOutcomeProvider` does the rest.
+   */
+  const { report, registerPicker } = useUploadOutcome();
+
+  React.useEffect(
+    () => registerPicker(doc.docKey, () => fileRef.current?.click()),
+    [doc.docKey, registerPicker]
+  );
 
   function upload(file: File) {
     const formData = new FormData();
@@ -49,8 +72,11 @@ export function DocumentRow({
 
     startTransition(async () => {
       const result = await uploadDocument(formData);
-      if (result?.error) toast.error(result.error);
-      else toast.success(`${doc.name} uploaded — checking it now`);
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      report(doc.docKey, completesChecklist);
     });
   }
 
@@ -101,9 +127,7 @@ export function DocumentRow({
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="t-title">{doc.name}</h3>
             <DocStateBadge state={doc.state} />
-            {!doc.isRequired && (
-              <span className="special-caps">Only if it applies to you</span>
-            )}
+            <RequirementBadge required={doc.isRequired} />
           </div>
           {doc.reason ? (
             <p className="t-body mt-2 max-w-[74ch] text-ink-2">{doc.reason}</p>
@@ -178,7 +202,7 @@ export function DocumentRow({
       <input
         ref={fileRef}
         type="file"
-        accept="image/*,application/pdf"
+        accept={ACCEPT}
         className="sr-only"
         onChange={(e) => {
           const f = e.target.files?.[0];

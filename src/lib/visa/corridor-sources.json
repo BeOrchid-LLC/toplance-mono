@@ -364,60 +364,60 @@
     "destinationName": "Brazil",
     "purpose": "business",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
-    "checkedAt": "2026-09-03",
-    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source, like Italy and Spain. Every VIVIS document list on gov.br belongs to one post \u2014 Washington, Houston, Miami, Berlin, Helsinki, Amsterdam, Tokyo, Dar es Salaam \u2014 and the Washington one asks for a letter from 'your U.S. or Brazilian company'. There is no central Brazilian list. Needs the Abuja embassy's own page."
   },
   {
     "destinationIso": "br",
     "destinationName": "Brazil",
     "purpose": "medical",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
-    "checkedAt": "2026-09-03",
-    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source, like Italy and Spain. Every VIVIS document list on gov.br belongs to one post \u2014 Washington, Houston, Miami, Berlin, Helsinki, Amsterdam, Tokyo, Dar es Salaam \u2014 and the Washington one asks for a letter from 'your U.S. or Brazilian company'. There is no central Brazilian list. Needs the Abuja embassy's own page."
   },
   {
     "destinationIso": "br",
     "destinationName": "Brazil",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
-    "checkedAt": "2026-09-03",
-    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source, like Italy and Spain. Every VIVIS document list on gov.br belongs to one post \u2014 Washington, Houston, Miami, Berlin, Helsinki, Amsterdam, Tokyo, Dar es Salaam \u2014 and the Washington one asks for a letter from 'your U.S. or Brazilian company'. There is no central Brazilian list. Needs the Abuja embassy's own page."
   },
   {
     "destinationIso": "br",
     "destinationName": "Brazil",
     "purpose": "study",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
-    "checkedAt": "2026-09-03",
-    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source, like Italy and Spain. Every VIVIS document list on gov.br belongs to one post \u2014 Washington, Houston, Miami, Berlin, Helsinki, Amsterdam, Tokyo, Dar es Salaam \u2014 and the Washington one asks for a letter from 'your U.S. or Brazilian company'. There is no central Brazilian list. Needs the Abuja embassy's own page."
   },
   {
     "destinationIso": "br",
     "destinationName": "Brazil",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
-    "checkedAt": "2026-09-03",
-    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source, like Italy and Spain. Every VIVIS document list on gov.br belongs to one post \u2014 Washington, Houston, Miami, Berlin, Helsinki, Amsterdam, Tokyo, Dar es Salaam \u2014 and the Washington one asks for a letter from 'your U.S. or Brazilian company'. There is no central Brazilian list. Needs the Abuja embassy's own page."
   },
   {
     "destinationIso": "br",
     "destinationName": "Brazil",
     "purpose": "work",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://ec-lagos.itamaraty.gov.br/",
-    "checkedAt": "2026-09-03",
-    "evidence": "Nigeria-specific e-consular portal exists but is a 1,946ch shell; gov.br/mre rate-limits (429)."
+    "status": "unusable",
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source, like Italy and Spain. Every VIVIS document list on gov.br belongs to one post \u2014 Washington, Houston, Miami, Berlin, Helsinki, Amsterdam, Tokyo, Dar es Salaam \u2014 and the Washington one asks for a letter from 'your U.S. or Brazilian company'. There is no central Brazilian list. Needs the Abuja embassy's own page."
   },
   {
     "destinationIso": "ca",
@@ -743,10 +743,10 @@
     "destinationName": "Czechia",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://mv.gov.cz/mvcren/article/application-requirements-application-requirements.aspx",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
+    "evidence": "DRAFTED 2026-09-04 (4 docs) from the same three general mv.gov.cz pages as cz/work. \u26a0\ufe0f THINNEST of the three Czech corridors and the one most in need of completion: the generic long-term-visa pages carry nothing family-specific, so it came out as travel document and proof of funds plus two funding variants. A family reunification checklist with four rows will mislead. A reviewer must add the relationship evidence, accommodation and photographs, or reject it."
   },
   {
     "destinationIso": "cz",
@@ -1735,10 +1735,10 @@
     "destinationName": "Morocco",
     "purpose": "business",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.consulat.ma/en/ordinary-visas",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 14 docs, study 13, business 9, work 6). MUST be captured with a browser: consulat.ma returns a 118-character shell to fetch and renders 18k chars with 13 document nouns once JS runs. One page carries every ordinary visa category \u2014 tourism, work, business, student \u2014 so four corridors come from a single capture. Minor review note: 'chancery_fees' is a fee rather than a document."
   },
   {
     "destinationIso": "ma",
@@ -1765,30 +1765,30 @@
     "destinationName": "Morocco",
     "purpose": "study",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.consulat.ma/en/ordinary-visas",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 14 docs, study 13, business 9, work 6). MUST be captured with a browser: consulat.ma returns a 118-character shell to fetch and renders 18k chars with 13 document nouns once JS runs. One page carries every ordinary visa category \u2014 tourism, work, business, student \u2014 so four corridors come from a single capture. Minor review note: 'chancery_fees' is a fee rather than a document."
   },
   {
     "destinationIso": "ma",
     "destinationName": "Morocco",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.consulat.ma/en/ordinary-visas",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 14 docs, study 13, business 9, work 6). MUST be captured with a browser: consulat.ma returns a 118-character shell to fetch and renders 18k chars with 13 document nouns once JS runs. One page carries every ordinary visa category \u2014 tourism, work, business, student \u2014 so four corridors come from a single capture. Minor review note: 'chancery_fees' is a fee rather than a document."
   },
   {
     "destinationIso": "ma",
     "destinationName": "Morocco",
     "purpose": "work",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.consulat.ma/en/ordinary-visas",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 14 docs, study 13, business 9, work 6). MUST be captured with a browser: consulat.ma returns a 118-character shell to fetch and renders 18k chars with 13 document nouns once JS runs. One page carries every ordinary visa category \u2014 tourism, work, business, student \u2014 so four corridors come from a single capture. Minor review note: 'chancery_fees' is a fee rather than a document."
   },
   {
     "destinationIso": "mt",
@@ -1976,9 +1976,9 @@
     "purpose": "business",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: no guessed URL connected. Retry with researched URLs before concluding anything."
+    "sourceUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/documents-visa-application",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: two entry points tried, neither carries a list. ind.nl's permit page never says 'document' in 8.6k chars. netherlandsworldwide.nl's central 'what documents do I need' page is 3,894 chars with 2 document nouns, because the Dutch flow defers to an IND decision letter ('inwilligingsbrief') that itself lists what to bring \u2014 a per-applicant document we cannot read. The MVV pages are per-country (apply-united-states, apply-germany), so jurisdiction-contaminated too."
   },
   {
     "destinationIso": "nl",
@@ -1986,9 +1986,9 @@
     "purpose": "medical",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: no guessed URL connected. Retry with researched URLs before concluding anything."
+    "sourceUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/documents-visa-application",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: two entry points tried, neither carries a list. ind.nl's permit page never says 'document' in 8.6k chars. netherlandsworldwide.nl's central 'what documents do I need' page is 3,894 chars with 2 document nouns, because the Dutch flow defers to an IND decision letter ('inwilligingsbrief') that itself lists what to bring \u2014 a per-applicant document we cannot read. The MVV pages are per-country (apply-united-states, apply-germany), so jurisdiction-contaminated too."
   },
   {
     "destinationIso": "nl",
@@ -1996,9 +1996,9 @@
     "purpose": "relocation",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: no guessed URL connected. Retry with researched URLs before concluding anything."
+    "sourceUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/documents-visa-application",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: two entry points tried, neither carries a list. ind.nl's permit page never says 'document' in 8.6k chars. netherlandsworldwide.nl's central 'what documents do I need' page is 3,894 chars with 2 document nouns, because the Dutch flow defers to an IND decision letter ('inwilligingsbrief') that itself lists what to bring \u2014 a per-applicant document we cannot read. The MVV pages are per-country (apply-united-states, apply-germany), so jurisdiction-contaminated too."
   },
   {
     "destinationIso": "nl",
@@ -2006,19 +2006,19 @@
     "purpose": "study",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": "https://ind.nl/en/residence-permits/study/student-residence-permit-for-university-or-higher-professional-education",
+    "sourceUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/documents-visa-application",
     "checkedAt": "2026-09-04",
-    "evidence": "DRAFTED AND DELETED 2026-09-04 (1 requirement). The IND permit page is a 8.6k-char summary and the word 'document' does not appear on it at all \u2014 the conditions are there, the checklist is not. A Dutch student permit is applied for by the university as recognised sponsor, so the document list may sit with the institution rather than IND. Needs a different entry point; netherlandsworldwide.nl was tried and 404s on the guessed path."
+    "evidence": "2026-09-04: two entry points tried, neither carries a list. ind.nl's permit page never says 'document' in 8.6k chars. netherlandsworldwide.nl's central 'what documents do I need' page is 3,894 chars with 2 document nouns, because the Dutch flow defers to an IND decision letter ('inwilligingsbrief') that itself lists what to bring \u2014 a per-applicant document we cannot read. The MVV pages are per-country (apply-united-states, apply-germany), so jurisdiction-contaminated too."
   },
   {
     "destinationIso": "nl",
     "destinationName": "Netherlands",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "thin",
+    "sourceUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/documents-visa-application",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: two entry points tried, neither carries a list. ind.nl's permit page never says 'document' in 8.6k chars. netherlandsworldwide.nl's central 'what documents do I need' page is 3,894 chars with 2 document nouns, because the Dutch flow defers to an IND decision letter ('inwilligingsbrief') that itself lists what to bring \u2014 a per-applicant document we cannot read. The MVV pages are per-country (apply-united-states, apply-germany), so jurisdiction-contaminated too."
   },
   {
     "destinationIso": "nl",
@@ -2026,9 +2026,9 @@
     "purpose": "work",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: IND 'requirements that apply to everyone' is 3,091ch / 2 nouns; per-permit checklists not reachable."
+    "sourceUrl": "https://www.netherlandsworldwide.nl/visa-the-netherlands/documents-visa-application",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: two entry points tried, neither carries a list. ind.nl's permit page never says 'document' in 8.6k chars. netherlandsworldwide.nl's central 'what documents do I need' page is 3,894 chars with 2 document nouns, because the Dutch flow defers to an IND decision letter ('inwilligingsbrief') that itself lists what to bring \u2014 a per-applicant document we cannot read. The MVV pages are per-country (apply-united-states, apply-germany), so jurisdiction-contaminated too."
   },
   {
     "destinationIso": "no",

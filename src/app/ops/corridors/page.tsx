@@ -55,7 +55,7 @@ const STATE_BADGE = {
  */
 function freshnessLabel(row: CorridorRow) {
   const f = freshnessOf(row.lastVerifiedAt?.toISOString() ?? null, row.purpose);
-  if (f.state === "unverified") return { text: "Never checked", tone: "text-danger-ink" };
+  if (f.state === "unverified") return { text: "Not checked yet", tone: "text-danger-ink" };
   if (f.state === "stale") return { text: `Stale · ${f.checked}`, tone: "text-warning-ink" };
   return { text: f.checked, tone: "t-muted" };
 }
@@ -104,7 +104,7 @@ export default async function OpsCorridorsPage() {
       tone: "text-info-ink",
     },
     {
-      label: "Never checked",
+      label: "Not checked yet",
       value: unverified.length,
       sub: "live with no verification on record",
       tone: unverified.length ? "text-danger-ink" : "text-ink",

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -32,8 +33,18 @@ const LINKS = [
   { href: "/travellers", label: "For travellers" },
 ];
 
+/**
+ * In document order, which is what makes "the last one whose top has
+ * passed the bar" the right answer below. Derived rather than written
+ * twice, so adding a link to `LINKS` cannot leave the spy behind.
+ */
+const SECTION_IDS = LINKS.filter((l) => l.href.startsWith("#")).map((l) =>
+  l.href.slice(1)
+);
+
 export function SiteNav() {
   const t = useT();
+  const pathname = usePathname();
 
   /**
    * The hero is a light ground now, so the bar no longer has to invert
@@ -49,8 +60,42 @@ export function SiteNav() {
    */
   const [lifted, setLifted] = React.useState(false);
 
+  /**
+   * Which section is being read, so the bar answers "where am I" and not
+   * only "where could I go". `null` until the first section reaches the
+   * bar — at the top of the page the reader is in the hero, which has no
+   * link, and lighting `How it works` there would be a lie.
+   *
+   * The rule is the last section whose top has passed under the bar,
+   * rather than the largest visible area or the one nearest the
+   * viewport's middle: those flip back and forth between two neighbours
+   * whenever one section is much shorter than the other, and this bar
+   * sits over sections of very uneven height.
+   */
+  const [current, setCurrent] = React.useState<string | null>(null);
+
   React.useEffect(() => {
-    const onScroll = () => setLifted(window.scrollY > 24);
+    // One listener for both, since both answer the same event and the
+    // handler is cheap: three `getBoundingClientRect` reads, no writes,
+    // so it neither forces a second layout nor fights the compositor.
+    const onScroll = () => {
+      setLifted(window.scrollY > 24);
+
+      const line = parseFloat(
+        getComputedStyle(document.body).getPropertyValue("--bar-h")
+      );
+      // A little past the bar's own edge: a heading that is level with
+      // the rule is one the reader has not arrived at yet.
+      const threshold = (Number.isFinite(line) ? line : 64) + 8;
+
+      let seen: string | null = null;
+      for (const id of SECTION_IDS) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= threshold) seen = id;
+      }
+      setCurrent(seen);
+    };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -77,19 +122,43 @@ export function SiteNav() {
         {/* `items-stretch` and `h-full` for the same reason as `AppBar`:
             each link marks the bar's bottom edge from its own bottom, so
             a link shorter than the bar would leave its mark floating in
-            mid-air. These are anchors into the page rather than routes,
-            so none of them is ever the current one — the hover mark is
-            the whole of the treatment here. */}
+            mid-air.
+
+            The active mark is `AppNav`'s, to the pixel — 2px of brand
+            under the label, hover the same signal thinner and neutral.
+            Two bars in one product marking "you are here" two different
+            ways is how chrome stops being read at all. What differs is
+            only where the answer comes from: a route for the app, the
+            scroll position for a page whose links are its own
+            sections. */}
         <div className="hidden h-full min-w-0 items-stretch overflow-hidden lg:flex">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="nav-label relative flex h-full items-center whitespace-nowrap px-3.5 text-[15px] font-semibold text-ink-2 transition-colors after:absolute after:inset-x-2 after:bottom-0 after:z-10 after:h-px after:rounded-full after:bg-transparent after:transition-colors after:duration-[var(--dur-toggle)] hover:text-ink hover:after:bg-border-strong"
-            >
-              {l.label}
-            </Link>
-          ))}
+          {LINKS.map((l) => {
+            const active = l.href.startsWith("#")
+              ? current === l.href.slice(1)
+              : pathname === l.href;
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                // `location` rather than `page` for the fragments: they
+                // are places within this page, and a screen reader that
+                // announces three "current page" links has been told
+                // something false about all but one of them.
+                aria-current={
+                  active ? (l.href.startsWith("#") ? "location" : "page") : undefined
+                }
+                className={cn(
+                  "nav-label relative flex h-full items-center whitespace-nowrap px-3.5 text-[15px] font-semibold transition-colors",
+                  "after:absolute after:inset-x-2 after:bottom-0 after:z-10 after:rounded-full after:transition-colors after:duration-[var(--dur-toggle)] after:ease-[var(--ease-out)]",
+                  active
+                    ? "text-ink after:h-0.5 after:bg-brand"
+                    : "text-ink-2 after:h-px after:bg-transparent hover:text-ink hover:after:bg-border-strong"
+                )}
+              >
+                {l.label}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">

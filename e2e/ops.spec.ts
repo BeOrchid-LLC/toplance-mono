@@ -28,18 +28,23 @@ import {
 
 const EMAIL = testEmail("staff");
 const NAME = "Ngozi Balogun";
+// A reviewer fixture is a director who was promoted. Every door asks for
+// an organisation now, and promotion is also how a real reviewer comes
+// into being — so the fixture and the product agree.
+const STAFF_ORG = "Ops Reviewer Agency";
 const TRAVELLER = "Chukwuemeka Obi";
-const PASSPORT = "International passport (bio page)";
+const PASSPORT =
+  "a valid passport or other document that shows your identity and nationality";
 
 test("a reviewer takes a submitted case through review to approved", async ({ page }) => {
-  await resetFixtures([EMAIL]);
+  await resetFixtures([EMAIL], [STAFF_ORG]);
   const seeded = await seedSubmittedCase(TRAVELLER);
 
   // The employer door, `signUp`'s default: it lands on `/employer` rather
   // than `/app`, so no draft application is opened for an account that is
   // about to become staff, and no invitation is minted just to be thrown
   // away.
-  await signUp(page, { email: EMAIL, fullName: NAME });
+  await signUp(page, { email: EMAIL, fullName: NAME, orgName: STAFF_ORG });
 
   // The `refuse` branch. It no longer has to come before the promotion
   // to provision anything — `getProfile` stopped creating rows when
@@ -63,6 +68,27 @@ test("a reviewer takes a submitted case through review to approved", async ({ pa
   await page.getByRole("link", { name: new RegExp(seeded.caseRef) }).click();
   await page.waitForURL(`**/ops/cases/${seeded.applicationId}`);
   await expect(page.getByRole("heading", { name: TRAVELLER })).toBeVisible();
+
+  // ---- what the traveller has already declared ----
+  // The desk could not see this until now: travel history lived only on
+  // the traveller's own profile, so a reviewer checking "have you
+  // travelled here before" against the passport had to ask for something
+  // already on file. Asserting the row, not the panel — an empty panel
+  // renders fine with the query removed.
+  // The panel is the `section` carrying that heading — `Panel` renders a
+  // bare `section`, so there is no named region to ask for.
+  const travelHistory = page
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { name: "Travel history" }) })
+    .last();
+  await expect(travelHistory.getByText(seeded.trip.country)).toBeVisible();
+  await expect(travelHistory.getByText(seeded.trip.purpose, { exact: false })).toBeVisible();
+
+  // Read-only for staff: the traveller's own declaration is only worth
+  // something if the desk cannot quietly edit it.
+  await expect(
+    travelHistory.getByRole("button", { name: /Remove the trip/ })
+  ).toHaveCount(0);
 
   // ---- one document, judged ----
   await expect(page.getByText("Awaiting review")).toBeVisible();

@@ -52,14 +52,23 @@ export async function signUp(
     email,
     fullName,
     path = "/employer/sign-up",
-  }: { email: string; fullName: string; path?: string }
+    orgName,
+    locale,
+  }: {
+    email: string;
+    fullName: string;
+    path?: string;
+    orgName?: string;
+    /** A language label from the chooser, e.g. "Hausa". */
+    locale?: string;
+  }
 ): Promise<void> {
   // Replays the testing token on every Frontend API call this browser
   // makes, which is what gets a scripted sign-up past bot protection.
   await setupClerkTestingToken({ page });
 
   await page.goto(path);
-  await completeSignUpForm(page, { email, fullName });
+  await completeSignUpForm(page, { email, fullName, orgName, locale });
 }
 
 /**
@@ -69,10 +78,37 @@ export async function signUp(
  */
 export async function completeSignUpForm(
   page: Page,
-  { email, fullName }: { email: string; fullName: string }
+  {
+    email,
+    fullName,
+    orgName,
+    locale,
+  }: {
+    email: string;
+    fullName: string;
+    orgName?: string;
+    locale?: string;
+  }
 ): Promise<void> {
+  // Before anything is typed, so the choice is in the provider by the
+  // time `signUp.create` hands it to Clerk — which is the whole of what
+  // this proves. The chooser lives in the auth chrome, so it is there on
+  // every sign-up door.
+  if (locale) {
+    await page.getByRole("button", { name: "Language" }).click();
+    await page.getByRole("menuitem", { name: locale }).click();
+  }
+
   await page.getByLabel("Full name", { exact: true }).fill(fullName);
-  await page.getByLabel("Email", { exact: true }).fill(email);
+  // The director's door asks for all three facts at once and labels the
+  // address "Work email", so the organisation decides which label to
+  // look for. Every other door still shows the plain "Email".
+  if (orgName) {
+    await page.getByLabel("Name of organisation", { exact: true }).fill(orgName);
+    await page.getByLabel("Work email", { exact: true }).fill(email);
+  } else {
+    await page.getByLabel("Email", { exact: true }).fill(email);
+  }
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(

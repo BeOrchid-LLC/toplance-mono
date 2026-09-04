@@ -23,6 +23,7 @@ import { requireStaffAction } from "@/lib/auth/staff-gate";
 import { audit } from "@/lib/audit";
 import { aiEnabled } from "@/lib/ai/models";
 import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
 import {
   deleteDocument,
   putDocument,
@@ -113,8 +114,10 @@ export async function uploadDocument(formData: FormData) {
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Choose a file or take a photo first." };
   }
-  if (file.size > 10 * 1024 * 1024) {
-    return { error: "That file is over 10MB. Photograph it again at a lower size." };
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return {
+      error: `That file is over ${MAX_UPLOAD_LABEL}. Photograph it again at a lower size.`,
+    };
   }
 
   // What is on the checklist row now, before anything is written. A

@@ -110,7 +110,7 @@ const FEATURES = [
   },
   {
     title: "A person actually looks",
-    body: "Automatic checks catch the obvious problems. A Toplance reviewer confirms every document before submission. Verified means accepted for review — never a promise of approval.",
+    body: "Automatic checks catch the obvious problems. A Toplance reviewer confirms every document before submission. Verified means accepted for review, not a promise of approval.",
   },
   {
     title: "One thread, one case handler",
@@ -122,7 +122,7 @@ const FEATURES = [
   },
   {
     title: "Privacy is a boundary, not a setting",
-    body: "When an employer sponsors your seat they see your progress and whether you are stuck. They never see a passport, a bank statement or a police certificate.",
+    body: "When an employer sponsors your seat they see your progress and whether you are stuck. A passport, a bank statement or a police certificate stays between you and Toplance.",
   },
 ];
 
@@ -167,11 +167,11 @@ const SEAT_PLAN = {
 const FAQ = [
   {
     q: "Does Toplance decide whether I get a visa?",
-    a: "No, and we are careful never to imply it. Missions and embassies make the decision. What Toplance controls is that your file is complete, correct and submitted the way that corridor expects — which is the part applicants usually lose on. When a document shows as verified it means it has been accepted for review, not that your application has been approved.",
+    a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that your file is complete, correct and submitted the way that corridor expects — which is the part applicants usually lose on. When a document shows as verified it means it has been accepted for review, not that your application has been approved.",
   },
   {
     q: "What does it cost to find out what I need?",
-    a: "Nothing. The intake conversation and the resulting checklist are free, and you can leave with the list even if you never submit through us. You pay when you ask us to handle an application.",
+    a: "Nothing. The intake conversation and the resulting checklist are free, and you can leave with the list even if you do not submit through us. You pay when you ask us to handle an application.",
   },
   {
     q: "Which languages can I use?",
@@ -306,7 +306,7 @@ export default function TravellersPage() {
         <div className="grid items-start gap-12 xl:grid-cols-[1fr_0.85fr]">
           <div>
             <h2 className="d-lg max-w-[18ch]">
-              Sponsor the seat. See the progress. Never see the passport.
+              Sponsor the seat. See the progress. Leave the passport to us.
             </h2>
             <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
               If you are relocating staff, you need to know who is on track and
@@ -345,7 +345,7 @@ export default function TravellersPage() {
             <div className="flex items-start gap-3 border-b border-border pb-5">
               <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
               <div>
-                <p className="d-sm">You see progress, never documents</p>
+                <p className="d-sm">You see progress, not documents</p>
                 <p className="t-muted mt-1 text-[15px]">
                   Passports, bank statements and police certificates stay between
                   the traveller and Toplance.

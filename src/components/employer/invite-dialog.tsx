@@ -17,27 +17,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteTraveller } from "@/app/employer/actions";
-import { DESTINATION_ISO, PURPOSE_ISO } from "@/lib/domain/corridors";
-
-const inputClass =
-  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
 
 /** What the sent sheet states about the invitation it hands over. */
 type Recipient = {
   email: string;
   fullName: string;
-  destination: string;
 };
 
 /**
  * The invite form and its result, both behind one trigger. `email` is
- * the only field `createInvitation` requires; the rest — full name, job
- * title, destination, purpose — prefill the accept page and, later, the
- * intake this invitee will run (deferred by design; see Task 10's brief).
+ * the only field `createInvitation` requires; full name prefills the
+ * accept page.
+ *
+ * Job title, destination and purpose used to be here too. They were
+ * asked of the agency about a person the agency has not spoken to yet —
+ * a guess entered on someone else's behalf, which the intake then asks
+ * the traveller directly and authoritatively. Collecting it twice made
+ * the invitation form look like an onboarding questionnaire and gave the
+ * agency a field to be wrong in.
  *
  * On success the dialog does not close: it swaps the form for a small
- * document sheet — who the invitation is for, where to, how long the
- * link lives — with copying the link as its one primary action.
+ * document sheet — who the invitation is for and how long the link
+ * lives — with copying the link as its one primary action.
  * `sendEmail` no-ops without `RESEND_API_KEY` (true in local dev), so
  * the copyable link is not a fallback for that case — it is the primary
  * hand-off, the email a bonus when Resend is configured.
@@ -52,13 +53,9 @@ export function InviteDialog() {
   function onSubmit(formData: FormData) {
     // Read before the await: the sent sheet names its recipient, and the
     // action only returns the link.
-    const iso = String(formData.get("destination_iso") ?? "");
-    const destination =
-      Object.entries(DESTINATION_ISO).find(([, v]) => v === iso)?.[0] ?? "";
     const submitted: Recipient = {
       email: String(formData.get("email") ?? "").trim().toLowerCase(),
       fullName: String(formData.get("full_name") ?? "").trim(),
-      destination,
     };
 
     startTransition(async () => {
@@ -139,14 +136,6 @@ export function InviteDialog() {
                     </dd>
                   </div>
                 )}
-                {recipient?.destination && (
-                  <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
-                    <dt className="t-body shrink-0 text-ink-2">Destination</dt>
-                    <dd className="min-w-0 truncate text-right text-base font-semibold">
-                      {recipient.destination}
-                    </dd>
-                  </div>
-                )}
                 {/* Last row, so no bottom rule: the sheet's own border
                     closes it. The link itself is not printed here — it is
                     a 30-day bearer token, and a dialog that shows it puts
@@ -160,9 +149,16 @@ export function InviteDialog() {
               </dl>
             </div>
 
+            {/* What the link actually does, rather than a warning about
+                what it does not. `checkInvitedAddress` refuses a token
+                presented from any other address, so the old line —
+                "anyone who opens this link can accept" — described a
+                risk the product had already closed, and asked the agency
+                to be careful in place of a guarantee it already had. */}
             <p className="t-muted -mt-1 text-[14px]">
-              Anyone who opens this link can accept the invitation — share
-              it with {recipient?.email ?? "the invitee"} only.
+              Only {recipient?.email ?? "the invited address"} can accept
+              this invitation. Opened from any other address, it is
+              refused.
             </p>
 
             <Button type="button" size="block" onClick={copyLink}>
@@ -185,7 +181,7 @@ export function InviteDialog() {
               <DialogTitle>Invite someone</DialogTitle>
               <DialogDescription>
                 They complete their own intake. You see their progress here,
-                never their documents.
+                not their documents.
               </DialogDescription>
             </DialogHeader>
             <form action={onSubmit} className="flex flex-col gap-5">
@@ -206,56 +202,22 @@ export function InviteDialog() {
 
               <fieldset className="flex flex-col gap-4 border-t border-border pt-4">
                 <legend className="sr-only">
-                  Prefill their file — all optional
+                  Their name, optional
                 </legend>
                 <p aria-hidden className="tag">
-                  Prefill their file · optional
+                  Their name · optional
                 </p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="invite_full_name">Full name</Label>
-                    <Input
-                      id="invite_full_name"
-                      name="full_name"
-                      autoComplete="name"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="invite_job_title">Job title</Label>
-                    <Input id="invite_job_title" name="job_title" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="invite_destination">Destination</Label>
-                    <select
-                      id="invite_destination"
-                      name="destination_iso"
-                      defaultValue=""
-                      className={inputClass}
-                    >
-                      <option value="">Not set</option>
-                      {Object.entries(DESTINATION_ISO).map(([name, iso]) => (
-                        <option key={iso} value={iso}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="invite_purpose">Purpose</Label>
-                    <select
-                      id="invite_purpose"
-                      name="purpose"
-                      defaultValue=""
-                      className={inputClass}
-                    >
-                      <option value="">Not set</option>
-                      {Object.entries(PURPOSE_ISO).map(([label, purpose]) => (
-                        <option key={purpose} value={purpose}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="invite_full_name">Full name</Label>
+                  <Input
+                    id="invite_full_name"
+                    name="full_name"
+                    autoComplete="name"
+                  />
+                  <p className="t-muted text-[14px]">
+                    So the invitation greets them by name. Where they are
+                    going, and why, is theirs to answer in the intake.
+                  </p>
                 </div>
               </fieldset>
 

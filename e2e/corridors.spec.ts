@@ -24,6 +24,8 @@ import {
 
 const EMAIL = testEmail("corridor-owner");
 const NAME = "Amara Eze";
+// See `ops.spec.ts` — a reviewer fixture is a promoted director now.
+const STAFF_ORG = "Corridor Owner Agency";
 
 test.afterAll(async () => {
   await clearSeededCorridor();
@@ -32,10 +34,10 @@ test.afterAll(async () => {
 test("a reviewer may read a draft but only an owner can publish it", async ({
   page,
 }) => {
-  await resetFixtures([EMAIL]);
+  await resetFixtures([EMAIL], [STAFF_ORG]);
   const draft = await seedPendingCorridor();
 
-  await signUp(page, { email: EMAIL, fullName: NAME });
+  await signUp(page, { email: EMAIL, fullName: NAME, orgName: STAFF_ORG });
 
   // ---- a reviewer: reads everything, decides nothing ----
   await promoteToStaff(EMAIL, "reviewer");
@@ -44,7 +46,7 @@ test("a reviewer may read a draft but only an owner can publish it", async ({
   await expect(page.getByRole("heading", { name: "Corridor coverage" })).toBeVisible();
   // The seeded corridors have never been verified by anyone, and the
   // console says so rather than borrowing their effective dates.
-  await expect(page.getByText("Never checked").first()).toBeVisible();
+  await expect(page.getByText("Not checked yet").first()).toBeVisible();
 
   await page.goto(`/ops/corridors/${draft.corridorId}`);
   await expect(page.getByRole("heading", { name: /ZQ → ZR/ })).toBeVisible();

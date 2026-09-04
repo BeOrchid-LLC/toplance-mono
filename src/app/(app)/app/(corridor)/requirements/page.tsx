@@ -404,7 +404,7 @@ export default async function RequirementsPage() {
                 months while the screen looked perfectly well sourced. */}
             <span className="t-muted">
               {freshness.state === "unverified"
-                ? "Never checked by us"
+                ? "Not checked by us yet"
                 : `We last checked ${freshness.checked}`}
             </span>
             {ruleSet.sourceUrl && (

@@ -47,7 +47,7 @@ test("an approved traveller gets the arrival companion", async ({ page }) => {
   // The UK · work checklist, not a generic one.
   await expect(page.getByText("Collect your eVisa or BRP")).toBeVisible();
   await expect(page.getByText("Apply for a National Insurance number")).toBeVisible();
-  await expect(page.getByText("Skilled Worker Visa", { exact: true })).toBeVisible();
+  await expect(page.getByText("Skilled Worker visa", { exact: true })).toBeVisible();
   // No model behind this server, so the tips panel says so rather than
   // inventing any.
   await expect(page.getByText("Nothing generated yet.")).toBeVisible();

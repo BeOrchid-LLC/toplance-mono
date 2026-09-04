@@ -15,7 +15,10 @@ import { InviteDialog } from "@/components/employer/invite-dialog";
 import { ResendInvitationButton } from "@/components/employer/resend-invitation-button";
 import { RevokeInvitationButton } from "@/components/employer/revoke-invitation-button";
 import { homeFor } from "@/lib/auth/routes";
-import { provisionEmployerProfile } from "@/lib/data/organisations";
+import {
+  createOrganisationTx,
+  provisionEmployerProfile,
+} from "@/lib/data/organisations";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
 import {
   applications,
@@ -24,6 +27,7 @@ import {
   organisations,
 } from "@/lib/db/schema";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getActor, getProfile } from "@/lib/data/applications";
 import { listInvitations } from "@/lib/data/invitations";
@@ -32,6 +36,28 @@ import { listInvitations } from "@/lib/data/invitations";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: "Organisation console" };
+
+/**
+ * The `org_role` enum in words. This bar used to print a hard-coded
+ * "HR" beside the organisation name — for everyone, including the
+ * director who had just created the organisation and whom
+ * `createOrganisationTx` writes as `owner`. So the one place the product
+ * named your role was the one place it was reliably wrong, and it read
+ * as a title assigned behind your back rather than a fact about the
+ * account.
+ */
+const ROLE_LABEL: Record<"owner" | "hr_admin", string> = {
+  owner: "Owner",
+  hr_admin: "Administrator",
+};
+
+/** Why the account carries that role, said where the role is shown. */
+const ROLE_REASON: Record<"owner" | "hr_admin", string> = {
+  owner:
+    "You are the owner because you created this organisation. Owners can invite people, manage the account and see everyone's progress.",
+  hr_admin:
+    "You are an administrator because an owner invited you into this organisation. Administrators can invite people and see everyone's progress.",
+};
 
 function formatDay(value: Date) {
   return value.toLocaleDateString("en-GB", {
@@ -78,7 +104,8 @@ async function recoverEmployer(): Promise<
   await provisionEmployerProfile(
     userId,
     email,
-    [user?.firstName, user?.lastName].filter(Boolean).join(" ")
+    [user?.firstName, user?.lastName].filter(Boolean).join(" "),
+    readPendingProfile(user?.unsafeMetadata)
   );
 
   return Promise.all([getProfile(), getActor()]);
@@ -100,6 +127,20 @@ export default async function EmployerConsolePage() {
   }
   if (!profile || !actor) redirect("/go");
 
+  // Staff belong in `/ops`, whatever else is true of their account.
+  //
+  // This used to sit inside the `!membership` branch below, which meant
+  // it only fired for a staff account that owned no organisation — and
+  // an account can hold both. A director who signs up, names an
+  // organisation and is later promoted to reviewer has an `org_members`
+  // row and the `staff` role at once, and walked straight into the
+  // employer console: the one persona whose whole job is reading
+  // documents, on the one screen built to promise that nobody here
+  // reads them. Nothing was leaked (the console selects from the
+  // progress view, which carries no document column) but the routing
+  // said the opposite of what the product does.
+  if (actor.role === "staff") redirect(homeFor(actor.role));
+
   const [membership] = await db
     .select({
       role: orgMembers.role,
@@ -118,20 +159,41 @@ export default async function EmployerConsolePage() {
   // "0 people" roster for an org that was never created. This is the
   // only door in: name one, then the branch below takes over.
   if (!membership) {
+    // The organisation the director named on the sign-up form, finished
+    // here rather than there.
+    //
+    // Everything after Clerk's `finalize()` is a POST from a page the
+    // proxy is already walking the newly signed-in visitor off, so it
+    // gets cancelled in flight often enough to be the normal case, not
+    // the edge one — which is why `completeProfile` is retried and why
+    // `recoverEmployer` above exists at all. A client call to
+    // `createOrganisation` sat in exactly that gap and lost the name.
+    //
+    // So the name crosses inside Clerk's own record, and the first
+    // server render that finds no membership spends it. Idempotent by
+    // construction: `createOrganisationTx` locks the profile row and
+    // refuses a second organisation, so a double render cannot make two.
+    const { orgName } = readPendingProfile((await currentUser())?.unsafeMetadata);
+    if (orgName) {
+      const created = await createOrganisationTx(profile.id, orgName);
+      // Straight back through the front door, so the roster below reads
+      // the membership this just wrote rather than a stale `undefined`.
+      if (!("error" in created)) redirect("/employer");
+    }
+
     // …but not everyone holding a session belongs at that door. Since
     // travellers became invite-only (2026-08-31) a new employer arrives
     // already holding `org_member`, written by `completeProfile` — but
     // the membership row still begins in `createOrganisationTx`, so the
     // role alone cannot decide who belongs here.
     //
-    // What it can do is refuse the two accounts that transaction refuses
-    // anyway, rather than hand them a form guaranteed to fail at submit:
-    // staff, who may never own an organisation, and a traveller already
+    // Staff are already gone by this point. What is left to refuse is
+    // the account `createOrganisationTx` refuses anyway, rather than
+    // hand it a form guaranteed to fail at submit: a traveller already
     // mid-case, whose account is committed to the other side of the
-    // privacy boundary. Keep the two lists in step — a rule relaxed
-    // there and not here shows a dead form; the reverse hides a live one.
-    if (actor.role === "staff") redirect(homeFor(actor.role));
-
+    // privacy boundary. Keep this in step with that transaction — a
+    // rule relaxed there and not here shows a dead form; the reverse
+    // hides a live one.
     const [ownCase] = await db
       .select({ id: applications.id })
       .from(applications)
@@ -142,7 +204,7 @@ export default async function EmployerConsolePage() {
     return (
       <div className="min-h-dvh bg-bg">
         <AppBar
-          nav={[{ href: "/employer", label: "People" }]}
+          nav={[{ href: "/employer", label: "Dashboard" }]}
           name={profile.fullName}
           email={profile.email}
           subtitle="Organisation console"
@@ -150,12 +212,17 @@ export default async function EmployerConsolePage() {
         <main>
           <Shell className="py-12">
             <Panel className="mx-auto max-w-[560px]">
-              <PanelHeader label="Name your organisation" />
+              {/* "Name of", not "Name your". The field asks for the
+                  registered name of a licensed travel agency, which is a
+                  fact to be matched against a register — "name your
+                  organisation" invites a label the director makes up. */}
+              <PanelHeader label="Name of organisation" />
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  Once it exists you can sponsor seats and invite your
-                  people by email — they complete their own intake, and
-                  you see their progress here, never their documents.
+                  Give the registered name, as it appears on your trading
+                  licence. Once it exists you can invite your clients by
+                  email — they complete their own intake, and you see
+                  their progress here without their documents.
                 </p>
                 <div className="mt-6">
                   <CreateOrganisation />
@@ -201,10 +268,10 @@ export default async function EmployerConsolePage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[{ href: "/employer", label: "People" }]}
+        nav={[{ href: "/employer", label: "Dashboard" }]}
         name={profile.fullName}
         email={profile.email}
-        subtitle={org ? `${org.name} · HR` : "Organisation console"}
+        subtitle={org ? `${org.name} · ${ROLE_LABEL[org.role]}` : "Organisation console"}
       />
 
       {/* The ruled ground the laminate below refracts. Without it the
@@ -233,6 +300,13 @@ export default async function EmployerConsolePage() {
                 {pendingInvitations.length > 0 &&
                   ` · ${pendingInvitations.length} invitation${pendingInvitations.length === 1 ? "" : "s"} pending`}
               </p>
+              {/* The bar names your role; this says how you got it.
+                  Seeing "Owner" appended to your account without ever
+                  having chosen it is the kind of thing that reads as the
+                  product knowing something about you that you don't. */}
+              <p className="t-muted mt-2 max-w-[68ch]">
+                {ROLE_REASON[org.role]}
+              </p>
               {seats > 0 && (
                 <Progress
                   value={(used / seats) * 100}
@@ -260,7 +334,7 @@ export default async function EmployerConsolePage() {
               <div className="min-w-0">
                 <p className="tag">The privacy boundary</p>
                 <p className="d-sm mt-2 text-ink">
-                  You see progress, never documents
+                  You see progress, not documents
                 </p>
                 <p className="t-muted mt-2 max-w-[74ch]">
                   Passports, bank statements and police certificates stay

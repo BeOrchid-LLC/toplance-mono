@@ -195,7 +195,7 @@ function PhoneEditor({
         label="Mobile number"
         defaultCountry={countryIso}
         defaultDigits={digits}
-        hint="Used by your case handler, never for marketing."
+        hint="Used by your case handler, not for marketing."
       />
       <SaveCancel pending={pending} onCancel={close} />
     </form>

@@ -32,6 +32,13 @@ const STAFF_ON_APP_EMAIL = testEmail("routing.staff.onapp");
 const STAFF_ON_EMPLOYER_EMAIL = testEmail("routing.staff.onemployer");
 const EMPLOYER_EMAIL = testEmail("routing.employer");
 const ORG = "Routing Proof Ltd";
+// Every account now begins at a door that asks for an organisation,
+// so a reviewer fixture is a director who was promoted — which is
+// also the only way a real one comes into being. Each spec gets its
+// own, so a leaked row from one cannot collide with another.
+const STAFF_ORG = "Routing Reviewer Agency";
+const STAFF_ON_APP_ORG = "Routing Reviewer On App Agency";
+const STAFF_ON_EMPLOYER_ORG = "Routing Reviewer On Employer Agency";
 const TRAVELLER_ORG = "Routing Traveller Sponsor";
 const MIDCASE_ORG = "Routing Midcase Sponsor";
 
@@ -105,13 +112,17 @@ test("a traveller sees the unchanged marketing header and the generic door leads
 test("a reviewer sees the unchanged marketing header and never the traveller surface", async ({
   page,
 }) => {
-  await resetFixtures([STAFF_EMAIL]);
+  await resetFixtures([STAFF_EMAIL], [STAFF_ORG]);
   // The employer door, which is `signUp`'s default now that the
   // traveller one needs an invitation. It lands on `/employer` rather
   // than `/app`, so no draft application is opened for an account that
   // is about to become staff — and no invitation has to be minted and
   // thrown away just to get a session.
-  await signUp(page, { email: STAFF_EMAIL, fullName: "Ngozi Adeyemi" });
+  await signUp(page, {
+    email: STAFF_EMAIL,
+    fullName: "Ngozi Adeyemi",
+    orgName: STAFF_ORG,
+  });
   await promoteToStaff(STAFF_EMAIL);
 
   await page.goto("/");
@@ -141,8 +152,12 @@ test("a reviewer sees the unchanged marketing header and never the traveller sur
 test("a reviewer who opens the traveller console is sent to their own", async ({
   page,
 }) => {
-  await resetFixtures([STAFF_ON_APP_EMAIL]);
-  await signUp(page, { email: STAFF_ON_APP_EMAIL, fullName: "Chidi Okonkwo" });
+  await resetFixtures([STAFF_ON_APP_EMAIL], [STAFF_ON_APP_ORG]);
+  await signUp(page, {
+    email: STAFF_ON_APP_EMAIL,
+    fullName: "Chidi Okonkwo",
+    orgName: STAFF_ON_APP_ORG,
+  });
   await promoteToStaff(STAFF_ON_APP_EMAIL);
   // Nothing to clear first any more: the employer door never opened a
   // draft, so the assertion below now means "no application has ever
@@ -197,8 +212,12 @@ test("a traveller mid-case who opens the employer console is sent back to their 
 test("a reviewer who opens the employer console is sent to the case queue", async ({
   page,
 }) => {
-  await resetFixtures([STAFF_ON_EMPLOYER_EMAIL]);
-  await signUp(page, { email: STAFF_ON_EMPLOYER_EMAIL, fullName: "Ifeoma Balogun" });
+  await resetFixtures([STAFF_ON_EMPLOYER_EMAIL], [STAFF_ON_EMPLOYER_ORG]);
+  await signUp(page, {
+    email: STAFF_ON_EMPLOYER_EMAIL,
+    fullName: "Ifeoma Balogun",
+    orgName: STAFF_ON_EMPLOYER_ORG,
+  });
   await promoteToStaff(STAFF_ON_EMPLOYER_EMAIL);
 
   await page.goto("/employer");
@@ -209,16 +228,15 @@ test("an employer sees the unchanged marketing header and the generic door leads
   page,
 }) => {
   await resetFixtures([EMPLOYER_EMAIL], [ORG]);
+  // Membership (and the org_member role) begins with the organisation,
+  // which the sign-up form now asks for alongside the name and address.
   await signUp(page, {
     email: EMPLOYER_EMAIL,
     fullName: "Folake Adebayo",
     path: "/employer/sign-up",
+    orgName: ORG,
   });
   await expect(page).toHaveURL(/\/employer$/);
-
-  // Membership (and the org_member role) begins with the organisation.
-  await page.getByLabel("Organisation name").fill(ORG);
-  await page.getByRole("button", { name: "Create organisation" }).click();
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
   await page.goto("/");

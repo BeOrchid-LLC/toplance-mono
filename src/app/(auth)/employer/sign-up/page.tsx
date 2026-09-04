@@ -21,7 +21,7 @@ export default function EmployerSignUpPage() {
       <div className="hidden lg:block">
         <p className="tag">For organisations</p>
         <h2 className="d-lg mt-3 max-w-[18ch]">
-          You see progress, never documents
+          You see progress, not documents
         </h2>
         <p className="t-body-lg mt-5 max-w-[52ch] text-ink-2">
           The organisation console shows completion, status and destination for

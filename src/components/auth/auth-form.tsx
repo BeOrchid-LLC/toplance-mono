@@ -22,6 +22,7 @@ import {
 } from "@/app/(auth)/actions";
 import { isInternalPath } from "@/lib/auth/routes";
 import { splitFullName } from "@/lib/domain/name";
+import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
 
 /** Local to this component now that the server no longer returns it. */
 type AuthState = {
@@ -118,7 +119,21 @@ export function AuthForm(props: AuthFormProps) {
    * what the check was for. `PhoneField` already holds its own state,
    * so it survives a reset without help.
    */
-  const [typed, setTyped] = React.useState({ fullName: "", email: "" });
+  const [typed, setTyped] = React.useState({
+    fullName: "",
+    email: "",
+    orgName: "",
+  });
+
+  /**
+   * The director's door asks for the organisation alongside the name and
+   * the address, rather than on a second screen after the account
+   * exists. Two forms for three facts, and the account in between
+   * belonged to nobody — a director who closed the tab at that point had
+   * an account with no organisation, which is the state
+   * `EmployerConsolePage` still has a whole branch to recover from.
+   */
+  const isDirectorSignUp = mode === "sign-up" && audience === "employer";
 
   function onRequest(formData: FormData) {
     const email = String(formData.get("email") ?? "")
@@ -127,6 +142,7 @@ export function AuthForm(props: AuthFormProps) {
     const fullName = String(formData.get("full_name") ?? "").trim();
     const countryIso = String(formData.get("country_iso") ?? "ng");
     const phone = String(formData.get("phone") ?? "");
+    const org = String(formData.get("org_name") ?? "").trim();
 
     if (!email || !email.includes("@")) {
       setState({ error: "Enter the email address you want the code sent to." });
@@ -134,6 +150,18 @@ export function AuthForm(props: AuthFormProps) {
     }
     if (mode === "sign-up" && !fullName) {
       setState({ error: "Enter your full name as it appears in your passport." });
+      return;
+    }
+    if (isDirectorSignUp && !org) {
+      setState({
+        error: "Enter the registered name of your organisation.",
+      });
+      return;
+    }
+    // Checked before Clerk is told anything, so a personal address costs
+    // a corrected field rather than an account and a spent code.
+    if (isDirectorSignUp && !isWorkEmail(email)) {
+      setState({ error: workEmailRefusal(email) });
       return;
     }
 
@@ -173,8 +201,35 @@ export function AuthForm(props: AuthFormProps) {
         // The name goes to Clerk at creation as well as to `profiles`
         // later: if the profile write is ever lost, `getProfile`'s lazy
         // provisioning can still recover the name from Clerk.
+        //
+        // Everything else the form collected rides the same rail, and
+        // has to. Everything after `finalize()` is a POST from a page
+        // the proxy is already walking the now-signed-in visitor off, so
+        // it can be — and routinely is — cancelled in flight.
+        // `completeProfile` is that POST: it is retried twice and still
+        // loses, which is why `provisionInvitedProfile` carries the note
+        // that phone and country "are not recoverable here". They are
+        // now. Clerk's own record is the one thing that survives the
+        // crossing, and the server-side provisioning spends it.
+        //
+        // `unsafeMetadata` is client-writable by definition. That grants
+        // nothing here: every field is something this person was being
+        // asked for anyway and could edit afterwards from their profile.
+        // Roles are the counter-example and stay in Postgres, where
+        // `getActor` is explicit they are read from; an organisation
+        // name is a name, not a permission, and `createOrganisationTx`
+        // still decides whether this account may own one.
         steps.push(
-          await signUp.create({ emailAddress: email, ...splitFullName(fullName) })
+          await signUp.create({
+            emailAddress: email,
+            ...splitFullName(fullName),
+            unsafeMetadata: {
+              ...(org ? { orgName: org } : {}),
+              ...(phone ? { phone } : {}),
+              countryIso,
+              locale,
+            },
+          })
         );
         if (!steps.at(-1)?.error) {
           steps.push(await signUp.verifications.sendEmailCode());
@@ -274,6 +329,7 @@ export function AuthForm(props: AuthFormProps) {
         // which account they are signed in as and how to get out of it.
         toast.error(result.error);
       }
+
     }
 
     router.push(next);
@@ -546,18 +602,46 @@ export function AuthForm(props: AuthFormProps) {
           </div>
         )}
 
+        {/* Three facts on one form, in the order a director would say
+            them: who you are, what you run, where to reach you. The
+            organisation used to be asked for on a second screen after
+            the account existed, which left an account belonging to
+            nobody in between. */}
+        {isDirectorSignUp && (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="org_name">Name of organisation</Label>
+            <Input
+              id="org_name"
+              name="org_name"
+              autoComplete="organization"
+              placeholder="As registered on your trading licence"
+              value={typed.orgName}
+              onChange={(e) => setTyped((t) => ({ ...t, orgName: e.target.value }))}
+              required
+            />
+          </div>
+        )}
+
         <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">
+            {isDirectorSignUp ? "Work email" : "Email"}
+          </Label>
           <Input
             id="email"
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@email.com"
+            placeholder={isDirectorSignUp ? "you@youragency.com" : "you@email.com"}
             value={typed.email}
             onChange={(e) => setTyped((t) => ({ ...t, email: e.target.value }))}
             required
           />
+          {isDirectorSignUp && (
+            <p className="t-muted text-[14px]">
+              Your organisation&apos;s own address. Personal mailboxes are
+              not accepted for an organisation account.
+            </p>
+          )}
         </div>
 
         {mode === "sign-up" && audience === "traveller" && (

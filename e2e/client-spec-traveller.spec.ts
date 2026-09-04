@@ -134,19 +134,23 @@ const INTAKE = [
   },
 ] as const;
 
-/** The ten `is_required` rows of the seeded ng→gb work rule set. */
+/**
+ * The six `is_required` rows of the live ng→gb work rule set, in the
+ * mission's own wording — lowercase and unabbreviated, because the
+ * published checklist is transcribed rather than retitled.
+ */
 const REQUIRED_DOCUMENTS = [
-  "International passport (bio page)",
-  "Passport photographs ×2",
-  "Certificate of Sponsorship",
-  "Completed application form",
-  "Bank statements — 3 months",
-  "Tuberculosis test certificate",
-  "English language evidence",
-  "Degree certificate and transcript",
-  "Employment letter",
-  "Birth certificate",
+  "certificate of sponsorship reference number",
+  "proof of your knowledge of English",
+  "a valid passport or other document that shows your identity and nationality",
+  "your job title and annual salary",
+  "your job’s occupation code",
+  "the name of your employer and their sponsor licence number",
 ] as const;
+
+/** The row every upload assertion below acts on. */
+const PASSPORT =
+  "a valid passport or other document that shows your identity and nationality";
 
 /**
  * One checklist row, found by the document it is about — the same
@@ -471,16 +475,16 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
   test("item 6 — the requirements resolve from nationality and destination", async () => {
     await page.goto("/app/requirements");
 
-    await expect(page.getByRole("heading", { name: "Skilled Worker Visa" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Skilled Worker visa" })).toBeVisible();
 
     await expect(page.getByText("Documents required")).toBeVisible();
     await expect(page.getByText("Typical decision time")).toBeVisible();
-    await expect(page.getByText("3–8 weeks")).toBeVisible();
+    await expect(page.getByText("3–3 weeks")).toBeVisible();
     await expect(page.getByText("Government fee")).toBeVisible();
-    await expect(page.getByText(/719/)).toBeVisible();
+    await expect(page.getByText(/819/)).toBeVisible();
 
     // Whose rule set it is, and from when — the brief's "current".
-    await expect(page.getByRole("link", { name: "UK Visas and Immigration" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "www.gov.uk" })).toBeVisible();
     await expect(page.getByText(/Rule set v\d+/)).toBeVisible();
   });
 
@@ -503,7 +507,7 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
   /**
    * Item 7 is two claims in one sentence: the checklist is personal to
    * this traveller, and every line of it can be uploaded to. The first
-   * is the corridor's own ten required documents rather than a generic
+   * is the corridor's own six required documents rather than a generic
    * list; the second is a file input on each of them.
    */
   test("item 7 — every checklist item has an upload slot", async () => {
@@ -525,17 +529,20 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     try {
       await expect(
-        documentRow(page, "International passport (bio page)").getByRole(
-          "button",
-          { name: "Take a photo" }
-        )
+        documentRow(page, PASSPORT).getByRole("button", {
+          name: "Take a photo",
+        })
       ).toBeVisible();
     } finally {
       await page.setViewportSize({ width: 1280, height: 720 });
     }
 
     // Personal to the corridor: a UK requirement, and not a UAE one.
-    await expect(page.getByRole("heading", { name: "Certificate of Sponsorship" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: "certificate of sponsorship reference number",
+      })
+    ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Medical fitness certificate" })
     ).toHaveCount(0);
@@ -558,10 +565,19 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
   test("item 8 — an upload is checked, and a machine never calls it verified", async () => {
     await page.goto("/app/documents");
 
-    const passport = documentRow(page, "International passport (bio page)");
+    const passport = documentRow(page, PASSPORT);
     await expect(passport.getByText("Not started")).toBeVisible();
 
     await passport.locator('input[type="file"]').last().setInputFiles(FIXTURE);
+
+    // The confirmation the brief asks for, held to what is true at this
+    // moment: the brief's own wording was "upload verified", and nothing
+    // has verified anything — the machine is forbidden from doing so and
+    // the reviewer has not looked yet.
+    const outcome = page.getByRole("dialog");
+    await expect(outcome.getByText("Received")).toBeVisible();
+    await expect(outcome.getByText("Verified")).toHaveCount(0);
+    await outcome.getByRole("button", { name: "Continue" }).click();
 
     await expect(passport.getByText("Checking")).toBeVisible();
     await expect(passport.getByText("Verified")).toHaveCount(0);
@@ -577,8 +593,8 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
 
   /**
    * Item 5 and the first half of item 9, together: the score is on the
-   * dashboard, and the upload above moved it. One of ten required
-   * documents is in, so the ring reads 10%.
+   * dashboard, and the upload above moved it. One of six required
+   * documents is in, so the ring reads 17%.
    *
    * The ring's label says "collected", which is what the number is:
    * uploaded and awaiting or past review. The `fixme` below is the
@@ -589,9 +605,9 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
 
     await expect(page.getByRole("img", { name: /% of required documents collected/ })).toBeVisible();
     await expect(
-      page.getByRole("img", { name: "10% of required documents collected" })
+      page.getByRole("img", { name: "17% of required documents collected" })
     ).toBeVisible();
-    await expect(page.getByText("10%")).toBeVisible();
+    await expect(page.getByText("17%")).toBeVisible();
   });
 
   /**
@@ -599,7 +615,7 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
    * `completionOf` counts `checking` alongside `verified`, so the score
    * rises the moment a file arrives and reaches 100% before anyone has
    * looked at a single document — which is why the test above expects
-   * 10% from an upload nobody has judged.
+   * 17% from an upload nobody has judged.
    *
    * It is a defensible product decision — the ring measures what the
    * traveller still has to do, and submission is separately gated on
@@ -713,7 +729,7 @@ test.describe("phases 5 & 6 · after approval", () => {
     await expect(page.getByText("Collect your eVisa or BRP")).toBeVisible();
     await expect(page.getByText("Apply for a National Insurance number")).toBeVisible();
     // Document renewal, as guidance rather than as a reminder.
-    await expect(page.getByText("Skilled Worker Visa", { exact: true })).toBeVisible();
+    await expect(page.getByText("Skilled Worker visa", { exact: true })).toBeVisible();
   });
 
   /**
@@ -860,7 +876,7 @@ test.describe("technical requirements", () => {
 
       await page.goto("/app/documents");
       await expect(page.getByRole("heading", { name: "Your documents" })).toBeVisible();
-      const passport = documentRow(page, "International passport (bio page)");
+      const passport = documentRow(page, PASSPORT);
       await expect(passport).toBeVisible();
 
       // Actionable at this width, not merely present. Deliberately not
@@ -870,7 +886,7 @@ test.describe("technical requirements", () => {
       // item 7 — the last point in the journey with an outstanding row.
       await expect(
         passport.getByRole("button", {
-          name: "Replace International passport (bio page)",
+          name: `Replace ${PASSPORT}`,
         })
       ).toBeVisible();
 

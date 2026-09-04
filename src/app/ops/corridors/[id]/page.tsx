@@ -178,7 +178,7 @@ export default async function ReviewCorridorPage({
                 label: "Last checked",
                 value:
                   freshness.state === "unverified"
-                    ? "Never"
+                    ? "Not yet"
                     : freshness.checked,
               },
             ].map((f) => (

@@ -30,6 +30,33 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
 });
 
 describe("entryCheck", () => {
+  /**
+   * Whether a visa is needed at all, separated from the sentence that
+   * says so. The dead-end screen branches on this: a corridor nobody
+   * curated because *nothing needs curating* is an answer, not a gap,
+   * and it must not be reached by matching on the headline string.
+   */
+  describe("requiresVisa", () => {
+    it("is false when the passport needs no visa", () => {
+      expect(entryCheck(ruleSet({ visaName: "Visa not required" }))!.requiresVisa).toBe(false);
+      expect(entryCheck(ruleSet({ visaName: "Visa free" }))!.requiresVisa).toBe(false);
+    });
+
+    it("is true for every verdict that sends someone to a government", () => {
+      for (const visaName of [
+        "Visa required",
+        "Online visa required",
+        "E-visa",
+        // Issued at the border, but still issued: there is paperwork to
+        // carry, so this is a corridor to curate rather than one to
+        // answer with "you need nothing".
+        "Visa on arrival",
+      ]) {
+        expect(entryCheck(ruleSet({ visaName }))!.requiresVisa).toBe(true);
+      }
+    });
+  });
+
   it("states a plain visa requirement", () => {
     const check = entryCheck(ruleSet({ visaName: "Visa required" }))!;
 

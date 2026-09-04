@@ -603,60 +603,60 @@
     "destinationName": "Cameroon",
     "purpose": "business",
     "visaType": "national",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "VISA-FREE FOR NIGERIANS. Confirmed against the recorded VisaList response: Cameroon returns 'Visa Free' for a Nigerian passport. Not ECOWAS \u2014 Cameroon is CEMAC \u2014 so the reason differs from Ghana, Benin, Ivory Coast, Senegal and Togo, but the conclusion is the same: a curated document checklist here would be WRONG, because the requirements Cameroon publishes apply to nationals who need a visa. Served by the entry-rules layer, not by a checklist. Relabelled from 'thin' on 2026-09-04: the six entries invited a sub-page hunt that would have produced the bug the gh/tourism draft was deleted for."
   },
   {
     "destinationIso": "cm",
     "destinationName": "Cameroon",
     "purpose": "medical",
     "visaType": "national",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "VISA-FREE FOR NIGERIANS. Confirmed against the recorded VisaList response: Cameroon returns 'Visa Free' for a Nigerian passport. Not ECOWAS \u2014 Cameroon is CEMAC \u2014 so the reason differs from Ghana, Benin, Ivory Coast, Senegal and Togo, but the conclusion is the same: a curated document checklist here would be WRONG, because the requirements Cameroon publishes apply to nationals who need a visa. Served by the entry-rules layer, not by a checklist. Relabelled from 'thin' on 2026-09-04: the six entries invited a sub-page hunt that would have produced the bug the gh/tourism draft was deleted for."
   },
   {
     "destinationIso": "cm",
     "destinationName": "Cameroon",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "VISA-FREE FOR NIGERIANS. Confirmed against the recorded VisaList response: Cameroon returns 'Visa Free' for a Nigerian passport. Not ECOWAS \u2014 Cameroon is CEMAC \u2014 so the reason differs from Ghana, Benin, Ivory Coast, Senegal and Togo, but the conclusion is the same: a curated document checklist here would be WRONG, because the requirements Cameroon publishes apply to nationals who need a visa. Served by the entry-rules layer, not by a checklist. Relabelled from 'thin' on 2026-09-04: the six entries invited a sub-page hunt that would have produced the bug the gh/tourism draft was deleted for."
   },
   {
     "destinationIso": "cm",
     "destinationName": "Cameroon",
     "purpose": "study",
     "visaType": "national",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "VISA-FREE FOR NIGERIANS. Confirmed against the recorded VisaList response: Cameroon returns 'Visa Free' for a Nigerian passport. Not ECOWAS \u2014 Cameroon is CEMAC \u2014 so the reason differs from Ghana, Benin, Ivory Coast, Senegal and Togo, but the conclusion is the same: a curated document checklist here would be WRONG, because the requirements Cameroon publishes apply to nationals who need a visa. Served by the entry-rules layer, not by a checklist. Relabelled from 'thin' on 2026-09-04: the six entries invited a sub-page hunt that would have produced the bug the gh/tourism draft was deleted for."
   },
   {
     "destinationIso": "cm",
     "destinationName": "Cameroon",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "VISA-FREE FOR NIGERIANS. Confirmed against the recorded VisaList response: Cameroon returns 'Visa Free' for a Nigerian passport. Not ECOWAS \u2014 Cameroon is CEMAC \u2014 so the reason differs from Ghana, Benin, Ivory Coast, Senegal and Togo, but the conclusion is the same: a curated document checklist here would be WRONG, because the requirements Cameroon publishes apply to nationals who need a visa. Served by the entry-rules layer, not by a checklist. Relabelled from 'thin' on 2026-09-04: the six entries invited a sub-page hunt that would have produced the bug the gh/tourism draft was deleted for."
   },
   {
     "destinationIso": "cm",
     "destinationName": "Cameroon",
     "purpose": "work",
     "visaType": "national",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "VISA-FREE FOR NIGERIANS. Confirmed against the recorded VisaList response: Cameroon returns 'Visa Free' for a Nigerian passport. Not ECOWAS \u2014 Cameroon is CEMAC \u2014 so the reason differs from Ghana, Benin, Ivory Coast, Senegal and Togo, but the conclusion is the same: a curated document checklist here would be WRONG, because the requirements Cameroon publishes apply to nationals who need a visa. Served by the entry-rules layer, not by a checklist. Relabelled from 'thin' on 2026-09-04: the six entries invited a sub-page hunt that would have produced the bug the gh/tourism draft was deleted for."
   },
   {
     "destinationIso": "cn",
@@ -2875,60 +2875,60 @@
     "destinationName": "United States",
     "purpose": "business",
     "visaType": "national",
-    "status": "unusable",
+    "status": "unresearched",
     "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unusable",
+    "status": "unresearched",
     "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unusable",
+    "status": "unresearched",
     "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "study",
     "visaType": "national",
-    "status": "unusable",
+    "status": "unresearched",
     "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unusable",
+    "status": "unresearched",
     "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "work",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: travel.state.gov returns 403 to automated requests on every visa page, even with full browser headers. ng.usembassy.gov/visas is reachable but is an announcements page (0 hits for 'required documents', 'checklist', 'I-20', 'SEVIS'). ustraveldocs.com/ng redirects (302) or 404s. No reachable official US source for any purpose."
+    "status": "candidate",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTABLE via --source-text. Browser-reached travel.state.gov/.../temporary-worker-visas.html after the Cloudflare challenge cleared: 15,638 chars, 13 distinct document nouns (passport, photograph, application form, DS-160, petition, I-129, I-797, receipt, interview, appointment, fee, medical) and a 'required document' signal. Richer than Tanzania's 10, which drafted cleanly. fetch/curl remain 403, so this must be pasted, not fetched."
   },
   {
     "destinationIso": "za",

@@ -8,6 +8,73 @@ import { corridorGap } from "@/lib/domain/corridor-gap";
  * that could not reach one.
  */
 describe("corridorGap", () => {
+  /**
+   * The six ECOWAS destinations, and the reason this branch exists.
+   *
+   * Ghana has no corridor row and never will have a useful one: a
+   * Nigerian passport enters under ECOWAS free movement, and the
+   * document checklist Ghana publishes is for everyone else. The engine
+   * knowing that is not a gap — it is the answer — so the screen must
+   * stop saying "we do not cover Ghana yet" and offering to change
+   * destination, which is the same wrong-end-of-the-corridor bug this
+   * module was written to fix.
+   */
+  describe("when the passport needs no visa at all", () => {
+    const gap = corridorGap({
+      nationality: "Nigeria",
+      destination: "Ghana",
+      purpose: "Tourism",
+      entry: { requiresVisa: false },
+    });
+
+    it("is an answer rather than a gap", () => {
+      expect(gap.kind).toBe("answer");
+    });
+
+    it("does not claim we fail to cover the country", () => {
+      expect(gap.heading).not.toContain("do not cover");
+      expect(gap.heading).toBe("You do not need a visa for Ghana");
+    });
+
+    it("does not offer a recovery for a problem the traveller does not have", () => {
+      expect(gap.action).not.toBe("Change my destination");
+    });
+  });
+
+  /**
+   * The limit of the claim. VisaList reports Ghana visa-free for three
+   * months — a short-stay figure. Someone moving there to work needs a
+   * permit that no entry-rules vendor describes, so the visa-free
+   * answer must not be stretched over a purpose it was never measured
+   * for. Better a gap we admit to than a reassurance we cannot defend.
+   */
+  describe("when no visa is needed but the stay is a long one", () => {
+    for (const purpose of ["Work", "Study", "Relocation"]) {
+      it(`stays a gap for ${purpose.toLowerCase()}`, () => {
+        const gap = corridorGap({
+          nationality: "Nigeria",
+          destination: "Ghana",
+          purpose,
+          entry: { requiresVisa: false },
+        });
+
+        expect(gap.kind).toBe("gap");
+        expect(gap.heading).not.toContain("do not need a visa");
+      });
+    }
+  });
+
+  it("is unchanged when a visa is required, or when nobody answered", () => {
+    // The entry verdict only ever opens the branch above; it must not
+    // reword the three the screen already had.
+    const base = { nationality: "Nigeria", destination: "Canada", purpose: "Tourism" };
+    const plain = corridorGap(base);
+
+    expect(corridorGap({ ...base, entry: null })).toEqual(plain);
+    expect(corridorGap({ ...base, entry: { requiresVisa: true } })).toEqual(plain);
+    expect(plain.kind).toBe("gap");
+  });
+
   describe("when only the purpose is missing", () => {
     // Exactly the screenshot: Canada is seeded, for study, and the
     // traveller asked for tourism.

@@ -1,4 +1,8 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
+
+import { DESTINATION_ISO } from "@/lib/domain/corridors";
 
 /**
  * The curated provider over the seeded corridors, which are
@@ -61,14 +65,24 @@ describe.skipIf(!process.env.DATABASE_URL)("curatedProvider", async () => {
   });
 
   it("returns null for a corridor nobody has curated", async () => {
-    // Was `ng→jp/tourism`, which is now curated. The United States has
-    // no corridor row at any version or purpose, which is what this
-    // needs: the provider returning null is how `corridorGap` gets
+    // The destination is derived, not named. This assertion was
+    // `ng→jp/tourism` until Japan was approved, then `ng→us` until the
+    // United States was approved. Reading the live export for a
+    // destination it does not contain keeps the test about the
+    // provider's behaviour — returning null is how `corridorGap` gets
     // reached instead of a traveller being handed someone else's list.
+    const live: { destinationIso: string }[] = JSON.parse(
+      readFileSync(new URL("../db/corridors.live.json", import.meta.url), "utf8")
+    );
+    const served = new Set(live.map((c) => c.destinationIso));
+    const unserved = Object.values(DESTINATION_ISO).find((iso) => !served.has(iso));
+
+    expect(unserved, "every destination is served — rewrite this test").toBeDefined();
+
     await expect(
       curatedProvider.fetch({
         nationalityIso: "ng",
-        destinationIso: "us",
+        destinationIso: unserved!,
         purpose: "tourism",
       })
     ).resolves.toBeNull();

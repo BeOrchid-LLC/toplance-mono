@@ -1,6 +1,27 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { corridorGap } from "@/lib/domain/corridor-gap";
+import { DESTINATION_ISO, liveDestinationsFor } from "@/lib/domain/corridors";
+
+/**
+ * A destination on the menu that no live corridor serves, and one that
+ * is served — both derived from the export rather than named.
+ *
+ * This block named the United States until it was approved, and Japan
+ * before that. A dead-end test that hardcodes the dead end asserts the
+ * roadmap; deriving keeps it asserting the copy, which is what was
+ * actually wrong when this file was written.
+ */
+const live: { destinationIso: string }[] = JSON.parse(
+  readFileSync(new URL("../db/corridors.live.json", import.meta.url), "utf8")
+);
+const served = new Set(live.map((c) => c.destinationIso));
+const UNSERVED = Object.keys(DESTINATION_ISO).find(
+  (name) => !served.has(DESTINATION_ISO[name])
+)!;
+const SERVED = liveDestinationsFor("Nigeria")[0];
 
 /**
  * The dead-end screen's copy. It is tested because it was wrong: it named
@@ -101,19 +122,18 @@ describe("corridorGap", () => {
   describe("when the destination is not built for this passport", () => {
     const gap = corridorGap({
       nationality: "Nigeria",
-      destination: "United States",
+      destination: UNSERVED,
       purpose: "Work",
     });
 
     it("names the corridor, not the country alone", () => {
-      expect(gap.heading).toBe(
-        "We do not cover United States for work yet"
-      );
+      expect(gap.heading).toBe(`We do not cover ${UNSERVED} for work yet`);
     });
 
     it("lists where this passport can actually go", () => {
-      expect(gap.lead).toContain("United Kingdom");
-      expect(gap.lead).toContain("Canada");
+      // Whatever is live — the point is that it names somewhere real
+      // rather than sending the traveller round a loop with no exit.
+      expect(gap.lead).toContain(SERVED);
     });
 
     it("offers a destination change, which can reach a live corridor", () => {

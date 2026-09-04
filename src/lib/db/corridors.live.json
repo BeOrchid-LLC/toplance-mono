@@ -6,6 +6,41 @@
   },
   {
     "nationalityIso": "ng",
+    "destinationIso": "at",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "at",
+    "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "at",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "au",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "be",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "be",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "be",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
     "destinationIso": "ca",
     "purpose": "study"
   },
@@ -37,12 +72,42 @@
   {
     "nationalityIso": "ng",
     "destinationIso": "de",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "de",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "de",
+    "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "de",
     "purpose": "work"
   },
   {
     "nationalityIso": "ng",
     "destinationIso": "dk",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "dk",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "dk",
     "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "dk",
+    "purpose": "tourism"
   },
   {
     "nationalityIso": "ng",
@@ -96,6 +161,21 @@
   },
   {
     "nationalityIso": "ng",
+    "destinationIso": "it",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "it",
+    "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "it",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
     "destinationIso": "jp",
     "purpose": "business"
   },
@@ -133,11 +213,91 @@
     "nationalityIso": "ng",
     "destinationIso": "ke",
     "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ma",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ma",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ma",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ma",
+    "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "ma",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "mt",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "mt",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "mt",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "mx",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "mx",
+    "purpose": "study"
   },
   {
     "nationalityIso": "ng",
     "destinationIso": "my",
     "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "no",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "no",
+    "purpose": "medical"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "no",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "no",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "no",
+    "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "no",
+    "purpose": "work"
   },
   {
     "nationalityIso": "ng",
@@ -178,6 +338,11 @@
     "nationalityIso": "ng",
     "destinationIso": "se",
     "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "se",
+    "purpose": "tourism"
   },
   {
     "nationalityIso": "ng",
@@ -228,6 +393,31 @@
     "nationalityIso": "ng",
     "destinationIso": "ug",
     "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "us",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "us",
+    "purpose": "medical"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "us",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "us",
+    "purpose": "tourism"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "us",
+    "purpose": "work"
   },
   {
     "nationalityIso": "ng",

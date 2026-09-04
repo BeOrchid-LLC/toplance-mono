@@ -125,9 +125,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
+    "evidence": "DRAFTED AND DELETED 2026-09-04, same as au/tourism: the visitor-600 page yields eligibility conditions rather than documents. See that entry."
   },
   {
     "destinationIso": "au",
@@ -165,9 +165,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/visitor-600",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
+    "evidence": "DRAFTED AND DELETED 2026-09-04. The visitor-600 page is 7k chars of ELIGIBILITY CONDITIONS, not documents: the draft produced genuine_visitor, sufficient_funds and outside_australia_at_application_and_decision, none of which a traveller can upload. Australia's real documents live in the Document Checklist Tool, which is an interactive per-applicant form behind a disclaimer page. Contrast student-500, which carries its documents inline and drafted 34. Do not re-draft from this page; the tool needs solving first."
   },
   {
     "destinationIso": "au",
@@ -2006,9 +2006,9 @@
     "purpose": "study",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: IND 'requirements that apply to everyone' is 3,091ch / 2 nouns; per-permit checklists not reachable."
+    "sourceUrl": "https://ind.nl/en/residence-permits/study/student-residence-permit-for-university-or-higher-professional-education",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED AND DELETED 2026-09-04 (1 requirement). The IND permit page is a 8.6k-char summary and the word 'document' does not appear on it at all \u2014 the conditions are there, the checklist is not. A Dutch student permit is applied for by the university as recognised sponsor, so the document list may sit with the institution rather than IND. Needs a different entry point; netherlandsworldwide.nl was tried and 404s on the guessed path."
   },
   {
     "destinationIso": "nl",
@@ -2035,10 +2035,10 @@
     "destinationName": "Norway",
     "purpose": "business",
     "visaType": "C",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.udi.no/en/want-to-apply/visit-and-holiday/visitors-visa-to-norway/?c=nga",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (8 docs, 6 required). Norway treats a business visit as the same visitor visa, so this is the tourism source."
   },
   {
     "destinationIso": "no",
@@ -2065,30 +2065,30 @@
     "destinationName": "Norway",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: UDI study/work paths 404."
+    "status": "verified",
+    "sourceUrl": "https://www.udi.no/en/want-to-apply/studies/studietillatelse/?c=nga",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (9 docs, 7 required), from the study permit page plus UDI's checklist page (https://www.udi.no/en/word-definitions/checklists-which-explain-which-documents-you-must-hand-in-with-your-application/). Plain fetch, no browser needed. Note the ?c=nga parameter: UDI serves country-specific guidance, so drop it and you get a different page."
   },
   {
     "destinationIso": "no",
     "destinationName": "Norway",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "verified",
+    "sourceUrl": "https://www.udi.no/en/want-to-apply/visit-and-holiday/visitors-visa-to-norway/?c=nga",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (9 docs, 6 required) from the country-specific visitor visa page."
   },
   {
     "destinationIso": "no",
     "destinationName": "Norway",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: UDI study/work paths 404."
+    "status": "verified",
+    "sourceUrl": "https://www.udi.no/en/want-to-apply/work-immigration/skilled-workers/?c=nga",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (10 docs, 6 required). The path is skilled-workerS, plural; the singular 404s and the drafting script correctly refuses rather than drafting from nothing."
   },
   {
     "destinationIso": "om",
@@ -2885,10 +2885,10 @@
     "destinationName": "United States",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "status": "verified",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
+    "evidence": "DRAFTED successfully 2026-09-04 (9 docs). B-2 covers medical treatment explicitly, so this is the same visitor page as tourism and business."
   },
   {
     "destinationIso": "us",

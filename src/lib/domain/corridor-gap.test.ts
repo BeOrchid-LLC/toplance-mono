@@ -1,6 +1,27 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { corridorGap } from "@/lib/domain/corridor-gap";
+import { DESTINATION_ISO, liveDestinationsFor } from "@/lib/domain/corridors";
+
+/**
+ * A destination on the menu that no live corridor serves, and one that
+ * is served — both derived from the export rather than named.
+ *
+ * This block named the United States until it was approved, and Japan
+ * before that. A dead-end test that hardcodes the dead end asserts the
+ * roadmap; deriving keeps it asserting the copy, which is what was
+ * actually wrong when this file was written.
+ */
+const live: { destinationIso: string }[] = JSON.parse(
+  readFileSync(new URL("../db/corridors.live.json", import.meta.url), "utf8")
+);
+const served = new Set(live.map((c) => c.destinationIso));
+const UNSERVED = Object.keys(DESTINATION_ISO).find(
+  (name) => !served.has(DESTINATION_ISO[name])
+)!;
+const SERVED = liveDestinationsFor("Nigeria")[0];
 
 /**
  * The dead-end screen's copy. It is tested because it was wrong: it named
@@ -8,6 +29,73 @@ import { corridorGap } from "@/lib/domain/corridor-gap";
  * that could not reach one.
  */
 describe("corridorGap", () => {
+  /**
+   * The six ECOWAS destinations, and the reason this branch exists.
+   *
+   * Ghana has no corridor row and never will have a useful one: a
+   * Nigerian passport enters under ECOWAS free movement, and the
+   * document checklist Ghana publishes is for everyone else. The engine
+   * knowing that is not a gap — it is the answer — so the screen must
+   * stop saying "we do not cover Ghana yet" and offering to change
+   * destination, which is the same wrong-end-of-the-corridor bug this
+   * module was written to fix.
+   */
+  describe("when the passport needs no visa at all", () => {
+    const gap = corridorGap({
+      nationality: "Nigeria",
+      destination: "Ghana",
+      purpose: "Tourism",
+      entry: { requiresVisa: false },
+    });
+
+    it("is an answer rather than a gap", () => {
+      expect(gap.kind).toBe("answer");
+    });
+
+    it("does not claim we fail to cover the country", () => {
+      expect(gap.heading).not.toContain("do not cover");
+      expect(gap.heading).toBe("You do not need a visa for Ghana");
+    });
+
+    it("does not offer a recovery for a problem the traveller does not have", () => {
+      expect(gap.action).not.toBe("Change my destination");
+    });
+  });
+
+  /**
+   * The limit of the claim. VisaList reports Ghana visa-free for three
+   * months — a short-stay figure. Someone moving there to work needs a
+   * permit that no entry-rules vendor describes, so the visa-free
+   * answer must not be stretched over a purpose it was never measured
+   * for. Better a gap we admit to than a reassurance we cannot defend.
+   */
+  describe("when no visa is needed but the stay is a long one", () => {
+    for (const purpose of ["Work", "Study", "Relocation"]) {
+      it(`stays a gap for ${purpose.toLowerCase()}`, () => {
+        const gap = corridorGap({
+          nationality: "Nigeria",
+          destination: "Ghana",
+          purpose,
+          entry: { requiresVisa: false },
+        });
+
+        expect(gap.kind).toBe("gap");
+        expect(gap.heading).not.toContain("do not need a visa");
+      });
+    }
+  });
+
+  it("is unchanged when a visa is required, or when nobody answered", () => {
+    // The entry verdict only ever opens the branch above; it must not
+    // reword the three the screen already had.
+    const base = { nationality: "Nigeria", destination: "Canada", purpose: "Tourism" };
+    const plain = corridorGap(base);
+
+    expect(corridorGap({ ...base, entry: null })).toEqual(plain);
+    expect(corridorGap({ ...base, entry: { requiresVisa: true } })).toEqual(plain);
+    expect(plain.kind).toBe("gap");
+  });
+
   describe("when only the purpose is missing", () => {
     // Exactly the screenshot: Canada is seeded, for study, and the
     // traveller asked for tourism.
@@ -34,19 +122,18 @@ describe("corridorGap", () => {
   describe("when the destination is not built for this passport", () => {
     const gap = corridorGap({
       nationality: "Nigeria",
-      destination: "United States",
+      destination: UNSERVED,
       purpose: "Work",
     });
 
     it("names the corridor, not the country alone", () => {
-      expect(gap.heading).toBe(
-        "We do not cover United States for work yet"
-      );
+      expect(gap.heading).toBe(`We do not cover ${UNSERVED} for work yet`);
     });
 
     it("lists where this passport can actually go", () => {
-      expect(gap.lead).toContain("United Kingdom");
-      expect(gap.lead).toContain("Canada");
+      // Whatever is live — the point is that it names somewhere real
+      // rather than sending the traveller round a loop with no exit.
+      expect(gap.lead).toContain(SERVED);
     });
 
     it("offers a destination change, which can reach a live corridor", () => {

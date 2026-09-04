@@ -25,6 +25,18 @@ import type { CorridorRuleSet } from "@/lib/visa/types";
 export type EntryCheck = {
   /** The verdict, in our words rather than the vendor's. */
   headline: string;
+  /**
+   * Whether this passport needs a visa at all, as a fact rather than a
+   * sentence.
+   *
+   * Carried separately because a caller that needs the *decision* would
+   * otherwise have to match on `headline`, and copy is not an API — the
+   * dead-end screen branches on this to tell a traveller who needs
+   * nothing that they need nothing, instead of "we do not cover Ghana
+   * yet". Never null: a verdict outside `VERDICTS` returns no
+   * `EntryCheck` at all, so anything holding one has a decided answer.
+   */
+  requiresVisa: boolean;
   passportValidity: string | null;
   allowedStay: string | null;
   embassyUrl: string | null;
@@ -61,10 +73,19 @@ export type EntryCheck = {
  * Keys are lowercased at the lookup — the vendor's capitalisation varies
  * between corridors, and case is not a category.
  */
-const VERDICTS: Record<string, string> = {
-  "visa required": "A visa is required for your passport.",
-  "online visa required": "An online visa is required for your passport.",
-  "visa not required": "No visa is required for your passport.",
+const VERDICTS: Record<string, { sentence: string; requiresVisa: boolean }> = {
+  "visa required": {
+    sentence: "A visa is required for your passport.",
+    requiresVisa: true,
+  },
+  "online visa required": {
+    sentence: "An online visa is required for your passport.",
+    requiresVisa: true,
+  },
+  "visa not required": {
+    sentence: "No visa is required for your passport.",
+    requiresVisa: false,
+  },
 
   // VisaList's four category names. They are added rather than
   // translated at the provider because this list is the one place the
@@ -75,10 +96,24 @@ const VERDICTS: Record<string, string> = {
   // scoped, dated statement about paperwork. None is the kind of claim
   // the allowlist exists to refuse — "Not admitted", a categorical
   // verdict about a whole nationality with no scope and no source.
-  "visa free": "No visa is required for your passport.",
-  "e-visa": "An online visa is required for your passport.",
-  "visa on arrival":
-    "A visa is required, and is issued on arrival rather than beforehand.",
+  "visa free": {
+    sentence: "No visa is required for your passport.",
+    requiresVisa: false,
+  },
+  "e-visa": {
+    sentence: "An online visa is required for your passport.",
+    requiresVisa: true,
+  },
+  // `requiresVisa: true`, and the distinction is not pedantic. A visa
+  // issued at the border is still a visa: there are documents to carry
+  // and a fee to pay on landing, so this corridor wants a curated
+  // checklist. Calling it "no visa needed" because none is obtained
+  // beforehand would send someone to an airport counter unprepared.
+  "visa on arrival": {
+    sentence:
+      "A visa is required, and is issued on arrival rather than beforehand.",
+    requiresVisa: true,
+  },
 };
 
 /**
@@ -91,11 +126,12 @@ const VERDICTS: Record<string, string> = {
 export function entryCheck(ruleSet: CorridorRuleSet | null): EntryCheck | null {
   if (!ruleSet) return null;
 
-  const headline = VERDICTS[ruleSet.visaName.trim().toLowerCase()];
-  if (!headline) return null;
+  const verdict = VERDICTS[ruleSet.visaName.trim().toLowerCase()];
+  if (!verdict) return null;
 
   return {
-    headline,
+    headline: verdict.sentence,
+    requiresVisa: verdict.requiresVisa,
     passportValidity: ruleSet.passportValidity,
     allowedStay: ruleSet.allowedStay,
     embassyUrl: ruleSet.embassyUrl,

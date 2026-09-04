@@ -49,6 +49,31 @@ const liveCorridors: { nationalityIso: string; destinationIso: string; purpose: 
 const key = (c: { nationalityIso: string; destinationIso: string; purpose: string }) =>
   `${c.nationalityIso}->${c.destinationIso}:${c.purpose}`;
 
+/**
+ * A destination on the menu that no live corridor serves, found rather
+ * than named.
+ *
+ * This assertion has gone stale twice. It was `jp`, which was approved;
+ * it was then `us`, picked because it was "obviously" unserved, and that
+ * was approved too. Naming a destination here asserts the roadmap, not
+ * the behaviour — so the destination is derived from the same export
+ * `LIVE_CORRIDORS` is checked against, and the test survives the next
+ * approval batch.
+ */
+const unserved = Object.keys(DESTINATION_ISO).find(
+  (name) =>
+    !liveCorridors.some((c) => c.destinationIso === DESTINATION_ISO[name])
+);
+
+if (!unserved) {
+  // Every destination on the menu is served — a good problem, and one
+  // that makes the two assertions below meaningless rather than wrong.
+  throw new Error(
+    "No unserved destination left in DESTINATION_ISO; rewrite the " +
+      "gap assertions in this file rather than deleting them."
+  );
+}
+
 describe("DESTINATION_ISO", () => {
   it("offers at least the 50 destinations the launch requires", () => {
     // Phase 3's headline number. This asserts a traveller can *choose*
@@ -151,12 +176,10 @@ describe("isCorridorLive", () => {
   });
 
   it("is false for a destination we recognise but do not serve", () => {
-    // This assertion used to be `ng→jp/tourism`, which stopped being
-    // false the moment Japan was approved. The United States is on the
-    // menu, has no curated corridor for any purpose, and is the one the
-    // dead-end screen is most likely to be reached through.
+    // Not live for any purpose — the state the dead-end screen exists
+    // for. See `unserved` above for why the destination is derived.
     for (const purpose of PURPOSES) {
-      expect(isCorridorLive("Nigeria", "United States", purpose)).toBe(false);
+      expect(isCorridorLive("Nigeria", unserved, purpose)).toBe(false);
     }
   });
 });
@@ -175,7 +198,7 @@ describe("livePurposesFor", () => {
   });
 
   it("is empty for a destination nobody is served for yet", () => {
-    expect(livePurposesFor("Nigeria", "United States")).toEqual([]);
+    expect(livePurposesFor("Nigeria", unserved)).toEqual([]);
     expect(livePurposesFor("Ghana", "United Kingdom")).toEqual([]);
   });
 

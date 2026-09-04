@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, ExternalLink, Flag } from "lucide-react";
+import { ArrowRight, Check, ExternalLink, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -101,13 +101,23 @@ function CorridorGap({
    */
   entry: EntryCheck | null;
 }) {
-  const gap = corridorGap({ nationality, destination, purpose });
+  const gap = corridorGap({ nationality, destination, purpose, entry });
+  // A corridor that needs no visa is finished, not pending. Everything
+  // this screen says about waiting — the warning mark, the checklist we
+  // have not built, the suggestion to check back — is false there.
+  const answered = gap.kind === "answer";
 
   return (
     <main>
       <Shell className="max-w-[720px] py-16">
-        <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--warning)_16%,var(--mix))] text-warning-ink">
-          <Flag className="size-5" />
+        <span
+          className={
+            answered
+              ? "grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--success)_16%,var(--mix))] text-success-ink"
+              : "grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--warning)_16%,var(--mix))] text-warning-ink"
+          }
+        >
+          {answered ? <Check className="size-5" /> : <Flag className="size-5" />}
         </span>
         <h1 className="t-h2 mt-5 max-w-[26ch]">{gap.heading}</h1>
         <p className="t-body-lg mt-4 max-w-[62ch] text-ink-2">{gap.lead}</p>
@@ -158,8 +168,14 @@ function CorridorGap({
               ) : (
                 <span className="font-semibold">{entry.sourceName}</span>
               )}
-              . We cannot build your document checklist for {destination} yet
-              — that needs guidance we have checked against the mission.
+              .
+              {!answered && (
+                <>
+                  {" "}
+                  We cannot build your document checklist for {destination} yet
+                  — that needs guidance we have checked against the mission.
+                </>
+              )}
             </p>
             {/* A credit the provider's licence obliges us to display. */}
             {entry.attribution && (
@@ -170,10 +186,12 @@ function CorridorGap({
         {/* This used to promise an email. Nothing in the repo can send
             one — no mailer, no list to mail — so it now offers only what
             the demand event actually delivers. */}
-        <p className="t-muted mt-4 max-w-[62ch]">
-          Nothing has been charged. We cannot alert you when it opens yet, so
-          it is worth checking back.
-        </p>
+        {!answered && (
+          <p className="t-muted mt-4 max-w-[62ch]">
+            Nothing has been charged. We cannot alert you when it opens yet, so
+            it is worth checking back.
+          </p>
+        )}
         <Button asChild variant="tertiary" className="mt-8">
           <Link href="/app/agent">
             {gap.action} <ArrowRight />

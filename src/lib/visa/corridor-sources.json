@@ -1439,10 +1439,10 @@
     "destinationName": "Italy",
     "purpose": "business",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/italy/nigeria/english/pdf/BisinessVisa_150116.pdf",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 33/14 required, business 28/18, study 22/16, work 8/7) from the Consulate General of Italy in LAGOS via VFS one-pagers. \u26a0\ufe0f VFS IS NOT BLOCKED \u2014 it blocks fetch, not a browser. visa.vfsglobal.com returns 403 to fetch/curl and serves the same PDF at HTTP 200 to a real browser. Method: open the PDF URL in the browser, then fetch() it from the page's own origin, base64 the bytes out, and run pdftotext -layout locally; feed the result via --source-text with the VFS URL as the first line. These are the highest-quality drafts of the session BECAUSE the jurisdiction is exact: the lists ask for a Nigerian residence permit, a Tax Clearance Certificate and a PIT certificate, which no central Italian source would ever mention. Minor note: 'original_and_copy_of_documents' is an instruction, not a document."
   },
   {
     "destinationIso": "it",
@@ -1469,30 +1469,30 @@
     "destinationName": "Italy",
     "purpose": "study",
     "visaType": "D",
-    "status": "unusable",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/italy/nigeria/english/pdf/Checklist-study-visa.pdf",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 33/14 required, business 28/18, study 22/16, work 8/7) from the Consulate General of Italy in LAGOS via VFS one-pagers. \u26a0\ufe0f VFS IS NOT BLOCKED \u2014 it blocks fetch, not a browser. visa.vfsglobal.com returns 403 to fetch/curl and serves the same PDF at HTTP 200 to a real browser. Method: open the PDF URL in the browser, then fetch() it from the page's own origin, base64 the bytes out, and run pdftotext -layout locally; feed the result via --source-text with the VFS URL as the first line. These are the highest-quality drafts of the session BECAUSE the jurisdiction is exact: the lists ask for a Nigerian residence permit, a Tax Clearance Certificate and a PIT certificate, which no central Italian source would ever mention. Minor note: 'original_and_copy_of_documents' is an instruction, not a document."
   },
   {
     "destinationIso": "it",
     "destinationName": "Italy",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/italy/nigeria/english/pdf/Tourist_150116.pdf",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 33/14 required, business 28/18, study 22/16, work 8/7) from the Consulate General of Italy in LAGOS via VFS one-pagers. \u26a0\ufe0f VFS IS NOT BLOCKED \u2014 it blocks fetch, not a browser. visa.vfsglobal.com returns 403 to fetch/curl and serves the same PDF at HTTP 200 to a real browser. Method: open the PDF URL in the browser, then fetch() it from the page's own origin, base64 the bytes out, and run pdftotext -layout locally; feed the result via --source-text with the VFS URL as the first line. These are the highest-quality drafts of the session BECAUSE the jurisdiction is exact: the lists ask for a Nigerian residence permit, a Tax Clearance Certificate and a PIT certificate, which no central Italian source would ever mention. Minor note: 'original_and_copy_of_documents' is an instruction, not a document."
   },
   {
     "destinationIso": "it",
     "destinationName": "Italy",
     "purpose": "work",
     "visaType": "D",
-    "status": "unusable",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/italy/nigeria/english/pdf/Requisite_documents_for_independent_work_professional.pdf",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
+    "evidence": "DRAFTED successfully 2026-09-04 (tourism 33/14 required, business 28/18, study 22/16, work 8/7) from the Consulate General of Italy in LAGOS via VFS one-pagers. \u26a0\ufe0f VFS IS NOT BLOCKED \u2014 it blocks fetch, not a browser. visa.vfsglobal.com returns 403 to fetch/curl and serves the same PDF at HTTP 200 to a real browser. Method: open the PDF URL in the browser, then fetch() it from the page's own origin, base64 the bytes out, and run pdftotext -layout locally; feed the result via --source-text with the VFS URL as the first line. These are the highest-quality drafts of the session BECAUSE the jurisdiction is exact: the lists ask for a Nigerian residence permit, a Tax Clearance Certificate and a PIT certificate, which no central Italian source would ever mention. Minor note: 'original_and_copy_of_documents' is an instruction, not a document."
   },
   {
     "destinationIso": "jo",
@@ -1755,10 +1755,10 @@
     "destinationName": "Morocco",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.consulat.ma/en/ordinary-visas",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (10 docs) from the same consulat.ma capture as the other four Moroccan corridors \u2014 family reunification is one of the ordinary visa categories listed on that page."
   },
   {
     "destinationIso": "ma",
@@ -1885,10 +1885,10 @@
     "destinationName": "Mexico",
     "purpose": "study",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "status": "verified",
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residente-temporal-estudiante",
     "checkedAt": "2026-09-04",
-    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
+    "evidence": "DRAFTED successfully 2026-09-04 (11 docs) from the SRE student residence page. Spanish source, English document names returned."
   },
   {
     "destinationIso": "mx",

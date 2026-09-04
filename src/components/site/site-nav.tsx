@@ -133,9 +133,25 @@ export function SiteNav() {
             sections. */}
         <div className="hidden h-full min-w-0 items-stretch overflow-hidden lg:flex">
           {LINKS.map((l) => {
+            /*
+             * At most one mark, ever.
+             *
+             * `/travellers` carries the same section ids the spy watches
+             * (`how`, `where`, `pricing`), and it is itself one of these
+             * links — so scrolling to Pricing on that page lit both
+             * "Pricing" and "For travellers", which is precisely the
+             * "two ways of saying you are here" this treatment exists to
+             * avoid.
+             *
+             * The section wins because it is the more specific answer:
+             * while you are reading one, "For travellers" tells you only
+             * that you are on the page you were already on. Above the
+             * first section there is no section to name, so the route
+             * link takes the mark back.
+             */
             const active = l.href.startsWith("#")
               ? current === l.href.slice(1)
-              : pathname === l.href;
+              : pathname === l.href && current === null;
             return (
               <Link
                 key={l.href}

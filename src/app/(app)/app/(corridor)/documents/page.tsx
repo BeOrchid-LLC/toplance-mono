@@ -125,6 +125,7 @@ export default async function DocumentsPage() {
             row would be unmounted by that re-sort moments after opening.
             See `UploadOutcomeProvider`. */}
         <UploadOutcomeProvider
+          applicationId={application.id}
           docs={docs.map((d) => ({
             docKey: d.docKey,
             name: d.name,

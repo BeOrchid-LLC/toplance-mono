@@ -88,15 +88,15 @@ export function UploadOutcomeDialog({
   onReupload: () => void;
 }) {
   /**
-   * Which outcome the timer has already run out for, rather than a bare
-   * boolean that would need clearing when `outcome` changes — clearing it
-   * would mean a `setState` in an effect body, and the honest shape is a
-   * value derived from what the timer has seen.
+   * Whether the processing window has elapsed for *this* opening.
    *
-   * `completesChecklist` can only be true while the row is still
-   * outstanding, so one mounted row cannot reach `complete` twice.
+   * The provider gives this component a fresh `key` per upload, so the
+   * state starts false every time and needs no clearing — which is what
+   * keeps it out of an effect body. It used to be a page-lifetime flag
+   * on a page-level dialog, so the second completed checklist in a
+   * session skipped the ring and snapped straight to the final wording.
    */
-  const [settledFor, setSettledFor] = React.useState<UploadOutcome | null>(null);
+  const [settled, setSettled] = React.useState(false);
 
   React.useEffect(() => {
     if (outcome !== "complete") return;
@@ -104,11 +104,11 @@ export function UploadOutcomeDialog({
     // spinner that could run indefinitely would be theatre. Three
     // seconds is the ceiling the brief asked for, and it resolves to a
     // statement either way.
-    const timer = setTimeout(() => setSettledFor("complete"), PROCESSING_MS);
+    const timer = setTimeout(() => setSettled(true), PROCESSING_MS);
     return () => clearTimeout(timer);
   }, [outcome]);
 
-  const processing = outcome === "complete" && settledFor !== "complete";
+  const processing = outcome === "complete" && !settled;
 
   return (
     <Dialog open={outcome !== null} onOpenChange={onOpenChange}>

@@ -22,6 +22,7 @@ import {
 } from "@/app/(auth)/actions";
 import { isInternalPath } from "@/lib/auth/routes";
 import { splitFullName } from "@/lib/domain/name";
+import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
 
 /** Local to this component now that the server no longer returns it. */
@@ -617,6 +618,11 @@ export function AuthForm(props: AuthFormProps) {
               placeholder="As registered on your trading licence"
               value={typed.orgName}
               onChange={(e) => setTyped((t) => ({ ...t, orgName: e.target.value }))}
+              // The same ceiling `createOrganisationTx` enforces. Without
+              // it a pasted registered name could pass this form, be
+              // carried through Clerk, and then be refused by the
+              // transaction on the far side of a completed sign-up.
+              maxLength={ORG_NAME_MAX}
               required
             />
           </div>

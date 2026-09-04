@@ -302,6 +302,38 @@ export async function seedSubmittedCase(travellerName: string): Promise<SeededCa
 }
 
 /**
+ * Stand in for the pre-check's refusal, on whichever document is
+ * currently awaiting one.
+ *
+ * `precheckDocument` is a model call and this suite runs with no
+ * `OPENAI_API_KEY`, so the verdict never arrives on its own. What the
+ * spec needs to prove is not the model's judgement but the *delivery* of
+ * it: the flag is written by a background `after()` hook, whose
+ * `revalidatePath` cannot reach a client that has already rendered.
+ * Writing the same row the hook would write exercises exactly that path.
+ */
+export async function flagCheckingDocument(
+  email: string,
+  reason: string
+): Promise<void> {
+  await withClient(async (client) => {
+    const { rowCount } = await client.query(
+      `update documents d
+          set state = 'flagged', reason = $2
+         from applications a, profiles p
+        where d.application_id = a.id
+          and a.traveler_id = p.id
+          and p.email = $1
+          and d.state = 'checking'`,
+      [email, reason]
+    );
+    if (!rowCount) {
+      throw new Error(`No document awaiting a verdict for ${email}.`);
+    }
+  });
+}
+
+/**
  * Every required document collected except one, which is left for the
  * traveller to upload through the UI.
  *

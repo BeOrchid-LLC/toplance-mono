@@ -4,7 +4,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 import { resetFixtures, signUpInvited, testEmail } from "./helpers/auth";
-import { collectAllRequiredButOne, seedInvitation } from "./helpers/db";
+import {
+  collectAllRequiredButOne,
+  flagCheckingDocument,
+  seedInvitation,
+} from "./helpers/db";
 
 /**
  * Journey one: a Nigerian traveller arrives with nothing, and leaves
@@ -124,11 +128,61 @@ test("a traveller signs up, finishes intake and uploads a document", async ({ pa
   const outcome = page.getByRole("dialog");
   await expect(outcome.getByText("Received")).toBeVisible();
   await expect(outcome.getByText("Verified")).toHaveCount(0);
-  await outcome.getByRole("button", { name: "Continue" }).click();
+
+  /*
+   * …and the refusal reaches them, which is the half that has to be
+   * fetched rather than waited for.
+   *
+   * `precheckDocument` runs inside an `after()` hook, so its
+   * `revalidatePath` invalidates the cache for the next request and
+   * cannot reach this already-rendered page. Without the provider's
+   * poll the traveller sat on "Received" while the flag landed unseen,
+   * and the Re-upload/Skip variant was unreachable in the product.
+   *
+   * The row is written directly because the verdict is a model call and
+   * this suite has no key — what is under test is the delivery, not the
+   * judgement.
+   */
+  const REASON = "The photo is too dark to read the passport number.";
+  await flagCheckingDocument(EMAIL, REASON);
+
+  await expect(outcome.getByText("We cannot use this one")).toBeVisible({
+    timeout: 15_000,
+  });
+  // The checker's own words, not a generic "try a clearer copy" — a
+  // wrong-document refusal must not send someone to re-photograph the
+  // right one.
+  await expect(outcome.getByText(REASON)).toBeVisible();
+  await expect(
+    outcome.getByRole("button", { name: /^Re-upload/ })
+  ).toBeVisible();
+
+  // "Skip for now" leaves it outstanding rather than pretending it is
+  // done — the row keeps the flag and the reason.
+  await outcome.getByRole("button", { name: "Skip for now" }).click();
   await expect(outcome).toHaveCount(0);
 
-  await expect(passport.getByText("Checking")).toBeVisible();
-  await expect(page.getByText("Done", { exact: true })).toBeVisible();
+  /*
+   * The row itself catches up on the next render, not behind the open
+   * modal.
+   *
+   * The dialog learns the verdict by asking `documentVerdict`; the row
+   * is server-rendered from the `docs` this page was built with, and
+   * `precheckDocument`'s `revalidatePath` only affects the *next*
+   * request. So between dismissing the dialog and navigating, the row
+   * still reads "Checking" — which is what this reload stands in for,
+   * and what a traveller sees the moment they look again.
+   */
+  await page.reload();
+  const flaggedPassport = documentRow(
+    page,
+    "a valid passport or other document that shows your identity and nationality"
+  );
+  await expect(flaggedPassport.getByText("Needs re-upload")).toBeVisible();
+  await expect(flaggedPassport.getByText(REASON)).toBeVisible();
+  // And it is grouped as such: a refused document must not sit under
+  // "Done", which is where it was while it was merely `checking`.
+  await expect(page.getByText("Needs attention")).toBeVisible();
 
   /*
    * The last required document says so, rather than asking for a next

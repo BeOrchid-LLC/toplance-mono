@@ -174,11 +174,18 @@ export default async function EmployerConsolePage() {
     // construction: `createOrganisationTx` locks the profile row and
     // refuses a second organisation, so a double render cannot make two.
     const { orgName } = readPendingProfile((await currentUser())?.unsafeMetadata);
+    let pendingOrgError: string | null = null;
     if (orgName) {
       const created = await createOrganisationTx(profile.id, orgName);
       // Straight back through the front door, so the roster below reads
       // the membership this just wrote rather than a stale `undefined`.
       if (!("error" in created)) redirect("/employer");
+      // Kept, not swallowed. This branch used to drop the refusal on the
+      // floor: a director whose registered name ran past `NAME_MAX`
+      // signed up successfully, landed here, and was shown a blank
+      // "Name of organisation" form with no sign that what they had
+      // already typed was rejected, or why. The form below says it.
+      pendingOrgError = created.error;
     }
 
     // …but not everyone holding a session belongs at that door. Since
@@ -224,8 +231,21 @@ export default async function EmployerConsolePage() {
                   email — they complete their own intake, and you see
                   their progress here without their documents.
                 </p>
+                {/* Why the name they already gave did not take. Said
+                    here rather than as a toast: this render is the first
+                    thing they see after sign-up, and a toast fired
+                    during it would be gone before they had read the
+                    form. */}
+                {pendingOrgError && (
+                  <p
+                    role="alert"
+                    className="t-body mt-4 max-w-[62ch] text-danger-ink"
+                  >
+                    {pendingOrgError}
+                  </p>
+                )}
                 <div className="mt-6">
-                  <CreateOrganisation />
+                  <CreateOrganisation defaultName={orgName ?? ""} />
                 </div>
               </PanelBody>
             </Panel>

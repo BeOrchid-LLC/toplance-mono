@@ -4,6 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, orgMembers, organisations, profiles } from "@/lib/db/schema";
+import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import {
   EMPTY_PENDING_PROFILE,
   profileColumnsFrom,
@@ -12,7 +13,8 @@ import {
 
 export type CreateOrganisationResult = { ok: true; orgId: string } | { error: string };
 
-const NAME_MAX = 160;
+// One source, shared with the forms — see `@/lib/domain/organisations`.
+const NAME_MAX = ORG_NAME_MAX;
 
 /**
  * The profile a torn-down employer sign-up did not manage to write.

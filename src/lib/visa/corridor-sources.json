@@ -204,20 +204,20 @@
     "destinationName": "Belgium",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://dofi.ibz.be/en/themes/ressortissants-dun-pays-tiers/regroupement-familial/visa-d-application-family-reunification",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from dofi.ibz.be, the Belgian Immigration Office. Use this rather than diplomatie.belgium.be: every page there is per-country (canada., unitedstates., polen.\u2026) and so jurisdiction-contaminated for a Nigerian applicant. dofi is the central authority and answers a plain fetch."
   },
   {
     "destinationIso": "be",
     "destinationName": "Belgium",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: Belgium routes through a visa centre; dofi.ibz.be long-stay pages return 310ch."
+    "status": "verified",
+    "sourceUrl": "https://dofi.ibz.be/en/themes/third-country-nationals/study/initial-authorisation-stay-application-visa-d-authorisation",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from dofi.ibz.be, the Belgian Immigration Office. Use this rather than diplomatie.belgium.be: every page there is per-country (canada., unitedstates., polen.\u2026) and so jurisdiction-contaminated for a Nigerian applicant. dofi is the central authority and answers a plain fetch."
   },
   {
     "destinationIso": "be",
@@ -234,10 +234,10 @@
     "destinationName": "Belgium",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: Belgium routes through a visa centre; dofi.ibz.be long-stay pages return 310ch."
+    "status": "verified",
+    "sourceUrl": "https://dofi.ibz.be/en/themas/onderdanen-van-derde-landen/werk/single-permit",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from dofi.ibz.be, the Belgian Immigration Office. Use this rather than diplomatie.belgium.be: every page there is per-country (canada., unitedstates., polen.\u2026) and so jurisdiction-contaminated for a Nigerian applicant. dofi is the central authority and answers a plain fetch."
   },
   {
     "destinationIso": "bh",
@@ -753,10 +753,10 @@
     "destinationName": "Czechia",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://mv.gov.cz/mvcren/article/application-requirements-application-requirements.aspx",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
+    "evidence": "DRAFTED 2026-09-04 from FOUR mv.gov.cz pages combined \u2014 application requirements, proof of funds, travel document and (for study) the schools-and-students page. No single Czech page carries the list; the earlier 'thin' verdict was measuring one of them alone. \u26a0\ufe0f INCOMPLETE: the ministry states the required set as travel document, purpose-of-stay document, funds, accommodation AND photographs, but only travel_document and proof_of_funds came out required \u2014 photographs, accommodation and purpose-of-stay are missing or optional, and 11 of cz/study's 13 rows are proof-of-funds variants. A reviewer must complete the required set before approving. Same failure shape as the Greek corridors."
   },
   {
     "destinationIso": "cz",
@@ -773,10 +773,10 @@
     "destinationName": "Czechia",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
+    "status": "verified",
+    "sourceUrl": "https://mv.gov.cz/mvcren/article/application-requirements-application-requirements.aspx",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
+    "evidence": "DRAFTED 2026-09-04 from FOUR mv.gov.cz pages combined \u2014 application requirements, proof of funds, travel document and (for study) the schools-and-students page. No single Czech page carries the list; the earlier 'thin' verdict was measuring one of them alone. \u26a0\ufe0f INCOMPLETE: the ministry states the required set as travel document, purpose-of-stay document, funds, accommodation AND photographs, but only travel_document and proof_of_funds came out required \u2014 photographs, accommodation and purpose-of-stay are missing or optional, and 11 of cz/study's 13 rows are proof-of-funds variants. A reviewer must complete the required set before approving. Same failure shape as the Greek corridors."
   },
   {
     "destinationIso": "de",
@@ -963,40 +963,40 @@
     "destinationName": "Spain",
     "purpose": "business",
     "visaType": "C",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "es",
     "destinationName": "Spain",
     "purpose": "medical",
     "visaType": "C",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "es",
     "destinationName": "Spain",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "es",
     "destinationName": "Spain",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: Spain routes Nigerian applications through BLS International Lagos; no official fetchable checklist."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "es",
@@ -1004,19 +1004,19 @@
     "purpose": "tourism",
     "visaType": "C",
     "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "es",
     "destinationName": "Spain",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: Spain routes Nigerian applications through BLS International Lagos; no official fetchable checklist."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "et",
@@ -1084,9 +1084,9 @@
     "purpose": "business",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://france-visas.gouv.fr/en/etudiant",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: reachable, but carries no list. france-visas.gouv.fr 403s to fetch and opens fine in a browser \u2014 the US pattern \u2014 yet the page defers every document to its 'visa wizard', an interactive per-applicant tool. Drafted 2 requirements and was deleted. Same obstacle as Australia's Document Checklist Tool: the wizard has to be driven, not scraped."
   },
   {
     "destinationIso": "fr",
@@ -1094,9 +1094,9 @@
     "purpose": "medical",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://france-visas.gouv.fr/en/etudiant",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: reachable, but carries no list. france-visas.gouv.fr 403s to fetch and opens fine in a browser \u2014 the US pattern \u2014 yet the page defers every document to its 'visa wizard', an interactive per-applicant tool. Drafted 2 requirements and was deleted. Same obstacle as Australia's Document Checklist Tool: the wizard has to be driven, not scraped."
   },
   {
     "destinationIso": "fr",
@@ -1104,9 +1104,9 @@
     "purpose": "relocation",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://france-visas.gouv.fr/en/etudiant",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: reachable, but carries no list. france-visas.gouv.fr 403s to fetch and opens fine in a browser \u2014 the US pattern \u2014 yet the page defers every document to its 'visa wizard', an interactive per-applicant tool. Drafted 2 requirements and was deleted. Same obstacle as Australia's Document Checklist Tool: the wizard has to be driven, not scraped."
   },
   {
     "destinationIso": "fr",
@@ -1114,19 +1114,19 @@
     "purpose": "study",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: france-visas.gouv.fr returns 403; campusfrance 404."
+    "sourceUrl": "https://france-visas.gouv.fr/en/etudiant",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: reachable, but carries no list. france-visas.gouv.fr 403s to fetch and opens fine in a browser \u2014 the US pattern \u2014 yet the page defers every document to its 'visa wizard', an interactive per-applicant tool. Drafted 2 requirements and was deleted. Same obstacle as Australia's Document Checklist Tool: the wizard has to be driven, not scraped."
   },
   {
     "destinationIso": "fr",
     "destinationName": "France",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "thin",
+    "sourceUrl": "https://france-visas.gouv.fr/en/etudiant",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: reachable, but carries no list. france-visas.gouv.fr 403s to fetch and opens fine in a browser \u2014 the US pattern \u2014 yet the page defers every document to its 'visa wizard', an interactive per-applicant tool. Drafted 2 requirements and was deleted. Same obstacle as Australia's Document Checklist Tool: the wizard has to be driven, not scraped."
   },
   {
     "destinationIso": "fr",
@@ -1134,9 +1134,9 @@
     "purpose": "work",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: france-visas.gouv.fr returns 403; campusfrance 404."
+    "sourceUrl": "https://france-visas.gouv.fr/en/etudiant",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: reachable, but carries no list. france-visas.gouv.fr 403s to fetch and opens fine in a browser \u2014 the US pattern \u2014 yet the page defers every document to its 'visa wizard', an interactive per-applicant tool. Drafted 2 requirements and was deleted. Same obstacle as Australia's Document Checklist Tool: the wizard has to be driven, not scraped."
   },
   {
     "destinationIso": "gb",
@@ -1439,40 +1439,40 @@
     "destinationName": "Italy",
     "purpose": "business",
     "visaType": "C",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "it",
     "destinationName": "Italy",
     "purpose": "medical",
     "visaType": "C",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "it",
     "destinationName": "Italy",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "it",
     "destinationName": "Italy",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: Italian Consulate Lagos routes through VFS; no official fetchable checklist found."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "it",
@@ -1480,19 +1480,19 @@
     "purpose": "tourism",
     "visaType": "C",
     "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "sourceUrl": null,
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "it",
     "destinationName": "Italy",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: Italian Consulate Lagos routes through VFS; no official fetchable checklist found."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: JURISDICTION-CONTAMINATED at source. Every document list Italy and Spain publish is a per-consulate page or PDF \u2014 Los Angeles, New York, Toronto, London, Bangalore, Muscat for Italy; London, Kingston, Melbourne, Edinburgh, New Delhi for Spain \u2014 and each states requirements for applicants resident in THAT consulate's district. The central sites (studyinitaly.esteri.it, exteriores.gob.es) carry only the application form and generalities. Needs the Abuja mission's own list, the same gap Turkey has."
   },
   {
     "destinationIso": "jo",
@@ -1500,9 +1500,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://mfa.gov.jo/documents/100226visa%20to%20enter%20Jordan.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 requirement). The MFA PDF is visa POLICY \u2014 who needs a visa and how to get one \u2014 not a document list. moi.gov.jo does not answer a fetch. Jordan needs its e-services portal or the Amman ministry's own checklist."
   },
   {
     "destinationIso": "jo",
@@ -1510,9 +1510,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://mfa.gov.jo/documents/100226visa%20to%20enter%20Jordan.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 requirement). The MFA PDF is visa POLICY \u2014 who needs a visa and how to get one \u2014 not a document list. moi.gov.jo does not answer a fetch. Jordan needs its e-services portal or the Amman ministry's own checklist."
   },
   {
     "destinationIso": "jo",
@@ -1520,9 +1520,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://mfa.gov.jo/documents/100226visa%20to%20enter%20Jordan.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 requirement). The MFA PDF is visa POLICY \u2014 who needs a visa and how to get one \u2014 not a document list. moi.gov.jo does not answer a fetch. Jordan needs its e-services portal or the Amman ministry's own checklist."
   },
   {
     "destinationIso": "jo",
@@ -1530,9 +1530,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://mfa.gov.jo/documents/100226visa%20to%20enter%20Jordan.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 requirement). The MFA PDF is visa POLICY \u2014 who needs a visa and how to get one \u2014 not a document list. moi.gov.jo does not answer a fetch. Jordan needs its e-services portal or the Amman ministry's own checklist."
   },
   {
     "destinationIso": "jo",
@@ -1540,9 +1540,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://mfa.gov.jo/documents/100226visa%20to%20enter%20Jordan.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 requirement). The MFA PDF is visa POLICY \u2014 who needs a visa and how to get one \u2014 not a document list. moi.gov.jo does not answer a fetch. Jordan needs its e-services portal or the Amman ministry's own checklist."
   },
   {
     "destinationIso": "jo",
@@ -1550,9 +1550,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://mfa.gov.jo/documents/100226visa%20to%20enter%20Jordan.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 requirement). The MFA PDF is visa POLICY \u2014 who needs a visa and how to get one \u2014 not a document list. moi.gov.jo does not answer a fetch. Jordan needs its e-services portal or the Amman ministry's own checklist."
   },
   {
     "destinationIso": "jp",

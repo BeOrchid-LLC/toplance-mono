@@ -14,9 +14,15 @@ import {
  * the static landing page used to guess — every signed-in visitor was
  * treated as a traveller. A reviewer on `/` saw "Sign in", clicked it,
  * and landed on the traveller dashboard. The fix routes the generic
- * doors through `/go`, which reads the role and forwards, and the
- * landing page swaps its marketing nav for the visitor's own console
- * bar. Each test here walks one persona across that seam.
+ * doors through `/go`, which reads the role and forwards. Each test
+ * here walks one persona across that seam.
+ *
+ * The landing page itself deliberately does not take part. It used to
+ * swap its marketing nav for the visitor's own console bar; the header
+ * is now the same for everyone, signed in or out, so each persona's
+ * test asserts that it is *unchanged* and leans on `/sign-in` — the
+ * marketing bar's own door — to do the forwarding. That door is the
+ * thing that was broken, and it is still the thing under test.
  */
 
 const TRAVELLER_EMAIL = testEmail("routing.traveller");
@@ -68,7 +74,7 @@ test("the generic sign-in door names the organisation and operations doors", asy
   ).toHaveAttribute("href", "/ops/sign-in");
 });
 
-test("a traveller sees their own nav on the landing page and the generic door leads home", async ({
+test("a traveller sees the unchanged marketing header and the generic door leads home", async ({
   page,
 }) => {
   await resetFixtures([TRAVELLER_EMAIL], [TRAVELLER_ORG]);
@@ -80,12 +86,14 @@ test("a traveller sees their own nav on the landing page and the generic door le
   });
 
   await page.goto("/");
-  // The console bar, not the pitch: journey nav present, and the top
-  // nav free of marketing links (the footer keeps its own set).
+  // The pitch, not a console bar. Signing in changes nothing here, so
+  // this is the same assertion the signed-out test makes. Positives are
+  // scoped to the top nav because the footer carries its own copy of
+  // the marketing links; "Dashboard" appears in neither.
   const nav = page.getByRole("navigation");
-  await expect(nav.getByRole("link", { name: "Dashboard" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "How it works" })).toHaveCount(0);
-  await expect(nav.getByRole("link", { name: "Sign in" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
   // The old dead end: signed in, on /sign-in. Now it forwards through
   // /go to this persona's own console — which, for a traveller who has
@@ -94,7 +102,7 @@ test("a traveller sees their own nav on the landing page and the generic door le
   await expect(page).toHaveURL(/\/app(\/agent)?$/);
 });
 
-test("a reviewer sees the ops bar on the landing page and never the traveller surface", async ({
+test("a reviewer sees the unchanged marketing header and never the traveller surface", async ({
   page,
 }) => {
   await resetFixtures([STAFF_EMAIL]);
@@ -107,20 +115,20 @@ test("a reviewer sees the ops bar on the landing page and never the traveller su
   await promoteToStaff(STAFF_EMAIL);
 
   await page.goto("/");
-  const queueLink = page.getByRole("link", { name: "Case queue" });
-  await expect(queueLink).toBeVisible();
+  const nav = page.getByRole("navigation");
+  await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
+  // Neither console's bar leaks onto the marketing page — not this
+  // reviewer's own, and certainly not the traveller's.
+  await expect(page.getByRole("link", { name: "Case queue" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
-  await expect(
-    page.getByRole("navigation").getByRole("link", { name: "Sign in" })
-  ).toHaveCount(0);
 
-  await queueLink.click();
-  await expect(page).toHaveURL(/\/ops$/);
-  await expect(page.getByRole("heading", { name: "Case queue" })).toBeVisible();
-
-  // The reported bug, replayed: sign-in used to send staff to /app.
+  // The reported bug, replayed: sign-in used to send staff to /app. It
+  // is also how a reviewer now leaves this page, the header having no
+  // console link of its own to offer them.
   await page.goto("/sign-in");
   await expect(page).toHaveURL(/\/ops$/);
+  await expect(page.getByRole("heading", { name: "Case queue" })).toBeVisible();
 });
 
 /**
@@ -197,7 +205,7 @@ test("a reviewer who opens the employer console is sent to the case queue", asyn
   await expect(page).toHaveURL(/\/ops$/);
 });
 
-test("an employer sees the organisation bar on the landing page and the generic door leads to their console", async ({
+test("an employer sees the unchanged marketing header and the generic door leads to their console", async ({
   page,
 }) => {
   await resetFixtures([EMPLOYER_EMAIL], [ORG]);
@@ -214,11 +222,11 @@ test("an employer sees the organisation bar on the landing page and the generic 
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
   await page.goto("/");
-  await expect(page.getByRole("link", { name: "People" })).toBeVisible();
+  const nav = page.getByRole("navigation");
+  await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "People" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
-  await expect(
-    page.getByRole("navigation").getByRole("link", { name: "Sign in" })
-  ).toHaveCount(0);
 
   await page.goto("/sign-in");
   await expect(page).toHaveURL(/\/employer$/);

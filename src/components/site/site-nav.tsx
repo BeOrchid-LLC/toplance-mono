@@ -62,9 +62,7 @@ export function SiteNav() {
     // which centres a 1240 box — but `Shell` is 1240 *including* its
     // `px-6`, so the wordmark sat 24px outside the content it heads.
     // Being off by a padding is worse than being obviously wrong: it
-    // reads as a wobble rather than a decision. `SiteChrome` swaps this
-    // bar for `AppBar` in place once Clerk resolves, so the two must
-    // agree to the pixel or signing in nudges the whole bar sideways.
+    // reads as a wobble rather than a decision.
     <nav
       className={cn(
         "bar-edge sticky top-0 z-90 transition-colors duration-[var(--dur-toggle)] ease-[var(--ease-out)]",

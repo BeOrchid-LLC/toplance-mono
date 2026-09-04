@@ -25,34 +25,36 @@ const ORG = "Kaduna Freight E2E";
 const INVITEE_NAME = "Ifeoma Nwosu";
 
 /**
- * The invitation link, out of whatever shape the sent sheet is in — an
- * anchor if it has one, otherwise the link printed on the sheet. Either
- * way it is found by being an `/invite/` URL rather than by sitting in a
- * particular corner of the dialog.
+ * The invitation link, taken the only way the product hands it over: the
+ * sheet's "Copy link" button, onto the clipboard. The sheet deliberately
+ * no longer prints the URL — it is a 30-day bearer token, and showing it
+ * put it in every screenshot of this screen — so reading the dialog's
+ * text for it, as this helper used to, now finds nothing.
+ *
+ * Polls the clipboard rather than asserting the button's "Copied" state,
+ * which reverts after two seconds and would race a loaded CI machine.
  */
 async function readInviteUrl(dialog: Locator): Promise<string> {
-  let link: string | undefined;
+  const page = dialog.page();
 
+  // Chromium gates `readText()` behind a permission a test must grant.
+  // Writing needs none: it happens inside the click's user gesture.
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+
+  await dialog.getByRole("button", { name: "Copy link" }).click();
+
+  let link = "";
   await expect
     .poll(
       async () => {
-        const anchor = dialog.locator('a[href*="/invite/"]');
-        if (await anchor.count()) {
-          const href = await anchor.first().getAttribute("href");
-          if (href) {
-            link = new URL(href, "http://localhost").toString();
-            return true;
-          }
-        }
-
-        link = (await dialog.innerText()).match(/https?:\/\/\S+\/invite\/\S+/)?.[0];
-        return Boolean(link);
+        link = await page.evaluate(() => navigator.clipboard.readText());
+        return link;
       },
-      { message: "waiting for the sent sheet to hand over an /invite/ link" }
+      { message: "waiting for Copy link to put an /invite/ URL on the clipboard" }
     )
-    .toBe(true);
+    .toMatch(/^https?:\/\/\S+\/invite\/\S+$/);
 
-  return link as string;
+  return link;
 }
 
 test("an employer invites a traveller, who accepts and appears on the roster", async ({

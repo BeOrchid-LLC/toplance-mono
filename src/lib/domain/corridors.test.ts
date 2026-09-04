@@ -141,15 +141,37 @@ describe("isCorridorLive", () => {
   });
 
   it("is false for names it does not recognise", () => {
+    // One per early return in `isCorridorLive`: an unmapped nationality,
+    // an unmapped destination, an unmapped purpose. Each is a name a
+    // caller can genuinely produce — the intake agent is a model — and
+    // none of them may throw on the way to "not live".
     expect(isCorridorLive("Senegal", "United Kingdom", "Work")).toBe(false);
-    expect(isCorridorLive("Nigeria", "Japan", "Tourism")).toBe(false);
+    expect(isCorridorLive("Nigeria", "Iceland", "Work")).toBe(false);
+    expect(isCorridorLive("Nigeria", "United Kingdom", "Pilgrimage")).toBe(false);
+  });
+
+  it("is false for a destination we recognise but do not serve", () => {
+    // This assertion used to be `ng→jp/tourism`, which stopped being
+    // false the moment Japan was approved. The United States is on the
+    // menu, has no curated corridor for any purpose, and is the one the
+    // dead-end screen is most likely to be reached through.
+    for (const purpose of PURPOSES) {
+      expect(isCorridorLive("Nigeria", "United States", purpose)).toBe(false);
+    }
   });
 });
 
 describe("livePurposesFor", () => {
   it("lists the purposes a corridor is actually built for", () => {
     expect(livePurposesFor("Nigeria", "Canada")).toEqual(["Study"]);
-    expect(livePurposesFor("Nigeria", "United Kingdom")).toEqual(["Work"]);
+    // Ordered by `PURPOSES`, not by the corridor table — the UK is
+    // curated for relocation, study and work, and reads back in the
+    // order the intake agent offered them.
+    expect(livePurposesFor("Nigeria", "United Kingdom")).toEqual([
+      "Work",
+      "Study",
+      "Relocation",
+    ]);
   });
 
   it("is empty for a destination nobody is served for yet", () => {
@@ -166,9 +188,37 @@ describe("livePurposesFor", () => {
 
 describe("liveDestinationsFor", () => {
   it("lists where a passport can actually go", () => {
-    expect(liveDestinationsFor("Nigeria").sort()).toEqual(
-      ["Canada", "China", "Germany", "United Arab Emirates", "United Kingdom"].sort()
-    );
+    // Derived from the export rather than restated, for the same reason
+    // `liveNationalities` is below: a hand-written list here is a third
+    // copy of the live set, and it goes stale on every approval batch —
+    // which is how this assertion came to name five destinations while
+    // the engine served eighteen. The derivation is not circular: it
+    // reaches the names through the manifest and `countryFromIso2`,
+    // where the function under test walks `DESTINATION_ISO` against
+    // `LIVE_CORRIDORS`.
+    const expected = [
+      ...new Set(
+        liveCorridors
+          .filter((c) => c.nationalityIso === NATIONALITY_ISO.Nigeria)
+          .map((c) => countryFromIso2(c.destinationIso)?.name)
+      ),
+    ];
+
+    // A destination whose alpha-3 is missing drops out of `BY_ISO2`
+    // entirely, so an undefined here is a real gap in the maps, not a
+    // quirk of the derivation.
+    expect(expected).not.toContain(undefined);
+    expect(liveDestinationsFor("Nigeria").sort()).toEqual(expected.sort());
+  });
+
+  it("names each destination once, however many purposes it serves", () => {
+    // Singapore is curated for six purposes and South Africa for six
+    // more; the picker must offer each of them one row.
+    const destinations = liveDestinationsFor("Nigeria");
+
+    expect(new Set(destinations).size).toBe(destinations.length);
+    expect(destinations).toContain("Singapore");
+    expect(destinations).toContain("United Kingdom");
   });
 
   it("is empty for a passport no corridor serves", () => {

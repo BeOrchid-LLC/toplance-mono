@@ -24,10 +24,33 @@ import {
  * opens a transaction of its own or joins the caller's.
  */
 
-/** Absolute URL for a link inside an email. `APP_URL` unset means local dev. */
+/**
+ * Absolute URL for a link inside an email. `APP_URL` unset means local dev.
+ *
+ * The fallback is a convenience for a developer's machine and a hazard
+ * anywhere else: these URLs are read after they have left the building,
+ * in an invitation or a digest, so an unset `APP_URL` in production does
+ * not fail visibly — it ships links to `localhost` that no recipient can
+ * open, and nothing in the app ever reports it. Refusing outright turns
+ * that into a deploy-time error with the variable's name in it.
+ *
+ * Note this is a per-call check rather than a module-load assertion: the
+ * build runs with `NODE_ENV=production` and no runtime environment, so
+ * throwing at import time would fail `next build` instead.
+ */
 export function appUrl(path: string): string {
-  const base = process.env.APP_URL ?? "http://localhost:3000";
-  return new URL(path, base).toString();
+  const configured = process.env.APP_URL;
+
+  if (!configured) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "APP_URL is not set. Emailed links would point at localhost."
+      );
+    }
+    return new URL(path, "http://localhost:3000").toString();
+  }
+
+  return new URL(path, configured).toString();
 }
 
 /**

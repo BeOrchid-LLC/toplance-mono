@@ -55,10 +55,16 @@ jobs:
       # What README's "First run" does, minus the bucket: migrations,
       # then the hand-written SQL objects (views and functions the data
       # layer reads through), then the corridor rule sets.
+      #
+      # `db:corridors` applies the exported approvals on top of the four
+      # hand-written ones. Without it CI runs the curated-provider tests
+      # against a four-corridor database while `LIVE_CORRIDORS` declares
+      # fifty-two — green here and red on any developer's machine.
       - name: Migrate and seed
         run: |
           npm run db:migrate
           npm run db:seed
+          npm run db:corridors
 
       # Storage-backed tests (`documents.test.ts`) skip themselves
       # without `S3_ENDPOINT`, which is deliberate here: a MinIO service

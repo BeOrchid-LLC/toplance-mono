@@ -183,3 +183,39 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     expect(own.every((n) => n.readAt !== null)).toBe(true);
   });
 });
+
+/**
+ * Not gated on a database: `appUrl` is pure, and its production branch is
+ * the one that decides whether an invitation email ships a working link
+ * or a `localhost` one nobody can accept.
+ */
+describe("appUrl", async () => {
+  const { appUrl } = await import("@/lib/notifications/notify");
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("builds an absolute URL from APP_URL", () => {
+    vi.stubEnv("APP_URL", "https://toplance.ca");
+
+    expect(appUrl("/invite/abc123")).toBe("https://toplance.ca/invite/abc123");
+  });
+
+  it("falls back to the local dev origin when APP_URL is unset outside production", () => {
+    vi.stubEnv("APP_URL", undefined);
+    vi.stubEnv("NODE_ENV", "development");
+
+    expect(appUrl("/invite/abc123")).toBe("http://localhost:3000/invite/abc123");
+  });
+
+  it("refuses to build a localhost link in production when APP_URL is unset", () => {
+    // The failure this prevents is silent and outward-facing: every
+    // invitation email would carry a link to the reader's own machine,
+    // and nothing in the app would report it.
+    vi.stubEnv("APP_URL", undefined);
+    vi.stubEnv("NODE_ENV", "production");
+
+    expect(() => appUrl("/invite/abc123")).toThrow(/APP_URL/);
+  });
+});

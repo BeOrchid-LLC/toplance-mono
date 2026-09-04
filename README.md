@@ -18,6 +18,7 @@ npm run db:up                     # Postgres on 54329, MinIO on 54330
 cp .env.local.example .env.local  # then paste in your two Clerk keys
 npm run db:migrate                # applies the schema and the SQL objects
 npm run db:seed                   # loads four corridors and their requirements
+npm run db:corridors              # adds the exported approvals — fifty-two live
 npm run db:bucket                 # creates the private documents bucket
 npm run dev
 ```
@@ -80,7 +81,7 @@ object store:
 | `companion.spec.ts` | Approved → "After you land" appears → the arrival checklist |
 
 ```bash
-npm run db:up && npm run db:migrate && npm run db:seed && npm run db:bucket
+npm run db:up && npm run db:migrate && npm run db:seed && npm run db:corridors && npm run db:bucket
 npx playwright install chromium
 npm run e2e
 ```
@@ -335,6 +336,7 @@ Without `CRON_SECRET` set the route answers 503 and sends nothing at all.
 | `npm run db:up` / `db:down` | Postgres and MinIO in Docker |
 | `npm run db:generate` | Turn a schema change into a migration |
 | `npm run db:migrate` | Apply migrations, then the hand-written SQL objects |
-| `npm run db:seed` | Reload the corridor rule sets |
+| `npm run db:seed` | Reload the four hand-written corridor rule sets |
+| `npm run db:corridors` | Apply the exported approvals over them |
 | `npm run db:bucket` | Create the documents bucket |
 | `npm run db:studio` | Drizzle Studio |

@@ -147,14 +147,17 @@ export function InviteDialog() {
                     </dd>
                   </div>
                 )}
-                <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
+                {/* Last row, so no bottom rule: the sheet's own border
+                    closes it. The link itself is not printed here — it is
+                    a 30-day bearer token, and a dialog that shows it puts
+                    it into every screenshot and screen share of this
+                    screen. "Copy link" carries it to the clipboard
+                    instead, which is the only place it is needed. */}
+                <div className="flex items-baseline justify-between gap-6 px-4 py-3">
                   <dt className="t-body shrink-0 text-ink-2">Valid for</dt>
                   <dd className="text-right text-base font-semibold">30 days</dd>
                 </div>
               </dl>
-              <p className="break-all bg-surface-2 px-4 py-3 font-mono text-[13px] leading-relaxed text-ink-2">
-                {inviteUrl}
-              </p>
             </div>
 
             <p className="t-muted -mt-1 text-[14px]">

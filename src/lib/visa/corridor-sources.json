@@ -124,60 +124,60 @@
     "destinationName": "Australia",
     "purpose": "business",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+    "status": "thin",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
   },
   {
     "destinationIso": "au",
     "destinationName": "Australia",
     "purpose": "medical",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+    "status": "thin",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
   },
   {
     "destinationIso": "au",
     "destinationName": "Australia",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+    "status": "thin",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
   },
   {
     "destinationIso": "au",
     "destinationName": "Australia",
     "purpose": "study",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+    "status": "thin",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
   },
   {
     "destinationIso": "au",
     "destinationName": "Australia",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+    "status": "thin",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
   },
   {
     "destinationIso": "au",
     "destinationName": "Australia",
     "purpose": "work",
     "visaType": "national",
-    "status": "unusable",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Only fetchable official checklist is the PNG embassy's; jurisdiction-contaminated. Australia routes African applications through VFS."
+    "status": "thin",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
   },
   {
     "destinationIso": "be",

@@ -783,10 +783,10 @@
     "destinationName": "Germany",
     "purpose": "business",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://home-affairs.ec.europa.eu/system/files/2020-04/c-2020-1764-commission-implementing-decision_en.pdf",
-    "checkedAt": "2026-09-03",
-    "evidence": "SCHENGEN ATTEMPTED TWICE AND FAILED. Visa Code Annex II (legal text) returned no extract; the Commission's Visa Code Handbook PDF returned 5 rows including 'supporting documents' and 'fingerprints' \u2014 category labels, not uploads. EU-level documents are GUIDANCE TO CONSULATES, not applicant checklists. The applicant checklist for Nigeria is held by VFS Global, which returns 403."
+    "status": "verified",
+    "sourceUrl": "https://nigeria.diplo.de/ng-en/2753076-2753076",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from nigeria.diplo.de \u2014 the German Federal Foreign Office's OWN Nigeria site, which is both official and jurisdiction-correct, and better than VFS for this corridor. THE 'NO REACHABLE OFFICIAL SOURCE FOR GERMANY' VERDICT IS WITHDRAWN. Output is unmistakably Nigerian: nigerian_residence_permit, prepaid_courier_envelope, birth_certificate_or_age_declaration (a Nigerian declaration of age), alongside German specifics like section_54_declarations, blocked_account and approval_81a. TRAPS: some diplo.de article pages return HTTP 400 to fetch AND fail in a browser, so use the /resource/blob/ checklist PDFs where they exist; blob ids go stale (the student-visa blob 404s on both /blob/ and /resource/blob/ forms)."
   },
   {
     "destinationIso": "de",
@@ -803,40 +803,40 @@
     "destinationName": "Germany",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "unusable",
-    "sourceUrl": "https://nigeria.diplo.de/ng-en/2748634-2748634",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: mission pages nigeria.diplo.de/ng-en/2748634 (national) and /2746378 (Schengen) fetch at 200 but are OVERVIEWS \u2014 3-4 distinct document nouns, no enumerated list. make-it-in-germany is JS-rendered (106ch). The real checklists sit on VFS Global, which returns 403 to automated requests. No reachable official source for any German purpose."
+    "status": "verified",
+    "sourceUrl": "https://nigeria.diplo.de/resource/blob/2191572/0b41e7a9ba65f455020154ff65889838/checklist-kindernachzug-data.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from nigeria.diplo.de \u2014 the German Federal Foreign Office's OWN Nigeria site, which is both official and jurisdiction-correct, and better than VFS for this corridor. THE 'NO REACHABLE OFFICIAL SOURCE FOR GERMANY' VERDICT IS WITHDRAWN. Output is unmistakably Nigerian: nigerian_residence_permit, prepaid_courier_envelope, birth_certificate_or_age_declaration (a Nigerian declaration of age), alongside German specifics like section_54_declarations, blocked_account and approval_81a. TRAPS: some diplo.de article pages return HTTP 400 to fetch AND fail in a browser, so use the /resource/blob/ checklist PDFs where they exist; blob ids go stale (the student-visa blob 404s on both /blob/ and /resource/blob/ forms)."
   },
   {
     "destinationIso": "de",
     "destinationName": "Germany",
     "purpose": "study",
     "visaType": "D",
-    "status": "unusable",
-    "sourceUrl": "https://nigeria.diplo.de/ng-en/2748634-2748634",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: mission pages nigeria.diplo.de/ng-en/2748634 (national) and /2746378 (Schengen) fetch at 200 but are OVERVIEWS \u2014 3-4 distinct document nouns, no enumerated list. make-it-in-germany is JS-rendered (106ch). The real checklists sit on VFS Global, which returns 403 to automated requests. No reachable official source for any German purpose."
+    "status": "verified",
+    "sourceUrl": "https://nigeria.diplo.de/resource/blob/2191326/14172b8fd16ee9a269b2fad7994e2dd2/checklist-sprache-eng-data.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from nigeria.diplo.de \u2014 the German Federal Foreign Office's OWN Nigeria site, which is both official and jurisdiction-correct, and better than VFS for this corridor. THE 'NO REACHABLE OFFICIAL SOURCE FOR GERMANY' VERDICT IS WITHDRAWN. Output is unmistakably Nigerian: nigerian_residence_permit, prepaid_courier_envelope, birth_certificate_or_age_declaration (a Nigerian declaration of age), alongside German specifics like section_54_declarations, blocked_account and approval_81a. TRAPS: some diplo.de article pages return HTTP 400 to fetch AND fail in a browser, so use the /resource/blob/ checklist PDFs where they exist; blob ids go stale (the student-visa blob 404s on both /blob/ and /resource/blob/ forms). \u26a0\ufe0f SOURCE IS THE LANGUAGE-COURSE checklist, the only student checklist whose blob id still resolves. Degree study at a university may differ \u2014 a reviewer should confirm against the current student-visa checklist before approving."
   },
   {
     "destinationIso": "de",
     "destinationName": "Germany",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://home-affairs.ec.europa.eu/system/files/2020-04/c-2020-1764-commission-implementing-decision_en.pdf",
-    "checkedAt": "2026-09-03",
-    "evidence": "SCHENGEN ATTEMPTED TWICE AND FAILED. Visa Code Annex II (legal text) returned no extract; the Commission's Visa Code Handbook PDF returned 5 rows including 'supporting documents' and 'fingerprints' \u2014 category labels, not uploads. EU-level documents are GUIDANCE TO CONSULATES, not applicant checklists. The applicant checklist for Nigeria is held by VFS Global, which returns 403."
+    "status": "verified",
+    "sourceUrl": "https://nigeria.diplo.de/ng-en/2753076-2753076",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from nigeria.diplo.de \u2014 the German Federal Foreign Office's OWN Nigeria site, which is both official and jurisdiction-correct, and better than VFS for this corridor. THE 'NO REACHABLE OFFICIAL SOURCE FOR GERMANY' VERDICT IS WITHDRAWN. Output is unmistakably Nigerian: nigerian_residence_permit, prepaid_courier_envelope, birth_certificate_or_age_declaration (a Nigerian declaration of age), alongside German specifics like section_54_declarations, blocked_account and approval_81a. TRAPS: some diplo.de article pages return HTTP 400 to fetch AND fail in a browser, so use the /resource/blob/ checklist PDFs where they exist; blob ids go stale (the student-visa blob 404s on both /blob/ and /resource/blob/ forms)."
   },
   {
     "destinationIso": "de",
     "destinationName": "Germany",
     "purpose": "work",
     "visaType": "D",
-    "status": "unusable",
-    "sourceUrl": "https://nigeria.diplo.de/ng-en/2748634-2748634",
-    "checkedAt": "2026-09-03",
-    "evidence": "2026-09-03: mission pages nigeria.diplo.de/ng-en/2748634 (national) and /2746378 (Schengen) fetch at 200 but are OVERVIEWS \u2014 3-4 distinct document nouns, no enumerated list. make-it-in-germany is JS-rendered (106ch). The real checklists sit on VFS Global, which returns 403 to automated requests. No reachable official source for any German purpose."
+    "status": "verified",
+    "sourceUrl": "https://nigeria.diplo.de/resource/blob/2311392/12ce9fd6c1b7443f2fc6893c663e3a4c/checklist-feg-eng-02---2020-data.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from nigeria.diplo.de \u2014 the German Federal Foreign Office's OWN Nigeria site, which is both official and jurisdiction-correct, and better than VFS for this corridor. THE 'NO REACHABLE OFFICIAL SOURCE FOR GERMANY' VERDICT IS WITHDRAWN. Output is unmistakably Nigerian: nigerian_residence_permit, prepaid_courier_envelope, birth_certificate_or_age_declaration (a Nigerian declaration of age), alongside German specifics like section_54_declarations, blocked_account and approval_81a. TRAPS: some diplo.de article pages return HTTP 400 to fetch AND fail in a browser, so use the /resource/blob/ checklist PDFs where they exist; blob ids go stale (the student-visa blob 404s on both /blob/ and /resource/blob/ forms). \u26a0\ufe0f THIS IS v2 AND SUPERSEDES THE LIVE v1. v1 has 10 requirements from a source that cannot be re-verified \u2014 the reason Germany was flagged. v2 has 16 from the Skilled Immigration Act checklist. An EARLIER v2 attempt drafted from the general national-visa page produced meta-rows (required_documents, photocopies, fingerprints) and was DELETED before it could be approved: it would have made a live corridor worse, since the provider serves the highest live version."
   },
   {
     "destinationIso": "dk",

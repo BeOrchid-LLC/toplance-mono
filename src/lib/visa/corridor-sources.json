@@ -245,9 +245,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.evisa.gov.bh/VisaBhr2En.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (3 rows: passport, a literal placeholder row named 'required_documents', and credit_card \u2014 a payment method). npra.gov.bh, the central authority, TIMES OUT in a real browser, so the Portugal pattern applies to it. evisa.gov.bh is reachable but only describes the process."
   },
   {
     "destinationIso": "bh",
@@ -255,9 +255,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.evisa.gov.bh/VisaBhr2En.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (3 rows: passport, a literal placeholder row named 'required_documents', and credit_card \u2014 a payment method). npra.gov.bh, the central authority, TIMES OUT in a real browser, so the Portugal pattern applies to it. evisa.gov.bh is reachable but only describes the process."
   },
   {
     "destinationIso": "bh",
@@ -265,9 +265,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.evisa.gov.bh/VisaBhr2En.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (3 rows: passport, a literal placeholder row named 'required_documents', and credit_card \u2014 a payment method). npra.gov.bh, the central authority, TIMES OUT in a real browser, so the Portugal pattern applies to it. evisa.gov.bh is reachable but only describes the process."
   },
   {
     "destinationIso": "bh",
@@ -275,9 +275,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.evisa.gov.bh/VisaBhr2En.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (3 rows: passport, a literal placeholder row named 'required_documents', and credit_card \u2014 a payment method). npra.gov.bh, the central authority, TIMES OUT in a real browser, so the Portugal pattern applies to it. evisa.gov.bh is reachable but only describes the process."
   },
   {
     "destinationIso": "bh",
@@ -285,9 +285,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.evisa.gov.bh/VisaBhr2En.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (3 rows: passport, a literal placeholder row named 'required_documents', and credit_card \u2014 a payment method). npra.gov.bh, the central authority, TIMES OUT in a real browser, so the Portugal pattern applies to it. evisa.gov.bh is reachable but only describes the process."
   },
   {
     "destinationIso": "bh",
@@ -295,9 +295,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.evisa.gov.bh/VisaBhr2En.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (3 rows: passport, a literal placeholder row named 'required_documents', and credit_card \u2014 a payment method). npra.gov.bh, the central authority, TIMES OUT in a real browser, so the Portugal pattern applies to it. evisa.gov.bh is reachable but only describes the process."
   },
   {
     "destinationIso": "bj",
@@ -484,9 +484,9 @@
     "purpose": "business",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+    "sourceUrl": "https://www.sem.admin.ch/sem/en/home/themen/einreise/info-einreise/voraussetzungen-nach-staat/mit-visum.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: SEM publishes NO central document checklist \u2014 by design. It states that the documents required 'differ depending on the applicant's country of residence' and delegates to the Swiss representation covering that country, and the eda.admin.ch pages that do carry lists are per-country (countries/usa/, countries/china/). Switzerland belongs with Italy and Spain: jurisdiction-only, not merely unexplored."
   },
   {
     "destinationIso": "ch",
@@ -494,9 +494,9 @@
     "purpose": "medical",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+    "sourceUrl": "https://www.sem.admin.ch/sem/en/home/themen/einreise/info-einreise/voraussetzungen-nach-staat/mit-visum.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: SEM publishes NO central document checklist \u2014 by design. It states that the documents required 'differ depending on the applicant's country of residence' and delegates to the Swiss representation covering that country, and the eda.admin.ch pages that do carry lists are per-country (countries/usa/, countries/china/). Switzerland belongs with Italy and Spain: jurisdiction-only, not merely unexplored."
   },
   {
     "destinationIso": "ch",
@@ -504,9 +504,9 @@
     "purpose": "relocation",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+    "sourceUrl": "https://www.sem.admin.ch/sem/en/home/themen/einreise/info-einreise/voraussetzungen-nach-staat/mit-visum.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: SEM publishes NO central document checklist \u2014 by design. It states that the documents required 'differ depending on the applicant's country of residence' and delegates to the Swiss representation covering that country, and the eda.admin.ch pages that do carry lists are per-country (countries/usa/, countries/china/). Switzerland belongs with Italy and Spain: jurisdiction-only, not merely unexplored."
   },
   {
     "destinationIso": "ch",
@@ -514,9 +514,9 @@
     "purpose": "study",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+    "sourceUrl": "https://www.sem.admin.ch/sem/en/home/themen/einreise/info-einreise/voraussetzungen-nach-staat/mit-visum.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: SEM publishes NO central document checklist \u2014 by design. It states that the documents required 'differ depending on the applicant's country of residence' and delegates to the Swiss representation covering that country, and the eda.admin.ch pages that do carry lists are per-country (countries/usa/, countries/china/). Switzerland belongs with Italy and Spain: jurisdiction-only, not merely unexplored."
   },
   {
     "destinationIso": "ch",
@@ -524,9 +524,9 @@
     "purpose": "tourism",
     "visaType": "C",
     "status": "thin",
-    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+    "sourceUrl": "https://www.sem.admin.ch/sem/en/home/themen/einreise/info-einreise/voraussetzungen-nach-staat/mit-visum.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: SEM publishes NO central document checklist \u2014 by design. It states that the documents required 'differ depending on the applicant's country of residence' and delegates to the Swiss representation covering that country, and the eda.admin.ch pages that do carry lists are per-country (countries/usa/, countries/china/). Switzerland belongs with Italy and Spain: jurisdiction-only, not merely unexplored."
   },
   {
     "destinationIso": "ch",
@@ -534,9 +534,9 @@
     "purpose": "work",
     "visaType": "D",
     "status": "thin",
-    "sourceUrl": "https://www.eda.admin.ch/countries/nigeria/en/home/representations/embassy.html",
-    "checkedAt": "2026-09-03",
-    "evidence": "Embassy-in-Nigeria page is a CONTACT page (opening hours, phone). Drafted 3 rows of navigation items; deleted."
+    "sourceUrl": "https://www.sem.admin.ch/sem/en/home/themen/einreise/info-einreise/voraussetzungen-nach-staat/mit-visum.html",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: SEM publishes NO central document checklist \u2014 by design. It states that the documents required 'differ depending on the applicant's country of residence' and delegates to the Swiss representation covering that country, and the eda.admin.ch pages that do carry lists are per-country (countries/usa/, countries/china/). Switzerland belongs with Italy and Spain: jurisdiction-only, not merely unexplored."
   },
   {
     "destinationIso": "ci",
@@ -1024,9 +1024,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.et/information",
-    "checkedAt": "2026-09-03",
-    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+    "sourceUrl": "https://www.evisa.gov.et/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: browser-checked. evisa.gov.et renders 3,096 chars with ZERO document nouns and no requirements links \u2014 it is an application portal whose requirements live inside the form flow, the same obstacle as France's visa wizard. eis.gov.et does not resolve. ethiopianembassy.org is Washington DC and jurisdiction-contaminated."
   },
   {
     "destinationIso": "et",
@@ -1034,9 +1034,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.et/information",
-    "checkedAt": "2026-09-03",
-    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+    "sourceUrl": "https://www.evisa.gov.et/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: browser-checked. evisa.gov.et renders 3,096 chars with ZERO document nouns and no requirements links \u2014 it is an application portal whose requirements live inside the form flow, the same obstacle as France's visa wizard. eis.gov.et does not resolve. ethiopianembassy.org is Washington DC and jurisdiction-contaminated."
   },
   {
     "destinationIso": "et",
@@ -1044,9 +1044,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.et/information",
-    "checkedAt": "2026-09-03",
-    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+    "sourceUrl": "https://www.evisa.gov.et/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: browser-checked. evisa.gov.et renders 3,096 chars with ZERO document nouns and no requirements links \u2014 it is an application portal whose requirements live inside the form flow, the same obstacle as France's visa wizard. eis.gov.et does not resolve. ethiopianembassy.org is Washington DC and jurisdiction-contaminated."
   },
   {
     "destinationIso": "et",
@@ -1054,9 +1054,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.et/information",
-    "checkedAt": "2026-09-03",
-    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+    "sourceUrl": "https://www.evisa.gov.et/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: browser-checked. evisa.gov.et renders 3,096 chars with ZERO document nouns and no requirements links \u2014 it is an application portal whose requirements live inside the form flow, the same obstacle as France's visa wizard. eis.gov.et does not resolve. ethiopianembassy.org is Washington DC and jurisdiction-contaminated."
   },
   {
     "destinationIso": "et",
@@ -1064,9 +1064,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.et/information",
-    "checkedAt": "2026-09-03",
-    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+    "sourceUrl": "https://www.evisa.gov.et/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: browser-checked. evisa.gov.et renders 3,096 chars with ZERO document nouns and no requirements links \u2014 it is an application portal whose requirements live inside the form flow, the same obstacle as France's visa wizard. eis.gov.et does not resolve. ethiopianembassy.org is Washington DC and jurisdiction-contaminated."
   },
   {
     "destinationIso": "et",
@@ -1074,9 +1074,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.et/information",
-    "checkedAt": "2026-09-03",
-    "evidence": "Browser-rendered (plain fetch gets 0ch \u2014 JS app). Requirements page is 3,700ch of notices and instructions, only 2 document nouns. Not an enumerated checklist."
+    "sourceUrl": "https://www.evisa.gov.et/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: browser-checked. evisa.gov.et renders 3,096 chars with ZERO document nouns and no requirements links \u2014 it is an application portal whose requirements live inside the form flow, the same obstacle as France's visa wizard. eis.gov.et does not resolve. ethiopianembassy.org is Washington DC and jurisdiction-contaminated."
   },
   {
     "destinationIso": "fr",
@@ -1676,9 +1676,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.moi.gov.kw/main/eservices/residence?culture=en",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 row). moi.gov.kw's residency pages are 2.2k chars of service description; kuwaitvisa.moi.gov.kw returns 15 characters. Requirements sit inside the e-visa portal flow."
   },
   {
     "destinationIso": "kw",
@@ -1686,9 +1686,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.moi.gov.kw/main/eservices/residence?culture=en",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 row). moi.gov.kw's residency pages are 2.2k chars of service description; kuwaitvisa.moi.gov.kw returns 15 characters. Requirements sit inside the e-visa portal flow."
   },
   {
     "destinationIso": "kw",
@@ -1696,9 +1696,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.moi.gov.kw/main/eservices/residence?culture=en",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 row). moi.gov.kw's residency pages are 2.2k chars of service description; kuwaitvisa.moi.gov.kw returns 15 characters. Requirements sit inside the e-visa portal flow."
   },
   {
     "destinationIso": "kw",
@@ -1706,9 +1706,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.moi.gov.kw/main/eservices/residence?culture=en",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 row). moi.gov.kw's residency pages are 2.2k chars of service description; kuwaitvisa.moi.gov.kw returns 15 characters. Requirements sit inside the e-visa portal flow."
   },
   {
     "destinationIso": "kw",
@@ -1716,9 +1716,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.moi.gov.kw/main/eservices/residence?culture=en",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 row). moi.gov.kw's residency pages are 2.2k chars of service description; kuwaitvisa.moi.gov.kw returns 15 characters. Requirements sit inside the e-visa portal flow."
   },
   {
     "destinationIso": "kw",
@@ -1726,9 +1726,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://www.moi.gov.kw/main/eservices/residence?culture=en",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (1 row). moi.gov.kw's residency pages are 2.2k chars of service description; kuwaitvisa.moi.gov.kw returns 15 characters. Requirements sit inside the e-visa portal flow."
   },
   {
     "destinationIso": "ma",
@@ -1856,9 +1856,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
   },
   {
     "destinationIso": "mx",
@@ -1866,19 +1866,19 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
   },
   {
     "destinationIso": "mx",
     "destinationName": "Mexico",
     "purpose": "relocation",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "status": "verified",
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
   },
   {
     "destinationIso": "mx",
@@ -1886,9 +1886,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
   },
   {
     "destinationIso": "mx",
@@ -1896,9 +1896,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
   },
   {
     "destinationIso": "mx",
@@ -1906,9 +1906,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "sourceUrl": "https://www.gob.mx/sre/acciones-y-programas/visa-de-residencia-temporal",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04: mx/relocation, 11 documents (passport, photograph, proof of nationality or legal stay, fee payment, plus optional evidence categories). The SRE page is in SPANISH and the model returned English document names, so a non-English source is not a barrier \u2014 note that the probe script scores English nouns only and rated this page 0, which was wrong. Use gob.mx/sre, never consulmex.sre.gob.mx: the latter is per-consulate. LIMIT: the visitor-visa page (visa-de-visitante-sin-permiso...) is a summary and drafted 2 and 1 rows for tourism and business; both were deleted."
   },
   {
     "destinationIso": "my",
@@ -2096,9 +2096,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://evisa.rop.gov.om/documents/10183/42859/Apply+for+Visa_v3.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (18 rows). NEW FAILURE SHAPE \u2014 FORM FIELDS, not documents. The ROP PDF is a user guide for filling in the online application, so extraction produced travel_document_number, issuing_state, issue_date, mothers_first_name, civil_number and relationship. Only photo_of_applicant and passport_copy_applicant were real. rop.gov.om's visa page returns 0 chars. Watch for this whenever the source is an application walkthrough."
   },
   {
     "destinationIso": "om",
@@ -2106,9 +2106,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://evisa.rop.gov.om/documents/10183/42859/Apply+for+Visa_v3.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (18 rows). NEW FAILURE SHAPE \u2014 FORM FIELDS, not documents. The ROP PDF is a user guide for filling in the online application, so extraction produced travel_document_number, issuing_state, issue_date, mothers_first_name, civil_number and relationship. Only photo_of_applicant and passport_copy_applicant were real. rop.gov.om's visa page returns 0 chars. Watch for this whenever the source is an application walkthrough."
   },
   {
     "destinationIso": "om",
@@ -2116,9 +2116,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://evisa.rop.gov.om/documents/10183/42859/Apply+for+Visa_v3.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (18 rows). NEW FAILURE SHAPE \u2014 FORM FIELDS, not documents. The ROP PDF is a user guide for filling in the online application, so extraction produced travel_document_number, issuing_state, issue_date, mothers_first_name, civil_number and relationship. Only photo_of_applicant and passport_copy_applicant were real. rop.gov.om's visa page returns 0 chars. Watch for this whenever the source is an application walkthrough."
   },
   {
     "destinationIso": "om",
@@ -2126,9 +2126,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://evisa.rop.gov.om/documents/10183/42859/Apply+for+Visa_v3.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (18 rows). NEW FAILURE SHAPE \u2014 FORM FIELDS, not documents. The ROP PDF is a user guide for filling in the online application, so extraction produced travel_document_number, issuing_state, issue_date, mothers_first_name, civil_number and relationship. Only photo_of_applicant and passport_copy_applicant were real. rop.gov.om's visa page returns 0 chars. Watch for this whenever the source is an application walkthrough."
   },
   {
     "destinationIso": "om",
@@ -2136,9 +2136,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://evisa.rop.gov.om/documents/10183/42859/Apply+for+Visa_v3.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (18 rows). NEW FAILURE SHAPE \u2014 FORM FIELDS, not documents. The ROP PDF is a user guide for filling in the online application, so extraction produced travel_document_number, issuing_state, issue_date, mothers_first_name, civil_number and relationship. Only photo_of_applicant and passport_copy_applicant were real. rop.gov.om's visa page returns 0 chars. Watch for this whenever the source is an application walkthrough."
   },
   {
     "destinationIso": "om",
@@ -2146,9 +2146,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "sourceUrl": "https://evisa.rop.gov.om/documents/10183/42859/Apply+for+Visa_v3.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: DRAFTED AND DELETED (18 rows). NEW FAILURE SHAPE \u2014 FORM FIELDS, not documents. The ROP PDF is a user guide for filling in the online application, so extraction produced travel_document_number, issuing_state, issue_date, mothers_first_name, civil_number and relationship. Only photo_of_applicant and passport_copy_applicant were real. rop.gov.om's visa page returns 0 chars. Watch for this whenever the source is an application walkthrough."
   },
   {
     "destinationIso": "pl",
@@ -2696,9 +2696,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "sourceUrl": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
+    "evidence": "2026-09-04: DRAFTED AND DELETED (2 rows, one optional). mfa.gov.tr is 50k chars but is visa POLICY by nationality, not a checklist; evisa.gov.tr's 'what do I need' page is 1,153 chars. The document-rich Turkish sources are London and Dubai consulate PDFs \u2014 jurisdiction-contaminated. Needs the Abuja mission."
   },
   {
     "destinationIso": "tr",
@@ -2706,9 +2706,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "sourceUrl": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
+    "evidence": "2026-09-04: DRAFTED AND DELETED (2 rows, one optional). mfa.gov.tr is 50k chars but is visa POLICY by nationality, not a checklist; evisa.gov.tr's 'what do I need' page is 1,153 chars. The document-rich Turkish sources are London and Dubai consulate PDFs \u2014 jurisdiction-contaminated. Needs the Abuja mission."
   },
   {
     "destinationIso": "tr",
@@ -2716,9 +2716,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "sourceUrl": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
+    "evidence": "2026-09-04: DRAFTED AND DELETED (2 rows, one optional). mfa.gov.tr is 50k chars but is visa POLICY by nationality, not a checklist; evisa.gov.tr's 'what do I need' page is 1,153 chars. The document-rich Turkish sources are London and Dubai consulate PDFs \u2014 jurisdiction-contaminated. Needs the Abuja mission."
   },
   {
     "destinationIso": "tr",
@@ -2726,9 +2726,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "sourceUrl": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
+    "evidence": "2026-09-04: DRAFTED AND DELETED (2 rows, one optional). mfa.gov.tr is 50k chars but is visa POLICY by nationality, not a checklist; evisa.gov.tr's 'what do I need' page is 1,153 chars. The document-rich Turkish sources are London and Dubai consulate PDFs \u2014 jurisdiction-contaminated. Needs the Abuja mission."
   },
   {
     "destinationIso": "tr",
@@ -2736,9 +2736,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "sourceUrl": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
+    "evidence": "2026-09-04: DRAFTED AND DELETED (2 rows, one optional). mfa.gov.tr is 50k chars but is visa POLICY by nationality, not a checklist; evisa.gov.tr's 'what do I need' page is 1,153 chars. The document-rich Turkish sources are London and Dubai consulate PDFs \u2014 jurisdiction-contaminated. Needs the Abuja mission."
   },
   {
     "destinationIso": "tr",
@@ -2746,9 +2746,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "sourceUrl": "https://www.mfa.gov.tr/visa-information-for-foreigners.en.mfa",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
+    "evidence": "2026-09-04: DRAFTED AND DELETED (2 rows, one optional). mfa.gov.tr is 50k chars but is visa POLICY by nationality, not a checklist; evisa.gov.tr's 'what do I need' page is 1,153 chars. The document-rich Turkish sources are London and Dubai consulate PDFs \u2014 jurisdiction-contaminated. Needs the Abuja mission."
   },
   {
     "destinationIso": "tz",

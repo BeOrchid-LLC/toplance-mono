@@ -13,9 +13,12 @@ import { Progress } from "@/components/ui/progress";
 import { CorridorBar } from "@/components/site/corridor-bar";
 import { CorridorBoard } from "@/components/site/corridor-board";
 import { CorridorProvider } from "@/components/site/corridor-state";
+import { PricingEstimator } from "@/components/site/pricing-estimator";
 import { Shell } from "@/components/shared/shell";
 import { Head, Section } from "@/components/site/section";
 import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
+import { DEFAULT_RATE_CARD } from "@/lib/domain/pricing";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import { cn } from "@/lib/utils";
 
 /**
@@ -188,13 +191,24 @@ const SEAT_EXCLUDES = [
    can sign anything. The labels are ours; the values are the client's,
    and the ones left blank are blank on purpose — a term invented here
    is a term someone will quote back in a negotiation. */
+/**
+ * The bands as a buyer reads them. Display only — the arithmetic is
+ * `@/lib/domain/pricing`, quoted from the card in the database, and the
+ * estimator beside this table uses that rather than these strings.
+ */
+const RATE_BANDS = [
+  { range: "1st – 200th application", rate: "$18" },
+  { range: "201st – 500th", rate: "$15" },
+  { range: "501st and above", rate: "$12" },
+];
+
 const TERMS = [
-  { label: "Unit", value: "One case, one client" },
-  { label: "Billing", value: "Annually, in advance, by invoice" },
-  { label: "Price per case", value: null },
+  { label: "Unit", value: "One completed application" },
+  { label: "Billing", value: "Monthly, on your signup anniversary" },
+  { label: "Base fee", value: "$300 per month, per business account" },
+  { label: "Application fee", value: "$18 / $15 / $12, charged in layers" },
+  { label: "Band reset", value: "At the start of every cycle" },
   { label: "Minimum commitment", value: null },
-  { label: "Case reassignment", value: null },
-  { label: "Data residency", value: null },
 ];
 
 const FAQ = [
@@ -208,7 +222,7 @@ const FAQ = [
   },
   {
     q: "How are we invoiced?",
-    a: "One consolidated invoice for your cases, billed annually in advance, rather than a charge per client or per document. The amount per case and any minimum commitment are set in your contract — the pricing section above marks both as figures you supply rather than guessing at them here.",
+    a: "A $300 monthly base fee for the account, plus a fee for each application your client actually completes — $18 each for the first 200 in the month, $15 for the next 300, then $12 beyond that. The fee is layered, so passing a threshold only changes the price of the applications above it, never the ones below. Nothing is charged for an application that is invited, in progress or abandoned. The estimator in the pricing section runs the real arithmetic.",
   },
   {
     q: "What happens if a client drops out before they travel?",
@@ -228,7 +242,18 @@ const FAQ = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  /**
+   * The rates the estimator quotes at, read from the database so the
+   * calculator and the invoice cannot drift apart. The marketing site is
+   * built without a database in CI, so it falls back to the shipped card
+   * rather than failing the build — the numbers are the same either way
+   * until someone changes the row.
+   */
+  const rateCard = hasDatabaseEnv
+    ? await (await import("@/lib/data/billing")).activeRateCard()
+    : DEFAULT_RATE_CARD;
+
   return (
     <CorridorProvider>
       {/* ---------- hero ---------- */}
@@ -552,21 +577,54 @@ export default function HomePage() {
       </Section>
 
       {/* ---------- pricing ---------- */}
-      <Section id="pricing" label="Pricing" datum="Billed by case, annually">
+      <Section id="pricing" label="Pricing" datum="$300/month + per application">
         <Head
-          title="One case for every client you run"
-          lead="Every case carries the whole product — the conversation, the checklist, a named case handler and human review before submission — whichever corridor it is spent on. The amounts below are placeholders for you to set."
+          title="You pay for the applications that finish"
+          lead="A monthly fee for the account, plus a fee for every application your client actually completes. The per-application fee falls as your volume rises, and it is charged in layers — so crossing a threshold only ever changes the price of the applications above it."
         />
 
-        <div className="mt-11 overflow-hidden rounded-lg border border-border bg-surface">
-          <div className="flex flex-col p-7 lg:p-9">
+        {/* The bands, before the calculator. A buyer who is shown a total
+            without the rates behind it has to trust the arithmetic; one
+            who is shown the rates can check it. */}
+        <div className="mt-11 grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <div className="rounded-lg border border-border bg-surface p-6 sm:p-8">
             <span
               aria-hidden
-              className="block h-[3px] rounded-[var(--radius-pill)] bg-brand-accent"
+              className="block h-[3px] w-12 rounded-[var(--radius-pill)] bg-brand-accent"
             />
-            <span className="tag mt-4 block">Agencies</span>
-            <p className="d-lg mt-4">By case</p>
-            <p className="t-muted text-[15px]">billed annually</p>
+            <p className="d-lg mt-5">
+              <span className="num">$300</span>
+              <span className="t-muted text-[15px]"> / month</span>
+            </p>
+            <p className="t-muted mt-1 text-[15px]">
+              per business account, every cycle
+            </p>
+
+            <p className="tag mb-4 mt-8">Then, per completed application</p>
+            <dl className="border-t border-border">
+              {RATE_BANDS.map((band) => (
+                <div
+                  key={band.range}
+                  className="flex items-baseline justify-between gap-6 border-b border-border py-3"
+                >
+                  <dt className="text-[15px] text-ink-2">{band.range}</dt>
+                  <dd className="num text-base">{band.rate} each</dd>
+                </div>
+              ))}
+            </dl>
+            <p className="t-muted mt-4 text-[13px]">
+              Layered, like income tax bands. 350 applications is 200 at $18
+              and 150 at $15 — not 350 at $15.
+            </p>
+          </div>
+
+          <PricingEstimator card={rateCard} />
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="flex flex-col p-7 lg:p-9">
+            <span className="tag block">Agencies</span>
+            <p className="d-sm mt-3">What every application carries</p>
 
             {/* Split rather than one flat list: a buyer needs to see which
                 half of this is the service their traveller receives and

@@ -29,6 +29,7 @@ import {
   putDocument,
   signedDocumentUrl,
 } from "@/lib/storage/documents";
+import { markBillableIfComplete } from "@/lib/data/billing";
 import { recordIntakeAnswer } from "@/lib/data/intake";
 import { sendMessageRow } from "@/lib/data/messages";
 import { submitApplicationTx } from "@/lib/data/submissions";
@@ -161,6 +162,17 @@ export async function uploadDocument(formData: FormData) {
         eq(documents.docKey, docKey)
       )
     );
+
+  // The upload that fills the last outstanding row is what completes a
+  // checklist — `completionOf` counts a document from `checking`, so
+  // neither the pre-check nor the reviewer can be the moment it happens
+  // on the ordinary path. This is where an application becomes billable,
+  // and the helper is idempotent, so a re-upload after a flag does not
+  // bill the business a second time for the same case.
+  const billing = await markBillableIfComplete(db, applicationId);
+  if (billing.becameBillable) {
+    await track("toplance.application_became_billable", { applicationId }, actorId);
+  }
 
   // Replacing a document used to leave the old object in the bucket for
   // good: only removeDocument ever deleted anything, so every re-upload

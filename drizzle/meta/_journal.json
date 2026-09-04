@@ -64,6 +64,13 @@
       "when": 1788415678151,
       "tag": "0008_nasty_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788541234558,
+      "tag": "0009_clumsy_lyja",
+      "breakpoints": true
     }
   ]
 }

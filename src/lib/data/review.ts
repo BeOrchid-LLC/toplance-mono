@@ -3,6 +3,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
+import { markBillableIfComplete } from "@/lib/data/billing";
 import { applications, documents } from "@/lib/db/schema";
 
 export type ReviewVerdict =
@@ -97,6 +98,12 @@ export async function reviewDocumentTx(
           eq(documents.docKey, docKey)
         )
       );
+
+    // A verdict can be the thing that completes the checklist, which is
+    // the moment the application becomes billable. Inside this
+    // transaction so the stamp commits with the verdict that earned it;
+    // idempotent, so a flag-then-re-verify cannot bill twice.
+    await markBillableIfComplete(tx, applicationId);
 
     // Read rather than joined onto the select above: that one takes
     // `FOR UPDATE`, and a join would extend the row lock to

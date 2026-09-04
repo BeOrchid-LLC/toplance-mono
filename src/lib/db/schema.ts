@@ -181,6 +181,33 @@ export const organisations = pgTable(
   (t) => [check("seats_not_negative", sql`${t.seatsPurchased} >= 0`)]
 );
 
+/**
+ * What a business is charged, as data rather than as a constant.
+ *
+ * Peace's pricing document asks for "all rates and thresholds as
+ * configurable settings, not hard-coded numbers", because the rates are
+ * provisional until supplier costs land. A row here is edited without a
+ * deploy, and `effective_from` means a cycle that has already closed can
+ * still be re-derived at the rates that applied when it ran — which is
+ * the difference between a bill you can explain and one you can only
+ * assert.
+ *
+ * `bands` is the layered fee, as `[{ upTo, rateMinor }]` with a single
+ * open-ended top band carrying `upTo: null`. Shape and arithmetic live
+ * in `@/lib/domain/pricing`; this table only stores them.
+ *
+ * Amounts are in minor units. `300_00` is three hundred dollars.
+ */
+export const billingRateCards = pgTable("billing_rate_cards", {
+  id: uuid().primaryKey().defaultRandom(),
+  baseFeeMinor: integer().notNull(),
+  currency: text().notNull().default("USD"),
+  bands: jsonb().notNull(),
+  effectiveFrom: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  note: text(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
 export const orgMembers = pgTable(
   "org_members",
   {
@@ -332,6 +359,24 @@ export const applications = pgTable(
     submittedAt: timestamp({ withTimezone: true }),
     decidedAt: timestamp({ withTimezone: true }),
     slaDueAt: timestamp({ withTimezone: true }),
+    /**
+     * The instant this application first became billable — every
+     * required document uploaded, which is the moment Peace's pricing
+     * document calls "the application reaches done".
+     *
+     * Stamped once and never cleared, which is the entire reason it is a
+     * column rather than something derived. Completion is not monotonic:
+     * a reviewer flagging a document after the checklist was full drops
+     * it back below 100%, and re-uploading fills it again. Read as live
+     * state, that is a second sale of the same application; recorded as
+     * an event, it is one. `markBillableIfComplete` sets it under
+     * `where billable_at is null`, so concurrent document writes cannot
+     * race a business into being charged twice.
+     *
+     * Null on an application with no `org_id` — a traveller who came
+     * directly belongs to no business, so nobody is billed for them.
+     */
+    billableAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

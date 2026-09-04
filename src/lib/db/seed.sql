@@ -146,3 +146,23 @@ values (
   'accounts@ajalalogistics.com'
 )
 on conflict (id) do nothing;
+
+-- ---------- the rate card ----------
+-- Peace's pricing document, as data. The rates are provisional and are
+-- meant to be edited here (or by inserting a later `effective_from` row)
+-- rather than in code — `@/lib/domain/pricing` holds the arithmetic and
+-- reads whatever this table says. Amounts are minor units: 30000 = $300.
+--
+-- `bands` is cumulative: the 1st–200th application at $18, the
+-- 201st–500th at $15, everything above at $12. Exactly one band carries
+-- a null `up_to`, and it must be last.
+insert into billing_rate_cards (id, base_fee_minor, currency, bands, effective_from, note)
+values (
+  '00000000-0000-0000-0000-0000000000b1',
+  30000,
+  'USD',
+  '[{"upTo": 200, "rateMinor": 1800}, {"upTo": 500, "rateMinor": 1500}, {"upTo": null, "rateMinor": 1200}]'::jsonb,
+  '2026-01-01T00:00:00Z',
+  'Launch rates from ToplancePricingStructure.docx — provisional until supplier costs land.'
+)
+on conflict (id) do nothing;

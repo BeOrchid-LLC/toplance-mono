@@ -84,20 +84,20 @@
     "destinationName": "Austria",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.migration.gv.at/fileadmin/downloads/infoblaetter/2025_Required_Documents.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (7 docs, 5 required). REV"
   },
   {
     "destinationIso": "at",
     "destinationName": "Austria",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: migration.gv.at returns 853ch."
+    "status": "verified",
+    "sourceUrl": "https://www.migration.gv.at/fileadmin/downloads/infoblaetter/Leitfaden-Studi-engl.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (11 docs, 9 required) from the official student guide PDF (1.5 MB). PDFs are read directly by the drafting script, the same path Canada's IMM5820E uses."
   },
   {
     "destinationIso": "at",
@@ -114,10 +114,10 @@
     "destinationName": "Austria",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: migration.gv.at returns 853ch."
+    "status": "verified",
+    "sourceUrl": "https://www.migration.gv.at/fileadmin/downloads/infoblaetter/2025_Required_Documents.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (7 docs, 5 required) from Austria's required-documents sheet. REV"
   },
   {
     "destinationIso": "au",
@@ -725,8 +725,8 @@
     "visaType": "C",
     "status": "thin",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
   },
   {
     "destinationIso": "cz",
@@ -735,8 +735,8 @@
     "visaType": "C",
     "status": "thin",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
   },
   {
     "destinationIso": "cz",
@@ -745,8 +745,8 @@
     "visaType": "D",
     "status": "thin",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
   },
   {
     "destinationIso": "cz",
@@ -755,18 +755,18 @@
     "visaType": "D",
     "status": "thin",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: frs.gov.cz 404."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
   },
   {
     "destinationIso": "cz",
     "destinationName": "Czechia",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
+    "status": "thin",
     "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
   },
   {
     "destinationIso": "cz",
@@ -775,8 +775,8 @@
     "visaType": "D",
     "status": "thin",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: frs.gov.cz 404."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: thin, not blocked. mv.gov.cz/mvcren/article/a-visa-for-a-stay-of-over-90-days-long-term.aspx returns 200 but only 2,318 chars with 0 document nouns \u2014 the article body is paginated behind the q= chunk parameter. The document list exists; this entry point is not it."
   },
   {
     "destinationIso": "de",
@@ -2045,20 +2045,20 @@
     "destinationName": "Norway",
     "purpose": "medical",
     "visaType": "C",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.udi.no/en/want-to-apply/visit-and-holiday/visitors-visa-to-norway/?c=nga",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (10 docs). Norway handles a medical visit under the same visitor visa as tourism."
   },
   {
     "destinationIso": "no",
     "destinationName": "Norway",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.udi.no/en/want-to-apply/family-immigration/?c=nga",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 (10 docs) from UDI family immigration plus the checklist page (https://www.udi.no/en/word-definitions/checklists-which-explain-which-documents-you-must-hand-in-with-your-application/)."
   },
   {
     "destinationIso": "no",
@@ -2215,40 +2215,40 @@
     "destinationName": "Portugal",
     "purpose": "business",
     "visaType": "C",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: NETWORK-UNREACHABLE from this environment. vistos.mne.gov.pt fails at fetch and TIMES OUT in a real browser after 60s \u2014 the UAE pattern, not the US one, so a browser transcript will not rescue it. The pages are the right ones: search shows vistos.mne.gov.pt/en/national-visas/necessary-documentation/ carries explicit residency and temporary-stay document lists. Retry from a different network before concluding the sources do not exist."
   },
   {
     "destinationIso": "pt",
     "destinationName": "Portugal",
     "purpose": "medical",
     "visaType": "C",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: NETWORK-UNREACHABLE from this environment. vistos.mne.gov.pt fails at fetch and TIMES OUT in a real browser after 60s \u2014 the UAE pattern, not the US one, so a browser transcript will not rescue it. The pages are the right ones: search shows vistos.mne.gov.pt/en/national-visas/necessary-documentation/ carries explicit residency and temporary-stay document lists. Retry from a different network before concluding the sources do not exist."
   },
   {
     "destinationIso": "pt",
     "destinationName": "Portugal",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: NETWORK-UNREACHABLE from this environment. vistos.mne.gov.pt fails at fetch and TIMES OUT in a real browser after 60s \u2014 the UAE pattern, not the US one, so a browser transcript will not rescue it. The pages are the right ones: search shows vistos.mne.gov.pt/en/national-visas/necessary-documentation/ carries explicit residency and temporary-stay document lists. Retry from a different network before concluding the sources do not exist."
   },
   {
     "destinationIso": "pt",
     "destinationName": "Portugal",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: imigrante.sef.pt empty."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: NETWORK-UNREACHABLE from this environment. vistos.mne.gov.pt fails at fetch and TIMES OUT in a real browser after 60s \u2014 the UAE pattern, not the US one, so a browser transcript will not rescue it. The pages are the right ones: search shows vistos.mne.gov.pt/en/national-visas/necessary-documentation/ carries explicit residency and temporary-stay document lists. Retry from a different network before concluding the sources do not exist."
   },
   {
     "destinationIso": "pt",
@@ -2257,18 +2257,18 @@
     "visaType": "C",
     "status": "unusable",
     "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: NETWORK-UNREACHABLE from this environment. vistos.mne.gov.pt fails at fetch and TIMES OUT in a real browser after 60s \u2014 the UAE pattern, not the US one, so a browser transcript will not rescue it. The pages are the right ones: search shows vistos.mne.gov.pt/en/national-visas/necessary-documentation/ carries explicit residency and temporary-stay document lists. Retry from a different network before concluding the sources do not exist."
   },
   {
     "destinationIso": "pt",
     "destinationName": "Portugal",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
+    "status": "unusable",
     "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: imigrante.sef.pt empty."
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: NETWORK-UNREACHABLE from this environment. vistos.mne.gov.pt fails at fetch and TIMES OUT in a real browser after 60s \u2014 the UAE pattern, not the US one, so a browser transcript will not rescue it. The pages are the right ones: search shows vistos.mne.gov.pt/en/national-visas/necessary-documentation/ carries explicit residency and temporary-stay document lists. Retry from a different network before concluding the sources do not exist."
   },
   {
     "destinationIso": "qa",

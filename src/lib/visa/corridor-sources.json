@@ -1263,10 +1263,10 @@
     "destinationName": "Greece",
     "purpose": "business",
     "visaType": "C",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://www.mfa.gr/media/sites/20/2026/03/SupportingDocuments.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED 2026-09-04 from the Hellenic MFA's central supporting-documents PDF \u2014 jurisdiction-clean, unlike the per-mission lists (the Ireland and Dublin ones are for applicants resident there). \u26a0\ufe0f INCOMPLETE AS A CHECKLIST: this is a SUPPORTING documents list, so it assumes the passport, photo and application form are handled by the form itself. gr/tourism therefore drafted with only proof_of_travel, proof_of_accommodations and proof_of_means_of_subsistence required \u2014 a traveller following it would arrive with no passport photo. A reviewer must add the base documents, or pair this source with the application-form page, before approving. The 14 optional rows are per-applicant-category branches (employed, pensioner, business owner, student, spouse, minor), the same verbosity as au/study."
   },
   {
     "destinationIso": "gr",
@@ -1303,10 +1303,10 @@
     "destinationName": "Greece",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "verified",
+    "sourceUrl": "https://www.mfa.gr/media/sites/20/2026/03/SupportingDocuments.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED 2026-09-04 from the Hellenic MFA's central supporting-documents PDF \u2014 jurisdiction-clean, unlike the per-mission lists (the Ireland and Dublin ones are for applicants resident there). \u26a0\ufe0f INCOMPLETE AS A CHECKLIST: this is a SUPPORTING documents list, so it assumes the passport, photo and application form are handled by the form itself. gr/tourism therefore drafted with only proof_of_travel, proof_of_accommodations and proof_of_means_of_subsistence required \u2014 a traveller following it would arrive with no passport photo. A reviewer must add the base documents, or pair this source with the application-form page, before approving. The 14 optional rows are per-applicant-category branches (employed, pensioner, business owner, student, spouse, minor), the same verbosity as au/study."
   },
   {
     "destinationIso": "gr",
@@ -1815,20 +1815,20 @@
     "destinationName": "Malta",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: a GUESSED landing-page URL reached 200 but scored <6 document nouns. NOT a negative result \u2014 gov.uk, Canada and China all scored thin on their landing pages while their real checklists (a /documents sub-page, a PDF, a consulate guidance page) drafted cleanly. Needs sub-page or PDF research."
+    "status": "verified",
+    "sourceUrl": "https://identita.gov.mt/wp-content/uploads/2024/12/Documentation-required-for-long-term_non-tourism.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from Identita's long-term checklist PDF plus the Central Visa Unit page (19k chars, 15 document nouns \u2014 the richest HTML source found so far). Best drafts of the session: mt/study came out 15 documents with 11 required, all of them things a traveller can actually upload. Minor review note: the row 'documents_in_english' is a translation CONDITION rather than a document."
   },
   {
     "destinationIso": "mt",
     "destinationName": "Malta",
     "purpose": "study",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: identita.gov.mt 2 nouns."
+    "status": "verified",
+    "sourceUrl": "https://identita.gov.mt/wp-content/uploads/2024/12/Documentation-required-for-long-term_non-tourism.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from Identita's long-term checklist PDF plus the Central Visa Unit page (19k chars, 15 document nouns \u2014 the richest HTML source found so far). Best drafts of the session: mt/study came out 15 documents with 11 required, all of them things a traveller can actually upload. Minor review note: the row 'documents_in_english' is a translation CONDITION rather than a document."
   },
   {
     "destinationIso": "mt",
@@ -1845,10 +1845,10 @@
     "destinationName": "Malta",
     "purpose": "work",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Schengen long-stay search 2026-09-03: identita.gov.mt 2 nouns."
+    "status": "verified",
+    "sourceUrl": "https://identita.gov.mt/wp-content/uploads/2024/12/Documentation-required-for-long-term_non-tourism.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from Identita's long-term checklist PDF plus the Central Visa Unit page (19k chars, 15 document nouns \u2014 the richest HTML source found so far). Best drafts of the session: mt/study came out 15 documents with 11 required, all of them things a traveller can actually upload. Minor review note: the row 'documents_in_english' is a translation CONDITION rather than a document."
   },
   {
     "destinationIso": "mx",
@@ -2696,9 +2696,9 @@
     "purpose": "business",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
-    "checkedAt": "2026-09-03",
-    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
   },
   {
     "destinationIso": "tr",
@@ -2706,9 +2706,9 @@
     "purpose": "medical",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
-    "checkedAt": "2026-09-03",
-    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
   },
   {
     "destinationIso": "tr",
@@ -2716,9 +2716,9 @@
     "purpose": "relocation",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
-    "checkedAt": "2026-09-03",
-    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
   },
   {
     "destinationIso": "tr",
@@ -2726,9 +2726,9 @@
     "purpose": "study",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
-    "checkedAt": "2026-09-03",
-    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
   },
   {
     "destinationIso": "tr",
@@ -2736,9 +2736,9 @@
     "purpose": "tourism",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
-    "checkedAt": "2026-09-03",
-    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
   },
   {
     "destinationIso": "tr",
@@ -2746,9 +2746,9 @@
     "purpose": "work",
     "visaType": "national",
     "status": "thin",
-    "sourceUrl": "https://www.evisa.gov.tr/en/info/",
-    "checkedAt": "2026-09-03",
-    "evidence": "evisa.gov.tr unreachable to fetch; browser loads a FAQ index (3,448ch, 1 noun) whose answers are behind click-through. Needs interactive extraction."
+    "sourceUrl": "https://evisa.gov.tr/en/info/what-do-i-need-for-my-e-visa-application/",
+    "checkedAt": "2026-09-04",
+    "evidence": "2026-09-04: evisa.gov.tr answers a fetch but its 'what do I need' page is 1,153 chars with one document noun \u2014 the e-Visa flow asks for almost nothing up front. mfa.gov.tr's foreigners page is 50k chars but only 5 nouns and no checklist signal. The document-rich Turkish sources found are per-consulate PDFs (London, Dubai), which are jurisdiction-contaminated for a Nigerian applicant. Needs the Abuja mission's own list."
   },
   {
     "destinationIso": "tz",

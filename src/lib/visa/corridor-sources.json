@@ -154,10 +154,10 @@
     "destinationName": "Australia",
     "purpose": "study",
     "visaType": "national",
-    "status": "thin",
-    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing",
+    "status": "verified",
+    "sourceUrl": "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: immi.homeaffairs.gov.au serves Australia's own visa pages to a real browser (subclass 189 loaded, HTTP 200, title 'Skilled Independent visa'). The earlier verdict \u2014 'only fetchable official checklist is the PNG embassy's; Australia routes African applications through VFS' \u2014 conflated where an application is LODGED with where the requirements are PUBLISHED. VFS is the biometrics and lodgement partner; Home Affairs publishes the requirements itself. The landing page is JS-rendered and scored 1 noun over 2,279 chars, so this is the ordinary thin case: the checklist sits on a sub-page or in the Document Checklist Tool, and nobody has hunted it yet."
+    "evidence": "DRAFTED successfully 2026-09-04 (34 docs, 6 required). Home Affairs renders every tab into the DOM but hides them, so innerText yields 4k chars and textContent yields 76k \u2014 capture with textContent on <main>, minus script/style/nav. REVIEW NOTE: faithful but verbose; 28 optional rows are branch cases (under-18 guardianship, DFAT scholarship, sole custody)."
   },
   {
     "destinationIso": "au",
@@ -2875,10 +2875,10 @@
     "destinationName": "United States",
     "purpose": "business",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "status": "verified",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
+    "evidence": "DRAFTED successfully 2026-09-04 via --source-text (8 docs), from the same B-1/B-2 visitor page as tourism."
   },
   {
     "destinationIso": "us",
@@ -2905,30 +2905,30 @@
     "destinationName": "United States",
     "purpose": "study",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "status": "verified",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
+    "evidence": "DRAFTED successfully 2026-09-04 via --source-text from a browser transcript (8 docs)."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "tourism",
     "visaType": "national",
-    "status": "unresearched",
-    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "status": "verified",
+    "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas/tourism-visit/visitor.html",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04, BLOCKER WITHDRAWN: travel.state.gov is reachable in a real browser. The 403 is a Cloudflare interstitial ('Just a moment...') that clears on its own after the JS challenge; curl and fetch stay 403 with full browser headers, which is what the earlier 'no reachable official US source for any purpose' verdict measured. Reachability and publication quality are unrelated \u2014 this is the Tanzania case, so the path is --source-text with a browser transcript, not a fetch. This purpose's own page has not been located or scored yet."
+    "evidence": "DRAFTED successfully 2026-09-04 via --source-text (9 docs). The B-1/B-2 visitor page covers business and tourism together."
   },
   {
     "destinationIso": "us",
     "destinationName": "United States",
     "purpose": "work",
     "visaType": "national",
-    "status": "candidate",
+    "status": "verified",
     "sourceUrl": "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html",
     "checkedAt": "2026-09-04",
-    "evidence": "2026-09-04: DRAFTABLE via --source-text. Browser-reached travel.state.gov/.../temporary-worker-visas.html after the Cloudflare challenge cleared: 15,638 chars, 13 distinct document nouns (passport, photograph, application form, DS-160, petition, I-129, I-797, receipt, interview, appointment, fee, medical) and a 'required document' signal. Richer than Tanzania's 10, which drafted cleanly. fetch/curl remain 403, so this must be pasted, not fetched."
+    "evidence": "DRAFTED successfully 2026-09-04 via --source-text from a browser transcript (9 docs, $205 fee extracted). fetch/curl stay 403 behind Cloudflare; the browser clears it."
   },
   {
     "destinationIso": "za",

@@ -19,15 +19,16 @@ import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
 import { cn } from "@/lib/utils";
 
 /**
- * The organisation's landing page, and the only route with no session.
+ * The travel agency's landing page, and the only route with no session.
  *
- * This page used to address the traveller. It stopped being able to:
- * once travellers became invite-only (client decision, 2026-08-31)
- * nobody could buy a seat for themselves, so a page that promised a
- * free checklist and then sent you to `/employer/sign-up` was walking
- * its own reader into a door they could not open. The traveller copy
- * was not thrown away — it is `/travellers`, unchanged, because the
- * client asked for the B2B to be expanded and the B2C to be kept.
+ * This page used to address the traveller, then a generic "organisation"
+ * relocating its own staff. Client feedback (2026-09-04): the actual buyer
+ * is a travel agency running visa/relocation cases for its own clients as
+ * its business, not an employer moving employees — so the copy is written
+ * to that reader. The account model underneath is unchanged (same
+ * `/employer/sign-up` door, same case/roster mechanics, same document
+ * boundary) — this is a copy-only re-audience, not a new account type.
+ * The traveller copy was not thrown away — it is `/travellers`, unchanged.
  *
  * Statically rendered and cached at the edge — the sticky nav, the
  * corridor state, the FAQ accordion and the theme switch are the only
@@ -36,9 +37,9 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Visas and relocation for the organisations sending people",
+  title: "Visa and relocation processing for travel agencies",
   description:
-    "Sponsor a seat for every person you relocate. Toplance runs the visa application; you get a roster, a completion score and a status per person — and never their documents.",
+    "Run every client's visa application through Toplance. You get a caseboard, a completion score and a status per client — while Toplance's team handles the document review.",
 };
 
 /* Figures, quotes, portraits and prices are the client's to supply. Rather
@@ -53,25 +54,25 @@ const REGISTER = [
   // Corridors, not destinations. `LIVE_CORRIDORS` is asserted against
   // `seed.sql`, so the note is true as well as the figure.
   { label: "Corridors live", value: String(LIVE_CORRIDORS.length), note: "Counted from the corridor table" },
-  { label: "Seats sponsored", value: null, note: "Since launch" },
+  { label: "Cases run", value: null, note: "Since launch" },
   { label: "Approved on first submission", value: null, note: "Across live corridors" },
-  { label: "Median time from invitation to a complete file", value: null, note: "Per sponsored traveller" },
+  { label: "Median time from invitation to a complete file", value: null, note: "Per client" },
 ];
 
 /* The ledger is the same device the traveller page uses, re-aimed. Its
    left column is the mobility lead's week, not the applicant's. */
 const LEDGER = [
   {
-    alone: "A start date that slips twice, and you hear about it the week before",
-    with: "A roster that shows who is blocked, on the day they become blocked",
+    alone: "A case that stalls for a week before anyone notices",
+    with: "A caseboard that shows who is blocked, on the day they become blocked",
   },
   {
-    alone: "Chasing four hires on WhatsApp for documents you should not be holding",
+    alone: "Chasing four clients on WhatsApp for documents you shouldn't have to collect yourself",
     with: "Toplance collects and checks the documents; you see completion, never the file",
   },
   {
-    alone: "A different agent per country, each with its own invoice and no shared status",
-    with: "One supplier across every corridor, one consolidated invoice",
+    alone: "A different process for every corridor, remembered rather than written down",
+    with: "One system across every corridor, the same steps every time",
   },
   {
     alone: "A refusal three months in, for a document nobody flagged",
@@ -88,49 +89,49 @@ const LEDGER = [
 const STEPS = [
   {
     contracted: false,
-    title: "Scope the corridors you move on",
-    body: "Which passports, which destinations, which purposes. We show you what each corridor requires and which are live today — before anyone commits to anything.",
+    title: "Scope the corridors you work",
+    body: "Which passports, which destinations, which purposes. We show you what each corridor requires and which are live today — before you commit to anything.",
   },
   {
     contracted: false,
     title: "Get a quote against that scope",
-    body: "One price per seat, whichever corridor it is spent on. No per-document fees and no separate agent to negotiate with in each destination.",
+    body: "One price per case, whichever corridor it is spent on. No per-document fees and no separate agent to negotiate with in each destination.",
   },
   {
     contracted: true,
-    title: "Invite your people by email",
-    body: "Each invitation takes a seat. The traveller runs the intake conversation in their own language and uploads their own documents — you do not have to brief them or collect anything.",
+    title: "Invite your client by email",
+    body: "Each invitation opens a case. Your client runs the intake conversation in their own language and uploads their own documents — you do not have to brief them or collect anything by hand.",
   },
   {
     contracted: true,
-    title: "Watch the roster, not your inbox",
-    body: "Completion, status and destination per person, moving as their case moves. Nudge anyone who has stalled without having to call them.",
+    title: "Watch the caseboard, not your inbox",
+    body: "Completion, status and destination per client, moving as their case moves. Follow up on anyone who has stalled without having to call them.",
   },
 ];
 
 const FEATURES = [
   {
-    title: "A roster, not a spreadsheet you maintain",
-    body: "Every person you have sponsored, with a completion score, a status and a destination. It updates because their case moved, not because someone remembered to update it.",
+    title: "A caseboard, not a spreadsheet you maintain",
+    body: "Every client you are running, with a completion score, a status and a destination. It updates because their case moved, not because someone remembered to update it.",
   },
   {
-    title: "Progress without document access",
-    body: "You see whether someone is on track and whether they are stuck. You cannot open, download or preview a passport, a bank statement or a police certificate. That boundary is in the data model, not a permission a colleague can toggle.",
+    title: "Document review, done for you",
+    body: "You see whether a client is on track and whether they are stuck. Your own team never has to open, download or check a passport, a bank statement or a police certificate line by line — Toplance's reviewers do that, and it is built into how the product works, not a task you assign.",
   },
   {
-    title: "One supplier across every corridor",
-    body: "The same process, the same status vocabulary and the same invoice whether you are moving someone to Toronto or to Dubai — instead of one agent relationship per destination.",
+    title: "One system across every corridor",
+    body: "The same process, the same status vocabulary and the same invoice whether you are running a case to Toronto or to Dubai — instead of learning a different agent's process per destination.",
   },
   {
-    title: "A rules engine, not an agent's memory",
-    body: "Requirements are versioned rule sets per corridor. When a mission changes what it wants, everyone on that corridor sees the change, with the date it took effect.",
+    title: "A rules engine, not memory",
+    body: "Requirements are versioned rule sets per corridor. When a mission changes what it wants, every case on that corridor reflects the change, with the date it took effect.",
   },
   {
     title: "A named contact at both levels",
-    body: "An account contact for you, and a named Toplance case handler who owns each traveller's file. No ticket numbers and no starting over with someone new.",
+    body: "An account contact for you, and a named Toplance case handler who owns each client's file. No ticket numbers and no starting over with someone new.",
   },
   {
-    title: "An audit trail for compliance",
+    title: "An audit trail",
     body: "Who was invited, when, by whom; when a document was reviewed and by which reviewer; when a case changed status. Recorded as it happens rather than reconstructed later.",
   },
 ];
@@ -148,9 +149,9 @@ const ROSTER = [
  * left. What those tiers described is still exactly what a sponsored
  * traveller gets, so their feature lists are merged in here.
  *
- * Split into what the traveller gets and what the organisation gets,
- * because a buyer reading a flat eleven-item list cannot tell which
- * half is the service and which half is the console.
+ * Split into what the client gets and what the agency gets, because a
+ * buyer reading a flat eleven-item list cannot tell which half is the
+ * service and which half is the console.
  */
 const SEAT_INCLUDES = {
   traveller: [
@@ -162,9 +163,9 @@ const SEAT_INCLUDES = {
     "Arrival plan and alerts after approval",
   ],
   organisation: [
-    "A seat you can invite against, revoke and reassign",
-    "Roster view with completion, status and destination",
-    "Progress visibility with no document access",
+    "A case you can open, revoke and reassign",
+    "Caseboard view with completion, status and destination",
+    "Progress visibility, with document review handled for you",
     "Consolidated invoicing",
     "A named account contact",
     "Priority replies within one working day",
@@ -188,18 +189,18 @@ const SEAT_EXCLUDES = [
    and the ones left blank are blank on purpose — a term invented here
    is a term someone will quote back in a negotiation. */
 const TERMS = [
-  { label: "Unit", value: "One seat, one sponsored traveller" },
+  { label: "Unit", value: "One case, one client" },
   { label: "Billing", value: "Annually, in advance, by invoice" },
-  { label: "Price per seat", value: null },
+  { label: "Price per case", value: null },
   { label: "Minimum commitment", value: null },
-  { label: "Seat reassignment", value: null },
+  { label: "Case reassignment", value: null },
   { label: "Data residency", value: null },
 ];
 
 const FAQ = [
   {
-    q: "What exactly can we see about the people we sponsor?",
-    a: "Their completion percentage, their status, their destination and whether they are blocked — enough to plan a start date. You cannot open, download or preview a single document they upload. That boundary is built into the data model rather than being a permission an administrator can grant, which means it also holds for anyone you add to your account later.",
+    q: "What exactly can we see about our clients' cases?",
+    a: "Completion percentage, status, destination and whether a case is blocked — enough to know where every client stands. Your team doesn't open, download or preview the documents themselves; Toplance's reviewers do that. That boundary is built into the data model rather than being a permission an administrator can grant, so it holds for anyone you add to your account later, too.",
   },
   {
     q: "Does Toplance decide whether the visa is granted?",
@@ -207,23 +208,23 @@ const FAQ = [
   },
   {
     q: "How are we invoiced?",
-    a: "One consolidated invoice for your seats, billed annually in advance, rather than a charge per traveller or per document. The amount per seat and any minimum commitment are set in your contract — the pricing section above marks both as figures the client supplies rather than guessing at them here.",
+    a: "One consolidated invoice for your cases, billed annually in advance, rather than a charge per client or per document. The amount per case and any minimum commitment are set in your contract — the pricing section above marks both as figures you supply rather than guessing at them here.",
   },
   {
-    q: "What happens if someone leaves before they travel?",
-    a: "A pending invitation can be revoked from your console, which releases the seat before any work has begun on it. Once a traveller has started a case, whether that seat can be reassigned is a contract term rather than a product setting — it is one of the terms listed above.",
+    q: "What happens if a client drops out before they travel?",
+    a: "A pending invitation can be revoked from your console, which releases the case before any work has begun on it. Once a client has started a case, whether that case can be reassigned is a contract term rather than a product setting — it is one of the terms listed above.",
   },
   {
-    q: "Where is our people's data stored?",
-    a: "Documents are encrypted at rest and in transit. Residency of the stored files is a decision your organisation can set at contract level, so if you are bound to keep personal data in a particular jurisdiction that is a conversation to have before signing rather than a limitation you discover afterwards.",
+    q: "Where is our clients' data stored?",
+    a: "Documents are encrypted at rest and in transit. Residency of the stored files is a decision your agency can set at contract level, so if you are bound to keep personal data in a particular jurisdiction that is a conversation to have before signing rather than a limitation you discover afterwards.",
   },
   {
-    q: "Our travellers do not all read English.",
-    a: "The intake conversation, the checklist and the status updates run in English, Hausa, Yoruba and Igbo, typed or spoken. Your traveller can switch language at any point, including mid-conversation, and their answers carry over. Your console stays in English.",
+    q: "Our clients do not all read English.",
+    a: "The intake conversation, the checklist and the status updates run in English, Hausa, Yoruba and Igbo, typed or spoken. Your client can switch language at any point, including mid-conversation, and their answers carry over. Your caseboard stays in English.",
   },
   {
     q: "Can we start with one corridor?",
-    a: "Yes, and most organisations do. Seats are not tied to a destination, so a contract scoped around one corridor still covers the second one you open next quarter — provided it is live. If it is not, ask for it and it enters the build queue with your demand attached.",
+    a: "Yes, and most agencies do. Cases are not tied to a destination, so a contract scoped around one corridor still covers the second one you open next quarter — provided it is live. If it is not, ask for it and it enters the build queue with your demand attached.",
   },
 ];
 
@@ -240,11 +241,11 @@ export default function HomePage() {
         <div aria-hidden className="security-paper pointer-events-none absolute inset-0 -z-10" />
         <Shell className="pb-20 pt-12 md:pb-28 md:pt-16">
           <p className="tag rise text-brand-text">
-            Visas and relocation for the organisations sending people
+            Visa and relocation processing for travel agencies
           </p>
 
           <h1 className="d-hero rise mt-5 max-w-[20ch]" style={{ animationDelay: "70ms" }}>
-            Sponsor the seat. See the progress. Never see the passport.
+            Take the case. Track the file. Never chase it by hand.
           </h1>
 
           {/* The control sits directly after the H1, before the
@@ -252,7 +253,7 @@ export default function HomePage() {
               traveller page: you can interrogate the product on the first
               screen without reading a word of marketing. What changed is
               who is asking — a buyer checks whether the corridors their
-              workforce actually moves on are live before they read
+              clients actually need are live before they read
               anything else. */}
           <div className="rise mt-10" style={{ animationDelay: "150ms" }}>
             <CorridorBar ctaLabel="See what this corridor needs" />
@@ -263,17 +264,18 @@ export default function HomePage() {
             style={{ animationDelay: "230ms" }}
           >
             <p className="t-body-lg text-ink-2">
-              Toplance runs the visa application for every person you sponsor —
+              Toplance runs the visa application for every client you take on —
               the intake conversation in their own language, the exact document
               checklist for their corridor, human review before submission, and
-              a named case handler who owns the file. You get a roster, a
-              completion score and a status per person. You do not get their
-              documents, and neither does anyone else on your team.
+              a named case handler who owns the file. You get a caseboard, a
+              completion score and a status per client. Your team is never the
+              one combing through a passport or a bank statement to check it —
+              Toplance&apos;s reviewers are.
             </p>
             <ul className="flex flex-col justify-center gap-3">
               {[
-                "Buy seats in advance, invite by email",
-                "Progress visibility with no document access",
+                "Open a case and invite your client by email",
+                "One caseboard across every corridor you run",
                 "Consolidated invoicing and a named account contact",
               ].map((line) => (
                 <li key={line} className="flex items-start gap-3">
@@ -289,8 +291,8 @@ export default function HomePage() {
       {/* ---------- the problem ---------- */}
       <Section label="The problem">
         <Head
-          title="Nobody loses a hire over the visa. They lose it over not knowing."
-          lead="Relocation goes wrong in the gap between sending someone the embassy link and finding out, months later, what they never submitted."
+          title="Clients don't leave over a refusal. They leave over silence."
+          lead="A case goes wrong in the gap between telling a client what to send you and finding out, weeks later, what they never did."
         />
 
         <div className="mt-11 border-t border-border-strong">
@@ -324,7 +326,7 @@ export default function HomePage() {
       <Section id="how" label="How it works" datum="Steps 01–02 need no commitment">
         <Head
           title="Four steps, and the first two cost you nothing"
-          lead="Scoping your corridors and pricing them is free and yours to take to a procurement review. Everything after that is what the seats pay for."
+          lead="Scoping the corridors you work and pricing them is free and yours to take to a client. Everything after that is what each case pays for."
         />
 
         <ol className="mt-12 grid gap-x-10 gap-y-11 sm:grid-cols-2 xl:grid-cols-4">
@@ -359,7 +361,7 @@ export default function HomePage() {
       <Section label="What you get">
         <Head
           title="Built around the two things that actually go wrong"
-          lead="People submit the wrong documents, and then nobody tells anyone what is happening. Every item here closes one of those two gaps — for the traveller, and for the person who has to plan around them."
+          lead="Clients submit the wrong documents, and then nobody tells anyone what is happening. Every item here closes one of those two gaps — for your client, and for the person running their file."
         />
         {/* The one marketing section drawn as the product's own case-file
             cards — these six claims are what the signed-in screens
@@ -402,17 +404,17 @@ export default function HomePage() {
               One screen that answers &ldquo;is anyone stuck?&rdquo;
             </h2>
             <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
-              You need to know who is on track and who is not — and you should
-              not be holding anyone&apos;s identity documents to find out. The
-              organisation console gives you a roster, a completion score and a
-              status per person, and deliberately nothing else.
+              You need to know who is on track and who is not — and your staff
+              shouldn&apos;t have to open a passport or a bank statement to
+              find out. The caseboard gives you a completion score and a
+              status per client, and deliberately nothing else to manage.
             </p>
             <ul className="mt-8 flex flex-col gap-3">
               {[
-                "Buy seats in advance and invite people by email",
-                "One roster with completion, status and destination per person",
-                "Nudge someone who has stalled without calling them",
-                "Revoke a pending invitation and release the seat",
+                "Open a case and invite your client by email",
+                "One caseboard with completion, status and destination per client",
+                "Follow up on anyone who has stalled without calling them",
+                "Revoke a pending invitation and release the case",
                 "Consolidated invoicing and a named account contact",
               ].map((x) => (
                 <li key={x} className="flex items-start gap-3">
@@ -424,12 +426,12 @@ export default function HomePage() {
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
                 <Link href="/employer/sign-up">
-                  <Briefcase /> Talk to us about seats
+                  <Briefcase /> Talk to us about your caseload
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
                 <Link href="/employer/sign-in">
-                  Employer sign-in <ArrowRight />
+                  Agency sign-in <ArrowRight />
                 </Link>
               </Button>
             </div>
@@ -439,10 +441,10 @@ export default function HomePage() {
             <div className="flex items-start gap-3 border-b border-border pb-5">
               <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
               <div>
-                <p className="d-sm">You see progress, never documents</p>
+                <p className="d-sm">You see progress, we handle the file</p>
                 <p className="t-muted mt-1 text-[15px]">
-                  Passports, bank statements and police certificates stay between
-                  the traveller and Toplance.
+                  Passports, bank statements and police certificates are
+                  reviewed by Toplance, not chased by your team.
                 </p>
               </div>
             </div>
@@ -477,7 +479,7 @@ export default function HomePage() {
       >
         <Head
           title="Corridors, not countries"
-          lead="A corridor is one nationality travelling to one destination for one purpose. That is the unit a checklist is built from — so the question is not whether we cover Canada, it is whether we cover the corridors your workforce actually moves on. A Nigerian passport holder going to the UK for work needs a different file to a Ghanaian going to study."
+          lead="A corridor is one nationality travelling to one destination for one purpose. That is the unit a checklist is built from — so the question is not whether we cover Canada, it is whether we cover the corridors your clients actually need. A Nigerian passport holder going to the UK for work needs a different file to a Ghanaian going to study."
         />
         <div className="mt-11">
           <CorridorBoard />
@@ -519,9 +521,9 @@ export default function HomePage() {
         <p className="tag mt-12">In their own words</p>
         <div className="mt-4 grid gap-6 md:grid-cols-3">
           {[
-            "A mobility or HR lead on roster visibility",
+            "An agency ops lead on caseboard visibility",
             "A finance contact on consolidated invoicing",
-            "A second organisation, so this does not read as one account",
+            "A second agency, so this does not read as one account",
           ].map((slot) => (
             <figure
               key={slot}
@@ -537,7 +539,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        <p className="tag mt-11">Organisations we work with</p>
+        <p className="tag mt-11">Agencies we work with</p>
         <div className="mt-4 flex flex-wrap gap-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <span
@@ -551,10 +553,10 @@ export default function HomePage() {
       </Section>
 
       {/* ---------- pricing ---------- */}
-      <Section id="pricing" label="Pricing" datum="Billed by seat, annually">
+      <Section id="pricing" label="Pricing" datum="Billed by case, annually">
         <Head
-          title="One seat for each person you sponsor"
-          lead="Every seat carries the whole product — the conversation, the checklist, a named case handler and human review before submission — whichever corridor it is spent on. The amounts below are placeholders for the client to set."
+          title="One case for every client you run"
+          lead="Every case carries the whole product — the conversation, the checklist, a named case handler and human review before submission — whichever corridor it is spent on. The amounts below are placeholders for you to set."
         />
 
         <div className="mt-11 overflow-hidden rounded-lg border border-border bg-surface">
@@ -563,8 +565,8 @@ export default function HomePage() {
               aria-hidden
               className="block h-[3px] rounded-[var(--radius-pill)] bg-brand-accent"
             />
-            <span className="tag mt-4 block">Organisations</span>
-            <p className="d-lg mt-4">By seat</p>
+            <span className="tag mt-4 block">Agencies</span>
+            <p className="d-lg mt-4">By case</p>
             <p className="t-muted text-[15px]">billed annually</p>
 
             {/* Split rather than one flat list: a buyer needs to see which
@@ -572,7 +574,7 @@ export default function HomePage() {
                 which half is the console they log into themselves. */}
             <div className="mb-8 mt-8 grid gap-8 lg:grid-cols-2 lg:gap-x-10">
               <div>
-                <p className="tag mb-4">What the traveller gets</p>
+                <p className="tag mb-4">What your client gets</p>
                 <ul className="grid gap-3">
                   {SEAT_INCLUDES.traveller.map((f) => (
                     <li key={f} className="flex items-start gap-3">
@@ -583,7 +585,7 @@ export default function HomePage() {
                 </ul>
               </div>
               <div>
-                <p className="tag mb-4">What your organisation gets</p>
+                <p className="tag mb-4">What your agency gets</p>
                 <ul className="grid gap-3">
                   {SEAT_INCLUDES.organisation.map((f) => (
                     <li key={f} className="flex items-start gap-3">
@@ -596,7 +598,7 @@ export default function HomePage() {
             </div>
 
             <Button asChild size="block" variant="primary" className="lg:max-w-[320px]">
-              <Link href="/employer/sign-up">Sponsor your team</Link>
+              <Link href="/employer/sign-up">Run your first case</Link>
             </Button>
           </div>
 
@@ -606,7 +608,7 @@ export default function HomePage() {
               something that was being kept back. */}
           <div className="grid gap-8 border-t border-border bg-surface-2 p-7 md:grid-cols-2 lg:gap-x-10 lg:p-9">
             <div>
-              <p className="tag mb-4">What a seat does not cover</p>
+              <p className="tag mb-4">What a case does not cover</p>
               <ul className="grid gap-3">
                 {SEAT_EXCLUDES.map((x) => (
                   <li key={x} className="flex items-start gap-3">
@@ -665,14 +667,14 @@ export default function HomePage() {
         </Accordion>
 
         <p className="t-muted mt-9 text-[15px]">
-          Sponsoring a seat rather than buying one?{" "}
+          Booking your own visa rather than running it for a client?{" "}
           <Link
             href="/travellers"
             className="font-medium text-brand-text underline underline-offset-4"
           >
-            The traveller&apos;s side of this
+            The individual path
           </Link>{" "}
-          answers what the person you are sponsoring will be asked to do.
+          answers what you&apos;ll be asked to do.
         </p>
       </Section>
 
@@ -684,15 +686,15 @@ export default function HomePage() {
       <section className="border-t border-border bg-[color-mix(in_srgb,var(--brand)_5%,var(--bg))] py-20 md:py-24">
         <Shell>
           <h2 className="d-lg max-w-[22ch]">
-            Tell us who you are moving, and where.
+            Tell us who you&apos;re running cases for, and where.
           </h2>
           <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
             Scoping your corridors and pricing them costs nothing and commits you
-            to nothing. You leave with a quote you can take into a procurement
-            review, whether or not you come back.
+            to nothing. You leave with a quote you can compare against what
+            you&apos;re doing today, whether or not you come back.
           </p>
           <div className="mt-10">
-            <CorridorBar ctaLabel="Talk to us about seats" />
+            <CorridorBar ctaLabel="Talk to us about your caseload" />
           </div>
         </Shell>
       </section>

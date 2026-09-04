@@ -8,7 +8,7 @@ import { CompletionRing } from "@/components/app/completion-ring";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
-import { VERIFIED_MEANS } from "@/lib/domain/status";
+import { STATUS, VERIFIED_MEANS, canSubmitFrom } from "@/lib/domain/status";
 import { UPLOAD_GUIDANCE } from "@/lib/domain/uploads";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import {
@@ -103,22 +103,42 @@ export default async function DocumentsPage() {
           <CompletionRing pct={completion.pct} size={120} />
         </div>
 
-        {/* The ring reaches 100% when everything is uploaded; this
+{/* The ring reaches 100% when everything is uploaded; this
             section needs the stronger condition — every required
             document past review — because that is what the submit
             transaction checks. This is a real boundary: everything above
             it is collecting, everything after it is a file in someone
-            else's hands, so it is the one tinted sheet on the screen. */}
-        {completion.total > 0 && completion.verified === completion.total && (
-          <section className="mt-8 rounded-lg border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] px-5 py-5 sm:px-6">
-            <h2 className="t-h3">Everything is verified</h2>
-            <p className="t-muted mt-2 max-w-[74ch]">
-              Submitting sends your file to the review team and notifies them
-              immediately.
-            </p>
-            <SubmitButton applicationId={application.id} />
-          </section>
-        )}
+            else's hands, so it is the one tinted sheet on the screen.
+
+            `canSubmitFrom` is the other half, and it was missing: a
+            checklist stays complete after submission, so this panel used
+            to keep offering to send a case that was already with the
+            desk. The transaction refused the second click, which meant
+            the screen invited an action and then told the traveller off
+            for taking it. Drawn from the same list the transaction
+            enforces, the two cannot disagree. */}
+        {completion.total > 0 &&
+          completion.verified === completion.total &&
+          (canSubmitFrom(application.status) ? (
+            <section className="mt-8 rounded-lg border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] px-5 py-5 sm:px-6">
+              <h2 className="t-h3">Everything is verified</h2>
+              <p className="t-muted mt-2 max-w-[74ch]">
+                Submitting sends your file to the review team and notifies them
+                immediately.
+              </p>
+              <SubmitButton applicationId={application.id} />
+            </section>
+          ) : (
+            /* Already sent. Saying where it is beats saying nothing:
+               the panel disappearing on its own would read as the
+               submission having failed. */
+            <section className="mt-8 rounded-lg border border-border-strong px-5 py-5 sm:px-6">
+              <h2 className="t-h3">{STATUS[application.status].label}</h2>
+              <p className="t-muted mt-2 max-w-[74ch]">
+                {STATUS[application.status].blurb}
+              </p>
+            </section>
+          ))}
 
         {/* The outcome dialog sits outside the sets, because uploading
             moves a row from one set to another — a dialog owned by the

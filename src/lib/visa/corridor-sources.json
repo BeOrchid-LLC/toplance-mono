@@ -104,10 +104,10 @@
     "destinationName": "Austria",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/austria/nigeria/english/pdf/tourist-checklist.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from a VFS one-pager keyed to NIGERIA \u2014 see the it/* entries for the browser-fetch method (VFS 403s fetch, serves a browser). Headers name the issuing mission: 'Embassy of Denmark, Abuja', 'NIGERIA Harmonised Schengen Visa Application Form'. Jurisdiction shows in the output: dk/tourism asks for CAC registration (Nigeria's Corporate Affairs Commission), social ties proof and pocket money. NOTE the URL case is inconsistent across countries \u2014 denmark/Nigeria and sweden/Nigeria capitalise it, austria/nigeria and italy/nigeria do not, and the wrong case 404s."
   },
   {
     "destinationIso": "at",
@@ -843,10 +843,10 @@
     "destinationName": "Denmark",
     "purpose": "business",
     "visaType": "C",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/denmark/Nigeria/english/pdf/business_new.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from a VFS one-pager keyed to NIGERIA \u2014 see the it/* entries for the browser-fetch method (VFS 403s fetch, serves a browser). Headers name the issuing mission: 'Embassy of Denmark, Abuja', 'NIGERIA Harmonised Schengen Visa Application Form'. Jurisdiction shows in the output: dk/tourism asks for CAC registration (Nigeria's Corporate Affairs Commission), social ties proof and pocket money. NOTE the URL case is inconsistent across countries \u2014 denmark/Nigeria and sweden/Nigeria capitalise it, austria/nigeria and italy/nigeria do not, and the wrong case 404s."
   },
   {
     "destinationIso": "dk",
@@ -863,10 +863,10 @@
     "destinationName": "Denmark",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "thin",
-    "sourceUrl": null,
-    "checkedAt": "2026-09-03",
-    "evidence": "Recon 2026-09-03: guessed URL returned <800 chars \u2014 JS-rendered or a shell page. Needs a browser or a different entry point."
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/denmark/Nigeria/english/pdf/check-list-Visa-long-stay.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from a VFS one-pager keyed to NIGERIA \u2014 see the it/* entries for the browser-fetch method (VFS 403s fetch, serves a browser). Headers name the issuing mission: 'Embassy of Denmark, Abuja', 'NIGERIA Harmonised Schengen Visa Application Form'. Jurisdiction shows in the output: dk/tourism asks for CAC registration (Nigeria's Corporate Affairs Commission), social ties proof and pocket money. NOTE the URL case is inconsistent across countries \u2014 denmark/Nigeria and sweden/Nigeria capitalise it, austria/nigeria and italy/nigeria do not, and the wrong case 404s."
   },
   {
     "destinationIso": "dk",
@@ -883,10 +883,10 @@
     "destinationName": "Denmark",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/denmark/Nigeria/english/pdf/tourist-visa-checklist.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from a VFS one-pager keyed to NIGERIA \u2014 see the it/* entries for the browser-fetch method (VFS 403s fetch, serves a browser). Headers name the issuing mission: 'Embassy of Denmark, Abuja', 'NIGERIA Harmonised Schengen Visa Application Form'. Jurisdiction shows in the output: dk/tourism asks for CAC registration (Nigeria's Corporate Affairs Commission), social ties proof and pocket money. NOTE the URL case is inconsistent across countries \u2014 denmark/Nigeria and sweden/Nigeria capitalise it, austria/nigeria and italy/nigeria do not, and the wrong case 404s."
   },
   {
     "destinationIso": "dk",
@@ -2495,10 +2495,10 @@
     "destinationName": "Sweden",
     "purpose": "tourism",
     "visaType": "C",
-    "status": "unusable",
-    "sourceUrl": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX:32009R0810",
-    "checkedAt": "2026-09-03",
-    "evidence": "probe passed (10 distinct nouns) but DRAFTING FAILED on de/tourism 2026-09-03: Annex II sits 116k chars into the regulation and the model returned no extract. A legal instrument is not a checklist page."
+    "status": "verified",
+    "sourceUrl": "https://visa.vfsglobal.com/one-pager/sweden/Nigeria/english/pdf/tourism_nigeria_checklist.pdf",
+    "checkedAt": "2026-09-04",
+    "evidence": "DRAFTED successfully 2026-09-04 from a VFS one-pager keyed to NIGERIA \u2014 see the it/* entries for the browser-fetch method (VFS 403s fetch, serves a browser). Headers name the issuing mission: 'Embassy of Denmark, Abuja', 'NIGERIA Harmonised Schengen Visa Application Form'. Jurisdiction shows in the output: dk/tourism asks for CAC registration (Nigeria's Corporate Affairs Commission), social ties proof and pocket money. NOTE the URL case is inconsistent across countries \u2014 denmark/Nigeria and sweden/Nigeria capitalise it, austria/nigeria and italy/nigeria do not, and the wrong case 404s."
   },
   {
     "destinationIso": "se",

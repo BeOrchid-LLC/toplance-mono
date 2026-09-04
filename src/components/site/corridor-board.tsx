@@ -128,7 +128,7 @@ export function CorridorBoard() {
       <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
         <Button asChild>
           <Link href="/employer/sign-up">
-            Sponsor the {iso3(origin)} → {iso3(destination)} corridor
+            Run the {iso3(origin)} → {iso3(destination)} corridor
             <ArrowRight />
           </Link>
         </Button>

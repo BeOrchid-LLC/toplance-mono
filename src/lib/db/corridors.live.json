@@ -71,6 +71,21 @@
   },
   {
     "nationalityIso": "ng",
+    "destinationIso": "cz",
+    "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "cz",
+    "purpose": "study"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "cz",
+    "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
     "destinationIso": "de",
     "purpose": "business"
   },
@@ -78,6 +93,11 @@
     "nationalityIso": "ng",
     "destinationIso": "de",
     "purpose": "relocation"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "de",
+    "purpose": "study"
   },
   {
     "nationalityIso": "ng",
@@ -128,6 +148,16 @@
     "nationalityIso": "ng",
     "destinationIso": "gb",
     "purpose": "work"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "gr",
+    "purpose": "business"
+  },
+  {
+    "nationalityIso": "ng",
+    "destinationIso": "gr",
+    "purpose": "tourism"
   },
   {
     "nationalityIso": "ng",

@@ -4,16 +4,21 @@ import type { ApplicationStatus } from "@/lib/domain/status";
 /**
  * The traveller's journey nav, in one place.
  *
- * Two surfaces render it: the `(app)` layout, over the application row it
- * already holds, and the landing page's `SiteChrome`, over what
- * `getSignedInChrome` could read. They built the list separately once and
- * drifted — the landing page's copy stopped at Documents, so the bar grew
- * entries the moment a traveller clicked through to their own console.
- * Same fix as `AppNav` reading the pathname rather than taking it as a
- * prop: one answer, so the two cannot disagree.
+ * One surface renders it now: the `(app)` layout, over the application
+ * row it already holds. It was pulled out when there were two — the
+ * landing page used to dress its bar as the signed-in visitor's own
+ * console and built this list separately, and the two drifted, the
+ * landing page's copy stopping at Documents so the bar grew entries the
+ * moment a traveller clicked through. That second caller is gone with
+ * the swap itself: the marketing header is now the same for everyone.
  *
- * Pure, and free of both `"use client"` and `server-only`, because a
- * client component and a server layout each need to call it.
+ * The list stays here rather than being inlined into its one caller.
+ * Same reasoning as `AppNav` reading the pathname instead of taking it
+ * as a prop — one answer, in the place a second surface would find it —
+ * and `opsNav` is modelled on this.
+ *
+ * Pure, and free of both `"use client"` and `server-only`, so either a
+ * client component or a server layout can call it.
  */
 export function travellerNav({
   intakeComplete,

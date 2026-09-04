@@ -472,6 +472,13 @@ function ScriptedIntake({
     previous: string;
   } | null>(null);
   const [pending, startTransition] = React.useTransition();
+  // The server's own verdict on the last write. An intake that was
+  // already finished when this screen opened starts out confirmed;
+  // every submission clears it until `answerQuestion` answers, so a
+  // write in flight can never read as a finished intake.
+  const [confirmed, setConfirmed] = React.useState(
+    () => intakeFrontier(initialAnswers) === INTAKE_QUESTIONS.length
+  );
   const t = useT();
   const { locale } = useLocale();
   const router = useRouter();
@@ -484,7 +491,29 @@ function ScriptedIntake({
   // traveller's answer under the wrong question.
   const frontier = intakeFrontier(answers);
   const current = INTAKE_QUESTIONS[frontier];
-  const done = frontier === INTAKE_QUESTIONS.length;
+  // Two conditions, because the optimistic copy and the server's copy
+  // answer different questions. `asked` — has the conversation run out
+  // of questions — is the local one's to answer, and it is what takes
+  // the composer away the instant a chip is tapped.
+  //
+  // Whether the *intake* is finished is only the server's to answer,
+  // and the tenth answer is the one write where the two come apart:
+  // `recordIntakeAnswer` builds the checklist on it, which resolves a
+  // corridor over the network, so it lands a second or so after the tap
+  // rather than immediately. Reading completion off the optimistic copy
+  // put "Profile complete" and a "See my requirements" CTA on screen
+  // while `intake_complete` was still false — and every page that CTA
+  // leads to redirects back here on that column, so the traveller was
+  // handed a button that returned them to the screen they had just
+  // finished.
+  //
+  // The server's answer is taken from `answerQuestion`'s own return
+  // value rather than from a refreshed prop: `initialAnswers` arrives
+  // here as the wrapper's `handover` state, which is a snapshot taken
+  // at mount and deliberately not resynced, so a `router.refresh()`
+  // would never reach this component.
+  const asked = frontier === INTAKE_QUESTIONS.length;
+  const done = asked && confirmed;
 
   React.useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -497,12 +526,13 @@ function ScriptedIntake({
     setAnswers((a) => ({ ...a, [key]: value }));
     setDraft("");
     setTyping(true);
+    setConfirmed(false);
     setReopened(null);
 
     startTransition(async () => {
       const result = await answerQuestion(applicationId, key, value);
-      setTyping(false);
       if ("error" in result) {
+        setTyping(false);
         toast.error(result.error);
         setAnswers((a) => {
           const next = { ...a };
@@ -511,7 +541,14 @@ function ScriptedIntake({
         });
         return;
       }
+      setConfirmed(result.complete);
+      // The corridor header lives in the layout above this screen and
+      // is built by the same write, so the tenth answer refreshes it.
+      // `typing` deliberately stays on until then: the dock has no
+      // question left to show, and emptying it would read as the agent
+      // having nothing to say rather than as work still in progress.
       if (result.complete) router.refresh();
+      else setTyping(false);
     });
   }
 
@@ -519,6 +556,11 @@ function ScriptedIntake({
   function editFrom(key: string) {
     const previous = answers[key];
     setAnswers((a) => truncateAnswersAt(a, key));
+    // The tenth answer leaves `typing` on so the dock stays busy until
+    // the completion bar replaces it. Reopening is the one way back out
+    // of that state, and without this the re-asked question would
+    // arrive behind a thinking indicator that has nothing left to do.
+    setTyping(false);
     setReopened(previous ? { key, previous } : null);
     toast.info("Answer reopened. Anything after it will be asked again.");
   }

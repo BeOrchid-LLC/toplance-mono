@@ -84,10 +84,10 @@
     "destinationName": "Austria",
     "purpose": "relocation",
     "visaType": "D",
-    "status": "verified",
+    "status": "thin",
     "sourceUrl": "https://www.migration.gv.at/fileadmin/downloads/infoblaetter/2025_Required_Documents.pdf",
     "checkedAt": "2026-09-04",
-    "evidence": "DRAFTED successfully 2026-09-04 (7 docs, 5 required). REV"
+    "evidence": "2026-09-04: DRAFTED AND DELETED \u2014 MIS-SOURCED, and the predicted failure of 2025_Required_Documents.pdf. That single sheet covers every Austrian permit type, and drafting 'relocation' from it produced the EU BLUE CARD \u2014 a work permit \u2014 near-identical to at/work (degree, institution_status, ict_professional_experience, employers_declaration) with nothing about family reunification. Austria needs a family-reunification-specific source."
   },
   {
     "destinationIso": "at",
@@ -1469,10 +1469,10 @@
     "destinationName": "Italy",
     "purpose": "study",
     "visaType": "D",
-    "status": "verified",
+    "status": "thin",
     "sourceUrl": "https://visa.vfsglobal.com/one-pager/italy/nigeria/english/pdf/Checklist-study-visa.pdf",
     "checkedAt": "2026-09-04",
-    "evidence": "DRAFTED successfully 2026-09-04 (tourism 33/14 required, business 28/18, study 22/16, work 8/7) from the Consulate General of Italy in LAGOS via VFS one-pagers. \u26a0\ufe0f VFS IS NOT BLOCKED \u2014 it blocks fetch, not a browser. visa.vfsglobal.com returns 403 to fetch/curl and serves the same PDF at HTTP 200 to a real browser. Method: open the PDF URL in the browser, then fetch() it from the page's own origin, base64 the bytes out, and run pdftotext -layout locally; feed the result via --source-text with the VFS URL as the first line. These are the highest-quality drafts of the session BECAUSE the jurisdiction is exact: the lists ask for a Nigerian residence permit, a Tax Clearance Certificate and a PIT certificate, which no central Italian source would ever mention. Minor note: 'original_and_copy_of_documents' is an instruction, not a document."
+    "evidence": "2026-09-04: DRAFTED AND DELETED \u2014 MIS-SOURCED. The VFS file named 'Checklist-study-visa.pdf' does not contain a study checklist: its heading is 'REQUISITE DOCUMENTS PARTICIPATION IN CONFERENCES, CONGRESS (INVITATION)', and it extracted invitation_letter and official_delegation_letter with no admission letter, enrolment proof or tuition evidence. THE FILENAME LIES \u2014 read the document heading, never trust the URL. Italy still needs a real study checklist from the Lagos consulate."
   },
   {
     "destinationIso": "it",

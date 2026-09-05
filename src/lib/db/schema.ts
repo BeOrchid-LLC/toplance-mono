@@ -452,6 +452,25 @@ export const applications = pgTable(
     unique("applications_traveler_key").on(t.travelerId),
     index("applications_org_idx").on(t.orgId),
     index("applications_status_idx").on(t.status, t.slaDueAt),
+    /**
+     * Not for a read — for the delete on the other end of the foreign
+     * key. `corridor_id` is `on delete set null`, so without an index
+     * Postgres scans the whole of `applications` for every corridor
+     * deleted, and takes row locks while it does. That is how a fixture
+     * tearing down one corridor timed out unrelated suites inserting
+     * applications in parallel, which reads as a flaky test rather than
+     * a missing index.
+     *
+     * It earns its keep on reads too: the advisory sweep joins
+     * `applications` to `corridors` on it every night.
+     */
+    index("applications_corridor_idx").on(t.corridorId),
+    /**
+     * Same argument, different column. `assignee_id` points at
+     * `profiles`, so removing a staff account scanned this table as
+     * well — and the ops queue filters by assignee to answer "my cases".
+     */
+    index("applications_assignee_idx").on(t.assigneeId),
   ]
 );
 

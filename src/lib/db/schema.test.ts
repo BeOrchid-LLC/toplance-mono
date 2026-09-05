@@ -202,3 +202,36 @@ describe.skipIf(!process.env.DATABASE_URL)("profiles.avatarPath", async () => {
     }
   });
 });
+
+/**
+ * Every foreign key on `applications` is indexed.
+ *
+ * Not a performance nicety — a correctness-of-the-suite one. An
+ * unindexed `on delete set null` foreign key makes Postgres scan the
+ * whole child table for every parent row deleted, taking locks as it
+ * goes, and that is how a fixture tearing down one corridor came to time
+ * out unrelated suites inserting applications in parallel. It read as
+ * flakiness for days.
+ *
+ * Written as a test rather than trusted to the schema file because this
+ * table has lost an index to a migration before: `applications_traveler_idx`
+ * was created in `0000` and dropped in `0002`.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("applications indexes", async () => {
+  const { db } = await import("@/lib/db/client");
+  const { sql } = await import("drizzle-orm");
+
+  it("indexes every column that points at another table", async () => {
+    const { rows } = (await db.execute(
+      sql`select indexdef from pg_indexes where tablename = 'applications'`
+    )) as unknown as { rows: { indexdef: string }[] };
+
+    const definitions = rows.map((r) => r.indexdef).join("\n");
+
+    for (const column of ["traveler_id", "org_id", "corridor_id", "assignee_id"]) {
+      expect(definitions, `${column} needs an index`).toContain(`(${column}`);
+    }
+  });
+});

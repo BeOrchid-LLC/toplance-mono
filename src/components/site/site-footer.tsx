@@ -10,11 +10,12 @@ const COLUMNS = [
     links: [
       { href: "/#how", label: "How it works" },
       { href: "/#orgs", label: "Your dashboard" },
-      { href: "/#where", label: "Where we work" },
+      { href: "/#where", label: "Where you can go" },
       { href: "/#pricing", label: "Pricing" },
-      // The nav drops "Sign in" below 640px to keep the bar from
-      // crowding; on a phone this is the only way back to an account,
-      // so it cannot be missing from here as well.
+      // The bar carries this at every width now — on desktop in the
+      // row, below `lg` as a named row in the menu. It stays here
+      // because a footer that omits the way back to an account is a
+      // footer people scroll past looking for it.
       { href: "/sign-in", label: "Sign in" },
     ],
   },

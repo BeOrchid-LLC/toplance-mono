@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { PhoneField } from "@/components/auth/phone-field";
-import { useLocale } from "@/components/locale-provider";
+import { useLocale, useT } from "@/components/locale-provider";
 import {
   checkInvitedEmail,
   completeProfile,
@@ -22,6 +22,7 @@ import {
 } from "@/app/(auth)/actions";
 import { isInternalPath } from "@/lib/auth/routes";
 import { splitFullName } from "@/lib/domain/name";
+import { AUTH_FORM } from "@/lib/i18n/auth-form";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
 
@@ -65,7 +66,18 @@ type Audience = "traveller" | "employer" | "operations";
  */
 type AuthFormProps = { next?: string } & (
   | { mode: "sign-in"; audience?: Audience }
-  | { mode: "sign-up"; audience?: Audience; intent: SignUpIntent }
+  | {
+      mode: "sign-up";
+      audience?: Audience;
+      intent: SignUpIntent;
+      /**
+       * Set only by the invite-only sign-up door, which has already
+       * resolved the token server-side. Locks the email field instead
+       * of leaving it typed, since the invitation names exactly one
+       * address and `checkInvitedEmail` refuses anything else anyway.
+       */
+      invitedEmail?: string;
+    }
 );
 
 export function AuthForm(props: AuthFormProps) {
@@ -77,6 +89,7 @@ export function AuthForm(props: AuthFormProps) {
   const [useBackupCode, setUseBackupCode] = React.useState(false);
   const [backupCode, setBackupCode] = React.useState("");
   const { locale } = useLocale();
+  const t = useT();
   const router = useRouter();
   const params = useSearchParams();
   const requested = params.get("next");
@@ -120,9 +133,11 @@ export function AuthForm(props: AuthFormProps) {
    * what the check was for. `PhoneField` already holds its own state,
    * so it survives a reset without help.
    */
+  const lockedEmail = props.mode === "sign-up" ? props.invitedEmail : undefined;
+
   const [typed, setTyped] = React.useState({
     fullName: "",
-    email: "",
+    email: lockedEmail ?? "",
     orgName: "",
   });
 
@@ -146,16 +161,16 @@ export function AuthForm(props: AuthFormProps) {
     const org = String(formData.get("org_name") ?? "").trim();
 
     if (!email || !email.includes("@")) {
-      setState({ error: "Enter the email address you want the code sent to." });
+      setState({ error: t(AUTH_FORM.errors.emailRequired) });
       return;
     }
     if (mode === "sign-up" && !fullName) {
-      setState({ error: "Enter your full name as it appears in your passport." });
+      setState({ error: t(AUTH_FORM.errors.fullNameRequired) });
       return;
     }
     if (isDirectorSignUp && !org) {
       setState({
-        error: "Enter the registered name of your organisation.",
+        error: t(AUTH_FORM.errors.orgNameRequired),
       });
       return;
     }
@@ -173,8 +188,8 @@ export function AuthForm(props: AuthFormProps) {
       // address, so the two modes fail differently on purpose.
       const fallback =
         mode === "sign-in"
-          ? "We could not find an account for that address. Create one instead."
-          : "We could not send a code to that address. Check it and try again.";
+          ? t(AUTH_FORM.fallback.signInNotFound)
+          : t(AUTH_FORM.fallback.signUpSendFailed);
 
       const steps: ClerkResult[] = [];
 
@@ -191,7 +206,7 @@ export function AuthForm(props: AuthFormProps) {
         // correction. The server still enforces it; this only moves the
         // answer to where it can still be acted on.
         if (props.mode === "sign-up" && props.intent.intent === "invited") {
-          const invited = await checkInvitedEmail(props.intent.token, email);
+          const invited = await checkInvitedEmail(props.intent.token, email, locale);
           if (invited.error) {
             setState({ error: invited.error });
             toast.error(invited.error);
@@ -273,7 +288,7 @@ export function AuthForm(props: AuthFormProps) {
       }
 
       setState({ sent: true, email });
-      toast.success(`Code sent to ${email}`);
+      toast.success(t(AUTH_FORM.toast.codeSentTo).replace("{email}", email));
     });
   }
 
@@ -289,7 +304,7 @@ export function AuthForm(props: AuthFormProps) {
     if (finalized?.error) {
       const message = messageFor(
         finalized.error,
-        "We verified the code but could not start your session. Try signing in again."
+        t(AUTH_FORM.fallback.finalizeFailed)
       );
       setState((s) => ({ ...s, error: message }));
       toast.error(message);
@@ -338,8 +353,7 @@ export function AuthForm(props: AuthFormProps) {
 
   function onVerify() {
     startTransition(async () => {
-      const badCode =
-        "That code did not work. It expires after ten minutes and can only be used once.";
+      const badCode = t(AUTH_FORM.fallback.codeBad);
 
       const verified =
         mode === "sign-up"
@@ -370,8 +384,8 @@ export function AuthForm(props: AuthFormProps) {
   function onVerifySecondFactor() {
     startTransition(async () => {
       const badCode = useBackupCode
-        ? "That backup code did not work. Each one can only be used once."
-        : "That code did not work. Check your authenticator app and try again.";
+        ? t(AUTH_FORM.fallback.backupCodeBad)
+        : t(AUTH_FORM.fallback.totpCodeBad);
 
       const verified = useBackupCode
         ? await signIn?.mfa.verifyBackupCode({ code: backupCode })
@@ -398,11 +412,11 @@ export function AuthForm(props: AuthFormProps) {
 
       if (sent?.error) {
         toast.error(
-          messageFor(sent.error, "Could not send another code. Wait a moment and try again.")
+          messageFor(sent.error, t(AUTH_FORM.fallback.resendFailed))
         );
         return;
       }
-      toast.success("New code sent.");
+      toast.success(t(AUTH_FORM.toast.newCodeSent));
     });
   }
 
@@ -415,17 +429,19 @@ export function AuthForm(props: AuthFormProps) {
     );
 
     return (
-      <AuthPanel eyebrow="Verification" className="mx-auto w-full max-w-[440px]">
+      <AuthPanel eyebrow={t(AUTH_FORM.secondFactor.eyebrow)} className="mx-auto w-full max-w-[440px]">
         <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_12%,var(--mix))] text-brand-text">
           <Lock className="size-5" />
         </span>
         <h1 className="d-md mt-4">
-          {useBackupCode ? "Enter a backup code" : "Enter your authenticator code"}
+          {useBackupCode
+            ? t(AUTH_FORM.secondFactor.backupTitle)
+            : t(AUTH_FORM.secondFactor.totpTitle)}
         </h1>
         <p className="t-muted mt-2">
           {useBackupCode
-            ? "One of the backup codes you saved when you set up two-factor authentication. Each one works once."
-            : "This account needs a second factor. Enter the 6-digit code from your authenticator app."}
+            ? t(AUTH_FORM.secondFactor.backupBody)
+            : t(AUTH_FORM.secondFactor.totpBody)}
         </p>
 
         <form
@@ -437,7 +453,7 @@ export function AuthForm(props: AuthFormProps) {
         >
           {useBackupCode ? (
             <div className="flex flex-col gap-2">
-              <Label htmlFor="backup_code">Backup code</Label>
+              <Label htmlFor="backup_code">{t(AUTH_FORM.secondFactor.backupCodeLabel)}</Label>
               <Input
                 id="backup_code"
                 value={backupCode}
@@ -451,7 +467,7 @@ export function AuthForm(props: AuthFormProps) {
               maxLength={6}
               value={totpCode}
               onChange={setTotpCode}
-              aria-label="Six-digit authenticator code"
+              aria-label={t(AUTH_FORM.secondFactor.totpAriaLabel)}
               containerClassName="justify-center"
             >
               <InputOTPGroup>
@@ -471,7 +487,7 @@ export function AuthForm(props: AuthFormProps) {
               (useBackupCode ? backupCode.length === 0 : totpCode.length !== 6)
             }
           >
-            {pending ? "Checking…" : "Verify and continue"}
+            {pending ? t(AUTH_FORM.secondFactor.checking) : t(AUTH_FORM.secondFactor.verifyContinue)}
           </Button>
         </form>
 
@@ -487,8 +503,8 @@ export function AuthForm(props: AuthFormProps) {
               className="min-h-[var(--row-h)] text-base text-brand-text hover:underline"
             >
               {useBackupCode
-                ? "Use your authenticator app instead"
-                : "Use a backup code instead"}
+                ? t(AUTH_FORM.secondFactor.useAuthenticatorInstead)
+                : t(AUTH_FORM.secondFactor.useBackupInstead)}
             </button>
           </div>
         )}
@@ -497,15 +513,23 @@ export function AuthForm(props: AuthFormProps) {
   }
 
   if (state.sent) {
+    // The template's `{email}` marker is split rather than replaced, so
+    // the address itself can still be its own bolded element regardless
+    // of where a translation moves it in the sentence.
+    const [sentBefore, sentAfter] = t(AUTH_FORM.emailSent.bodyTemplate).split(
+      "{email}"
+    );
+
     return (
-      <AuthPanel eyebrow="Verification" className="mx-auto w-full max-w-[440px]">
+      <AuthPanel eyebrow={t(AUTH_FORM.secondFactor.eyebrow)} className="mx-auto w-full max-w-[440px]">
         <span className="grid size-10 place-items-center rounded-sm bg-[color-mix(in_srgb,var(--brand)_12%,var(--mix))] text-brand-text">
           <Mail className="size-5" />
         </span>
-        <h1 className="d-md mt-4">Enter the code we emailed you</h1>
+        <h1 className="d-md mt-4">{t(AUTH_FORM.emailSent.heading)}</h1>
         <p className="t-muted mt-2">
-          Sent to <b className="text-ink">{state.email}</b>. It expires in ten
-          minutes and can be used once.
+          {sentBefore}
+          <b className="text-ink">{state.email}</b>
+          {sentAfter}
         </p>
 
         <form
@@ -519,7 +543,7 @@ export function AuthForm(props: AuthFormProps) {
             maxLength={6}
             value={code}
             onChange={setCode}
-            aria-label="Six-digit code"
+            aria-label={t(AUTH_FORM.emailSent.ariaLabel)}
             containerClassName="justify-center"
           >
             <InputOTPGroup>
@@ -535,7 +559,7 @@ export function AuthForm(props: AuthFormProps) {
             className="mt-6"
             disabled={pending || code.length !== 6}
           >
-            {pending ? "Checking…" : "Verify and continue"}
+            {pending ? t(AUTH_FORM.secondFactor.checking) : t(AUTH_FORM.secondFactor.verifyContinue)}
           </Button>
         </form>
 
@@ -548,7 +572,7 @@ export function AuthForm(props: AuthFormProps) {
             }}
             className="min-h-[var(--row-h)] text-base text-ink-2 hover:text-ink"
           >
-            Use a different address
+            {t(AUTH_FORM.emailSent.useDifferentAddress)}
           </button>
           <button
             type="button"
@@ -556,7 +580,7 @@ export function AuthForm(props: AuthFormProps) {
             disabled={pending}
             className="min-h-[var(--row-h)] text-base text-brand-text hover:underline"
           >
-            Resend code
+            {t(AUTH_FORM.emailSent.resendCode)}
           </button>
         </div>
       </AuthPanel>
@@ -567,37 +591,39 @@ export function AuthForm(props: AuthFormProps) {
     <AuthPanel
       eyebrow={
         audience === "employer"
-          ? "Organisation"
+          ? t(AUTH_FORM.main.eyebrowEmployer)
           : audience === "operations"
-            ? "Toplance operations"
-            : "Traveler"
+            ? t(AUTH_FORM.main.eyebrowOperations)
+            : t(AUTH_FORM.main.eyebrowTraveller)
       }
       className="mx-auto w-full max-w-[560px]"
     >
       <h1 className="d-md">
-        {mode === "sign-up" ? "Create your account" : "Sign in"}
+        {mode === "sign-up" ? t(AUTH_FORM.main.headingSignUp) : t(AUTH_FORM.main.headingSignIn)}
       </h1>
       {audience !== "traveller" && (
         <p className="t-muted mt-2">
           {audience === "employer"
-            ? "For the person managing seats and invitations at your organisation."
-            : "Toplance operations staff only. Every document view is recorded against your account."}
+            ? t(AUTH_FORM.main.subtitleEmployer)
+            : t(AUTH_FORM.main.subtitleOperations)}
         </p>
       )}
 
       <form action={onRequest} className="mt-6 flex flex-col gap-4">
         {mode === "sign-up" && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="full_name">Full name</Label>
+            <Label htmlFor="full_name">{t(AUTH_FORM.main.fullNameLabel)}</Label>
             <Input
               id="full_name"
               name="full_name"
               autoComplete="name"
               placeholder={
-                audience === "traveller" ? "As shown in your passport" : "Full name"
+                audience === "traveller"
+                  ? t(AUTH_FORM.main.fullNamePlaceholderTraveller)
+                  : t(AUTH_FORM.main.fullNamePlaceholderOther)
               }
               value={typed.fullName}
-              onChange={(e) => setTyped((t) => ({ ...t, fullName: e.target.value }))}
+              onChange={(e) => setTyped((prev) => ({ ...prev, fullName: e.target.value }))}
               required
             />
           </div>
@@ -610,14 +636,14 @@ export function AuthForm(props: AuthFormProps) {
             nobody in between. */}
         {isDirectorSignUp && (
           <div className="flex flex-col gap-2">
-            <Label htmlFor="org_name">Name of organisation</Label>
+            <Label htmlFor="org_name">{t(AUTH_FORM.main.orgNameLabel)}</Label>
             <Input
               id="org_name"
               name="org_name"
               autoComplete="organization"
-              placeholder="As registered on your trading licence"
+              placeholder={t(AUTH_FORM.main.orgNamePlaceholder)}
               value={typed.orgName}
-              onChange={(e) => setTyped((t) => ({ ...t, orgName: e.target.value }))}
+              onChange={(e) => setTyped((prev) => ({ ...prev, orgName: e.target.value }))}
               // The same ceiling `createOrganisationTx` enforces. Without
               // it a pasted registered name could pass this form, be
               // carried through Clerk, and then be refused by the
@@ -630,7 +656,7 @@ export function AuthForm(props: AuthFormProps) {
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="email">
-            {isDirectorSignUp ? "Work email" : "Email"}
+            {isDirectorSignUp ? t(AUTH_FORM.main.workEmailLabel) : t(AUTH_FORM.main.emailLabel)}
           </Label>
           <Input
             id="email"
@@ -639,23 +665,25 @@ export function AuthForm(props: AuthFormProps) {
             autoComplete="email"
             placeholder={isDirectorSignUp ? "you@youragency.com" : "you@email.com"}
             value={typed.email}
-            onChange={(e) => setTyped((t) => ({ ...t, email: e.target.value }))}
+            onChange={(e) => setTyped((prev) => ({ ...prev, email: e.target.value }))}
+            readOnly={Boolean(lockedEmail)}
+            className={lockedEmail ? "bg-surface-2 text-ink-2" : undefined}
             required
           />
           {isDirectorSignUp && (
-            <p className="t-muted text-[14px]">
-              Your organisation&apos;s own address. Personal mailboxes are
-              not accepted for an organisation account.
-            </p>
+            <p className="t-muted text-[14px]">{t(AUTH_FORM.main.workEmailHint)}</p>
+          )}
+          {lockedEmail && (
+            <p className="t-muted text-[14px]">{t(AUTH_FORM.main.lockedEmailHint)}</p>
           )}
         </div>
 
         {mode === "sign-up" && audience === "traveller" && (
-          <PhoneField hint="Optional. Kept on your record so a reviewer can reach you — nothing is sent to it." />
+          <PhoneField hint={t(AUTH_FORM.main.phoneHint)} />
         )}
 
         <Button type="submit" size="block" className="mt-2" disabled={pending}>
-          {pending ? "Sending…" : "Continue"} <ArrowRight />
+          {pending ? t(AUTH_FORM.main.sending) : t(AUTH_FORM.main.continue)} <ArrowRight />
         </Button>
 
         {/*
@@ -675,29 +703,29 @@ export function AuthForm(props: AuthFormProps) {
 
         <p className="t-muted flex items-center justify-center gap-2 text-center">
           <Lock className="size-4 shrink-0" />
-          Your documents are encrypted at rest and in transit.
+          {t(AUTH_FORM.main.encryptedNotice)}
         </p>
 
         {(audience === "traveller" || audience === "employer") && (
           <p className="t-muted text-center">
             {mode === "sign-up" ? (
               <>
-                Already have an account?{" "}
+                {t(AUTH_FORM.main.alreadyHaveAccount)}{" "}
                 <Link
                   href={audience === "employer" ? "/employer/sign-in" : "/sign-in"}
                   className="font-semibold text-brand-text hover:underline"
                 >
-                  Sign in
+                  {t(AUTH_FORM.main.signInLink)}
                 </Link>
               </>
             ) : (
               <>
-                New to Toplance?{" "}
+                {t(AUTH_FORM.main.newToToplance)}{" "}
                 <Link
                   href={audience === "employer" ? "/employer/sign-up" : "/sign-up"}
                   className="font-semibold text-brand-text hover:underline"
                 >
-                  Create an account
+                  {t(AUTH_FORM.main.createAccountLink)}
                 </Link>
               </>
             )}

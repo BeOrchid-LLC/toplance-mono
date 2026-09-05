@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
 import { capitalFor, toOutlook } from "@/lib/weather/outlook";
 
 /**
@@ -38,6 +39,15 @@ describe("capitalFor", () => {
 
   it("is case-insensitive on the destination code", () => {
     expect(capitalFor("DE")).toEqual(capitalFor("de"));
+  });
+
+  it("covers every destination with a live corridor", () => {
+    // The panel is silent without a curated capital, so a destination
+    // approved without one loses its weather quietly. This is what makes
+    // that loud: the same agreement `corridors.test.ts` pins between
+    // LIVE_CORRIDORS and the exported manifest.
+    const live = [...new Set(LIVE_CORRIDORS.map((c) => c.destinationIso))].sort();
+    expect(live.filter((iso) => !capitalFor(iso))).toEqual([]);
   });
 
   it("has no coordinates for a destination this product does not curate", () => {

@@ -3,7 +3,12 @@ import "server-only";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, companionUpdates, corridors } from "@/lib/db/schema";
+import {
+  applications,
+  companionUpdates,
+  corridors,
+  profiles,
+} from "@/lib/db/schema";
 import {
   getCompanionUpdate,
   isStale,
@@ -194,14 +199,35 @@ export async function markAdvisoriesAlerted(applicationId: string): Promise<void
  * by destination, and an application with no corridor has no destination
  * to look one up for.
  *
- * Ordered oldest-cache-first, nulls (never checked at all) ahead of
- * everything — the same rule `travellersDueForDigest` uses, and for the
- * same reason. `limit` with no `orderBy` is not a fair sample: Postgres
- * returns whichever rows it reaches first, which is stable in practice,
- * so at more than `limit` approved travellers the same ones were swept
- * every night and the rest were never checked at all. Bounding the work
- * is fine; bounding it to the same subset for ever is a traveller who
- * never hears about a change.
+ * Gated on the traveller's own preference, unlike the expiry sweep next
+ * door. The distinction is worth stating, because the two look alike and
+ * are not: `visa_expiring` ignores this setting on purpose, since a date
+ * on somebody's leave to remain is a deadline they asked us to watch and
+ * not a subscription. A travel advisory is a companion update — it is
+ * the same kind of thing as the weekly orientation email, arriving on
+ * its own schedule — so a traveller who switched the companion off has
+ * already said what they want, and reaching them anyway would make that
+ * switch a lie.
+ *
+ * It reuses `companionDigest` rather than introducing a second setting.
+ * A traveller who wants safety alerts but no digest is a real person,
+ * but they are better served by one switch that means what it says than
+ * by two they have to find; the advisory is also still on the companion
+ * page for anyone who goes looking, whatever this says.
+ *
+ * `is distinct from 'off'` rather than `!= 'off'` for the reason
+ * `digest.ts` gives at length: `notificationPrefs` defaults to `{}`, and
+ * `!=` against a missing key evaluates to NULL, which would silently
+ * drop every traveller who never opened the setting.
+ *
+ * Of whoever is left, oldest-cache-first, nulls (never checked at all)
+ * ahead of everything — the same rule `travellersDueForDigest` uses, and
+ * for the same reason. `limit` with no `orderBy` is not a fair sample:
+ * Postgres returns whichever rows it reaches first, which is stable in
+ * practice, so at more than `limit` eligible travellers the same ones
+ * were swept every night and the rest were never checked at all.
+ * Bounding the work is fine; bounding it to the same subset for ever is
+ * a traveller who never hears about a change.
  */
 export async function approvedTravellersForAdvisories(
   limit: number
@@ -214,6 +240,9 @@ export async function approvedTravellersForAdvisories(
     })
     .from(applications)
     .innerJoin(corridors, eq(corridors.id, applications.corridorId))
+    // Inner-joined to read the preference below: a traveller with no
+    // profile row has nobody to alert anyway.
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
     // Left-joined only to order by it, the same shape
     // `travellersDueForDigest` uses.
     .leftJoin(
@@ -226,7 +255,8 @@ export async function approvedTravellersForAdvisories(
     .where(
       and(
         eq(applications.status, "approved"),
-        isNotNull(applications.corridorId)
+        isNotNull(applications.corridorId),
+        sql`(${profiles.notificationPrefs}->>'companionDigest') is distinct from 'off'`
       )
     )
     .orderBy(sql`${companionUpdates.generatedAt} asc nulls first`)

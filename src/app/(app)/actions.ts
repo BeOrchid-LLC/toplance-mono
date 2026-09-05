@@ -38,6 +38,7 @@ import {
   addTravelRecord as insertTravelRecord,
   removeTravelRecord as deleteTravelRecord,
 } from "@/lib/data/travel-records";
+import { markChecklistCompleteIfDone } from "@/lib/data/checklist";
 import { avatarKey, validateAvatarFile } from "@/lib/domain/avatar";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
 import { isDigestFrequency } from "@/lib/domain/digest";
@@ -227,11 +228,13 @@ export async function uploadDocument(formData: FormData) {
       // application should not become unbillable because a model call
       // timed out.
       await billIfComplete(applicationId, actorId);
+      await notifyDeskIfComplete(applicationId, actorId);
     });
   } else {
     // No pre-check was scheduled, so no verdict is ever coming and there
     // is nothing to wait for.
     await billIfComplete(applicationId, actorId);
+    await notifyDeskIfComplete(applicationId, actorId);
   }
 
   revalidatePath("/app", "layout");
@@ -261,6 +264,54 @@ async function billIfComplete(applicationId: string, actorId: string) {
   } catch (error) {
     console.error(
       `[actions] billing check failed for application ${applicationId}`,
+      error
+    );
+  }
+}
+
+/**
+ * Tell the review desk when this upload was the one that finished the
+ * checklist.
+ *
+ * The brief asks for it twice — item 9 wants 100% to "trigger an
+ * automatic admin notification", item 11 wants that notification to be
+ * "email + dashboard alert". Until now the desk heard about a case only
+ * when the traveller pressed Submit, so somebody who uploaded every
+ * document and then stopped never reached anyone. That is the person
+ * this is for: at 100% and going nowhere.
+ *
+ * Runs at the same moment as the billing stamp and for the same reason —
+ * after the pre-check, so a set of documents that is about to be flagged
+ * has already been flagged and the checklist is not, in fact, complete.
+ *
+ * Best-effort like everything else on this path. `notifyStaff` never
+ * throws on its own, but `markChecklistCompleteIfDone` writes, and a
+ * traveller watching an upload spinner must not be told their passport
+ * failed because a notification could not be sent.
+ */
+async function notifyDeskIfComplete(applicationId: string, actorId: string) {
+  try {
+    const { becameComplete } = await markChecklistCompleteIfDone(db, applicationId);
+    if (!becameComplete) return;
+
+    const [app] = await db
+      .select({ caseRef: applications.caseRef })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1);
+
+    if (app) {
+      await notifyStaff(
+        "checklist_complete",
+        { caseRef: app.caseRef, url: appUrl(`/ops/cases/${applicationId}`) },
+        applicationId
+      );
+    }
+
+    await track("toplance.checklist_completed", { applicationId }, actorId);
+  } catch (error) {
+    console.error(
+      `[actions] completion notice failed for application ${applicationId}`,
       error
     );
   }

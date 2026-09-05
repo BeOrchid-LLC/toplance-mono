@@ -286,6 +286,17 @@ function DigestEditor({
           </option>
         ))}
       </select>
+      {/* This switch governs the safety-advisory email too, so it has to
+          say so — a setting a traveller believes covers everything and
+          quietly does not is worse than no setting. Visa-expiry
+          reminders are named as the exception rather than left for
+          someone to discover, because turning updates off and then
+          missing a date on your own leave to remain is not a surprise
+          anyone should get from us. */}
+      <p className="t-muted">
+        Covers your orientation updates and travel-advice alerts. Reminders
+        about your visa expiring are sent whatever you choose here.
+      </p>
       <SaveCancel pending={pending} onCancel={close} />
     </form>
   );

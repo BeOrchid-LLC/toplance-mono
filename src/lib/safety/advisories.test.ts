@@ -164,6 +164,73 @@ describe("stateDeptAdvisoryFor", () => {
   it("returns null for a destination the feed does not name", () => {
     expect(stateDeptAdvisoryFor(RSS, "de")).toBeNull();
   });
+
+  /**
+   * The feed writes some countries under a different name than this
+   * product's curated list does. Every alias below was read off the live
+   * feed on 2026-09-05 rather than guessed — matching by name is only
+   * safe if the names are the source's own.
+   *
+   * Six of fifty curated destinations missed before this: four had a
+   * different name in the feed, and two are not in it at all.
+   */
+  const ALIASED = `<rss><channel>
+    <item><title>Turkey - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/turkey</link>
+      <pubDate>Thu, 08 May 2025</pubDate></item>
+    <item><title>Cote d Ivoire - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/cote-d-ivoire</link>
+      <pubDate>Thu, 08 May 2025</pubDate></item>
+    <item><title>Kingdom of Denmark - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/denmark</link>
+      <pubDate>Thu, 08 May 2025</pubDate></item>
+    <item><title>Mexico Travel Advisory - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/mexico</link>
+      <pubDate>Thu, 08 May 2025</pubDate></item>
+    <item><title>Mainland China, Hong Kong &amp; Macau - See Summaries - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/china</link>
+      <pubDate>Thu, 08 May 2025</pubDate></item>
+    <item><title>Ghana - Level 1: Exercise Normal Precautions</title>
+      <link>https://travel.state.gov/ghana</link>
+      <pubDate>Thu, 08 May 2025</pubDate></item>
+  </channel></rss>`;
+
+  it("finds Türkiye under the feed's spelling of it", () => {
+    expect(stateDeptAdvisoryFor(ALIASED, "tr")?.url).toContain("turkey");
+  });
+
+  it("finds Ivory Coast under Cote d Ivoire", () => {
+    expect(stateDeptAdvisoryFor(ALIASED, "ci")?.url).toContain("cote-d-ivoire");
+  });
+
+  it("finds Denmark under the Kingdom of Denmark", () => {
+    expect(stateDeptAdvisoryFor(ALIASED, "dk")?.url).toContain("denmark");
+  });
+
+  it("finds Mexico under its 'Travel Advisory' suffix", () => {
+    expect(stateDeptAdvisoryFor(ALIASED, "mx")?.url).toContain("mexico");
+  });
+
+  it("has nothing to say about the United States", () => {
+    // Not an alias, and pinned here so its absence from the table above
+    // is not mistaken for an oversight: the feed carries no United
+    // States entry at all, because a government does not advise its own
+    // citizens about home. Exact matching already answers null.
+    expect(stateDeptAdvisoryFor(ALIASED, "us")).toBeNull();
+  });
+
+  it("declines China rather than pick one of two levels for it", () => {
+    // The feed carries no entry for China alone — it publishes
+    // "Mainland China, Hong Kong & Macau - See Summaries" twice, at
+    // Level 2 and Level 3. Reporting either as China's advisory would be
+    // choosing one, which is not this product's to choose. FCDO still
+    // covers the corridor.
+    expect(stateDeptAdvisoryFor(ALIASED, "cn")).toBeNull();
+  });
+
+  it("still matches an unaliased destination by its curated name", () => {
+    expect(stateDeptAdvisoryFor(ALIASED, "gh")?.url).toContain("ghana");
+  });
 });
 
 describe("fcdoSlugFor", () => {

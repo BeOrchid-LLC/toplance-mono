@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents } from "@/lib/db/schema";
@@ -105,4 +105,75 @@ export async function adoptRuleSet(
     .update(applications)
     .set({ corridorId: ruleSet.corridorId })
     .where(eq(applications.id, applicationId));
+}
+
+/**
+ * Stamp the moment a traveller's required checklist first reached 100%
+ * collected, and say whether this call is the one that did it.
+ *
+ * The brief asks for the review desk to hear about 100% completion
+ * (items 9 and 11) separately from submission, and they are separate
+ * moments: somebody can upload every document and never press Submit.
+ * Until this existed that person was invisible to the desk, which is
+ * the opposite of what a checklist at 100% should mean.
+ *
+ * "Collected" is the same definition `completionOf` draws the ring
+ * from — uploaded and either awaiting or past review — not "verified".
+ * Waiting for verification would make this fire when a reviewer
+ * finished, which is news to nobody, since a reviewer is already
+ * looking.
+ *
+ * Written the way `markBillableIfComplete` is, and for the same reason:
+ * completion is not monotonic, so the column is what makes one
+ * traveller one notification however many times a flag-and-re-upload
+ * cycle refills the checklist. The `is null` guard in the update is
+ * what makes that true under concurrent uploads rather than merely
+ * likely.
+ *
+ * It parts company with billing in one place. Billing returns early
+ * without an `org_id`, because there is no business to charge; there is
+ * still a reviewer to tell, so this does not.
+ *
+ * Authorization is the caller's job, like everything else here.
+ */
+export async function markChecklistCompleteIfDone(
+  tx: Pick<typeof db, "select" | "update">,
+  applicationId: string
+): Promise<{ becameComplete: boolean }> {
+  const [app] = await tx
+    .select({ completeAt: applications.checklistCompleteAt })
+    .from(applications)
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  if (!app || app.completeAt) return { becameComplete: false };
+
+  const rows = await tx
+    .select({ state: documents.state, isRequired: documents.isRequired })
+    .from(documents)
+    .where(eq(documents.applicationId, applicationId));
+
+  // An application with no required documents has not "reached 100%" —
+  // it has no checklist yet. Treating an empty set as complete would
+  // announce every application the moment intake created it.
+  const required = rows.filter((d) => d.isRequired);
+  if (required.length === 0) return { becameComplete: false };
+
+  const collected = required.filter(
+    (d) => d.state === "checking" || d.state === "verified"
+  ).length;
+  if (collected < required.length) return { becameComplete: false };
+
+  const updated = await tx
+    .update(applications)
+    .set({ checklistCompleteAt: new Date() })
+    .where(
+      and(
+        eq(applications.id, applicationId),
+        isNull(applications.checklistCompleteAt)
+      )
+    )
+    .returning({ id: applications.id });
+
+  return { becameComplete: updated.length > 0 };
 }

@@ -73,12 +73,11 @@ jobs:
       - name: Unit tests
         run: npx vitest run
 
-      # TODO: drop `continue-on-error` once the marketing/landing
-      # prerender work in flight lands — the production build currently
-      # fails on it, and this step is here to show the day it stops
-      # doing so rather than to gate every push until then. It also
-      # builds without Clerk keys, which is its own reason to fail
-      # loudly-but-harmlessly for now.
-      - name: Production build (not yet gating)
-        continue-on-error: true
+      # Gating since 2026-09-05. It was `continue-on-error` while the
+      # marketing/landing prerender work was in flight; that has landed,
+      # and a build from a clean checkout with no `.env.local` — so no
+      # Clerk keys and no reachable database, exactly what this job has —
+      # now exits 0. The landing page prerenders against an unreachable
+      # database by design, so the step needs no secrets to be honest.
+      - name: Production build
         run: npm run build

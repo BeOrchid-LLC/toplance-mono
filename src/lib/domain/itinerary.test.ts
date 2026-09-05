@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  SPEECH_CHUNK_LIMIT,
   itinerarySchema,
   itinerarySections,
+  itinerarySpeechChunks,
+  itinerarySpeechScript,
   type ItineraryPayload,
 } from "@/lib/domain/itinerary";
 
@@ -113,5 +116,142 @@ describe("itinerarySections", () => {
     expect(
       itinerarySections({ flights_guidance: "", packing_list: [] })
     ).toEqual([]);
+  });
+});
+
+/**
+ * The spoken form of the same payload.
+ *
+ * `itinerarySections` renders for the eye and `itinerarySpeechScript`
+ * for the ear, so they differ exactly where that distinction bites: a
+ * " · " separator is a visual device that a voice reads as nothing at
+ * all, running seven days into one breathless sentence. Both draw from
+ * the same payload and neither may add a word that is not in it.
+ */
+describe("itinerarySpeechScript", () => {
+  it("reads each section as its heading followed by its text", () => {
+    const script = itinerarySpeechScript(FULL_PAYLOAD);
+    expect(script).toContain(
+      "Flights guidance. Book into the main international terminal; land in daylight if you can."
+    );
+  });
+
+  it("covers every section the page renders", () => {
+    const script = itinerarySpeechScript(FULL_PAYLOAD)!;
+    for (const { label } of itinerarySections(FULL_PAYLOAD)) {
+      expect(script).toContain(label);
+    }
+  });
+
+  it("reads the seven-day plan as sentences, never as a interpunct-joined run-on", () => {
+    const script = itinerarySpeechScript(FULL_PAYLOAD)!;
+    expect(script).not.toContain(" · ");
+    expect(script).toContain(
+      "First seven days. Day 1 — Arrive, settle in, rest. Day 2 — Register your address, as required."
+    );
+  });
+
+  it("terminates a list entry that carries no punctuation of its own", () => {
+    // Without this a voice reads "Passport and copies weather-appropriate
+    // clothing adapter plug" as one item.
+    const script = itinerarySpeechScript(FULL_PAYLOAD)!;
+    expect(script).toContain(
+      "Packing list. Passport and copies. Weather-appropriate clothing. Adapter plug."
+    );
+  });
+
+  it("does not double the punctuation of an entry that already ends in one", () => {
+    const script = itinerarySpeechScript({
+      cultural_notes: "Tipping is not expected.",
+      flights_guidance: "Land in daylight!",
+      accommodation: "Is the stay booked?",
+    })!;
+    expect(script).not.toMatch(/[.!?]\./);
+  });
+
+  it("separates sections so a voice pauses between them", () => {
+    const script = itinerarySpeechScript({
+      flights_guidance: "Land in daylight.",
+      accommodation: "Two weeks are covered.",
+    });
+    expect(script).toBe(
+      "Flights guidance. Land in daylight.\n\nAccommodation. Two weeks are covered."
+    );
+  });
+
+  it("has nothing to say for an empty payload", () => {
+    expect(itinerarySpeechScript({})).toBeNull();
+  });
+
+  it("has nothing to say for null or a non-object", () => {
+    expect(itinerarySpeechScript(null)).toBeNull();
+    expect(itinerarySpeechScript("not an itinerary")).toBeNull();
+    expect(itinerarySpeechScript(42)).toBeNull();
+  });
+
+  it("skips what the renderer skips, rather than voicing garbage", () => {
+    const script = itinerarySpeechScript({
+      flights_guidance: "Fine.",
+      packing_list: null,
+      cultural_notes: { nested: "garbage" },
+      local_transport: 7,
+    });
+    expect(script).toBe("Flights guidance. Fine.");
+  });
+
+  it("skips a string array whose entries are not strings", () => {
+    expect(itinerarySpeechScript({ packing_list: [1, 2, 3] })).toBeNull();
+  });
+});
+
+/**
+ * Chunking exists for one reason: the speech API takes at most a few
+ * thousand characters per call, and a ten-section itinerary with a
+ * seven-day plan and a packing list can pass that. Truncating would
+ * hand the richest plans the shortest audio, and silently — so the
+ * script is split instead, and every chunk is spoken.
+ */
+describe("itinerarySpeechChunks", () => {
+  const longSection = (n: number) => "A".repeat(n);
+
+  it("returns the whole script as one chunk when it fits", () => {
+    expect(itinerarySpeechChunks(FULL_PAYLOAD)).toEqual([
+      itinerarySpeechScript(FULL_PAYLOAD),
+    ]);
+  });
+
+  it("never returns a chunk longer than the limit", () => {
+    const payload = Object.fromEntries(
+      Array.from({ length: 12 }, (_, i) => [`section_${i}`, longSection(500)])
+    );
+    for (const chunk of itinerarySpeechChunks(payload)) {
+      expect(chunk.length).toBeLessThanOrEqual(SPEECH_CHUNK_LIMIT);
+    }
+  });
+
+  it("splits between sections, losing nothing", () => {
+    const payload = Object.fromEntries(
+      Array.from({ length: 12 }, (_, i) => [`section_${i}`, longSection(500)])
+    );
+    const chunks = itinerarySpeechChunks(payload);
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks.join("\n\n")).toBe(itinerarySpeechScript(payload));
+  });
+
+  it("splits a single oversized section rather than dropping it", () => {
+    // One section longer than the limit has no section boundary to break
+    // on. It still has to be spoken.
+    const payload = { flights_guidance: `${longSection(9000)}.` };
+    const chunks = itinerarySpeechChunks(payload);
+    expect(chunks.length).toBeGreaterThan(1);
+    for (const chunk of chunks) {
+      expect(chunk.length).toBeLessThanOrEqual(SPEECH_CHUNK_LIMIT);
+    }
+    expect(chunks.join("").replace(/\s+/g, "")).toContain(longSection(9000));
+  });
+
+  it("has nothing to speak for a payload with nothing sayable", () => {
+    expect(itinerarySpeechChunks({})).toEqual([]);
+    expect(itinerarySpeechChunks(null)).toEqual([]);
   });
 });

@@ -28,6 +28,7 @@ import {
   EditablePhone,
   type CompanionDigest,
 } from "@/components/app/profile-fields";
+import { ItineraryAudio } from "@/components/app/itinerary-audio";
 import { AvatarUpload } from "@/components/app/avatar-upload";
 import { TravelHistory } from "@/components/app/travel-history";
 import { signedDocumentUrl } from "@/lib/storage/documents";
@@ -370,6 +371,7 @@ export default async function ProfilePage() {
                       </div>
                     ))}
                   </dl>
+                  <ItineraryAudio applicationId={application.id} />
                 </>
               ) : (
                 <p className="t-muted">

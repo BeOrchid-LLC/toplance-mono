@@ -237,19 +237,57 @@ export function parseStateDeptFeed(
 }
 
 /**
- * The State Department advisory for one destination, matched on the
- * curated destination name.
+ * Where the feed's name for a country differs from this product's.
  *
- * Matching on a name is imperfect — the feed says "Turkey" where the
- * curated table says "Türkiye" — and a miss simply means no advisory for
- * that destination. That is the right failure: an unmatched name shows
- * nothing rather than showing another country's advisory.
+ * Matching by name is only safe if the name is the source's own, and
+ * for six of the fifty curated destinations it was not. Every entry
+ * here was read off the live feed on 2026-09-05 rather than guessed:
+ *
+ * - `tr` — the feed writes "Turkey" where the curated list, following
+ *   the country's own preference, writes "Türkiye".
+ * - `ci` — "Cote d Ivoire", with neither the accents nor the
+ *   apostrophe.
+ * - `dk` — "Kingdom of Denmark", which covers Greenland and the Faroes
+ *   as well.
+ * - `mx` — "Mexico Travel Advisory", a suffix no other entry carries.
+ *
+ * The remaining two need no entry, and it is worth writing down why so
+ * their silence is not read as this table being incomplete. The feed
+ * carries nothing for the **United States** — a government does not
+ * advise its own citizens about home, the same way FCDO publishes
+ * nothing about the United Kingdom. And it carries nothing for **China**
+ * alone: what it publishes is "Mainland China, Hong Kong & Macau — See
+ * Summaries", twice, at two different levels. Aliasing China to that
+ * would mean choosing one of the two levels on the traveller's behalf,
+ * which is not this product's to choose. Both fall out of exact
+ * matching as null, which is the right answer; FCDO still covers China.
+ */
+const STATE_DEPT_NAMES: Record<string, string> = {
+  tr: "Turkey",
+  ci: "Cote d Ivoire",
+  dk: "Kingdom of Denmark",
+  mx: "Mexico Travel Advisory",
+};
+
+/** The name this feed publishes a destination under, or null if we carry none. */
+function stateDeptNameFor(destinationIso: string): string | null {
+  const iso = destinationIso.toLowerCase();
+  return STATE_DEPT_NAMES[iso] ?? NAME_BY_ISO[iso] ?? null;
+}
+
+/**
+ * The State Department advisory for one destination, matched on the name
+ * that feed publishes it under — see `STATE_DEPT_NAMES` above.
+ *
+ * The match is exact, and a miss simply means no advisory for that
+ * destination. That is the right failure: an unmatched name shows nothing
+ * rather than showing another country's advisory.
  */
 export function stateDeptAdvisoryFor(
   xml: string,
   destinationIso: string
 ): Advisory | null {
-  const name = NAME_BY_ISO[destinationIso.toLowerCase()];
+  const name = stateDeptNameFor(destinationIso);
   if (!name) return null;
 
   const row = parseStateDeptFeed(xml).find(

@@ -17,6 +17,7 @@ import { useVoiceIntake } from "@/components/app/use-voice-intake";
 import { answerQuestion } from "@/app/(app)/actions";
 import {
   INTAKE_QUESTIONS,
+  resolveChips,
   HISTORY_NOTE,
   applyIntakeWrites,
   intakeFrontier,
@@ -42,7 +43,7 @@ type Answers = Record<string, string>;
  *
  * Two ways of holding that conversation. With a model behind it the
  * agent asks in its own words and understands whatever the traveller
- * writes back; without one it walks the same ten questions from a
+ * writes back; without one it walks the same questions from a
  * script. The script is not a stub — it is the whole product minus the
  * fluency, and it is what runs when there is no API key and what this
  * falls back to mid-conversation if the model becomes unreachable. A
@@ -51,12 +52,12 @@ type Answers = Record<string, string>;
 export function IntakeAgent({
   applicationId,
   initialAnswers,
-  firstName,
+  fullName,
   aiEnabled,
 }: {
   applicationId: string;
   initialAnswers: Answers;
-  firstName: string;
+  fullName: string;
   aiEnabled: boolean;
 }) {
   const [degraded, setDegraded] = React.useState(false);
@@ -69,7 +70,7 @@ export function IntakeAgent({
       <ScriptedIntake
         applicationId={applicationId}
         initialAnswers={handover}
-        firstName={firstName}
+        fullName={fullName}
       />
     );
   }
@@ -78,7 +79,7 @@ export function IntakeAgent({
     <LiveIntake
       applicationId={applicationId}
       initialAnswers={initialAnswers}
-      firstName={firstName}
+      fullName={fullName}
       onDegrade={(answers) => {
         setHandover(answers);
         setDegraded(true);
@@ -96,12 +97,12 @@ export function IntakeAgent({
 function LiveIntake({
   applicationId,
   initialAnswers,
-  firstName,
+  fullName,
   onDegrade,
 }: {
   applicationId: string;
   initialAnswers: Answers;
-  firstName: string;
+  fullName: string;
   onDegrade: (answers: Answers) => void;
 }) {
   const [draft, setDraft] = React.useState("");
@@ -226,7 +227,7 @@ function LiveIntake({
 
   // The gap the agent is asking at, which is what the server built its
   // prompt from this turn. Not a count of what is filled: `record_answer`
-  // takes any of the ten keys, so an answer can land out of order and
+  // takes any of the intake's keys, so an answer can land out of order and
   // leave a hole behind it, and a count would then offer the chips for
   // the question *after* the one being asked.
   const frontier = intakeFrontier(answers);
@@ -247,7 +248,7 @@ function LiveIntake({
   const voice = useVoiceIntake({
     applicationId,
     answers,
-    firstName,
+    fullName,
     locale,
     // No live transcript bubbles, deliberately: the rail filling in is
     // the feedback, and it is the only feedback that is also the record.
@@ -343,7 +344,7 @@ function LiveIntake({
           <Thinking />
         ) : (
           <>
-            {messages.length === 0 && <p>{greeting(firstName)}</p>}
+            {messages.length === 0 && <p>{greeting(fullName)}</p>}
             {reaskingNow && reopenedQuestion ? (
               <p className="font-semibold">{t(reopenedQuestion.prompt)}</p>
             ) : latest ? (
@@ -365,7 +366,7 @@ function LiveIntake({
       log={
         <>
           <Turn from="agent" plain>
-            {greeting(firstName)}
+            {greeting(fullName)}
           </Turn>
 
           {/* The model only speaks once the traveller has, so the
@@ -412,11 +413,11 @@ function LiveIntake({
         !done && current ? (
           <>
             <Chips
-              chips={current.chips}
+              chips={resolveChips(current, { fullName })}
               locale={locale}
               // Typing and speaking are two separate conversations with
               // two separate models. Letting both run would put two
-              // agents on the same ten questions, so the written half
+              // agents on the same questions, so the written half
               // closes for as long as the spoken one is open.
               disabled={busy || speaking}
               // The traveller taps a word in their own language and the
@@ -445,18 +446,18 @@ function LiveIntake({
 }
 
 /**
- * The intake with no model behind it: the ten questions, in order, in
+ * The intake with no model behind it: every question, in order, in
  * the traveller's language, answered by chip or free text. Every answer
  * goes straight to `answerQuestion`.
  */
 function ScriptedIntake({
   applicationId,
   initialAnswers,
-  firstName,
+  fullName,
 }: {
   applicationId: string;
   initialAnswers: Answers;
-  firstName: string;
+  fullName: string;
 }) {
   const [answers, setAnswers] = React.useState<Answers>(initialAnswers);
   const [typing, setTyping] = React.useState(false);
@@ -497,7 +498,7 @@ function ScriptedIntake({
   // the composer away the instant a chip is tapped.
   //
   // Whether the *intake* is finished is only the server's to answer,
-  // and the tenth answer is the one write where the two come apart:
+  // and the final answer is the one write where the two come apart:
   // `recordIntakeAnswer` builds the checklist on it, which resolves a
   // corridor over the network, so it lands a second or so after the tap
   // rather than immediately. Reading completion off the optimistic copy
@@ -543,7 +544,7 @@ function ScriptedIntake({
       }
       setConfirmed(result.complete);
       // The corridor header lives in the layout above this screen and
-      // is built by the same write, so the tenth answer refreshes it.
+      // is built by the same write, so the final answer refreshes it.
       // `typing` deliberately stays on until then: the dock has no
       // question left to show, and emptying it would read as the agent
       // having nothing to say rather than as work still in progress.
@@ -580,7 +581,7 @@ function ScriptedIntake({
           <Thinking />
         ) : (
           <>
-            {fresh && <p>{greeting(firstName)}</p>}
+            {fresh && <p>{greeting(fullName)}</p>}
             {current && <p className="font-semibold">{t(current.prompt)}</p>}
             {/* Attached to the question it qualifies rather than left in
                 the transcript. It is guidance for the answer being given
@@ -594,7 +595,7 @@ function ScriptedIntake({
       log={
         <>
           <Turn from="agent" plain>
-            {greeting(firstName)}
+            {greeting(fullName)}
           </Turn>
 
           {INTAKE_QUESTIONS.map((q, i) => {
@@ -629,7 +630,7 @@ function ScriptedIntake({
         !done && current ? (
           <>
             <Chips
-              chips={current.chips}
+              chips={resolveChips(current, { fullName })}
               locale={locale}
               disabled={pending}
               // The canonical label, not the translated one: with no
@@ -749,7 +750,7 @@ function AgentLayout({
         )}
       </div>
 
-      {/* A dock is a place to answer. Once the tenth answer lands there
+      {/* A dock is a place to answer. Once the final answer lands there
           is nothing to answer, so the furniture changes rather than
           emptying out — the composer and the suggestions go, and what is
           left says what happened and what to do next. */}
@@ -833,7 +834,8 @@ function TranscriptPanel({
  * traveller's own name is in it, and the shared renderer is for model
  * output only.
  */
-function greeting(firstName: string) {
+function greeting(fullName: string) {
+  const firstName = fullName.trim().split(" ")[0] ?? "";
   return `Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`;
 }
 
@@ -881,7 +883,7 @@ function CompletionBar({
   onToggleTranscript: () => void;
 }) {
   return (
-    // The same card the dock was, so the tenth answer changes what the
+    // The same card the dock was, so the final answer changes what the
     // panel says without changing what it is. See `AgentDock`.
     <div className="shrink-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-7">
       {/* A grid rather than a row, so the sentence can run the full

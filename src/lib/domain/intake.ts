@@ -3,10 +3,20 @@ import type { Locale } from "@/lib/i18n/locales";
 export type IntakeQuestion = {
   key: string;
   prompt: Record<Locale, string>;
+  /**
+   * A chip may carry `{fullName}` in its value and its labels, which
+   * `resolveChips` fills in from the profile before either agent renders
+   * it. Only the passport question needs it, and it needs it in the
+   * value as well as the label: the scripted flow stores `chip.value`
+   * verbatim, so a literal token would become the answer of record.
+   */
   chips: { value: string; label: Record<Locale, string> }[];
   /** Free text is allowed on every question; chips are only a shortcut. */
   allowsFreeText?: boolean;
 };
+
+/** The one placeholder a chip may carry. See `resolveChips`. */
+const FULL_NAME_TOKEN = "{fullName}";
 
 const c = (
   value: string,
@@ -27,12 +37,60 @@ const c = (
  */
 export const INTAKE_QUESTIONS: IntakeQuestion[] = [
   {
+    /**
+     * Sign-up already captured a name, so this asks the only question
+     * that name cannot answer: is it the one the passport carries? A
+     * visa is issued to the passport's spelling, and the two diverging
+     * is a refusal nobody sees coming — which is why the answer is
+     * stored beside the account name rather than merged into it.
+     */
+    key: "passport_name",
+    prompt: {
+      en: "First — what is your full name, exactly as it appears on your passport?",
+      ha: "Da farko — mene ne cikakken sunanka, kamar yadda yake a fasfo ɗinka?",
+      yo: "Àkọ́kọ́ — kí ni orúkọ rẹ ní kíkún, gẹ́gẹ́ bí ó ṣe wà nínú ìwé ìrìnnà rẹ?",
+      ig: "Nke mbụ — gịnị bụ aha gị zuru ezu, dịka o si dị na paspọtụ gị?",
+    },
+    chips: [
+      c(
+        FULL_NAME_TOKEN,
+        `Yes — ${FULL_NAME_TOKEN}`,
+        `Eh — ${FULL_NAME_TOKEN}`,
+        `Bẹ́ẹ̀ ni — ${FULL_NAME_TOKEN}`,
+        `Ee — ${FULL_NAME_TOKEN}`
+      ),
+    ],
+  },
+  {
     key: "nationality",
     prompt: {
-      en: "First — which country's passport do you hold?",
-      ha: "Da farko — fasfo na wace ƙasa kake da shi?",
-      yo: "Àkọ́kọ́ — ìwé ìrìnnà orílẹ̀-èdè wo ni o ní?",
-      ig: "Nke mbụ — paspọtụ obodo ole ka i ji?",
+      en: "Which country's passport do you hold?",
+      ha: "Fasfo na wace ƙasa kake da shi?",
+      yo: "Ìwé ìrìnnà orílẹ̀-èdè wo ni o ní?",
+      ig: "Paspọtụ obodo ole ka i ji?",
+    },
+    chips: [
+      c("Nigeria", "Nigeria", "Najeriya", "Nàìjíríà", "Naịjirịa"),
+      c("Ghana", "Ghana", "Gana", "Gánà", "Ghana"),
+      c("Kenya", "Kenya", "Kenya", "Kẹ́nyà", "Kenya"),
+      c("South Africa", "South Africa", "Afirka ta Kudu", "Gúúsù Áfríkà", "South Africa"),
+      c("Cameroon", "Cameroon", "Kamaru", "Kamerúùnù", "Cameroon"),
+    ],
+  },
+  {
+    /**
+     * The country, asked before the city. Nationality is not a
+     * substitute: a mission's jurisdiction follows where the traveller
+     * applies *from*, and a Nigerian passport holder living in Accra
+     * applies in Ghana. Recorded and displayed today; the corridor
+     * still resolves on nationality, destination and purpose alone.
+     */
+    key: "residence_country",
+    prompt: {
+      en: "And which country are you living in right now?",
+      ha: "Kuma a wace ƙasa kake zaune yanzu?",
+      yo: "Orílẹ̀-èdè wo ni o ń gbé báyìí?",
+      ig: "Kedu mba ị bi ugbu a?",
     },
     chips: [
       c("Nigeria", "Nigeria", "Najeriya", "Nàìjíríà", "Naịjirịa"),
@@ -45,7 +103,7 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
   {
     key: "residence",
     prompt: {
-      en: "And where are you living right now?",
+      en: "And which city or town are you in?",
       ha: "Kuma a ina kake zaune yanzu?",
       yo: "Ibo ni o ń gbé báyìí?",
       ig: "Ebee ka ị bi ugbu a?",
@@ -192,6 +250,44 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
  */
 export const HISTORY_NOTE =
   "A previous refusal must be declared. Hiding one is the single fastest way to lose the next application.";
+
+/**
+ * A question's chips with the traveller's own name filled in.
+ *
+ * Only the passport question carries a placeholder, and it carries it in
+ * the value as well as the labels because the two agents read different
+ * halves of a chip: the scripted flow stores `chip.value` as the answer
+ * of record, while the model-driven one sends the translated label as
+ * though the traveller had typed it. A literal `{fullName}` reaching
+ * either is a name nobody has.
+ *
+ * A blank name yields no chip at all rather than one reading "Yes — ",
+ * which confirms nothing. Free text answers the question in that case,
+ * as it does for every question here.
+ */
+export function resolveChips(
+  question: IntakeQuestion,
+  { fullName }: { fullName: string }
+): IntakeQuestion["chips"] {
+  const name = fullName.trim();
+
+  return question.chips.flatMap((chip) => {
+    if (!chip.value.includes(FULL_NAME_TOKEN)) return [chip];
+    if (!name) return [];
+
+    return [
+      {
+        value: chip.value.replaceAll(FULL_NAME_TOKEN, name),
+        label: Object.fromEntries(
+          Object.entries(chip.label).map(([locale, text]) => [
+            locale,
+            text.replaceAll(FULL_NAME_TOKEN, name),
+          ])
+        ) as Record<Locale, string>,
+      },
+    ];
+  });
+}
 
 /**
  * Everything the intake knows up to, but not including, one topic — the

@@ -28,8 +28,10 @@ const FIXTURE = join(__dirname, "fixtures/passport.jpg");
 const TYPO_EMAIL = testEmail("traveller.typo");
 const TYPO_ORG = "Traveller Typo Sponsor";
 
-/** The ten answers, as the chips label them in English. */
+/** The twelve answers, as the chips label them in English. */
 const ANSWERS = [
+  `Yes — ${NAME}`,
+  "Nigeria",
   "Nigeria",
   "Lagos",
   "United Kingdom",

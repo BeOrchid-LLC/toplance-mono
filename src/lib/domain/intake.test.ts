@@ -6,8 +6,10 @@ import {
   intakeFrontier,
   nextIntakeQuestion,
   orderIntakeWrites,
+  resolveChips,
   truncateAnswersAt,
 } from "@/lib/domain/intake";
+import { LOCALES } from "@/lib/i18n/locales";
 
 const KEYS = INTAKE_QUESTIONS.map((q) => q.key);
 
@@ -18,12 +20,17 @@ const KEYS = INTAKE_QUESTIONS.map((q) => q.key);
  */
 describe("nextIntakeQuestion", () => {
   it("opens a fresh intake with the first question", () => {
-    expect(nextIntakeQuestion({})?.key).toBe("nationality");
+    expect(nextIntakeQuestion({})).toBe(INTAKE_QUESTIONS[0]);
   });
 
   it("resumes a part-answered intake at the first gap", () => {
     expect(
-      nextIntakeQuestion({ nationality: "Nigeria", residence: "Lagos" })?.key
+      nextIntakeQuestion({
+        passport_name: "Adaeze Okonkwo",
+        nationality: "Nigeria",
+        residence_country: "Nigeria",
+        residence: "Lagos",
+      })?.key
     ).toBe("destination");
   });
 
@@ -46,8 +53,8 @@ describe("nextIntakeQuestion", () => {
     const answers: Record<string, string> = { destination: "Germany" };
     const counted = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
 
-    expect(nextIntakeQuestion(answers)?.key).toBe("nationality");
-    expect(INTAKE_QUESTIONS[counted].key).not.toBe("nationality");
+    expect(nextIntakeQuestion(answers)?.key).toBe("passport_name");
+    expect(INTAKE_QUESTIONS[counted].key).not.toBe("passport_name");
   });
 });
 
@@ -58,7 +65,13 @@ describe("intakeFrontier", () => {
 
   it("sits on the first gap, not on the number answered", () => {
     expect(intakeFrontier({ destination: "Germany" })).toBe(0);
-    expect(intakeFrontier({ nationality: "Nigeria", purpose: "Work" })).toBe(1);
+    expect(
+      intakeFrontier({
+        passport_name: "Adaeze Okonkwo",
+        nationality: "Nigeria",
+        purpose: "Work",
+      })
+    ).toBe(2);
   });
 
   it("runs off the end of the list once every question is answered", () => {
@@ -261,5 +274,69 @@ describe("orderIntakeWrites", () => {
     expect(orderIntakeWrites(typed, [])).toEqual(typed);
     expect(orderIntakeWrites([], spoken)).toEqual(spoken);
     expect(orderIntakeWrites([], [])).toEqual([]);
+  });
+});
+
+/**
+ * The two topics the client's brief item 1 names and the intake did not
+ * ask. Both are asserted by position rather than by count, because what
+ * the brief buys is the *question being asked* — a datum collected
+ * somewhere else does not satisfy it.
+ */
+describe("the topics brief item 1 names", () => {
+  it("opens by confirming the name on the passport", () => {
+    // Not "asks for a name": sign-up already captured one. A visa is
+    // issued to the name the passport carries, so the opening move is
+    // to check the one we hold against it.
+    expect(nextIntakeQuestion({})?.key).toBe("passport_name");
+  });
+
+  it("asks which country the traveller is in, before which city", () => {
+    const keys = INTAKE_QUESTIONS.map((q) => q.key);
+
+    expect(keys.indexOf("residence_country")).toBeGreaterThan(
+      keys.indexOf("nationality")
+    );
+    expect(keys.indexOf("residence_country")).toBeLessThan(
+      keys.indexOf("residence")
+    );
+  });
+});
+
+/**
+ * The passport question is the only one whose chip is not knowable when
+ * the module loads — its whole content is the traveller's own name. The
+ * substitution is a pure function so both agents share it: the scripted
+ * flow stores `chip.value` verbatim, and a chip reading "Yes — {fullName}"
+ * would otherwise be filed as the answer of record.
+ */
+describe("resolveChips", () => {
+  const passport = INTAKE_QUESTIONS.find((q) => q.key === "passport_name")!;
+
+  it("puts the traveller's name in the value the scripted flow stores", () => {
+    const [chip] = resolveChips(passport, { fullName: "Adaeze Okonkwo" });
+
+    expect(chip.value).toBe("Adaeze Okonkwo");
+  });
+
+  it("puts the name in every language's label", () => {
+    const [chip] = resolveChips(passport, { fullName: "Adaeze Okonkwo" });
+
+    for (const locale of LOCALES) {
+      expect(chip.label[locale.code]).toContain("Adaeze Okonkwo");
+    }
+  });
+
+  it("offers nothing to confirm when no name is held", () => {
+    // A chip reading "Yes — " confirms nothing. Free text still answers.
+    expect(resolveChips(passport, { fullName: "  " })).toEqual([]);
+  });
+
+  it("leaves a question that names nobody exactly as it was", () => {
+    const nationality = INTAKE_QUESTIONS.find((q) => q.key === "nationality")!;
+
+    expect(resolveChips(nationality, { fullName: "Adaeze Okonkwo" })).toEqual(
+      nationality.chips
+    );
   });
 });

@@ -10,7 +10,7 @@ import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
  * `inputSchema` against `parameters` — and otherwise agree: a zod object,
  * converted to JSON schema for the model. Sharing the schema is what
  * keeps a spoken answer and a typed answer the same kind of thing, one
- * of the ten keys capped at the same length, rather than two contracts
+ * of the intake's keys capped at the same length, rather than two contracts
  * that drift apart the first time a question is renamed.
  *
  * The enum is built from `INTAKE_QUESTIONS` rather than a hand-copied

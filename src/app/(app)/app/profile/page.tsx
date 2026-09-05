@@ -210,8 +210,18 @@ export default async function ProfilePage() {
                 </h1>
                 <p className="t-muted mt-1.5">
                   {answers.nationality || <Awaiting w={80} />}
-                  {answers.residence && (
-                    <span> · living in {answers.residence}</span>
+                  {/* City and country read as one place, not two fields:
+                      "living in Lagos, Nigeria". Either half may be
+                      missing — the intake asks them as separate topics,
+                      so one can be answered before the other. */}
+                  {(answers.residence || answers.residence_country) && (
+                    <span>
+                      {" "}
+                      · living in{" "}
+                      {[answers.residence, answers.residence_country]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </span>
                   )}
                 </p>
                 {sponsorName && (
@@ -274,12 +284,18 @@ export default async function ProfilePage() {
                   without re-ordering. */}
               <dl className="grid gap-x-10 sm:grid-cols-2">
                 <EditableName fullName={profile.fullName} />
+                {/* Beside the account name deliberately. A visa is issued
+                    to the passport's spelling, so the two disagreeing is
+                    what a reviewer needs to catch before an application
+                    reaches a mission — not something to reconcile away. */}
+                <DetailField label="Name on passport" value={answers.passport_name} />
                 <DetailField label="Email" value={profile.email} />
                 <EditablePhone countryIso={countryIso} digits={phoneDigits} />
                 <EditableLanguage locale={locale} />
                 <EditableDigest digest={companionDigest} />
                 <DetailField label="Nationality" value={answers.nationality} />
-                <DetailField label="Currently in" value={answers.residence} />
+                <DetailField label="Currently in" value={answers.residence_country} />
+                <DetailField label="City or town" value={answers.residence} />
                 <DetailField label="Destination" value={answers.destination} />
                 <DetailField label="Purpose" value={answers.purpose} />
                 <DetailField label="Target dates" value={answers.dates} />

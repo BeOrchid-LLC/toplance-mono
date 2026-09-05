@@ -13,9 +13,12 @@ import { Progress } from "@/components/ui/progress";
 import { CorridorBar } from "@/components/site/corridor-bar";
 import { CorridorBoard } from "@/components/site/corridor-board";
 import { CorridorProvider } from "@/components/site/corridor-state";
+import { PricingEstimator } from "@/components/site/pricing-estimator";
 import { Shell } from "@/components/shared/shell";
 import { Head, Section } from "@/components/site/section";
 import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
+import { DEFAULT_RATE_CARD, quote, type RateCard } from "@/lib/domain/pricing";
+import { hasDatabaseEnv } from "@/lib/db/client";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,6 +38,20 @@ import { cn } from "@/lib/utils";
  * client-side JavaScript on it.
  */
 export const dynamic = "force-static";
+
+/**
+ * Regenerated every five minutes, which `force-static` explicitly allows.
+ *
+ * This page reads the live rate card, and without a revalidate window
+ * that read happens once, at build time, and is frozen into the
+ * prerendered HTML forever. The billing side would pick a rate change up
+ * on the next invoice while this page went on quoting the old one until
+ * somebody deployed — which is the exact drift the card is in a table to
+ * prevent. Five minutes is short enough that nobody is quoted a stale
+ * price for long, and long enough that the marketing page is still a
+ * cached document rather than a query per visitor.
+ */
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: "Visa and relocation processing for travel agencies",
@@ -188,47 +205,150 @@ const SEAT_EXCLUDES = [
    can sign anything. The labels are ours; the values are the client's,
    and the ones left blank are blank on purpose — a term invented here
    is a term someone will quote back in a negotiation. */
-const TERMS = [
-  { label: "Unit", value: "One case, one client" },
-  { label: "Billing", value: "Annually, in advance, by invoice" },
-  { label: "Price per case", value: null },
-  { label: "Minimum commitment", value: null },
-  { label: "Case reassignment", value: null },
-  { label: "Data residency", value: null },
-];
+/**
+ * The bands as a buyer reads them, built from the same card the
+ * estimator quotes at.
+ *
+ * These used to be three typed-out strings sitting directly above a
+ * calculator that reads the database. The first rate change would have
+ * left the table contradicting the calculator beside it, on the same
+ * screen, in front of the buyer — so every price on this page is now
+ * derived from the card rather than transcribed next to it.
+ */
+function bandRows(card: RateCard) {
+  return card.bands.map((band, i) => {
+    const from = i === 0 ? 1 : (card.bands[i - 1].upTo as number) + 1;
+    return {
+      range:
+        band.upTo === null
+          ? `${ordinal(from)} and above`
+          : `${ordinal(from)} – ${ordinal(band.upTo)}${i === 0 ? " application" : ""}`,
+      rate: compactMoney(band.rateMinor, card.currency),
+    };
+  });
+}
 
-const FAQ = [
-  {
-    q: "What exactly can we see about our clients' cases?",
-    a: "Completion percentage, status, destination and whether a case is blocked — enough to know where every client stands. Your team doesn't open, download or preview the documents themselves; Toplance's reviewers do that. That boundary is built into the data model rather than being a permission an administrator can grant, so it holds for anyone you add to your account later, too.",
-  },
-  {
-    q: "Does Toplance decide whether the visa is granted?",
-    a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that the file is complete, correct and submitted the way that corridor expects — which is the part applications usually fail on. When a document shows as verified it means it has been accepted for review, not that the application has been approved.",
-  },
-  {
-    q: "How are we invoiced?",
-    a: "One consolidated invoice for your cases, billed annually in advance, rather than a charge per client or per document. The amount per case and any minimum commitment are set in your contract — the pricing section above marks both as figures you supply rather than guessing at them here.",
-  },
-  {
-    q: "What happens if a client drops out before they travel?",
-    a: "A pending invitation can be revoked from your console, which releases the case before any work has begun on it. Once a client has started a case, whether that case can be reassigned is a contract term rather than a product setting — it is one of the terms listed above.",
-  },
-  {
-    q: "Where is our clients' data stored?",
-    a: "Documents are encrypted at rest and in transit. Residency of the stored files is a decision your agency can set at contract level, so if you are bound to keep personal data in a particular jurisdiction that is a conversation to have before signing rather than a limitation you discover afterwards.",
-  },
-  {
-    q: "Our clients do not all read English.",
-    a: "The intake conversation, the checklist and the status updates run in English, Hausa, Yoruba and Igbo, typed or spoken. Your client can switch language at any point, including mid-conversation, and their answers carry over. Your caseboard stays in English.",
-  },
-  {
-    q: "Can we start with one corridor?",
-    a: "Yes, and most agencies do. Cases are not tied to a destination, so a contract scoped around one corridor still covers the second one you open next quarter — provided it is live. If it is not, ask for it and it enters the build queue with your demand attached.",
-  },
-];
+function termsFor(card: RateCard) {
+  const rates = card.bands
+    .map((b) => compactMoney(b.rateMinor, card.currency))
+    .join(" / ");
 
-export default function HomePage() {
+  return [
+    { label: "Unit", value: "One completed application" },
+    { label: "Billing", value: "Monthly, on your signup anniversary" },
+    {
+      label: "Base fee",
+      value: `${compactMoney(card.baseFeeMinor, card.currency)} per month, per business account`,
+    },
+    { label: "Application fee", value: `${rates}, charged in layers` },
+    { label: "Band reset", value: "At the start of every cycle" },
+    { label: "Minimum commitment", value: null },
+  ];
+}
+
+/** `1800` → `"$18"`, `1850` → `"$18.50"`. Display only, like `formatMoney`. */
+function compactMoney(minor: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: minor % 100 === 0 ? 0 : 2,
+  }).format(minor / 100);
+}
+
+/** `201` → `"201st"`. English only, like the rest of this page. */
+function ordinal(n: number): string {
+  const teens = n % 100;
+  const suffix =
+    teens >= 11 && teens <= 13
+      ? "th"
+      : ({ 1: "st", 2: "nd", 3: "rd" }[n % 10] ?? "th");
+  return `${n.toLocaleString("en-US")}${suffix}`;
+}
+
+/**
+ * Takes the card for one answer only — "How are we invoiced?" quotes the
+ * rates, and an FAQ that disagrees with the estimator two sections above
+ * it is worse than no FAQ.
+ */
+function faqFor(card: RateCard) {
+  const [first, ...rest] = card.bands;
+  // "$18 each for the first 200 in the month, $15 for the next 300, then
+  // $12 beyond that" — the same sentence, from whatever bands exist.
+  const invoiceRates = [
+    `${compactMoney(first.rateMinor, card.currency)} each for the first ${(first.upTo ?? 0).toLocaleString("en-US")} in the month`,
+    ...rest.map((band, i) => {
+      const previous = card.bands[i].upTo as number;
+      return band.upTo === null
+        ? `then ${compactMoney(band.rateMinor, card.currency)} beyond that`
+        : `${compactMoney(band.rateMinor, card.currency)} for the next ${(band.upTo - previous).toLocaleString("en-US")}`;
+    }),
+  ].join(", ");
+
+  return [
+    {
+      q: "What exactly can we see about our clients' cases?",
+      a: "Completion percentage, status, destination and whether a case is blocked — enough to know where every client stands. Your team doesn't open, download or preview the documents themselves; Toplance's reviewers do that. That boundary is built into the data model rather than being a permission an administrator can grant, so it holds for anyone you add to your account later, too.",
+    },
+    {
+      q: "Does Toplance decide whether the visa is granted?",
+      a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that the file is complete, correct and submitted the way that corridor expects — which is the part applications usually fail on. When a document shows as verified it means it has been accepted for review, not that the application has been approved.",
+    },
+    {
+      q: "How are we invoiced?",
+      a: `A ${compactMoney(card.baseFeeMinor, card.currency)} monthly base fee for the account, plus a fee for each application your client actually completes — ${invoiceRates}. The fee is layered, so passing a threshold only changes the price of the applications above it, never the ones below. An application is counted once its checklist is complete and every document has passed its check — an invitation nobody accepts, a checklist still being filled and one whose documents came back rejected are never charged. The estimator in the pricing section runs the real arithmetic.`,
+    },
+    {
+      q: "What happens if a client drops out before they travel?",
+      a: "A pending invitation can be revoked from your console, which releases the case before any work has begun on it. Once a client has started a case, whether that case can be reassigned is a contract term rather than a product setting — it is one of the terms listed above.",
+    },
+    {
+      q: "Where is our clients' data stored?",
+      a: "Documents are encrypted at rest and in transit. Residency of the stored files is a decision your agency can set at contract level, so if you are bound to keep personal data in a particular jurisdiction that is a conversation to have before signing rather than a limitation you discover afterwards.",
+    },
+    {
+      q: "Our clients do not all read English.",
+      a: "The intake conversation, the checklist and the status updates run in English, Hausa, Yoruba and Igbo, typed or spoken. Your client can switch language at any point, including mid-conversation, and their answers carry over. Your caseboard stays in English.",
+    },
+    {
+      q: "Can we start with one corridor?",
+      a: "Yes, and most agencies do. Cases are not tied to a destination, so a contract scoped around one corridor still covers the second one you open next quarter — provided it is live. If it is not, ask for it and it enters the build queue with your demand attached.",
+    },
+  ];
+}
+
+export default async function HomePage() {
+  /**
+   * The rates the estimator quotes at, read from the database so the
+   * calculator and the invoice cannot drift apart. Every price on this
+   * page is derived from this one object.
+   *
+   * Two ways it can be absent, and neither should stop the page
+   * rendering. CI builds the marketing site with no database at all, so
+   * `hasDatabaseEnv` is false. And a build machine can have the variable
+   * set but not be able to reach the host — a missing env var is a
+   * different failure from an unreachable one, and only the first is a
+   * configuration check. This page had no database dependency at all
+   * before billing arrived; it should not be the thing that fails a
+   * deploy. The shipped card is the same as the seeded row until someone
+   * edits it, so the fallback is a stale price at worst, never a wrong
+   * shape — `parseRateCard` refuses those upstream of here.
+   */
+  let rateCard = DEFAULT_RATE_CARD;
+  if (hasDatabaseEnv) {
+    try {
+      rateCard = await (await import("@/lib/data/billing")).activeRateCard();
+    } catch (error) {
+      console.error("[site] falling back to the shipped rate card", error);
+    }
+  }
+
+  const bands = bandRows(rateCard);
+  const baseFee = compactMoney(rateCard.baseFeeMinor, rateCard.currency);
+  // A worked example, computed rather than written out, so it stays true
+  // when the bands move. Suppressed on a single-band card, where "350 is
+  // 200 at one rate and 150 at another" has nothing to say.
+  const worked = quote(350, rateCard);
+
   return (
     <CorridorProvider>
       {/* ---------- hero ---------- */}
@@ -552,21 +672,72 @@ export default function HomePage() {
       </Section>
 
       {/* ---------- pricing ---------- */}
-      <Section id="pricing" label="Pricing" datum="Billed by case, annually">
+      <Section
+        id="pricing"
+        label="Pricing"
+        datum={`${baseFee}/month + per application`}
+      >
         <Head
-          title="One case for every client you run"
-          lead="Every case carries the whole product — the conversation, the checklist, a named case handler and human review before submission — whichever corridor it is spent on. The amounts below are placeholders for you to set."
+          title="You pay for the applications that finish"
+          lead="A monthly fee for the account, plus a fee for every application your client actually completes. The per-application fee falls as your volume rises, and it is charged in layers — so crossing a threshold only ever changes the price of the applications above it."
         />
 
-        <div className="mt-11 overflow-hidden rounded-lg border border-border bg-surface">
-          <div className="flex flex-col p-7 lg:p-9">
+        {/* The bands, before the calculator. A buyer who is shown a total
+            without the rates behind it has to trust the arithmetic; one
+            who is shown the rates can check it. */}
+        <div className="mt-11 grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <div className="rounded-lg border border-border bg-surface p-6 sm:p-8">
             <span
               aria-hidden
-              className="block h-[3px] rounded-[var(--radius-pill)] bg-brand-accent"
+              className="block h-[3px] w-12 rounded-[var(--radius-pill)] bg-brand-accent"
             />
-            <span className="tag mt-4 block">Agencies</span>
-            <p className="d-lg mt-4">By case</p>
-            <p className="t-muted text-[15px]">billed annually</p>
+            <p className="d-lg mt-5">
+              <span className="num">{baseFee}</span>
+              <span className="t-muted text-[15px]"> / month</span>
+            </p>
+            <p className="t-muted mt-1 text-[15px]">
+              per business account, every cycle
+            </p>
+
+            <p className="tag mb-4 mt-8">Then, per completed application</p>
+            <dl className="border-t border-border">
+              {bands.map((band) => (
+                <div
+                  key={band.range}
+                  className="flex items-baseline justify-between gap-6 border-b border-border py-3"
+                >
+                  <dt className="text-[15px] text-ink-2">{band.range}</dt>
+                  <dd className="num text-base">{band.rate} each</dd>
+                </div>
+              ))}
+            </dl>
+            {worked.layers.length >= 2 && (
+              <p className="t-muted mt-4 text-[13px]">
+                Layered, like income tax bands.{" "}
+                {worked.applications.toLocaleString("en-US")} applications is{" "}
+                {worked.layers
+                  .map(
+                    (l) =>
+                      `${l.count.toLocaleString("en-US")} at ${compactMoney(l.rateMinor, rateCard.currency)}`
+                  )
+                  .join(" and ")}{" "}
+                — not {worked.applications.toLocaleString("en-US")} at{" "}
+                {compactMoney(
+                  worked.layers[worked.layers.length - 1].rateMinor,
+                  rateCard.currency
+                )}
+                .
+              </p>
+            )}
+          </div>
+
+          <PricingEstimator card={rateCard} />
+        </div>
+
+        <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="flex flex-col p-7 lg:p-9">
+            <span className="tag block">Agencies</span>
+            <p className="d-sm mt-3">What every application carries</p>
 
             {/* Split rather than one flat list: a buyer needs to see which
                 half of this is the service their traveller receives and
@@ -621,7 +792,7 @@ export default function HomePage() {
             <div>
               <p className="tag mb-4">Commercial terms</p>
               <dl className="border-t border-border">
-                {TERMS.map((t) => (
+                {termsFor(rateCard).map((t) => (
                   <div
                     key={t.label}
                     className="grid items-baseline gap-x-6 gap-y-1 border-b border-border py-3 sm:grid-cols-[minmax(0,150px)_1fr]"
@@ -655,7 +826,7 @@ export default function HomePage() {
           collapsible
           className="mt-9 border-t border-border-strong"
         >
-          {FAQ.map((f, i) => (
+          {faqFor(rateCard).map((f, i) => (
             <AccordionItem key={f.q} value={`q${i}`}>
               <AccordionTrigger className="d-sm text-left">{f.q}</AccordionTrigger>
               <AccordionContent className="max-w-[74ch] text-[15px]">

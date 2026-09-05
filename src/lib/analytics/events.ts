@@ -38,6 +38,12 @@ export const EVENT_NAMES = [
   "toplance.corridor_requested",
 
   "toplance.document_uploaded",
+  /**
+   * A business's application reached the point it is charged for — every
+   * required document uploaded. Emitted once per application by
+   * `markBillableIfComplete`, never on a re-upload after a flag.
+   */
+  "toplance.application_became_billable",
   "toplance.document_removed",
 
   /** A reviewer's verdict — the transitions out of `checking`. */

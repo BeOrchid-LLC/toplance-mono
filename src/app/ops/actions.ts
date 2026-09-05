@@ -66,6 +66,14 @@ export async function reviewDocument(formData: FormData) {
     actor.userId
   );
 
+  // A reviewer's verdict can be what completes a checklist — a document
+  // uploaded before the pre-check was reachable, say, or one re-uploaded
+  // after a flag. The upload path emits this too; without it here, the
+  // event undercounts exactly the cases a person had to touch.
+  if (result.becameBillable) {
+    await track("toplance.application_became_billable", { applicationId }, actor.userId);
+  }
+
   await audit(
     actor.userId,
     verdict === "verified" ? "document.verified" : "document.flagged",

@@ -4,14 +4,14 @@ import { eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents, statusEvents } from "@/lib/db/schema";
-import type { ApplicationStatus } from "@/lib/domain/status";
+import { RESUBMITTABLE } from "@/lib/domain/status";
 
-/** The only statuses a traveller may submit from. */
-export const RESUBMITTABLE: readonly ApplicationStatus[] = [
-  "draft",
-  "collecting_documents",
-  "additional_documents",
-];
+// The list itself lives in `@/lib/domain/status` — pure and I/O-free, so
+// the documents page can read it to decide whether to draw the submit
+// panel without pulling `db` into that render. Re-exported here so this
+// module stays the place the list and its enforcement are read together,
+// the same arrangement `transitions.ts` has with `STAFF_TRANSITIONS`.
+export { RESUBMITTABLE } from "@/lib/domain/status";
 
 export type SubmitResult = { ok: true } | { error: string };
 

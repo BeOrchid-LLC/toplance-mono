@@ -96,3 +96,44 @@ test("the traveller page survives, and the chrome still reaches it", async ({
   ).toBeVisible();
   await expect(page.getByText("No card needed to see your checklist")).toBeVisible();
 });
+
+/**
+ * The regression this file did not catch, and the reason it now does.
+ *
+ * `SiteNav` rendered its links inside a `hidden lg:flex` container with
+ * no fallback of any kind — no trigger, no sheet, nothing. Below 1024px
+ * both landing pages had zero navigation: every section was unreachable
+ * from the chrome on exactly the mid-range Android `CorridorBar`'s own
+ * comments say this page is mostly read on.
+ *
+ * Asserted at a phone width, because at desktop widths the bug is
+ * invisible — which is how it shipped.
+ */
+test.describe("the small-screen menu", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("carries the navigation the bar has no room for", async ({ page }) => {
+    await page.goto("/");
+
+    // The links are genuinely absent from the bar itself at this width —
+    // if they were merely visually hidden this test would pass while the
+    // bar stayed unusable.
+    await expect(page.getByRole("navigation").getByRole("link", { name: "Pricing" })).toHaveCount(0);
+
+    await page.getByRole("button", { name: "Open menu" }).click();
+
+    const menu = page.getByRole("dialog");
+    for (const label of ["How it works", "Where you can go", "Pricing", "For travellers", "Sign in"]) {
+      await expect(menu.getByRole("link", { name: label })).toBeVisible();
+    }
+
+    // A way out that is not the Escape key. Hiding this in favour of
+    // "tap the trigger again" does not work: Radix makes the body
+    // inert while the sheet is open, so the trigger cannot be clicked.
+    await expect(menu.getByRole("button", { name: "Close" })).toBeVisible();
+
+    await menu.getByRole("link", { name: "Pricing" }).click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+    await expect(page).toHaveURL(/#pricing$/);
+  });
+});

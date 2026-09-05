@@ -77,6 +77,12 @@ export const EVENT_NAMES = [
   /** One of the three pre-expiry warnings actually went out. */
   "toplance.expiry_reminder_sent",
 
+  /** A government advisory for a destination moved, and we told the traveller. */
+  "toplance.advisory_change_notified",
+
+  /** Advisories were re-read from their sources for one application. */
+  "toplance.advisories_refreshed",
+
   /** A staff decision that moves a case through review — see `changeStatusTx`. */
   "toplance.application_status_changed",
 

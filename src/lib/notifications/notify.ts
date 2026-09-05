@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { notifications, profiles, type Notification } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/notifications/email";
 import {
+  advisoryChangedEmail,
   checklistChangedEmail,
   companionDigestEmail,
   documentFlaggedEmail,
@@ -67,6 +68,13 @@ export type NotificationPayload = {
   document_flagged: { documentName: string; reason: string; url: string };
   message_received: { senderName: string; preview: string; url: string };
   itinerary_ready: { url: string };
+  advisory_changed: {
+    destination: string;
+    source: string;
+    level: string | null;
+    changeNote: string | null;
+    url: string;
+  };
   visa_expiring: {
     visaName: string | null;
     expiresOn: string;
@@ -97,6 +105,10 @@ function templateFor<K extends keyof NotificationPayload>(
       return messageReceivedEmail(payload as NotificationPayload["message_received"]);
     case "itinerary_ready":
       return itineraryReadyEmail(payload as NotificationPayload["itinerary_ready"]);
+    case "advisory_changed":
+      return advisoryChangedEmail(
+        payload as NotificationPayload["advisory_changed"]
+      );
     case "visa_expiring":
       return visaExpiringEmail(payload as NotificationPayload["visa_expiring"]);
     case "companion_digest":

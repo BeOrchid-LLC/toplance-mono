@@ -78,6 +78,13 @@
       "when": 1788572224094,
       "tag": "0010_lean_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788576311366,
+      "tag": "0011_curly_thing",
+      "breakpoints": true
     }
   ]
 }

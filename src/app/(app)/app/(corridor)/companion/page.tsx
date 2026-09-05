@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CalendarClock, ClipboardList, MapPin, Sparkles } from "lucide-react";
+import {
+  CalendarClock,
+  ClipboardList,
+  MapPin,
+  ShieldAlert,
+  Sparkles,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Shell } from "@/components/shared/shell";
@@ -14,6 +20,7 @@ import {
 } from "@/lib/data/applications";
 import { arrivalChecklist, renewalGuidance } from "@/lib/domain/companion";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
+import { refreshAdvisoriesIfStale } from "@/lib/data/advisories";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { track } from "@/lib/analytics/track";
@@ -53,6 +60,14 @@ export default async function CompanionPage() {
   // weekly digest cron calls, so the two can never disagree on what
   // "stale" means or how a refresh gets written.
   const tips = await refreshLocalTipsIfStale(application.id, profile.id);
+
+  // The same helper the cron sweep calls, so the page and the alert can
+  // never disagree on what is cached. `changed` is ignored here on
+  // purpose — rendering a page is not the moment to email somebody.
+  const { advisories } = await refreshAdvisoriesIfStale(
+    application.id,
+    corridor.destinationIso
+  );
 
   await track("toplance.companion_viewed", { applicationId: application.id }, profile.id);
 
@@ -138,6 +153,55 @@ export default async function CompanionPage() {
                 />
               </PanelBody>
             </Panel>
+
+            {/* ---- travel advice ---- */}
+            {advisories.length > 0 && (
+              <Panel>
+                <PanelHeader
+                  label="Travel advice"
+                  aside={
+                    <Badge variant="neutral">
+                      <ShieldAlert className="size-3.5" aria-hidden /> Official
+                    </Badge>
+                  }
+                />
+                <PanelBody className="pt-2">
+                  {/*
+                    Every word below belongs to the issuing government and
+                    is shown with its name on it. Nothing here is
+                    summarised, rated or reworded by us — a paraphrased
+                    safety advisory would be a claim about someone's
+                    safety that this product has no standing to make.
+                  */}
+                  <ul>
+                    {advisories.map((advisory) => (
+                      <li
+                        key={advisory.source}
+                        className="border-b border-border py-4 last:border-b-0"
+                      >
+                        <p className="t-title">{advisory.source}</p>
+                        {advisory.level && (
+                          <p className="t-body mt-1">{advisory.level}</p>
+                        )}
+                        {advisory.changeNote && (
+                          <p className="t-muted mt-1 italic">
+                            “{advisory.changeNote}”
+                          </p>
+                        )}
+                        <a
+                          className="t-muted mt-2 inline-block underline"
+                          href={advisory.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          Read it on {advisory.source}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </PanelBody>
+              </Panel>
+            )}
 
             {/* ---- destination ---- */}
             <Panel>

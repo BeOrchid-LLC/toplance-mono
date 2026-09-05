@@ -33,6 +33,7 @@ const KIND_COPY: Record<NotificationKind, string> = {
   companion_digest: "Your weekly digest is ready",
   checklist_changed: "Your document checklist changed",
   visa_expiring: "Your visa is approaching its expiry date",
+  advisory_changed: "Travel advice for your destination changed",
 };
 
 function relativeTime(date: Date): string {

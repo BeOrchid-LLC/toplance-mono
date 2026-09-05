@@ -8,6 +8,7 @@ import {
   messageReceivedEmail,
   statusChangedEmail,
   submissionEmail,
+  advisoryChangedEmail,
   visaExpiringEmail,
 } from "@/lib/notifications/templates";
 
@@ -99,6 +100,45 @@ describe("email templates", () => {
       expiresOn: "2027-03-14",
       daysOut: 60,
       url: "https://x.test/app/companion",
+    });
+    expect(email.html).not.toContain("<script>");
+  });
+
+  it("advisoryChangedEmail quotes the source and links to its page", () => {
+    const email = advisoryChangedEmail({
+      destination: "United Arab Emirates",
+      source: "UK FCDO",
+      level: null,
+      changeNote: "Updated information about regional tensions.",
+      url: "https://www.gov.uk/foreign-travel-advice/united-arab-emirates",
+    });
+    expect(email.subject).toContain("United Arab Emirates");
+    expect(email.html).toContain("Updated information about regional tensions.");
+    expect(email.html).toContain("UK FCDO");
+    expect(email.html).toContain("https://www.gov.uk/foreign-travel-advice/united-arab-emirates");
+  });
+
+  it("advisoryChangedEmail falls back to the level when there is no change note", () => {
+    const email = advisoryChangedEmail({
+      destination: "United Kingdom",
+      source: "US State Department",
+      level: "Level 2: Exercise Increased Caution",
+      changeNote: null,
+      url: "https://travel.state.gov/uk.html",
+    });
+    expect(email.html).toContain("Level 2: Exercise Increased Caution");
+    expect(email.html).not.toContain("null");
+  });
+
+  it("advisoryChangedEmail escapes third-party advisory text", () => {
+    // The note is written by a government website, not by us. It is still
+    // third-party text arriving over the network into an HTML body.
+    const email = advisoryChangedEmail({
+      destination: "Germany",
+      source: "UK FCDO",
+      level: null,
+      changeNote: SCRIPT,
+      url: "https://www.gov.uk/foreign-travel-advice/germany",
     });
     expect(email.html).not.toContain("<script>");
   });

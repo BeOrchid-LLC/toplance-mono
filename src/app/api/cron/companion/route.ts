@@ -1,6 +1,11 @@
 import { getCorridorFor } from "@/lib/data/applications";
 import { countDueForDigest, travellersDueForDigest } from "@/lib/data/digest";
 import { travellersDueForExpiryReminder } from "@/lib/data/expiry";
+import {
+  approvedTravellersForAdvisories,
+  refreshAdvisoriesIfStale,
+} from "@/lib/data/advisories";
+import { destinationNameFor } from "@/lib/safety/advisories";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { arrivalChecklist } from "@/lib/domain/companion";
 import { appUrl, notify } from "@/lib/notifications/notify";
@@ -110,6 +115,7 @@ export async function GET(request: Request) {
   }
 
   const expiry = await remindExpiringVisas();
+  const advisories = await alertAdvisoryChanges();
 
   // `eligible` is the true population size (a cheap COUNT, no per-row
   // work); `skipped` is what this run's cap left for a later run to
@@ -121,7 +127,77 @@ export async function GET(request: Request) {
     eligible: eligibleCount,
     skipped: Math.max(0, eligibleCount - checked),
     expiryReminded: expiry.reminded,
+    advisoriesChecked: advisories.checked,
+    advisoriesAlerted: advisories.alerted,
   });
+}
+
+/**
+ * The third sweep: re-read each approved traveller's destination
+ * advisories and tell them when one has actually moved.
+ *
+ * The alert carries the issuing government's own words — this product
+ * never restates an advisory — so there is no generation step here and
+ * nothing to degrade when a model is unavailable.
+ *
+ * `refreshAdvisoriesIfStale` is the same function the companion page
+ * calls on render, which is deliberate: the page and this sweep can
+ * never disagree about what is cached or when it went stale. It reports
+ * a change only when there was a previous reading to compare against, so
+ * a traveller checked for the first time here is recorded silently
+ * rather than mailed about advice that has not changed.
+ */
+async function alertAdvisoryChanges(): Promise<{
+  checked: number;
+  alerted: number;
+}> {
+  let checked = 0;
+  let alerted = 0;
+
+  const travellers = await approvedTravellersForAdvisories(CRON_BATCH_LIMIT);
+
+  for (const { applicationId, travelerId, destinationIso } of travellers) {
+    checked += 1;
+
+    try {
+      const { changed } = await refreshAdvisoriesIfStale(
+        applicationId,
+        destinationIso
+      );
+      if (changed.length === 0) continue;
+
+      const destination = destinationNameFor(destinationIso) ?? destinationIso.toUpperCase();
+
+      for (const advisory of changed) {
+        await notify(
+          travelerId,
+          "advisory_changed",
+          {
+            destination,
+            source: advisory.source,
+            level: advisory.level,
+            changeNote: advisory.changeNote,
+            url: advisory.url,
+          },
+          applicationId
+        );
+        alerted += 1;
+      }
+
+      await track(
+        "toplance.advisory_change_notified",
+        { applicationId, sources: changed.map((c) => c.source) },
+        null
+      );
+    } catch (error) {
+      console.error(
+        `[cron/companion] could not check advisories for application ${applicationId}`,
+        error
+      );
+    }
+  }
+
+  return { checked, alerted };
 }
 
 /**

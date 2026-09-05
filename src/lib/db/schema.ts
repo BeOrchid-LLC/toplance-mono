@@ -136,6 +136,13 @@ export const notificationKind = pgEnum("notification_kind", [
    * not to repeat one.
    */
   "visa_expiring",
+  /**
+   * → traveller: a government travel advisory for their destination
+   * changed. The payload carries the issuing source's own words and a
+   * link to its page — this product never restates an advisory, so the
+   * notification has nothing of ours in it beyond the framing.
+   */
+  "advisory_changed",
 ]);
 
 /**

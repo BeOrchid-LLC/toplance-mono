@@ -160,6 +160,50 @@ export function visaExpiringEmail({
 }
 
 /**
+ * → traveller: a government travel advisory for their destination moved.
+ *
+ * Every substantive sentence here belongs to the issuing government and
+ * is quoted with its name attached. This product does not summarise,
+ * rank or interpret a safety advisory — it says who changed what, and
+ * sends the traveller to read it at the source. The note arrives over
+ * the network from a third party, so it is passed to `renderEmail` raw
+ * and escaped at that boundary like every other untrusted string here.
+ */
+export function advisoryChangedEmail({
+  destination,
+  source,
+  level,
+  changeNote,
+  url,
+}: {
+  destination: string;
+  source: string;
+  level: string | null;
+  changeNote: string | null;
+  url: string;
+}): EmailContent {
+  // The note is what the source itself said changed; the level is the
+  // fallback when a source publishes a rating but no note. One of the
+  // two is always present, so the email never says merely "something
+  // changed" with nothing to show for it.
+  const detail = changeNote
+    ? `“${changeNote}” — ${source}`
+    : `${source} now rates ${destination} as ${level}.`;
+
+  return {
+    subject: `Travel advice for ${destination} has been updated`,
+    ...renderEmail({
+      heading: `Travel advice for ${destination} has been updated`,
+      paragraphs: [
+        detail,
+        "This is their wording, not ours. Read the full advice on their own page before you act on it.",
+      ],
+      cta: { href: url, label: `Read it on ${source}` },
+    }),
+  };
+}
+
+/**
  * To an invitee who has NO account. Deliberately not routed through
  * `notify()` — there is no `profiles` row to attach it to, which is also
  * why `invitation` is not a `notification_kind`.

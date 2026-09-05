@@ -11,6 +11,9 @@ import { documentUrl } from "@/app/(app)/actions";
 import { reviewDocument } from "@/app/ops/actions";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/locale-provider";
+import { OPS_REVIEW_ROW } from "@/lib/i18n/ops-case-actions";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
 
 /**
  * One checklist row as the reviewer sees it: the traveller's
@@ -23,6 +26,7 @@ import { cn } from "@/lib/utils";
  * the document name and state in view while writing it.
  */
 export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: string }) {
+  const t = useT();
   const [pending, startTransition] = React.useTransition();
   const [flagging, setFlagging] = React.useState(false);
   const [reason, setReason] = React.useState("");
@@ -37,7 +41,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
     startTransition(async () => {
       const result = await documentUrl(applicationId, doc.docKey);
       if (result.error || !result.url) {
-        toast.error(result.error ?? "That file could not be opened.");
+        toast.error(result.error ?? t(OPS_REVIEW_ROW.toastOpenFailed));
         return;
       }
       window.open(result.url, "_blank", "noopener,noreferrer");
@@ -60,9 +64,10 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
       setFlagging(false);
       setReason("");
       toast.success(
-        verdict === "verified"
-          ? `${doc.name} verified`
-          : `${doc.name} flagged — the traveler sees your reason`
+        (verdict === "verified"
+          ? t(OPS_REVIEW_ROW.toastVerified)
+          : t(OPS_REVIEW_ROW.toastFlagged)
+        ).replace("{name}", doc.name)
       );
     });
   }
@@ -84,7 +89,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
             <h3 className="t-title">{doc.name}</h3>
             <DocStateBadge state={doc.state} />
             {!doc.isRequired && (
-              <span className="special-caps">Optional</span>
+              <span className="special-caps">{t(OPS_REVIEW_ROW.optional)}</span>
             )}
           </div>
           {doc.reason && (
@@ -99,9 +104,9 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               size="sm"
               onClick={view}
               disabled={pending}
-              aria-label={`View ${doc.name}`}
+              aria-label={`${t(OPS_REVIEW_ROW.view)} ${doc.name}`}
             >
-              <Eye /> View
+              <Eye /> {t(OPS_REVIEW_ROW.view)}
             </Button>
           )}
           {reviewable && doc.state !== "verified" && (
@@ -109,9 +114,9 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               size="sm"
               onClick={() => submit("verified")}
               disabled={pending}
-              aria-label={`Verify ${doc.name}`}
+              aria-label={`${t(OPS_REVIEW_ROW.verify)} ${doc.name}`}
             >
-              <Check /> Verify
+              <Check /> {t(OPS_REVIEW_ROW.verify)}
             </Button>
           )}
           {reviewable && doc.state !== "flagged" && !flagging && (
@@ -120,9 +125,9 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               size="sm"
               onClick={() => setFlagging(true)}
               disabled={pending}
-              aria-label={`Flag ${doc.name}`}
+              aria-label={`${t(OPS_REVIEW_ROW.flag)} ${doc.name}`}
             >
-              <Flag /> Flag
+              <Flag /> {t(OPS_REVIEW_ROW.flag)}
             </Button>
           )}
         </div>
@@ -134,7 +139,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
             autoFocus
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="What is wrong, and what should they upload instead? The traveler reads this."
+            placeholder={t(OPS_REVIEW_ROW.flagPlaceholder)}
             rows={3}
           />
           <div className="mt-3 flex gap-3">
@@ -144,7 +149,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               onClick={() => submit("flagged")}
               disabled={pending || !reason.trim()}
             >
-              <Flag /> Flag for the traveler
+              <Flag /> {t(OPS_REVIEW_ROW.flagForTraveler)}
             </Button>
             <Button
               variant="tertiary"
@@ -155,7 +160,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               }}
               disabled={pending}
             >
-              <X /> Cancel
+              <X /> {t(OPS_COMMON.cancel)}
             </Button>
           </div>
         </div>

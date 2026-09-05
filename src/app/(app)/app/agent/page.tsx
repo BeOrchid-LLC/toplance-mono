@@ -10,11 +10,16 @@ import {
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { aiEnabled } from "@/lib/ai/models";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { getLocale } from "@/lib/i18n/server";
+import { INTAKE_UI } from "@/lib/i18n/intake-ui";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Intake agent" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: INTAKE_UI.pageTitle[locale] };
+}
 
 export default async function AgentPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;

@@ -9,7 +9,6 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { opsNav } from "@/components/ops/ops-nav";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import {
@@ -27,11 +26,18 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/i18n/server";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import { OPS_QUEUE } from "@/lib/i18n/ops-queue";
+import { localizedOpsNav } from "@/components/ops/ops-nav";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Case queue" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: OPS_QUEUE.heading[locale] };
+}
 
 const assignee = alias(profiles, "assignee");
 
@@ -43,6 +49,8 @@ function ageInDays(at: Date | null) {
 
 export default async function OpsQueuePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
 
   // Staff-only, and now the only thing making that so — RLS used to
   // return an empty table to everyone else. It also gates on a second
@@ -88,27 +96,27 @@ export default async function OpsQueuePage() {
 
   const counters = [
     {
-      label: "Open cases",
+      label: OPS_QUEUE.counters.openCases.label[locale],
       value: rows.length,
-      sub: "in the pipeline",
+      sub: OPS_QUEUE.counters.openCases.sub[locale],
       tone: "text-ink",
     },
     {
-      label: "Awaiting review",
+      label: OPS_COMMON.awaitingReview[locale],
       value: rows.filter((r) => r.status === "submitted").length,
-      sub: "at 100% completion",
+      sub: OPS_QUEUE.counters.awaitingReviewSub[locale],
       tone: "text-info-ink",
     },
     {
-      label: "Unassigned",
+      label: OPS_COMMON.unassigned[locale],
       value: rows.filter((r) => !r.assigneeId).length,
-      sub: "no owner yet",
+      sub: OPS_QUEUE.counters.unassignedSub[locale],
       tone: "text-warning-ink",
     },
     {
-      label: "Overdue",
+      label: OPS_QUEUE.counters.overdue.label[locale],
       value: rows.filter((r) => ageInDays(r.createdAt) > 5).length,
-      sub: "more than 5 days in queue",
+      sub: OPS_QUEUE.counters.overdue.sub[locale],
       tone: "text-danger-ink",
     },
   ];
@@ -116,10 +124,10 @@ export default async function OpsQueuePage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={opsNav}
+        nav={localizedOpsNav(locale)}
         name={profile.fullName}
         email={profile.email}
-        subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
         notifications={
           <NotificationsMenu
             notifications={notifications}
@@ -136,10 +144,8 @@ export default async function OpsQueuePage() {
         />
 
         <Shell className="pt-10">
-          <h1 className="t-h2">Case queue</h1>
-          <p className="t-muted mt-2 max-w-[62ch]">
-            Every application a person still has to act on, oldest first.
-          </p>
+          <h1 className="t-h2">{OPS_QUEUE.heading[locale]}</h1>
+          <p className="t-muted mt-2 max-w-[62ch]">{OPS_QUEUE.intro[locale]}</p>
 
           {/*
             The queue header is this console's signature moment (§4), and
@@ -181,21 +187,18 @@ export default async function OpsQueuePage() {
         <Shell className="py-12">
           <Panel>
             <PanelHeader
-              label="Sorted by age, oldest first"
+              label={OPS_QUEUE.sortedByAge[locale]}
               aside={
                 <Badge variant="brand">
                   <span className="num">{rows.length}</span>
-                  {rows.length === 1 ? "case" : "cases"}
+                  {OPS_COMMON.caseWord[rows.length === 1 ? "one" : "other"][locale]}
                 </Badge>
               }
             />
 
           {rows.length === 0 ? (
             <PanelBody>
-              <p className="t-muted max-w-[62ch]">
-                Nothing in the queue. Cases appear here once a traveler
-                finishes intake.
-              </p>
+              <p className="t-muted max-w-[62ch]">{OPS_QUEUE.empty[locale]}</p>
             </PanelBody>
           ) : (
             /*
@@ -219,11 +222,11 @@ export default async function OpsQueuePage() {
               <Table className="min-w-[720px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[26%]">Applicant</TableHead>
-                    <TableHead className="w-[22%]">Destination</TableHead>
-                    <TableHead className="w-[20%]">Status</TableHead>
-                    <TableHead className="w-[20%]">Owner</TableHead>
-                    <TableHead className="w-[12%]">Age</TableHead>
+                    <TableHead className="w-[26%]">{OPS_QUEUE.tableHead.applicant[locale]}</TableHead>
+                    <TableHead className="w-[22%]">{OPS_QUEUE.tableHead.destination[locale]}</TableHead>
+                    <TableHead className="w-[20%]">{OPS_QUEUE.tableHead.status[locale]}</TableHead>
+                    <TableHead className="w-[20%]">{OPS_QUEUE.tableHead.owner[locale]}</TableHead>
+                    <TableHead className="w-[12%]">{OPS_QUEUE.tableHead.age[locale]}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -238,7 +241,7 @@ export default async function OpsQueuePage() {
                             className="group block"
                           >
                             <span className="t-title block truncate group-hover:underline">
-                              {r.travelerName || "Unnamed"}
+                              {r.travelerName || OPS_COMMON.unnamed[locale]}
                             </span>
                             <span className="special">
                               {r.travelerCountryIso.toUpperCase()} · {r.caseRef}
@@ -249,13 +252,13 @@ export default async function OpsQueuePage() {
                           <span className="t-body block truncate">
                             {destination?.name ??
                               r.destinationIso?.toUpperCase() ??
-                              "Route not set"}
+                              OPS_COMMON.routeNotSet[locale]}
                           </span>
                           <span
                             className="special truncate"
                             title={r.visaName ?? undefined}
                           >
-                            {r.visaName ?? "Route not set"}
+                            {r.visaName ?? OPS_COMMON.routeNotSet[locale]}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -264,10 +267,10 @@ export default async function OpsQueuePage() {
                         <TableCell>
                           {r.assigneeId ? (
                             <span className="t-body block truncate">
-                              {r.assigneeName ?? "Former staff"}
+                              {r.assigneeName ?? OPS_COMMON.formerStaff[locale]}
                             </span>
                           ) : (
-                            <Badge variant="outline">Unassigned</Badge>
+                            <Badge variant="outline">{OPS_COMMON.unassigned[locale]}</Badge>
                           )}
                         </TableCell>
                         <TableCell>
@@ -284,7 +287,7 @@ export default async function OpsQueuePage() {
                                   ? "text-warning-ink"
                                   : "text-success-ink"
                             )}
-                            title={`${age} days in the queue`}
+                            title={OPS_QUEUE.ageTitle[locale].replace("{age}", String(age))}
                           >
                             {age > 5 ? (
                               <AlertTriangle className="size-4" aria-hidden />

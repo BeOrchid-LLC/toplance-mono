@@ -7,6 +7,8 @@ import type { VoiceStatus } from "@/components/app/use-voice-intake";
 import type { IntakeQuestion } from "@/lib/domain/intake";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/locale-provider";
+import { INTAKE_UI } from "@/lib/i18n/intake-ui";
 
 /**
  * Where the agent speaks, docked under the record it is filling in.
@@ -37,6 +39,8 @@ export function AgentDock({
   transcriptOpen: boolean;
   onToggleTranscript: () => void;
 }) {
+  const t = useT();
+
   return (
     // Lifted off the bottom edge and cut to the same card as the record
     // above it: same 720px measure, same radius, same elevation, same
@@ -69,7 +73,7 @@ export function AgentDock({
             <div
               role="status"
               aria-live="polite"
-              aria-label="The agent"
+              aria-label={t(INTAKE_UI.ariaAgent)}
               // A column with a gap, not a block: the opening turn is a
               // greeting *and* a question, and run together as two
               // paragraphs of the same flow they read as one long
@@ -92,7 +96,7 @@ export function AgentDock({
               <MessagesSquare aria-hidden className="size-4" />
             )}
             <span className="max-sm:sr-only">
-              {transcriptOpen ? "Close" : "Transcript"}
+              {transcriptOpen ? t(INTAKE_UI.close) : t(INTAKE_UI.transcript)}
             </span>
           </button>
         </div>
@@ -158,6 +162,7 @@ export function Composer({
   voice?: { status: VoiceStatus; onToggle: () => void };
 }) {
   const field = React.useRef<HTMLTextAreaElement>(null);
+  const t = useT();
 
   // Grown from the content on every change rather than sized once. The
   // height has to be cleared first: `scrollHeight` on an element already
@@ -204,9 +209,11 @@ export function Composer({
         }}
         disabled={disabled}
         placeholder={
-          voice?.status === "live" ? "Listening — stop to type" : "Type your answer"
+          voice?.status === "live"
+            ? t(INTAKE_UI.placeholderListening)
+            : t(INTAKE_UI.placeholderTypeAnswer)
         }
-        aria-label="Your answer"
+        aria-label={t(INTAKE_UI.ariaYourAnswer)}
         // Padded to sit on the same optical line as the two 44px buttons
         // beside it while a single line of text is in the box.
         className="block max-h-40 min-w-0 flex-1 resize-none self-center bg-transparent px-2 py-2 text-base leading-[1.6] outline-none placeholder:text-ink-3 disabled:opacity-50"
@@ -214,8 +221,8 @@ export function Composer({
       <button
         type="submit"
         disabled={disabled || empty}
-        aria-label="Send your answer"
-        title="Send your answer"
+        aria-label={t(INTAKE_UI.ariaSendAnswer)}
+        title={t(INTAKE_UI.ariaSendAnswer)}
         className="grid size-[var(--row-h)] shrink-0 place-items-center rounded-full bg-brand text-on-brand transition-[background,opacity] duration-[var(--dur-tap)] hover:bg-[color-mix(in_srgb,var(--brand)_88%,#fff)] active:bg-brand-press disabled:bg-surface-2 disabled:text-ink-3"
       >
         <ArrowUp className="size-5" />
@@ -239,6 +246,7 @@ function VoiceButton({
 }: {
   voice?: { status: VoiceStatus; onToggle: () => void };
 }) {
+  const t = useT();
   const base =
     "grid size-[var(--row-h)] shrink-0 place-items-center rounded-full transition-colors duration-[var(--dur-tap)]";
 
@@ -247,8 +255,8 @@ function VoiceButton({
       <button
         type="button"
         disabled
-        aria-label="Answer by voice"
-        title="Speaking needs the agent, which is not running here. Type your answers instead."
+        aria-label={t(INTAKE_UI.ariaAnswerByVoice)}
+        title={t(INTAKE_UI.titleVoiceUnavailable)}
         className={cn(base, "text-ink-3 disabled:opacity-40")}
       >
         <Mic className="size-5" />
@@ -258,10 +266,10 @@ function VoiceButton({
 
   const live = voice.status === "live";
   const label = live
-    ? "Stop speaking to the agent"
+    ? t(INTAKE_UI.ariaStopVoice)
     : voice.status === "connecting"
-      ? "Cancel connecting the microphone"
-      : "Answer by voice";
+      ? t(INTAKE_UI.ariaCancelConnecting)
+      : t(INTAKE_UI.ariaAnswerByVoice);
 
   return (
     <span className="relative inline-flex shrink-0">
@@ -296,9 +304,9 @@ function VoiceButton({
           it; this says the same thing to everyone who cannot. */}
       <span role="status" className="sr-only">
         {live
-          ? "The microphone is on. The agent is listening."
+          ? t(INTAKE_UI.srMicLive)
           : voice.status === "connecting"
-            ? "Connecting the microphone."
+            ? t(INTAKE_UI.srMicConnecting)
             : ""}
       </span>
     </span>

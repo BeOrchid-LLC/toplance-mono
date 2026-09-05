@@ -7,6 +7,9 @@ import { MrzBand } from "@/components/shared/mrz-band";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { iso3 } from "@/lib/domain/corridors";
 import { cn } from "@/lib/utils";
+import { useLocale, useT } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n/locales";
+import { INTAKE_UI } from "@/lib/i18n/intake-ui";
 
 type Answers = Record<string, string>;
 
@@ -14,21 +17,13 @@ type Answers = Record<string, string>;
  * The label each topic is filed under. UI copy, not domain: the record
  * reads "Living in" where the question asks "where are you living right
  * now?", and the checklist downstream is keyed on `q.key` either way.
+ * The strings themselves live in `INTAKE_UI.fieldLabels`, one per
+ * language; this just picks the active one.
  */
-export const LABELS: Record<string, string> = {
-  passport_name: "Name on passport",
-  nationality: "Nationality",
-  residence_country: "Living in",
-  residence: "City or town",
-  destination: "Destination",
-  purpose: "Purpose",
-  dates: "Travel dates",
-  budget: "Budget",
-  accommodation: "Accommodation",
-  companions: "Travel party",
-  needs: "Food & support",
-  history: "Visa history",
-};
+export function fieldLabel(key: string, locale: Locale): string {
+  const labels = INTAKE_UI.fieldLabels as Record<string, Record<Locale, string>>;
+  return labels[key]?.[locale] ?? key;
+}
 
 /**
  * The code the band resolves to, built from however much of the corridor
@@ -91,6 +86,8 @@ export function RecordDocument({
 }) {
   const asking = React.useRef<HTMLDivElement>(null);
   const answered = INTAKE_QUESTIONS.filter((q) => answers[q.key]).length;
+  const { locale } = useLocale();
+  const t = useT();
 
   // The document's equivalent of a transcript scrolling to its newest
   // line. `nearest` rather than `center`: the field is usually already
@@ -110,7 +107,7 @@ export function RecordDocument({
       className="ovi-edge mx-auto w-full max-w-[720px] rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5"
     >
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-        <p className="special-caps truncate">Traveler record</p>
+        <p className="special-caps truncate">{t(INTAKE_UI.recordHeading)}</p>
         {/* Two readings of one fact, as the tick meter used to carry.
             Sighted, "3 / 10" sits over ten fields that say what it
             counts; read aloud it could be anything, so the spoken
@@ -125,13 +122,20 @@ export function RecordDocument({
         <p className="num special shrink-0 text-ink-2">
           <span className="sr-only">
             {done
-              ? `All ${INTAKE_QUESTIONS.length} questions answered`
-              : `Question ${frontier + 1} of ${INTAKE_QUESTIONS.length}`}
+              ? INTAKE_UI.srAllAnswered[locale].replace(
+                  "{n}",
+                  String(INTAKE_QUESTIONS.length)
+                )
+              : INTAKE_UI.srQuestionOf[locale]
+                  .replace("{current}", String(frontier + 1))
+                  .replace("{total}", String(INTAKE_QUESTIONS.length))}
           </span>
           <span aria-hidden>
             {done
-              ? "Complete"
-              : `${answered} / ${INTAKE_QUESTIONS.length} complete`}
+              ? t(INTAKE_UI.complete)
+              : INTAKE_UI.completeCount[locale]
+                  .replace("{answered}", String(answered))
+                  .replace("{total}", String(INTAKE_QUESTIONS.length))}
           </span>
         </p>
       </div>
@@ -145,7 +149,7 @@ export function RecordDocument({
           <RecordField
             key={q.key}
             ref={i === frontier ? asking : undefined}
-            label={LABELS[q.key]}
+            label={fieldLabel(q.key, locale)}
             value={answers[q.key]}
             asking={i === frontier}
             reopened={reopenedKey === q.key}
@@ -153,7 +157,7 @@ export function RecordDocument({
             edit={
               onEdit && answers[q.key] ? (
                 <EditButton
-                  label={LABELS[q.key]}
+                  label={fieldLabel(q.key, locale)}
                   disabled={editDisabled}
                   onClick={() => onEdit(q.key)}
                 />
@@ -215,6 +219,7 @@ function RecordField({
     // a CSS animation only restarts if its class actually leaves.
     setLanded(Boolean(value) && !prev);
   }
+  const t = useT();
 
   return (
     <div
@@ -238,7 +243,7 @@ function RecordField({
             <>
               <span className="t-title flex items-center gap-2 text-brand-text">
                 <span className="intake-pulse size-1.5 shrink-0 rounded-full bg-brand-accent" />
-                Asking again
+                {t(INTAKE_UI.askingAgain)}
               </span>
               {previous && (
                 <span className="mt-0.5 block break-words text-base text-ink-3 line-through">
@@ -251,7 +256,7 @@ function RecordField({
           ) : asking ? (
             <span className="t-title flex items-center gap-2 text-brand-text">
               <span className="intake-pulse size-1.5 shrink-0 rounded-full bg-brand" />
-              Asking now
+              {t(INTAKE_UI.askingNow)}
             </span>
           ) : (
             /* A ruled line across the whole field, not a 56px stub. This
@@ -260,7 +265,7 @@ function RecordField({
                same height as a filled one, so the grid stops looking
                ragged. */
             <span
-              aria-label="Not answered yet"
+              aria-label={t(INTAKE_UI.notAnsweredYet)}
               className="mt-2.5 block h-0 w-full border-b border-dashed border-border-strong"
             />
           )}
@@ -280,16 +285,17 @@ export function EditButton({
   onClick: () => void;
   disabled?: boolean;
 }) {
+  const { locale } = useLocale();
+  const t = useT();
+
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      aria-label={`Edit your answer to: ${label}`}
+      aria-label={INTAKE_UI.ariaEditAnswerTo[locale].replace("{label}", label)}
       title={
-        disabled
-          ? "Say what it should be instead — the agent is listening"
-          : "Edit this answer"
+        disabled ? t(INTAKE_UI.titleEditListening) : t(INTAKE_UI.titleEditAnswer)
       }
       className="grid size-9 shrink-0 place-items-center rounded-full text-ink-3 opacity-0 transition-[color,background,opacity] duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink focus-visible:opacity-100 group-hover/row:opacity-100 disabled:pointer-events-none disabled:opacity-40 max-lg:opacity-100"
     >

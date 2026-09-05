@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { approveCorridor, rejectCorridor } from "@/app/ops/actions";
+import { useT } from "@/components/locale-provider";
+import { OPS_CORRIDOR_DECISION } from "@/lib/i18n/ops-corridor-review";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
 
 /**
  * The two decisions an owner can take on a drafted corridor.
@@ -26,6 +29,7 @@ export function CorridorDecision({
   corridorId: string;
   canApprove: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [reason, setReason] = React.useState("");
@@ -34,8 +38,7 @@ export function CorridorDecision({
   if (!canApprove) {
     return (
       <p className="t-muted max-w-[62ch]">
-        Only a super admin can approve a route. You can read this draft
-        and its sources, but the decision is not yours to record.
+        {t(OPS_CORRIDOR_DECISION.readOnlyNotice)}
       </p>
     );
   }
@@ -57,8 +60,8 @@ export function CorridorDecision({
 
       toast.success(
         action === "approve"
-          ? "Approved — travelers on this route see it now"
-          : "Sent back with your reason"
+          ? t(OPS_CORRIDOR_DECISION.toastApproveSuccess)
+          : t(OPS_CORRIDOR_DECISION.toastRejectSuccess)
       );
       setReason("");
       setRejecting(false);
@@ -73,13 +76,12 @@ export function CorridorDecision({
           to undo — a further version supersedes it — but that it is
           immediately public, and that is worth saying in words. */}
       <p className="t-muted max-w-[62ch]">
-        Approving publishes this version to every traveler on the
-        route and records you as the person who checked it.
+        {t(OPS_CORRIDOR_DECISION.approveNotice)}
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={() => decide("approve")} disabled={pending}>
-          <CheckCircle2 /> Approve and publish
+          <CheckCircle2 /> {t(OPS_CORRIDOR_DECISION.approveButton)}
         </Button>
         {!rejecting && (
           <Button
@@ -87,7 +89,7 @@ export function CorridorDecision({
             onClick={() => setRejecting(true)}
             disabled={pending}
           >
-            <XCircle /> Send back
+            <XCircle /> {t(OPS_CORRIDOR_DECISION.sendBack)}
           </Button>
         )}
       </div>
@@ -97,7 +99,7 @@ export function CorridorDecision({
           <Textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="What is wrong with this draft? Whoever redrafts it reads this."
+            placeholder={t(OPS_CORRIDOR_DECISION.rejectPlaceholder)}
             rows={3}
           />
           <div className="mt-3 flex gap-3">
@@ -107,7 +109,7 @@ export function CorridorDecision({
               onClick={() => decide("reject")}
               disabled={pending || !reason.trim()}
             >
-              Send back
+              {t(OPS_CORRIDOR_DECISION.sendBack)}
             </Button>
             <Button
               variant="tertiary"
@@ -115,7 +117,7 @@ export function CorridorDecision({
               onClick={() => setRejecting(false)}
               disabled={pending}
             >
-              Cancel
+              {t(OPS_COMMON.cancel)}
             </Button>
           </div>
         </div>

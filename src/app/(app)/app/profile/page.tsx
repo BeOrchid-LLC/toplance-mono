@@ -40,17 +40,25 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryBy } from "@/lib/domain/countries";
 import { isLocale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/i18n/server";
+import { PROFILE } from "@/lib/i18n/profile";
+import { currencyForCountryName } from "@/lib/domain/currencies";
+import { convertFee, formatApproximate } from "@/lib/domain/fx";
+import { getPairRate } from "@/lib/fx/rates";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Traveler profile" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: PROFILE.title[locale] };
+}
 
 /** An answer nobody has given yet — an absence, never an invented value. */
-function Awaiting({ w = 64 }: { w?: number }) {
+function Awaiting({ w = 64, label }: { w?: number; label: string }) {
   return (
     <span
-      aria-label="Not answered yet"
+      aria-label={label}
       style={{ width: w }}
       className="inline-block border-b-2 border-dashed border-border-strong align-middle"
     />
@@ -64,12 +72,20 @@ function Awaiting({ w = 64 }: { w?: number }) {
  * (an email, a destination) must wrap rather than truncate, because a
  * traveller has to be able to read their own record.
  */
-function DetailField({ label, value }: { label: string; value?: string | null }) {
+function DetailField({
+  label,
+  value,
+  notAnsweredLabel,
+}: {
+  label: string;
+  value?: string | null;
+  notAnsweredLabel: string;
+}) {
   return (
     <div className="border-b border-border py-3">
       <dt className="special-caps">{label}</dt>
       <dd className="mt-1 break-words text-base font-semibold">
-        {value || <Awaiting />}
+        {value || <Awaiting label={notAnsweredLabel} />}
       </dd>
     </div>
   );
@@ -95,6 +111,14 @@ function formatFee(minor: number | null, currency: string | null) {
 export default async function ProfilePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  // The traveller's interface language — from the URL/proxy, same as
+  // every other screen. Distinct from `locale` below, which is the
+  // *stored preference* the "Language" field edits; the two can and do
+  // disagree today (see the handover notes), and this page's own copy
+  // should still follow the interface language it is actually rendered
+  // under.
+  const uiLocale = await getLocale();
+  const t = PROFILE;
   const profile = await getProfile();
   const application = await getOrCreateApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/profile");
@@ -151,20 +175,20 @@ export default async function ProfilePage() {
    */
   const learned = [
     answers.companions && {
-      fact: `Traveling — ${answers.companions.toLowerCase()}`,
-      why: "Sets who is on the document checklist",
+      fact: `${t.travelingPrefix[uiLocale]} ${answers.companions.toLowerCase()}`,
+      why: t.travelingWhy[uiLocale],
     },
     answers.needs && {
       fact: answers.needs,
-      why: "Carried into your arrival plan",
+      why: t.needsWhy[uiLocale],
     },
     answers.accommodation && {
       fact: answers.accommodation,
-      why: "Used as your proof of accommodation",
+      why: t.accommodationWhy[uiLocale],
     },
     answers.history && {
-      fact: `Visa history — ${answers.history.toLowerCase()}`,
-      why: "Declared on the application, as it must be",
+      fact: `${t.visaHistoryPrefix[uiLocale]} ${answers.history.toLowerCase()}`,
+      why: t.visaHistoryWhy[uiLocale],
     },
   ].filter(Boolean) as { fact: string; why: string }[];
 
@@ -181,6 +205,40 @@ export default async function ProfilePage() {
         month: "short",
         year: "numeric",
       })
+    : null;
+
+  /**
+   * The same government fee, approximated into the traveller's own
+   * currency — the residence-driven conversion `requirements/page.tsx`
+   * already does, reused here rather than reinvented. Residence is
+   * already part of this page's existing `getIntakeAnswers` fetch, so
+   * this adds no new query. Degrades to nothing (no `feeApprox` line)
+   * whenever the fee, the currency pair, or a fresh rate is missing —
+   * same as everywhere else this conversion is shown.
+   */
+  const feeLocalCurrency =
+    currencyForCountryName(answers.residence_country) ??
+    currencyForCountryName(answers.nationality);
+  const feePair = corridor
+    ? await getPairRate(corridor.governmentFeeCurrency, feeLocalCurrency)
+    : null;
+  const feeApproximate = corridor
+    ? convertFee({
+        minor: corridor.governmentFeeMinor,
+        from: corridor.governmentFeeCurrency,
+        to: feeLocalCurrency,
+        rate: feePair?.rate ?? null,
+        fetchedAt: feePair?.fetchedAt ?? null,
+      })
+    : null;
+  const feeApprox = feeApproximate
+    ? `${formatApproximate(feeApproximate, uiLocale)} ${t.approxAtRatesDate[uiLocale].replace(
+        "{date}",
+        feeApproximate.fetchedAt.toLocaleDateString(uiLocale, {
+          day: "numeric",
+          month: "long",
+        })
+      )}`
     : null;
 
   return (
@@ -204,12 +262,14 @@ export default async function ProfilePage() {
                   page. The circle in the app bar stays a circle. */}
               <AvatarUpload fullName={profile.fullName} avatarUrl={avatarUrl} />
               <div className="min-w-0 flex-1">
-                <p className="tag">Traveler</p>
+                <p className="tag">{t.travelerTag[uiLocale]}</p>
                 <h1 className="d-lg mt-1.5 break-words text-ink">
-                  {profile.fullName || "Traveler"}
+                  {profile.fullName || t.travelerFallback[uiLocale]}
                 </h1>
                 <p className="t-muted mt-1.5">
-                  {answers.nationality || <Awaiting w={80} />}
+                  {answers.nationality || (
+                    <Awaiting w={80} label={t.notAnsweredAria[uiLocale]} />
+                  )}
                   {/* City and country read as one place, not two fields:
                       "living in Lagos, Nigeria". Either half may be
                       missing — the intake asks them as separate topics,
@@ -217,7 +277,7 @@ export default async function ProfilePage() {
                   {(answers.residence || answers.residence_country) && (
                     <span>
                       {" "}
-                      · living in{" "}
+                      · {t.livingIn[uiLocale]}{" "}
                       {[answers.residence, answers.residence_country]
                         .filter(Boolean)
                         .join(", ")}
@@ -226,8 +286,9 @@ export default async function ProfilePage() {
                 </p>
                 {sponsorName && (
                   <p className="t-muted mt-3">
-                    Sponsored by <strong className="text-ink">{sponsorName}</strong> —
-                    they see your progress, not your documents.
+                    {t.sponsoredBy[uiLocale]}{" "}
+                    <strong className="text-ink">{sponsorName}</strong> —{" "}
+                    {t.sponsoredByTail[uiLocale]}
                   </p>
                 )}
               </div>
@@ -243,7 +304,7 @@ export default async function ProfilePage() {
                 other field on the sheet — a bare code among pills reads
                 as noise, a labelled one reads as the document number. */}
             <div className="shrink-0">
-              <p className="special-caps">Case number</p>
+              <p className="special-caps">{t.caseNumberLabel[uiLocale]}</p>
               <p className="num mt-0.5 text-[15px] font-semibold text-ink">
                 {application.caseRef.toUpperCase()}
               </p>
@@ -251,7 +312,8 @@ export default async function ProfilePage() {
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={application.status} />
               <Badge variant="brand">
-                <span className="num">{completion.pct}%</span> complete
+                <span className="num">{completion.pct}%</span>{" "}
+                {t.percentComplete[uiLocale]}
               </Badge>
             </div>
             <Button
@@ -260,7 +322,7 @@ export default async function ProfilePage() {
               size="sm"
               className="w-full sm:ms-auto sm:w-auto"
             >
-              <Link href="/app/agent">Edit trip answers</Link>
+              <Link href="/app/agent">{t.editTripAnswers[uiLocale]}</Link>
             </Button>
           </div>
         </Panel>
@@ -270,10 +332,10 @@ export default async function ProfilePage() {
           {/* ---- personal and travel details ---- */}
           <Panel>
             <PanelHeader
-              label="Personal and travel details"
+              label={t.personalDetailsLabel[uiLocale]}
               aside={
                 <Badge variant="brand">
-                  <Sparkles /> Collected by the agent
+                  <Sparkles /> {t.collectedByAgent[uiLocale]}
                 </Badge>
               }
             />
@@ -288,19 +350,59 @@ export default async function ProfilePage() {
                     to the passport's spelling, so the two disagreeing is
                     what a reviewer needs to catch before an application
                     reaches a mission — not something to reconcile away. */}
-                <DetailField label="Name on passport" value={answers.passport_name} />
-                <DetailField label="Email" value={profile.email} />
+                <DetailField
+                  label={t.nameOnPassport[uiLocale]}
+                  value={answers.passport_name}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.emailLabel[uiLocale]}
+                  value={profile.email}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
                 <EditablePhone countryIso={countryIso} digits={phoneDigits} />
                 <EditableLanguage locale={locale} />
                 <EditableDigest digest={companionDigest} />
-                <DetailField label="Nationality" value={answers.nationality} />
-                <DetailField label="Currently in" value={answers.residence_country} />
-                <DetailField label="City or town" value={answers.residence} />
-                <DetailField label="Destination" value={answers.destination} />
-                <DetailField label="Purpose" value={answers.purpose} />
-                <DetailField label="Target dates" value={answers.dates} />
-                <DetailField label="Budget" value={answers.budget} />
-                <DetailField label="Travel party" value={answers.companions} />
+                <DetailField
+                  label={t.nationalityLabel[uiLocale]}
+                  value={answers.nationality}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.currentlyIn[uiLocale]}
+                  value={answers.residence_country}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.cityOrTown[uiLocale]}
+                  value={answers.residence}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.destinationLabel[uiLocale]}
+                  value={answers.destination}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.purposeLabel[uiLocale]}
+                  value={answers.purpose}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.targetDatesLabel[uiLocale]}
+                  value={answers.dates}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.budgetLabel[uiLocale]}
+                  value={answers.budget}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
+                <DetailField
+                  label={t.travelPartyLabel[uiLocale]}
+                  value={answers.companions}
+                  notAnsweredLabel={t.notAnsweredAria[uiLocale]}
+                />
               </dl>
 
               {/* The field grid above already closes with a hairline, so
@@ -308,30 +410,32 @@ export default async function ProfilePage() {
                   `divide-y` rules only between blocks. */}
               <div className="mt-1 grid divide-y divide-border">
                 <div className="py-4">
-                  <h3 className="t-title">Food and support needs</h3>
+                  <h3 className="t-title">{t.foodAndSupportNeeds[uiLocale]}</h3>
                   <p className="t-muted mt-1.5">
-                    {answers.needs || <Awaiting w={120} />}
+                    {answers.needs || <Awaiting w={120} label={t.notAnsweredAria[uiLocale]} />}
                   </p>
                 </div>
                 <div className="py-4">
-                  <h3 className="t-title">Prior visa history</h3>
+                  <h3 className="t-title">{t.priorVisaHistory[uiLocale]}</h3>
                   <p className="t-muted mt-1.5">
-                    {answers.history || <Awaiting w={120} />}
+                    {answers.history || <Awaiting w={120} label={t.notAnsweredAria[uiLocale]} />}
                   </p>
                 </div>
                 {corridor && (
                   <div className="py-4 pb-0">
-                    <h3 className="t-title">Matched requirement</h3>
+                    <h3 className="t-title">{t.matchedRequirement[uiLocale]}</h3>
                     <p className="t-muted mt-1.5">
                       {corridor.visaName}
                       {fee && <span className="num"> · {fee}</span>}
+                      {feeApprox && <span className="num"> · {feeApprox}</span>}
                       {weeks && <span className="num"> · {weeks}</span>}
                     </p>
                     <p className="special mt-2 flex items-start gap-1.5">
                       <Clock3 className="mt-px size-4 shrink-0" aria-hidden />
                       <span>
-                        {corridor.sourceName ?? "Official source"} · rule set
-                        v{corridor.version} · in effect since {effective}
+                        {corridor.sourceName ?? t.officialSourceFallback[uiLocale]} ·{" "}
+                        {t.ruleSetVersion[uiLocale].replace("{version}", String(corridor.version))} ·{" "}
+                        {t.inEffectSince[uiLocale].replace("{date}", effective ?? "")}
                       </span>
                     </p>
                   </div>
@@ -343,12 +447,12 @@ export default async function ProfilePage() {
           {/* ---- travel history ---- */}
           <Panel>
             <PanelHeader
-              label="Travel history"
+              label={t.travelHistoryLabel[uiLocale]}
               aside={
                 trips.length > 0 ? (
                   <Badge variant="neutral">
                     <span className="num">{trips.length}</span>
-                    {trips.length === 1 ? "trip" : "trips"}
+                    {trips.length === 1 ? t.tripSingular[uiLocale] : t.tripPlural[uiLocale]}
                   </Badge>
                 ) : undefined
               }
@@ -368,13 +472,18 @@ export default async function ProfilePage() {
 
           {/* ---- itinerary ---- */}
           <Panel>
-            <PanelHeader label="Arrival plan" />
+            <PanelHeader label={t.arrivalPlanLabel[uiLocale]} />
             <PanelBody>
               {itinerary ? (
                 <>
                   <p className="special flex items-start gap-1.5">
                     <Clock3 className="mt-px size-4 shrink-0" aria-hidden />
-                    <span>Generated {formatDay(itinerary.generatedAt)}</span>
+                    <span>
+                      {t.generatedOn[uiLocale].replace(
+                        "{date}",
+                        formatDay(itinerary.generatedAt)
+                      )}
+                    </span>
                   </p>
                   <dl className="mt-2">
                     {itinerarySections(itinerary.payload).map((section) => (
@@ -390,11 +499,7 @@ export default async function ProfilePage() {
                   <ItineraryAudio applicationId={application.id} />
                 </>
               ) : (
-                <p className="t-muted">
-                  Once your application is approved, your first weeks land
-                  here — arrival, accommodation, registration and the rest.
-                  Nothing to plan yet.
-                </p>
+                <p className="t-muted">{t.noItineraryYet[uiLocale]}</p>
               )}
             </PanelBody>
           </Panel>
@@ -403,11 +508,9 @@ export default async function ProfilePage() {
           <div className="grid gap-6">
             {/* ---- agent memory ---- */}
             <Panel>
-              <PanelHeader label="What the agent has learned" />
+              <PanelHeader label={t.agentLearnedLabel[uiLocale]} />
               <PanelBody>
-                <p className="t-muted">
-                  Updated automatically after every interaction.
-                </p>
+                <p className="t-muted">{t.updatedAutomatically[uiLocale]}</p>
                 {learned.length > 0 ? (
                   <ul className="mt-4">
                     {learned.map((item, i) => (
@@ -433,10 +536,7 @@ export default async function ProfilePage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="t-muted mt-4">
-                    Nothing yet. Answer the agent&rsquo;s questions and what it
-                    keeps appears here.
-                  </p>
+                  <p className="t-muted mt-4">{t.nothingLearnedYet[uiLocale]}</p>
                 )}
               </PanelBody>
             </Panel>
@@ -444,7 +544,7 @@ export default async function ProfilePage() {
             {/* ---- documents summary ---- */}
             <Panel>
               <PanelHeader
-                label="Documents"
+                label={t.documentsLabel[uiLocale]}
                 aside={
                   <Badge variant="brand">
                     <span className="num">{completion.pct}%</span>
@@ -455,9 +555,9 @@ export default async function ProfilePage() {
                 <dl>
                   {(
                     [
-                      ["Verified", verified],
-                      ["Need attention", attention],
-                      ["Still to do", toDo],
+                      [t.verifiedLabel[uiLocale], verified],
+                      [t.needAttentionLabel[uiLocale], attention],
+                      [t.stillToDoLabel[uiLocale], toDo],
                     ] as const
                   ).map(([label, count]) => (
                     <div
@@ -471,7 +571,7 @@ export default async function ProfilePage() {
                 </dl>
                 <Button asChild variant="neutral" size="block" className="mt-5">
                   <Link href="/app/documents">
-                    Open documents <ArrowRight />
+                    {t.openDocuments[uiLocale]} <ArrowRight />
                   </Link>
                 </Button>
               </PanelBody>
@@ -479,7 +579,7 @@ export default async function ProfilePage() {
 
             {/* ---- notes from the case team ---- */}
             <Panel>
-              <PanelHeader label="Notes from your case team" />
+              <PanelHeader label={t.notesFromCaseTeam[uiLocale]} />
               <PanelBody className="pt-2">
                 {notes.length > 0 ? (
                   <ul>
@@ -490,17 +590,14 @@ export default async function ProfilePage() {
                       >
                         <p className="t-body max-w-[62ch]">{note.body}</p>
                         <p className="special mt-1.5">
-                          {note.authorName ?? "Toplance team"} ·{" "}
+                          {note.authorName ?? t.toplanceTeamFallback[uiLocale]} ·{" "}
                           {formatDay(note.createdAt)}
                         </p>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="t-muted pt-3">
-                    Nothing yet. When the review team writes on your file,
-                    you read it here — no note is kept from you.
-                  </p>
+                  <p className="t-muted pt-3">{t.noNotesYet[uiLocale]}</p>
                 )}
               </PanelBody>
             </Panel>
@@ -508,7 +605,7 @@ export default async function ProfilePage() {
             {/* ---- status history ---- */}
             <Panel>
               <PanelHeader
-                label="Status history"
+                label={t.statusHistoryLabel[uiLocale]}
                 aside={<StatusBadge status={application.status} short />}
               />
               <PanelBody className="pt-2">
@@ -536,10 +633,7 @@ export default async function ProfilePage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="t-muted pt-3">
-                    Every change to your application&rsquo;s status is
-                    recorded here, with the date it happened.
-                  </p>
+                  <p className="t-muted pt-3">{t.noStatusHistoryYet[uiLocale]}</p>
                 )}
               </PanelBody>
             </Panel>

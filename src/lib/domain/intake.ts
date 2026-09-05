@@ -26,6 +26,10 @@ const FULL_NAME_TOKEN = "{fullName}";
  * proofread, and a transposed pair would put Yoruba under `ig` with
  * nothing to catch it. `Record<Locale, string>` still means a new
  * language is a compile error here rather than a silent English chip.
+ *
+ * NEEDS NATIVE REVIEW before launch. The `tw` and `zu` strings added on
+ * 2026-09-05 were translated in-house from the English, the same way the
+ * rest of this file's non-English strings were.
  */
 const c = (
   value: string,
@@ -39,11 +43,11 @@ const c = (
  * Cameroon `Kamerúùnù` and the next one calling it something else.
  */
 const NATIONS = {
-  nigeria: c("Nigeria", { en: "Nigeria", ha: "Najeriya", yo: "Nàìjíríà", ig: "Naịjirịa", fr: "Nigeria", pt: "Nigéria", sw: "Nigeria", ar: "نيجيريا" }),
-  ghana: c("Ghana", { en: "Ghana", ha: "Gana", yo: "Gánà", ig: "Ghana", fr: "Ghana", pt: "Gana", sw: "Ghana", ar: "غانا" }),
-  kenya: c("Kenya", { en: "Kenya", ha: "Kenya", yo: "Kẹ́nyà", ig: "Kenya", fr: "Kenya", pt: "Quénia", sw: "Kenya", ar: "كينيا" }),
-  southAfrica: c("South Africa", { en: "South Africa", ha: "Afirka ta Kudu", yo: "Gúúsù Áfríkà", ig: "South Africa", fr: "Afrique du Sud", pt: "África do Sul", sw: "Afrika Kusini", ar: "جنوب أفريقيا" }),
-  cameroon: c("Cameroon", { en: "Cameroon", ha: "Kamaru", yo: "Kamerúùnù", ig: "Cameroon", fr: "Cameroun", pt: "Camarões", sw: "Kameruni", ar: "الكاميرون" }),
+  nigeria: c("Nigeria", { en: "Nigeria", ha: "Najeriya", yo: "Nàìjíríà", ig: "Naịjirịa", fr: "Nigeria", pt: "Nigéria", sw: "Nigeria", ar: "نيجيريا", tw: "Naegeria", zu: "iNigeria" }),
+  ghana: c("Ghana", { en: "Ghana", ha: "Gana", yo: "Gánà", ig: "Ghana", fr: "Ghana", pt: "Gana", sw: "Ghana", ar: "غانا", tw: "Gaana", zu: "iGhana" }),
+  kenya: c("Kenya", { en: "Kenya", ha: "Kenya", yo: "Kẹ́nyà", ig: "Kenya", fr: "Kenya", pt: "Quénia", sw: "Kenya", ar: "كينيا", tw: "Kenya", zu: "iKenya" }),
+  southAfrica: c("South Africa", { en: "South Africa", ha: "Afirka ta Kudu", yo: "Gúúsù Áfríkà", ig: "South Africa", fr: "Afrique du Sud", pt: "África do Sul", sw: "Afrika Kusini", ar: "جنوب أفريقيا", tw: "Afrika Anafo", zu: "iNingizimu Afrika" }),
+  cameroon: c("Cameroon", { en: "Cameroon", ha: "Kamaru", yo: "Kamerúùnù", ig: "Cameroon", fr: "Cameroun", pt: "Camarões", sw: "Kameruni", ar: "الكاميرون", tw: "Kamerun", zu: "iKamerun" }),
 };
 
 /**
@@ -71,6 +75,8 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Para começar — qual é o seu nome completo, exatamente como aparece no seu passaporte?",
       sw: "Kwanza — jina lako kamili ni lipi, kama lilivyo kwenye pasipoti yako?",
       ar: "أولاً — ما اسمك الكامل كما هو مكتوب في جواز سفرك؟",
+      tw: "Nea edi kan — wo din a edi mu nyinaa yɛ dɛn, sɛnea ɛte wɔ wo pasport so ara pɛ?",
+      zu: "Okokuqala — ubani igama lakho eliphelele, ngokunembile njengoba livela kuphasipoti yakho?",
     },
     chips: [
       c(FULL_NAME_TOKEN, {
@@ -82,6 +88,8 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
         pt: `Sim — ${FULL_NAME_TOKEN}`,
         sw: `Ndiyo — ${FULL_NAME_TOKEN}`,
         ar: `نعم — ${FULL_NAME_TOKEN}`,
+        tw: `Aane — ${FULL_NAME_TOKEN}`,
+        zu: `Yebo — ${FULL_NAME_TOKEN}`,
       }),
     ],
   },
@@ -96,6 +104,8 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "De que país é o seu passaporte?",
       sw: "Una pasipoti ya nchi gani?",
       ar: "ما الدولة التي تحمل جواز سفرها؟",
+      tw: "Ɔman bɛn pasport na wokura?",
+      zu: "Uphethe iphasipoti yaziphi izwe?",
     },
     chips: [NATIONS.nigeria, NATIONS.ghana, NATIONS.kenya, NATIONS.southAfrica, NATIONS.cameroon],
   },
@@ -117,6 +127,8 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "E em que país está a viver neste momento?",
       sw: "Na unaishi katika nchi gani kwa sasa?",
       ar: "وفي أي دولة تقيم حالياً؟",
+      tw: "Na ɔman bɛn mu na wote seesei?",
+      zu: "Futhi uhlala kuliphi izwe njengamanje?",
     },
     chips: [NATIONS.nigeria, NATIONS.ghana, NATIONS.kenya, NATIONS.southAfrica, NATIONS.cameroon],
   },
@@ -131,13 +143,15 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "E em que cidade está?",
       sw: "Na uko katika mji gani?",
       ar: "وفي أي مدينة تقيم؟",
+      tw: "Na kurow bɛn mu na wowɔ seesei?",
+      zu: "Futhi ukuliphi idolobha noma idolobhana?",
     },
     chips: [
-      c("Lagos", { en: "Lagos", ha: "Legas", yo: "Èkó", ig: "Lagos", fr: "Lagos", pt: "Lagos", sw: "Lagos", ar: "لاغوس" }),
-      c("Abuja", { en: "Abuja", ha: "Abuja", yo: "Àbùjá", ig: "Abuja", fr: "Abuja", pt: "Abuja", sw: "Abuja", ar: "أبوجا" }),
-      c("Port Harcourt", { en: "Port Harcourt", ha: "Fatakwal", yo: "Pọ́ọ̀tì Hákọ́tì", ig: "Pọtakọt", fr: "Port Harcourt", pt: "Port Harcourt", sw: "Port Harcourt", ar: "بورت هاركورت" }),
-      c("Kano", { en: "Kano", ha: "Kano", yo: "Kánò", ig: "Kano", fr: "Kano", pt: "Kano", sw: "Kano", ar: "كانو" }),
-      c("Ibadan", { en: "Ibadan", ha: "Ibadan", yo: "Ìbàdàn", ig: "Ibadan", fr: "Ibadan", pt: "Ibadan", sw: "Ibadan", ar: "إيبادان" }),
+      c("Lagos", { en: "Lagos", ha: "Legas", yo: "Èkó", ig: "Lagos", fr: "Lagos", pt: "Lagos", sw: "Lagos", ar: "لاغوس", tw: "Lagos", zu: "iLagos" }),
+      c("Abuja", { en: "Abuja", ha: "Abuja", yo: "Àbùjá", ig: "Abuja", fr: "Abuja", pt: "Abuja", sw: "Abuja", ar: "أبوجا", tw: "Abuja", zu: "i-Abuja" }),
+      c("Port Harcourt", { en: "Port Harcourt", ha: "Fatakwal", yo: "Pọ́ọ̀tì Hákọ́tì", ig: "Pọtakọt", fr: "Port Harcourt", pt: "Port Harcourt", sw: "Port Harcourt", ar: "بورت هاركورت", tw: "Port Harcourt", zu: "iPort Harcourt" }),
+      c("Kano", { en: "Kano", ha: "Kano", yo: "Kánò", ig: "Kano", fr: "Kano", pt: "Kano", sw: "Kano", ar: "كانو", tw: "Kano", zu: "iKano" }),
+      c("Ibadan", { en: "Ibadan", ha: "Ibadan", yo: "Ìbàdàn", ig: "Ibadan", fr: "Ibadan", pt: "Ibadan", sw: "Ibadan", ar: "إيبادان", tw: "Ibadan", zu: "i-Ibadan" }),
     ],
   },
   {
@@ -151,13 +165,15 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Para onde espera viajar?",
       sw: "Unatarajia kusafiri wapi?",
       ar: "إلى أين تأمل السفر؟",
+      tw: "Ɛhe na wo werɛ hyɛ sɛ wobɛtu kwan akɔ?",
+      zu: "Uthemba ukuya kuphi?",
     },
     chips: [
-      c("United Kingdom", { en: "United Kingdom", ha: "Birtaniya", yo: "Ilẹ̀ Gẹ̀ẹ́sì", ig: "United Kingdom", fr: "Royaume-Uni", pt: "Reino Unido", sw: "Uingereza", ar: "المملكة المتحدة" }),
-      c("Canada", { en: "Canada", ha: "Kanada", yo: "Kánádà", ig: "Canada", fr: "Canada", pt: "Canadá", sw: "Kanada", ar: "كندا" }),
-      c("United Arab Emirates", { en: "UAE", ha: "Hadaddiyar Daular Larabawa", yo: "UAE", ig: "UAE", fr: "Émirats arabes unis", pt: "Emirados Árabes Unidos", sw: "Falme za Kiarabu", ar: "الإمارات العربية المتحدة" }),
-      c("Germany", { en: "Germany", ha: "Jamus", yo: "Jámánì", ig: "Germany", fr: "Allemagne", pt: "Alemanha", sw: "Ujerumani", ar: "ألمانيا" }),
-      c("United States", { en: "United States", ha: "Amurka", yo: "Amẹ́ríkà", ig: "United States", fr: "États-Unis", pt: "Estados Unidos", sw: "Marekani", ar: "الولايات المتحدة" }),
+      c("United Kingdom", { en: "United Kingdom", ha: "Birtaniya", yo: "Ilẹ̀ Gẹ̀ẹ́sì", ig: "United Kingdom", fr: "Royaume-Uni", pt: "Reino Unido", sw: "Uingereza", ar: "المملكة المتحدة", tw: "Bretaaɲ", zu: "iBrithani" }),
+      c("Canada", { en: "Canada", ha: "Kanada", yo: "Kánádà", ig: "Canada", fr: "Canada", pt: "Canadá", sw: "Kanada", ar: "كندا", tw: "Kanada", zu: "iKhanada" }),
+      c("United Arab Emirates", { en: "UAE", ha: "Hadaddiyar Daular Larabawa", yo: "UAE", ig: "UAE", fr: "Émirats arabes unis", pt: "Emirados Árabes Unidos", sw: "Falme za Kiarabu", ar: "الإمارات العربية المتحدة", tw: "Emireti Arab Nkabom", zu: "Ama-Arabhu Ahlangene" }),
+      c("Germany", { en: "Germany", ha: "Jamus", yo: "Jámánì", ig: "Germany", fr: "Allemagne", pt: "Alemanha", sw: "Ujerumani", ar: "ألمانيا", tw: "Jaaman", zu: "iJalimane" }),
+      c("United States", { en: "United States", ha: "Amurka", yo: "Amẹ́ríkà", ig: "United States", fr: "États-Unis", pt: "Estados Unidos", sw: "Marekani", ar: "الولايات المتحدة", tw: "Amerika", zu: "iMelika" }),
     ],
   },
   {
@@ -171,13 +187,15 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "O que o leva até lá — turismo, trabalho, estudos, tratamento médico, ou vai mudar-se?",
       sw: "Ni nini kinachokupeleka huko — utalii, kazi, masomo, matibabu, au unahamia?",
       ar: "ما الذي يأخذك إلى هناك — سياحة أم عمل أم دراسة أم علاج أم انتقال للإقامة؟",
+      tw: "Dɛn na ɛrekɔ hɔ — akwantuo, adwuma, adesua, ayaresa, anaasɛ worekɔtena hɔ?",
+      zu: "Yini ekuyisa lapho — ukuvakasha, umsebenzi, ukufunda, ukwelashwa, noma uyathuthela?",
     },
     chips: [
-      c("Work", { en: "Work", ha: "Aiki", yo: "Iṣẹ́", ig: "Ọrụ", fr: "Travail", pt: "Trabalho", sw: "Kazi", ar: "عمل" }),
-      c("Study", { en: "Study", ha: "Karatu", yo: "Ẹ̀kọ́", ig: "Agụmakwụkwọ", fr: "Études", pt: "Estudos", sw: "Masomo", ar: "دراسة" }),
-      c("Tourism", { en: "Tourism", ha: "Yawon buɗe ido", yo: "Ìrìn-àjò", ig: "Njem nlegharị anya", fr: "Tourisme", pt: "Turismo", sw: "Utalii", ar: "سياحة" }),
-      c("Medical", { en: "Medical treatment", ha: "Magani", yo: "Ìtọ́jú", ig: "Ọgwụgwọ", fr: "Soins médicaux", pt: "Tratamento médico", sw: "Matibabu", ar: "علاج طبي" }),
-      c("Relocation", { en: "Relocating", ha: "Ƙaura", yo: "Ìṣílọ", ig: "Ịkwaga", fr: "Installation", pt: "Mudança definitiva", sw: "Kuhamia", ar: "الانتقال للإقامة" }),
+      c("Work", { en: "Work", ha: "Aiki", yo: "Iṣẹ́", ig: "Ọrụ", fr: "Travail", pt: "Trabalho", sw: "Kazi", ar: "عمل", tw: "Adwuma", zu: "Umsebenzi" }),
+      c("Study", { en: "Study", ha: "Karatu", yo: "Ẹ̀kọ́", ig: "Agụmakwụkwọ", fr: "Études", pt: "Estudos", sw: "Masomo", ar: "دراسة", tw: "Adesua", zu: "Ukufunda" }),
+      c("Tourism", { en: "Tourism", ha: "Yawon buɗe ido", yo: "Ìrìn-àjò", ig: "Njem nlegharị anya", fr: "Tourisme", pt: "Turismo", sw: "Utalii", ar: "سياحة", tw: "Akwantuo", zu: "Ukuvakasha" }),
+      c("Medical", { en: "Medical treatment", ha: "Magani", yo: "Ìtọ́jú", ig: "Ọgwụgwọ", fr: "Soins médicaux", pt: "Tratamento médico", sw: "Matibabu", ar: "علاج طبي", tw: "Ayaresa", zu: "Ukwelashwa kwezempilo" }),
+      c("Relocation", { en: "Relocating", ha: "Ƙaura", yo: "Ìṣílọ", ig: "Ịkwaga", fr: "Installation", pt: "Mudança definitiva", sw: "Kuhamia", ar: "الانتقال للإقامة", tw: "Atutena", zu: "Ukuthuthela" }),
     ],
   },
   {
@@ -191,12 +209,14 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Mais ou menos quando planeia viajar?",
       sw: "Unapanga kusafiri lini takribani?",
       ar: "متى تخطط للسفر تقريباً؟",
+      tw: "Bere bɛn na wobɛtu kwan, sɛnea wonim seesei?",
+      zu: "Uhlela ukuhamba nini cishe?",
     },
     chips: [
-      c("Within a month", { en: "Within a month", ha: "Cikin wata ɗaya", yo: "Láàrin oṣù kan", ig: "N'ime otu ọnwa", fr: "D'ici un mois", pt: "Dentro de um mês", sw: "Ndani ya mwezi mmoja", ar: "خلال شهر" }),
-      c("In 2–3 months", { en: "In 2–3 months", ha: "Cikin wata 2–3", yo: "Ní oṣù 2–3", ig: "N'ime ọnwa 2–3", fr: "Dans 2–3 mois", pt: "Em 2–3 meses", sw: "Katika miezi 2–3", ar: "خلال 2–3 أشهر" }),
-      c("In 4–6 months", { en: "In 4–6 months", ha: "Cikin wata 4–6", yo: "Ní oṣù 4–6", ig: "N'ime ọnwa 4–6", fr: "Dans 4–6 mois", pt: "Em 4–6 meses", sw: "Katika miezi 4–6", ar: "خلال 4–6 أشهر" }),
-      c("Not decided yet", { en: "Not decided yet", ha: "Ban yanke shawara ba", yo: "Kò tíì pinnu", ig: "Ekpebibeghị", fr: "Pas encore décidé", pt: "Ainda não decidi", sw: "Bado sijaamua", ar: "لم أقرر بعد" }),
+      c("Within a month", { en: "Within a month", ha: "Cikin wata ɗaya", yo: "Láàrin oṣù kan", ig: "N'ime otu ọnwa", fr: "D'ici un mois", pt: "Dentro de um mês", sw: "Ndani ya mwezi mmoja", ar: "خلال شهر", tw: "Bosome baako mu", zu: "Ngaphakathi kwenyanga eyodwa" }),
+      c("In 2–3 months", { en: "In 2–3 months", ha: "Cikin wata 2–3", yo: "Ní oṣù 2–3", ig: "N'ime ọnwa 2–3", fr: "Dans 2–3 mois", pt: "Em 2–3 meses", sw: "Katika miezi 2–3", ar: "خلال 2–3 أشهر", tw: "Abosome 2–3 mu", zu: "Ezinyangeni ezi-2–3" }),
+      c("In 4–6 months", { en: "In 4–6 months", ha: "Cikin wata 4–6", yo: "Ní oṣù 4–6", ig: "N'ime ọnwa 4–6", fr: "Dans 4–6 mois", pt: "Em 4–6 meses", sw: "Katika miezi 4–6", ar: "خلال 4–6 أشهر", tw: "Abosome 4–6 mu", zu: "Ezinyangeni ezi-4–6" }),
+      c("Not decided yet", { en: "Not decided yet", ha: "Ban yanke shawara ba", yo: "Kò tíì pinnu", ig: "Ekpebibeghị", fr: "Pas encore décidé", pt: "Ainda não decidi", sw: "Bado sijaamua", ar: "لم أقرر بعد", tw: "Minsii gyinaeɛ biara", zu: "Angikanqumi okwamanje" }),
     ],
   },
   {
@@ -210,13 +230,15 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Com que orçamento conta para a mudança em si — voos, taxas, o primeiro mês?",
       sw: "Una bajeti gani kwa safari yenyewe — tiketi, ada, mwezi wa kwanza?",
       ar: "ما الميزانية المتاحة للانتقال نفسه — تذاكر الطيران والرسوم والشهر الأول؟",
+      tw: "Sika dodow bɛn na wode bɛyɛ atutena no ho ade — wimhyɛn akwantuo, sika a wobɛtua, bosome a edi kan?",
+      zu: "Yimalini oyisebenzisayo yokufuduka uqobo — izindiza, izimali okumele zikhokhwe, inyanga yokuqala?",
     },
     chips: [
-      c("Under ₦2 million", { en: "Under ₦2 million", ha: "Ƙasa da ₦2m", yo: "Kéré sí ₦2m", ig: "N'okpuru ₦2m", fr: "Moins de ₦2 M", pt: "Menos de ₦2 milhões", sw: "Chini ya ₦2m", ar: "أقل من ₦2 مليون" }),
-      c("₦2–4 million", { en: "₦2–4 million", ha: "₦2–4m", yo: "₦2–4m", ig: "₦2–4m", fr: "₦2–4 M", pt: "₦2–4 milhões", sw: "₦2–4m", ar: "₦2–4 مليون" }),
-      c("₦4–8 million", { en: "₦4–8 million", ha: "₦4–8m", yo: "₦4–8m", ig: "₦4–8m", fr: "₦4–8 M", pt: "₦4–8 milhões", sw: "₦4–8m", ar: "₦4–8 مليون" }),
-      c("Over ₦8 million", { en: "Over ₦8 million", ha: "Sama da ₦8m", yo: "Ju ₦8m lọ", ig: "Karịa ₦8m", fr: "Plus de ₦8 M", pt: "Mais de ₦8 milhões", sw: "Zaidi ya ₦8m", ar: "أكثر من ₦8 مليون" }),
-      c("Not sure yet", { en: "Not sure yet", ha: "Ban tabbata ba", yo: "Kò dá mi lójú", ig: "Amabeghị m", fr: "Je ne sais pas encore", pt: "Ainda não sei", sw: "Sijui bado", ar: "لست متأكداً بعد" }),
+      c("Under ₦2 million", { en: "Under ₦2 million", ha: "Ƙasa da ₦2m", yo: "Kéré sí ₦2m", ig: "N'okpuru ₦2m", fr: "Moins de ₦2 M", pt: "Menos de ₦2 milhões", sw: "Chini ya ₦2m", ar: "أقل من ₦2 مليون", tw: "Ase ₦2m", zu: "Ngaphansi kuka-₦2m" }),
+      c("₦2–4 million", { en: "₦2–4 million", ha: "₦2–4m", yo: "₦2–4m", ig: "₦2–4m", fr: "₦2–4 M", pt: "₦2–4 milhões", sw: "₦2–4m", ar: "₦2–4 مليون", tw: "₦2–4m", zu: "₦2–4m" }),
+      c("₦4–8 million", { en: "₦4–8 million", ha: "₦4–8m", yo: "₦4–8m", ig: "₦4–8m", fr: "₦4–8 M", pt: "₦4–8 milhões", sw: "₦4–8m", ar: "₦4–8 مليون", tw: "₦4–8m", zu: "₦4–8m" }),
+      c("Over ₦8 million", { en: "Over ₦8 million", ha: "Sama da ₦8m", yo: "Ju ₦8m lọ", ig: "Karịa ₦8m", fr: "Plus de ₦8 M", pt: "Mais de ₦8 milhões", sw: "Zaidi ya ₦8m", ar: "أكثر من ₦8 مليون", tw: "Boro ₦8m", zu: "Ngaphezu kuka-₦8m" }),
+      c("Not sure yet", { en: "Not sure yet", ha: "Ban tabbata ba", yo: "Kò dá mi lójú", ig: "Amabeghị m", fr: "Je ne sais pas encore", pt: "Ainda não sei", sw: "Sijui bado", ar: "لست متأكداً بعد", tw: "Minsii gyinaeɛ biara", zu: "Angikaqiniseki" }),
     ],
   },
   {
@@ -230,13 +252,15 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Onde vai ficar quando chegar?",
       sw: "Utakaa wapi utakapowasili?",
       ar: "أين ستقيم عند وصولك؟",
+      tw: "Ɛhe na wobɛtena wɔ bere a woduru?",
+      zu: "Uzohlala kuphi lapho ufika?",
     },
     chips: [
-      c("Long-term rental", { en: "Long-term rental", ha: "Haya na dogon lokaci", yo: "Ìyàlégbé gígùn", ig: "Mgbazinye ogologo oge", fr: "Location longue durée", pt: "Arrendamento de longa duração", sw: "Kupanga kwa muda mrefu", ar: "إيجار طويل الأجل" }),
-      c("With family or friends", { en: "With family or friends", ha: "Da dangi ko abokai", yo: "Pẹ̀lú ẹbí tàbí ọ̀rẹ́", ig: "Ya na ezinụlọ ma ọ bụ ndị enyi", fr: "Chez la famille ou des amis", pt: "Com família ou amigos", sw: "Kwa familia au marafiki", ar: "لدى الأهل أو الأصدقاء" }),
-      c("Employer housing", { en: "Employer housing", ha: "Gidan ma'aikata", yo: "Ilé agbanisíṣẹ́", ig: "Ụlọ onye ọrụ", fr: "Logement de l'employeur", pt: "Alojamento do empregador", sw: "Makazi ya mwajiri", ar: "سكن جهة العمل" }),
-      c("Hotel at first", { en: "Hotel at first", ha: "Otal da farko", yo: "Hotẹ́ẹ̀lì lákọ̀ọ́kọ́", ig: "Họtel na mbụ", fr: "À l'hôtel au début", pt: "Hotel no início", sw: "Hoteli mwanzoni", ar: "فندق في البداية" }),
-      c("Student housing", { en: "Student housing", ha: "Gidan ɗalibai", yo: "Ilé akẹ́kọ̀ọ́", ig: "Ụlọ ụmụ akwụkwọ", fr: "Résidence étudiante", pt: "Residência de estudantes", sw: "Makazi ya wanafunzi", ar: "سكن الطلاب" }),
+      c("Long-term rental", { en: "Long-term rental", ha: "Haya na dogon lokaci", yo: "Ìyàlégbé gígùn", ig: "Mgbazinye ogologo oge", fr: "Location longue durée", pt: "Arrendamento de longa duração", sw: "Kupanga kwa muda mrefu", ar: "إيجار طويل الأجل", tw: "Efie a wɔabɔ kaa nkyɛ", zu: "Ukuqasha isikhathi eside" }),
+      c("With family or friends", { en: "With family or friends", ha: "Da dangi ko abokai", yo: "Pẹ̀lú ẹbí tàbí ọ̀rẹ́", ig: "Ya na ezinụlọ ma ọ bụ ndị enyi", fr: "Chez la famille ou des amis", pt: "Com família ou amigos", sw: "Kwa familia au marafiki", ar: "لدى الأهل أو الأصدقاء", tw: "Wɔ abusuafo anaa nnamfo nkyɛn", zu: "Nomndeni noma abangani" }),
+      c("Employer housing", { en: "Employer housing", ha: "Gidan ma'aikata", yo: "Ilé agbanisíṣẹ́", ig: "Ụlọ onye ọrụ", fr: "Logement de l'employeur", pt: "Alojamento do empregador", sw: "Makazi ya mwajiri", ar: "سكن جهة العمل", tw: "Efie a osomfoɔ de ma", zu: "Indawo yokuhlala yomqashi" }),
+      c("Hotel at first", { en: "Hotel at first", ha: "Otal da farko", yo: "Hotẹ́ẹ̀lì lákọ̀ọ́kọ́", ig: "Họtel na mbụ", fr: "À l'hôtel au début", pt: "Hotel no início", sw: "Hoteli mwanzoni", ar: "فندق في البداية", tw: "Ahɔhogyebea kan", zu: "Ihhotela ekuqaleni" }),
+      c("Student housing", { en: "Student housing", ha: "Gidan ɗalibai", yo: "Ilé akẹ́kọ̀ọ́", ig: "Ụlọ ụmụ akwụkwọ", fr: "Résidence étudiante", pt: "Residência de estudantes", sw: "Makazi ya wanafunzi", ar: "سكن الطلاب", tw: "Asuafoɔ efie", zu: "Indawo yokuhlala yabafundi" }),
     ],
   },
   {
@@ -250,12 +274,14 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Quem vai consigo?",
       sw: "Nani anasafiri nawe?",
       ar: "من سيرافقك؟",
+      tw: "Hena na ɔne wo rebɛba?",
+      zu: "Ubani ozohamba nawe?",
     },
     chips: [
-      c("Just me", { en: "Just me", ha: "Ni kaɗai", yo: "Èmi nìkan", ig: "Naanị m", fr: "Moi seulement", pt: "Só eu", sw: "Mimi peke yangu", ar: "أنا فقط" }),
-      c("Partner", { en: "My partner", ha: "Abokin zama", yo: "Alábàáṣepọ̀ mi", ig: "Onye ibe m", fr: "Mon conjoint", pt: "O meu companheiro", sw: "Mwenzi wangu", ar: "شريكي" }),
-      c("Partner and children", { en: "Partner and children", ha: "Abokin zama da yara", yo: "Alábàáṣepọ̀ àti ọmọ", ig: "Onye ibe m na ụmụ", fr: "Mon conjoint et mes enfants", pt: "Companheiro e filhos", sw: "Mwenzi na watoto", ar: "شريكي وأطفالي" }),
-      c("Children", { en: "My children", ha: "Yara", yo: "Àwọn ọmọ mi", ig: "Ụmụ m", fr: "Mes enfants", pt: "Os meus filhos", sw: "Watoto wangu", ar: "أطفالي" }),
+      c("Just me", { en: "Just me", ha: "Ni kaɗai", yo: "Èmi nìkan", ig: "Naanị m", fr: "Moi seulement", pt: "Só eu", sw: "Mimi peke yangu", ar: "أنا فقط", tw: "Me nko ara", zu: "Yimina kuphela" }),
+      c("Partner", { en: "My partner", ha: "Abokin zama", yo: "Alábàáṣepọ̀ mi", ig: "Onye ibe m", fr: "Mon conjoint", pt: "O meu companheiro", sw: "Mwenzi wangu", ar: "شريكي", tw: "Me kunu/yere", zu: "Umlingani wami" }),
+      c("Partner and children", { en: "Partner and children", ha: "Abokin zama da yara", yo: "Alábàáṣepọ̀ àti ọmọ", ig: "Onye ibe m na ụmụ", fr: "Mon conjoint et mes enfants", pt: "Companheiro e filhos", sw: "Mwenzi na watoto", ar: "شريكي وأطفالي", tw: "Me kunu/yere ne mma", zu: "Umlingani nezingane" }),
+      c("Children", { en: "My children", ha: "Yara", yo: "Àwọn ọmọ mi", ig: "Ụmụ m", fr: "Mes enfants", pt: "Os meus filhos", sw: "Watoto wangu", ar: "أطفالي", tw: "Me mma", zu: "Izingane zami" }),
     ],
   },
   {
@@ -269,13 +295,15 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Há algo que devamos ter em conta — alimentação, saúde, ou deslocações?",
       sw: "Kuna jambo tunalopaswa kupanga — chakula, afya, au usafiri?",
       ar: "هل هناك ما ينبغي مراعاته — الطعام أو الصحة أو التنقل؟",
+      tw: "Biribi wɔ hɔ a ɛsɛ sɛ yɛhyehyɛ ho — aduane, akwahosan, anaa akwantu mu?",
+      zu: "Ikhona yini okudingeka sikuhlele — ukudla, impilo, noma ukuhamba?",
     },
     chips: [
-      c("Halal food", { en: "Halal food", ha: "Abinci halal", yo: "Oúnjẹ halal", ig: "Nri halal", fr: "Nourriture halal", pt: "Comida halal", sw: "Chakula halali", ar: "طعام حلال" }),
-      c("Prayer facilities", { en: "Prayer facilities", ha: "Wurin sallah", yo: "Ibi àdúrà", ig: "Ebe ekpere", fr: "Lieu de prière", pt: "Local de oração", sw: "Mahali pa kusali", ar: "مكان للصلاة" }),
-      c("A medical condition", { en: "A medical condition", ha: "Yanayin lafiya", yo: "Ipò ìlera", ig: "Ọnọdụ ahụike", fr: "Un problème de santé", pt: "Uma condição de saúde", sw: "Hali ya kiafya", ar: "حالة صحية" }),
-      c("Step-free access", { en: "Step-free access", ha: "Hanya mara matakala", yo: "Ọ̀nà aláìní àtẹ̀gùn", ig: "Ụzọ enweghị steepụ", fr: "Accès sans marches", pt: "Acesso sem degraus", sw: "Njia isiyo na ngazi", ar: "مدخل بلا درجات" }),
-      c("Nothing in particular", { en: "Nothing in particular", ha: "Babu wani abu", yo: "Kò sí nǹkan pàtàkì", ig: "Ọ dịghị ihe pụrụ iche", fr: "Rien de particulier", pt: "Nada em especial", sw: "Hakuna kitu maalum", ar: "لا شيء بعينه" }),
+      c("Halal food", { en: "Halal food", ha: "Abinci halal", yo: "Oúnjẹ halal", ig: "Nri halal", fr: "Nourriture halal", pt: "Comida halal", sw: "Chakula halali", ar: "طعام حلال", tw: "Halal aduane", zu: "Ukudla kwe-Halal" }),
+      c("Prayer facilities", { en: "Prayer facilities", ha: "Wurin sallah", yo: "Ibi àdúrà", ig: "Ebe ekpere", fr: "Lieu de prière", pt: "Local de oração", sw: "Mahali pa kusali", ar: "مكان للصلاة", tw: "Mpaebɔ beaeɛ", zu: "Izindawo zokukhuleka" }),
+      c("A medical condition", { en: "A medical condition", ha: "Yanayin lafiya", yo: "Ipò ìlera", ig: "Ọnọdụ ahụike", fr: "Un problème de santé", pt: "Uma condição de saúde", sw: "Hali ya kiafya", ar: "حالة صحية", tw: "Akwahosan haw bi", zu: "Isimo sezempilo" }),
+      c("Step-free access", { en: "Step-free access", ha: "Hanya mara matakala", yo: "Ọ̀nà aláìní àtẹ̀gùn", ig: "Ụzọ enweghị steepụ", fr: "Accès sans marches", pt: "Acesso sem degraus", sw: "Njia isiyo na ngazi", ar: "مدخل بلا درجات", tw: "Kwan a atrapoe nni mu", zu: "Ukungena ngaphandle kwezitebhisi" }),
+      c("Nothing in particular", { en: "Nothing in particular", ha: "Babu wani abu", yo: "Kò sí nǹkan pàtàkì", ig: "Ọ dịghị ihe pụrụ iche", fr: "Rien de particulier", pt: "Nada em especial", sw: "Hakuna kitu maalum", ar: "لا شيء بعينه", tw: "Biribiara nni ho", zu: "Akukho okuthile" }),
     ],
   },
   {
@@ -289,12 +317,14 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       pt: "Última pergunta — já lhe recusaram um visto em algum lado?",
       sw: "Swali la mwisho — umewahi kukataliwa viza mahali popote?",
       ar: "السؤال الأخير — هل سبق أن رُفض طلب تأشيرة لك في أي بلد؟",
+      tw: "Deɛ etwa toɔ — wɔapo wo visa da wɔ baabiara pɛn?",
+      zu: "Okokugcina — wake wenqatshwa i-visa ndawo ethile ngaphambili?",
     },
     chips: [
-      c("No", { en: "No, never", ha: "A'a, bai taɓa faruwa ba", yo: "Rárá, kò rí bẹ́ẹ̀ rí", ig: "Mba, ọ dịtụbeghị", fr: "Non, jamais", pt: "Não, nunca", sw: "Hapana, kamwe", ar: "لا، أبداً" }),
-      c("Yes — I was refused once", { en: "Yes, once", ha: "Eh, sau ɗaya", yo: "Bẹ́ẹ̀ ni, ẹ̀ẹ̀kan", ig: "Ee, otu ugboro", fr: "Oui, une fois", pt: "Sim, uma vez", sw: "Ndiyo, mara moja", ar: "نعم، مرة واحدة" }),
-      c("Yes — more than once", { en: "Yes, more than once", ha: "Eh, fiye da sau ɗaya", yo: "Bẹ́ẹ̀ ni, ju ẹ̀ẹ̀kan lọ", ig: "Ee, karịa otu ugboro", fr: "Oui, plus d'une fois", pt: "Sim, mais de uma vez", sw: "Ndiyo, zaidi ya mara moja", ar: "نعم، أكثر من مرة" }),
-      c("I would rather explain", { en: "I would rather explain", ha: "Zan fi son bayyanawa", yo: "Mo fẹ́ ṣàlàyé", ig: "Ọ ka mma ka m kọwaa", fr: "Je préfère expliquer", pt: "Prefiro explicar", sw: "Ningependa kueleza", ar: "أفضّل أن أشرح" }),
+      c("No", { en: "No, never", ha: "A'a, bai taɓa faruwa ba", yo: "Rárá, kò rí bẹ́ẹ̀ rí", ig: "Mba, ọ dịtụbeghị", fr: "Non, jamais", pt: "Não, nunca", sw: "Hapana, kamwe", ar: "لا، أبداً", tw: "Daabi, ɛmpo da", zu: "Cha, angikaze" }),
+      c("Yes — I was refused once", { en: "Yes, once", ha: "Eh, sau ɗaya", yo: "Bẹ́ẹ̀ ni, ẹ̀ẹ̀kan", ig: "Ee, otu ugboro", fr: "Oui, une fois", pt: "Sim, uma vez", sw: "Ndiyo, mara moja", ar: "نعم، مرة واحدة", tw: "Aane, prɛko", zu: "Yebo, kanye" }),
+      c("Yes — more than once", { en: "Yes, more than once", ha: "Eh, fiye da sau ɗaya", yo: "Bẹ́ẹ̀ ni, ju ẹ̀ẹ̀kan lọ", ig: "Ee, karịa otu ugboro", fr: "Oui, plus d'une fois", pt: "Sim, mais de uma vez", sw: "Ndiyo, zaidi ya mara moja", ar: "نعم، أكثر من مرة", tw: "Aane, mprenu anaa ɛboro saa", zu: "Yebo, ngaphezu kwesikhathi esisodwa" }),
+      c("I would rather explain", { en: "I would rather explain", ha: "Zan fi son bayyanawa", yo: "Mo fẹ́ ṣàlàyé", ig: "Ọ ka mma ka m kọwaa", fr: "Je préfère expliquer", pt: "Prefiro explicar", sw: "Ningependa kueleza", ar: "أفضّل أن أشرح", tw: "Mepɛ sɛ mekyerɛkyerɛ mu", zu: "Ngingathanda ukuchaza" }),
     ],
     allowsFreeText: true,
   },

@@ -12,6 +12,8 @@ import { useUploadOutcome } from "@/components/app/upload-outcome";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { ACCEPT } from "@/lib/domain/uploads";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/locale-provider";
+import { DOCUMENT_ROW } from "@/lib/i18n/document-row";
 
 /**
  * Camera first. Most applicants are photographing a paper document on a
@@ -45,6 +47,7 @@ export function DocumentRow({
    */
   completesChecklist?: boolean;
 }) {
+  const t = useT();
   const [pending, startTransition] = React.useTransition();
   const cameraRef = React.useRef<HTMLInputElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -84,7 +87,7 @@ export function DocumentRow({
     startTransition(async () => {
       const result = await removeDocument(applicationId, doc.docKey);
       if (result?.error) toast.error(result.error);
-      else toast.info(`${doc.name} removed`);
+      else toast.info(t(DOCUMENT_ROW.removedToast).replace("{name}", doc.name));
     });
   }
 
@@ -98,7 +101,7 @@ export function DocumentRow({
     startTransition(async () => {
       const result = await documentUrl(applicationId, doc.docKey);
       if (result.error || !result.url) {
-        toast.error(result.error ?? "That file could not be opened.");
+        toast.error(result.error ?? t(DOCUMENT_ROW.openFailed));
         return;
       }
       window.open(result.url, "_blank", "noopener,noreferrer");
@@ -143,9 +146,9 @@ export function DocumentRow({
               size="sm"
               onClick={view}
               disabled={pending}
-              aria-label={`View ${doc.name}`}
+              aria-label={t(DOCUMENT_ROW.viewAria).replace("{name}", doc.name)}
             >
-              <Eye /> View
+              <Eye /> {t(DOCUMENT_ROW.view)}
             </Button>
           )}
           {doc.state === "verified" || doc.state === "checking" ? (
@@ -154,9 +157,9 @@ export function DocumentRow({
               size="sm"
               onClick={reset}
               disabled={pending}
-              aria-label={`Replace ${doc.name}`}
+              aria-label={t(DOCUMENT_ROW.replaceAria).replace("{name}", doc.name)}
             >
-              <Trash2 /> Replace
+              <Trash2 /> {t(DOCUMENT_ROW.replace)}
             </Button>
           ) : (
             <>
@@ -167,7 +170,7 @@ export function DocumentRow({
                 disabled={pending}
                 className="sm:hidden"
               >
-                <Camera /> Take a photo
+                <Camera /> {t(DOCUMENT_ROW.takePhoto)}
               </Button>
               <Button
                 size="sm"
@@ -177,10 +180,10 @@ export function DocumentRow({
               >
                 {needsAttention ? <RotateCcw /> : <Upload />}
                 {pending
-                  ? "Uploading…"
+                  ? t(DOCUMENT_ROW.uploading)
                   : needsAttention
-                    ? "Replace file"
-                    : "Upload"}
+                    ? t(DOCUMENT_ROW.replaceFile)
+                    : t(DOCUMENT_ROW.upload)}
               </Button>
             </>
           )}
@@ -193,7 +196,7 @@ export function DocumentRow({
         accept="image/*"
         capture="environment"
         className="sr-only"
-        aria-label={`Take a photo of ${doc.name}`}
+        aria-label={t(DOCUMENT_ROW.takePhotoAria).replace("{name}", doc.name)}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) upload(f);
@@ -205,7 +208,7 @@ export function DocumentRow({
         type="file"
         accept={ACCEPT}
         className="sr-only"
-        aria-label={`Upload ${doc.name}`}
+        aria-label={t(DOCUMENT_ROW.uploadAria).replace("{name}", doc.name)}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) upload(f);

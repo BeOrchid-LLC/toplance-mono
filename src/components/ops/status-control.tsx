@@ -13,6 +13,9 @@ import {
   isTerminalStatus,
   type ApplicationStatus,
 } from "@/lib/domain/status";
+import { useT } from "@/components/locale-provider";
+import { OPS_STATUS_CONTROL } from "@/lib/i18n/ops-case-actions";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
 
 const ICON: Partial<Record<ApplicationStatus, React.ComponentType<{ className?: string }>>> = {
   under_review: Search,
@@ -40,6 +43,7 @@ export function StatusControl({
   applicationId: string;
   status: ApplicationStatus;
 }) {
+  const t = useT();
   const [pending, startTransition] = React.useTransition();
   const [message, setMessage] = React.useState("");
   const [confirming, setConfirming] = React.useState<ApplicationStatus | null>(null);
@@ -61,7 +65,10 @@ export function StatusControl({
       }
       setMessage("");
       setConfirming(null);
-      toast.success(`Case moved to "${STATUS[to].label}" — the traveler has been told`);
+      // `STATUS[to].label` (`@/lib/domain/status.ts`) is not itself
+      // localised — see the review's flags — so this toast is only
+      // partly translated until that file gets its own pass.
+      toast.success(t(OPS_STATUS_CONTROL.toastMoved).replace("{status}", STATUS[to].label));
     });
   }
 
@@ -74,12 +81,7 @@ export function StatusControl({
   }
 
   if (exits.length === 0) {
-    return (
-      <p className="t-muted">
-        No staff action from this state — it is either terminal, or waiting on the
-        traveler.
-      </p>
-    );
+    return <p className="t-muted">{t(OPS_STATUS_CONTROL.noAction)}</p>;
   }
 
   return (
@@ -90,7 +92,7 @@ export function StatusControl({
           setMessage(e.target.value);
           setConfirming(null);
         }}
-        placeholder="Message to the traveler — every status change sends one."
+        placeholder={t(OPS_STATUS_CONTROL.messagePlaceholder)}
         rows={3}
         maxLength={2000}
         disabled={pending}
@@ -99,10 +101,12 @@ export function StatusControl({
         {exits.map((to) => {
           const Icon = ICON[to];
           const isConfirming = confirming === to;
+          // `STATUS[to].label` (`@/lib/domain/status.ts`) is not itself
+          // localised — see the review's flags.
           const label = isConfirming
             ? to === "approved"
-              ? "Confirm approval"
-              : "Confirm rejection"
+              ? t(OPS_STATUS_CONTROL.confirmApproval)
+              : t(OPS_STATUS_CONTROL.confirmRejection)
             : STATUS[to].label;
           const variant =
             to === "approved" ? "success" : to === "rejected" ? "danger" : "secondary";
@@ -124,7 +128,7 @@ export function StatusControl({
                   onClick={() => setConfirming(null)}
                   disabled={pending}
                 >
-                  Cancel
+                  {t(OPS_COMMON.cancel)}
                 </Button>
               )}
             </div>

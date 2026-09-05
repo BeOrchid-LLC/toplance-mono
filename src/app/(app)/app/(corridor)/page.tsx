@@ -20,21 +20,26 @@ import {
 import { unreadCountFor } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { getLocale } from "@/lib/i18n/server";
+import { DASHBOARD } from "@/lib/i18n/dashboard";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Dashboard" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: DASHBOARD.title[locale] };
+}
 
 /**
  * An answer nobody has given yet. The same dashed rule the landing page
  * uses for a figure nobody has earned — §7 forbids inventing the number,
  * and an em dash reads as a value rather than as an absence.
  */
-function Awaiting() {
+function Awaiting({ label }: { label: string }) {
   return (
     <span
-      aria-label="Not answered yet"
+      aria-label={label}
       className="inline-block w-[64px] border-b-2 border-dashed border-border-strong align-middle"
     />
   );
@@ -43,6 +48,8 @@ function Awaiting() {
 export default async function DashboardPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
+  const t = DASHBOARD;
   const profile = await getProfile();
   const application = await getOrCreateApplication();
   if (!profile || !application) redirect("/sign-in?next=/app");
@@ -81,32 +88,39 @@ export default async function DashboardPage() {
               <div className="min-w-[260px] max-w-[58ch] flex-1">
                 <h1 className="t-h2">
                   {done
-                    ? "Everything is verified"
+                    ? t.headingVerified[locale]
                     : allUploaded
-                      ? "Everything is uploaded"
-                      : `${toUpload} document${toUpload === 1 ? "" : "s"} to upload`}
+                      ? t.headingUploaded[locale]
+                      : (toUpload === 1 ? t.headingToUploadOne[locale] : t.headingToUploadMany[locale]).replace(
+                          "{n}",
+                          String(toUpload)
+                        )}
                 </h1>
                 <p className="t-body-lg mt-3 text-ink-2">
                   {done
-                    ? "Your file is ready to submit. Nothing else is waiting on you."
+                    ? t.bodyVerified[locale]
                     : allUploaded
-                      ? `${completion.verified} of ${completion.total} verified. The rest are being checked — nothing is waiting on you.`
-                      : `${completion.collected} of ${completion.total} uploaded. Upload the rest and your application goes straight to our team.`}
+                      ? t.bodyUploaded[locale]
+                          .replace("{verified}", String(completion.verified))
+                          .replace("{total}", String(completion.total))
+                      : t.bodyToUpload[locale]
+                          .replace("{collected}", String(completion.collected))
+                          .replace("{total}", String(completion.total))}
                 </p>
                 <p className="special mt-4 text-ink-2">{VERIFIED_MEANS}</p>
                 <Button asChild className="mt-6">
                   <Link href="/app/documents">
                     {done ? (
                       <>
-                        Review and submit <ArrowRight />
+                        {t.ctaReviewSubmit[locale]} <ArrowRight />
                       </>
                     ) : allUploaded ? (
                       <>
-                        See your documents <ArrowRight />
+                        {t.ctaSeeDocuments[locale]} <ArrowRight />
                       </>
                     ) : (
                       <>
-                        <Upload /> Upload next document
+                        <Upload /> {t.ctaUploadNext[locale]}
                       </>
                     )}
                   </Link>
@@ -119,21 +133,18 @@ export default async function DashboardPage() {
               file", and side by side with the ring they fill the column
               without inventing a third fact to pad it. */}
           <Panel>
-            <PanelHeader label="Application status" />
+            <PanelHeader label={t.statusPanelLabel[locale]} />
             <PanelBody>
               <StatusBadge status={application.status} />
               <p className="t-muted mt-3">{status.blurb}</p>
             </PanelBody>
-            <PanelHeader label="Your case handler" className="border-t" />
+            <PanelHeader label={t.caseHandlerLabel[locale]} className="border-t" />
             <PanelBody>
-              <p className="t-muted">
-                You can message a person at any point, not only when we
-                message you.
-              </p>
+              <p className="t-muted">{t.caseHandlerBody[locale]}</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button asChild variant="neutral" size="sm">
                   <Link href="/app/messages">
-                    <MessageSquare /> Open messages
+                    <MessageSquare /> {t.openMessages[locale]}
                     {unreadMessages > 0 && (
                       <Badge variant="brand">
                         <span className="num">{unreadMessages}</span>
@@ -143,7 +154,7 @@ export default async function DashboardPage() {
                 </Button>
                 <Button asChild variant="tertiary" size="sm">
                   <Link href="/app/agent">
-                    <Sparkles /> Ask the agent
+                    <Sparkles /> {t.askAgent[locale]}
                   </Link>
                 </Button>
               </div>
@@ -154,13 +165,13 @@ export default async function DashboardPage() {
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Panel>
             <PanelHeader
-              label="Your trip at a glance"
+              label={t.tripGlanceLabel[locale]}
               aside={
                 <Link
                   href="/app/agent"
                   className="text-base font-semibold text-brand-text hover:underline"
                 >
-                  Edit
+                  {t.editLink[locale]}
                 </Link>
               }
             />
@@ -168,11 +179,11 @@ export default async function DashboardPage() {
               <dl>
                 {(
                   [
-                    ["Destination", answers.destination],
-                    ["Purpose", answers.purpose],
-                    ["Target dates", answers.dates],
-                    ["Budget", answers.budget],
-                    ["Travel party", answers.companions],
+                    [t.labelDestination[locale], answers.destination],
+                    [t.labelPurpose[locale], answers.purpose],
+                    [t.labelTargetDates[locale], answers.dates],
+                    [t.labelBudget[locale], answers.budget],
+                    [t.labelTravelParty[locale], answers.companions],
                   ] as const
                 ).map(([label, value]) => (
                   <div
@@ -181,7 +192,7 @@ export default async function DashboardPage() {
                   >
                     <dt className="t-body text-ink-2">{label}</dt>
                     <dd className="text-end text-base font-semibold">
-                      {value ?? <Awaiting />}
+                      {value ?? <Awaiting label={t.notAnsweredAria[locale]} />}
                     </dd>
                   </div>
                 ))}
@@ -191,22 +202,18 @@ export default async function DashboardPage() {
 
           <Panel>
             <PanelHeader
-              label="Traveler profile"
+              label={t.travelerProfileLabel[locale]}
               aside={
                 <Badge variant="brand">
-                  <Sparkles /> Collected by the agent
+                  <Sparkles /> {t.collectedByAgent[locale]}
                 </Badge>
               }
             />
             <PanelBody>
-              <p className="t-muted">
-                Everything the agent knows about you and this trip in one
-                place — who is traveling, what to plan around, and the
-                requirement your answers matched.
-              </p>
+              <p className="t-muted">{t.profileBlurb[locale]}</p>
               <Button asChild variant="neutral" size="sm" className="mt-4">
                 <Link href="/app/profile">
-                  Open profile <ArrowRight />
+                  {t.openProfile[locale]} <ArrowRight />
                 </Link>
               </Button>
             </PanelBody>

@@ -3,6 +3,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { corridorMrz, countryFromIso2 } from "@/lib/domain/corridors";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import type { Corridor } from "@/lib/db/schema";
+import { getLocale } from "@/lib/i18n/server";
+import { CORRIDOR_HEADER } from "@/lib/i18n/corridor-header";
 
 /**
  * The `(app)` signature moment: the corridor a traveller is actually on,
@@ -23,7 +25,7 @@ import type { Corridor } from "@/lib/db/schema";
  * handover is explicit that the fallback is no mark rather than a
  * placeholder one).
  */
-export function CorridorHeader({
+export async function CorridorHeader({
   caseRef,
   status,
   corridor,
@@ -32,6 +34,7 @@ export function CorridorHeader({
   status: ApplicationStatus;
   corridor: Corridor;
 }) {
+  const locale = await getLocale();
   const from = countryFromIso2(corridor.nationalityIso);
   const to = countryFromIso2(corridor.destinationIso);
   const code = corridorMrz(
@@ -53,7 +56,7 @@ export function CorridorHeader({
                 through this product over time, so the word that reads as
                 one of many is the right one on their own screen; the
                 record underneath is still a corridor everywhere else. */}
-            <p className="tag">Your current route</p>
+            <p className="tag">{CORRIDOR_HEADER.route[locale]}</p>
             {/* Archivo crossing into a product screen, which §2 allows
                 only inside a signature moment. It stops at this card —
                 everything below is back on the `.t-*` scale. */}
@@ -72,7 +75,7 @@ export function CorridorHeader({
           <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
             <StatusBadge status={status} />
             <span className="num text-[13px] font-semibold text-ink-2">
-              CASE {caseRef.toUpperCase()}
+              {CORRIDOR_HEADER.casePrefix[locale]} {caseRef.toUpperCase()}
             </span>
           </div>
         </div>

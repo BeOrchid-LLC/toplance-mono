@@ -13,7 +13,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AddCaseNote } from "@/components/ops/add-case-note";
 import { ClaimButton } from "@/components/ops/claim-button";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { opsNav } from "@/components/ops/ops-nav";
+import { localizedOpsNav } from "@/components/ops/ops-nav";
 import { ReviewRow } from "@/components/ops/review-row";
 import { StatusControl } from "@/components/ops/status-control";
 import { Badge } from "@/components/ui/badge";
@@ -33,13 +33,20 @@ import { listTravelRecords } from "@/lib/data/travel-records";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { isOwner } from "@/lib/auth/policy";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
+import { getLocale } from "@/lib/i18n/server";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import { OPS_CASE } from "@/lib/i18n/ops-case";
+import { MESSAGES } from "@/lib/i18n/messages";
 
 const assignee = alias(profiles, "assignee");
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Case review" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: OPS_CASE.metaTitle[locale] };
+}
 
 export default async function OpsCasePage({
   params,
@@ -48,6 +55,7 @@ export default async function OpsCasePage({
 }) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
   const { id } = await params;
 
   // A typed URL like /ops/cases/1 would make Postgres throw on the uuid
@@ -112,19 +120,19 @@ export default async function OpsCasePage({
    */
   const sets = [
     {
-      label: "Awaiting review",
+      label: OPS_CASE.docSets.awaitingReview[locale],
       docs: docs.filter(
         (d) => d.state === "checking" || d.state === "uploaded"
       ),
     },
     {
-      label: "Already judged",
+      label: OPS_CASE.docSets.alreadyJudged[locale],
       docs: docs.filter(
         (d) => d.state === "verified" || d.state === "flagged"
       ),
     },
     {
-      label: "Not uploaded yet",
+      label: OPS_CASE.docSets.notUploadedYet[locale],
       docs: docs.filter(
         (d) => d.state === "not_started" || d.state === "failed"
       ),
@@ -134,10 +142,10 @@ export default async function OpsCasePage({
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={opsNav}
+        nav={localizedOpsNav(locale)}
         name={profile.fullName}
         email={profile.email}
-        subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
         notifications={
           <NotificationsMenu
             notifications={notifications}
@@ -153,7 +161,7 @@ export default async function OpsCasePage({
             href="/ops"
             className="inline-flex items-center gap-1.5 text-base font-semibold text-brand-text hover:underline"
           >
-            <ArrowLeft className="size-4" aria-hidden /> Back to the queue
+            <ArrowLeft className="size-4" aria-hidden /> {OPS_CASE.backToQueue[locale]}
           </Link>
 
           {/* The same identity sheet the traveller's own profile opens
@@ -162,10 +170,10 @@ export default async function OpsCasePage({
           <Panel className="mt-6">
             <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-4 px-5 py-5 sm:px-6">
               <div className="min-w-0">
-                <h1 className="t-h2">{row.travelerName || "Unnamed"}</h1>
+                <h1 className="t-h2">{row.travelerName || OPS_COMMON.unnamed[locale]}</h1>
                 <p className="t-muted mt-2">
                   {row.travelerCountryIso.toUpperCase()} ·{" "}
-                  {destination?.name ?? "Route not set"}
+                  {destination?.name ?? OPS_COMMON.routeNotSet[locale]}
                   {row.visaName ? ` · ${row.visaName}` : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -178,13 +186,13 @@ export default async function OpsCasePage({
                   <p className="t-muted">
                     {row.assigneeId ? (
                       <>
-                        Owned by{" "}
+                        {OPS_CASE.ownedByPrefix[locale]}{" "}
                         <span className="font-semibold text-ink">
-                          {row.assigneeName ?? "Former staff"}
+                          {row.assigneeName ?? OPS_COMMON.formerStaff[locale]}
                         </span>
                       </>
                     ) : (
-                      "Unassigned — no owner yet"
+                      OPS_CASE.unassignedNoOwner[locale]
                     )}
                   </p>
                   <ClaimButton
@@ -198,8 +206,11 @@ export default async function OpsCasePage({
                 <span className="num font-semibold text-ink">
                   {completion.verified}
                 </span>{" "}
-                of <span className="num">{completion.total}</span> verified ·{" "}
-                <span className="num">{completion.collected}</span> uploaded
+                {OPS_CASE.completion.of[locale]}{" "}
+                <span className="num">{completion.total}</span>{" "}
+                {OPS_CASE.completion.verified[locale]} ·{" "}
+                <span className="num">{completion.collected}</span>{" "}
+                {OPS_CASE.completion.uploaded[locale]}
               </p>
             </div>
           </Panel>
@@ -211,8 +222,8 @@ export default async function OpsCasePage({
                   scratchpad. */}
               <Panel>
                 <PanelHeader
-                  label="Case notes"
-                  aside={<Badge variant="neutral">Traveler reads these</Badge>}
+                  label={OPS_CASE.caseNotesPanel[locale]}
+                  aside={<Badge variant="neutral">{OPS_CASE.travelerReadsThese[locale]}</Badge>}
                 />
                 <PanelBody>
                   <AddCaseNote applicationId={row.id} />
@@ -225,7 +236,7 @@ export default async function OpsCasePage({
                         >
                           <p className="t-body max-w-[74ch]">{note.body}</p>
                           <p className="special mt-1.5">
-                            {note.authorName ?? "Former staff"} ·{" "}
+                            {note.authorName ?? OPS_COMMON.formerStaff[locale]} ·{" "}
                             {note.createdAt.toLocaleDateString("en-GB", {
                               day: "numeric",
                               month: "short",
@@ -240,9 +251,7 @@ export default async function OpsCasePage({
               </Panel>
 
               {docs.length === 0 && (
-                <p className="t-muted max-w-[62ch]">
-                  No checklist yet — this traveler has not finished intake.
-                </p>
+                <p className="t-muted max-w-[62ch]">{OPS_CASE.noChecklistYet[locale]}</p>
               )}
 
               {sets.map(
@@ -254,7 +263,7 @@ export default async function OpsCasePage({
                         aside={
                           <Badge variant="neutral">
                             <span className="num">{set.docs.length}</span>
-                            {set.docs.length === 1 ? "document" : "documents"}
+                            {OPS_COMMON.documentWord[set.docs.length === 1 ? "one" : "other"][locale]}
                           </Badge>
                         }
                       />
@@ -277,7 +286,7 @@ export default async function OpsCasePage({
                   the reviewer scrolls the checklist — the whole reason
                   this screen exists. */}
               <Panel>
-                <PanelHeader label="Decision" />
+                <PanelHeader label={OPS_CASE.decisionPanel[locale]} />
                 <PanelBody>
                   <StatusControl applicationId={row.id} status={row.status} />
                 </PanelBody>
@@ -288,7 +297,7 @@ export default async function OpsCasePage({
                   shared `sendMessage` action, not a staff-only copy of
                   it. */}
               <Panel>
-                <PanelHeader label="Messages" />
+                <PanelHeader label={MESSAGES.panelLabel[locale]} />
                 <PanelBody>
                   <MessageThread messages={thread} />
                   <div className="mt-5 border-t border-border pt-5">
@@ -312,12 +321,12 @@ export default async function OpsCasePage({
                   own id regardless, so there is no route to one. */}
               <Panel>
                 <PanelHeader
-                  label="Travel history"
+                  label={OPS_CASE.travelHistoryPanel[locale]}
                   aside={
                     trips.length > 0 ? (
                       <Badge variant="neutral">
                         <span className="num">{trips.length}</span>
-                        {trips.length === 1 ? "trip" : "trips"}
+                        {OPS_COMMON.tripWord[trips.length === 1 ? "one" : "other"][locale]}
                       </Badge>
                     ) : undefined
                   }
@@ -325,7 +334,7 @@ export default async function OpsCasePage({
                 <PanelBody>
                   <TripList
                     trips={trips}
-                    empty="This traveler has recorded no past trips."
+                    empty={OPS_CASE.noTrips[locale]}
                   />
                 </PanelBody>
               </Panel>

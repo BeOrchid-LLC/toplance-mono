@@ -28,6 +28,8 @@ export const HERO: {
     pt: "Vistos e mudança, feitos como deve ser",
     sw: "Viza na uhamiaji, vimefanywa ipasavyo",
     ar: "التأشيرات والانتقال، بالشكل الصحيح",
+    tw: "Visa ne atutena, wɔyɛ no yiye",
+    zu: "Amavisa nokufuduka, kwenziwa ngokufanele",
   },
   title: {
     en: "Know exactly what your visa needs — before you spend a naira on it",
@@ -38,6 +40,8 @@ export const HERO: {
     pt: "Saiba exatamente o que o seu visto exige — antes de gastar um cêntimo",
     sw: "Jua hasa kile viza yako inahitaji — kabla ya kutumia hata senti moja",
     ar: "اعرف بالضبط ما تتطلبه تأشيرتك — قبل أن تنفق درهماً واحداً",
+    tw: "Hu deɛ wo visa hia pɔtee — ansa na woasɛe sika biara wɔ so",
+    zu: "Yazi ngokuqondile lokho i-visa yakho ekudingayo — ngaphambi kokusebenzisa noma imalini encane",
   },
   body: {
     en: "Toplance asks a few short questions in your own language, turns your answers into the exact document checklist for your destination, checks every file as you upload it, and stays with you through the decision and your first week after landing.",
@@ -48,6 +52,8 @@ export const HERO: {
     pt: "A Toplance faz-lhe algumas perguntas curtas na sua própria língua, transforma as suas respostas na lista exata de documentos que o seu destino exige, verifica cada ficheiro à medida que o carrega, e fica consigo até à decisão e durante a sua primeira semana depois de chegar.",
     sw: "Toplance hukuuliza maswali machache mafupi kwa lugha yako mwenyewe, hugeuza majibu yako kuwa orodha kamili ya nyaraka zinazohitajika mahali unapokwenda, huikagua kila faili unapoipakia, na hubaki nawe hadi uamuzi utolewe na katika wiki yako ya kwanza baada ya kuwasili.",
     ar: "يطرح عليك Toplance بضعة أسئلة قصيرة بلغتك، ويحوّل إجاباتك إلى قائمة المستندات المطلوبة تحديداً لوجهتك، ويفحص كل ملف أثناء رفعك له، ويبقى معك حتى صدور القرار وطوال أسبوعك الأول بعد الوصول.",
+    tw: "Toplance bisa wo nsɛmmisa tiawa kakraa wɔ wo kasa mu, dane wo mmuae ma ɛyɛ nsɛm ho nkrataa deɛ ɛho hia ma baabi a worekɔ, hwɛ krataa biara mu wɔ berɛ a wode reto soro, na ɛka wo ho kɔsi sɛ wobɛnya gyinaeɛ ne wo nnawɔtwe a ɛdi ɛkan wɔ berɛ a woadu.",
+    zu: "I-Toplance ikubuza imibuzo emifushane embalwa ngolimi lwakho, iphendule izimpendulo zakho zibe uhlu olunembile lwamadokhumenti adingekayo esiphethweni sakho, ihlole ifayela ngalinye njengoba ulilayisha, futhi ihlale nawe kuze kufike isinqumo naphakathi nesonto lakho lokuqala ngemva kokufika.",
   },
   ctaPrimary: {
     en: "See your checklist — free",
@@ -58,6 +64,8 @@ export const HERO: {
     pt: "Ver a sua lista — grátis",
     sw: "Ona orodha yako — bure",
     ar: "اطّلع على قائمتك — مجاناً",
+    tw: "Hwɛ wo krataa nhyehyɛeɛ — kwa",
+    zu: "Bona uhlu lwakho — mahhala",
   },
   ctaShort: {
     en: "Get started",
@@ -68,6 +76,8 @@ export const HERO: {
     pt: "Começar",
     sw: "Anza",
     ar: "ابدأ الآن",
+    tw: "Fi ase",
+    zu: "Qala",
   },
   ctaSecondary: {
     en: "For organisations",
@@ -78,6 +88,8 @@ export const HERO: {
     pt: "Para organizações",
     sw: "Kwa mashirika",
     ar: "للمؤسسات",
+    tw: "Ma nkuraa ne akuw",
+    zu: "Ezinhlangano",
   },
   signIn: {
     en: "Sign in",
@@ -88,6 +100,8 @@ export const HERO: {
     pt: "Entrar",
     sw: "Ingia",
     ar: "تسجيل الدخول",
+    tw: "Hyɛn mu",
+    zu: "Ngena",
   },
   trust: [
     {
@@ -99,6 +113,8 @@ export const HERO: {
       pt: "Não é preciso cartão para ver a sua lista",
       sw: "Hakuna kadi inayohitajika kuona orodha yako",
       ar: "لا حاجة لبطاقة لعرض قائمتك",
+      tw: "Wonhia kaad biara ansa na woahu wo krataa nhyehyɛeɛ",
+      zu: "Akudingeki ikhadi ukuze ubone uhlu lwakho",
     },
     {
       en: "Documents encrypted at rest and in transit",
@@ -109,22 +125,26 @@ export const HERO: {
       pt: "Documentos cifrados em repouso e em trânsito",
       sw: "Nyaraka zimesimbwa zikiwa zimehifadhiwa na zikiwa safarini",
       ar: "المستندات مشفّرة أثناء التخزين وأثناء الإرسال",
+      tw: "Wɔde nkataso banbɔ nkrataa mu berɛ a ɛda hɔ ne berɛ a ɛretu kwan",
+      zu: "Amadokhumenti abethelwe lapho egciniwe nalapho ethunyelwa",
     },
     /**
-     * Named rather than counted, because "eight languages" is a claim
+     * Named rather than counted, because "ten languages" is a claim
      * about us and a list is a claim about the reader: someone scanning
      * for their own language finds it here or knows immediately that it
      * is missing. Keep it in step with `LOCALES`.
      */
     {
-      en: "English, Hausa, Yoruba, Igbo, French, Portuguese, Swahili and Arabic",
-      ha: "Turanci, Hausa, Yoruba, Igbo, Faransanci, Fotigal, Suwahili da Larabci",
-      yo: "Gẹ̀ẹ́sì, Hausa, Yorùbá, Ìgbò, Faransé, Pọ́tọ́gí, Swahili àti Lárúbáwá",
-      ig: "Bekee, Hausa, Yoruba, Igbo, French, Portuguese, Swahili na Arabic",
-      fr: "Anglais, haoussa, yoruba, igbo, français, portugais, swahili et arabe",
-      pt: "Inglês, hauçá, ioruba, igbo, francês, português, suaíli e árabe",
-      sw: "Kiingereza, Kihausa, Kiyoruba, Kiigbo, Kifaransa, Kireno, Kiswahili na Kiarabu",
-      ar: "الإنجليزية والهوسا واليوروبا والإيغبو والفرنسية والبرتغالية والسواحيلية والعربية",
+      en: "English, Hausa, Yoruba, Igbo, French, Portuguese, Swahili, Arabic, Twi and isiZulu",
+      ha: "Turanci, Hausa, Yoruba, Igbo, Faransanci, Fotigal, Suwahili, Larabci, Twi da Isizulu",
+      yo: "Gẹ̀ẹ́sì, Hausa, Yorùbá, Ìgbò, Faransé, Pọ́tọ́gí, Swahili, Lárúbáwá, Twi àti isiZulu",
+      ig: "Bekee, Hausa, Yoruba, Igbo, French, Portuguese, Swahili, Arabic, Twi na isiZulu",
+      fr: "Anglais, haoussa, yoruba, igbo, français, portugais, swahili, arabe, twi et zoulou",
+      pt: "Inglês, hauçá, ioruba, igbo, francês, português, suaíli, árabe, twi e zulu",
+      sw: "Kiingereza, Kihausa, Kiyoruba, Kiigbo, Kifaransa, Kireno, Kiswahili, Kiarabu, Kitwi na Kizulu",
+      ar: "الإنجليزية والهوسا واليوروبا والإيغبو والفرنسية والبرتغالية والسواحيلية والعربية والتوي والزولو",
+      tw: "Borɔfo, Hausa, Yoruba, Igbo, Frɛnkye, Portugal kasa, Swahili, Arab kasa, Twi ne isiZulu",
+      zu: "IsiNgisi, isiHausa, isiYoruba, isiIgbo, isiFulentshi, isiPutukezi, isiSwahili, isi-Arabhu, isiTwi nesiZulu",
     },
   ],
 
@@ -147,6 +167,8 @@ export const HERO: {
       pt: "Passaporte",
       sw: "Pasipoti",
       ar: "جواز السفر",
+      tw: "Pasport",
+      zu: "Iphasipoti",
     },
     destination: {
       en: "Destination",
@@ -157,6 +179,8 @@ export const HERO: {
       pt: "Destino",
       sw: "Unakoenda",
       ar: "الوجهة",
+      tw: "Baabi a woreko",
+      zu: "Indawo oya kuyo",
     },
     purpose: {
       en: "Purpose",
@@ -167,6 +191,8 @@ export const HERO: {
       pt: "Motivo",
       sw: "Sababu",
       ar: "الغرض",
+      tw: "Botaeɛ",
+      zu: "Injongo",
     },
   },
 };

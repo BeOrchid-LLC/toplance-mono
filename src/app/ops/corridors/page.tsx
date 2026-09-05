@@ -6,7 +6,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { opsNav } from "@/components/ops/ops-nav";
+import { localizedOpsNav } from "@/components/ops/ops-nav";
 import { Shell } from "@/components/shared/shell";
 import {
   Table,
@@ -24,11 +24,18 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/locales";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Route coverage" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: OPS_CORRIDORS.heading[locale] };
+}
 
 /**
  * The country's name, or the raw code upper-cased when this file cannot
@@ -40,28 +47,40 @@ const countryName = (iso: string) => countryFromIso2(iso)?.name ?? iso.toUpperCa
 /**
  * What a row's review state should look like at a glance. `pending` is
  * the only one that is work rather than record, so it is the only one
- * that gets a colour demanding attention.
+ * that gets a colour demanding attention. Labels resolve through
+ * `OPS_COMMON` rather than living on this object, since the variant is
+ * fixed but the word is not.
  */
-const STATE_BADGE = {
-  pending: { variant: "warning" as const, label: "Awaiting review" },
-  approved: { variant: "success" as const, label: "Approved" },
-  rejected: { variant: "neutral" as const, label: "Sent back" },
+const STATE_VARIANT = {
+  pending: "warning" as const,
+  approved: "success" as const,
+  rejected: "neutral" as const,
 };
+
+function stateLabel(reviewState: keyof typeof STATE_VARIANT, locale: Locale) {
+  if (reviewState === "pending") return OPS_COMMON.awaitingReview[locale];
+  if (reviewState === "approved") return OPS_COMMON.approved[locale];
+  return OPS_COMMON.sentBack[locale];
+}
 
 /**
  * How fresh a live corridor is, said in the fewest words that stay
  * honest. The corridor's own page carries the full sentence; a coverage
  * table needs the verdict.
  */
-function freshnessLabel(row: CorridorRow) {
+function freshnessLabel(row: CorridorRow, locale: Locale) {
   const f = freshnessOf(row.lastVerifiedAt?.toISOString() ?? null, row.purpose);
-  if (f.state === "unverified") return { text: "Not checked yet", tone: "text-danger-ink" };
-  if (f.state === "stale") return { text: `Stale · ${f.checked}`, tone: "text-warning-ink" };
+  if (f.state === "unverified")
+    return { text: OPS_CORRIDORS.notCheckedYetShort[locale], tone: "text-danger-ink" };
+  if (f.state === "stale")
+    return { text: `${OPS_CORRIDORS.stale[locale]} · ${f.checked}`, tone: "text-warning-ink" };
   return { text: f.checked, tone: "t-muted" };
 }
 
 export default async function OpsCorridorsPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
 
   const gate = await requireStaffConsole();
   if (gate.decision === "refuse") return <StaffAccessRefused />;
@@ -82,15 +101,15 @@ export default async function OpsCorridorsPage() {
 
   const counters = [
     {
-      label: "Live routes",
+      label: OPS_CORRIDORS.counters.liveRoutes.label[locale],
       value: live.length,
-      sub: "resolvable by a traveler",
+      sub: OPS_CORRIDORS.counters.liveRoutes.sub[locale],
       tone: "text-ink",
     },
     {
-      label: "Awaiting review",
+      label: OPS_COMMON.awaitingReview[locale],
       value: pending.length,
-      sub: "drafted, not yet published",
+      sub: OPS_CORRIDORS.counters.awaitingReviewSub[locale],
       tone: "text-warning-ink",
     },
     {
@@ -98,15 +117,15 @@ export default async function OpsCorridorsPage() {
       // PRD assumption #1 reads it: destinations, not destination ×
       // purpose. If the client means the other thing, this counter is
       // the first place it will show.
-      label: "Destinations",
+      label: OPS_CORRIDORS.counters.destinations.label[locale],
       value: new Set(live.map((r) => r.destinationIso)).size,
-      sub: "of 50 required at launch",
+      sub: OPS_CORRIDORS.counters.destinations.sub[locale],
       tone: "text-info-ink",
     },
     {
-      label: "Not checked yet",
+      label: OPS_CORRIDORS.counters.notCheckedYet.label[locale],
       value: unverified.length,
-      sub: "live with no verification on record",
+      sub: OPS_CORRIDORS.counters.notCheckedYet.sub[locale],
       tone: unverified.length ? "text-danger-ink" : "text-ink",
     },
   ];
@@ -114,10 +133,10 @@ export default async function OpsCorridorsPage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={opsNav}
+        nav={localizedOpsNav(locale)}
         name={profile.fullName}
         email={profile.email}
-        subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
         notifications={
           <NotificationsMenu
             notifications={notifications}
@@ -134,11 +153,8 @@ export default async function OpsCorridorsPage() {
         />
 
         <Shell className="pt-10">
-          <h1 className="t-h2">Route coverage</h1>
-          <p className="t-muted mt-2 max-w-[62ch]">
-            Every rule set the engine can serve, and how long it has been
-            since a person read it against its source.
-          </p>
+          <h1 className="t-h2">{OPS_CORRIDORS.heading[locale]}</h1>
+          <p className="t-muted mt-2 max-w-[62ch]">{OPS_CORRIDORS.intro[locale]}</p>
 
           <div className="laminate mt-8 overflow-hidden rounded-lg">
             <span aria-hidden className="laminate-sheen" />
@@ -170,36 +186,37 @@ export default async function OpsCorridorsPage() {
 
           <Panel className="mt-8 mb-16">
             <PanelHeader
-              label="All versions"
+              label={OPS_CORRIDORS.allVersionsPanel[locale]}
               aside={
                 <Badge variant="outline">
-                  <span className="num">{rows.length}</span> rows
+                  <span className="num">{rows.length}</span> {OPS_CORRIDORS.rowsWord[locale]}
                 </Badge>
               }
             />
             {rows.length === 0 ? (
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  No routes yet. Run <code>npm run db:seed</code>, or draft
-                  one with <code>scripts/draft-corridor.mts</code>.
+                  {OPS_CORRIDORS.emptyPrefix[locale]} <code>npm run db:seed</code>
+                  {OPS_CORRIDORS.emptyMiddle[locale]}{" "}
+                  <code>scripts/draft-corridor.mts</code>.
                 </p>
               </PanelBody>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Route</TableHead>
-                    <TableHead>Purpose</TableHead>
-                    <TableHead>Version</TableHead>
-                    <TableHead>State</TableHead>
-                    <TableHead>Documents</TableHead>
-                    <TableHead>Last checked</TableHead>
+                    <TableHead>{OPS_CORRIDORS.tableHead.route[locale]}</TableHead>
+                    <TableHead>{OPS_CORRIDORS.tableHead.purpose[locale]}</TableHead>
+                    <TableHead>{OPS_CORRIDORS.tableHead.version[locale]}</TableHead>
+                    <TableHead>{OPS_CORRIDORS.tableHead.state[locale]}</TableHead>
+                    <TableHead>{OPS_CORRIDORS.tableHead.documents[locale]}</TableHead>
+                    <TableHead>{OPS_CORRIDORS.tableHead.lastChecked[locale]}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.map((row) => {
-                    const badge = STATE_BADGE[row.reviewState];
-                    const fresh = freshnessLabel(row);
+                    const variant = STATE_VARIANT[row.reviewState];
+                    const fresh = freshnessLabel(row, locale);
                     return (
                       <TableRow key={row.id}>
                         <TableCell>
@@ -212,15 +229,15 @@ export default async function OpsCorridorsPage() {
                           </Link>
                           <span className="t-muted block">{row.visaName}</span>
                         </TableCell>
-                        <TableCell className="capitalize">{row.purpose}</TableCell>
+                        <TableCell>{OPS_COMMON.purpose[row.purpose][locale]}</TableCell>
                         <TableCell className="num">v{row.version}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant={badge.variant}>{badge.label}</Badge>
+                            <Badge variant={variant}>{stateLabel(row.reviewState, locale)}</Badge>
                             {/* Live is a separate fact from approved: a
                                 superseded version stays approved for the
                                 record and stops being served. */}
-                            {row.isLive && <Badge variant="brand">Live</Badge>}
+                            {row.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
                           </div>
                         </TableCell>
                         <TableCell

@@ -27,11 +27,17 @@ import {
 import { resolveEntryCheck, resolveRuleSet } from "@/lib/visa";
 import type { EntryCheck } from "@/lib/visa";
 import { SetupNotice } from "@/components/shared/setup-notice";
+import { getLocale } from "@/lib/i18n/server";
+import { REQUIREMENTS } from "@/lib/i18n/requirements";
+import type { Locale } from "@/lib/i18n/locales";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Visa requirements" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: REQUIREMENTS.title[locale] };
+}
 
 /**
  * Returns null rather than a dash when the rule set does not carry a
@@ -48,11 +54,19 @@ function formatFee(minor: number | null, currency: string | null) {
   }).format(minor / 100);
 }
 
-function Figure({ value, label }: { value: string | null; label: string }) {
+function Figure({
+  value,
+  label,
+  locale,
+}: {
+  value: string | null;
+  label: string;
+  locale: Locale;
+}) {
   if (value) return <>{value}</>;
   return (
     <span
-      aria-label={`${label}: awaiting a real figure`}
+      aria-label={REQUIREMENTS.awaitingFigureAria[locale].replace("{label}", label)}
       className="inline-block w-[88px] border-b-2 border-dashed border-border-strong align-middle"
     />
   );
@@ -67,7 +81,7 @@ function Figure({ value, label }: { value: string | null; label: string }) {
  * every row above it. Renders nothing at all for a requirement without
  * one: an unlinked line is honest, an invented link is not.
  */
-function RequirementSource({ url }: { url: string | null }) {
+function RequirementSource({ url, locale }: { url: string | null; locale: Locale }) {
   if (!url) return null;
   return (
     <a
@@ -76,7 +90,7 @@ function RequirementSource({ url }: { url: string | null }) {
       rel="noopener noreferrer"
       className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-text hover:underline"
     >
-      Source
+      {REQUIREMENTS.source[locale]}
       <ExternalLink className="size-3.5" aria-hidden />
     </a>
   );
@@ -93,6 +107,7 @@ function CorridorGap({
   destination,
   purpose,
   entry,
+  locale,
 }: {
   nationality: string;
   destination: string;
@@ -103,7 +118,9 @@ function CorridorGap({
    * renders exactly as this screen always did.
    */
   entry: EntryCheck | null;
+  locale: Locale;
 }) {
+  const t = REQUIREMENTS;
   const gap = corridorGap({ nationality, destination, purpose, entry });
   // A corridor that needs no visa is finished, not pending. Everything
   // this screen says about waiting — the warning mark, the checklist we
@@ -142,13 +159,13 @@ function CorridorGap({
             <dl className="mt-4 flex flex-wrap gap-x-10 gap-y-3">
               {entry.allowedStay && (
                 <div>
-                  <dt className="special-caps">Allowed stay</dt>
+                  <dt className="special-caps">{t.allowedStayLabel[locale]}</dt>
                   <dd className="num text-base">{entry.allowedStay}</dd>
                 </div>
               )}
               {entry.passportValidity && (
                 <div>
-                  <dt className="special-caps">Passport validity</dt>
+                  <dt className="special-caps">{t.passportValidityLabel[locale]}</dt>
                   <dd className="text-base">{entry.passportValidity}</dd>
                 </div>
               )}
@@ -158,7 +175,7 @@ function CorridorGap({
                 became a false citation the moment a second provider
                 could — and it silently was one. */}
             <p className="t-muted mt-4 max-w-[62ch]">
-              Entry rules from{" "}
+              {t.entryRulesFrom[locale]}{" "}
               {entry.embassyUrl ? (
                 <a
                   href={entry.embassyUrl}
@@ -175,8 +192,7 @@ function CorridorGap({
               {!answered && (
                 <>
                   {" "}
-                  We cannot build your document checklist for {destination} yet
-                  — that needs guidance we have checked against the mission.
+                  {t.cannotBuildChecklist[locale].replace("{destination}", destination)}
                 </>
               )}
             </p>
@@ -190,10 +206,7 @@ function CorridorGap({
             one — no mailer, no list to mail — so it now offers only what
             the demand event actually delivers. */}
         {!answered && (
-          <p className="t-muted mt-4 max-w-[62ch]">
-            Nothing has been charged. We cannot alert you when it opens yet, so
-            it is worth checking back.
-          </p>
+          <p className="t-muted mt-4 max-w-[62ch]">{t.nothingCharged[locale]}</p>
         )}
         <Button asChild variant="tertiary" className="mt-8">
           <Link href="/app/agent">
@@ -208,6 +221,8 @@ function CorridorGap({
 export default async function RequirementsPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
+  const t = REQUIREMENTS;
   const application = await getOrCreateApplication();
   if (!application) redirect("/sign-in?next=/app/requirements");
   if (!application.intakeComplete) redirect("/app/agent");
@@ -264,6 +279,7 @@ export default async function RequirementsPage() {
         destination={answers.destination}
         purpose={answers.purpose}
         entry={entry}
+        locale={locale}
       />
     );
   }
@@ -351,8 +367,7 @@ export default async function RequirementsPage() {
             printing of the same three facts. */}
         <h1 className="t-h2 max-w-[26ch]">{ruleSet.visaName}</h1>
         <p className="t-body-lg mt-3 max-w-[62ch] text-ink-2">
-          The rule set that built your checklist, as the mission publishes
-          it. Nothing here is our interpretation.
+          {t.ruleSetIntro[locale]}
         </p>
 
         {/* Three facts on one sheet. The dividers keep the fee — the one
@@ -363,29 +378,29 @@ export default async function RequirementsPage() {
           <dl className="grid sm:grid-cols-3">
             {[
               {
-                label: "Documents required",
+                label: t.documentsRequiredLabel[locale],
                 value: String(required.length),
                 sub: conditional.length
-                  ? `${conditional.length} more only if they apply to you`
-                  : "every one of them applies to you",
+                  ? t.conditionalSub[locale].replace("{n}", String(conditional.length))
+                  : t.allApplySub[locale],
                 approx: null,
               },
               {
-                label: "Typical decision time",
+                label: t.typicalDecisionLabel[locale],
                 value:
                   ruleSet.processingWeeksMin && ruleSet.processingWeeksMax
                     ? `${ruleSet.processingWeeksMin}–${ruleSet.processingWeeksMax} weeks`
                     : null,
-                sub: "from the date the mission receives your file",
+                sub: t.fromDateReceivedSub[locale],
                 approx: null,
               },
               {
-                label: "Government fee",
+                label: t.governmentFeeLabel[locale],
                 value: formatFee(
                   ruleSet.governmentFeeMinor,
                   ruleSet.governmentFeeCurrency
                 ),
-                sub: "paid to the mission, not to Toplance",
+                sub: t.paidToMissionSub[locale],
                 /**
                  * The same fee in the traveller's own money, marked as
                  * the estimate it is. The mission charges the figure
@@ -393,12 +408,21 @@ export default async function RequirementsPage() {
                  * it because a conversion with no date is a promise
                  * about a number that moves every day — and the whole
                  * sheet is built on saying where a figure came from.
+                 *
+                 * `formatApproximate` gets the traveller's own interface
+                 * locale, not a hardcoded one — it only ever changes how
+                 * the number is grouped and punctuated, never the
+                 * currency shown, which stays driven by residence
+                 * (`localCurrency` above) regardless of language.
                  */
                 approx: approximateFee
-                  ? `${formatApproximate(approximateFee, "en-NG")} at ${approximateFee.fetchedAt.toLocaleDateString(
-                      "en-GB",
-                      { day: "numeric", month: "long" }
-                    )} rates`
+                  ? `${formatApproximate(approximateFee, locale)} ${t.approxAtRatesDate[locale].replace(
+                      "{date}",
+                      approximateFee.fetchedAt.toLocaleDateString(locale, {
+                        day: "numeric",
+                        month: "long",
+                      })
+                    )}`
                   : null,
               },
               // The entry rules the brief's item 6 names. Curated
@@ -412,9 +436,9 @@ export default async function RequirementsPage() {
               ...(ruleSet.allowedStay
                 ? [
                     {
-                      label: "Allowed stay",
+                      label: t.allowedStayLabel[locale],
                       value: ruleSet.allowedStay,
-                      sub: "on this visa, per entry",
+                      sub: t.perEntrySub[locale],
                       approx: null,
                     },
                   ]
@@ -422,9 +446,9 @@ export default async function RequirementsPage() {
               ...(ruleSet.passportValidity
                 ? [
                     {
-                      label: "Passport validity",
+                      label: t.passportValidityLabel[locale],
                       value: ruleSet.passportValidity,
-                      sub: "a common reason a file is refused",
+                      sub: t.refusalReasonSub[locale],
                       approx: null,
                     },
                   ]
@@ -436,7 +460,7 @@ export default async function RequirementsPage() {
               >
                 <dt className="special-caps">{stat.label}</dt>
                 <dd className="t-h3 num mt-3">
-                  <Figure value={stat.value} label={stat.label} />
+                  <Figure value={stat.value} label={stat.label} locale={locale} />
                 </dd>
                 <dd className="t-muted mt-1.5">{stat.sub}</dd>
                 {/* Only the fee has one, and only when a fresh rate
@@ -463,7 +487,7 @@ export default async function RequirementsPage() {
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
               >
-                Official eVisa portal
+                {t.officialEvisaPortal[locale]}
                 <ExternalLink className="size-4" aria-hidden />
               </a>
             )}
@@ -474,7 +498,7 @@ export default async function RequirementsPage() {
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
               >
-                {ruleSet.registrationName} registration
+                {t.registrationSuffix[locale].replace("{name}", ruleSet.registrationName)}
                 <ExternalLink className="size-4" aria-hidden />
               </a>
             )}
@@ -485,7 +509,7 @@ export default async function RequirementsPage() {
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
               >
-                Embassy contact
+                {t.embassyContact[locale]}
                 <ExternalLink className="size-4" aria-hidden />
               </a>
             )}
@@ -497,7 +521,9 @@ export default async function RequirementsPage() {
                 somebody can actually go and verify it. Asking the
                 traveller to weigh our own sourcing is asking them to do
                 the job they came here to have done. */}
-            <span className="t-muted">In effect since {effective}</span>
+            <span className="t-muted">
+              {t.inEffectSince[locale].replace("{date}", effective)}
+            </span>
             {ruleSet.sourceUrl && (
               <a
                 href={ruleSet.sourceUrl}
@@ -505,7 +531,7 @@ export default async function RequirementsPage() {
                 rel="noopener noreferrer"
                 className="ms-auto inline-flex min-h-[var(--row-h)] items-center gap-2 text-base font-semibold text-brand-text hover:underline"
               >
-                {ruleSet.sourceName ?? "Source"}
+                {ruleSet.sourceName ?? t.source[locale]}
                 <ExternalLink className="size-4" aria-hidden />
               </a>
             )}
@@ -526,11 +552,18 @@ export default async function RequirementsPage() {
               each provider that filled a blank says which blank it
               filled. Empty for every single-provider rule set, which is
               all of them until a corridor has a gap.
+
+              `c.fields` are the English field labels `@/lib/visa/merge`
+              (outside this pass's ownership) writes — e.g. "Government
+              fee" — and stay in English; only the connecting words
+              around them are translated.
             */}
             {ruleSet.contributions.map((c) => (
               <p key={c.provider} className="t-muted basis-full">
-                {c.fields.join(" and ")}{" "}
-                {c.fields.length > 1 ? "come" : "comes"} from{" "}
+                {c.fields.join(` ${t.contributionsAnd[locale]} `)}{" "}
+                {c.fields.length > 1
+                  ? t.contributionsComePlural[locale]
+                  : t.contributionsComeSingular[locale]}{" "}
                 {c.sourceUrl ? (
                   <a
                     href={c.sourceUrl}
@@ -553,10 +586,10 @@ export default async function RequirementsPage() {
 
         <Panel className="mt-6">
           <PanelHeader
-            label="What you must provide"
+            label={t.whatYouMustProvide[locale]}
             aside={
               <Badge variant="brand">
-                <span className="num">{required.length}</span> documents
+                <span className="num">{required.length}</span> {t.documentsBadge[locale]}
               </Badge>
             }
           />
@@ -576,7 +609,7 @@ export default async function RequirementsPage() {
                       {r.description}
                     </p>
                   )}
-                  <RequirementSource url={r.sourceUrl} />
+                  <RequirementSource url={r.sourceUrl} locale={locale} />
                 </div>
               </li>
             ))}
@@ -586,10 +619,11 @@ export default async function RequirementsPage() {
         {conditional.length > 0 && (
           <Panel className="mt-6">
             <PanelHeader
-              label="Only if it applies"
+              label={t.onlyIfItApplies[locale]}
               aside={
                 <Badge variant="outline">
-                  <span className="num">{conditional.length}</span> conditional
+                  <span className="num">{conditional.length}</span>{" "}
+                  {t.conditionalBadge[locale]}
                 </Badge>
               }
             />
@@ -605,7 +639,7 @@ export default async function RequirementsPage() {
                       {r.description}
                     </p>
                   )}
-                  <RequirementSource url={r.sourceUrl} />
+                  <RequirementSource url={r.sourceUrl} locale={locale} />
                 </li>
               ))}
             </ul>
@@ -615,7 +649,7 @@ export default async function RequirementsPage() {
         <div className="mt-8">
           <Button asChild>
             <Link href="/app/documents">
-              Start uploading ({docs.length} on your checklist) <ArrowRight />
+              {t.startUploading[locale].replace("{n}", String(docs.length))} <ArrowRight />
             </Link>
           </Button>
         </div>

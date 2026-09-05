@@ -3,6 +3,8 @@ import { ArrowLeft } from "lucide-react";
 
 import { SettingsCluster } from "@/components/shared/settings-cluster";
 import { Wordmark } from "@/components/shared/wordmark";
+import { AUTH_LAYOUT } from "@/lib/i18n/auth-pages";
+import { getLocale } from "@/lib/i18n/server";
 
 /**
  * Auth surfaces carry the Toplance brand, per the client's decision.
@@ -19,9 +21,11 @@ import { Wordmark } from "@/components/shared/wordmark";
  * refracts. Without it the glass has nothing to bend and reads as a flat
  * translucent rectangle.
  */
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="bar-edge sticky top-0 z-90 flex h-[var(--bar-h)] items-center gap-4 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-[max(16px,calc((100%-1140px)/2))] backdrop-blur-md">
@@ -47,7 +51,7 @@ export default function AuthLayout({
             className="flex min-h-[var(--row-h)] items-center gap-2 text-[15px] font-medium text-ink-2 transition-colors hover:text-brand-text"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Back to toplance.ca
+            {AUTH_LAYOUT.backToSite[locale]}
           </Link>
         </div>
       </footer>

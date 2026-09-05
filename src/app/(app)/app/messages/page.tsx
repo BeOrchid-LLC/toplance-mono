@@ -10,11 +10,16 @@ import { getOrCreateApplication, getProfile } from "@/lib/data/applications";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { getLocale } from "@/lib/i18n/server";
+import { MESSAGES } from "@/lib/i18n/messages";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Messages" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: MESSAGES.title[locale] };
+}
 
 /**
  * The traveller's side of the thread — outside the `(corridor)` route
@@ -25,6 +30,7 @@ export const metadata: Metadata = { title: "Messages" };
 export default async function MessagesPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
   const profile = await getProfile();
   const application = await getOrCreateApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/messages");
@@ -43,7 +49,7 @@ export default async function MessagesPage() {
     <main>
       <Shell className="py-8 md:py-10">
         <Panel>
-          <PanelHeader label="Messages" />
+          <PanelHeader label={MESSAGES.panelLabel[locale]} />
           <PanelBody>
             <MessageThread messages={thread} />
             <div className="mt-5 border-t border-border pt-5">

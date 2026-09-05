@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isActive, type NavItem } from "@/components/app/app-nav";
+import { useT } from "@/components/locale-provider";
+import { APP_NAV } from "@/lib/i18n/app-chrome";
 
 /**
  * The nav below `lg`, where the bar hides `AppNav`. A hamburger rather
@@ -22,11 +24,12 @@ import { isActive, type NavItem } from "@/components/app/app-nav";
 export function AppNavMenu({ nav }: { nav: NavItem[] }) {
   const pathname = usePathname();
   const root = nav[0]?.href ?? "/app";
+  const t = useT();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label="Navigation menu"
+        aria-label={t(APP_NAV.menuLabel)}
         className="grid size-9 place-items-center rounded-full hover:bg-surface-2"
       >
         <Menu className="size-5" aria-hidden />

@@ -27,6 +27,8 @@ import {
   type IntakeWrite,
   type SpokenIntakeWrite,
 } from "@/lib/domain/intake";
+import { INTAKE_UI } from "@/lib/i18n/intake-ui";
+import type { Locale } from "@/lib/i18n/locales";
 
 type Answers = Record<string, string>;
 
@@ -156,12 +158,10 @@ function LiveIntake({
       console.error("[intake] the conversation failed", error);
       errorStreak.current += 1;
       if (errorStreak.current < 2) {
-        toast.error("That didn't go through. Try again.");
+        toast.error(t(INTAKE_UI.toastRetry));
         return;
       }
-      toast.error(
-        "The agent stopped responding. Carrying on with the short questions.",
-      );
+      toast.error(t(INTAKE_UI.toastDegraded));
       onDegrade(answersRef.current);
     },
     onFinish: ({ isError }) => {
@@ -330,7 +330,7 @@ function LiveIntake({
    */
   function editFrom(key: string) {
     setReopened({ key, afterWrites: writes, afterMessages: messages.length });
-    toast.info("Answer reopened. Tell the agent what it should say instead.");
+    toast.info(t(INTAKE_UI.toastReopenedLive));
   }
 
   // Whether the locally re-asked question is still the live one. After
@@ -360,7 +360,7 @@ function LiveIntake({
           <Thinking />
         ) : (
           <>
-            {messages.length === 0 && <p>{greeting(fullName)}</p>}
+            {messages.length === 0 && <p>{greeting(fullName, locale)}</p>}
             {reaskingNow && reopenedQuestion ? (
               <p className="font-semibold">{t(reopenedQuestion.prompt)}</p>
             ) : latest ? (
@@ -382,7 +382,7 @@ function LiveIntake({
       log={
         <>
           <Turn from="agent" plain>
-            {greeting(fullName)}
+            {greeting(fullName, locale)}
           </Turn>
 
           {/* The model only speaks once the traveller has, so the
@@ -579,7 +579,7 @@ function ScriptedIntake({
     // arrive behind a thinking indicator that has nothing left to do.
     setTyping(false);
     setReopened(previous ? { key, previous } : null);
-    toast.info("Answer reopened. Anything after it will be asked again.");
+    toast.info(t(INTAKE_UI.toastReopenedScripted));
   }
 
   const fresh = INTAKE_QUESTIONS.every((q) => !answers[q.key]);
@@ -597,7 +597,7 @@ function ScriptedIntake({
           <Thinking />
         ) : (
           <>
-            {fresh && <p>{greeting(fullName)}</p>}
+            {fresh && <p>{greeting(fullName, locale)}</p>}
             {current && <p className="font-semibold">{t(current.prompt)}</p>}
             {/* Attached to the question it qualifies rather than left in
                 the transcript. It is guidance for the answer being given
@@ -611,7 +611,7 @@ function ScriptedIntake({
       log={
         <>
           <Turn from="agent" plain>
-            {greeting(fullName)}
+            {greeting(fullName, locale)}
           </Turn>
 
           {INTAKE_QUESTIONS.map((q, i) => {
@@ -807,6 +807,7 @@ function TranscriptPanel({
   children: React.ReactNode;
 }) {
   const box = React.useRef<HTMLDivElement>(null);
+  const t = useT();
 
   React.useEffect(() => {
     const el = box.current;
@@ -819,11 +820,11 @@ function TranscriptPanel({
       className="absolute inset-0 z-20 flex animate-in flex-col bg-surface fade-in-0 slide-in-from-bottom-4 duration-[var(--dur-sheet)]"
     >
       <div className="flex h-[var(--row-h)] shrink-0 items-center justify-between gap-3 border-b border-border px-4 sm:px-6">
-        <p className="special-caps">Conversation</p>
+        <p className="special-caps">{t(INTAKE_UI.transcriptLabel)}</p>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close the conversation and go back to your record"
+          aria-label={t(INTAKE_UI.ariaCloseTranscript)}
           className="-me-2 grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
         >
           <X aria-hidden className="size-4" />
@@ -832,7 +833,7 @@ function TranscriptPanel({
       <div
         ref={box}
         role="log"
-        aria-label="Conversation with the Toplance agent"
+        aria-label={t(INTAKE_UI.ariaConversationLog)}
         className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
       >
         <div className="mx-auto flex w-full max-w-[720px] flex-col gap-7">
@@ -850,9 +851,10 @@ function TranscriptPanel({
  * traveller's own name is in it, and the shared renderer is for model
  * output only.
  */
-function greeting(fullName: string) {
+function greeting(fullName: string, locale: Locale): string {
   const firstName = fullName.trim().split(" ")[0] ?? "";
-  return `Nice to meet you, ${firstName || "there"}. I will ask a few short questions so I know exactly what you need. You can type, or tap one of the suggestions.`;
+  const name = firstName || INTAKE_UI.greetingFallbackName[locale];
+  return INTAKE_UI.greeting[locale].replace("{name}", name);
 }
 
 /**
@@ -861,8 +863,9 @@ function greeting(fullName: string) {
  * container the reply itself will not have.
  */
 function Thinking() {
+  const t = useT();
   return (
-    <div role="status" aria-label="The agent is answering">
+    <div role="status" aria-label={t(INTAKE_UI.ariaThinking)}>
       <span className="intake-thinking block size-2.5 rounded-full bg-ink-3" />
     </div>
   );
@@ -898,6 +901,8 @@ function CompletionBar({
   transcriptOpen: boolean;
   onToggleTranscript: () => void;
 }) {
+  const t = useT();
+
   return (
     // The same card the dock was, so the final answer changes what the
     // panel says without changing what it is. See `AgentDock`.
@@ -915,11 +920,10 @@ function CompletionBar({
           <Check className="size-4" />
         </span>
 
-        <p className="t-title">Profile complete</p>
+        <p className="t-title">{t(INTAKE_UI.completionTitle)}</p>
 
         <p className="t-muted col-span-2 text-[15px] sm:col-start-2 sm:row-start-2">
-          Your checklist is ready. You can change any answer later and it
-          rebuilds.
+          {t(INTAKE_UI.completionBody)}
         </p>
 
         {/* Stacked and full-width on a phone, where two buttons side by
@@ -938,11 +942,11 @@ function CompletionBar({
             ) : (
               <MessagesSquare aria-hidden className="size-4" />
             )}
-            {transcriptOpen ? "Close" : "Transcript"}
+            {transcriptOpen ? t(INTAKE_UI.close) : t(INTAKE_UI.transcript)}
           </button>
           <Button asChild className="w-full sm:w-auto">
             <Link href="/app/requirements">
-              See my requirements <ArrowRight />
+              {t(INTAKE_UI.seeRequirements)} <ArrowRight />
             </Link>
           </Button>
         </div>

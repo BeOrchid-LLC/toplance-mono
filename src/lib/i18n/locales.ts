@@ -1,19 +1,22 @@
 /**
  * The languages the interface itself speaks.
  *
- * Two groups, and the distinction is worth keeping in mind when adding a
- * third: the first four are the languages of the origin country this
- * product launched into, and the next four are the languages of the
- * corridors it now serves — francophone West Africa, lusophone Africa,
- * East Africa and the Gulf. Every string in `HERO` and `INTAKE_QUESTIONS`
- * is a `Record<Locale, string>`, so adding a code here is a compile error
- * until that language is actually written. That is deliberate: a locale
- * in the menu that falls back to English is worse than one that is not
- * offered, because the reader has already told us they cannot read it.
+ * The set now maps cleanly onto the five origin nationalities in
+ * `NATIONALITY_ISO` (`src/lib/domain/corridors.ts`): Nigeria speaks Hausa,
+ * Yoruba and Igbo; Ghana speaks Twi; Kenya speaks Swahili; South Africa
+ * speaks isiZulu; and Cameroon speaks French. Portuguese and Arabic remain
+ * the two forward-looking corridor languages — lusophone Africa and the
+ * Gulf — that are not yet an origin nationality here. Every string in
+ * `HERO` and `INTAKE_QUESTIONS` is a `Record<Locale, string>`, so adding a
+ * code here is a compile error until that language is actually written.
+ * That is deliberate: a locale in the menu that falls back to English is
+ * worse than one that is not offered, because the reader has already told
+ * us they cannot read it.
  *
- * NEEDS NATIVE REVIEW before launch. The four added on 2026-09-05 were
- * translated in-house from the English, like the `slots` strings before
- * them; only the original English is client-supplied copy.
+ * NEEDS NATIVE REVIEW before launch. The four added on 2026-09-05, and the
+ * two (`tw`, `zu`) added after them, were translated in-house from the
+ * English, like the `slots` strings before them; only the original English
+ * is client-supplied copy.
  */
 export const LOCALES = [
   { code: "en", label: "English", native: "English", dir: "ltr" },
@@ -24,6 +27,8 @@ export const LOCALES = [
   { code: "pt", label: "Portuguese", native: "Português", dir: "ltr" },
   { code: "sw", label: "Swahili", native: "Kiswahili", dir: "ltr" },
   { code: "ar", label: "Arabic", native: "العربية", dir: "rtl" },
+  { code: "tw", label: "Twi", native: "Twi", dir: "ltr" },
+  { code: "zu", label: "isiZulu", native: "isiZulu", dir: "ltr" },
 ] as const;
 
 export type Locale = (typeof LOCALES)[number]["code"];

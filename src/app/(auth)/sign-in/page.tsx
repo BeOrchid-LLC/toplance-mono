@@ -5,9 +5,15 @@ import { AuthForm } from "@/components/auth/auth-form";
 import { OtherDoors, SIGN_IN_DOORS } from "@/components/auth/other-doors";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { AUTH_DOORS_HEADINGS } from "@/lib/i18n/auth-doors";
+import { AUTH_PAGE_TITLES } from "@/lib/i18n/auth-pages";
+import { getLocale } from "@/lib/i18n/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const metadata: Metadata = { title: "Sign in" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: AUTH_PAGE_TITLES.signIn[locale] };
+}
 
 export default function SignInPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
@@ -19,7 +25,7 @@ export default function SignInPage() {
       <Suspense fallback={<Skeleton className="h-[360px] w-full" />}>
         <AuthForm mode="sign-in" />
       </Suspense>
-      <OtherDoors heading="Not a traveler?" entries={SIGN_IN_DOORS} />
+      <OtherDoors heading={AUTH_DOORS_HEADINGS.notATraveler} entries={SIGN_IN_DOORS} />
     </div>
   );
 }

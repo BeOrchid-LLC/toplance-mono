@@ -1,8 +1,10 @@
 import { getCorridorFor } from "@/lib/data/applications";
 import { countDueForDigest, travellersDueForDigest } from "@/lib/data/digest";
+import { travellersDueForExpiryReminder } from "@/lib/data/expiry";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { arrivalChecklist } from "@/lib/domain/companion";
 import { appUrl, notify } from "@/lib/notifications/notify";
+import { track } from "@/lib/analytics/track";
 
 /**
  * How many recipients one invocation processes. Each one is a
@@ -107,6 +109,8 @@ export async function GET(request: Request) {
     }
   }
 
+  const expiry = await remindExpiringVisas();
+
   // `eligible` is the true population size (a cheap COUNT, no per-row
   // work); `skipped` is what this run's cap left for a later run to
   // pick up — both cheap to report, and what makes a shrinking or
@@ -116,7 +120,64 @@ export async function GET(request: Request) {
     notified,
     eligible: eligibleCount,
     skipped: Math.max(0, eligibleCount - checked),
+    expiryReminded: expiry.reminded,
   });
+}
+
+/**
+ * The second sweep: warn travellers whose visa is running out.
+ *
+ * It rides this route rather than getting one of its own because a new
+ * route means new deploy-time scheduler config, and that config is the
+ * single part of this system no test can reach. One URL on a timer stays
+ * one URL on a timer.
+ *
+ * Sharing the handler is all it shares. Who is due is decided by
+ * `travellersDueForExpiryReminder`, which deliberately ignores the
+ * digest preference: `companionDigest: "off"` silences weekly
+ * orientation mail, never a warning that someone's leave to remain is
+ * ending. A failure on one traveller is logged and stepped over, the
+ * same as the digest loop above — one bad row must not cost everybody
+ * else their notice.
+ */
+async function remindExpiringVisas(): Promise<{ reminded: number }> {
+  let reminded = 0;
+
+  const due = await travellersDueForExpiryReminder(CRON_BATCH_LIMIT);
+
+  for (const row of due) {
+    try {
+      await notify(
+        row.travelerId,
+        "visa_expiring",
+        {
+          visaName: row.visaName,
+          expiresOn: row.expiresOn,
+          daysOut: row.daysOut,
+          url: appUrl("/app/companion"),
+        },
+        row.applicationId
+      );
+
+      // Tracked after the notify, not before: the notification row is
+      // what stops the next run repeating this notice, so an event
+      // claiming a reminder the traveller never got would be a lie the
+      // dedupe then makes permanent.
+      await track(
+        "toplance.expiry_reminder_sent",
+        { applicationId: row.applicationId, daysOut: row.daysOut },
+        null
+      );
+      reminded += 1;
+    } catch (error) {
+      console.error(
+        `[cron/companion] could not send the expiry reminder for application ${row.applicationId}`,
+        error
+      );
+    }
+  }
+
+  return { reminded };
 }
 
 /** The checklist's own item titles, when there are no AI tips to summarise instead. */

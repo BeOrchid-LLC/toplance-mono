@@ -114,6 +114,52 @@ export function itineraryReadyEmail({ url }: { url: string }): EmailContent {
 }
 
 /**
+ * → traveller: their visa is approaching the expiry date they gave us.
+ *
+ * The date is theirs, so it is repeated back in the same terms the
+ * renewal card uses — attributed, and formatted in UTC, because a
+ * date-only value formatted locally reads as the previous day for every
+ * recipient west of Greenwich.
+ *
+ * This email states no rule and promises no outcome: it names a date the
+ * traveller supplied and sends them to the card that explains where the
+ * real renewal route is. `visaName` comes off a curated corridor row and
+ * is null when none resolved, which is a fallback rather than the string
+ * "null" in someone's inbox.
+ */
+export function visaExpiringEmail({
+  visaName,
+  expiresOn,
+  daysOut,
+  url,
+}: {
+  visaName: string | null;
+  expiresOn: string;
+  daysOut: number;
+  url: string;
+}): EmailContent {
+  const visa = visaName ?? "visa";
+  const when = new Date(`${expiresOn}T00:00:00Z`).toLocaleDateString("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  return {
+    subject: `Your ${visa} expires in ${daysOut} days`,
+    ...renderEmail({
+      heading: `${daysOut} days until your ${visa} expires`,
+      paragraphs: [
+        `You told us your ${visa} expires on ${when}.`,
+        "If you plan to stay, start your extension or renewal before that date — most routes will not accept an application filed after it.",
+      ],
+      cta: { href: url, label: "See what to check" },
+    }),
+  };
+}
+
+/**
  * To an invitee who has NO account. Deliberately not routed through
  * `notify()` — there is no `profiles` row to attach it to, which is also
  * why `invitation` is not a `notification_kind`.

@@ -71,6 +71,13 @@
       "when": 1788541234558,
       "tag": "0009_clumsy_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788572224094,
+      "tag": "0010_lean_shooting_star",
+      "breakpoints": true
     }
   ]
 }

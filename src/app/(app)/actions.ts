@@ -17,6 +17,7 @@ import {
   canWriteDocuments,
   canWriteIntakeAnswers,
   canWriteMessages,
+  canWriteVisaExpiry,
   isStaff,
 } from "@/lib/auth/policy";
 import { requireStaffAction } from "@/lib/auth/staff-gate";
@@ -40,6 +41,7 @@ import {
 import { avatarKey, validateAvatarFile } from "@/lib/domain/avatar";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
 import { isDigestFrequency } from "@/lib/domain/digest";
+import { parseVisaExpiry } from "@/lib/domain/expiry";
 import { isLocale } from "@/lib/i18n/locales";
 import { track } from "@/lib/analytics/track";
 import {
@@ -733,6 +735,52 @@ export async function markNotificationsRead() {
   try {
     const actor = await requireActor();
     await markOwnNotificationsRead(actor.userId);
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Record the expiry date printed on the traveller's own visa.
+ *
+ * Guarded by `canWriteVisaExpiry`, which is narrower than every other
+ * write here: the owning traveller and nobody else, not even staff. The
+ * date is a fact about somebody's legal status that nothing in this
+ * product verified, and the desk entering one would dress a third-hand
+ * reading up as a record of ours.
+ *
+ * An empty field clears the date rather than failing — the traveller was
+ * never obliged to give us one, so taking it back has to be possible.
+ * Validation itself lives in `@/lib/domain/expiry` so the rules are
+ * testable without a session or a database.
+ */
+export async function setVisaExpiry(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+
+  try {
+    const { actor } = await requireApplicationAccess(
+      applicationId,
+      canWriteVisaExpiry
+    );
+
+    const parsed = parseVisaExpiry(String(formData.get("visa_expires_on") ?? ""));
+    if (!parsed.ok) return { error: parsed.error };
+
+    await db
+      .update(applications)
+      .set({ visaExpiresOn: parsed.value, updatedAt: new Date() })
+      .where(eq(applications.id, applicationId));
+
+    await track(
+      "toplance.visa_expiry_set",
+      { applicationId, cleared: parsed.value === null },
+      actor.userId
+    );
+
+    revalidatePath("/app", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

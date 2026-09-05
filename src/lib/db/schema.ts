@@ -128,6 +128,14 @@ export const notificationKind = pgEnum("notification_kind", [
    * news to them.
    */
   "checklist_changed",
+  /**
+   * → traveller: their visa is approaching the expiry date they gave us.
+   * Sent at most three times per application (see `EXPIRY_THRESHOLDS`),
+   * and never after the date has passed. The `daysOut` in the payload is
+   * which notice it was, and reading those back is how the cron knows
+   * not to repeat one.
+   */
+  "visa_expiring",
 ]);
 
 /**
@@ -359,6 +367,21 @@ export const applications = pgTable(
     submittedAt: timestamp({ withTimezone: true }),
     decidedAt: timestamp({ withTimezone: true }),
     slaDueAt: timestamp({ withTimezone: true }),
+    /**
+     * When the traveller's visa runs out, as they read it off their own
+     * document after approval. Drives the renewal card and the expiry
+     * reminders in `@/lib/domain/expiry`.
+     *
+     * `date`, not `timestamp`: this is a date printed on a document, with
+     * no time and no zone, and storing an instant would invent both.
+     *
+     * Traveller-supplied and never derived. A corridor carries no
+     * validity duration, so the only alternative would be calculating an
+     * expiry from the approval date — a guess about somebody's legal
+     * status, which is exactly what `renewalGuidance` refuses to make.
+     * Null is the normal state: nobody is required to tell us.
+     */
+    visaExpiresOn: date(),
     /**
      * The instant this application first became billable — every
      * required document uploaded, which is the moment Peace's pricing

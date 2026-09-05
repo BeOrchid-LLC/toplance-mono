@@ -8,6 +8,7 @@ import {
   messageReceivedEmail,
   statusChangedEmail,
   submissionEmail,
+  visaExpiringEmail,
 } from "@/lib/notifications/templates";
 
 const SCRIPT = "<script>alert(1)</script>";
@@ -64,6 +65,42 @@ describe("email templates", () => {
     const email = itineraryReadyEmail({ url: "https://x.test/app" });
     expect(email.subject).not.toHaveLength(0);
     expect(email.html).toContain("https://x.test/app");
+  });
+
+  it("visaExpiringEmail names the visa, the date and how long is left", () => {
+    const email = visaExpiringEmail({
+      visaName: "Skilled Worker visa",
+      expiresOn: "2027-03-14",
+      daysOut: 30,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.subject).not.toHaveLength(0);
+    expect(email.subject).toContain("30");
+    expect(email.html).toContain("Skilled Worker visa");
+    expect(email.html).toContain("14 Mar 2027");
+    expect(email.html).toContain("https://x.test/app/companion");
+    expect(email.text).toContain("https://x.test/app/companion");
+  });
+
+  it("visaExpiringEmail falls back to a plain noun when no corridor named the visa", () => {
+    const email = visaExpiringEmail({
+      visaName: null,
+      expiresOn: "2027-03-14",
+      daysOut: 7,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.html.toLowerCase()).toContain("your visa");
+    expect(email.html).not.toContain("null");
+  });
+
+  it("visaExpiringEmail escapes the visa name", () => {
+    const email = visaExpiringEmail({
+      visaName: SCRIPT,
+      expiresOn: "2027-03-14",
+      daysOut: 60,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.html).not.toContain("<script>");
   });
 
   it("invitationEmail contains the invite URL and escapes the org name", () => {

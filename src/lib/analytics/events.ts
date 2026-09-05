@@ -68,6 +68,15 @@ export const EVENT_NAMES = [
   /** An arrival plan generated (or refreshed) on approval. */
   "toplance.itinerary_generated",
 
+  /**
+   * The traveller supplied (or corrected) the expiry date printed on
+   * their own visa. Never a value this product derived.
+   */
+  "toplance.visa_expiry_set",
+
+  /** One of the three pre-expiry warnings actually went out. */
+  "toplance.expiry_reminder_sent",
+
   /** A staff decision that moves a case through review — see `changeStatusTx`. */
   "toplance.application_status_changed",
 

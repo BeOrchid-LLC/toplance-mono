@@ -80,4 +80,42 @@ describe("renewalGuidance", () => {
     );
     expect(texts.size).toBe(4);
   });
+
+  describe("when the traveller has supplied their expiry date", () => {
+    const decidedAt = new Date("2026-08-10T00:00:00Z");
+    const NOW = new Date("2026-09-05T12:00:00Z");
+
+    it("states the date they gave and says it came from them", () => {
+      const text = renewalGuidance(corridor, decidedAt, "2027-03-14", NOW);
+      expect(text).toContain("14 Mar 2027");
+      // Attributed, not asserted as our own record — we never verified it.
+      expect(text.toLowerCase()).toContain("you told us");
+    });
+
+    it("reads the date as UTC, so it never slips a day west of Greenwich", () => {
+      // Formatted in a negative-offset local timezone, a date-only value
+      // parsed as local midnight renders as the previous day.
+      const text = renewalGuidance(corridor, decidedAt, "2027-01-01", NOW);
+      expect(text).toContain("1 Jan 2027");
+      expect(text).not.toContain("31 Dec 2026");
+    });
+
+    it("still points at the destination's own renewal route", () => {
+      const text = renewalGuidance(corridor, decidedAt, "2027-03-14", NOW);
+      expect(text.toLowerCase()).toContain("evisa");
+    });
+
+    it("says so plainly once the date has passed", () => {
+      const text = renewalGuidance(corridor, decidedAt, "2026-08-30", NOW);
+      expect(text.toLowerCase()).toContain("has passed");
+    });
+
+    it("is byte-identical to the old output when no date is held", () => {
+      // The date is an enhancement, never a dependency — a traveller who
+      // never supplies one must see exactly what they saw before.
+      expect(renewalGuidance(corridor, decidedAt, null, NOW)).toBe(
+        renewalGuidance(corridor, decidedAt)
+      );
+    });
+  });
 });

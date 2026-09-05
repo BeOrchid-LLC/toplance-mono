@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
+import { VisaExpiryField } from "@/components/app/visa-expiry-field";
 import {
   getCorridorFor,
   getOrCreateApplication,
@@ -42,7 +43,11 @@ export default async function CompanionPage() {
   if (!corridor) redirect("/app");
 
   const checklist = arrivalChecklist(corridor.destinationIso, corridor.purpose);
-  const renewal = renewalGuidance(corridor, application.decidedAt);
+  const renewal = renewalGuidance(
+    corridor,
+    application.decidedAt,
+    application.visaExpiresOn
+  );
 
   // Regenerates (or reuses) the cached tips — the same helper the
   // weekly digest cron calls, so the two can never disagree on what
@@ -127,6 +132,10 @@ export default async function CompanionPage() {
               />
               <PanelBody>
                 <p className="t-body">{renewal}</p>
+                <VisaExpiryField
+                  applicationId={application.id}
+                  expiresOn={application.visaExpiresOn}
+                />
               </PanelBody>
             </Panel>
 

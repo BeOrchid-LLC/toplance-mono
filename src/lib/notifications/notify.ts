@@ -13,6 +13,7 @@ import {
   messageReceivedEmail,
   statusChangedEmail,
   submissionEmail,
+  visaExpiringEmail,
 } from "@/lib/notifications/templates";
 
 /**
@@ -66,6 +67,12 @@ export type NotificationPayload = {
   document_flagged: { documentName: string; reason: string; url: string };
   message_received: { senderName: string; preview: string; url: string };
   itinerary_ready: { url: string };
+  visa_expiring: {
+    visaName: string | null;
+    expiresOn: string;
+    daysOut: number;
+    url: string;
+  };
   companion_digest: { url: string; highlights: string[] };
   checklist_changed: {
     visaName: string;
@@ -90,6 +97,8 @@ function templateFor<K extends keyof NotificationPayload>(
       return messageReceivedEmail(payload as NotificationPayload["message_received"]);
     case "itinerary_ready":
       return itineraryReadyEmail(payload as NotificationPayload["itinerary_ready"]);
+    case "visa_expiring":
+      return visaExpiringEmail(payload as NotificationPayload["visa_expiring"]);
     case "companion_digest":
       return companionDigestEmail(payload as NotificationPayload["companion_digest"]);
     case "checklist_changed":

@@ -18,16 +18,38 @@ import { Shell } from "@/components/shared/shell";
 import { Head, Section } from "@/components/site/section";
 import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
 import { cn } from "@/lib/utils";
+import { getLocale } from "@/lib/i18n/server";
+import { SITE_CHROME } from "@/lib/i18n/site-chrome";
+import { fillTemplate } from "@/lib/i18n/corridor-picker";
+import {
+  SITE_TRAVELERS,
+  registerRowsFor,
+  ledgerRowsFor,
+  stepsFor,
+  featuresFor,
+  orgBulletsFor,
+  testimonialSlotsFor,
+  seatPlanFeaturesFor,
+  faqFor,
+} from "@/lib/i18n/site-travelers";
 
 /**
  * The traveller's landing page, and the page `/` used to be.
  *
  * It moved here rather than being rewritten when the home page was
  * turned over to the organisations who actually buy seats (client
- * instruction, 2026-09-03: update the B2B, do not delete the B2C). The
- * copy below is unchanged from that page — including its four
- * languages — because the client still has a review outstanding on it,
- * and a page they are reviewing should not shift under them.
+ * instruction, 2026-09-03: update the B2B, do not delete the B2C).
+ *
+ * Translated into all 10 site locales on 2026-09-05, the same as the
+ * rest of the site — the earlier review hold (the client had a review
+ * outstanding on this copy, and a page under review should not shift)
+ * was lifted by explicit client instruction on that date. The hero
+ * above (`HeroCopy`) already handled its own translation; this page
+ * covers everything below it. The English strings the FAQ and steps
+ * quote — "English, Hausa, Yoruba and Igbo" — describe languages the
+ * *product's* intake conversation supports and are translated as part
+ * of the surrounding sentence, which is a separate thing from the site
+ * chrome locale this page itself now renders in.
  *
  * Statically rendered and cached at the edge — the sticky nav, the
  * corridor state, the FAQ accordion and the theme switch are the only
@@ -41,157 +63,55 @@ export const metadata: Metadata = {
     "Know exactly what your visa needs before you spend anything on it — one checklist built from your nationality, destination and purpose.",
 };
 
-/* Figures, quotes, portraits and prices are the client's to supply. Rather
-   than dressing invented numbers up as real ones, the page shows the shape
-   of the claim and leaves the value visibly empty — a blank reads as
-   honest, a fabricated statistic is a liability the moment it is public. */
-const REGISTER = [
-  // Corridors, not destinations. This counted `CORRIDORS_LIVE`, a list of
-  // countries, under a label reading "Corridors live" and a note claiming
-  // it came from the corridor table — three ways of saying eight when the
-  // table holds four. `LIVE_CORRIDORS` is asserted against `seed.sql`, so
-  // the note is now true as well as the figure.
-  { label: "Routes live", value: String(LIVE_CORRIDORS.length), note: "Counted from the published route list" },
-  { label: "Applications guided", value: null, note: "Since launch" },
-  { label: "Approved on first submission", value: null, note: "Across live routes" },
-  { label: "Median time to a complete checklist", value: null, note: "From first question" },
-];
-
-const LEDGER = [
-  {
-    alone: "An embassy page written for every applicant, not for you",
-    with: "One checklist built from your nationality, destination and purpose",
-  },
-  {
-    alone: "An agent in a shop who will not tell you what they are charging for",
-    with: "A price you see before you commit to anything",
-  },
-  {
-    alone: "A rejection three months later for a document nobody mentioned",
-    with: "Every document checked before a mission sees it",
-  },
-  {
-    alone: "Fees paid again to reapply, and a refusal on your record",
-    with: "A named person who answers you, in your language",
-  },
-];
-
-const STEPS = [
-  {
-    paid: false,
-    title: "Talk, do not fill in forms",
-    body: "A short conversation in English, Hausa, Yoruba or Igbo — typed or spoken. One question at a time, and any answer can be corrected later without starting again.",
-  },
-  {
-    paid: false,
-    title: "Get the checklist that is actually yours",
-    body: "Your nationality, your destination and your reason for traveling resolve to one specific document list — not a generic embassy page you have to interpret yourself.",
-  },
-  {
-    paid: true,
-    title: "Upload, and be told what is wrong early",
-    body: "Photograph a document with your phone. Each file is checked for the things that get applications rejected — expiry, legibility, the wrong name order — before a mission ever sees it.",
-  },
-  {
-    paid: true,
-    title: "Submitted, tracked, and met on arrival",
-    body: "A named case handler owns your file, you can message a person at any point, and once you are approved the app becomes an arrival plan for your first weeks.",
-  },
-];
-
-const FEATURES = [
-  {
-    title: "An agent, not a 40-field form",
-    body: "Intake is a conversation. It adapts to your answers, skips what does not apply to you, and every answer stays editable in place.",
-  },
-  {
-    title: "A rules engine, not a static list",
-    body: "Requirements are versioned rule sets per route. When a mission changes what it wants, everyone on that route sees the change — with the date it took effect.",
-  },
-  {
-    title: "A person actually looks",
-    body: "Automatic checks catch the obvious problems. A Toplance reviewer confirms every document before submission. Verified means accepted for review, not a promise of approval.",
-  },
-  {
-    title: "One thread, one case handler",
-    body: "No ticket numbers, no starting over with someone new. You can open a message to your handler at any point, not only when we message you first.",
-  },
-  {
-    title: "The app does not stop at approval",
-    body: "After the decision it becomes an arrival plan: what to carry, what to register for in your first week, and alerts timed to your own quiet hours.",
-  },
-  {
-    title: "Privacy is a boundary, not a setting",
-    body: "When an employer sponsors your seat they see your progress and whether you are stuck. A passport, a bank statement or a police certificate stays between you and Toplance.",
-  },
-];
-
-const ROSTER = [
-  { name: "Chioma Eze", dest: "CAN", pct: 100, state: "Submitted" },
-  { name: "Kwame Mensah", dest: "ARE", pct: 100, state: "Under review" },
-  { name: "Ifeoma Nwankwo", dest: "GBR", pct: 85, state: "Collecting" },
-  { name: "Emeka Obi", dest: "CAN", pct: 0, state: "Draft" },
-];
-
 /**
- * One plan, since travellers became invite-only (client decision,
- * 2026-08-31): nobody can buy a seat for themselves, so the Self-serve
- * and Guided tiers had no buyer left. Their feature lists are not
- * discarded — they are merged in here, because what those tiers
- * described is still exactly what a sponsored traveller gets, and
- * "Everything in Guided" no longer resolved to anything on the page.
- *
- * The price stays a placeholder. Figures are the client's to supply.
+ * Illustrative sample data for the organisation console preview card —
+ * names, destinations and completion numbers a reader recognises as a
+ * mockup, not copy. `stateKey` points at the matching `SITE_CHROME`
+ * roster-state string, which is real copy and gets translated.
  */
-const SEAT_PLAN = {
-  name: "Organisations",
-  price: "By seat",
-  sub: "billed annually",
-  features: [
-    "The full intake conversation, in their own language",
-    "Their exact document checklist",
-    "Automatic checks on every upload",
-    "A named Toplance case handler",
-    "Human review before submission",
-    "Arrival plan and alerts after approval",
-    "Priority replies within one working day",
-    "Seats, invitations and a roster view",
-    "Progress without document access",
-    "Consolidated invoicing",
-    "A named account contact",
-  ],
-  cta: "Sponsor your team",
-  href: "/employer/sign-up",
-};
-
-const FAQ = [
-  {
-    q: "Does Toplance decide whether I get a visa?",
-    a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that your file is complete, correct and submitted the way that route expects — which is the part applicants usually lose on. When a document shows as verified it means it has been accepted for review, not that your application has been approved.",
-  },
-  {
-    q: "What does it cost to find out what I need?",
-    a: "Nothing. The intake conversation and the resulting checklist are free, and you can leave with the list even if you do not submit through us. You pay when you ask us to handle an application.",
-  },
-  {
-    q: "Which languages can I use?",
-    a: "English, Hausa, Yoruba and Igbo — for the conversation, the checklist and the status updates. You can switch language at any point, including mid-conversation, and your answers carry over.",
-  },
-  {
-    q: "My employer is paying. What can they see?",
-    a: "Your completion percentage, your status and whether you are blocked — enough for them to plan your start date. They cannot open, download or preview a single document you upload. That boundary is built into the data model, not a permission someone can toggle.",
-  },
-  {
-    q: "What happens to my documents after a decision?",
-    a: "They stay in your account so you can reuse them for the next application — renewals and dependants reuse most of the same file. You can delete any document, and deleting your account removes them all. Residency of the stored files is a decision your organisation can set at contract level.",
-  },
-  {
-    q: "I already started an application somewhere else. Can you take it over?",
-    a: "Usually yes. Run the intake conversation, upload what you already have, and the checklist will show you only the gap that is left rather than asking you to gather everything again.",
-  },
+const ROSTER = [
+  { name: "Chioma Eze", dest: "CAN", pct: 100, stateKey: "rosterSubmitted" as const },
+  { name: "Kwame Mensah", dest: "ARE", pct: 100, stateKey: "rosterUnderReview" as const },
+  { name: "Ifeoma Nwankwo", dest: "GBR", pct: 85, stateKey: "rosterCollecting" as const },
+  { name: "Emeka Obi", dest: "CAN", pct: 0, stateKey: "rosterDraft" as const },
 ];
 
-export default function TravellersPage() {
+/** PLACEHOLDER, per `SEAT_PLAN`'s note below — not copy, so not translated. */
+const SEAT_PLAN_HREF = "/employer/sign-up";
+
+export default async function TravellersPage() {
+  const locale = await getLocale();
+
+  /* Figures, quotes, portraits and prices are the client's to supply. Rather
+     than dressing invented numbers up as real ones, the page shows the shape
+     of the claim and leaves the value visibly empty — a blank reads as
+     honest, a fabricated statistic is a liability the moment it is public. */
+  const registerRows = registerRowsFor(locale).map((row, i) => ({
+    ...row,
+    // Corridors, not destinations. `LIVE_CORRIDORS` is asserted against
+    // `seed.sql`, so this figure stays true rather than invented.
+    value: i === 0 ? String(LIVE_CORRIDORS.length) : null,
+  }));
+
+  const ledgerRows = ledgerRowsFor(locale);
+  const steps = stepsFor(locale);
+  const features = featuresFor(locale);
+  const orgBullets = orgBulletsFor(locale);
+  const testimonialSlots = testimonialSlotsFor(locale);
+
+  /**
+   * One plan, since travellers became invite-only (client decision,
+   * 2026-08-31): nobody can buy a seat for themselves, so the Self-serve
+   * and Guided tiers had no buyer left. Their feature lists are not
+   * discarded — they are merged in here, because what those tiers
+   * described is still exactly what a sponsored traveller gets.
+   *
+   * The price stays a placeholder. Figures are the client's to supply.
+   */
+  const seatPlanFeatures = seatPlanFeaturesFor(locale);
+
+  const faq = faqFor(locale);
+
   return (
     <CorridorProvider>
       {/* ---------- hero ---------- */}
@@ -203,26 +123,28 @@ export default function TravellersPage() {
       </header>
 
       {/* ---------- the problem ---------- */}
-      <Section label="The problem">
-        <Head title="The paperwork is not the hard part. Knowing which paperwork is." />
+      <Section label={SITE_CHROME.sectionTheProblem[locale]}>
+        <Head title={SITE_TRAVELERS.problemHeadTitle[locale]} />
 
         <div className="mt-11 border-t border-border-strong">
           <div className="hidden grid-cols-2 gap-x-12 py-3 sm:grid">
-            <span className="tag">Doing it alone</span>
-            <span className="tag text-brand-text">With Toplance</span>
+            <span className="tag">{SITE_CHROME.doingItAlone[locale]}</span>
+            <span className="tag text-brand-text">{SITE_CHROME.withToplance[locale]}</span>
           </div>
-          {LEDGER.map((row) => (
+          {ledgerRows.map((row) => (
             <div
               key={row.with}
               className="grid gap-x-12 gap-y-5 border-t border-border py-7 sm:grid-cols-2"
             >
               <div>
-                <span className="tag mb-2 block sm:hidden">Doing it alone</span>
+                <span className="tag mb-2 block sm:hidden">
+                  {SITE_CHROME.doingItAlone[locale]}
+                </span>
                 <p className="text-[17px] leading-relaxed text-ink-3">{row.alone}</p>
               </div>
               <div className="sm:border-s sm:border-[color-mix(in_srgb,var(--brand)_35%,transparent)] sm:ps-12">
                 <span className="tag mb-2 block text-brand-text sm:hidden">
-                  With Toplance
+                  {SITE_CHROME.withToplance[locale]}
                 </span>
                 <p className="text-[17px] font-medium leading-relaxed text-ink">
                   {row.with}
@@ -234,14 +156,18 @@ export default function TravellersPage() {
       </Section>
 
       {/* ---------- how it works ---------- */}
-      <Section id="how" label="How it works" datum="Steps 01–02 are free">
+      <Section
+        id="how"
+        label={SITE_CHROME.howItWorks[locale]}
+        datum={SITE_TRAVELERS.howItWorksDatum[locale]}
+      >
         <Head
-          title="Four steps, and you can stop after the second"
-          lead="The conversation and the checklist cost nothing and are yours to keep. Everything after that is what you pay us for."
+          title={SITE_TRAVELERS.howItWorksHeadTitle[locale]}
+          lead={SITE_TRAVELERS.howItWorksHeadLead[locale]}
         />
 
         <ol className="mt-12 grid gap-x-10 gap-y-11 sm:grid-cols-2 xl:grid-cols-4">
-          {STEPS.map((step, i) => (
+          {steps.map((step, i) => (
             <li key={step.title}>
               {/* The rule is the free/paid boundary, drawn rather than
                   described — two brand rules, then two neutral ones. */}
@@ -253,11 +179,13 @@ export default function TravellersPage() {
                 )}
               />
               <div className="mt-4 flex items-baseline justify-between gap-3">
-                <span className="tag">Step {String(i + 1).padStart(2, "0")}</span>
+                <span className="tag">
+                  {SITE_CHROME.stepWord[locale]} {String(i + 1).padStart(2, "0")}
+                </span>
                 <span
                   className={cn("tag", step.paid ? "text-ink-3" : "text-brand-text")}
                 >
-                  {step.paid ? "Paid" : "Free"}
+                  {step.paid ? SITE_CHROME.paidWord[locale] : SITE_CHROME.freeWord[locale]}
                 </span>
               </div>
               <h3 className="d-md mt-3">{step.title}</h3>
@@ -268,16 +196,16 @@ export default function TravellersPage() {
       </Section>
 
       {/* ---------- what you get ---------- */}
-      <Section label="What you get">
+      <Section label={SITE_CHROME.sectionWhatYouGet[locale]}>
         <Head
-          title="Built around the two things that actually go wrong"
-          lead="People submit the wrong documents, and then nobody tells them what is happening. Every item here closes one of those two gaps."
+          title={SITE_TRAVELERS.whatYouGetHeadTitle[locale]}
+          lead={SITE_TRAVELERS.whatYouGetHeadLead[locale]}
         />
         {/* The one marketing section drawn as the product's own case-file
             cards — these six claims are what the signed-in screens
             actually look like, so they borrow that surface verbatim. */}
         <dl className="mt-12 grid gap-6 md:grid-cols-2">
-          {FEATURES.map((f) => (
+          {features.map((f) => (
             <div
               key={f.title}
               className="rounded-lg border border-border bg-surface p-6 shadow-[var(--shadow-sm)] sm:p-7"
@@ -299,28 +227,18 @@ export default function TravellersPage() {
           page background and the beat disappears entirely. */}
       <Section
         id="orgs"
-        label="For organisations"
+        label={SITE_TRAVELERS.orgsLabel[locale]}
         glow
         className="dark overflow-hidden bg-surface text-ink"
       >
         <div className="grid items-start gap-12 xl:grid-cols-[1fr_0.85fr]">
           <div>
-            <h2 className="d-lg max-w-[18ch]">
-              Sponsor the seat. See the progress. Leave the passport to us.
-            </h2>
+            <h2 className="d-lg max-w-[18ch]">{SITE_TRAVELERS.orgsH2Title[locale]}</h2>
             <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
-              If you are relocating staff, you need to know who is on track and
-              who is stuck — and you should not be holding anyone&apos;s identity
-              documents to find out. The organisation console gives you a roster,
-              a completion score and a status per person, and nothing else.
+              {SITE_TRAVELERS.orgsBodyParagraph[locale]}
             </p>
             <ul className="mt-8 flex flex-col gap-3">
-              {[
-                "Buy seats in advance and invite people by email",
-                "One roster with completion, status and destination per person",
-                "Nudge someone who has stalled without calling them",
-                "Consolidated invoicing and a named account contact",
-              ].map((x) => (
+              {orgBullets.map((x) => (
                 <li key={x} className="flex items-start gap-3">
                   <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
                   <span className="text-[15px] text-ink-2">{x}</span>
@@ -330,12 +248,12 @@ export default function TravellersPage() {
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
                 <Link href="/employer/sign-in">
-                  <Briefcase /> Talk to us about seats
+                  <Briefcase /> {SITE_TRAVELERS.orgsSponsorSeatsCta[locale]}
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
                 <Link href="/employer/sign-in">
-                  Employer sign-in <ArrowRight />
+                  {SITE_CHROME.employerSignIn[locale]} <ArrowRight />
                 </Link>
               </Button>
             </div>
@@ -345,10 +263,9 @@ export default function TravellersPage() {
             <div className="flex items-start gap-3 border-b border-border pb-5">
               <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
               <div>
-                <p className="d-sm">You see progress, not documents</p>
+                <p className="d-sm">{SITE_TRAVELERS.orgsCardTitle[locale]}</p>
                 <p className="t-muted mt-1 text-[15px]">
-                  Passports, bank statements and police certificates stay between
-                  the traveler and Toplance.
+                  {SITE_TRAVELERS.orgsCardBody[locale]}
                 </p>
               </div>
             </div>
@@ -366,7 +283,7 @@ export default function TravellersPage() {
                     <Progress value={p.pct} />
                   </span>
                   <span className="tag w-[124px] shrink-0 whitespace-nowrap text-end text-ink-2">
-                    {p.state}
+                    {SITE_CHROME[p.stateKey][locale]}
                   </span>
                 </div>
               ))}
@@ -378,12 +295,14 @@ export default function TravellersPage() {
       {/* ---------- corridors ---------- */}
       <Section
         id="where"
-        label="Where we work"
-        datum={`${LIVE_CORRIDORS.length} live · more in build`}
+        label={SITE_CHROME.whereWeWork[locale]}
+        datum={fillTemplate(SITE_TRAVELERS.corridorsDatumTemplate[locale], {
+          count: String(LIVE_CORRIDORS.length),
+        })}
       >
         <Head
-          title="Routes, not countries"
-          lead="A route is one nationality traveling to one destination for one purpose. That is the unit a checklist is built from — a Nigerian passport holder going to the UK for work needs a different file to a Ghanaian going to study."
+          title={SITE_TRAVELERS.corridorsHeadTitle[locale]}
+          lead={SITE_TRAVELERS.corridorsHeadLead[locale]}
         />
         <div className="mt-11">
           <CorridorBoard />
@@ -391,14 +310,14 @@ export default function TravellersPage() {
       </Section>
 
       {/* ---------- proof ---------- */}
-      <Section label="Proof">
+      <Section label={SITE_CHROME.sectionProof[locale]}>
         <Head
-          title="What we can prove, and what we cannot yet"
-          lead="Toplance is pre-launch. Rather than print numbers nobody has earned, the figures below stay blank until the client supplies them — a blank is honest, an invented statistic is a liability."
+          title={SITE_TRAVELERS.proofHeadTitle[locale]}
+          lead={SITE_TRAVELERS.proofHeadLead[locale]}
         />
 
         <dl className="mt-11 border-t border-border-strong">
-          {REGISTER.map((row) => (
+          {registerRows.map((row) => (
             <div
               key={row.label}
               className="grid items-baseline gap-x-8 gap-y-1 border-b border-border py-6 sm:grid-cols-[1fr_96px_1fr]"
@@ -422,13 +341,9 @@ export default function TravellersPage() {
           ))}
         </dl>
 
-        <p className="tag mt-12">In their own words</p>
+        <p className="tag mt-12">{SITE_TRAVELERS.proofInTheirOwnWordsTag[locale]}</p>
         <div className="mt-4 grid gap-6 md:grid-cols-3">
-          {[
-            "A traveler who avoided a trip to an agent",
-            "An employer on seat visibility",
-            "A second route, so this does not read as one use case",
-          ].map((slot) => (
+          {testimonialSlots.map((slot) => (
             <figure
               key={slot}
               className="flex min-h-[170px] flex-col justify-between rounded-md border border-dashed border-border-strong p-6"
@@ -437,30 +352,34 @@ export default function TravellersPage() {
                 &rdquo;
               </span>
               <figcaption className="t-muted text-[15px]">
-                Awaiting a real, attributed sentence — {slot.toLowerCase()}.
+                {fillTemplate(SITE_TRAVELERS.proofAwaitingSentenceTemplate[locale], { slot })}
               </figcaption>
             </figure>
           ))}
         </div>
 
-        <p className="tag mt-11">Organisations we work with</p>
+        <p className="tag mt-11">{SITE_TRAVELERS.proofOrgsWeWorkWithTag[locale]}</p>
         <div className="mt-4 flex flex-wrap gap-4">
           {[1, 2, 3, 4, 5].map((i) => (
             <span
               key={i}
               className="tag grid h-14 min-w-[130px] flex-1 place-items-center rounded-sm border border-dashed border-border-strong"
             >
-              Logo {i}
+              {SITE_CHROME.logoWord[locale]} {i}
             </span>
           ))}
         </div>
       </Section>
 
       {/* ---------- pricing ---------- */}
-      <Section id="pricing" label="Pricing" datum="Billed by seat, annually">
+      <Section
+        id="pricing"
+        label={SITE_CHROME.pricing[locale]}
+        datum={SITE_TRAVELERS.pricingDatum[locale]}
+      >
         <Head
-          title="One seat for each person you sponsor"
-          lead="Organisations buy seats and invite the people who need visas; nobody buys a seat for themselves. Every seat carries the whole product — the conversation, the checklist, a named case handler and human review before submission. The amount below is a placeholder for the client to set."
+          title={SITE_TRAVELERS.pricingHeadTitle[locale]}
+          lead={SITE_TRAVELERS.pricingHeadLead[locale]}
         />
 
         {/* One panel, not a lonely card in a three-column grid. The
@@ -472,11 +391,11 @@ export default function TravellersPage() {
               aria-hidden
               className="block h-[3px] rounded-[var(--radius-pill)] bg-brand-accent"
             />
-            <span className="tag mt-4 block">{SEAT_PLAN.name}</span>
-            <p className="d-lg mt-4">{SEAT_PLAN.price}</p>
-            <p className="t-muted text-[15px]">{SEAT_PLAN.sub}</p>
+            <span className="tag mt-4 block">{SITE_TRAVELERS.seatPlanName[locale]}</span>
+            <p className="d-lg mt-4">{SITE_TRAVELERS.seatPlanPrice[locale]}</p>
+            <p className="t-muted text-[15px]">{SITE_TRAVELERS.seatPlanSub[locale]}</p>
             <ul className="mb-8 mt-7 grid gap-3 lg:grid-cols-2 lg:gap-x-10">
-              {SEAT_PLAN.features.map((f) => (
+              {seatPlanFeatures.map((f) => (
                 <li key={f} className="flex items-start gap-3">
                   <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
                   <span className="text-[15px] text-ink-2">{f}</span>
@@ -484,21 +403,21 @@ export default function TravellersPage() {
               ))}
             </ul>
             <Button asChild size="block" variant="primary" className="mt-auto lg:max-w-[320px]">
-              <Link href={SEAT_PLAN.href}>{SEAT_PLAN.cta}</Link>
+              <Link href={SEAT_PLAN_HREF}>{SITE_TRAVELERS.seatPlanCta[locale]}</Link>
             </Button>
           </div>
         </div>
       </Section>
 
       {/* ---------- questions ---------- */}
-      <Section label="Questions">
-        <Head title="The ones people actually ask" />
+      <Section label={SITE_CHROME.sectionQuestions[locale]}>
+        <Head title={SITE_TRAVELERS.questionsHeadTitle[locale]} />
         <Accordion
           type="single"
           collapsible
           className="mt-9 border-t border-border-strong"
         >
-          {FAQ.map((f, i) => (
+          {faq.map((f, i) => (
             <AccordionItem key={f.q} value={`q${i}`}>
               <AccordionTrigger className="d-sm text-start">{f.q}</AccordionTrigger>
               <AccordionContent className="max-w-[74ch] text-[15px]">
@@ -516,13 +435,9 @@ export default function TravellersPage() {
           down should have to travel back up to act. */}
       <section className="border-t border-border bg-[color-mix(in_srgb,var(--brand)_5%,var(--bg))] py-20 md:py-24">
         <Shell>
-          <h2 className="d-lg max-w-[19ch]">
-            Find out what you need. It costs nothing to ask.
-          </h2>
+          <h2 className="d-lg max-w-[19ch]">{SITE_TRAVELERS.closingTitle[locale]}</h2>
           <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
-            A few short questions and you have your checklist. No card, no
-            commitment, and the list is yours whether you submit through us or
-            not.
+            {SITE_TRAVELERS.closingBody[locale]}
           </p>
           <div className="mt-10">
             <CorridorBar />

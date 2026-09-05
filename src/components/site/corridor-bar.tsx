@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
+import { CORRIDOR_PICKER, fillTemplate } from "@/lib/i18n/corridor-picker";
 import {
   CORRIDORS_LIVE,
   CORRIDORS_SOON,
@@ -89,9 +90,11 @@ export function CorridorBar({
    * home page passes its own label rather than telling its reader to go
    * where they already are.
    *
-   * Deliberately untranslated: only the surfaces that address the
-   * traveller run in four languages, and every caller passing this is an
-   * English-only B2B surface. A translated default stays the default.
+   * The caller supplies its own translated override rather than a raw
+   * English literal — `/` (`src/app/(site)/page.tsx`) passes strings
+   * indexed out of its own `SITE_HOME` dictionary by the current locale,
+   * the same way `HERO`/`CORRIDOR_PICKER` are indexed below. This prop's
+   * type stays a plain `string`; only its callers changed.
    */
   ctaLabel?: string;
 }) {
@@ -178,7 +181,7 @@ export function CorridorBar({
                     )}
                     aria-hidden
                   />
-                  {soon ? "In build" : "Live route"}
+                  {soon ? t(CORRIDOR_PICKER.inBuild) : t(CORRIDOR_PICKER.liveRoute)}
                 </span>
                 {/* A separator only separates while both halves share a line.
                     On a phone the code drops to its own row and the rule is
@@ -207,7 +210,9 @@ export function CorridorBar({
               )}
             >
               <Link href="/employer/sign-up">
-                {soon ? "Request this route" : (ctaLabel ?? t(HERO.ctaSecondary))}
+                {soon
+                  ? t(CORRIDOR_PICKER.requestThisRoute)
+                  : (ctaLabel ?? t(HERO.ctaSecondary))}
                 <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Button>
@@ -222,10 +227,11 @@ export function CorridorBar({
           is no mailer behind it. */}
       {soon && !compact && (
         <p className="t-muted mt-3 max-w-[52ch] text-[15px]">
-          {origin} → {destination} for {purpose.toLowerCase()} is not open
-          yet — a corridor is all three, so switching any one of them may
-          land on a live one. Ask for this one and it enters the build queue
-          with your demand attached.
+          {fillTemplate(t(CORRIDOR_PICKER.notOpenYetTemplate), {
+            o: origin,
+            d: destination,
+            p: purpose.toLowerCase(),
+          })}
         </p>
       )}
     </div>

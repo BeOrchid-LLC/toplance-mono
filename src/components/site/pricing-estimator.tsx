@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 
 import { formatMoney, quote, type RateCard } from "@/lib/domain/pricing";
+import { useT } from "@/components/locale-provider";
+import { PRICING_ESTIMATOR } from "@/lib/i18n/pricing-estimator";
+import { SITE_CHROME } from "@/lib/i18n/site-chrome";
 
 /**
  * "Estimate your monthly cost", as Peace's pricing document asks for.
@@ -18,6 +21,7 @@ import { formatMoney, quote, type RateCard } from "@/lib/domain/pricing";
  * shown is the one a business is actually charged.
  */
 export function PricingEstimator({ card }: { card: RateCard }) {
+  const t = useT();
   const [value, setValue] = useState(200);
 
   const estimate = useMemo(() => quote(value, card), [value, card]);
@@ -25,7 +29,7 @@ export function PricingEstimator({ card }: { card: RateCard }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-6 sm:p-8">
       <label htmlFor="apps" className="tag block">
-        Applications completed in a month
+        {t(PRICING_ESTIMATOR.applicationsLabel)}
       </label>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-4">
@@ -52,13 +56,13 @@ export function PricingEstimator({ card }: { card: RateCard }) {
             setValue(Number.isFinite(next) && next >= 0 ? Math.floor(next) : 0);
           }}
           className="num w-28 rounded-sm border border-border-strong bg-surface px-3 py-2 text-end text-base"
-          aria-label="Applications completed in a month"
+          aria-label={t(PRICING_ESTIMATOR.applicationsLabel)}
         />
       </div>
 
       <dl className="mt-7 grid gap-3 border-t border-border pt-6">
         <div className="flex items-baseline justify-between gap-4">
-          <dt className="text-[15px] text-ink-2">Base fee</dt>
+          <dt className="text-[15px] text-ink-2">{t(PRICING_ESTIMATOR.baseFee)}</dt>
           <dd className="num text-[15px]">
             {formatMoney(estimate.baseFeeMinor, estimate.currency)}
           </dd>
@@ -75,7 +79,12 @@ export function PricingEstimator({ card }: { card: RateCard }) {
           >
             <dt className="text-[15px] text-ink-2">
               <span className="num">{layer.count.toLocaleString("en-US")}</span>{" "}
-              {layer.count === 1 ? "application" : "applications"} at{" "}
+              {t(
+                layer.count === 1
+                  ? PRICING_ESTIMATOR.applicationSingular
+                  : PRICING_ESTIMATOR.applicationPlural
+              )}{" "}
+              {t(SITE_CHROME.wordAt)}{" "}
               <span className="num">
                 {formatMoney(layer.rateMinor, estimate.currency)}
               </span>
@@ -91,7 +100,7 @@ export function PricingEstimator({ card }: { card: RateCard }) {
           aria-live="polite"
           className="mt-2 flex items-baseline justify-between gap-4 border-t border-border-strong pt-4"
         >
-          <dt className="t-h3">Monthly total</dt>
+          <dt className="t-h3">{t(PRICING_ESTIMATOR.monthlyTotal)}</dt>
           <dd className="num d-sm">
             {formatMoney(estimate.totalMinor, estimate.currency)}
           </dd>
@@ -104,12 +113,7 @@ export function PricingEstimator({ card }: { card: RateCard }) {
           complete checklist, and whether a complete checklist that is
           never submitted should be billed is a question for the client,
           not one to answer by implication on a pricing page. */}
-      <p className="t-muted mt-5 max-w-[62ch]">
-        Only applications that finish are counted — a checklist your client
-        completes, and every document past its check. An invitation nobody
-        accepts, a checklist still being filled and one whose documents came
-        back rejected are never charged.
-      </p>
+      <p className="t-muted mt-5 max-w-[62ch]">{t(PRICING_ESTIMATOR.disclaimer)}</p>
     </div>
   );
 }

@@ -19,15 +19,22 @@ import {
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import type { BadgeVariant } from "@/lib/domain/status";
+import { getLocale } from "@/lib/i18n/server";
+import { DOCUMENTS } from "@/lib/i18n/documents";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Documents" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: DOCUMENTS.title[locale] };
+}
 
 export default async function DocumentsPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
+  const t = DOCUMENTS;
   const application = await getOrCreateApplication();
   if (!application) redirect("/sign-in?next=/app/documents");
   if (!application.intakeComplete) redirect("/app/agent");
@@ -63,19 +70,19 @@ export default async function DocumentsPage() {
    */
   const sets: { label: string; variant: BadgeVariant; docs: Doc[] }[] = [
     {
-      label: "Needs attention",
+      label: t.needsAttention[locale],
       variant: "warning",
       docs: docs.filter((d) => d.state === "flagged" || d.state === "failed"),
     },
     {
-      label: "Still to upload",
+      label: t.stillToUpload[locale],
       variant: "neutral",
       docs: docs.filter(
         (d) => d.state === "not_started" || d.state === "uploaded"
       ),
     },
     {
-      label: "Done",
+      label: t.done[locale],
       variant: "success",
       docs: docs.filter(
         (d) => d.state === "verified" || d.state === "checking"
@@ -88,11 +95,9 @@ export default async function DocumentsPage() {
       <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
           <div className="max-w-[62ch]">
-            <h1 className="t-h2">Your documents</h1>
+            <h1 className="t-h2">{t.heading[locale]}</h1>
             <p className="t-muted mt-3">
-              Each file is checked automatically within a few seconds of
-              arriving, then confirmed by a person before submission.{" "}
-              {VERIFIED_MEANS}
+              {t.intro[locale]} {VERIFIED_MEANS}
             </p>
             {/* Said before they photograph anything, not after a refusal.
                 Legibility is the largest single cause of a re-upload and
@@ -121,10 +126,9 @@ export default async function DocumentsPage() {
           completion.verified === completion.total &&
           (canSubmitFrom(application.status) ? (
             <section className="mt-8 rounded-lg border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] px-5 py-5 sm:px-6">
-              <h2 className="t-h3">Everything is verified</h2>
+              <h2 className="t-h3">{t.everythingVerifiedHeading[locale]}</h2>
               <p className="t-muted mt-2 max-w-[74ch]">
-                Submitting sends your file to the review team and notifies them
-                immediately.
+                {t.everythingVerifiedBody[locale]}
               </p>
               <SubmitButton applicationId={application.id} />
             </section>
@@ -162,7 +166,9 @@ export default async function DocumentsPage() {
                     aside={
                       <Badge variant={set.variant}>
                         <span className="num">{set.docs.length}</span>
-                        {set.docs.length === 1 ? "document" : "documents"}
+                        {set.docs.length === 1
+                          ? t.documentSingular[locale]
+                          : t.documentPlural[locale]}
                       </Badge>
                     }
                   />
@@ -196,10 +202,7 @@ export default async function DocumentsPage() {
         {docs.length === 0 && (
           <Panel className="mt-6">
             <PanelBody>
-              <p className="t-muted max-w-[62ch]">
-                No checklist yet. Finish the intake conversation and it
-                appears here.
-              </p>
+              <p className="t-muted max-w-[62ch]">{t.noChecklistYet[locale]}</p>
             </PanelBody>
           </Panel>
         )}

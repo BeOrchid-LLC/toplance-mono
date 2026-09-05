@@ -8,12 +8,18 @@ import { DEAD_END_MESSAGE, InvitationDeadEnd } from "@/components/invite/dead-en
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getInvitationPreview } from "@/lib/data/invitations";
+import { AUTH_DOORS_HEADINGS } from "@/lib/i18n/auth-doors";
+import { AUTH_PAGE_TITLES, SIGN_UP_PAGE } from "@/lib/i18n/auth-pages";
+import { getLocale } from "@/lib/i18n/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Resolves a token against the database, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Create your account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: AUTH_PAGE_TITLES.signUp[locale] };
+}
 
 /**
  * The traveller door, which since the client's decision of 2026-08-31
@@ -39,23 +45,24 @@ export default async function SignUpPage({
 }) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
   const { token } = await searchParams;
 
   if (!token) {
     return (
       <div className="mx-auto w-full max-w-[560px]">
         <InvitationDeadEnd
-          title="Toplance accounts are created by invitation"
-          body="An organisation sponsors your application and sends you a link. If you are expecting one, ask whoever is arranging your travel — and if you already have an account, sign in instead."
+          title={SIGN_UP_PAGE.noTokenTitle[locale]}
+          body={SIGN_UP_PAGE.noTokenBody[locale]}
         >
           <Link
             href="/sign-in"
             className="mt-6 inline-block font-semibold text-brand-text hover:underline"
           >
-            Sign in
+            {SIGN_UP_PAGE.signInLink[locale]}
           </Link>
         </InvitationDeadEnd>
-        <OtherDoors heading="Here for something else?" entries={SIGN_UP_DOORS} />
+        <OtherDoors heading={AUTH_DOORS_HEADINGS.hereForSomethingElse} entries={SIGN_UP_DOORS} />
       </div>
     );
   }
@@ -71,16 +78,16 @@ export default async function SignUpPage({
       <div className="mx-auto w-full max-w-[560px]">
         <InvitationDeadEnd
           title={DEAD_END_MESSAGE[reason]}
-          body="Ask whoever invited you to send a new one — nothing about your account has changed."
+          body={SIGN_UP_PAGE.invalidTokenBody[locale]}
         >
           <Link
             href="/sign-in"
             className="mt-6 inline-block font-semibold text-brand-text hover:underline"
           >
-            Already have an account? Sign in
+            {SIGN_UP_PAGE.alreadyHaveAccountSignIn[locale]}
           </Link>
         </InvitationDeadEnd>
-        <OtherDoors heading="Here for something else?" entries={SIGN_UP_DOORS} />
+        <OtherDoors heading={AUTH_DOORS_HEADINGS.hereForSomethingElse} entries={SIGN_UP_DOORS} />
       </div>
     );
   }
@@ -94,7 +101,7 @@ export default async function SignUpPage({
           next={`/invite/${token}`}
         />
       </Suspense>
-      <OtherDoors heading="Not a traveler?" entries={SIGN_UP_DOORS} />
+      <OtherDoors heading={AUTH_DOORS_HEADINGS.notATraveler} entries={SIGN_UP_DOORS} />
     </div>
   );
 }

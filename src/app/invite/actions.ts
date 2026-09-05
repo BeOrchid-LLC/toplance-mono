@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { track } from "@/lib/analytics/track";
 import { requireActor, toActionError } from "@/lib/auth/guards";
 import { acceptInvitationTx } from "@/lib/data/invitations";
+import { INVITE_ACTIONS } from "@/lib/i18n/invite";
+import { getLocale } from "@/lib/i18n/server";
 
 /**
  * The one write on this surface, called only from the accept page's own
@@ -27,7 +29,8 @@ export async function acceptInvitation(token: string) {
   try {
     const actor = await requireActor();
     if (actor.role !== "traveler") {
-      return { error: "Only a traveler account can accept an invitation." };
+      const locale = await getLocale();
+      return { error: INVITE_ACTIONS.travelerOnly[locale] };
     }
 
     const result = await acceptInvitationTx(token, actor.userId);

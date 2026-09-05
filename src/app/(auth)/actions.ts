@@ -8,7 +8,8 @@ import { profiles } from "@/lib/db/schema";
 import { checkInvitedAddress } from "@/lib/data/invitations";
 import { toE164 } from "@/lib/domain/countries";
 import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
-import { isLocale } from "@/lib/i18n/locales";
+import { AUTH_ACTIONS } from "@/lib/i18n/auth-actions";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
 
 /** The fields the sign-up form collects that Clerk has no opinion about. */
 type ProfileFields = {
@@ -51,22 +52,31 @@ export type SignUpIntent =
 export async function completeProfile(
   input: ProfileFields & SignUpIntent
 ): Promise<{ error?: string }> {
+  // Read off the form's own submission rather than `getLocale()`: this
+  // runs as a Server Action, and `next/headers` only has a request store
+  // to read when the framework itself invoked it — calling it here would
+  // make `completeProfile` unable to run outside a live request at all,
+  // including from a test that calls it directly. The client already
+  // knows its own locale (`useLocale()`) and was already sending it
+  // through for the profile row itself.
+  const locale: Locale = isLocale(input.locale) ? input.locale : DEFAULT_LOCALE;
+
   const { userId } = await auth();
   if (!userId) {
-    return { error: "Your session did not carry through. Sign in again." };
+    return { error: AUTH_ACTIONS.sessionLost[locale] };
   }
 
   const fullName = input.fullName.trim();
   if (!fullName) {
-    return { error: "Enter your full name as it appears in your passport." };
+    return { error: AUTH_ACTIONS.fullNameRequired[locale] };
   }
 
   const email = (await currentUser())?.emailAddresses[0]?.emailAddress;
   if (!email) {
-    return { error: "Clerk returned no email address for that account." };
+    return { error: AUTH_ACTIONS.noClerkEmail[locale] };
   }
 
-  const role = await roleFor(input, email);
+  const role = await roleFor(input, email, locale);
   if ("error" in role) return role;
 
   const digits = input.phone.replace(/\D/g, "");
@@ -74,7 +84,7 @@ export async function completeProfile(
     fullName,
     phone: digits ? toE164(input.countryIso, digits) : null,
     countryIso: input.countryIso,
-    locale: isLocale(input.locale) ? input.locale : "en",
+    locale,
     role: role.role,
   };
 
@@ -98,10 +108,12 @@ export async function completeProfile(
  * second is a promise about what the first will decide, and a promise
  * worded differently from the outcome is worse than no promise.
  */
-const INVITATION_ERROR = {
-  dead: "That invitation is no longer valid. Ask for a new one.",
-  mismatch: "That invitation was sent to a different email address.",
-} as const;
+function invitationError(locale: Locale) {
+  return {
+    dead: AUTH_ACTIONS.invitationDead[locale],
+    mismatch: AUTH_ACTIONS.invitationMismatch[locale],
+  } as const;
+}
 
 /**
  * The invitation check, asked before Clerk has been told anything.
@@ -122,13 +134,21 @@ const INVITATION_ERROR = {
  * link nothing they could not already learn by attempting the sign-up
  * itself — the same oracle `completeProfile` has always been, minus the
  * burnt code.
+ *
+ * `locale` is a plain, unvalidated `string` from the caller's own
+ * `useLocale()` rather than a request header this action reads for
+ * itself — see `completeProfile` for why.
  */
 export async function checkInvitedEmail(
   token: string,
-  email: string
+  email: string,
+  locale?: string
 ): Promise<{ error?: string }> {
   const check = await checkInvitedAddress(token, email);
-  return check === "ok" ? {} : { error: INVITATION_ERROR[check] };
+  if (check === "ok") return {};
+  return {
+    error: invitationError(isLocale(locale) ? locale : DEFAULT_LOCALE)[check],
+  };
 }
 
 /**
@@ -148,7 +168,8 @@ export async function checkInvitedEmail(
  */
 async function roleFor(
   input: SignUpIntent,
-  email: string
+  email: string,
+  locale: Locale
 ): Promise<{ role: "traveler" | "org_member" } | { error: string }> {
   if (input.intent !== "invited") {
     // The same rule the director's form applies, repeated here for the
@@ -170,7 +191,7 @@ async function roleFor(
   // Repeated here rather than trusted, because that one ran in a browser
   // and this is the write.
   const check = await checkInvitedAddress(input.token, email);
-  if (check !== "ok") return { error: INVITATION_ERROR[check] };
+  if (check !== "ok") return { error: invitationError(locale)[check] };
 
   return { role: "traveler" };
 }

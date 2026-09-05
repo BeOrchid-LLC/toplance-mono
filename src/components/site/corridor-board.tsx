@@ -5,6 +5,9 @@ import { ArrowRight, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/components/locale-provider";
+import { HERO } from "@/lib/i18n/hero";
+import { CORRIDOR_PICKER, fillTemplate } from "@/lib/i18n/corridor-picker";
 import {
   CORRIDORS_LIVE,
   CORRIDORS_SOON,
@@ -24,6 +27,7 @@ import { useCorridor } from "@/components/site/corridor-state";
  * the same state.
  */
 export function CorridorBoard() {
+  const t = useT();
   const { origin, destination, purpose, set } = useCorridor();
 
   // Every destination we offer, each labelled by whether *this* corridor
@@ -40,12 +44,12 @@ export function CorridorBoard() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3">
-        <span className="tag">Traveling from</span>
+        <span className="tag">{t(CORRIDOR_PICKER.travelingFrom)}</span>
         <div className="relative inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-border-strong bg-surface py-2 ps-4 pe-3 transition-colors hover:border-brand has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-brand">
           <span className="d-sm text-ink">{origin}</span>
           <ChevronDown className="size-4 text-ink-3" aria-hidden />
           <select
-            aria-label="Traveling from"
+            aria-label={t(CORRIDOR_PICKER.travelingFrom)}
             value={origin}
             onChange={(e) => set({ origin: e.target.value })}
             className="absolute inset-0 cursor-pointer opacity-0 outline-none"
@@ -60,15 +64,19 @@ export function CorridorBoard() {
         {/* The status column now depends on the purpose as well as the
             passport, so the purpose has to be readable here — otherwise
             a row flips between Live and In build for no visible reason. */}
-        <span className="tag">for {purpose.toLowerCase()}</span>
+        <span className="tag">
+          {fillTemplate(t(CORRIDOR_PICKER.forPurposeTemplate), {
+            p: purpose.toLowerCase(),
+          })}
+        </span>
       </div>
 
       <div className="mt-6 border-b border-border">
         <div className="grid grid-cols-[3px_auto_1fr_auto] items-center gap-x-4 border-b border-border-strong pb-2">
           <span />
-          <span className="tag">Route</span>
-          <span className="tag">Destination</span>
-          <span className="tag text-end">Status</span>
+          <span className="tag">{t(CORRIDOR_PICKER.routeColumnHeader)}</span>
+          <span className="tag">{t(HERO.slots.destination)}</span>
+          <span className="tag text-end">{t(CORRIDOR_PICKER.statusColumnHeader)}</span>
         </div>
 
         {rows.map((row) => {
@@ -118,7 +126,7 @@ export function CorridorBoard() {
                   row.soon ? "text-warning-ink" : "text-brand-text"
                 )}
               >
-                {row.soon ? "In build" : "Live"}
+                {row.soon ? t(CORRIDOR_PICKER.inBuild) : t(CORRIDOR_PICKER.live)}
               </span>
             </button>
           );
@@ -128,13 +136,14 @@ export function CorridorBoard() {
       <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
         <Button asChild>
           <Link href="/employer/sign-up">
-            Run the {iso3(origin)} → {iso3(destination)} corridor
+            {fillTemplate(t(CORRIDOR_PICKER.runRouteTemplate), {
+              route: `${iso3(origin)} → ${iso3(destination)}`,
+            })}
             <ArrowRight />
           </Link>
         </Button>
         <p className="t-muted max-w-[42ch] text-[15px]">
-          Missing a route? Ask for it and it enters the build queue with the
-          demand attached to it.
+          {t(CORRIDOR_PICKER.missingRoute)}
         </p>
       </div>
     </div>

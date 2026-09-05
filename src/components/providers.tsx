@@ -3,8 +3,15 @@
 import { ThemeProvider } from "next-themes";
 
 import { LocaleProvider } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n/locales";
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
   return (
     <ThemeProvider
       attribute="class"
@@ -12,7 +19,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       enableSystem
       disableTransitionOnChange
     >
-      <LocaleProvider>{children}</LocaleProvider>
+      <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
     </ThemeProvider>
   );
 }

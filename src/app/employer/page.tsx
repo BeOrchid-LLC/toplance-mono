@@ -31,33 +31,44 @@ import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getActor, getProfile } from "@/lib/data/applications";
 import { listInvitations } from "@/lib/data/invitations";
+import { getLocale } from "@/lib/i18n/server";
+import { EMPLOYER } from "@/lib/i18n/employer";
+import type { Locale } from "@/lib/i18n/locales";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Organisation console" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: EMPLOYER.pageTitle[locale] };
+}
 
 /**
- * The `org_role` enum in words. This bar used to print a hard-coded
- * "HR" beside the organisation name — for everyone, including the
- * director who had just created the organisation and whom
- * `createOrganisationTx` writes as `owner`. So the one place the product
- * named your role was the one place it was reliably wrong, and it read
- * as a title assigned behind your back rather than a fact about the
- * account.
+ * The `org_role` enum in words, in every locale — see `EMPLOYER.roleLabel`
+ * in `src/lib/i18n/employer.ts`. This bar used to print a hard-coded "HR"
+ * beside the organisation name — for everyone, including the director who
+ * had just created the organisation and whom `createOrganisationTx`
+ * writes as `owner`. So the one place the product named your role was the
+ * one place it was reliably wrong, and it read as a title assigned behind
+ * your back rather than a fact about the account.
  */
-const ROLE_LABEL: Record<"owner" | "hr_admin", string> = {
-  owner: "Owner",
-  hr_admin: "Administrator",
-};
+const ROLE_LABEL = EMPLOYER.roleLabel;
 
-/** Why the account carries that role, said where the role is shown. */
-const ROLE_REASON: Record<"owner" | "hr_admin", string> = {
-  owner:
-    "You are the owner because you created this organisation. Owners can invite people, manage the account and see everyone's progress.",
-  hr_admin:
-    "You are an administrator because an owner invited you into this organisation. Administrators can invite people and see everyone's progress.",
-};
+/**
+ * Why the account carries that role, said where the role is shown — see
+ * `EMPLOYER.roleReason`.
+ */
+const ROLE_REASON = EMPLOYER.roleReason;
+
+/**
+ * Fills `{token}` placeholders in a translated template — the interpolated
+ * value (a name, a count, a formatted date) has to survive being chosen
+ * by locale first, so dictionary strings carry tokens rather than being
+ * built from template literals.
+ */
+function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? ""));
+}
 
 function formatDay(value: Date) {
   return value.toLocaleDateString("en-GB", {
@@ -67,21 +78,33 @@ function formatDay(value: Date) {
 }
 
 /** One line of lifecycle per invitation — the dates its status makes true. */
-function invitationTimeline(invite: {
-  status: string;
-  createdAt: Date;
-  expiresAt: Date;
-  acceptedAt: Date | null;
-}): string {
+function invitationTimeline(
+  invite: {
+    status: string;
+    createdAt: Date;
+    expiresAt: Date;
+    acceptedAt: Date | null;
+  },
+  locale: Locale
+): string {
   switch (invite.status) {
     case "pending":
-      return `Invited ${formatDay(invite.createdAt)} · expires ${formatDay(invite.expiresAt)}`;
+      return fill(EMPLOYER.timelineInvitedExpires[locale], {
+        created: formatDay(invite.createdAt),
+        expires: formatDay(invite.expiresAt),
+      });
     case "accepted":
-      return `Accepted ${formatDay(invite.acceptedAt ?? invite.createdAt)}`;
+      return fill(EMPLOYER.timelineAccepted[locale], {
+        date: formatDay(invite.acceptedAt ?? invite.createdAt),
+      });
     case "expired":
-      return `Expired ${formatDay(invite.expiresAt)}`;
+      return fill(EMPLOYER.timelineExpired[locale], {
+        date: formatDay(invite.expiresAt),
+      });
     default:
-      return `Invited ${formatDay(invite.createdAt)}`;
+      return fill(EMPLOYER.timelineInvited[locale], {
+        date: formatDay(invite.createdAt),
+      });
   }
 }
 
@@ -113,6 +136,8 @@ async function recoverEmployer(): Promise<
 
 export default async function EmployerConsolePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
 
   let [profile, actor] = await Promise.all([getProfile(), getActor()]);
 
@@ -211,10 +236,10 @@ export default async function EmployerConsolePage() {
     return (
       <div className="min-h-dvh bg-bg">
         <AppBar
-          nav={[{ href: "/employer", label: "Dashboard" }]}
+          nav={[{ href: "/employer", label: EMPLOYER.navDashboard[locale] }]}
           name={profile.fullName}
           email={profile.email}
-          subtitle="Organisation console"
+          subtitle={EMPLOYER.pageTitle[locale]}
         />
         <main>
           <Shell className="py-12">
@@ -223,13 +248,10 @@ export default async function EmployerConsolePage() {
                   registered name of a licensed travel agency, which is a
                   fact to be matched against a register — "name your
                   organisation" invites a label the director makes up. */}
-              <PanelHeader label="Name of organisation" />
+              <PanelHeader label={EMPLOYER.nameOrgLabel[locale]} />
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  Give the registered name, as it appears on your trading
-                  licence. Once it exists you can invite your clients by
-                  email — they complete their own intake, and you see
-                  their progress here without their documents.
+                  {EMPLOYER.nameOrgBody[locale]}
                 </p>
                 {/* Why the name they already gave did not take. Said
                     here rather than as a toast: this render is the first
@@ -288,10 +310,14 @@ export default async function EmployerConsolePage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[{ href: "/employer", label: "Dashboard" }]}
+        nav={[{ href: "/employer", label: EMPLOYER.navDashboard[locale] }]}
         name={profile.fullName}
         email={profile.email}
-        subtitle={org ? `${org.name} · ${ROLE_LABEL[org.role]}` : "Organisation console"}
+        subtitle={
+          org
+            ? `${org.name} · ${ROLE_LABEL[org.role][locale]}`
+            : EMPLOYER.pageTitle[locale]
+        }
       />
 
       {/* The ruled ground the laminate below refracts. Without it the
@@ -306,7 +332,9 @@ export default async function EmployerConsolePage() {
         <Shell className="pt-10">
           <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
-              <h1 className="t-h2">{org?.name ?? "Your organisation"}</h1>
+              <h1 className="t-h2">
+                {org?.name ?? EMPLOYER.yourOrganisationFallback[locale]}
+              </h1>
               {/*
                 "0 of 0 seats in use" is a sentence made of two facts we
                 do not have. Seats are a placeholder until the client
@@ -315,17 +343,27 @@ export default async function EmployerConsolePage() {
               */}
               <p className="t-muted mt-2">
                 {seats > 0
-                  ? `${used} of ${seats} seats in use`
-                  : `${used} ${used === 1 ? "person" : "people"} · seat count not set yet`}
+                  ? fill(EMPLOYER.seatsInUse[locale], { used, seats })
+                  : fill(
+                      (used === 1
+                        ? EMPLOYER.seatCountNotSetOne
+                        : EMPLOYER.seatCountNotSetOther)[locale],
+                      { used }
+                    )}
                 {pendingInvitations.length > 0 &&
-                  ` · ${pendingInvitations.length} invitation${pendingInvitations.length === 1 ? "" : "s"} pending`}
+                  fill(
+                    (pendingInvitations.length === 1
+                      ? EMPLOYER.pendingSuffixOne
+                      : EMPLOYER.pendingSuffixOther)[locale],
+                    { n: pendingInvitations.length }
+                  )}
               </p>
               {/* The bar names your role; this says how you got it.
                   Seeing "Owner" appended to your account without ever
                   having chosen it is the kind of thing that reads as the
                   product knowing something about you that you don't. */}
               <p className="t-muted mt-2 max-w-[68ch]">
-                {ROLE_REASON[org.role]}
+                {ROLE_REASON[org.role][locale]}
               </p>
               {seats > 0 && (
                 <Progress
@@ -352,14 +390,12 @@ export default async function EmployerConsolePage() {
             <div className="relative z-[1] flex items-start gap-4 p-6">
               <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
               <div className="min-w-0">
-                <p className="tag">The privacy boundary</p>
+                <p className="tag">{EMPLOYER.privacyTag[locale]}</p>
                 <p className="d-sm mt-2 text-ink">
-                  You see progress, not documents
+                  {EMPLOYER.privacyHeading[locale]}
                 </p>
                 <p className="t-muted mt-2 max-w-[74ch]">
-                  Passports, bank statements and police certificates stay
-                  between the traveler and Toplance. You see the completion
-                  score, the status and whether someone is stuck.
+                  {EMPLOYER.privacyBody[locale]}
                 </p>
               </div>
             </div>
@@ -374,11 +410,11 @@ export default async function EmployerConsolePage() {
               one card with ruled rows inside, not a stack of boxes. */}
           <Panel>
             <PanelHeader
-              label="Your people"
+              label={EMPLOYER.yourPeopleLabel[locale]}
               aside={
                 <Badge variant="brand">
                   <span className="num">{used}</span>
-                  {used === 1 ? "person" : "people"}
+                  {(used === 1 ? EMPLOYER.personWord : EMPLOYER.peopleWord)[locale]}
                 </Badge>
               }
             />
@@ -386,8 +422,7 @@ export default async function EmployerConsolePage() {
           {rows.length === 0 ? (
             <PanelBody>
               <p className="t-muted max-w-[62ch]">
-                Nobody yet. Once you invite someone and they finish intake, they
-                appear here with a live completion score.
+                {EMPLOYER.rosterEmpty[locale]}
               </p>
             </PanelBody>
           ) : (
@@ -417,10 +452,10 @@ export default async function EmployerConsolePage() {
                       <p className="t-body truncate">
                         {destination?.name ??
                           r.destinationIso?.toUpperCase() ??
-                          "Route not set"}
+                          EMPLOYER.routeNotSet[locale]}
                       </p>
                       <p className="special mt-1 truncate" title={r.visaName ?? ""}>
-                        {r.visaName ?? "Route not set"}
+                        {r.visaName ?? EMPLOYER.routeNotSet[locale]}
                       </p>
                     </div>
 
@@ -432,8 +467,10 @@ export default async function EmployerConsolePage() {
                         </span>
                       </div>
                       <p className="special mt-1">
-                        {r.documentsVerified ?? 0} of {r.documentsTotal ?? 0}{" "}
-                        verified
+                        {fill(EMPLOYER.documentsVerified[locale], {
+                          verified: r.documentsVerified ?? 0,
+                          total: r.documentsTotal ?? 0,
+                        })}
                       </p>
                     </div>
 
@@ -452,11 +489,11 @@ export default async function EmployerConsolePage() {
               exist, the other is emails nobody has answered yet. */}
           <Panel className="mt-8">
             <PanelHeader
-              label="Invitations"
+              label={EMPLOYER.invitationsLabel[locale]}
               aside={
                 <Badge variant="neutral">
                   <span className="num">{pendingInvitations.length}</span>
-                  pending
+                  {EMPLOYER.pendingWord[locale]}
                 </Badge>
               }
             />
@@ -464,8 +501,7 @@ export default async function EmployerConsolePage() {
             {invitations.length === 0 ? (
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  Nobody has been invited yet. Send an invitation and it
-                  appears here until it is accepted, revoked or expires.
+                  {EMPLOYER.invitationsEmpty[locale]}
                 </p>
               </PanelBody>
             ) : (
@@ -490,10 +526,10 @@ export default async function EmployerConsolePage() {
                         <p className="t-body truncate">
                           {destination?.name ??
                             invite.destinationIso?.toUpperCase() ??
-                            "Destination not set"}
+                            EMPLOYER.destinationNotSet[locale]}
                         </p>
                         <p className="special mt-1 truncate">
-                          {invitationTimeline(invite)}
+                          {invitationTimeline(invite, locale)}
                         </p>
                       </div>
 

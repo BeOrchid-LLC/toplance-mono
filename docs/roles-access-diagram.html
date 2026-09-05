@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Toplance — Roles &amp; Access Diagram</title>
+<style>
+  :root {
+    --ink: #1b1f24;
+    --sub: #5b6470;
+    --line: #dfe3e8;
+    --beorchid: #2f5fd6;
+    --beorchid-bg: #eef2fe;
+    --org: #b5680d;
+    --org-bg: #fdf3e4;
+    --traveler: #1f9d6b;
+    --traveler-bg: #e9f9f2;
+    --danger: #c0392b;
+    --danger-bg: #fdecea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #f6f7f9;
+    color: var(--ink);
+    margin: 0;
+    padding: 32px 24px 64px;
+    line-height: 1.45;
+  }
+  h1 {
+    font-size: 22px;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    color: var(--sub);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+  .legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    font-size: 13px;
+    color: var(--sub);
+  }
+  .legend span.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 980px) {
+    .cols { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .card-head {
+    padding: 16px 18px;
+    color: #fff;
+  }
+  .card-head.beorchid { background: var(--beorchid); }
+  .card-head.org { background: var(--org); }
+  .card-head.traveler { background: var(--traveler); }
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+  .card-head .scope {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+  .card-body { padding: 16px 18px 18px; }
+  .role-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin: 2px 6px 10px 0;
+  }
+  .role-pill.beorchid { background: var(--beorchid-bg); color: var(--beorchid); }
+  .role-pill.org { background: var(--org-bg); color: var(--org); }
+  .role-pill.traveler { background: var(--traveler-bg); color: var(--traveler); }
+  .console-line {
+    font-size: 12px;
+    color: var(--sub);
+    margin-bottom: 12px;
+  }
+  code {
+    background: #f0f1f3;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 12px;
+  }
+  ul.access {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 13px;
+  }
+  ul.access li { margin-bottom: 6px; }
+  .note-box {
+    margin-top: 28px;
+    background: var(--danger-bg);
+    border: 1px solid #f2c6c0;
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .note-box h3 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    color: var(--danger);
+  }
+  .note-box p { margin: 0 0 8px; font-size: 13px; }
+  .note-box p:last-child { margin-bottom: 0; }
+
+  table.matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 32px;
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  table.matrix th, table.matrix td {
+    border-bottom: 1px solid var(--line);
+    padding: 10px 12px;
+    text-align: left;
+  }
+  table.matrix th {
+    background: #fafbfc;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--sub);
+  }
+  table.matrix td.center, table.matrix th.center { text-align: center; }
+  .yes { color: var(--traveler); font-weight: 700; }
+  .no { color: var(--danger); font-weight: 700; }
+  .own { color: var(--beorchid); font-weight: 600; font-size: 12px; }
+
+  .footer-note {
+    margin-top: 24px;
+    font-size: 12px;
+    color: var(--sub);
+  }
+  .footer-note code { font-size: 11px; }
+</style>
+</head>
+<body>
+
+<h1>Toplance — who can access what</h1>
+<div class="subtitle">Three platform-wide roles, each mapped to its own console. Enforced in application code (<code>src/lib/auth/policy.ts</code>, <code>guards.ts</code>) — there is no database RLS.</div>
+
+<div class="legend">
+  <div><span class="dot" style="background:var(--beorchid)"></span>BeOrchid / Toplance internal staff</div>
+  <div><span class="dot" style="background:var(--org)"></span>Client organization employees</div>
+  <div><span class="dot" style="background:var(--traveler)"></span>Traveller (end user)</div>
+</div>
+
+<div class="cols">
+
+  <div class="card">
+    <div class="card-head beorchid">
+      <h2>Staff — BeOrchid / Toplance</h2>
+      <div class="scope">Platform-wide · runs the product</div>
+    </div>
+    <div class="card-body">
+      <span class="role-pill beorchid">reviewer</span>
+      <span class="role-pill beorchid">owner</span>
+      <div class="console-line">Console: <code>/ops</code> — gated by <code>requireStaffConsole</code> + Clerk 2FA (only role with this extra gate)</div>
+      <ul class="access">
+        <li>Read/write <strong>every</strong> traveller's application, documents, case notes</li>
+        <li>Review &amp; verify documents, change case status, claim/release cases</li>
+        <li>Read the audit log</li>
+        <li><em>owner</em> only: write corridor reference data (rare — normally seeded via script)</li>
+        <li>No self-serve signup — promoted via a manual SQL helper, on purpose</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head org">
+      <h2>Org member — client organization</h2>
+      <div class="scope">Scoped to their own organization only</div>
+    </div>
+    <div class="card-body">
+      <span class="role-pill org">hr_admin</span>
+      <span class="role-pill org">owner</span>
+      <div class="console-line">Console: <code>/employer</code> — gated by <code>requireOrgAccess</code>. <strong>No access to <code>/ops</code>, ever.</div>
+      <ul class="access">
+        <li>Invite travellers to their org (invite-only sponsorship model)</li>
+        <li>View a <strong>read-only roster</strong> of sponsored travellers' progress (status only)</li>
+        <li>owner vs hr_admin is currently just a UI label — no permission actually differs between them today</li>
+        <li><span style="color:var(--danger); font-weight:600;">Cannot</span> see documents, case notes, messages, itinerary, or companion data for any traveller — see privacy boundary below</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head traveler">
+      <h2>Traveller — end user</h2>
+      <div class="scope">Scoped to themself only</div>
+    </div>
+    <div class="card-body">
+      <span class="role-pill traveler">traveler</span>
+      <div class="console-line">Console: <code>/app</code> — the actual product</div>
+      <ul class="access">
+        <li>Read/write their own single application, documents, intake answers</li>
+        <li>Read-only on their own case notes and messages</li>
+        <li>Write their own itinerary and companion updates</li>
+        <li>Uniquely: the <em>only</em> role that can set their own visa expiry date — restricted even from staff</li>
+        <li>Invite-only since 2026-08-31: no self-serve traveller signup, must come via an org invitation</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="note-box">
+  <h3>The privacy boundary — BeOrchid staff vs. the client's own employees</h3>
+  <p><strong>This is the core distinction the platform is built around:</strong> a client organization sponsors a traveller's visa case, but its employees (<code>org_member</code>) are treated as an outside party with a status dashboard, not as case handlers.</p>
+  <p>Functions like <code>canReadDocuments</code>, <code>canReadCaseNotes</code>, <code>canReadMessages</code>, <code>canReadCompanion</code> and <code>canReadItinerary</code> in <code>policy.ts</code> are commented "deliberately no sponsorship branch" — meaning sponsoring an application grants <strong>zero</strong> visibility into its private contents, by design, not by omission.</p>
+  <p>Only <code>staff</code> (BeOrchid/Toplance employees) and the <code>traveler</code> themself can see that data. Org admins only ever see aggregate/status-level progress for people they sponsored.</p>
+</div>
+
+<table class="matrix">
+  <thead>
+    <tr>
+      <th>Can access…</th>
+      <th class="center">Staff (BeOrchid)</th>
+      <th class="center">Org member (client)</th>
+      <th class="center">Traveller</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Own application data</td><td class="center yes">✓ (all)</td><td class="center no">✗</td><td class="center own">✓ own only</td></tr>
+    <tr><td>Documents</td><td class="center yes">✓ (all)</td><td class="center no">✗</td><td class="center own">✓ own only</td></tr>
+    <tr><td>Case notes</td><td class="center yes">✓ read/write</td><td class="center no">✗</td><td class="center own">✓ read-only, own</td></tr>
+    <tr><td>Messages</td><td class="center yes">✓ (all)</td><td class="center no">✗</td><td class="center own">✓ own only</td></tr>
+    <tr><td>Itinerary</td><td class="center yes">✓ (all)</td><td class="center no">✗</td><td class="center own">✓ own only</td></tr>
+    <tr><td>Companion data</td><td class="center yes">✓ (all)</td><td class="center no">✗</td><td class="center own">✓ own only</td></tr>
+    <tr><td>Sponsored traveller status roster</td><td class="center yes">✓</td><td class="center yes">✓ own org's travellers</td><td class="center no">✗</td></tr>
+    <tr><td>Invite travellers</td><td class="center yes">✓</td><td class="center yes">✓ own org</td><td class="center no">✗</td></tr>
+    <tr><td>Change case status / claim case</td><td class="center yes">✓ reviewer+</td><td class="center no">✗</td><td class="center no">✗</td></tr>
+    <tr><td>Write visa expiry date</td><td class="center no">✗ (restricted)</td><td class="center no">✗</td><td class="center yes">✓ own only</td></tr>
+    <tr><td>Write corridor reference data</td><td class="center own">✓ owner only</td><td class="center no">✗</td><td class="center no">✗</td></tr>
+    <tr><td>Audit log</td><td class="center yes">✓</td><td class="center no">✗</td><td class="center no">✗</td></tr>
+    <tr><td>Console access</td><td class="center">/ops</td><td class="center">/employer</td><td class="center">/app</td></tr>
+  </tbody>
+</table>
+
+<div class="footer-note">
+  Roles live in Postgres (<code>profiles.role</code>, <code>profiles.staffRole</code>, <code>orgMembers.role</code>) — never in Clerk session metadata. Source: <code>src/lib/db/schema.ts</code>, <code>src/lib/auth/policy.ts</code>, <code>guards.ts</code>, <code>staff-gate.ts</code>, <code>routes.ts</code>.
+</div>
+
+</body>
+</html>

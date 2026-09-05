@@ -16,6 +16,10 @@ import {
 import { markNotificationsRead } from "@/app/(app)/actions";
 import type { Notification } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
+import { useLocale, useT } from "@/components/locale-provider";
+import type { Locale } from "@/lib/i18n/locales";
+import { NOTIFICATIONS } from "@/lib/i18n/app-chrome";
+import { RELATIVE_TIME } from "@/lib/i18n/relative-time";
 
 type NotificationKind = Notification["kind"];
 
@@ -23,28 +27,22 @@ type NotificationKind = Notification["kind"];
  * Human copy for the bell — independent of the email subject line the
  * same event sends via `@/lib/notifications/templates`, because a list
  * item is read in passing and an inbox subject is read on its own.
+ * The strings themselves live in `NOTIFICATIONS.kind`, one per language.
  */
-const KIND_COPY: Record<NotificationKind, string> = {
-  application_submitted: "A case reached 100% and was submitted",
-  checklist_complete: "A case reached 100% but has not been submitted",
-  status_changed: "Your application status changed",
-  document_flagged: "A document needs another look",
-  message_received: "You have a new message",
-  itinerary_ready: "Your arrival plan is ready",
-  companion_digest: "Your weekly digest is ready",
-  checklist_changed: "Your document checklist changed",
-  visa_expiring: "Your visa is approaching its expiry date",
-  advisory_changed: "Travel advice for your destination changed",
-};
+function kindCopy(kind: NotificationKind, locale: Locale): string {
+  return NOTIFICATIONS.kind[kind][locale];
+}
 
-function relativeTime(date: Date): string {
+function relativeTime(date: Date, locale: Locale): string {
   const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1) return RELATIVE_TIME.justNow[locale];
+  if (minutes < 60) {
+    return RELATIVE_TIME.minutesAgo[locale].replace("{n}", String(minutes));
+  }
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return RELATIVE_TIME.hoursAgo[locale].replace("{n}", String(hours));
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return RELATIVE_TIME.daysAgo[locale].replace("{n}", String(days));
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
@@ -80,6 +78,8 @@ export function NotificationsMenu({
 }) {
   const router = useRouter();
   const [markedThisOpen, setMarkedThisOpen] = React.useState(false);
+  const { locale } = useLocale();
+  const t = useT();
 
   function onOpenChange(open: boolean) {
     if (!open || markedThisOpen || unreadCount === 0) return;
@@ -91,7 +91,9 @@ export function NotificationsMenu({
     <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger
         aria-label={
-          unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"
+          unreadCount > 0
+            ? NOTIFICATIONS.ariaUnread[locale].replace("{n}", String(unreadCount))
+            : t(NOTIFICATIONS.ariaNoUnread)
         }
         className="relative grid size-9 place-items-center rounded-full hover:bg-surface-2"
       >
@@ -104,10 +106,10 @@ export function NotificationsMenu({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-[340px]">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuLabel>{t(NOTIFICATIONS.title)}</DropdownMenuLabel>
 
         {notifications.length === 0 ? (
-          <p className="t-muted px-3 py-4">Nothing yet.</p>
+          <p className="t-muted px-3 py-4">{t(NOTIFICATIONS.empty)}</p>
         ) : (
           notifications.map((n, i) => (
             <React.Fragment key={n.id}>
@@ -117,9 +119,9 @@ export function NotificationsMenu({
                   className="flex-col items-start gap-0.5 py-2"
                 >
                   <span className={cn("t-body", !n.readAt && "font-semibold text-ink")}>
-                    {KIND_COPY[n.kind]}
+                    {kindCopy(n.kind, locale)}
                   </span>
-                  <span className="special">{relativeTime(n.createdAt)}</span>
+                  <span className="special">{relativeTime(n.createdAt, locale)}</span>
                 </Link>
               </DropdownMenuItem>
               {i < notifications.length - 1 && <DropdownMenuSeparator />}

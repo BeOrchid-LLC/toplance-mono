@@ -10,7 +10,7 @@ import { CorridorDecision } from "@/components/ops/corridor-decision";
 import { RequirementCondition } from "@/components/ops/requirement-condition";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { opsNav } from "@/components/ops/ops-nav";
+import { localizedOpsNav } from "@/components/ops/ops-nav";
 import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryFromIso2 } from "@/lib/domain/corridors";
@@ -23,11 +23,18 @@ import { isUuid } from "@/lib/domain/uuid";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
+import { getLocale } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/locales";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import { OPS_CORRIDOR_REVIEW } from "@/lib/i18n/ops-corridor-review";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Review route" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: OPS_CORRIDOR_REVIEW.metaTitle[locale] };
+}
 
 /**
  * The country's name, or the raw code upper-cased when this file cannot
@@ -37,11 +44,19 @@ export const metadata: Metadata = { title: "Review route" };
 const countryName = (iso: string) => countryFromIso2(iso)?.name ?? iso.toUpperCase();
 
 /** A source link, or an explicit absence — never a silent blank. */
-function Source({ url, label = "Source" }: { url: string | null; label?: string }) {
+function Source({
+  url,
+  label,
+  locale,
+}: {
+  url: string | null;
+  label?: string;
+  locale: Locale;
+}) {
   if (!url) {
     return (
       <span className="text-sm font-semibold text-danger-ink">
-        No source recorded
+        {OPS_COMMON.noSourceRecorded[locale]}
       </span>
     );
   }
@@ -52,7 +67,7 @@ function Source({ url, label = "Source" }: { url: string | null; label?: string 
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-text hover:underline"
     >
-      {label}
+      {label ?? OPS_COMMON.source[locale]}
       <ExternalLink className="size-3.5" aria-hidden />
     </a>
   );
@@ -64,6 +79,8 @@ export default async function ReviewCorridorPage({
   params: Promise<{ id: string }>;
 }) {
   if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
 
   const gate = await requireStaffConsole();
   if (gate.decision === "refuse") return <StaffAccessRefused />;
@@ -96,10 +113,10 @@ export default async function ReviewCorridorPage({
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={opsNav}
+        nav={localizedOpsNav(locale)}
         name={profile.fullName}
         email={profile.email}
-        subtitle={`Toplance operations · ${actor.staffRole ?? "reviewer"}`}
+        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
         notifications={
           <NotificationsMenu
             notifications={notifications}
@@ -114,7 +131,7 @@ export default async function ReviewCorridorPage({
           href="/ops/corridors"
           className="t-muted inline-flex items-center gap-2 hover:underline"
         >
-          <ArrowLeft className="size-4" aria-hidden /> Route coverage
+          <ArrowLeft className="size-4" aria-hidden /> {OPS_CORRIDOR_REVIEW.backLink[locale]}
         </Link>
 
         <div className="mt-5 flex flex-wrap items-start justify-between gap-x-10 gap-y-4">
@@ -124,21 +141,24 @@ export default async function ReviewCorridorPage({
               {countryName(corridor.destinationIso)}
             </h1>
             <p className="t-muted mt-2">
-              {corridor.visaName} · <span className="capitalize">{corridor.purpose}</span>{" "}
+              {corridor.visaName} · {OPS_COMMON.purpose[corridor.purpose][locale]}{" "}
               · <span className="num">v{corridor.version}</span>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {corridor.isLive && <Badge variant="brand">Live</Badge>}
+            {corridor.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
             {corridor.reviewState === "pending" && (
-              <Badge variant="warning">Awaiting review</Badge>
+              <Badge variant="warning">{OPS_COMMON.awaitingReview[locale]}</Badge>
             )}
             {corridor.reviewState === "rejected" && (
-              <Badge variant="neutral">Sent back</Badge>
+              <Badge variant="neutral">{OPS_COMMON.sentBack[locale]}</Badge>
             )}
             {corridor.reviewState === "approved" && (
               <Badge variant="success">
-                Approved{corridor.approverName ? ` by ${corridor.approverName}` : ""}
+                {OPS_COMMON.approved[locale]}
+                {corridor.approverName
+                  ? ` ${OPS_CORRIDOR_REVIEW.approvedByPrefix[locale]} ${corridor.approverName}`
+                  : ""}
               </Badge>
             )}
           </div>
@@ -146,7 +166,7 @@ export default async function ReviewCorridorPage({
 
         {corridor.reviewState === "rejected" && corridor.rejectReason && (
           <p className="t-muted mt-5 max-w-[74ch] rounded-sm border border-border-strong px-5 py-4">
-            <span className="special-caps block">Sent back because</span>
+            <span className="special-caps block">{OPS_CORRIDOR_REVIEW.sentBackBecause[locale]}</span>
             <span className="mt-1 block text-base text-ink-2">
               {corridor.rejectReason}
             </span>
@@ -172,11 +192,14 @@ export default async function ReviewCorridorPage({
             decision time sit next to the source that stated them because
             an approver's job is to open that link and compare. */}
         <Panel className="mt-8">
-          <PanelHeader label="Route facts" aside={<Source url={corridor.sourceUrl} />} />
+          <PanelHeader
+            label={OPS_CORRIDOR_REVIEW.routeFactsPanel[locale]}
+            aside={<Source url={corridor.sourceUrl} locale={locale} />}
+          />
           <dl className="grid sm:grid-cols-3">
             {[
               {
-                label: "Government fee",
+                label: OPS_CORRIDOR_REVIEW.fields.governmentFee[locale],
                 value:
                   corridor.governmentFeeMinor == null
                     ? "—"
@@ -185,17 +208,17 @@ export default async function ReviewCorridorPage({
                       ).toLocaleString("en-GB")}`,
               },
               {
-                label: "Decision time",
+                label: OPS_CORRIDOR_REVIEW.fields.decisionTime[locale],
                 value:
                   corridor.processingWeeksMin && corridor.processingWeeksMax
-                    ? `${corridor.processingWeeksMin}–${corridor.processingWeeksMax} weeks`
+                    ? `${corridor.processingWeeksMin}–${corridor.processingWeeksMax} ${OPS_CORRIDOR_REVIEW.weeksSuffix[locale]}`
                     : "—",
               },
               {
-                label: "Last checked",
+                label: OPS_CORRIDOR_REVIEW.fields.lastChecked[locale],
                 value:
                   freshness.state === "unverified"
-                    ? "Not yet"
+                    ? OPS_CORRIDOR_REVIEW.notYet[locale]
                     : freshness.checked,
               },
             ].map((f) => (
@@ -216,27 +239,29 @@ export default async function ReviewCorridorPage({
         {!diff.isFirstVersion && (
           <Panel className="mt-6">
             <PanelHeader
-              label={`Changes since v${live?.version}`}
+              label={OPS_CORRIDOR_REVIEW.changesSincePrefix[locale].replace(
+                "{version}",
+                String(live?.version)
+              )}
               aside={
                 <Badge variant={isUnchanged(diff) ? "neutral" : "warning"}>
                   <span className="num">
                     {diff.fields.length + diff.requirements.length}
                   </span>{" "}
-                  changes
+                  {OPS_CORRIDOR_REVIEW.changesWord[locale]}
                 </Badge>
               }
             />
             {isUnchanged(diff) ? (
               <PanelBody>
-                <p className="t-muted max-w-[74ch]">
-                  Nothing differs from the live version. Publishing this would
-                  raise a version number and change nothing a traveler sees —
-                  which usually means the draft did not pick up what it was
-                  meant to.
-                </p>
+                <p className="t-muted max-w-[74ch]">{OPS_CORRIDOR_REVIEW.noDiff[locale]}</p>
               </PanelBody>
             ) : (
               <div>
+                {/* `f.label` here is generated by `corridorDiff()`
+                    (`@/lib/domain/corridor-diff.ts`), outside this pass's
+                    ownership, and stays in English — see the review's
+                    flags. */}
                 {diff.fields.map((f) => (
                   <div
                     key={f.label}
@@ -245,10 +270,12 @@ export default async function ReviewCorridorPage({
                     <p className="special-caps">{f.label}</p>
                     <p className="mt-1.5 text-base">
                       <span className="text-ink-3 line-through">
-                        {f.before ?? "not set"}
+                        {f.before ?? OPS_CORRIDOR_REVIEW.notSet[locale]}
                       </span>
                       <span aria-hidden> → </span>
-                      <span className="font-semibold">{f.after ?? "not set"}</span>
+                      <span className="font-semibold">
+                        {f.after ?? OPS_CORRIDOR_REVIEW.notSet[locale]}
+                      </span>
                     </p>
                   </div>
                 ))}
@@ -268,10 +295,10 @@ export default async function ReviewCorridorPage({
                         }
                       >
                         {r.kind === "added"
-                          ? "New document"
+                          ? OPS_CORRIDOR_REVIEW.newDocument[locale]
                           : r.kind === "removed"
-                            ? "No longer asked for"
-                            : "Reworded"}
+                            ? OPS_CORRIDOR_REVIEW.noLongerAskedFor[locale]
+                            : OPS_CORRIDOR_REVIEW.reworded[locale]}
                       </Badge>
                       <p className="t-title">{r.name}</p>
                     </div>
@@ -279,15 +306,18 @@ export default async function ReviewCorridorPage({
                       r.fields.map((f) => (
                         <p key={f.label} className="t-muted mt-2 max-w-[74ch]">
                           <span className="special-caps">{f.label}: </span>
-                          <span className="line-through">{f.before ?? "not set"}</span>
+                          <span className="line-through">
+                            {f.before ?? OPS_CORRIDOR_REVIEW.notSet[locale]}
+                          </span>
                           <span aria-hidden> → </span>
-                          <span className="text-ink-2">{f.after ?? "not set"}</span>
+                          <span className="text-ink-2">
+                            {f.after ?? OPS_CORRIDOR_REVIEW.notSet[locale]}
+                          </span>
                         </p>
                       ))}
                     {r.kind === "removed" && (
                       <p className="t-muted mt-2 max-w-[74ch]">
-                        A traveler who already uploaded this keeps their file —
-                        only untouched rows are dropped.
+                        {OPS_CORRIDOR_REVIEW.removedNotice[locale]}
                       </p>
                     )}
                   </div>
@@ -299,19 +329,18 @@ export default async function ReviewCorridorPage({
 
         <Panel className="mt-6">
           <PanelHeader
-            label="Every requirement in this version"
+            label={OPS_CORRIDOR_REVIEW.everyRequirementPanel[locale]}
             aside={
               <Badge variant={corridor.requirementCount ? "brand" : "warning"}>
-                <span className="num">{corridor.requirementCount}</span> documents
+                <span className="num">{corridor.requirementCount}</span>{" "}
+                {OPS_COMMON.documentsWord[locale]}
               </Badge>
             }
           />
           {corridor.requirements.length === 0 ? (
             <PanelBody>
               <p className="t-muted max-w-[74ch]">
-                This draft has no requirements. It cannot be approved — a
-                traveler would get a checklist with nothing on it, no upload
-                slots and no way to reach submission.
+                {OPS_CORRIDOR_REVIEW.noRequirements[locale]}
               </p>
             </PanelBody>
           ) : (
@@ -328,7 +357,9 @@ export default async function ReviewCorridorPage({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="t-title">{r.name}</p>
                       {!r.isRequired && (
-                        <Badge variant="outline">Only if it applies</Badge>
+                        <Badge variant="outline">
+                          {OPS_CORRIDOR_REVIEW.onlyIfApplies[locale]}
+                        </Badge>
                       )}
                     </div>
                     {r.description && (
@@ -348,7 +379,11 @@ export default async function ReviewCorridorPage({
                         A requirement with no source is called out in red
                         rather than left looking merely unlinked. */}
                     <p className="mt-2">
-                      <Source url={r.sourceUrl} label="Open the source" />
+                      <Source
+                        url={r.sourceUrl}
+                        label={OPS_CORRIDOR_REVIEW.openTheSource[locale]}
+                        locale={locale}
+                      />
                     </p>
                   </div>
                 </li>
@@ -359,7 +394,7 @@ export default async function ReviewCorridorPage({
 
         {decidable && (
           <Panel className="mt-6 mb-16">
-            <PanelHeader label="Your decision" />
+            <PanelHeader label={OPS_CORRIDOR_REVIEW.yourDecisionPanel[locale]} />
             <PanelBody>
               <CorridorDecision corridorId={corridor.id} canApprove={isOwner(actor)} />
             </PanelBody>

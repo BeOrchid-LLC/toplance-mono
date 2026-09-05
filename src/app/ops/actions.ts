@@ -21,6 +21,8 @@ import { STAFF_REACHABLE_STATUSES, changeStatusTx } from "@/lib/data/transitions
 import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import { STATUS, type ApplicationStatus } from "@/lib/domain/status";
 import { appUrl, notify } from "@/lib/notifications/notify";
+import { getLocale } from "@/lib/i18n/server";
+import { OPS_ACTIONS } from "@/lib/i18n/ops-actions";
 
 /**
  * Every action here opens with `requireStaffAction()` — the same
@@ -49,7 +51,7 @@ export async function reviewDocument(formData: FormData) {
   const { actor } = gate;
 
   if (verdict !== "verified" && verdict !== "flagged") {
-    return { error: "Choose a verdict." };
+    return { error: OPS_ACTIONS.chooseVerdict[await getLocale()] };
   }
 
   const result = await reviewDocumentTx(
@@ -157,7 +159,7 @@ export async function changeCaseStatus(formData: FormData) {
   const { actor } = gate;
 
   if (!(STAFF_REACHABLE_STATUSES as readonly string[]).includes(to)) {
-    return { error: "Choose a status." };
+    return { error: OPS_ACTIONS.chooseStatus[await getLocale()] };
   }
   const nextStatus = to as ApplicationStatus;
 
@@ -285,7 +287,7 @@ export async function approveCorridor(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: "Only a super admin can approve a route." };
+    return { error: OPS_ACTIONS.onlyOwnerApprove[await getLocale()] };
   }
 
   const result = await approveCorridorTx(corridorId, actor.userId);
@@ -336,7 +338,7 @@ export async function rejectCorridor(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: "Only a super admin can reject a route." };
+    return { error: OPS_ACTIONS.onlyOwnerReject[await getLocale()] };
   }
 
   const result = await rejectCorridorTx(corridorId, reason);
@@ -380,19 +382,19 @@ export async function setRequirementCondition(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: "Only a super admin can write a requirement rule." };
+    return { error: OPS_ACTIONS.onlyOwnerCondition[await getLocale()] };
   }
 
   let appliesWhen: unknown = null;
 
   if (answer) {
     if (!options.length) {
-      return { error: "Choose at least one answer this document applies to." };
+      return { error: OPS_ACTIONS.chooseAtLeastOneAnswer[await getLocale()] };
     }
 
     appliesWhen = parseAppliesWhen([{ answer, in: options }]);
     if (!appliesWhen) {
-      return { error: "That rule does not name an intake question we ask." };
+      return { error: OPS_ACTIONS.ruleNotRecognized[await getLocale()] };
     }
   }
 

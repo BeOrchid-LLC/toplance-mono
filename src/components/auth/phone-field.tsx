@@ -4,12 +4,14 @@ import * as React from "react";
 import { ChevronDown, Search } from "lucide-react";
 
 import { Label } from "@/components/ui/label";
+import { useT } from "@/components/locale-provider";
 import {
   applyMask,
   countryBy,
   searchCountries,
   type Country,
 } from "@/lib/domain/countries";
+import { PHONE_FIELD } from "@/lib/i18n/phone-field";
 import { cn } from "@/lib/utils";
 
 /**
@@ -28,7 +30,7 @@ export function PhoneField({
   countryName = "country_iso",
   defaultCountry = "ng",
   defaultDigits = "",
-  label = "Mobile number",
+  label,
   hint,
 }: {
   name?: string;
@@ -39,6 +41,7 @@ export function PhoneField({
   label?: string;
   hint?: string;
 }) {
+  const t = useT();
   const [iso, setIso] = React.useState(defaultCountry);
   const [digits, setDigits] = React.useState(defaultDigits);
   const [open, setOpen] = React.useState(false);
@@ -48,6 +51,7 @@ export function PhoneField({
 
   const country = countryBy(iso);
   const results = searchCountries(query);
+  const resolvedLabel = label ?? t(PHONE_FIELD.defaultLabel);
 
   React.useEffect(() => {
     if (!open) return;
@@ -74,7 +78,7 @@ export function PhoneField({
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={`${name}-input`}>{label}</Label>
+      <Label htmlFor={`${name}-input`}>{resolvedLabel}</Label>
 
       <div ref={wrapRef} className="relative">
         <div className="flex h-[var(--control-h)] items-stretch overflow-hidden rounded-md border border-border-strong bg-surface focus-within:border-brand focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]">
@@ -83,7 +87,9 @@ export function PhoneField({
             onClick={() => setOpen((o) => !o)}
             aria-haspopup="listbox"
             aria-expanded={open}
-            aria-label={`Country code: ${country.name} ${country.dial}`}
+            aria-label={t(PHONE_FIELD.countryCodeAriaLabel)
+              .replace("{name}", country.name)
+              .replace("{dial}", country.dial)}
             className="flex shrink-0 items-center gap-1 border-e border-border px-3 text-xl transition-colors hover:bg-surface-2"
           >
             <span aria-hidden>{country.flag}</span>
@@ -117,13 +123,13 @@ export function PhoneField({
                 ref={searchRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search countries"
+                placeholder={t(PHONE_FIELD.searchPlaceholder)}
                 className="h-[var(--row-h)] w-full bg-transparent text-base outline-none placeholder:text-ink-3"
               />
             </div>
             <div role="listbox" className="max-h-64 overflow-y-auto p-2">
               {results.some((c) => c.preferred) && !query && (
-                <p className="special-caps px-3 py-2">Common here</p>
+                <p className="special-caps px-3 py-2">{t(PHONE_FIELD.commonHere)}</p>
               )}
               {results.map((c, i) => (
                 <React.Fragment key={c.iso}>
@@ -131,7 +137,7 @@ export function PhoneField({
                     i > 0 &&
                     results[i - 1].preferred &&
                     !c.preferred && (
-                      <p className="special-caps px-3 py-2">All countries</p>
+                      <p className="special-caps px-3 py-2">{t(PHONE_FIELD.allCountries)}</p>
                     )}
                   <button
                     type="button"
@@ -152,7 +158,9 @@ export function PhoneField({
                 </React.Fragment>
               ))}
               {results.length === 0 && (
-                <p className="t-muted px-3 py-4">No country matches “{query}”.</p>
+                <p className="t-muted px-3 py-4">
+                  {t(PHONE_FIELD.noMatchTemplate).replace("{query}", query)}
+                </p>
               )}
             </div>
           </div>

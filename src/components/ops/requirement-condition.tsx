@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { setRequirementCondition } from "@/app/ops/actions";
 import type { AppliesWhen } from "@/lib/domain/applies-when";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
+import { useT } from "@/components/locale-provider";
+import { OPS_REQUIREMENT_CONDITION } from "@/lib/i18n/ops-corridor-review";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
 
 /**
  * The rule that turns "only if it applies" into "this one is yours".
@@ -39,6 +42,7 @@ export function RequirementCondition({
    */
   editable: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [open, setOpen] = React.useState(false);
@@ -63,21 +67,29 @@ export function RequirementCondition({
         return;
       }
 
-      toast.success(clear ? "Rule cleared." : "Rule saved.");
+      toast.success(
+        clear
+          ? t(OPS_REQUIREMENT_CONDITION.toastCleared)
+          : t(OPS_REQUIREMENT_CONDITION.toastSaved)
+      );
       setOpen(false);
       router.refresh();
     });
   }
 
+  // `current.in` names the traveller's own answer tokens verbatim (see
+  // `@/lib/domain/intake.ts`'s `chip.value`), stored for matching and
+  // never translated — only the joining word is.
   if (!editable) {
     return current ? (
       <p className="t-muted mt-2">
-        Applies when <span className="font-semibold">{current.in.join(" or ")}</span>
+        {t(OPS_REQUIREMENT_CONDITION.appliesWhen)}{" "}
+        <span className="font-semibold">
+          {current.in.join(` ${t(OPS_REQUIREMENT_CONDITION.orWord)} `)}
+        </span>
       </p>
     ) : (
-      <p className="t-muted mt-2">
-        No rule yet — travellers are asked about this one with a hedge.
-      </p>
+      <p className="t-muted mt-2">{t(OPS_REQUIREMENT_CONDITION.noRuleReadOnly)}</p>
     );
   }
 
@@ -86,24 +98,29 @@ export function RequirementCondition({
       <div className="flex flex-wrap items-center gap-2">
         {current ? (
           <Badge variant="success">
-            Applies when {current.in.join(" or ")}
+            {t(OPS_REQUIREMENT_CONDITION.appliesWhen)}{" "}
+            {current.in.join(` ${t(OPS_REQUIREMENT_CONDITION.orWord)} `)}
           </Badge>
         ) : (
-          <Badge variant="warning">No rule yet</Badge>
+          <Badge variant="warning">{t(OPS_REQUIREMENT_CONDITION.noRuleBadge)}</Badge>
         )}
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
           className="text-base font-semibold text-brand-text hover:underline"
         >
-          {open ? "Cancel" : current ? "Change rule" : "Write the rule"}
+          {open
+            ? t(OPS_COMMON.cancel)
+            : current
+              ? t(OPS_REQUIREMENT_CONDITION.changeRule)
+              : t(OPS_REQUIREMENT_CONDITION.writeTheRule)}
         </button>
       </div>
 
       {open && (
         <div className="mt-3 rounded-sm border border-border-strong p-4">
           <label className="special-caps block" htmlFor={`answer-${requirementId}`}>
-            Applies when the traveller answered
+            {t(OPS_REQUIREMENT_CONDITION.appliesWhenAnswered)}
           </label>
           <select
             id={`answer-${requirementId}`}
@@ -117,17 +134,19 @@ export function RequirementCondition({
             }}
             className="mt-2 min-h-[var(--row-h)] w-full rounded-sm border border-border-strong bg-surface px-3 text-base"
           >
-            <option value="">Choose a question…</option>
+            <option value="">{t(OPS_REQUIREMENT_CONDITION.chooseQuestion)}</option>
             {INTAKE_QUESTIONS.map((q) => (
               <option key={q.key} value={q.key}>
-                {q.prompt.en}
+                {t(q.prompt)}
               </option>
             ))}
           </select>
 
           {question && (
             <fieldset className="mt-4">
-              <legend className="special-caps">with any of these answers</legend>
+              <legend className="special-caps">
+                {t(OPS_REQUIREMENT_CONDITION.withAnyOfTheseAnswers)}
+              </legend>
               <div className="mt-2 flex flex-col gap-2">
                 {question.chips.map((chip) => (
                   <label
@@ -145,7 +164,7 @@ export function RequirementCondition({
                         )
                       }
                     />
-                    {chip.label.en}
+                    {t(chip.label)}
                   </label>
                 ))}
               </div>
@@ -156,9 +175,7 @@ export function RequirementCondition({
                 who typed their own answer keeps the hedge.
               */}
               <p className="t-muted mt-3 max-w-[62ch]">
-                A traveller who typed their own answer instead of tapping one of
-                these is not matched by the rule, and keeps this document on
-                their conditional list.
+                {t(OPS_REQUIREMENT_CONDITION.freeTextNotice)}
               </p>
             </fieldset>
           )}
@@ -170,7 +187,7 @@ export function RequirementCondition({
               disabled={pending || !answer || !options.length}
               onClick={() => save()}
             >
-              Save rule
+              {t(OPS_REQUIREMENT_CONDITION.saveRule)}
             </Button>
             {current && (
               <Button
@@ -180,7 +197,7 @@ export function RequirementCondition({
                 disabled={pending}
                 onClick={() => save(true)}
               >
-                Clear the rule
+                {t(OPS_REQUIREMENT_CONDITION.clearRule)}
               </Button>
             )}
           </div>

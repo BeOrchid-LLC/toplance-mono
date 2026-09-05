@@ -21,6 +21,8 @@ import { Shell } from "@/components/shared/shell";
 import { Wordmark } from "@/components/shared/wordmark";
 import { useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
+import { SITE_CHROME } from "@/lib/i18n/site-chrome";
+import type { Locale } from "@/lib/i18n/locales";
 
 const TRAVELERS = "/travelers";
 
@@ -45,18 +47,21 @@ const TRAVELERS = "/travelers";
  * clips a label that long between `lg` and roughly 1140px, and a nav
  * entry is a signpost rather than a heading.
  */
-function chromeFor(pathname: string) {
+function chromeFor(pathname: string, t: (record: Record<Locale, string>) => string) {
   const traveller = pathname === TRAVELERS;
 
   return {
     sections: [
-      { href: "#how", label: "How it works" },
-      { href: "#where", label: traveller ? "Where we work" : "Where you can go" },
-      { href: "#pricing", label: "Pricing" },
+      { href: "#how", label: t(SITE_CHROME.howItWorks) },
+      {
+        href: "#where",
+        label: t(traveller ? SITE_CHROME.whereWeWork : SITE_CHROME.whereYouCanGo),
+      },
+      { href: "#pricing", label: t(SITE_CHROME.pricing) },
     ],
     cross: traveller
-      ? { href: "/", label: "For agencies" }
-      : { href: TRAVELERS, label: "For travelers" },
+      ? { href: "/", label: t(SITE_CHROME.forAgencies) }
+      : { href: TRAVELERS, label: t(SITE_CHROME.forTravelers) },
   };
 }
 
@@ -66,7 +71,7 @@ const SECTION_IDS = ["how", "where", "pricing"];
 export function SiteNav() {
   const t = useT();
   const pathname = usePathname();
-  const { sections, cross } = chromeFor(pathname);
+  const { sections, cross } = chromeFor(pathname, t);
 
   /**
    * The hero is a light ground now, so the bar no longer has to invert
@@ -234,7 +239,7 @@ export function SiteNav() {
                 variant="neutral"
                 size="icon"
                 className="lg:hidden"
-                aria-label="Open menu"
+                aria-label={t(SITE_CHROME.openMenu)}
               >
                 <Menu />
               </Button>
@@ -266,7 +271,7 @@ export function SiteNav() {
                 "data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2"
               )}
             >
-              <DialogTitle className="sr-only">Menu</DialogTitle>
+              <DialogTitle className="sr-only">{t(SITE_CHROME.menuTitle)}</DialogTitle>
 
               <div className="px-6 pb-4">
                 {sections.map((l) => (
@@ -301,11 +306,11 @@ export function SiteNav() {
                     word on it, which is the same call `AccountMenu`
                     makes on the product bar below `md`. */}
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                  <span className="tag">Appearance</span>
+                  <span className="tag">{t(SITE_CHROME.appearance)}</span>
                   <ThemeSwitch />
                 </div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="tag">Language</span>
+                  <span className="tag">{t(SITE_CHROME.language)}</span>
                   <LocaleMenu />
                 </div>
               </div>

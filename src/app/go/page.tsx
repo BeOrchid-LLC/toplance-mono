@@ -7,6 +7,8 @@ import { SignOutLink } from "@/components/auth/sign-out-link";
 import { homeFor } from "@/lib/auth/routes";
 import { getActor } from "@/lib/data/applications";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { GO_PAGE } from "@/lib/i18n/go";
+import { getLocale } from "@/lib/i18n/server";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -35,6 +37,8 @@ export default async function GoPage() {
   const actor = await getActor();
   if (actor) redirect(homeFor(actor.role));
 
+  const locale = await getLocale();
+
   return (
     <main className="relative isolate grid min-h-dvh place-items-center px-6 py-14">
       <div
@@ -44,17 +48,14 @@ export default async function GoPage() {
       <Shell className="max-w-[560px]">
         <Panel>
           <PanelBody>
-            <p className="tag">Account</p>
+            <p className="tag">{GO_PAGE.tag[locale]}</p>
             <h1 className="t-h2 mt-3 max-w-[24ch]">
-              This sign-in has no Toplance account
+              {GO_PAGE.title[locale]}
             </h1>
             <p className="t-muted mt-3 max-w-[48ch]">
-              You are signed in, but nothing here belongs to this address.
-              Toplance accounts are created from an invitation — open the link
-              the organisation sponsoring you sent, or sign out and try the
-              address they invited.
+              {GO_PAGE.body[locale]}
             </p>
-            <SignOutLink>Sign out</SignOutLink>
+            <SignOutLink>{GO_PAGE.signOut[locale]}</SignOutLink>
           </PanelBody>
         </Panel>
       </Shell>

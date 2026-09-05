@@ -5,12 +5,19 @@ import { Check } from "lucide-react";
 import { AuthForm } from "@/components/auth/auth-form";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { AUTH_PAGE_TITLES, OPS_DOOR_PANEL } from "@/lib/i18n/auth-pages";
+import { getLocale } from "@/lib/i18n/server";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export const metadata: Metadata = { title: "Operations sign-in" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: AUTH_PAGE_TITLES.opsSignIn[locale] };
+}
 
-export default function OpsSignInPage() {
+export default async function OpsSignInPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
 
   return (
     <div className="mx-auto grid max-w-[1000px] items-center gap-14 lg:grid-cols-[1fr_460px]">
@@ -18,22 +25,16 @@ export default function OpsSignInPage() {
           the one door where the reader is being told what is recorded
           about them, not sold anything. */}
       <div className="hidden lg:block">
-        <p className="tag">Staff entrance</p>
-        <h2 className="d-lg mt-3 max-w-[16ch]">Staff access only</h2>
+        <p className="tag">{OPS_DOOR_PANEL.tag[locale]}</p>
+        <h2 className="d-lg mt-3 max-w-[16ch]">{OPS_DOOR_PANEL.heading[locale]}</h2>
         <p className="t-body-lg mt-5 max-w-[52ch] text-ink-2">
-          This console holds identity documents for every applicant. Sessions
-          are logged and every document view is recorded against your account.
+          {OPS_DOOR_PANEL.body[locale]}
         </p>
         <ul className="mt-8 flex flex-col gap-3">
-          {[
-            "A one-time code is emailed on every sign-in",
-            "An authenticator app is required as a second factor",
-            "Sessions expire after 30 minutes idle",
-            "Full audit trail on document access",
-          ].map((x) => (
-            <li key={x} className="flex items-start gap-3">
+          {OPS_DOOR_PANEL.bullets.map((x) => (
+            <li key={x.en} className="flex items-start gap-3">
               <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
-              <span className="text-[15px] text-ink-2">{x}</span>
+              <span className="text-[15px] text-ink-2">{x[locale]}</span>
             </li>
           ))}
         </ul>

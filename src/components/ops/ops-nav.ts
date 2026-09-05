@@ -1,4 +1,6 @@
 import type { NavItem } from "@/components/app/app-nav";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import type { Locale } from "@/lib/i18n/locales";
 
 /**
  * The staff console's nav, in one place.
@@ -16,8 +18,19 @@ import type { NavItem } from "@/components/app/app-nav";
  * `/ops` stays first: `AppNav.isActive` treats item 0 as the section root
  * and matches it exactly, so reordering this list would light the wrong
  * pill on every child route.
+ *
+ * Kept in English here — `ops-nav.test.ts` asserts against this shape —
+ * and localised for actual rendering by `localizedOpsNav` below.
  */
 export const opsNav: NavItem[] = [
   { href: "/ops", label: "Case queue" },
   { href: "/ops/corridors", label: "Routes" },
 ];
+
+/** `opsNav`, with each label resolved to `locale` — what every ops page actually renders. */
+export function localizedOpsNav(locale: Locale): NavItem[] {
+  return [
+    { ...opsNav[0], label: OPS_COMMON.nav.caseQueue[locale] },
+    { ...opsNav[1], label: OPS_COMMON.nav.routes[locale] },
+  ];
+}

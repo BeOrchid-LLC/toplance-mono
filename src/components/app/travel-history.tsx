@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { addTravelRecord, removeTravelRecord } from "@/app/(app)/actions";
 import { TripList, type Trip } from "@/components/shared/trip-list";
+import { useT } from "@/components/locale-provider";
+import { TRAVEL_HISTORY } from "@/lib/i18n/travel-history";
 
 /**
  * The traveller's past trips, editable in place on the profile. Rows
@@ -24,6 +26,7 @@ const inputClass =
   "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
 
 export function TravelHistory({ trips }: { trips: Trip[] }) {
+  const t = useT();
   const [adding, setAdding] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -35,7 +38,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
         toast.error(result.error);
         return;
       }
-      toast.success("Trip added to your history");
+      toast.success(t(TRAVEL_HISTORY.tripAdded));
       formRef.current?.reset();
       setAdding(false);
     });
@@ -47,18 +50,18 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
         toast.error(result.error);
         return;
       }
-      toast.success(`${trip.country} removed`);
+      toast.success(t(TRAVEL_HISTORY.removedToast).replace("{country}", trip.country));
     });
 
   return (
     <div>
       <TripList
         trips={trips}
-        empty="No past trips recorded. Visa forms ask about them — adding yours here saves digging through old passports at the desk."
+        empty={t(TRAVEL_HISTORY.empty)}
         action={(trip) => (
           <button
             type="button"
-            aria-label={`Remove the trip to ${trip.country}`}
+            aria-label={t(TRAVEL_HISTORY.removeAria).replace("{country}", trip.country)}
             onClick={() => remove(trip)}
             disabled={pending}
             className="-my-2 -me-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-danger"
@@ -71,28 +74,28 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
       {adding ? (
         <form ref={formRef} action={save} className="mt-5 grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="trip_country">Country you traveled to</Label>
+            <Label htmlFor="trip_country">{t(TRAVEL_HISTORY.countryLabel)}</Label>
             <input
               id="trip_country"
               name="country"
               required
               autoFocus
-              placeholder="Ghana"
+              placeholder={t(TRAVEL_HISTORY.countryPlaceholder)}
               className={inputClass}
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="trip_purpose">What the trip was for</Label>
+            <Label htmlFor="trip_purpose">{t(TRAVEL_HISTORY.purposeLabel)}</Label>
             <input
               id="trip_purpose"
               name="purpose"
-              placeholder="Family visit, work, study…"
+              placeholder={t(TRAVEL_HISTORY.purposePlaceholder)}
               className={inputClass}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="trip_from">From</Label>
+              <Label htmlFor="trip_from">{t(TRAVEL_HISTORY.fromLabel)}</Label>
               <input
                 id="trip_from"
                 name="started_on"
@@ -101,7 +104,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="trip_to">To</Label>
+              <Label htmlFor="trip_to">{t(TRAVEL_HISTORY.toLabel)}</Label>
               <input
                 id="trip_to"
                 name="ended_on"
@@ -112,7 +115,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           </div>
           <div className="flex gap-2">
             <Button type="submit" size="sm" disabled={pending}>
-              {pending ? "Saving…" : "Save trip"}
+              {pending ? t(TRAVEL_HISTORY.saving) : t(TRAVEL_HISTORY.saveTrip)}
             </Button>
             <Button
               type="button"
@@ -121,7 +124,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
               onClick={() => setAdding(false)}
               disabled={pending}
             >
-              <X /> Cancel
+              <X /> {t(TRAVEL_HISTORY.cancel)}
             </Button>
           </div>
         </form>
@@ -133,7 +136,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           className="mt-5"
           onClick={() => setAdding(true)}
         >
-          <Plus /> Add a past trip
+          <Plus /> {t(TRAVEL_HISTORY.addTrip)}
         </Button>
       )}
     </div>

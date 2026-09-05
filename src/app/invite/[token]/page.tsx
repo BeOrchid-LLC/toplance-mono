@@ -21,11 +21,17 @@ import {
 } from "@/lib/data/invitations";
 import { countryFromIso2, PURPOSE_ISO } from "@/lib/domain/corridors";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
+import { INVITE_PAGE } from "@/lib/i18n/invite";
+import { getLocale } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/locales";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Accept invitation" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: INVITE_PAGE.title[locale] };
+}
 
 function purposeLabel(purpose: string): string {
   return Object.entries(PURPOSE_ISO).find(([, iso]) => iso === purpose)?.[0] ?? purpose;
@@ -57,7 +63,13 @@ function InviteChrome({ children }: { children: React.ReactNode }) {
 }
 
 /** The facts every signed-in-or-not visitor with a live invitation sees. */
-function InvitationSummary({ preview }: { preview: InvitationPreview }) {
+function InvitationSummary({
+  preview,
+  locale,
+}: {
+  preview: InvitationPreview;
+  locale: Locale;
+}) {
   const destination = countryFromIso2(preview.destinationIso);
   const destinationLabel = destination?.name ?? preview.destinationIso?.toUpperCase();
   const parts = [destinationLabel, preview.purpose && purposeLabel(preview.purpose)].filter(
@@ -65,9 +77,9 @@ function InvitationSummary({ preview }: { preview: InvitationPreview }) {
   );
   return (
     <>
-      <p className="tag">Invitation</p>
+      <p className="tag">{INVITE_PAGE.tag[locale]}</p>
       <h1 className="t-h2 mt-3 max-w-[22ch]">
-        {preview.orgName} is sponsoring your visa application
+        {INVITE_PAGE.summaryHeadingTemplate[locale].replace("{orgName}", preview.orgName)}
       </h1>
       {parts.length > 0 && (
         <p className="t-body-lg mt-3 text-ink-2">{parts.join(" · ")}</p>
@@ -75,9 +87,7 @@ function InvitationSummary({ preview }: { preview: InvitationPreview }) {
       <div className="mt-6 flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
         <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
         <p className="t-muted">
-          {preview.orgName} sees your progress, not your documents.
-          Passports, bank statements and police certificates stay between
-          you and Toplance.
+          {INVITE_PAGE.summaryNoticeTemplate[locale].replace("{orgName}", preview.orgName)}
         </p>
       </div>
     </>
@@ -100,18 +110,26 @@ function InvitationSummary({ preview }: { preview: InvitationPreview }) {
  * the invited address is the one fact on the invitation that belongs to
  * somebody who may not be the reader.
  */
-function WrongAccount({ email, token }: { email: string | null; token: string }) {
+function WrongAccount({
+  email,
+  token,
+  locale,
+}: {
+  email: string | null;
+  token: string;
+  locale: Locale;
+}) {
   return (
     <InvitationDeadEnd
-      title="This invitation is for a different account"
+      title={INVITE_PAGE.wrongAccountTitle[locale]}
       body={
         email
-          ? `You are signed in as ${email}, and this invitation was sent to another address. Sign out and open the link again with the address the organisation invited.`
-          : "You are signed in with an account this invitation was not sent to. Sign out and open the link again with the address the organisation invited."
+          ? INVITE_PAGE.wrongAccountBodyWithEmailTemplate[locale].replace("{email}", email)
+          : INVITE_PAGE.wrongAccountBodyNoEmail[locale]
       }
     >
       <SignOutLink redirectUrl={`/invite/${token}`}>
-        Sign out and use another address
+        {INVITE_PAGE.signOutUseAnotherAddress[locale]}
       </SignOutLink>
     </InvitationDeadEnd>
   );
@@ -158,18 +176,19 @@ export default async function InvitePage({
 
   const { token } = await params;
   const preview = await getInvitationPreview(token);
+  const locale = await getLocale();
 
   const deadEnd = (reason: keyof typeof DEAD_END_MESSAGE) => (
     <InviteChrome>
       <InvitationDeadEnd
         title={DEAD_END_MESSAGE[reason]}
-        body="Ask whoever invited you to send a new one — nothing about your account has changed."
+        body={INVITE_PAGE.sendNewOne[locale]}
       >
         <Link
           href="/"
           className="mt-6 inline-block font-semibold text-brand-text hover:underline"
         >
-          Back to toplance.ca
+          {INVITE_PAGE.backToSite[locale]}
         </Link>
       </InvitationDeadEnd>
     </InviteChrome>
@@ -206,6 +225,7 @@ export default async function InvitePage({
           <WrongAccount
             email={user?.emailAddresses[0]?.emailAddress ?? null}
             token={token}
+            locale={locale}
           />
         </InviteChrome>
       );
@@ -220,19 +240,19 @@ export default async function InvitePage({
       <InviteChrome>
         <Panel>
           <PanelBody>
-            <InvitationSummary preview={preview} />
+            <InvitationSummary preview={preview} locale={locale} />
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href={`/sign-up?token=${encodeURIComponent(token)}`}
                 className="flex h-[var(--control-h)] flex-1 items-center justify-center rounded-md bg-brand px-[22px] text-base font-semibold text-on-brand hover:bg-[color-mix(in_srgb,var(--brand)_88%,#fff)]"
               >
-                Set up your account
+                {INVITE_PAGE.setUpAccount[locale]}
               </Link>
               <Link
                 href={`/sign-in?next=${encodeURIComponent(next)}`}
                 className="flex h-[var(--control-h)] flex-1 items-center justify-center rounded-md border border-brand px-[22px] text-base font-semibold text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]"
               >
-                Sign in
+                {INVITE_PAGE.signIn[locale]}
               </Link>
             </div>
           </PanelBody>
@@ -246,16 +266,13 @@ export default async function InvitePage({
       <InviteChrome>
         <Panel>
           <PanelBody>
-            <p className="tag">Invitation</p>
-            <h1 className="t-h2 mt-3">This invitation is for a traveler account</h1>
+            <p className="tag">{INVITE_PAGE.tag[locale]}</p>
+            <h1 className="t-h2 mt-3">{INVITE_PAGE.notTravelerTitle[locale]}</h1>
             <p className="t-muted mt-3 max-w-[48ch]">
-              You are signed in with an organisation or staff account, which
-              cannot accept a sponsorship invitation. Open the link in a
-              browser signed in as the traveler it was sent to, or sign out
-              first.
+              {INVITE_PAGE.notTravelerBody[locale]}
             </p>
             <SignOutLink redirectUrl={`/invite/${token}`}>
-              Sign out and use another address
+              {INVITE_PAGE.signOutUseAnotherAddress[locale]}
             </SignOutLink>
           </PanelBody>
         </Panel>
@@ -271,7 +288,7 @@ export default async function InvitePage({
   if (profile.email.toLowerCase() !== invitedEmail.toLowerCase()) {
     return (
       <InviteChrome>
-        <WrongAccount email={profile.email} token={token} />
+        <WrongAccount email={profile.email} token={token} locale={locale} />
       </InviteChrome>
     );
   }
@@ -280,7 +297,7 @@ export default async function InvitePage({
     <InviteChrome>
       <Panel>
         <PanelBody>
-          <InvitationSummary preview={preview} />
+          <InvitationSummary preview={preview} locale={locale} />
           <AcceptInvitationForm token={token} />
         </PanelBody>
       </Panel>

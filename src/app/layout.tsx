@@ -4,6 +4,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { dirOf } from "@/lib/i18n/locales";
+import { getLocale } from "@/lib/i18n/server";
 
 import "./globals.css";
 
@@ -74,11 +76,13 @@ export const metadata: Metadata = {
     "Answer a few short questions in your own language. Toplance turns them into the exact document checklist for your destination, checks every file as you upload it, and stays with you through the decision.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} dir={dirOf(locale)} suppressHydrationWarning>
       <body
         data-brand="toplance"
         className={`${inter.variable} ${archivo.variable} ${jetbrains.variable} antialiased`}
@@ -89,7 +93,7 @@ export default function RootLayout({
           * keeps the theme and locale providers where they were.
           */}
         <ClerkProvider>
-          <Providers>
+          <Providers initialLocale={locale}>
             {children}
             <Toaster />
           </Providers>

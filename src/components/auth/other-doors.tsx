@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, Briefcase, Shield, type LucideIcon } from "lucide-react";
 
+import { getLocale } from "@/lib/i18n/server";
+import { AUTH_DOORS, type AUTH_DOORS_HEADINGS } from "@/lib/i18n/auth-doors";
+import type { Locale } from "@/lib/i18n/locales";
+
 /**
  * The doors this one is not, under a rule rather than in cards.
  *
@@ -13,12 +17,17 @@ import { ArrowRight, Briefcase, Shield, type LucideIcon } from "lucide-react";
  * on the outside, so it owes a visitor an alternative. `/sign-in` needs
  * it for the opposite reason: it is where *everyone* with an account
  * arrives, including the two audiences whose console it is not.
+ *
+ * `title`/`body` are dictionaries rather than resolved strings: `OtherDoors`
+ * is a Server Component with no locale of its own to resolve them against
+ * until it renders, and these two arrays are module-level constants shared
+ * by every request.
  */
 export type Door = {
   href: string;
   icon: LucideIcon;
-  title: string;
-  body: string;
+  title: Record<Locale, string>;
+  body: Record<Locale, string>;
 };
 
 /**
@@ -31,14 +40,14 @@ export const SIGN_UP_DOORS: Door[] = [
   {
     href: "/employer/sign-up",
     icon: Briefcase,
-    title: "Employer sign-up",
-    body: "Create your organisation, sponsor seats and invite your people",
+    title: AUTH_DOORS.employerSignUp.title,
+    body: AUTH_DOORS.employerSignUp.body,
   },
   {
     href: "/ops/sign-in",
     icon: Shield,
-    title: "Toplance operations sign-in",
-    body: "Staff only — review cases, verify documents and set decisions",
+    title: AUTH_DOORS.opsSignIn.title,
+    body: AUTH_DOORS.opsSignIn.body,
   },
 ];
 
@@ -52,27 +61,29 @@ export const SIGN_IN_DOORS: Door[] = [
   {
     href: "/employer/sign-in",
     icon: Briefcase,
-    title: "Organisation sign-in",
-    body: "For the person managing seats and invitations at your organisation",
+    title: AUTH_DOORS.employerSignIn.title,
+    body: AUTH_DOORS.employerSignIn.body,
   },
   {
     href: "/ops/sign-in",
     icon: Shield,
-    title: "Toplance operations sign-in",
-    body: "Staff only — review cases, verify documents and set decisions",
+    title: AUTH_DOORS.opsSignIn.title,
+    body: AUTH_DOORS.opsSignIn.body,
   },
 ];
 
-export function OtherDoors({
+export async function OtherDoors({
   heading,
   entries,
 }: {
-  heading: string;
+  heading: (typeof AUTH_DOORS_HEADINGS)[keyof typeof AUTH_DOORS_HEADINGS];
   entries: Door[];
 }) {
+  const locale = await getLocale();
+
   return (
     <div className="mt-10">
-      <p className="tag">{heading}</p>
+      <p className="tag">{heading[locale]}</p>
       <div className="mt-4 border-t border-border-strong">
         {entries.map((e) => (
           <Link
@@ -82,8 +93,8 @@ export function OtherDoors({
           >
             <e.icon className="size-5 shrink-0 text-brand-text" aria-hidden />
             <span className="min-w-0 flex-1">
-              <span className="d-sm block">{e.title}</span>
-              <span className="t-muted mt-0.5 block text-[15px]">{e.body}</span>
+              <span className="d-sm block">{e.title[locale]}</span>
+              <span className="t-muted mt-0.5 block text-[15px]">{e.body[locale]}</span>
             </span>
             <ArrowRight
               className="size-5 shrink-0 text-brand-text transition-transform group-hover:translate-x-0.5"

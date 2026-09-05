@@ -26,15 +26,22 @@ import { fetchOutlook } from "@/lib/weather/fetch-outlook";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { track } from "@/lib/analytics/track";
+import { getLocale } from "@/lib/i18n/server";
+import { COMPANION } from "@/lib/i18n/companion";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "After you land" };
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return { title: COMPANION.title[locale] };
+}
 
 export default async function CompanionPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
+  const t = COMPANION;
   const profile = await getProfile();
   const application = await getOrCreateApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/companion");
@@ -85,23 +92,20 @@ export default async function CompanionPage() {
   return (
     <main>
       <Shell className="py-8 md:py-10">
-        <h1 className="d-lg text-ink">After you land</h1>
-        <p className="t-body-lg mt-2 max-w-[62ch] text-ink-2">
-          Your approval is the start of a new file, not the end of this one —
-          here is what to do in your first weeks, and what to check before
-          your visa needs renewing.
-        </p>
+        <h1 className="d-lg text-ink">{t.heading[locale]}</h1>
+        <p className="t-body-lg mt-2 max-w-[62ch] text-ink-2">{t.intro[locale]}</p>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
           <div className="grid gap-6">
             {/* ---- arrival checklist ---- */}
             <Panel>
               <PanelHeader
-                label="Arrival checklist"
+                label={t.arrivalChecklistLabel[locale]}
                 aside={
                   <Badge variant="neutral">
                     <ClipboardList className="size-3.5" aria-hidden />{" "}
-                    <span className="num">{checklist.length}</span> steps
+                    <span className="num">{checklist.length}</span>{" "}
+                    {t.stepsBadge[locale]}
                   </Badge>
                 }
               />
@@ -123,7 +127,7 @@ export default async function CompanionPage() {
             {/* ---- local tips ---- */}
             <Panel>
               <PanelHeader
-                label="Local tips"
+                label={t.localTipsLabel[locale]}
                 aside={
                   <Badge variant="brand">
                     <Sparkles /> AI
@@ -134,11 +138,7 @@ export default async function CompanionPage() {
                 {tips ? (
                   <ChatMarkdown>{tips.markdown}</ChatMarkdown>
                 ) : (
-                  <p className="t-muted">
-                    Nothing generated yet. Your checklist above is ready
-                    either way — local tips appear here once they have
-                    been put together.
-                  </p>
+                  <p className="t-muted">{t.noTipsYet[locale]}</p>
                 )}
               </PanelBody>
             </Panel>
@@ -148,11 +148,11 @@ export default async function CompanionPage() {
             {/* ---- renewal ---- */}
             <Panel>
               <PanelHeader
-                label="Renewal"
+                label={t.renewalLabel[locale]}
                 aside={
                   <Badge variant="neutral">
-                    <CalendarClock className="size-3.5" aria-hidden /> Check
-                    ahead
+                    <CalendarClock className="size-3.5" aria-hidden />{" "}
+                    {t.checkAheadBadge[locale]}
                   </Badge>
                 }
               />
@@ -169,7 +169,7 @@ export default async function CompanionPage() {
             {weather && (
               <Panel>
                 <PanelHeader
-                  label="This week"
+                  label={t.thisWeekLabel[locale]}
                   aside={
                     <Badge variant="neutral">
                       <Thermometer className="size-3.5" aria-hidden />{" "}
@@ -179,13 +179,36 @@ export default async function CompanionPage() {
                 />
                 <PanelBody>
                   <p className="t-body">
-                    Over the next{" "}
-                    <span className="num">{weather.outlook.days}</span> days in{" "}
-                    {weather.city}, expect highs around{" "}
-                    <span className="num">{weather.outlook.highC}</span>
-                    {weather.outlook.unit} and lows around{" "}
-                    <span className="num">{weather.outlook.lowC}</span>
-                    {weather.outlook.unit}.
+                    {t.weatherOutlook[locale]
+                      .split(/(\{[a-zA-Z]+\})/)
+                      .map((part, i) => {
+                        switch (part) {
+                          case "{days}":
+                            return (
+                              <span key={i} className="num">
+                                {weather.outlook.days}
+                              </span>
+                            );
+                          case "{city}":
+                            return weather.city;
+                          case "{highC}":
+                            return (
+                              <span key={i} className="num">
+                                {weather.outlook.highC}
+                              </span>
+                            );
+                          case "{lowC}":
+                            return (
+                              <span key={i} className="num">
+                                {weather.outlook.lowC}
+                              </span>
+                            );
+                          case "{unit}":
+                            return weather.outlook.unit;
+                          default:
+                            return part;
+                        }
+                      })}
                   </p>
                 </PanelBody>
               </Panel>
@@ -195,10 +218,11 @@ export default async function CompanionPage() {
             {advisories.length > 0 && (
               <Panel>
                 <PanelHeader
-                  label="Travel advice"
+                  label={t.travelAdviceLabel[locale]}
                   aside={
                     <Badge variant="neutral">
-                      <ShieldAlert className="size-3.5" aria-hidden /> Official
+                      <ShieldAlert className="size-3.5" aria-hidden />{" "}
+                      {t.officialBadge[locale]}
                     </Badge>
                   }
                 />
@@ -231,7 +255,7 @@ export default async function CompanionPage() {
                           target="_blank"
                           rel="noreferrer noopener"
                         >
-                          Read it on {advisory.source}
+                          {t.readItOn[locale].replace("{source}", advisory.source)}
                         </a>
                       </li>
                     ))}
@@ -242,13 +266,13 @@ export default async function CompanionPage() {
 
             {/* ---- destination ---- */}
             <Panel>
-              <PanelHeader label="Your visa" />
+              <PanelHeader label={t.yourVisaLabel[locale]} />
               <PanelBody className="pt-2">
                 <div className="flex items-center gap-2">
                   <MapPin className="size-4 text-ink-3" aria-hidden />
                   <p className="t-body font-semibold">{corridor.visaName}</p>
                 </div>
-                <p className="t-muted mt-2">Approved and on file.</p>
+                <p className="t-muted mt-2">{t.approvedAndOnFile[locale]}</p>
               </PanelBody>
             </Panel>
           </div>

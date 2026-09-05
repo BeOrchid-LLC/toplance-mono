@@ -17,6 +17,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteTraveller } from "@/app/employer/actions";
+import { useT } from "@/components/locale-provider";
+import { INVITE_DIALOG } from "@/lib/i18n/invite-dialog";
+
+/**
+ * Fills `{token}` placeholders in a translated template — the same
+ * convention `src/app/employer/page.tsx` uses, needed here because the
+ * recipient's own email address has to be spliced into an already
+ * locale-picked sentence.
+ */
+function fill(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? "");
+}
 
 /** What the sent sheet states about the invitation it hands over. */
 type Recipient = {
@@ -44,6 +56,7 @@ type Recipient = {
  * hand-off, the email a bonus when Resend is configured.
  */
 export function InviteDialog() {
+  const t = useT();
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
@@ -66,7 +79,7 @@ export function InviteDialog() {
       }
       setRecipient(submitted);
       setInviteUrl(result.inviteUrl);
-      toast.success("Invitation sent");
+      toast.success(t(INVITE_DIALOG.sentTitle));
     });
   }
 
@@ -92,7 +105,7 @@ export function InviteDialog() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("Copy failed — select the link text instead.");
+      toast.error(t(INVITE_DIALOG.toastCopyFailed));
     }
   }
 
@@ -100,19 +113,21 @@ export function InviteDialog() {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <Mail /> Invite someone
+          <Mail /> {t(INVITE_DIALOG.inviteSomeone)}
         </Button>
       </DialogTrigger>
       <DialogContent>
         {inviteUrl ? (
           <>
             <DialogHeader>
-              <DialogTitle>Invitation sent</DialogTitle>
+              <DialogTitle>{t(INVITE_DIALOG.sentTitle)}</DialogTitle>
               <DialogDescription>
                 {recipient?.email
-                  ? `An email is on its way to ${recipient.email}. `
+                  ? fill(t(INVITE_DIALOG.sentDescriptionEmailPrefix), {
+                      email: recipient.email,
+                    })
                   : ""}
-                Copy the link if you would rather hand it over yourself.
+                {t(INVITE_DIALOG.sentDescriptionCopy)}
               </DialogDescription>
             </DialogHeader>
 
@@ -123,14 +138,18 @@ export function InviteDialog() {
             <div className="min-w-0 overflow-hidden rounded-md border border-border">
               <dl>
                 <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
-                  <dt className="t-body shrink-0 text-ink-2">For</dt>
+                  <dt className="t-body shrink-0 text-ink-2">
+                    {t(INVITE_DIALOG.sheetFor)}
+                  </dt>
                   <dd className="min-w-0 truncate text-end text-base font-semibold">
                     {recipient?.fullName || recipient?.email}
                   </dd>
                 </div>
                 {recipient?.fullName && (
                   <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
-                    <dt className="t-body shrink-0 text-ink-2">Email</dt>
+                    <dt className="t-body shrink-0 text-ink-2">
+                      {t(INVITE_DIALOG.emailWord)}
+                    </dt>
                     <dd className="min-w-0 truncate text-end text-base font-semibold">
                       {recipient.email}
                     </dd>
@@ -143,8 +162,12 @@ export function InviteDialog() {
                     screen. "Copy link" carries it to the clipboard
                     instead, which is the only place it is needed. */}
                 <div className="flex items-baseline justify-between gap-6 px-4 py-3">
-                  <dt className="t-body shrink-0 text-ink-2">Valid for</dt>
-                  <dd className="text-end text-base font-semibold">30 days</dd>
+                  <dt className="t-body shrink-0 text-ink-2">
+                    {t(INVITE_DIALOG.sheetValidFor)}
+                  </dt>
+                  <dd className="text-end text-base font-semibold">
+                    {t(INVITE_DIALOG.sheetThirtyDays)}
+                  </dd>
                 </div>
               </dl>
             </div>
@@ -156,14 +179,16 @@ export function InviteDialog() {
                 risk the product had already closed, and asked the agency
                 to be careful in place of a guarantee it already had. */}
             <p className="t-muted -mt-1 text-[14px]">
-              Only {recipient?.email ?? "the invited address"} can accept
-              this invitation. Opened from any other address, it is
-              refused.
+              {fill(t(INVITE_DIALOG.onlyAddressNotice), {
+                email: recipient?.email ?? t(INVITE_DIALOG.onlyAddressFallback),
+              })}
             </p>
 
             <Button type="button" size="block" onClick={copyLink}>
               {copied ? <Check /> : <Copy />}
-              {copied ? "Copied" : "Copy link"}
+              {copied
+                ? t(INVITE_DIALOG.copyLinkCopied)
+                : t(INVITE_DIALOG.copyLinkDefault)}
             </Button>
             <DialogFooter>
               <Button
@@ -171,22 +196,21 @@ export function InviteDialog() {
                 variant="tertiary"
                 onClick={() => onOpenChange(false)}
               >
-                Done
+                {t(INVITE_DIALOG.doneButton)}
               </Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Invite someone</DialogTitle>
+              <DialogTitle>{t(INVITE_DIALOG.inviteSomeone)}</DialogTitle>
               <DialogDescription>
-                They complete their own intake. You see their progress here,
-                not their documents.
+                {t(INVITE_DIALOG.inviteDescription)}
               </DialogDescription>
             </DialogHeader>
             <form action={onSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="invite_email">Email</Label>
+                <Label htmlFor="invite_email">{t(INVITE_DIALOG.emailWord)}</Label>
                 <Input
                   id="invite_email"
                   name="email"
@@ -196,33 +220,36 @@ export function InviteDialog() {
                   required
                 />
                 <p className="t-muted text-[14px]">
-                  The only field the invitation needs.
+                  {t(INVITE_DIALOG.emailHelp)}
                 </p>
               </div>
 
               <fieldset className="flex flex-col gap-4 border-t border-border pt-4">
                 <legend className="sr-only">
-                  Their name, optional
+                  {t(INVITE_DIALOG.nameFieldsetLegend)}
                 </legend>
                 <p aria-hidden className="tag">
-                  Their name · optional
+                  {t(INVITE_DIALOG.nameFieldsetTag)}
                 </p>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="invite_full_name">Full name</Label>
+                  <Label htmlFor="invite_full_name">
+                    {t(INVITE_DIALOG.fullNameLabel)}
+                  </Label>
                   <Input
                     id="invite_full_name"
                     name="full_name"
                     autoComplete="name"
                   />
                   <p className="t-muted text-[14px]">
-                    So the invitation greets them by name. Where they are
-                    going, and why, is theirs to answer in the intake.
+                    {t(INVITE_DIALOG.fullNameHelp)}
                   </p>
                 </div>
               </fieldset>
 
               <Button type="submit" size="block" disabled={pending}>
-                {pending ? "Sending…" : "Send invitation"}
+                {pending
+                  ? t(INVITE_DIALOG.sendingButton)
+                  : t(INVITE_DIALOG.sendButton)}
               </Button>
             </form>
           </>

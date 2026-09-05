@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { addCaseNote } from "@/app/ops/actions";
+import { useT } from "@/components/locale-provider";
+import { OPS_ADD_NOTE } from "@/lib/i18n/ops-case-actions";
 
 /**
  * The desk's note composer. The placeholder says who reads it, for the
@@ -14,6 +16,7 @@ import { addCaseNote } from "@/app/ops/actions";
  * traveller as much as about them.
  */
 export function AddCaseNote({ applicationId }: { applicationId: string }) {
+  const t = useT();
   const [pending, startTransition] = React.useTransition();
   const [body, setBody] = React.useState("");
 
@@ -29,7 +32,7 @@ export function AddCaseNote({ applicationId }: { applicationId: string }) {
         return;
       }
       setBody("");
-      toast.success("Note added — the traveler sees it on their profile");
+      toast.success(t(OPS_ADD_NOTE.toastSuccess));
     });
   }
 
@@ -38,7 +41,7 @@ export function AddCaseNote({ applicationId }: { applicationId: string }) {
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="What should the file remember? The traveler reads this on their profile."
+        placeholder={t(OPS_ADD_NOTE.placeholder)}
         rows={3}
       />
       <Button
@@ -47,7 +50,7 @@ export function AddCaseNote({ applicationId }: { applicationId: string }) {
         onClick={submit}
         disabled={pending || !body.trim()}
       >
-        <NotebookPen /> Add note
+        <NotebookPen /> {t(OPS_ADD_NOTE.button)}
       </Button>
     </div>
   );

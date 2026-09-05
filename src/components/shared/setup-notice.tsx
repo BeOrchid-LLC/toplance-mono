@@ -33,7 +33,7 @@ export function SetupNotice() {
           },
           {
             cmd: "npm run db:seed",
-            note: "Loads the four corridor rule sets and their requirements.",
+            note: "Loads the four route rule sets and their requirements.",
           },
           {
             cmd: "npm run db:bucket",

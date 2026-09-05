@@ -348,6 +348,25 @@ export const corridorRequirements = pgTable(
      * arrives without one is dropped rather than guessed.
      */
     sourceUrl: text(),
+    /**
+     * When this document applies, as clauses against the traveller's own
+     * intake answers — `[{ answer: "companions", in: ["Partner"] }]`
+     * reads "only if they said they are bringing a partner". Every
+     * clause must match; an empty array is not a condition and is
+     * rejected by `parseAppliesWhen`.
+     *
+     * Null means "no rule has been written for this one yet", which is
+     * the state every conditional requirement starts in and is *not* the
+     * same as "always applies". The distinction is the whole point: a
+     * document with a rule can be stated or omitted with confidence,
+     * while one without a rule can only be offered with a hedge — and
+     * the hedge is what the 01/09 review asked us to get rid of, one
+     * corridor at a time rather than by deleting it.
+     *
+     * Only meaningful on a row with `is_required = false`; a required
+     * document applies to everyone by definition.
+     */
+    appliesWhen: jsonb(),
   },
   (t) => [unique("corridor_requirements_doc_key").on(t.corridorId, t.docKey)]
 );
@@ -671,6 +690,41 @@ export const companionUpdates = pgTable(
   (t) => [unique("companion_updates_kind_key").on(t.applicationId, t.kind)]
 );
 
+/**
+ * One exchange rate, cached.
+ *
+ * A table rather than module state, for the reason `visa-warm` records
+ * and defers: the rate has to be the same figure on every instance, and
+ * it has to carry the moment it was fetched. Both matter here because
+ * the figure is shown to a traveller beside a government fee — an
+ * approximation with no date on it is the same failure as a checklist
+ * with no date on it.
+ *
+ * `rate` is `numeric`, not a float: 1 GBP buys about 2,000 NGN, and
+ * binary floating point rounds the last naira of a fee in a way that is
+ * visible on the screen. The application does the arithmetic on the
+ * string with `Number` only at the point of display.
+ *
+ * Only inverse-free pairs are stored — the base is whatever the
+ * provider quotes against, and `convert` walks through it rather than
+ * storing every pair both ways.
+ */
+export const fxRates = pgTable(
+  "fx_rates",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /** ISO 4217, uppercase, e.g. `USD`. */
+    base: text().notNull(),
+    quote: text().notNull(),
+    /** Units of `quote` per one unit of `base`. */
+    rate: text().notNull(),
+    fetchedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    /** Which provider said so, for the same reason a corridor names its source. */
+    source: text().notNull(),
+  },
+  (t) => [unique("fx_rates_pair").on(t.base, t.quote)]
+);
+
 export const auditLog = pgTable(
   "audit_log",
   {
@@ -752,3 +806,4 @@ export type Notification = typeof notifications.$inferSelect;
 export type CaseNote = typeof caseNotes.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type CompanionUpdate = typeof companionUpdates.$inferSelect;
+export type FxRate = typeof fxRates.$inferSelect;

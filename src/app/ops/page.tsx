@@ -161,8 +161,8 @@ export default async function OpsQueuePage() {
                   className={cn(
                     "border-border px-5 py-5",
                     "border-b sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0",
-                    i < counters.length - 1 && "lg:border-r",
-                    i % 2 === 0 && "sm:border-r"
+                    i < counters.length - 1 && "lg:border-e",
+                    i % 2 === 0 && "sm:border-e"
                   )}
                 >
                   <dt className="tag">{c.label}</dt>
@@ -193,7 +193,7 @@ export default async function OpsQueuePage() {
           {rows.length === 0 ? (
             <PanelBody>
               <p className="t-muted max-w-[62ch]">
-                Nothing in the queue. Cases appear here once a traveller
+                Nothing in the queue. Cases appear here once a traveler
                 finishes intake.
               </p>
             </PanelBody>
@@ -249,13 +249,13 @@ export default async function OpsQueuePage() {
                           <span className="t-body block truncate">
                             {destination?.name ??
                               r.destinationIso?.toUpperCase() ??
-                              "Corridor not set"}
+                              "Route not set"}
                           </span>
                           <span
                             className="special truncate"
                             title={r.visaName ?? undefined}
                           >
-                            {r.visaName ?? "Corridor not set"}
+                            {r.visaName ?? "Route not set"}
                           </span>
                         </TableCell>
                         <TableCell>

@@ -138,14 +138,14 @@ export function CorridorBar({
               value={origin}
               options={ORIGINS}
               onChange={(next) => set({ origin: next })}
-              className="border-b border-border lg:border-b-0 lg:border-r"
+              className="border-b border-border lg:border-b-0 lg:border-e"
             />
             <Slot
               label={t(HERO.slots.destination)}
               value={destination}
               options={destinations}
               onChange={(next) => set({ destination: next })}
-              className="border-b border-border lg:border-b-0 lg:border-r"
+              className="border-b border-border lg:border-b-0 lg:border-e"
             />
             <Slot
               label={t(HERO.slots.purpose)}
@@ -178,7 +178,7 @@ export function CorridorBar({
                     )}
                     aria-hidden
                   />
-                  {soon ? "In build" : "Live corridor"}
+                  {soon ? "In build" : "Live route"}
                 </span>
                 {/* A separator only separates while both halves share a line.
                     On a phone the code drops to its own row and the rule is
@@ -207,7 +207,7 @@ export function CorridorBar({
               )}
             >
               <Link href="/employer/sign-up">
-                {soon ? "Request this corridor" : (ctaLabel ?? t(HERO.ctaSecondary))}
+                {soon ? "Request this route" : (ctaLabel ?? t(HERO.ctaSecondary))}
                 <ArrowRight className="transition-transform group-hover:translate-x-0.5" />
               </Link>
             </Button>

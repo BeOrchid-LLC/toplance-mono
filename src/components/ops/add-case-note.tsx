@@ -29,7 +29,7 @@ export function AddCaseNote({ applicationId }: { applicationId: string }) {
         return;
       }
       setBody("");
-      toast.success("Note added — the traveller sees it on their profile");
+      toast.success("Note added — the traveler sees it on their profile");
     });
   }
 
@@ -38,7 +38,7 @@ export function AddCaseNote({ applicationId }: { applicationId: string }) {
       <Textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="What should the file remember? The traveller reads this on their profile."
+        placeholder="What should the file remember? The traveler reads this on their profile."
         rows={3}
       />
       <Button

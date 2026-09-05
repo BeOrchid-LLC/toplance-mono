@@ -1,0 +1,1 @@
+ALTER TABLE "corridor_requirements" ADD COLUMN "applies_when" jsonb;

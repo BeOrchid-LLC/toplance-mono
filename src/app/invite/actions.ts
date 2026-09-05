@@ -27,7 +27,7 @@ export async function acceptInvitation(token: string) {
   try {
     const actor = await requireActor();
     if (actor.role !== "traveler") {
-      return { error: "Only a traveller account can accept an invitation." };
+      return { error: "Only a traveler account can accept an invitation." };
     }
 
     const result = await acceptInvitationTx(token, actor.userId);

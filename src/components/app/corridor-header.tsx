@@ -47,18 +47,22 @@ export function CorridorHeader({
       <span aria-hidden className="laminate-sheen" />
 
       <div className="relative z-[1]">
-        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4 px-5 py-5 sm:px-6">
+        <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3 px-5 py-4 sm:px-6">
           <div className="min-w-0">
-            <p className="tag">Your corridor</p>
+            {/* "Route", not "corridor". A traveller runs several trips
+                through this product over time, so the word that reads as
+                one of many is the right one on their own screen; the
+                record underneath is still a corridor everywhere else. */}
+            <p className="tag">Your current route</p>
             {/* Archivo crossing into a product screen, which §2 allows
                 only inside a signature moment. It stops at this card —
                 everything below is back on the `.t-*` scale. */}
-            <p className="d-sm mt-2 text-ink">
+            <p className="d-sm mt-1.5 text-ink">
               {from?.name ?? corridor.nationalityIso.toUpperCase()}
               <span className="text-ink-3"> → </span>
               {to?.name ?? corridor.destinationIso.toUpperCase()}
             </p>
-            <p className="t-muted mt-1.5">
+            <p className="t-muted mt-1">
               {corridor.visaName}
               <span className="text-ink-3"> · </span>
               <span className="capitalize">{corridor.purpose}</span>
@@ -74,11 +78,11 @@ export function CorridorHeader({
         </div>
 
         {code && (
-          <div className="border-t border-border px-5 py-4 sm:px-6">
+          <div className="border-t border-border px-5 py-3 sm:px-6">
             <MrzBand code={code} />
             {/* The band is aria-hidden, so this line is the only reading
                 of the code assistive tech gets. */}
-            <p className="num mt-3.5 text-[13px] font-semibold text-ink-2">
+            <p className="num mt-2.5 text-[13px] font-semibold text-ink-2">
               {from?.iso3} → {to?.iso3} · {corridor.purpose.toUpperCase()}
             </p>
           </div>

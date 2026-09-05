@@ -44,7 +44,7 @@ import { cn } from "@/lib/utils";
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Traveller profile" };
+export const metadata: Metadata = { title: "Traveler profile" };
 
 /** An answer nobody has given yet — an absence, never an invented value. */
 function Awaiting({ w = 64 }: { w?: number }) {
@@ -151,7 +151,7 @@ export default async function ProfilePage() {
    */
   const learned = [
     answers.companions && {
-      fact: `Travelling — ${answers.companions.toLowerCase()}`,
+      fact: `Traveling — ${answers.companions.toLowerCase()}`,
       why: "Sets who is on the document checklist",
     },
     answers.needs && {
@@ -204,9 +204,9 @@ export default async function ProfilePage() {
                   page. The circle in the app bar stays a circle. */}
               <AvatarUpload fullName={profile.fullName} avatarUrl={avatarUrl} />
               <div className="min-w-0 flex-1">
-                <p className="tag">Traveller</p>
+                <p className="tag">Traveler</p>
                 <h1 className="d-lg mt-1.5 break-words text-ink">
-                  {profile.fullName || "Traveller"}
+                  {profile.fullName || "Traveler"}
                 </h1>
                 <p className="t-muted mt-1.5">
                   {answers.nationality || <Awaiting w={80} />}
@@ -258,7 +258,7 @@ export default async function ProfilePage() {
               asChild
               variant="neutral"
               size="sm"
-              className="w-full sm:ml-auto sm:w-auto"
+              className="w-full sm:ms-auto sm:w-auto"
             >
               <Link href="/app/agent">Edit trip answers</Link>
             </Button>
@@ -403,14 +403,7 @@ export default async function ProfilePage() {
           <div className="grid gap-6">
             {/* ---- agent memory ---- */}
             <Panel>
-              <PanelHeader
-                label="What the agent has learned"
-                aside={
-                  <Badge variant="brand">
-                    <Sparkles /> AI
-                  </Badge>
-                }
-              />
+              <PanelHeader label="What the agent has learned" />
               <PanelBody>
                 <p className="t-muted">
                   Updated automatically after every interaction.
@@ -418,17 +411,17 @@ export default async function ProfilePage() {
                 {learned.length > 0 ? (
                   <ul className="mt-4">
                     {learned.map((item, i) => (
-                      <li key={item.fact} className="relative pb-5 pl-6 last:pb-0">
+                      <li key={item.fact} className="relative pb-5 ps-6 last:pb-0">
                         {i < learned.length - 1 && (
                           <span
                             aria-hidden
-                            className="absolute bottom-0 left-[5px] top-5 w-px bg-border"
+                            className="absolute bottom-0 start-[5px] top-5 w-px bg-border"
                           />
                         )}
                         <span
                           aria-hidden
                           className={cn(
-                            "absolute left-0 top-[5px] size-3 rounded-full",
+                            "absolute start-0 top-[5px] size-3 rounded-full",
                             i === 0
                               ? "bg-brand ring-4 ring-[color-mix(in_srgb,var(--brand)_18%,transparent)]"
                               : "bg-success ring-4 ring-[color-mix(in_srgb,var(--success)_16%,transparent)]"

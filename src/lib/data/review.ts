@@ -59,7 +59,7 @@ export async function reviewDocumentTx(
   reviewerId: string
 ): Promise<ReviewResult> {
   if (review.verdict === "flagged" && !review.reason.trim()) {
-    return { error: "Say what is wrong — the traveller reads this reason." };
+    return { error: "Say what is wrong — the traveler reads this reason." };
   }
 
   return db.transaction(async (tx) => {

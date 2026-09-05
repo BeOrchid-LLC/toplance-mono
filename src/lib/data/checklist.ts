@@ -4,6 +4,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents } from "@/lib/db/schema";
+import { appliesToTraveller } from "@/lib/domain/applies-when";
 import type { CorridorRuleSet } from "@/lib/visa/types";
 
 /**
@@ -24,9 +25,33 @@ import type { CorridorRuleSet } from "@/lib/visa/types";
  */
 export async function adoptRuleSet(
   applicationId: string,
-  ruleSet: CorridorRuleSet
+  ruleSet: CorridorRuleSet,
+  /**
+   * The traveller's intake answers, which decide which conditional
+   * documents are theirs. Optional, and an empty set behaves exactly as
+   * this function did before conditions existed: every conditional
+   * document is materialised with its hedge intact.
+   */
+  answers: Record<string, string | undefined> = {}
 ): Promise<void> {
-  const requirements = ruleSet.requirements;
+  /**
+   * The rule set, narrowed to this one traveller.
+   *
+   * A conditional document whose rule they match stops being
+   * conditional — it is stored as required, because for them it is. One
+   * whose rule they do not match is dropped here, and the stale-row
+   * sweep further down removes it from a checklist it had already been
+   * added to (unless they have uploaded it, which that sweep protects).
+   * One with no rule yet keeps `isRequired: false` and the hedge.
+   */
+  const requirements = ruleSet.requirements.flatMap((r) => {
+    if (r.isRequired) return [r];
+
+    const verdict = appliesToTraveller(r.appliesWhen, answers);
+    if (!verdict.applies) return [];
+
+    return [{ ...r, isRequired: verdict.certain }];
+  });
 
   const existing = await db
     .select({

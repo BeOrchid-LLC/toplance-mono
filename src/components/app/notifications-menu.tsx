@@ -97,7 +97,7 @@ export function NotificationsMenu({
       >
         <Bell className="size-5" aria-hidden />
         {unreadCount > 0 && (
-          <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-danger text-[10px] font-semibold leading-none text-white">
+          <span className="absolute end-1 top-1 flex size-4 items-center justify-center rounded-full bg-danger text-[10px] font-semibold leading-none text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}

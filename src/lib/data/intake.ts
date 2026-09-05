@@ -179,7 +179,9 @@ async function buildChecklist(
     userId
   );
 
-  await adoptRuleSet(applicationId, ruleSet);
+  // The answers decide which conditional documents are this traveller's,
+  // so the checklist is materialised against them rather than in full.
+  await adoptRuleSet(applicationId, ruleSet, answers);
 
   await db
     .update(applications)

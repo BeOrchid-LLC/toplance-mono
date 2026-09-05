@@ -7,6 +7,7 @@ import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { CorridorDecision } from "@/components/ops/corridor-decision";
+import { RequirementCondition } from "@/components/ops/requirement-condition";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { opsNav } from "@/components/ops/ops-nav";
@@ -14,6 +15,7 @@ import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { corridorDiff, isUnchanged } from "@/lib/domain/corridor-diff";
+import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import { freshnessOf } from "@/lib/domain/freshness";
 import { getCorridor, liveVersionOf } from "@/lib/data/corridors";
 import { isOwner } from "@/lib/auth/policy";
@@ -25,7 +27,7 @@ import { requireStaffConsole } from "@/lib/auth/staff-gate";
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Review corridor" };
+export const metadata: Metadata = { title: "Review route" };
 
 /**
  * The country's name, or the raw code upper-cased when this file cannot
@@ -112,7 +114,7 @@ export default async function ReviewCorridorPage({
           href="/ops/corridors"
           className="t-muted inline-flex items-center gap-2 hover:underline"
         >
-          <ArrowLeft className="size-4" aria-hidden /> Corridor coverage
+          <ArrowLeft className="size-4" aria-hidden /> Route coverage
         </Link>
 
         <div className="mt-5 flex flex-wrap items-start justify-between gap-x-10 gap-y-4">
@@ -151,11 +153,26 @@ export default async function ReviewCorridorPage({
           </p>
         )}
 
+        {/* How much anybody here still knows about this corridor, said
+            to the person who can do something about it. The traveller's
+            requirements screen used to carry this sentence, which put
+            the doubt in front of the one reader who cannot resolve it —
+            they have no source to check and no way to record a check.
+            Absent entirely for a corridor verified inside its window. */}
+        {freshness.notice && (
+          <p
+            role="note"
+            className="mt-5 max-w-[74ch] rounded-sm border border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_7%,transparent)] px-5 py-4 text-base text-ink-2"
+          >
+            {freshness.notice}
+          </p>
+        )}
+
         {/* The corridor's own facts, and where each was read. Fee and
             decision time sit next to the source that stated them because
             an approver's job is to open that link and compare. */}
         <Panel className="mt-8">
-          <PanelHeader label="Corridor facts" aside={<Source url={corridor.sourceUrl} />} />
+          <PanelHeader label="Route facts" aside={<Source url={corridor.sourceUrl} />} />
           <dl className="grid sm:grid-cols-3">
             {[
               {
@@ -184,7 +201,7 @@ export default async function ReviewCorridorPage({
             ].map((f) => (
               <div
                 key={f.label}
-                className="border-b border-border px-5 py-5 last:border-b-0 sm:border-b-0 sm:border-r sm:px-6 sm:last:border-r-0"
+                className="border-b border-border px-5 py-5 last:border-b-0 sm:border-b-0 sm:border-e sm:px-6 sm:last:border-e-0"
               >
                 <dt className="special-caps">{f.label}</dt>
                 <dd className="t-h3 num mt-3">{f.value}</dd>
@@ -213,7 +230,7 @@ export default async function ReviewCorridorPage({
               <PanelBody>
                 <p className="t-muted max-w-[74ch]">
                   Nothing differs from the live version. Publishing this would
-                  raise a version number and change nothing a traveller sees —
+                  raise a version number and change nothing a traveler sees —
                   which usually means the draft did not pick up what it was
                   meant to.
                 </p>
@@ -269,7 +286,7 @@ export default async function ReviewCorridorPage({
                       ))}
                     {r.kind === "removed" && (
                       <p className="t-muted mt-2 max-w-[74ch]">
-                        A traveller who already uploaded this keeps their file —
+                        A traveler who already uploaded this keeps their file —
                         only untouched rows are dropped.
                       </p>
                     )}
@@ -293,7 +310,7 @@ export default async function ReviewCorridorPage({
             <PanelBody>
               <p className="t-muted max-w-[74ch]">
                 This draft has no requirements. It cannot be approved — a
-                traveller would get a checklist with nothing on it, no upload
+                traveler would get a checklist with nothing on it, no upload
                 slots and no way to reach submission.
               </p>
             </PanelBody>
@@ -316,6 +333,16 @@ export default async function ReviewCorridorPage({
                     </div>
                     {r.description && (
                       <p className="t-muted mt-1.5 max-w-[74ch]">{r.description}</p>
+                    )}
+                    {/* Only a conditional document takes a rule. A
+                        required one applies to everybody, and a control
+                        offering to narrow it would suggest otherwise. */}
+                    {!r.isRequired && (
+                      <RequirementCondition
+                        requirementId={r.id}
+                        rule={parseAppliesWhen(r.appliesWhen)}
+                        editable={decidable && isOwner(actor)}
+                      />
                     )}
                     {/* The approver's actual job: open this and compare.
                         A requirement with no source is called out in red

@@ -180,7 +180,7 @@ export default async function DashboardPage() {
                     className="flex items-baseline justify-between gap-6 border-b border-border py-3 last:border-0 last:pb-0"
                   >
                     <dt className="t-body text-ink-2">{label}</dt>
-                    <dd className="text-right text-base font-semibold">
+                    <dd className="text-end text-base font-semibold">
                       {value ?? <Awaiting />}
                     </dd>
                   </div>
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
 
           <Panel>
             <PanelHeader
-              label="Traveller profile"
+              label="Traveler profile"
               aside={
                 <Badge variant="brand">
                   <Sparkles /> Collected by the agent
@@ -201,7 +201,7 @@ export default async function DashboardPage() {
             <PanelBody>
               <p className="t-muted">
                 Everything the agent knows about you and this trip in one
-                place — who is travelling, what to plan around, and the
+                place — who is traveling, what to plan around, and the
                 requirement your answers matched.
               </p>
               <Button asChild variant="neutral" size="sm" className="mt-4">

@@ -35,7 +35,7 @@ export function submissionEmail({
     subject: `${caseRef} is ready for review`,
     ...renderEmail({
       heading: `${caseRef} is ready for review`,
-      paragraphs: ["A traveller finished their checklist and submitted their file."],
+      paragraphs: ["A traveler finished their checklist and submitted their file."],
       cta: { href: url, label: "Open the case" },
     }),
   };
@@ -62,7 +62,7 @@ export function checklistCompleteEmail({
     ...renderEmail({
       heading: `${caseRef} reached 100%`,
       paragraphs: [
-        "Every required document on this checklist has been uploaded. The traveller has not pressed Submit, so the case is not in the review queue yet.",
+        "Every required document on this checklist has been uploaded. The traveler has not pressed Submit, so the case is not in the review queue yet.",
         "They may still be checking their file — or they may be waiting for something nobody has told them about.",
       ],
       cta: { href: url, label: "Open the case" },

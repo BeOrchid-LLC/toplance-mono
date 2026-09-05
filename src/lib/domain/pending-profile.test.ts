@@ -33,8 +33,14 @@ describe("readPendingProfile", () => {
     // The whole point of carrying it is opening the intake in the right
     // language; a code with no translations behind it is worse than the
     // English default, which at least renders.
-    expect(readPendingProfile({ locale: "fr" }).locale).toBeNull();
+    //
+    // `de` stands in for "some language we do not speak". It was `fr`
+    // until French shipped on 2026-09-05 — if this line ever fails
+    // again, the honest fix is to pick another unsupported code, not to
+    // loosen the check.
+    expect(readPendingProfile({ locale: "de" }).locale).toBeNull();
     expect(readPendingProfile({ locale: "yo" }).locale).toBe("yo");
+    expect(readPendingProfile({ locale: "fr" }).locale).toBe("fr");
   });
 
   it("drops a country this product does not list", () => {

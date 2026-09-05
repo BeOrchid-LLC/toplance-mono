@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Corridor coverage" };
+export const metadata: Metadata = { title: "Route coverage" };
 
 /**
  * The country's name, or the raw code upper-cased when this file cannot
@@ -50,7 +50,7 @@ const STATE_BADGE = {
 
 /**
  * How fresh a live corridor is, said in the fewest words that stay
- * honest. The traveller's screen carries the full sentence; a coverage
+ * honest. The corridor's own page carries the full sentence; a coverage
  * table needs the verdict.
  */
 function freshnessLabel(row: CorridorRow) {
@@ -82,9 +82,9 @@ export default async function OpsCorridorsPage() {
 
   const counters = [
     {
-      label: "Live corridors",
+      label: "Live routes",
       value: live.length,
-      sub: "resolvable by a traveller",
+      sub: "resolvable by a traveler",
       tone: "text-ink",
     },
     {
@@ -134,7 +134,7 @@ export default async function OpsCorridorsPage() {
         />
 
         <Shell className="pt-10">
-          <h1 className="t-h2">Corridor coverage</h1>
+          <h1 className="t-h2">Route coverage</h1>
           <p className="t-muted mt-2 max-w-[62ch]">
             Every rule set the engine can serve, and how long it has been
             since a person read it against its source.
@@ -149,8 +149,8 @@ export default async function OpsCorridorsPage() {
                   className={cn(
                     "border-border px-5 py-5",
                     "border-b sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0",
-                    i < counters.length - 1 && "lg:border-r",
-                    i % 2 === 0 && "sm:border-r"
+                    i < counters.length - 1 && "lg:border-e",
+                    i % 2 === 0 && "sm:border-e"
                   )}
                 >
                   <dt className="tag">{c.label}</dt>
@@ -180,7 +180,7 @@ export default async function OpsCorridorsPage() {
             {rows.length === 0 ? (
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  No corridors yet. Run <code>npm run db:seed</code>, or draft
+                  No routes yet. Run <code>npm run db:seed</code>, or draft
                   one with <code>scripts/draft-corridor.mts</code>.
                 </p>
               </PanelBody>
@@ -188,7 +188,7 @@ export default async function OpsCorridorsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Corridor</TableHead>
+                    <TableHead>Route</TableHead>
                     <TableHead>Purpose</TableHead>
                     <TableHead>Version</TableHead>
                     <TableHead>State</TableHead>

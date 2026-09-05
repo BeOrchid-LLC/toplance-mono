@@ -15,6 +15,17 @@ const nextConfig: NextConfig = {
    * `npm run dev` running, which is most of the time.
    */
   distDir: process.env.NEXT_DIST_DIR ?? ".next",
+  /**
+   * `/travellers` was the traveller landing page until the 01/09 review
+   * asked for the US spelling across the interface. It has been linked
+   * from the nav and the footer, so the old path answers permanently
+   * rather than 404ing — a marketing URL is somebody else's bookmark.
+   */
+  redirects() {
+    return [
+      { source: "/travellers", destination: "/travelers", permanent: true },
+    ];
+  },
   experimental: {
     serverActions: {
       // uploadDocument accepts files up to 10MB; the limit is on the raw

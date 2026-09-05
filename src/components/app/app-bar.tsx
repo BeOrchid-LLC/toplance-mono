@@ -68,7 +68,7 @@ export function AppBar({
           <AppNav nav={nav} className="hidden h-full items-stretch lg:flex" />
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ms-auto flex items-center gap-3">
           {notifications}
           {/* Below `md` both settings move into `AccountMenu`, where they
               get named rows instead of icons. */}

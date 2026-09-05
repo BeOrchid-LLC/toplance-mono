@@ -124,14 +124,14 @@ export function InviteDialog() {
               <dl>
                 <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
                   <dt className="t-body shrink-0 text-ink-2">For</dt>
-                  <dd className="min-w-0 truncate text-right text-base font-semibold">
+                  <dd className="min-w-0 truncate text-end text-base font-semibold">
                     {recipient?.fullName || recipient?.email}
                   </dd>
                 </div>
                 {recipient?.fullName && (
                   <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
                     <dt className="t-body shrink-0 text-ink-2">Email</dt>
-                    <dd className="min-w-0 truncate text-right text-base font-semibold">
+                    <dd className="min-w-0 truncate text-end text-base font-semibold">
                       {recipient.email}
                     </dd>
                   </div>
@@ -144,7 +144,7 @@ export function InviteDialog() {
                     instead, which is the only place it is needed. */}
                 <div className="flex items-baseline justify-between gap-6 px-4 py-3">
                   <dt className="t-body shrink-0 text-ink-2">Valid for</dt>
-                  <dd className="text-right text-base font-semibold">30 days</dd>
+                  <dd className="text-end text-base font-semibold">30 days</dd>
                 </div>
               </dl>
             </div>

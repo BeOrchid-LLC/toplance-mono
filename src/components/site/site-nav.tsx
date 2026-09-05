@@ -22,7 +22,7 @@ import { Wordmark } from "@/components/shared/wordmark";
 import { useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
 
-const TRAVELLERS = "/travellers";
+const TRAVELERS = "/travelers";
 
 /**
  * The bar addresses whichever of the two landing pages it is sitting on.
@@ -30,7 +30,7 @@ const TRAVELLERS = "/travellers";
  * It used to be one static list for both, which made three of its four
  * entries wrong on one page or the other. `#where` is "Where we work" on
  * the traveller page and "Where your travelers can go" on the agency
- * one. The cross-link was hardcoded to `/travellers`, so on the
+ * one. The cross-link was hardcoded to `/travelers`, so on the
  * traveller page the bar carried a link to the page you were already
  * reading — the scroll spy even had a special case apologising for it.
  * And the call to action said "For organisations" on the organisations'
@@ -46,10 +46,9 @@ const TRAVELLERS = "/travellers";
  * entry is a signpost rather than a heading.
  */
 function chromeFor(pathname: string) {
-  const traveller = pathname === TRAVELLERS;
+  const traveller = pathname === TRAVELERS;
 
   return {
-    traveller,
     sections: [
       { href: "#how", label: "How it works" },
       { href: "#where", label: traveller ? "Where we work" : "Where you can go" },
@@ -57,7 +56,7 @@ function chromeFor(pathname: string) {
     ],
     cross: traveller
       ? { href: "/", label: "For agencies" }
-      : { href: TRAVELLERS, label: "For travellers" },
+      : { href: TRAVELERS, label: "For travelers" },
   };
 }
 
@@ -67,17 +66,7 @@ const SECTION_IDS = ["how", "where", "pricing"];
 export function SiteNav() {
   const t = useT();
   const pathname = usePathname();
-  const { traveller, sections, cross } = chromeFor(pathname);
-
-  /**
-   * "For organisations" is the right call to action on the traveller
-   * page and a tautology on the agencies' own, where it also disagrees
-   * with the hero's own `Get Started` two hundred pixels below it. The
-   * traveller label stays translated; the agency one is English-only,
-   * for the same reason `CorridorBar`'s `ctaLabel` is — only the
-   * surfaces addressing the traveller run in four languages.
-   */
-  const ctaLabel = traveller ? t(HERO.ctaSecondary) : "Get Started";
+  const { sections, cross } = chromeFor(pathname);
 
   /**
    * The hero is a light ground now, so the bar no longer has to invert
@@ -199,7 +188,7 @@ export function SiteNav() {
           })}
         </div>
 
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ms-auto flex items-center gap-2 sm:gap-3">
           {/* The cross-link sits with the account doors rather than among
               the section anchors. It is the only entry that leaves the
               page, and grouping it with three fragments is what made the
@@ -219,8 +208,14 @@ export function SiteNav() {
             <Link href="/sign-in">{t(HERO.signIn)}</Link>
           </Button>
 
+          {/* "Get started", not an audience name. The audience swap is
+              the cross-link above, and this slot is the bar's one
+              primary act — a button that named an audience read as a
+              second navigation entry and left the page with no call to
+              action at all. Both landing pages sell the same seat, so
+              both send here. */}
           <Button asChild size="sm">
-            <Link href="/employer/sign-up">{ctaLabel}</Link>
+            <Link href="/employer/sign-up">{t(HERO.ctaShort)}</Link>
           </Button>
 
           {/* The menu, and the reason this file was reopened: below `lg`

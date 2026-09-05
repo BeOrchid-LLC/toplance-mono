@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "For travellers",
+  title: "For travelers",
   description:
     "Know exactly what your visa needs before you spend anything on it — one checklist built from your nationality, destination and purpose.",
 };
@@ -51,9 +51,9 @@ const REGISTER = [
   // it came from the corridor table — three ways of saying eight when the
   // table holds four. `LIVE_CORRIDORS` is asserted against `seed.sql`, so
   // the note is now true as well as the figure.
-  { label: "Corridors live", value: String(LIVE_CORRIDORS.length), note: "Counted from the corridor table" },
+  { label: "Routes live", value: String(LIVE_CORRIDORS.length), note: "Counted from the published route list" },
   { label: "Applications guided", value: null, note: "Since launch" },
-  { label: "Approved on first submission", value: null, note: "Across live corridors" },
+  { label: "Approved on first submission", value: null, note: "Across live routes" },
   { label: "Median time to a complete checklist", value: null, note: "From first question" },
 ];
 
@@ -85,7 +85,7 @@ const STEPS = [
   {
     paid: false,
     title: "Get the checklist that is actually yours",
-    body: "Your nationality, your destination and your reason for travelling resolve to one specific document list — not a generic embassy page you have to interpret yourself.",
+    body: "Your nationality, your destination and your reason for traveling resolve to one specific document list — not a generic embassy page you have to interpret yourself.",
   },
   {
     paid: true,
@@ -106,7 +106,7 @@ const FEATURES = [
   },
   {
     title: "A rules engine, not a static list",
-    body: "Requirements are versioned rule sets per corridor. When a mission changes what it wants, everyone on that corridor sees the change — with the date it took effect.",
+    body: "Requirements are versioned rule sets per route. When a mission changes what it wants, everyone on that route sees the change — with the date it took effect.",
   },
   {
     title: "A person actually looks",
@@ -167,7 +167,7 @@ const SEAT_PLAN = {
 const FAQ = [
   {
     q: "Does Toplance decide whether I get a visa?",
-    a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that your file is complete, correct and submitted the way that corridor expects — which is the part applicants usually lose on. When a document shows as verified it means it has been accepted for review, not that your application has been approved.",
+    a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that your file is complete, correct and submitted the way that route expects — which is the part applicants usually lose on. When a document shows as verified it means it has been accepted for review, not that your application has been approved.",
   },
   {
     q: "What does it cost to find out what I need?",
@@ -220,7 +220,7 @@ export default function TravellersPage() {
                 <span className="tag mb-2 block sm:hidden">Doing it alone</span>
                 <p className="text-[17px] leading-relaxed text-ink-3">{row.alone}</p>
               </div>
-              <div className="sm:border-l sm:border-[color-mix(in_srgb,var(--brand)_35%,transparent)] sm:pl-12">
+              <div className="sm:border-s sm:border-[color-mix(in_srgb,var(--brand)_35%,transparent)] sm:ps-12">
                 <span className="tag mb-2 block text-brand-text sm:hidden">
                   With Toplance
                 </span>
@@ -348,7 +348,7 @@ export default function TravellersPage() {
                 <p className="d-sm">You see progress, not documents</p>
                 <p className="t-muted mt-1 text-[15px]">
                   Passports, bank statements and police certificates stay between
-                  the traveller and Toplance.
+                  the traveler and Toplance.
                 </p>
               </div>
             </div>
@@ -365,7 +365,7 @@ export default function TravellersPage() {
                   <span className="hidden w-20 shrink-0 sm:block">
                     <Progress value={p.pct} />
                   </span>
-                  <span className="tag w-[124px] shrink-0 whitespace-nowrap text-right text-ink-2">
+                  <span className="tag w-[124px] shrink-0 whitespace-nowrap text-end text-ink-2">
                     {p.state}
                   </span>
                 </div>
@@ -382,8 +382,8 @@ export default function TravellersPage() {
         datum={`${LIVE_CORRIDORS.length} live · more in build`}
       >
         <Head
-          title="Corridors, not countries"
-          lead="A corridor is one nationality travelling to one destination for one purpose. That is the unit a checklist is built from — a Nigerian passport holder going to the UK for work needs a different file to a Ghanaian going to study."
+          title="Routes, not countries"
+          lead="A route is one nationality traveling to one destination for one purpose. That is the unit a checklist is built from — a Nigerian passport holder going to the UK for work needs a different file to a Ghanaian going to study."
         />
         <div className="mt-11">
           <CorridorBoard />
@@ -406,7 +406,7 @@ export default function TravellersPage() {
               <dt className="d-sm">{row.label}</dt>
               <dd
                 className={cn(
-                  "num text-[28px] font-semibold sm:text-right",
+                  "num text-[28px] font-semibold sm:text-end",
                   row.value ? "text-brand-text" : "text-ink-3"
                 )}
               >
@@ -417,7 +417,7 @@ export default function TravellersPage() {
                   />
                 )}
               </dd>
-              <dd className="tag sm:text-right">{row.note}</dd>
+              <dd className="tag sm:text-end">{row.note}</dd>
             </div>
           ))}
         </dl>
@@ -425,9 +425,9 @@ export default function TravellersPage() {
         <p className="tag mt-12">In their own words</p>
         <div className="mt-4 grid gap-6 md:grid-cols-3">
           {[
-            "A traveller who avoided a trip to an agent",
+            "A traveler who avoided a trip to an agent",
             "An employer on seat visibility",
-            "A second corridor, so this does not read as one use case",
+            "A second route, so this does not read as one use case",
           ].map((slot) => (
             <figure
               key={slot}
@@ -500,7 +500,7 @@ export default function TravellersPage() {
         >
           {FAQ.map((f, i) => (
             <AccordionItem key={f.q} value={`q${i}`}>
-              <AccordionTrigger className="d-sm text-left">{f.q}</AccordionTrigger>
+              <AccordionTrigger className="d-sm text-start">{f.q}</AccordionTrigger>
               <AccordionContent className="max-w-[74ch] text-[15px]">
                 {f.a}
               </AccordionContent>

@@ -52,6 +52,7 @@ export type CorridorDetail = CorridorRow & {
   governmentFeeMinor: number | null;
   governmentFeeCurrency: string | null;
   requirements: {
+    id: string;
     docKey: string;
     name: string;
     description: string | null;
@@ -59,10 +60,65 @@ export type CorridorDetail = CorridorRow & {
     isRequired: boolean;
     sortOrder: number;
     sourceUrl: string | null;
+    /** Raw `jsonb`; the screen parses it with `parseAppliesWhen`. */
+    appliesWhen: unknown;
   }[];
 };
 
 export type CorridorWriteResult = { ok: true } | { error: string };
+
+/**
+ * Write (or clear) the rule that decides which travellers a conditional
+ * document applies to.
+ *
+ * Refused on a version that is already serving travellers. A rule
+ * decides who is *asked* for a document, so a wrong one hides a
+ * requirement from the people who need it — the same class of change as
+ * editing the requirement list, and the reason the approval gate exists.
+ * Drafts are where corridors are edited; `raisePendingCopy` in
+ * `drift.ts` is how a live one gets a draft to edit.
+ *
+ * `appliesWhen` is validated by the caller with `parseAppliesWhen`; this
+ * function writes what it is given and never invents a rule.
+ */
+export async function setRequirementCondition(
+  requirementId: string,
+  appliesWhen: unknown
+): Promise<CorridorWriteResult & { corridorId?: string }> {
+  const [row] = await db
+    .select({
+      corridorId: corridorRequirements.corridorId,
+      isRequired: corridorRequirements.isRequired,
+      isLive: corridors.isLive,
+      reviewState: corridors.reviewState,
+    })
+    .from(corridorRequirements)
+    .innerJoin(corridors, eq(corridors.id, corridorRequirements.corridorId))
+    .where(eq(corridorRequirements.id, requirementId))
+    .limit(1);
+
+  if (!row) return { error: "That requirement no longer exists." };
+
+  if (row.isLive || row.reviewState === "approved") {
+    return {
+      error:
+        "This version is already serving travelers. Rules are written on a draft and take effect when it is approved.",
+    };
+  }
+
+  if (row.isRequired) {
+    // A required document applies to everybody by definition, and a rule
+    // on one would read as a promise the checklist does not keep.
+    return { error: "A required document applies to everyone — it takes no rule." };
+  }
+
+  await db
+    .update(corridorRequirements)
+    .set({ appliesWhen })
+    .where(eq(corridorRequirements.id, requirementId));
+
+  return { ok: true, corridorId: row.corridorId };
+}
 
 /**
  * Every corridor version, newest decision first.
@@ -150,6 +206,7 @@ export async function getCorridor(id: string): Promise<CorridorDetail | null> {
 
   const requirements = await db
     .select({
+      id: corridorRequirements.id,
       docKey: corridorRequirements.docKey,
       name: corridorRequirements.name,
       description: corridorRequirements.description,
@@ -157,6 +214,7 @@ export async function getCorridor(id: string): Promise<CorridorDetail | null> {
       isRequired: corridorRequirements.isRequired,
       sortOrder: corridorRequirements.sortOrder,
       sourceUrl: corridorRequirements.sourceUrl,
+      appliesWhen: corridorRequirements.appliesWhen,
     })
     .from(corridorRequirements)
     .where(eq(corridorRequirements.corridorId, id))
@@ -221,7 +279,7 @@ export async function approveCorridorTx(
       .for("update")
       .limit(1);
 
-    if (!draft) return { error: "That corridor no longer exists." };
+    if (!draft) return { error: "That route no longer exists." };
     if (draft.reviewState === "approved" && draft.isLive) {
       return { error: "That version is already live." };
     }
@@ -235,7 +293,7 @@ export async function approveCorridorTx(
       return {
         error:
           "This draft has no requirements. Approving it would give a " +
-          "traveller an empty checklist with nothing to upload.",
+          "traveler an empty checklist with nothing to upload.",
       };
     }
 
@@ -296,12 +354,12 @@ export async function rejectCorridorTx(
     .where(eq(corridors.id, corridorId))
     .limit(1);
 
-  if (!row) return { error: "That corridor no longer exists." };
+  if (!row) return { error: "That route no longer exists." };
   if (row.isLive) {
     return {
       error:
         "That version is live. Approve a replacement to supersede it — " +
-        "rejecting it here would leave the corridor serving it anyway.",
+        "rejecting it here would leave the route serving it anyway.",
     };
   }
 

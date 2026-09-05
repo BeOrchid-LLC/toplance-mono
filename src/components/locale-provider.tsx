@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
+import { DEFAULT_LOCALE, dirOf, isLocale, type Locale } from "@/lib/i18n/locales";
 
 const STORAGE_KEY = "toplance.locale";
 
@@ -45,10 +45,22 @@ const localeStore = {
     } catch {
       // Non-fatal: the choice just will not survive a reload.
     }
-    document.documentElement.lang = next;
+    applyToDocument(next);
     localeStore.listeners.forEach((l) => l());
   },
 };
+
+/**
+ * `lang` and `dir` live on `<html>`, which React does not own here — the
+ * server rendered it as English, left to right. Both have to move
+ * together: Arabic set as the language while the document still runs
+ * left to right gives a page that announces itself correctly to a screen
+ * reader and then lays itself out backwards.
+ */
+function applyToDocument(locale: Locale) {
+  document.documentElement.lang = locale;
+  document.documentElement.dir = dirOf(locale);
+}
 
 type LocaleContextValue = { locale: Locale; setLocale: (next: Locale) => void };
 
@@ -64,6 +76,17 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     localeStore.getServerSnapshot
   );
 
+  /**
+   * A stored language has to reach `<html>` on load as well as on
+   * change. The server cannot know it — it is in this browser's
+   * localStorage — so the first paint is English, left to right, and
+   * this corrects it. Cheap, idempotent, and the only writer of these
+   * two attributes besides `localeStore.set`.
+   */
+  React.useEffect(() => {
+    applyToDocument(locale);
+  }, [locale]);
+
   const value = React.useMemo(
     () => ({ locale, setLocale: localeStore.set }),
     [locale]
@@ -76,7 +99,7 @@ export function useLocale() {
   return React.useContext(LocaleContext);
 }
 
-/** Pick the active string out of a `{ en, ha, yo, ig }` record. */
+/** Pick the active string out of a `Record<Locale, string>`. */
 export function useT() {
   const { locale } = useLocale();
   return React.useCallback(

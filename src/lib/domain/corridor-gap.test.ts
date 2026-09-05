@@ -183,7 +183,7 @@ describe("corridorGap", () => {
         purpose: "",
       });
 
-      expect(gap.heading).toBe("We do not cover that corridor yet");
+      expect(gap.heading).toBe("We do not cover that route yet");
       expect(`${gap.heading}${gap.lead}`).not.toMatch(/\s{2,}|undefined|null/);
     });
   });

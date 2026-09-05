@@ -70,7 +70,7 @@ export async function changeStatusTx(
     // docstring on `statusEvents` in schema.ts.
     const text = message.trim();
     if (!text) {
-      return { error: "Write a message to the traveller — every status change carries one." };
+      return { error: "Write a message to the traveler — every status change carries one." };
     }
     if (text.length > 2000) {
       return { error: "That message is over 2,000 characters — split it up." };

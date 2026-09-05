@@ -13,6 +13,13 @@ import type { TravelPurpose } from "@/lib/visa/types";
  * Pure and free of I/O, like `corridorGap`: the thresholds are a policy
  * argument, not a query, so they can be read, tested and changed without
  * a database.
+ *
+ * The notices address staff, not travellers. A traveller who is told the
+ * checklist they are holding might be out of date has been handed our
+ * job back: they cannot check it against a mission, and the sentence
+ * only costs them confidence in a list that is very probably right.
+ * Whoever *can* fix it reads the ops console, so that is where the
+ * sentence is rendered.
  */
 
 export type Freshness =
@@ -62,11 +69,11 @@ function formatDate(at: Date): string {
  *   `effectiveFrom` would have hidden exactly the corridors most worth
  *   distrusting.
  * - **fresh** — checked within the window for its purpose.
- * - **stale** — checked, but long enough ago that the traveller should
- *   weigh it themselves. The corridor is still served: pulling it would
- *   replace a dated checklist with no checklist, which helps nobody.
- *   Dropping a corridor out of `is_live` past a hard limit is the
- *   re-check job's decision, not this screen's.
+ * - **stale** — checked, but long enough ago that somebody should look
+ *   again. The corridor is still served: pulling it would replace a
+ *   dated checklist with no checklist, which helps nobody. Dropping a
+ *   corridor out of `is_live` past a hard limit is the re-check job's
+ *   decision, not this module's.
  */
 export function freshnessOf(
   lastVerifiedAt: string | null,
@@ -77,8 +84,10 @@ export function freshnessOf(
     return {
       state: "unverified",
       notice:
-        "No one has checked this against the mission since it was added. " +
-        "Confirm anything that decides your trip with the mission itself.",
+        "Nobody has checked this route against the mission since it " +
+        "was added. Open the source, confirm the fee, the decision time " +
+        "and every document — approving the route is what records " +
+        "that check.",
     };
   }
 
@@ -99,7 +108,8 @@ export function freshnessOf(
     state: "stale",
     checked,
     notice:
-      `This was last checked ${days} days ago. Missions change fees and ` +
-      "paperwork without notice — confirm anything that decides your trip.",
+      `This route was last checked ${days} days ago. Missions change ` +
+      "fees and paperwork without notice, so re-check it against the " +
+      "source and record the result.",
   };
 }

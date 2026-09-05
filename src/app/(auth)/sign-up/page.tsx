@@ -94,7 +94,7 @@ export default async function SignUpPage({
           next={`/invite/${token}`}
         />
       </Suspense>
-      <OtherDoors heading="Not a traveller?" entries={SIGN_UP_DOORS} />
+      <OtherDoors heading="Not a traveler?" entries={SIGN_UP_DOORS} />
     </div>
   );
 }

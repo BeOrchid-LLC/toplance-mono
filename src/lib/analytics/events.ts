@@ -148,6 +148,18 @@ export const EVENT_NAMES = [
   "toplance.corridor_rejected",
 
   /**
+   * An approver wrote (or cleared) the rule that decides which
+   * travellers a conditional document applies to.
+   *
+   * Counted because it measures the 01/09 review's actual ask — "tell
+   * them what applies" — as a number that can only go one way: every
+   * one of these is a document that stopped being a maybe on somebody's
+   * checklist. The audit trail beside it answers who; this answers how
+   * much of the hedge is left.
+   */
+  "toplance.requirement_condition_set",
+
+  /**
    * A source page moved under a live corridor. Reserved for the
    * re-check job; nothing emits it yet.
    */

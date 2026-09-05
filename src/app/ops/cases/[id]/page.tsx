@@ -165,7 +165,7 @@ export default async function OpsCasePage({
                 <h1 className="t-h2">{row.travelerName || "Unnamed"}</h1>
                 <p className="t-muted mt-2">
                   {row.travelerCountryIso.toUpperCase()} ·{" "}
-                  {destination?.name ?? "Corridor not set"}
+                  {destination?.name ?? "Route not set"}
                   {row.visaName ? ` · ${row.visaName}` : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -212,7 +212,7 @@ export default async function OpsCasePage({
               <Panel>
                 <PanelHeader
                   label="Case notes"
-                  aside={<Badge variant="neutral">Traveller reads these</Badge>}
+                  aside={<Badge variant="neutral">Traveler reads these</Badge>}
                 />
                 <PanelBody>
                   <AddCaseNote applicationId={row.id} />
@@ -241,7 +241,7 @@ export default async function OpsCasePage({
 
               {docs.length === 0 && (
                 <p className="t-muted max-w-[62ch]">
-                  No checklist yet — this traveller has not finished intake.
+                  No checklist yet — this traveler has not finished intake.
                 </p>
               )}
 
@@ -325,7 +325,7 @@ export default async function OpsCasePage({
                 <PanelBody>
                   <TripList
                     trips={trips}
-                    empty="This traveller has recorded no past trips."
+                    empty="This traveler has recorded no past trips."
                   />
                 </PanelBody>
               </Panel>

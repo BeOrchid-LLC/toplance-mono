@@ -26,7 +26,7 @@ export default function EmployerSignInPage() {
         <p className="t-body-lg mt-5 max-w-[52ch] text-ink-2">
           The organisation console shows completion, status and destination for
           everyone whose seat you sponsor. Passports, bank statements and police
-          certificates stay between the traveller and Toplance.
+          certificates stay between the traveler and Toplance.
         </p>
         <ul className="mt-8 flex flex-col gap-3">
           {[

@@ -43,7 +43,7 @@ test("a reviewer may read a draft but only an owner can publish it", async ({
   await promoteToStaff(EMAIL, "reviewer");
 
   await page.goto("/ops/corridors");
-  await expect(page.getByRole("heading", { name: "Corridor coverage" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Route coverage" })).toBeVisible();
   // The seeded corridors have never been verified by anyone, and the
   // console says so rather than borrowing their effective dates.
   await expect(page.getByText("Not checked yet").first()).toBeVisible();
@@ -57,7 +57,7 @@ test("a reviewer may read a draft but only an owner can publish it", async ({
   await expect(page.getByRole("link", { name: "Open the source" })).toBeVisible();
 
   await expect(
-    page.getByText("Only a super admin can approve a corridor.")
+    page.getByText("Only a super admin can approve a route.")
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Approve and publish" })

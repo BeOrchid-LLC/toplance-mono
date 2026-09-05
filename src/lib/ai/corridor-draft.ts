@@ -208,7 +208,7 @@ export function buildDraftPrompt(input: {
   return [
     "You are transcribing an official visa checklist into structured data.",
     "",
-    `Corridor: a ${input.nationality} passport holder travelling to ` +
+    `Route: a ${input.nationality} passport holder traveling to ` +
       `${input.destination} for ${input.purpose}.`,
     "",
     "Rules, in order of importance:",

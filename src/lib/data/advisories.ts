@@ -1,9 +1,9 @@
 import "server-only";
 
-import { and, eq, isNotNull } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, corridors } from "@/lib/db/schema";
+import { applications, corridors, profiles } from "@/lib/db/schema";
 import {
   getCompanionUpdate,
   isStale,
@@ -97,6 +97,27 @@ export async function refreshAdvisoriesIfStale(
  * A corridor is required rather than optional: the advisory is looked up
  * by destination, and an application with no corridor has no destination
  * to look one up for.
+ *
+ * Gated on the traveller's own preference, unlike the expiry sweep next
+ * door. The distinction is worth stating, because the two look alike and
+ * are not: `visa_expiring` ignores this setting on purpose, since a date
+ * on somebody's leave to remain is a deadline they asked us to watch and
+ * not a subscription. A travel advisory is a companion update — it is
+ * the same kind of thing as the weekly orientation email, arriving on
+ * its own schedule — so a traveller who switched the companion off has
+ * already said what they want, and reaching them anyway would make that
+ * switch a lie.
+ *
+ * It reuses `companionDigest` rather than introducing a second setting.
+ * A traveller who wants safety alerts but no digest is a real person,
+ * but they are better served by one switch that means what it says than
+ * by two they have to find; the advisory is also still on the companion
+ * page for anyone who goes looking, whatever this says.
+ *
+ * `is distinct from 'off'` rather than `!= 'off'` for the reason
+ * `digest.ts` gives at length: `notificationPrefs` defaults to `{}`, and
+ * `!=` against a missing key evaluates to NULL, which would silently
+ * drop every traveller who never opened the setting.
  */
 export async function approvedTravellersForAdvisories(
   limit: number
@@ -109,10 +130,12 @@ export async function approvedTravellersForAdvisories(
     })
     .from(applications)
     .innerJoin(corridors, eq(corridors.id, applications.corridorId))
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
     .where(
       and(
         eq(applications.status, "approved"),
-        isNotNull(applications.corridorId)
+        isNotNull(applications.corridorId),
+        sql`(${profiles.notificationPrefs}->>'companionDigest') is distinct from 'off'`
       )
     )
     .limit(limit);

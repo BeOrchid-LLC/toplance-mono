@@ -213,5 +213,40 @@ describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
       expect(names).not.toContain(PENDING);
       expect(names).not.toContain(NO_CORRIDOR);
     });
+
+    /**
+     * A travel advisory is news somebody may reasonably not want emailed.
+     *
+     * `visa_expiring` deliberately ignores preferences — a deadline on
+     * someone's leave to remain is not a digest — and says so where it
+     * is queried. This one has no such argument: a traveller who has
+     * turned the companion off has said what they want, and an
+     * advisory is exactly the kind of update they turned off.
+     */
+    it("skips a traveller who has turned companion updates off", async () => {
+      await db
+        .update(profiles)
+        .set({ notificationPrefs: { companionDigest: "off" } })
+        .where(eq(profiles.id, APPROVED));
+
+      try {
+        const rows = await approvedTravellersForAdvisories(100);
+        expect(rows.map((r) => r.travelerId)).not.toContain(APPROVED);
+      } finally {
+        await db
+          .update(profiles)
+          .set({ notificationPrefs: {} })
+          .where(eq(profiles.id, APPROVED));
+      }
+    });
+
+    it("includes a traveller who has never touched the setting", async () => {
+      // `notificationPrefs` defaults to `{}`. An absent key is the
+      // documented default, not "off" — the same trap `digest.ts` names:
+      // `!= 'off'` evaluates to NULL against a missing key and silently
+      // excludes everyone who never opened the setting.
+      const rows = await approvedTravellersForAdvisories(100);
+      expect(rows.map((r) => r.travelerId)).toContain(APPROVED);
+    });
   });
 });

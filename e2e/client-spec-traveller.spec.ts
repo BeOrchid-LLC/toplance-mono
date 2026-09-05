@@ -808,9 +808,13 @@ test.describe("phases 5 & 6 · after approval", () => {
    * arms, `package.json` has no telephony dependency, and no SMS or
    * outbound voice exists to carry a voice message.
    *
-   * Worth flagging alongside this: the sign-up form's phone field tells
-   * the traveller the number is "used for the voice agent and travel
-   * alerts". It is used for neither.
+   * The consent mismatch this used to flag is gone: the sign-up form's
+   * phone field once told the traveller their number was "used for the
+   * voice agent and travel alerts" when it was used for neither. It now
+   * says "Kept on your record so a reviewer can reach you — nothing is
+   * sent to it", which is what actually happens. Recorded rather than
+   * deleted, because the copy has to stay true if a channel is ever
+   * built: asking for a number is a promise about what happens to it.
    */
   test.fixme("item 14 — updates can reach the traveller as a voice message", async () => {
     // Needs a channel that does not exist yet — Twilio, per the brief's

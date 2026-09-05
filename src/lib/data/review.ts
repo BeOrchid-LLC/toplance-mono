@@ -17,9 +17,18 @@ export type ReviewVerdict =
  * writes the verdict, so the notification is about the row that was
  * actually judged; the caller sends it only once that transaction has
  * committed. `applyPrecheckTx` returns `travelerId` for the same reason.
+ *
+ * `becameBillable` is reported out for the same reason and no other: the
+ * analytics event belongs after the commit, not inside it, so the caller
+ * emits it. True at most once in an application's life.
  */
 export type ReviewResult =
-  | { ok: true; documentName: string; travelerId: string }
+  | {
+      ok: true;
+      documentName: string;
+      travelerId: string;
+      becameBillable: boolean;
+    }
   | { error: string };
 
 /**
@@ -54,6 +63,28 @@ export async function reviewDocumentTx(
   }
 
   return db.transaction(async (tx) => {
+    // `applications` first, then `documents` — the same order
+    // `changeStatusTx` takes them in, and the reason this select is up
+    // here rather than beside the return where it reads more naturally.
+    // This transaction writes both tables (the verdict below, and
+    // `billable_at` when the verdict completes the checklist), and two
+    // writers taking two tables in opposite orders is how a pair of
+    // reviewers deadlock instead of one waiting for the other. Postgres
+    // resolves that by killing one of them with a 40P01, which reaches
+    // the reviewer as a 500 on a verdict they were entitled to make.
+    //
+    // `travelerId` never changes once an application exists, so the lock
+    // is not protecting that read — it is reserving the row in the
+    // agreed order before anything else is touched.
+    const [app] = await tx
+      .select({ travelerId: applications.travelerId })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .for("update")
+      .limit(1);
+
+    if (!app) return { error: "That application does not exist." };
+
     const [doc] = await tx
       .select({ state: documents.state, name: documents.name })
       .from(documents)
@@ -102,21 +133,15 @@ export async function reviewDocumentTx(
     // A verdict can be the thing that completes the checklist, which is
     // the moment the application becomes billable. Inside this
     // transaction so the stamp commits with the verdict that earned it;
-    // idempotent, so a flag-then-re-verify cannot bill twice.
-    await markBillableIfComplete(tx, applicationId);
+    // idempotent, so a flag-then-re-verify cannot bill twice. The
+    // `applications` row this updates is already locked, at the top.
+    const billing = await markBillableIfComplete(tx, applicationId);
 
-    // Read rather than joined onto the select above: that one takes
-    // `FOR UPDATE`, and a join would extend the row lock to
-    // `applications` — a second table locked in an order no other writer
-    // here uses, which is how two writers deadlock instead of one losing
-    // cleanly. `travelerId` never changes once an application exists, so
-    // there is nothing to lock it against.
-    const [app] = await tx
-      .select({ travelerId: applications.travelerId })
-      .from(applications)
-      .where(eq(applications.id, applicationId))
-      .limit(1);
-
-    return { ok: true, documentName: doc.name, travelerId: app.travelerId };
+    return {
+      ok: true,
+      documentName: doc.name,
+      travelerId: app.travelerId,
+      becameBillable: billing.becameBillable,
+    };
   });
 }

@@ -12,12 +12,15 @@ import { and, eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
   const { db } = await import("@/lib/db/client");
-  const { applications, documents, profiles } = await import("@/lib/db/schema");
+  const { applications, documents, organisations, profiles } = await import(
+    "@/lib/db/schema"
+  );
   const { reviewDocumentTx } = await import("@/lib/data/review");
 
   const TRAVELLER = "test_review_traveller";
   const REVIEWER = "test_review_reviewer";
   let applicationId = "";
+  let orgId: string | null = null;
 
   beforeEach(async () => {
     await db.insert(profiles).values({
@@ -60,6 +63,12 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
   afterEach(async () => {
     await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
     await db.delete(profiles).where(eq(profiles.id, REVIEWER));
+    // After the profiles, so the application is already gone by cascade
+    // and nothing is left pointing at the organisation.
+    if (orgId) {
+      await db.delete(organisations).where(eq(organisations.id, orgId));
+      orgId = null;
+    }
   });
 
   async function docState(docKey: string) {
@@ -84,6 +93,9 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
       ok: true,
       documentName: "Passport",
       travelerId: TRAVELLER,
+      // No org on this fixture, so no business to bill — the flag is
+      // reported out on every verdict, not only the billable ones.
+      becameBillable: false,
     });
     expect(await docState("passport")).toEqual({
       state: "verified",
@@ -103,6 +115,9 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
       ok: true,
       documentName: "Passport",
       travelerId: TRAVELLER,
+      // No org on this fixture, so no business to bill — the flag is
+      // reported out on every verdict, not only the billable ones.
+      becameBillable: false,
     });
     expect(await docState("passport")).toEqual({
       state: "flagged",
@@ -174,10 +189,72 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
       ok: true,
       documentName: "Passport",
       travelerId: TRAVELLER,
+      // No org on this fixture, so no business to bill — the flag is
+      // reported out on every verdict, not only the billable ones.
+      becameBillable: false,
     });
     expect(await docState("passport")).toEqual({
       state: "verified",
       reason: null,
     });
+  });
+
+  it("reports the verdict that made an application billable", async () => {
+    /**
+     * The reviewer's route to `billable_at`. It is not the usual one —
+     * an upload normally completes a checklist by itself — but it is the
+     * one that happens when a document went up before the pre-check
+     * could reach it, or came back after a flag. `reviewDocument` reads
+     * this flag to emit `toplance.application_became_billable`; the
+     * result used to be discarded here, so every case a person finished
+     * was billed correctly and counted nowhere.
+     */
+    const [org] = await db
+      .insert(organisations)
+      .values({ name: "Review Billing Agency" })
+      .returning({ id: organisations.id });
+    orgId = org.id;
+
+    await db
+      .update(applications)
+      .set({ orgId })
+      .where(eq(applications.id, applicationId));
+
+    // `funds` is still `not_started`, so this verdict completes nothing.
+    const first = await reviewDocumentTx(applicationId, "passport", {
+      verdict: "verified",
+    }, REVIEWER);
+    expect(first).toMatchObject({ ok: true, becameBillable: false });
+
+    // Scoped to this application as well as the key — `passport` and
+    // `funds` are doc keys half the database shares.
+    await db
+      .update(documents)
+      .set({ state: "checking" })
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, "funds")
+        )
+      );
+
+    const second = await reviewDocumentTx(applicationId, "funds", {
+      verdict: "verified",
+    }, REVIEWER);
+    expect(second).toMatchObject({ ok: true, becameBillable: true });
+
+    // And once only. A second look that flags the document and a third
+    // that clears it walk the checklist back to complete, and must not
+    // bill the agency for the same case again.
+    const third = await reviewDocumentTx(applicationId, "funds", {
+      verdict: "flagged",
+      reason: "Second look — the statement is unreadable.",
+    }, REVIEWER);
+    expect(third).toMatchObject({ ok: true, becameBillable: false });
+
+    const fourth = await reviewDocumentTx(applicationId, "funds", {
+      verdict: "verified",
+    }, REVIEWER);
+    expect(fourth).toMatchObject({ ok: true, becameBillable: false });
   });
 });

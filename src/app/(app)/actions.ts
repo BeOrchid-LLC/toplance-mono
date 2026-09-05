@@ -163,17 +163,6 @@ export async function uploadDocument(formData: FormData) {
       )
     );
 
-  // The upload that fills the last outstanding row is what completes a
-  // checklist — `completionOf` counts a document from `checking`, so
-  // neither the pre-check nor the reviewer can be the moment it happens
-  // on the ordinary path. This is where an application becomes billable,
-  // and the helper is idempotent, so a re-upload after a flag does not
-  // bill the business a second time for the same case.
-  const billing = await markBillableIfComplete(db, applicationId);
-  if (billing.becameBillable) {
-    await track("toplance.application_became_billable", { applicationId }, actorId);
-  }
-
   // Replacing a document used to leave the old object in the bucket for
   // good: only removeDocument ever deleted anything, so every re-upload
   // retained another copy of someone's passport. Deleted after the row
@@ -219,11 +208,60 @@ export async function uploadDocument(formData: FormData) {
           error
         );
       }
+
+      // Deliberately after the pre-check, not before it. `completionOf`
+      // counts a document from `checking`, which the write above sets
+      // before anything has looked at the file — so billing at that
+      // moment charges for a checklist nobody has yet judged, and breaks
+      // the promise the pricing page makes in the same breath, that an
+      // abandoned application is never charged. The case that promise is
+      // about is real: a traveller uploads a full set of illegible
+      // documents, the pre-check flags every one, and they never come
+      // back. Waiting until here, those flags have already landed, the
+      // checklist is not complete, and nobody is billed.
+      //
+      // Runs whether the check passed, flagged or threw. A check that
+      // failed is one that is never going to judge this document, and an
+      // application should not become unbillable because a model call
+      // timed out.
+      await billIfComplete(applicationId, actorId);
     });
+  } else {
+    // No pre-check was scheduled, so no verdict is ever coming and there
+    // is nothing to wait for.
+    await billIfComplete(applicationId, actorId);
   }
 
   revalidatePath("/app", "layout");
   return { ok: true };
+}
+
+/**
+ * Stamp the application billable if this upload completed its checklist,
+ * and never let a failure doing so reach the traveller.
+ *
+ * Everything after a successful upload on this path is best-effort by
+ * design: the file is stored and the row points at it, so somebody
+ * watching a spinner must not be told their passport failed to upload
+ * because a billing write lost its connection. The asymmetry is the
+ * argument — an unstamped application is recoverable, because the next
+ * document event on it re-runs this check and `cycleUsage` reads the
+ * column rather than an event log, while a false "that upload did not
+ * complete" sends a traveller to re-photograph a document that is
+ * already safely stored.
+ */
+async function billIfComplete(applicationId: string, actorId: string) {
+  try {
+    const billing = await markBillableIfComplete(db, applicationId);
+    if (billing.becameBillable) {
+      await track("toplance.application_became_billable", { applicationId }, actorId);
+    }
+  } catch (error) {
+    console.error(
+      `[actions] billing check failed for application ${applicationId}`,
+      error
+    );
+  }
 }
 
 /**

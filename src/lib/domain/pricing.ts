@@ -52,6 +52,78 @@ export const DEFAULT_RATE_CARD: RateCard = {
   ],
 };
 
+/**
+ * A rate card out of the database, checked rather than cast.
+ *
+ * `billing_rate_cards.bands` is a JSON column, so what comes back is
+ * `unknown` however the row type is written — and the whole design
+ * invites someone to edit that row by hand. The failure this guards
+ * against is silent and expensive: drop the open top band and `quote`
+ * charges *nothing* for every application above the last threshold, so a
+ * 500-application month invoices as 200, with no error anywhere.
+ * Throwing turns a quietly wrong invoice into a loud one nobody misses.
+ */
+export function parseRateCard(input: {
+  baseFeeMinor: unknown;
+  currency: unknown;
+  bands: unknown;
+}): RateCard {
+  if (!isMinorUnit(input.baseFeeMinor)) {
+    badCard("base fee is not a whole number of minor units");
+  }
+  if (typeof input.currency !== "string" || input.currency.length !== 3) {
+    badCard("currency is not a three-letter code");
+  }
+  if (!Array.isArray(input.bands) || input.bands.length === 0) {
+    badCard("bands is not a non-empty array");
+  }
+
+  const bands: RateBand[] = (input.bands as unknown[]).map((raw, i) => {
+    if (typeof raw !== "object" || raw === null) badCard(`band ${i} is not an object`);
+    const { upTo, rateMinor } = raw as { upTo?: unknown; rateMinor?: unknown };
+
+    if (!isMinorUnit(rateMinor)) {
+      badCard(`band ${i} has no whole-minor-unit rate`);
+    }
+    if (upTo !== null && !(isMinorUnit(upTo) && upTo > 0)) {
+      badCard(`band ${i} has an "upTo" that is neither null nor a positive whole number`);
+    }
+
+    return { upTo: upTo as number | null, rateMinor };
+  });
+
+  // Exactly one open-ended band, and it has to be last. This is the
+  // under-billing case: `quote` stops counting at the final threshold, so
+  // a card with no open top band silently charges nothing above it.
+  const openEnded = bands.filter((b) => b.upTo === null).length;
+  if (openEnded !== 1) {
+    badCard(`exactly one band must be open-ended, found ${openEnded}`);
+  }
+  if (bands[bands.length - 1].upTo !== null) {
+    badCard("the open-ended band must be the last one");
+  }
+
+  // `upTo` is cumulative, so the thresholds must ascend. Out of order, a
+  // band's room comes out negative and `quote` skips it without a word.
+  for (let i = 1; i < bands.length - 1; i++) {
+    const previous = bands[i - 1].upTo as number;
+    if ((bands[i].upTo as number) <= previous) {
+      badCard(`band thresholds must ascend — band ${i} does not exceed ${previous}`);
+    }
+  }
+
+  return { baseFeeMinor: input.baseFeeMinor, currency: input.currency, bands };
+}
+
+/** A declaration, not an arrow: only this form narrows the code after a call. */
+function badCard(why: string): never {
+  throw new Error(`Rate card is not usable: ${why}`);
+}
+
+function isMinorUnit(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
 /** One band as it actually applied to a given volume. */
 export type QuoteLayer = {
   count: number;

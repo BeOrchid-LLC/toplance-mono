@@ -7,10 +7,10 @@ import { applications, billingRateCards, documents } from "@/lib/db/schema";
 import {
   DEFAULT_RATE_CARD,
   cycleFor,
+  parseRateCard,
   quote,
   type BillingCycle,
   type Quote,
-  type RateBand,
   type RateCard,
 } from "@/lib/domain/pricing";
 
@@ -39,11 +39,10 @@ export async function activeRateCard(at: Date = new Date()): Promise<RateCard> {
 
   if (!row) return DEFAULT_RATE_CARD;
 
-  return {
-    baseFeeMinor: row.baseFeeMinor,
-    currency: row.currency,
-    bands: row.bands as RateBand[],
-  };
+  // Parsed, not cast. `bands` is a JSON column that a human is expected
+  // to edit; `parseRateCard` throws on a card that would under-bill
+  // rather than letting it quote a smaller number than the rates say.
+  return parseRateCard(row);
 }
 
 /**

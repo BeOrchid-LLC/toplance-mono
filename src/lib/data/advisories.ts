@@ -3,14 +3,19 @@ import "server-only";
 import { and, eq, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, corridors, profiles } from "@/lib/db/schema";
+import {
+  applications,
+  companionUpdates,
+  corridors,
+  profiles,
+} from "@/lib/db/schema";
 import {
   getCompanionUpdate,
   isStale,
   upsertCompanionUpdate,
 } from "@/lib/data/companion";
 import { advisoryChanged, type Advisory } from "@/lib/safety/advisories";
-import { fetchAdvisories } from "@/lib/safety/fetch-advisories";
+import { fetchAdvisories, type AdvisoryFetch } from "@/lib/safety/fetch-advisories";
 
 /**
  * The cached travel advisories for one application, and the change
@@ -34,11 +39,42 @@ const KIND = "safety_advisory";
  */
 const STALE_AFTER_DAYS = 1;
 
-type CachedAdvisories = { advisories: Advisory[] };
+/**
+ * Two readings, not one.
+ *
+ * `advisories` is what the sources last said — the page renders this, and
+ * refreshing it is the whole point of the cache. `alerted` is the reading
+ * the traveller has actually been told about, and it moves only when an
+ * alert is genuinely sent.
+ *
+ * Keeping them apart is what makes the alert survive a page view. With a
+ * single reading, `refreshAdvisoriesIfStale` had to overwrite the very
+ * baseline it compares against; the companion page calls it on render and
+ * discards `changed`, so a traveller opening their page after a
+ * government moved its advice silently consumed the change, and the
+ * nightly sweep — comparing against the already-updated copy — found
+ * nothing to send, permanently. That page is approved-only, which is
+ * exactly the population the sweep exists for.
+ */
+type CachedAdvisories = { advisories: Advisory[]; alerted: Advisory[] };
 
-function readCache(payload: unknown): Advisory[] {
-  const advisories = (payload as Partial<CachedAdvisories> | null)?.advisories;
-  return Array.isArray(advisories) ? advisories : [];
+function asAdvisories(value: unknown): Advisory[] {
+  return Array.isArray(value) ? (value as Advisory[]) : [];
+}
+
+function readCache(payload: unknown): CachedAdvisories {
+  const row = payload as Partial<CachedAdvisories> | null;
+  const advisories = asAdvisories(row?.advisories);
+
+  return {
+    advisories,
+    // A row written before the two were split has no `alerted`. Treating
+    // the last reading as the baseline reproduces the old behaviour for
+    // that one row and seeds it properly on the next write — which is the
+    // quiet choice, and the only one that cannot mail somebody about a
+    // change that predates this code.
+    alerted: row?.alerted === undefined ? advisories : asAdvisories(row.alerted),
+  };
 }
 
 /**
@@ -56,39 +92,104 @@ function readCache(payload: unknown): Advisory[] {
  * copy rather than an empty list — stale but true beats blank, and an
  * advisory that merely failed to load must never read as one that was
  * withdrawn.
+ *
+ * `changed` is compared against the *alerted* baseline and this function
+ * never moves that baseline — only `markAdvisoriesAlerted` does, after an
+ * alert is really away. So a caller that ignores `changed` (the companion
+ * page does, because rendering a page is not the moment to email
+ * somebody) costs the traveller nothing: the change is still pending the
+ * next time the sweep looks.
  */
 export async function refreshAdvisoriesIfStale(
   applicationId: string,
-  destinationIso: string
+  destinationIso: string,
+  memo?: AdvisoryFetch
 ): Promise<{ advisories: Advisory[]; changed: Advisory[] }> {
   const existing = await getCompanionUpdate(applicationId, KIND);
-  const cached = existing ? readCache(existing.payload) : [];
+  const cached = existing
+    ? readCache(existing.payload)
+    : { advisories: [], alerted: [] };
 
+  // A fresh cache still reports what is pending. It is not a re-read, so
+  // it can find nothing new — but something the page refreshed an hour
+  // ago and never mentioned to anybody is still owed to the traveller,
+  // and this is the branch the sweep lands in when that happened.
   if (existing && !isStale(existing, STALE_AFTER_DAYS)) {
-    return { advisories: cached, changed: [] };
+    return {
+      advisories: cached.advisories,
+      changed: changedSince(cached.alerted, cached.advisories, true),
+    };
   }
 
-  const fetched = await fetchAdvisories(destinationIso);
+  const fetched = await fetchAdvisories(destinationIso, memo);
 
   // Every source down. Keep what we last read and claim no change.
   if (fetched.length === 0) {
-    return { advisories: cached, changed: [] };
+    return { advisories: cached.advisories, changed: [] };
   }
 
-  // Compared per source, never across them: FCDO moving says nothing
-  // about whether the State Department did.
-  const changed = existing
-    ? fetched.filter((next) => {
-        const previous = cached.find((c) => c.source === next.source) ?? null;
-        return advisoryChanged(previous, next);
-      })
-    : [];
+  const changed = changedSince(cached.alerted, fetched, existing !== null);
 
   await upsertCompanionUpdate(applicationId, KIND, {
     advisories: fetched,
+    // On a first sighting the reading *is* the baseline: there was
+    // nothing to compare it against, the traveller sees it on the page
+    // rather than in their inbox, and the next move of the source is the
+    // first thing worth alerting on. Seeding it empty instead would make
+    // every source look new for ever — `advisoryChanged(null, next)` is
+    // false — so no change would ever be reported at all.
+    //
+    // Afterwards it is left exactly where it was. Moving it here would
+    // mark as "told" something nobody has been told yet, which is the
+    // mistake this split exists to make impossible.
+    alerted: existing ? cached.alerted : fetched,
   } satisfies CachedAdvisories);
 
   return { advisories: fetched, changed };
+}
+
+/**
+ * Which of `next` has moved since the traveller was last alerted.
+ *
+ * Compared per source, never across them: FCDO moving says nothing about
+ * whether the State Department did.
+ *
+ * A first sighting is never a change — `advisoryChanged` enforces that
+ * per source, and `hasHistory` covers the whole application, so deploying
+ * this cannot mail every approved traveller about advice that has sat
+ * unchanged for a year.
+ */
+function changedSince(
+  alerted: Advisory[],
+  next: Advisory[],
+  hasHistory: boolean
+): Advisory[] {
+  if (!hasHistory) return [];
+
+  return next.filter((advisory) => {
+    const previous = alerted.find((a) => a.source === advisory.source) ?? null;
+    return advisoryChanged(previous, advisory);
+  });
+}
+
+/**
+ * Record that the traveller has now been told about these advisories.
+ *
+ * Called only after `notify` reports the alert actually went out, so a
+ * failed send is retried on the next sweep rather than swallowed. Writes
+ * the current reading as the new baseline and leaves `advisories`
+ * untouched — this is bookkeeping about what was said, not a refresh.
+ */
+export async function markAdvisoriesAlerted(applicationId: string): Promise<void> {
+  const existing = await getCompanionUpdate(applicationId, KIND);
+  if (!existing) return;
+
+  const cached = readCache(existing.payload);
+
+  await upsertCompanionUpdate(applicationId, KIND, {
+    advisories: cached.advisories,
+    alerted: cached.advisories,
+  } satisfies CachedAdvisories);
 }
 
 /**
@@ -118,6 +219,15 @@ export async function refreshAdvisoriesIfStale(
  * `digest.ts` gives at length: `notificationPrefs` defaults to `{}`, and
  * `!=` against a missing key evaluates to NULL, which would silently
  * drop every traveller who never opened the setting.
+ *
+ * Of whoever is left, oldest-cache-first, nulls (never checked at all)
+ * ahead of everything — the same rule `travellersDueForDigest` uses, and
+ * for the same reason. `limit` with no `orderBy` is not a fair sample:
+ * Postgres returns whichever rows it reaches first, which is stable in
+ * practice, so at more than `limit` eligible travellers the same ones
+ * were swept every night and the rest were never checked at all.
+ * Bounding the work is fine; bounding it to the same subset for ever is
+ * a traveller who never hears about a change.
  */
 export async function approvedTravellersForAdvisories(
   limit: number
@@ -130,7 +240,18 @@ export async function approvedTravellersForAdvisories(
     })
     .from(applications)
     .innerJoin(corridors, eq(corridors.id, applications.corridorId))
+    // Inner-joined to read the preference below: a traveller with no
+    // profile row has nobody to alert anyway.
     .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+    // Left-joined only to order by it, the same shape
+    // `travellersDueForDigest` uses.
+    .leftJoin(
+      companionUpdates,
+      and(
+        eq(companionUpdates.applicationId, applications.id),
+        eq(companionUpdates.kind, KIND)
+      )
+    )
     .where(
       and(
         eq(applications.status, "approved"),
@@ -138,5 +259,6 @@ export async function approvedTravellersForAdvisories(
         sql`(${profiles.notificationPrefs}->>'companionDigest') is distinct from 'off'`
       )
     )
+    .orderBy(sql`${companionUpdates.generatedAt} asc nulls first`)
     .limit(limit);
 }

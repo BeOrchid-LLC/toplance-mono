@@ -155,16 +155,23 @@ export function itineraryReadyEmail({ url }: { url: string }): EmailContent {
  * real renewal route is. `visaName` comes off a curated corridor row and
  * is null when none resolved, which is a fallback rather than the string
  * "null" in someone's inbox.
+ *
+ * `daysRemaining` is the real count to the date, never the threshold that
+ * triggered the send. The two are not the same number and the difference
+ * is not cosmetic: the expiry field only appears after approval, so most
+ * travellers enter a date that is already inside a band, and printing the
+ * band would tell someone with 31 days left that they have 60 — a claim
+ * the body of the very same email then contradicts.
  */
 export function visaExpiringEmail({
   visaName,
   expiresOn,
-  daysOut,
+  daysRemaining,
   url,
 }: {
   visaName: string | null;
   expiresOn: string;
-  daysOut: number;
+  daysRemaining: number;
   url: string;
 }): EmailContent {
   const visa = visaName ?? "visa";
@@ -175,10 +182,25 @@ export function visaExpiringEmail({
     year: "numeric",
   });
 
+  // "in 0 days" and "in 1 days" are both things a count reaches and
+  // neither is a sentence, so the last two days are named rather than
+  // counted. Everything below one day is "today": the reminder is keyed
+  // on a date, and there is no negative case here — `dueThreshold`
+  // returns null once the date is behind us.
+  const remaining =
+    daysRemaining <= 0
+      ? "today"
+      : daysRemaining === 1
+        ? "tomorrow"
+        : `in ${daysRemaining} days`;
+
   return {
-    subject: `Your ${visa} expires in ${daysOut} days`,
+    subject: `Your ${visa} expires ${remaining}`,
     ...renderEmail({
-      heading: `${daysOut} days until your ${visa} expires`,
+      heading:
+        daysRemaining <= 1
+          ? `Your ${visa} expires ${remaining}`
+          : `${daysRemaining} days until your ${visa} expires`,
       paragraphs: [
         `You told us your ${visa} expires on ${when}.`,
         "If you plan to stay, start your extension or renewal before that date — most routes will not accept an application filed after it.",
@@ -212,12 +234,17 @@ export function advisoryChangedEmail({
   url: string;
 }): EmailContent {
   // The note is what the source itself said changed; the level is the
-  // fallback when a source publishes a rating but no note. One of the
-  // two is always present, so the email never says merely "something
-  // changed" with nothing to show for it.
+  // fallback when a source publishes a rating but no note. Neither is
+  // guaranteed — an FCDO advisory has no level at all by design (see
+  // `toFcdoAdvisory`) and carries no note whenever the response omits
+  // `change_description` — so there is a third rung. Without it that case
+  // interpolated a null and mailed somebody the sentence "UK FCDO now
+  // rates Germany as null."
   const detail = changeNote
     ? `“${changeNote}” — ${source}`
-    : `${source} now rates ${destination} as ${level}.`;
+    : level
+      ? `${source} now rates ${destination} as ${level}.`
+      : `${source} has updated its travel advice for ${destination}.`;
 
   return {
     subject: `Travel advice for ${destination} has been updated`,

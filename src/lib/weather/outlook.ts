@@ -105,16 +105,46 @@ export type Outlook = {
   highC: number;
   /** Coolest daily low across the window, rounded. */
   lowC: number;
-  /** How many days the range covers. */
+  /** How many days the range actually covers — see `toOutlook`. */
   days: number;
   /** The unit the source reported in, e.g. "°C". */
   unit: string;
 };
 
+function isReading(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function series(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 /** The finite numbers in a mixed array — Open-Meteo sends null for a day it has no value for. */
 function numbers(value: unknown): number[] {
-  if (!Array.isArray(value)) return [];
-  return value.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  return series(value).filter(isReading);
+}
+
+/**
+ * How many days the range actually describes: those the source gave a
+ * reading of any kind for.
+ *
+ * Counted per day rather than taken from `daily.time`, which is the list
+ * of days *asked* about and stays at seven however many of them came back
+ * empty. A high on Monday and a low on Tuesday is two days of data even
+ * though neither day is a complete pair, so the two arrays are walked
+ * together instead of having their filtered lengths compared.
+ */
+function daysCovered(maxima: unknown, minima: unknown): number {
+  const highs = series(maxima);
+  const lows = series(minima);
+  const span = Math.max(highs.length, lows.length);
+
+  let days = 0;
+  for (let i = 0; i < span; i += 1) {
+    if (isReading(highs[i]) || isReading(lows[i])) days += 1;
+  }
+
+  return days;
 }
 
 /**
@@ -123,6 +153,13 @@ function numbers(value: unknown): number[] {
  * Nulls are dropped rather than coerced: `Math.min` over an array
  * containing `null` returns 0, which would print a 0°C low in the middle
  * of a warm week and read as a fact rather than a gap.
+ *
+ * `days` counts the days that actually carry a reading, not the length of
+ * `daily.time` — see `daysCovered`. Those differ exactly when the source
+ * sent nulls, and taking the longer one labels the answer with a window
+ * it does not describe: two usable days of temperatures rendered as "over
+ * the next 7 days" is the same class of claim the null-dropping above
+ * exists to avoid — a gap presented as a fact.
  *
  * Returns null for anything that is not recognisably this response, so a
  * maintenance page can never render as a forecast of zero degrees.
@@ -142,7 +179,7 @@ export function toOutlook(payload: unknown): Outlook | null {
   const unit =
     typeof units?.temperature_2m_max === "string" ? units.temperature_2m_max : "°C";
 
-  const days = Array.isArray(daily.time) ? daily.time.length : highs.length;
+  const days = daysCovered(daily.temperature_2m_max, daily.temperature_2m_min);
 
   return {
     highC: Math.round(Math.max(...highs)),

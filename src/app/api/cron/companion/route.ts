@@ -3,9 +3,11 @@ import { countDueForDigest, travellersDueForDigest } from "@/lib/data/digest";
 import { travellersDueForExpiryReminder } from "@/lib/data/expiry";
 import {
   approvedTravellersForAdvisories,
+  markAdvisoriesAlerted,
   refreshAdvisoriesIfStale,
 } from "@/lib/data/advisories";
 import { destinationNameFor } from "@/lib/safety/advisories";
+import { newAdvisoryFetch } from "@/lib/safety/fetch-advisories";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { arrivalChecklist } from "@/lib/domain/companion";
 import { appUrl, notify } from "@/lib/notifications/notify";
@@ -99,13 +101,16 @@ export async function GET(request: Request) {
 
       if (highlights.length === 0) continue;
 
-      await notify(
+      // Counted on what `notify` reports rather than on reaching the next
+      // line — see `remindExpiringVisas` below for why the try/catch
+      // cannot stand in for this.
+      const ok = await notify(
         travelerId,
         "companion_digest",
         { url: appUrl("/app/companion"), highlights },
         applicationId
       );
-      notified += 1;
+      if (ok) notified += 1;
     } catch (error) {
       console.error(
         `[cron/companion] could not send the digest for application ${applicationId}`,
@@ -156,20 +161,28 @@ async function alertAdvisoryChanges(): Promise<{
 
   const travellers = await approvedTravellersForAdvisories(CRON_BATCH_LIMIT);
 
+  // One memo for the whole sweep. The State Department feed is a single
+  // ~1 MB document covering every country, so every traveller below wants
+  // the same bytes; without this each one downloaded and re-scanned it.
+  const memo = newAdvisoryFetch();
+
   for (const { applicationId, travelerId, destinationIso } of travellers) {
     checked += 1;
 
     try {
       const { changed } = await refreshAdvisoriesIfStale(
         applicationId,
-        destinationIso
+        destinationIso,
+        memo
       );
       if (changed.length === 0) continue;
 
       const destination = destinationNameFor(destinationIso) ?? destinationIso.toUpperCase();
 
+      const sent: string[] = [];
+
       for (const advisory of changed) {
-        await notify(
+        const ok = await notify(
           travelerId,
           "advisory_changed",
           {
@@ -181,12 +194,26 @@ async function alertAdvisoryChanges(): Promise<{
           },
           applicationId
         );
+
+        if (!ok) continue;
+        sent.push(advisory.source);
         alerted += 1;
+      }
+
+      if (sent.length === 0) continue;
+
+      // Only now is the traveller on record as having been told. Doing
+      // this inside `refreshAdvisoriesIfStale` is what broke the feature
+      // before: the page calls that too, and it consumed the change
+      // without sending anything. A partial send leaves the baseline
+      // where it is, so the source that failed is retried next sweep.
+      if (sent.length === changed.length) {
+        await markAdvisoriesAlerted(applicationId);
       }
 
       await track(
         "toplance.advisory_change_notified",
-        { applicationId, sources: changed.map((c) => c.source) },
+        { applicationId, sources: sent },
         null
       );
     } catch (error) {
@@ -223,25 +250,35 @@ async function remindExpiringVisas(): Promise<{ reminded: number }> {
 
   for (const row of due) {
     try {
-      await notify(
+      const ok = await notify(
         row.travelerId,
         "visa_expiring",
         {
           visaName: row.visaName,
           expiresOn: row.expiresOn,
-          daysOut: row.daysOut,
+          thresholdDays: row.thresholdDays,
+          daysRemaining: row.daysRemaining,
           url: appUrl("/app/companion"),
         },
         row.applicationId
       );
 
-      // Tracked after the notify, not before: the notification row is
-      // what stops the next run repeating this notice, so an event
-      // claiming a reminder the traveller never got would be a lie the
-      // dedupe then makes permanent.
+      // Gated on what `notify` reports, not on reaching this line.
+      // `notify` never throws — it swallows its own failures by design —
+      // so a try/catch around it cannot tell a sent reminder from a
+      // failed one, and counting in the happy path counted every failure
+      // as a success. The notification row is what stops the next run
+      // repeating this notice, so an event claiming a reminder the
+      // traveller never got is a lie the dedupe then makes permanent.
+      if (!ok) continue;
+
       await track(
         "toplance.expiry_reminder_sent",
-        { applicationId: row.applicationId, daysOut: row.daysOut },
+        {
+          applicationId: row.applicationId,
+          thresholdDays: row.thresholdDays,
+          daysRemaining: row.daysRemaining,
+        },
         null
       );
       reminded += 1;

@@ -246,6 +246,27 @@ describe("fcdoSlugFor", () => {
   it("has no slug for a destination this product does not curate", () => {
     expect(fcdoSlugFor("zz")).toBeNull();
   });
+
+  it("uses the published slug where gov.uk and the curated name disagree", () => {
+    // All four were checked against the live content API on 2026-09-05.
+    // Derived from the name, each of these 404s and the traveller simply
+    // gets no FCDO advisory — a silent failure nothing in the product
+    // reports, which is why they are pinned here.
+    //
+    // `us` is the one that mattered: the State Department publishes no
+    // row about the United States either, so a US-bound traveller — a
+    // live corridor — had no advisory from either source.
+    expect(fcdoSlugFor("us")).toBe("usa");
+    expect(fcdoSlugFor("tr")).toBe("turkey");
+    expect(fcdoSlugFor("ci")).toBe("cote-d-ivoire");
+  });
+
+  it("leaves the derived slug alone where it already resolves", () => {
+    // Both were verified live on the same sweep. Adding an override for
+    // either would break a working lookup.
+    expect(fcdoSlugFor("cz")).toBe("czechia");
+    expect(fcdoSlugFor("ae")).toBe("united-arab-emirates");
+  });
 });
 
 describe("advisoryChanged", () => {

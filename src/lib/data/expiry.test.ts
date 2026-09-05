@@ -28,8 +28,9 @@ describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", asy
   const NO_DATE = "test_expiry_no_date";
   const EXPIRED = "test_expiry_expired";
   const FAR_OFF = "test_expiry_far_off";
+  const MOVED = "test_expiry_moved";
 
-  const IDS = [DUE, SENT, MUTED, PENDING, NO_DATE, EXPIRED, FAR_OFF];
+  const IDS = [DUE, SENT, MUTED, PENDING, NO_DATE, EXPIRED, FAR_OFF, MOVED];
 
   beforeEach(async () => {
     await db.insert(profiles).values(
@@ -51,6 +52,7 @@ describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", asy
       { travelerId: NO_DATE, status: "approved", visaExpiresOn: null },
       { travelerId: EXPIRED, status: "approved", visaExpiresOn: inDays(-3) },
       { travelerId: FAR_OFF, status: "approved", visaExpiresOn: inDays(120) },
+      { travelerId: MOVED, status: "approved", visaExpiresOn: inDays(45) },
     ]);
 
     // SENT has already had the sixty-day notice.
@@ -63,7 +65,32 @@ describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", asy
       recipientId: SENT,
       applicationId: sentApp.id,
       kind: "visa_expiring",
-      payload: { daysOut: 60, expiresOn: inDays(45), url: "https://example.invalid" },
+      payload: {
+        thresholdDays: 60,
+        daysRemaining: 45,
+        expiresOn: inDays(45),
+        url: "https://example.invalid",
+      },
+    });
+
+    // MOVED had the sixty-day notice for a date that has since changed —
+    // an extension granted, the field updated. The old notice was about
+    // a different date and must not silence the new one.
+    const [movedApp] = await db
+      .select({ id: applications.id })
+      .from(applications)
+      .where(inArray(applications.travelerId, [MOVED]));
+
+    await db.insert(notifications).values({
+      recipientId: MOVED,
+      applicationId: movedApp.id,
+      kind: "visa_expiring",
+      payload: {
+        thresholdDays: 60,
+        daysRemaining: 45,
+        expiresOn: inDays(-400),
+        url: "https://example.invalid",
+      },
     });
   });
 
@@ -82,13 +109,25 @@ describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", asy
     const rows = await dueFor();
     const row = rows.find((r) => r.travelerId === DUE);
     expect(row).toBeDefined();
-    expect(row!.daysOut).toBe(60);
+    expect(row!.thresholdDays).toBe(60);
+    expect(row!.daysRemaining).toBe(45);
     expect(row!.expiresOn).toBe(inDays(45));
   });
 
   it("does not repeat a notice that has already been sent", async () => {
     const rows = await dueFor();
     expect(rows.map((r) => r.travelerId)).not.toContain(SENT);
+  });
+
+  it("starts again when the expiry date the notice was about has changed", async () => {
+    // A notice is only a reason to stay quiet about the date it was
+    // actually about. Keyed on the threshold alone, a traveller whose
+    // visa was extended silently skipped the sixty-day notice for the new
+    // date and dropped straight to the thirty-day one a year later.
+    const rows = await dueFor();
+    const row = rows.find((r) => r.travelerId === MOVED);
+    expect(row).toBeDefined();
+    expect(row!.thresholdDays).toBe(60);
   });
 
   it("still reminds a traveller who turned the companion digest off", async () => {

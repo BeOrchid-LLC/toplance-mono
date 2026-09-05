@@ -61,7 +61,7 @@ export type EntryCheck = {
  * An **allowlist**, and the distinction is the whole point. Travel Buddy
  * answers NG→US with "Not admitted" — a categorical claim about an
  * entire nationality, carrying no scope, no effective date and no source
- * the screen could cite. A traveller who answered ten questions honestly
+ * the screen could cite. A traveller who answered every question honestly
  * should not meet that sentence rendered raw, and we are in no position
  * to defend it.
  *

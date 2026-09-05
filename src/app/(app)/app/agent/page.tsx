@@ -24,7 +24,6 @@ export default async function AgentPage() {
   if (!profile || !application) redirect("/sign-in?next=/app/agent");
 
   const answers = await getIntakeAnswers(application.id);
-  const firstName = profile.fullName.split(" ")[0] ?? "";
 
   // Decided on the server: the key is server-only, and the client needs
   // to know which of the two agents it is rendering before it renders.
@@ -32,7 +31,7 @@ export default async function AgentPage() {
     <IntakeAgent
       applicationId={application.id}
       initialAnswers={answers}
-      firstName={firstName}
+      fullName={profile.fullName}
       aiEnabled={aiEnabled()}
     />
   );

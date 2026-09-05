@@ -50,7 +50,7 @@ export type VoiceStatus = "idle" | "connecting" | "live";
 export function useVoiceIntake({
   applicationId,
   answers,
-  firstName,
+  fullName,
   locale,
   onAnswerRecorded,
   onComplete,
@@ -59,7 +59,7 @@ export function useVoiceIntake({
   applicationId: string;
   /** The record as the screen currently shows it, for the opening prompt. */
   answers: Record<string, string>;
-  firstName: string;
+  fullName: string;
   locale: Locale;
   /** One answer landed in the database. */
   onAnswerRecorded: (key: string, value: string) => void;
@@ -189,7 +189,7 @@ export function useVoiceIntake({
         instructions: buildVoiceIntakeInstructions({
           answers: answersRef.current,
           locale,
-          firstName,
+          fullName,
         }),
         tools: [recordAnswer],
       });
@@ -259,7 +259,7 @@ export function useVoiceIntake({
     } finally {
       startingRef.current = false;
     }
-  }, [applicationId, firstName, locale, stop]);
+  }, [applicationId, fullName, locale, stop]);
 
   // A session left open would hold the microphone and keep billing after
   // the screen is gone, so leaving the page ends the call.

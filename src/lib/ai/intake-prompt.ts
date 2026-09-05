@@ -23,12 +23,18 @@ import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n/locales";
 export function buildIntakeSystemPrompt({
   answers,
   locale,
-  firstName,
+  fullName,
   reopenedKey,
 }: {
   answers: Record<string, string>;
   locale: Locale;
-  firstName: string;
+  /**
+   * The whole name, not just the first: the opening topic reads it back
+   * for the traveller to confirm against their passport. The greeting's
+   * first name is sliced from it here rather than passed alongside, so
+   * the two cannot disagree.
+   */
+  fullName: string;
   /**
    * A topic the traveller reopened from the answers rail. The reopen
    * never writes anything by itself, so the database still holds the
@@ -41,6 +47,7 @@ export function buildIntakeSystemPrompt({
     LOCALES.find((l) => l.code === locale) ??
     LOCALES.find((l) => l.code === DEFAULT_LOCALE)!;
 
+  const firstName = fullName.trim().split(" ")[0] ?? "";
   const next = INTAKE_QUESTIONS.find((q) => !answers[q.key]);
   const reopened = INTAKE_QUESTIONS.find((q) => q.key === reopenedKey);
 
@@ -64,6 +71,7 @@ export function buildIntakeSystemPrompt({
   const travellerData = JSON.stringify(
     {
       firstName,
+      fullName,
       answers: Object.fromEntries(
         INTAKE_QUESTIONS.filter((q) => answers[q.key]).map((q) => [
           q.key,
@@ -82,7 +90,7 @@ export function buildIntakeSystemPrompt({
 
   return `You are the Toplance intake agent. You are talking to a traveller who is planning to move or travel abroad and has come here to have their file started.
 
-Your only job is to collect ten answers, one at a time, and record each one with the \`record_answer\` tool. Nothing else.
+Your only job is to collect every answer on the list below, one at a time, and record each one with the \`record_answer\` tool. Nothing else.
 
 ## How to talk
 
@@ -125,6 +133,8 @@ For \`nationality\`, \`destination\` and \`purpose\`, the checklist is keyed on 
 - destination: ${labels(DESTINATION_ISO)}
 - purpose: ${labels(PURPOSE_ISO)}
 
+For \`passport_name\`, record the name itself and never "Yes" or any other acknowledgement. The traveller is confirming or correcting \`fullName\` in the JSON above: if they confirm it, record that value exactly as it appears there; if they correct it, record their spelling.
+
 "UK", "Britain" and "England" are the "United Kingdom". "Dubai" and "Abu Dhabi" are the "United Arab Emirates". A job offer, a work permit or "going to work" is "Work".
 
 If it does not clearly match, record their words verbatim. Do not steer them towards a label to make one fit — a corridor we do not serve is answered honestly further down the line, and a wrong label is not.
@@ -157,7 +167,7 @@ Question 10 asks about previous refusals. Some people are afraid to say. Reassur
 export function buildVoiceIntakeInstructions(args: {
   answers: Record<string, string>;
   locale: Locale;
-  firstName: string;
+  fullName: string;
 }): string {
   return `${buildIntakeSystemPrompt(args)}
 ## You are speaking aloud

@@ -70,16 +70,30 @@ const FIXTURE = join(__dirname, "fixtures/passport.jpg");
  */
 const INTAKE = [
   {
+    topic: "full name",
+    prompt: "what is your full name, exactly as it appears on your passport?",
+    rail: "Name on passport",
+    chip: `Yes — ${NAME}`,
+    stored: NAME,
+  },
+  {
     topic: "nationality",
-    prompt: "First — which country's passport do you hold?",
+    prompt: "Which country's passport do you hold?",
     rail: "Nationality",
     chip: "Nigeria",
     stored: "Nigeria",
   },
   {
-    topic: "current location",
-    prompt: "And where are you living right now?",
+    topic: "current country",
+    prompt: "And which country are you living in right now?",
     rail: "Living in",
+    chip: "Nigeria",
+    stored: "Nigeria",
+  },
+  {
+    topic: "current city",
+    prompt: "And which city or town are you in?",
+    rail: "City or town",
     chip: "Lagos",
     stored: "Lagos",
   },
@@ -340,28 +354,44 @@ test.describe("phase 1 · the intake agent", () => {
   });
 
   /**
-   * The brief opens its list with full name. The agent never asks for
-   * it — `auth-form.tsx` collects it at sign-up and `completeProfile`
-   * writes it — so the datum exists (item 3's test finds it on the
-   * profile) but not by the route item 1 describes. Whether that
-   * matters is the client's call, which is exactly why it is a named
-   * entry here rather than a silent pass.
+   * The brief opens its list with full name, and the agent now asks for
+   * it — but as a confirmation rather than a cold question, because
+   * sign-up already captured a name. What the passport carries is the
+   * name a visa is issued to, and the two are allowed to differ: this
+   * asserts the answer is filed as its own field beside the account
+   * name, not merged into it.
    */
-  test.fixme("item 1 — the agent asks the traveller their full name", async () => {
-    await page.goto("/app/agent");
-    await expect(page.getByText("what should I call you", { exact: false })).toBeVisible();
+  test("item 1 — the agent asks for the name on the traveller's passport", async () => {
+    await page.goto("/app/profile");
+
+    const passportName = page
+      .locator("div")
+      .filter({ hasText: /^Name on passport/ })
+      .last();
+    await expect(passportName).toContainText(NAME);
   });
 
   /**
-   * The brief asks for "current country". The `residence` question asks
-   * for a city, and its chips are five Nigerian ones (Lagos, Abuja,
-   * Port Harcourt, Kano, Ibadan) — which is a sharper question for the
-   * corridors actually served, and a narrower one than was bought. The
-   * nationality answer is doing the country's job today.
+   * The brief asks for "current country", which the intake used to
+   * leave to nationality — a different fact, and the wrong one: a
+   * mission's jurisdiction follows where a traveller applies *from*.
+   * The city question survives alongside it, so this asserts the two
+   * are recorded as separate fields rather than one doing both jobs.
    */
-  test.fixme("item 1 — the agent asks which country the traveller is in now", async () => {
-    await page.goto("/app/agent");
-    await expect(page.getByRole("button", { name: "Nigeria", exact: true })).toBeVisible();
+  test("item 1 — the agent asks which country the traveller is in now", async () => {
+    await page.goto("/app/profile");
+
+    const country = page
+      .locator("div")
+      .filter({ hasText: /^Currently in/ })
+      .last();
+    const city = page
+      .locator("div")
+      .filter({ hasText: /^City or town/ })
+      .last();
+
+    await expect(country).toContainText("Nigeria");
+    await expect(city).toContainText("Lagos");
   });
 
   /**

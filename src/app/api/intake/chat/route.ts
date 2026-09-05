@@ -204,7 +204,7 @@ export async function POST(request: Request) {
 
   const locale =
     profile && isLocale(profile.locale) ? profile.locale : DEFAULT_LOCALE;
-  const firstName = profile?.fullName.split(" ")[0] ?? "";
+  const fullName = profile?.fullName ?? "";
 
   // Client state, like the transcript: believed only as far as it names
   // a question the intake actually asks. Reopening writes nothing, so
@@ -219,7 +219,7 @@ export async function POST(request: Request) {
 
   const result = streamText({
     model: openai(INTAKE_MODEL),
-    system: buildIntakeSystemPrompt({ answers, locale, firstName, reopenedKey }),
+    system: buildIntakeSystemPrompt({ answers, locale, fullName, reopenedKey }),
     messages: modelMessages,
     tools,
     // One tool call, then the reply that acknowledges it. Three is the

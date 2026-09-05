@@ -16,8 +16,10 @@ type Answers = Record<string, string>;
  * now?", and the checklist downstream is keyed on `q.key` either way.
  */
 export const LABELS: Record<string, string> = {
+  passport_name: "Name on passport",
   nationality: "Nationality",
-  residence: "Living in",
+  residence_country: "Living in",
+  residence: "City or town",
   destination: "Destination",
   purpose: "Purpose",
   dates: "Travel dates",
@@ -100,7 +102,7 @@ export function RecordDocument({
 
   return (
     // Addressable as one region, the way `intake-transcript` is: the
-    // record and the transcript hold the same ten answers, so anything
+    // record and the transcript hold the same answers, so anything
     // reading "the answer to question 4" — a journey test, a future
     // `aria-controls` — needs to say which surface it means.
     <div

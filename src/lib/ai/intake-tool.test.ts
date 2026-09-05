@@ -23,7 +23,7 @@ describe("intakeAnswerSchema", () => {
     }
   });
 
-  it("offers exactly the ten keys, in order", () => {
+  it("offers exactly the intake's keys, in order", () => {
     expect(intakeAnswerSchema.shape.questionKey.options).toEqual(
       INTAKE_QUESTIONS.map((q) => q.key)
     );

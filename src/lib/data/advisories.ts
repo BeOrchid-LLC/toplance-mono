@@ -127,9 +127,17 @@ export async function refreshAdvisoriesIfStale(
 
   await upsertCompanionUpdate(applicationId, KIND, {
     advisories: fetched,
-    // Untouched. Moving it here would mark as "told" something nobody has
-    // been told yet — the mistake this split exists to make impossible.
-    alerted: cached.alerted,
+    // On a first sighting the reading *is* the baseline: there was
+    // nothing to compare it against, the traveller sees it on the page
+    // rather than in their inbox, and the next move of the source is the
+    // first thing worth alerting on. Seeding it empty instead would make
+    // every source look new for ever — `advisoryChanged(null, next)` is
+    // false — so no change would ever be reported at all.
+    //
+    // Afterwards it is left exactly where it was. Moving it here would
+    // mark as "told" something nobody has been told yet, which is the
+    // mistake this split exists to make impossible.
+    alerted: existing ? cached.alerted : fetched,
   } satisfies CachedAdvisories);
 
   return { advisories: fetched, changed };

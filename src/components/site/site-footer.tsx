@@ -12,6 +12,10 @@ const COLUMNS = [
       { href: "/#orgs", label: "The console" },
       { href: "/#where", label: "Where we work" },
       { href: "/#pricing", label: "Pricing" },
+      // The nav drops "Sign in" below 640px to keep the bar from
+      // crowding; on a phone this is the only way back to an account,
+      // so it cannot be missing from here as well.
+      { href: "/sign-in", label: "Sign in" },
     ],
   },
   {

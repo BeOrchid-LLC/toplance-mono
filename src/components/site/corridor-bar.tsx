@@ -165,7 +165,7 @@ export function CorridorBar({
               The band is aria-hidden, so `code` beside it is the only
               reading of the corridor a screen reader ever gets — it stays,
               it just stops competing as a second object. */}
-          <div className="border-t border-border px-5 py-4 lg:col-span-3">
+          <div className="min-w-0 border-t border-border px-5 py-4 lg:col-span-3">
             <MrzBand code={mrz} />
 
             <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -184,7 +184,13 @@ export function CorridorBar({
                 />
                 {soon ? "In build" : "Live corridor"}
               </span>
-              <span aria-hidden className="h-3 w-px bg-border-strong" />
+              {/* A separator only separates while both halves share a line.
+                  On a phone the code drops to its own row and the rule is
+                  left hanging off the end of the one above it. */}
+              <span
+                aria-hidden
+                className="hidden h-3 w-px bg-border-strong sm:block"
+              />
               <span className="num text-[13px] font-semibold text-ink-2">
                 {code}
               </span>

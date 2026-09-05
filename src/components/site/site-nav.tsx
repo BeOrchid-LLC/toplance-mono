@@ -179,7 +179,16 @@ export function SiteNav() {
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <SettingsCluster />
-          <Button asChild variant="tertiary" size="sm" className="hidden xl:inline-flex">
+          {/* From `sm`, not `xl`. The footer's sign-in doors are the
+              agency's and operations', so hiding this one until 1280px
+              left a returning traveller on a phone or a tablet with no
+              route back to their own account anywhere on the page. */}
+          <Button
+            asChild
+            variant="tertiary"
+            size="sm"
+            className="hidden sm:inline-flex"
+          >
             <Link href="/sign-in">{t(HERO.signIn)}</Link>
           </Button>
           <Button asChild size="sm">

@@ -415,9 +415,15 @@ export default async function HomePage() {
         />
 
         <div className="mt-11 border-t border-border-strong">
+          {/* The header cell carries the same left border and inset as the
+              rows beneath it, or the label sits 48px left of the column it
+              names — the one place on the page where a heading and its
+              content did not line up. */}
           <div className="hidden grid-cols-2 gap-x-12 py-3 sm:grid">
             <span className="tag">Managing it yourself</span>
-            <span className="tag text-brand-text">With Toplance</span>
+            <span className="tag border-l border-transparent pl-12 text-brand-text">
+              With Toplance
+            </span>
           </div>
           {LEDGER.map((row) => (
             <div
@@ -448,9 +454,21 @@ export default async function HomePage() {
           lead="Scoping the corridors you work and pricing them is free and yours to take to a client. Everything after that is what each case pays for."
         />
 
-        <ol className="mt-12 grid gap-x-10 gap-y-11 sm:grid-cols-2 xl:grid-cols-4">
+        {/* Subgrid, so the rule, the meta line, the title and the body each
+            share a row across the columns. Without it a title that wraps to
+            three lines drops its own body below its neighbours' and the four
+            steps stop reading as one band.
+
+            `gap-y-0` on the item because a subgrid inherits the parent's
+            row gap: the 44px that separates two bands of steps would
+            otherwise open up inside every step as well. The internal
+            rhythm stays on the margins. */}
+        <ol className="mt-12 grid gap-x-10 gap-y-11 sm:grid-cols-2 sm:grid-rows-[auto_auto_auto_1fr] xl:grid-cols-4">
           {STEPS.map((step, i) => (
-            <li key={step.title}>
+            <li
+              key={step.title}
+              className="sm:row-span-4 sm:grid sm:grid-rows-subgrid sm:gap-y-0"
+            >
               <span
                 aria-hidden
                 className={cn(

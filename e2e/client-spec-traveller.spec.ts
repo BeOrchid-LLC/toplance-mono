@@ -699,13 +699,23 @@ test.describe("phases 5 & 6 · after approval", () => {
   });
 
   /**
-   * Item 13's third channel. The realtime SDK is wired to intake and
-   * nowhere else: there is no voice control on the profile, nothing
-   * reads a plan aloud, and no telephony dependency in `package.json`
-   * to push one out. The itinerary email is a link to the profile, not
-   * the plan itself, so there is nothing to listen to anywhere.
+   * Item 13's third channel, built as a delivery channel rather than a
+   * second agent: `/api/itinerary/speech` speaks the stored plan, and
+   * `itinerarySpeechScript` — pure, and unit tested in
+   * `src/lib/domain/itinerary.test.ts` — is the only thing that decides
+   * what the words are. No model summarises or rephrases, so the voice
+   * cannot say anything the page does not.
+   *
+   * Skipped rather than fixme: the button only renders once an itinerary
+   * exists, and generating one needs OPENAI_API_KEY, which this server
+   * deliberately runs without. Speaking it needs the same key again.
+   *
+   * Still not built, and still item 14's problem rather than this one:
+   * an outbound voice *message*. There is no telephony dependency in
+   * `package.json`, so nothing pushes audio to anybody — a traveller has
+   * to come to the page and press play.
    */
-  test.fixme("item 13 — the agent reads the itinerary aloud", async () => {
+  test.skip("item 13 — the agent reads the itinerary aloud", async () => {
     await page.goto("/app/profile");
     await expect(page.getByRole("button", { name: /listen|read aloud/i })).toBeVisible();
   });

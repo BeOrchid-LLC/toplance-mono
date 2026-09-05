@@ -69,6 +69,13 @@ export const EVENT_NAMES = [
   "toplance.itinerary_generated",
 
   /**
+   * A traveller asked to hear their arrival plan read aloud. Recorded on
+   * the request, not on playback — the browser never tells us whether
+   * anyone listened.
+   */
+  "toplance.itinerary_spoken",
+
+  /**
    * The traveller supplied (or corrected) the expiry date printed on
    * their own visa. Never a value this product derived.
    */

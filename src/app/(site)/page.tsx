@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Check, Minus, Shield } from "lucide-react";
 
@@ -19,7 +20,6 @@ import { Head, Section } from "@/components/site/section";
 import { LIVE_CORRIDORS } from "@/lib/domain/corridors";
 import { DEFAULT_RATE_CARD, quote, type RateCard } from "@/lib/domain/pricing";
 import { hasDatabaseEnv } from "@/lib/db/client";
-import { cn } from "@/lib/utils";
 
 /**
  * The travel agency's landing page, and the only route with no session.
@@ -32,6 +32,19 @@ import { cn } from "@/lib/utils";
  * `/employer/sign-up` door, same case/roster mechanics, same document
  * boundary) — this is a copy-only re-audience, not a new account type.
  * The traveller copy was not thrown away — it is `/travellers`, unchanged.
+ *
+ * The prose was replaced wholesale on 2026-09-05 from the client's copy
+ * doc ("Toplance — Website Copy · Agency page"). Two deliberate departures
+ * from `CONTEXT.md`, agreed with the client on the same day and scoped to
+ * this page only:
+ *
+ *   - "traveler", one l. The glossary asks for two, and `/travellers` and
+ *     the nav still spell it that way. The copy doc is consistently
+ *     American and the client chose to keep it.
+ *   - "route" and "trip" rather than "corridor". The glossary lists Route
+ *     under _Avoid_, and it stays avoided in code, in staff-facing UI and
+ *     in the shared `CorridorBar`/`CorridorBoard` — this substitution is
+ *     marketing prose on this page and nowhere else.
  *
  * Statically rendered and cached at the edge — the sticky nav, the
  * corridor state, the FAQ accordion and the theme switch are the only
@@ -56,100 +69,100 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Visa and relocation processing for travel agencies",
   description:
-    "Run every client's visa application through Toplance. You get a caseboard, a completion score and a status per client — while Toplance's team handles the document review.",
+    "Toplance takes the paperwork off your hands. Every traveler gets the exact documents for their trip, the wrong ones are caught early, and your team only picks up files that are ready to work.",
 };
 
-/* Figures, quotes, portraits and prices are the client's to supply. Rather
-   than dressing invented numbers up as real ones, the page shows the shape
-   of the claim and leaves the value visibly empty — a blank reads as
-   honest, a fabricated statistic is a liability the moment it is public.
-
-   This holds harder on a B2B page than it did on the B2C one: the reader
-   here is signing a contract, and a number they can quote back at you in a
-   procurement review is not a number to guess at. */
-const REGISTER = [
-  // Corridors, not destinations. `LIVE_CORRIDORS` is asserted against
-  // `seed.sql`, so the note is true as well as the figure.
-  { label: "Corridors live", value: String(LIVE_CORRIDORS.length), note: "Counted from the corridor table" },
-  { label: "Cases run", value: null, note: "Since launch" },
-  { label: "Approved on first submission", value: null, note: "Across live corridors" },
-  { label: "Median time from invitation to a complete file", value: null, note: "Per client" },
-];
+/**
+ * The hero's secondary call to action.
+ *
+ * PLACEHOLDER — there is no demo booking route, no contact form and no
+ * address anywhere in this repo, so this domain is a guess and the client
+ * has to confirm it before the page is public. It is a constant rather
+ * than an inline `href` so that confirming it is one edit in one place.
+ */
+const DEMO_EMAIL = "hello@toplance.com";
 
 /* The ledger is the same device the traveller page uses, re-aimed. Its
-   left column is the mobility lead's week, not the applicant's. */
+   left column is the agency's week, not the applicant's. */
 const LEDGER = [
   {
-    alone: "A case that stalls for a week before anyone notices",
-    with: "A caseboard that shows who is blocked, on the day they become blocked",
+    alone: "You look up the requirements yourself and hope nothing's changed",
+    with: "Every traveler gets the right list for where they're going, always up to date",
   },
   {
-    alone: "Chasing four clients on WhatsApp for documents you shouldn't have to collect yourself",
-    with: "Toplance collects and checks the documents; you see completion, not the file",
+    alone: "You check each document by hand and hope you caught the problems",
+    with: "The wrong or unusable ones are caught before they reach you",
   },
   {
-    alone: "A different process for every corridor, remembered rather than written down",
-    with: "One system across every corridor, the same steps every time",
+    alone: "You chase travelers and still can't say who's ready",
+    with: "You see who's ready, who's stuck, and who needs a nudge, at a glance",
   },
   {
-    alone: "A refusal three months in, for a document nobody flagged",
-    with: "Every file checked against that corridor's current rules before submission",
+    alone: "A bad document turns up weeks in and costs you the case",
+    with: "It's caught early and sent back to fix, before it costs anyone time",
   },
 ];
 
 /**
- * The rule above each step is the commitment boundary, drawn rather than
- * described — two open steps, then two contracted ones. It is the same
- * device the traveller page uses for free/paid, carrying the distinction
- * that actually matters to someone with a budget to defend.
+ * The four steps no longer split into open and contracted halves.
+ *
+ * That distinction existed when steps 01–02 were scoping and quoting,
+ * which cost nothing, and 03–04 were the paid work. The client's rewrite
+ * describes a single continuous flow from a new traveler to a file the
+ * agency's team can process, so there is no boundary left to draw and
+ * every rule is the same weight.
+ *
+ * The doc writes these as run-in headings, bolded inline with the body
+ * and closed with a full stop. Standing alone as an `h3` they take no
+ * terminal punctuation, which is the only edit made to the supplied text.
  */
 const STEPS = [
   {
-    contracted: false,
-    title: "Scope the corridors you work",
-    body: "Which passports, which destinations, which purposes. We show you what each corridor requires and which are live today — before you commit to anything.",
+    title: "Bring your travelers in",
+    body: "Invite them by email — or let them come to you straight from your own website, so applications land in your team's screen on their own. (We can build that website for you, or add it to the one you have.)",
   },
   {
-    contracted: false,
-    title: "Get a quote against that scope",
-    body: "One price per case, whichever corridor it is spent on. No per-document fees and no separate agent to negotiate with in each destination.",
+    title: "We guide each one through",
+    body: "Every traveler is walked through exactly what they need to send, in their own language — so you don't have to explain a thing.",
   },
   {
-    contracted: true,
-    title: "Invite your client by email",
-    body: "Each invitation opens a case. Your client runs the intake conversation in their own language and uploads their own documents — you do not have to brief them or collect anything by hand.",
+    title: "We check every document",
+    body: "That it's the right one, clear, complete and genuine. Anything wrong goes back to the traveler to fix.",
   },
   {
-    contracted: true,
-    title: "Watch the caseboard, not your inbox",
-    body: "Completion, status and destination per client, moving as their case moves. Follow up on anyone who has stalled without having to call them.",
+    title: "Your team takes it from there",
+    body: "The moment a traveler's documents are all in, your team is told the file is ready.",
   },
 ];
 
+/* The last two carry a fragment rather than a sentence in the copy doc —
+   "The same simple way of working, for every trip." is one line, bolded
+   up to the comma. Split at that comma so all six cards keep the same
+   title/body shape rather than two of them rendering as a bare heading. */
 const FEATURES = [
   {
-    title: "A caseboard, not a spreadsheet you maintain",
-    body: "Every client you are running, with a completion score, a status and a destination. It updates because their case moved, not because someone remembered to update it.",
+    title: "One clear view of every traveler",
+    body: "How far each has got and where they're going, all in one place, always up to date.",
   },
   {
-    title: "Document review, done for you",
-    body: "You see whether a client is on track and whether they are stuck. Your own team does not have to open, download or check a passport, a bank statement or a police certificate line by line — Toplance's reviewers do that, and it is built into how the product works, not a task you assign.",
+    title: "Problems caught before they cost you",
+    body: "The wrong or unusable documents are spotted early and fixed, long before they can lose you a case.",
   },
   {
-    title: "One system across every corridor",
-    body: "The same process, the same status vocabulary and the same invoice whether you are running a case to Toronto or to Dubai — instead of learning a different agent's process per destination.",
+    title: "A direct line between your travelers and your team",
+    body: "Questions get answered and nobody goes quiet — messages sit right alongside each case.",
   },
   {
-    title: "A rules engine, not memory",
-    body: "Requirements are versioned rule sets per corridor. When a mission changes what it wants, every case on that corridor reflects the change, with the date it took effect.",
+    title: "Every traveler's history in one place",
+    body: "When they come back for their next trip, you're not starting from scratch.",
   },
   {
-    title: "A named contact at both levels",
-    body: "An account contact for you, and a named Toplance case handler who owns each client's file. No ticket numbers and no starting over with someone new.",
+    title: "The same simple way of working",
+    body: "For every trip.",
   },
   {
-    title: "An audit trail",
-    body: "Who was invited, when, by whom; when a document was reviewed and by which reviewer; when a case changed status. Recorded as it happens rather than reconstructed later.",
+    title: "A full record of every case",
+    body: "Kept as it happens.",
   },
 ];
 
@@ -166,32 +179,32 @@ const ROSTER = [
  * left. What those tiers described is still exactly what a sponsored
  * traveller gets, so their feature lists are merged in here.
  *
- * Split into what the client gets and what the agency gets, because a
- * buyer reading a flat eleven-item list cannot tell which half is the
- * service and which half is the console.
+ * Split into what the traveler gets and what the agency gets, because a
+ * buyer reading a flat twelve-item list cannot tell which half is the
+ * service and which half is the dashboard.
  */
 const SEAT_INCLUDES = {
   traveller: [
-    "The full intake conversation, in their own language",
-    "Their exact document checklist for that corridor",
-    "Automatic checks on every upload",
-    "Human review of every document before submission",
-    "A named Toplance case handler",
-    "Arrival plan and alerts after approval",
+    "Clear, step-by-step help with what to send, in their own language",
+    "The exact documents for their trip",
+    "Quick feedback when something's wrong, so they can fix it fast",
+    "Handy tips to get ready before they travel",
+    "Support after they arrive, for a smoother trip",
   ],
   organisation: [
-    "A case you can open, revoke and reassign",
-    "Caseboard view with completion, status and destination",
-    "Progress visibility, with document review handled for you",
-    "Consolidated invoicing",
-    "A named account contact",
-    "Priority replies within one working day",
+    "A case you can open, cancel, or hand to someone else",
+    "One place to see every traveler's progress and destination",
+    "Only clean, ready files reaching your team",
+    "A heads-up the moment a traveler's file is complete",
+    "Messaging between your team and your travelers",
+    "Every traveler's history, ready for their next trip",
+    "One invoice for everything",
   ],
 };
 
 /* Naming the exclusions is not a concession — it is the difference
    between a page a procurement reviewer trusts and one they discount.
-   Every line here is a cost the organisation will meet regardless of
+   Every line here is a cost the agency will meet regardless of
    supplier, so saying so early costs nothing and pre-empts the
    question that otherwise arrives at contract stage. */
 const SEAT_EXCLUDES = [
@@ -201,10 +214,6 @@ const SEAT_EXCLUDES = [
   "Flights, insurance and accommodation",
 ];
 
-/* The commercial questions a buyer has to answer internally before they
-   can sign anything. The labels are ours; the values are the client's,
-   and the ones left blank are blank on purpose — a term invented here
-   is a term someone will quote back in a negotiation. */
 /**
  * The bands as a buyer reads them, built from the same card the
  * estimator quotes at.
@@ -228,6 +237,11 @@ function bandRows(card: RateCard) {
   });
 }
 
+/* The commercial questions a buyer has to answer internally before they
+   can sign anything. The labels are ours; the values are the client's,
+   and the ones left blank are blank on purpose — a term invented here
+   is a term someone will quote back in a negotiation. The copy doc
+   leaves this table alone: it is factual reference, not marketing. */
 function termsFor(card: RateCard) {
   const rates = card.bands
     .map((b) => compactMoney(b.rateMinor, card.currency))
@@ -269,6 +283,12 @@ function ordinal(n: number): string {
  * Takes the card for one answer only — "How are we invoiced?" quotes the
  * rates, and an FAQ that disagrees with the estimator two sections above
  * it is worse than no FAQ.
+ *
+ * The first question is new, moved here from the old "What we don't do"
+ * block at the client's instruction. The rest are the existing ones, kept
+ * in order, with "client" changed to "traveler" and "corridor" to "route"
+ * so the section does not answer in a different vocabulary from the page
+ * above it.
  */
 function faqFor(card: RateCard) {
   const [first, ...rest] = card.bands;
@@ -286,32 +306,36 @@ function faqFor(card: RateCard) {
 
   return [
     {
-      q: "What exactly can we see about our clients' cases?",
-      a: "Completion percentage, status, destination and whether a case is blocked — enough to know where every client stands. Your team doesn't open, download or preview the documents themselves; Toplance's reviewers do that. That boundary is built into the data model rather than being a permission an administrator can grant, so it holds for anyone you add to your account later, too.",
+      q: "Do you process the visa or decide the outcome?",
+      a: "No — that's your team's expertise. We get each traveler's file complete and correct, and flag problems early, so your staff process it faster. Government, appointment, translation, flight and insurance costs are all paid to others, not to us.",
+    },
+    {
+      q: "What exactly can we see about our travelers' cases?",
+      a: "Completion percentage, status, destination and whether a case is blocked — enough to know where every traveler stands. Your team doesn't open, download or preview the documents themselves; Toplance's reviewers do that. That boundary is built into the data model rather than being a permission an administrator can grant, so it holds for anyone you add to your account later, too.",
     },
     {
       q: "Does Toplance decide whether the visa is granted?",
-      a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that the file is complete, correct and submitted the way that corridor expects — which is the part applications usually fail on. When a document shows as verified it means it has been accepted for review, not that the application has been approved.",
+      a: "No, and we are careful not to imply it. Missions and embassies make the decision. What Toplance controls is that the file is complete, correct and submitted the way that route expects — which is the part applications usually fail on. When a document shows as verified it means it has been accepted for review, not that the application has been approved.",
     },
     {
       q: "How are we invoiced?",
-      a: `A ${compactMoney(card.baseFeeMinor, card.currency)} monthly base fee for the account, plus a fee for each application your client actually completes — ${invoiceRates}. The fee is layered, so passing a threshold only changes the price of the applications above it, never the ones below. An application is counted once its checklist is complete and every document has passed its check — an invitation nobody accepts, a checklist still being filled and one whose documents came back rejected are never charged. The estimator in the pricing section runs the real arithmetic.`,
+      a: `A ${compactMoney(card.baseFeeMinor, card.currency)} monthly base fee for the account, plus a fee for each application your traveler actually completes — ${invoiceRates}. The fee is layered, so passing a threshold only changes the price of the applications above it, never the ones below. An application is counted once its checklist is complete and every document has passed its check — an invitation nobody accepts, a checklist still being filled and one whose documents came back rejected are never charged. The estimator in the pricing section runs the real arithmetic.`,
     },
     {
-      q: "What happens if a client drops out before they travel?",
-      a: "A pending invitation can be revoked from your console, which releases the case before any work has begun on it. Once a client has started a case, whether that case can be reassigned is a contract term rather than a product setting — it is one of the terms listed above.",
+      q: "What happens if a traveler drops out before they travel?",
+      a: "A pending invitation can be cancelled from your dashboard, which releases the case before any work has begun on it. Once a traveler has started a case, whether that case can be handed to someone else is a contract term rather than a product setting — it is one of the terms listed above.",
     },
     {
-      q: "Where is our clients' data stored?",
+      q: "Where is our travelers' data stored?",
       a: "Documents are encrypted at rest and in transit. Residency of the stored files is a decision your agency can set at contract level, so if you are bound to keep personal data in a particular jurisdiction that is a conversation to have before signing rather than a limitation you discover afterwards.",
     },
     {
-      q: "Our clients do not all read English.",
-      a: "The intake conversation, the checklist and the status updates run in English, Hausa, Yoruba and Igbo, typed or spoken. Your client can switch language at any point, including mid-conversation, and their answers carry over. Your caseboard stays in English.",
+      q: "Our travelers do not all read English.",
+      a: "The intake conversation, the checklist and the status updates run in English, Hausa, Yoruba and Igbo, typed or spoken. Your traveler can switch language at any point, including mid-conversation, and their answers carry over. Your dashboard stays in English.",
     },
     {
-      q: "Can we start with one corridor?",
-      a: "Yes, and most agencies do. Cases are not tied to a destination, so a contract scoped around one corridor still covers the second one you open next quarter — provided it is live. If it is not, ask for it and it enters the build queue with your demand attached.",
+      q: "Can we start with one route?",
+      a: "Yes, and most agencies do. Cases are not tied to a destination, so a contract scoped around one route still covers the second one you open next quarter — provided it is live. If it is not, ask for it and it enters the build queue with your demand attached.",
     },
   ];
 }
@@ -354,55 +378,149 @@ export default async function HomePage() {
       {/* ---------- hero ---------- */}
       {/* Server-rendered, unlike the traveller hero it replaces. That one
           is a client component because it translates itself into four
-          languages; this copy addresses HR, mobility and procurement
-          contacts and stays in English, so the only client boundary left
+          languages; this copy addresses agency owners and operations
+          leads and stays in English, so the only client boundary left
           in the hero is `CorridorBar` itself. */}
       <header className="relative isolate overflow-hidden">
         <div aria-hidden className="security-paper pointer-events-none absolute inset-0 -z-10" />
         <Shell className="pb-20 pt-12 md:pb-28 md:pt-16">
-          <p className="tag rise text-brand-text">
-            Visa and relocation processing for travel agencies
-          </p>
+          {/* Two columns from `lg`, one below it. The text keeps the
+              left, and the image takes the space the copy was never
+              going to fill — the headline is capped at 20ch by design,
+              so on a wide screen the right half of the first fold was
+              empty ground rather than deliberate space.
 
-          <h1 className="d-hero rise mt-5 max-w-[20ch]" style={{ animationDelay: "70ms" }}>
-            Take the case. Track the file. Stop chasing it by hand.
-          </h1>
+              `items-center` rather than `items-start`: the text block is
+              shorter than the frame beside it, and aligning their tops
+              left the column looking dropped rather than paired. */}
+          <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
+            <div>
+              <p className="tag rise text-brand-text">
+                For visa and relocation agencies
+              </p>
 
-          {/* The control sits directly after the H1, before the
-              explanatory paragraph, for the same reason it does on the
-              traveller page: you can interrogate the product on the first
-              screen without reading a word of marketing. What changed is
-              who is asking — a buyer checks whether the corridors their
-              clients actually need are live before they read
-              anything else. */}
-          <div className="rise mt-10" style={{ animationDelay: "150ms" }}>
-            <CorridorBar ctaLabel="See what this corridor needs" />
+              <h1 className="d-hero rise mt-5 max-w-[20ch]" style={{ animationDelay: "70ms" }}>
+                Handle more travelers, with far less chasing.
+              </h1>
+
+              <p
+                className="t-body-lg rise mt-6 max-w-[52ch] text-ink-2"
+                style={{ animationDelay: "110ms" }}
+              >
+                The paperwork is the part that eats your team&apos;s time and
+                puts your cases at risk. We take it off your hands — so the
+                right documents come in, problems get caught early, and your
+                team gets to the visa work sooner.
+              </p>
+
+              {/* The buttons the client's copy asks for, above the picker
+                  rather than instead of it. The doc names a primary and an
+                  outline secondary and says nothing about the corridor
+                  control, and removing a working way to interrogate the
+                  product on the first screen is not something a copy change
+                  should decide. */}
+              <div
+                className="rise mt-8 flex flex-wrap gap-3"
+                style={{ animationDelay: "130ms" }}
+              >
+                <Button asChild>
+                  <Link href="/employer/sign-up">
+                    Get Started <ArrowRight />
+                  </Link>
+                </Button>
+                <Button asChild variant="secondary">
+                  <a href={`mailto:${DEMO_EMAIL}?subject=Toplance%20demo`}>
+                    Book a demo
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            {/* Hidden below `lg` rather than stacked: on a phone this
+                would push the call to action off the first screen, and a
+                decorative illustration is worth less there than the
+                buttons are.
+
+                `alt=""` on purpose. It carries no information the
+                headline beside it does not already state in words, so
+                announcing it would make a screen reader read the same
+                claim twice — the rule this codebase already applies to
+                `MrzBand`.
+
+                unDraw art, with one edit on the way in: its stock accent
+                is #6c63ff, and shipping that violet on a page whose
+                brand is #2450d8 is the clearest single tell that a
+                library illustration was dropped in untouched. All seven
+                occurrences are recoloured to `--brand` in
+                `public/hero/travel-everywhere.svg`. Its greys are left
+                alone — those are the drawing, not the branding.
+
+                The ground is genuinely transparent, so in light mode
+                `security-paper` rules straight through the artwork and
+                there is nothing to frame, tint or blend. Dark mode still
+                needs the panel: the linework is #3f3d56 and #090814,
+                which on a #0b0d13 page is invisible rather than merely
+                low-contrast. A light panel is the honest fix — this is a
+                light-ground drawing, so it gets presented as one.
+
+                `unoptimized` because the source is SVG. Next's optimizer
+                refuses SVG unless `images.dangerouslyAllowSVG` is set,
+                and there is nothing in a 16KB vector worth loosening
+                that setting for. */}
+            <div className="rise hidden lg:block" style={{ animationDelay: "190ms" }}>
+              <div className="rounded-lg dark:bg-[#f2f4f8] dark:p-6 dark:shadow-[var(--shadow)]">
+                <Image
+                  src="/hero/travel-everywhere.svg"
+                  alt=""
+                  width={1071}
+                  height={863}
+                  priority
+                  unoptimized
+                  className="h-auto w-full"
+                />
+              </div>
+            </div>
           </div>
 
+          {/* The control sits on the first screen for the same reason it
+              does on the traveller page: you can interrogate the product
+              without reading a word of marketing. What changed is who is
+              asking — a buyer checks whether the trips their travelers
+              actually take are live before they read anything else. */}
+          <div className="rise mt-10" style={{ animationDelay: "150ms" }}>
+            <CorridorBar ctaLabel="See what this trip needs" />
+          </div>
+
+          {/* ---------- intro ---------- */}
           <div
-            className="rise mt-12 grid gap-8 border-t border-border pt-8 lg:grid-cols-[1.35fr_1fr]"
+            className="rise mt-12 border-t border-border pt-8"
             style={{ animationDelay: "230ms" }}
           >
-            <p className="t-body-lg text-ink-2">
-              Toplance runs the visa application for every client you take on —
-              the intake conversation in their own language, the exact document
-              checklist for their corridor, human review before submission, and
-              a named case handler who owns the file. You get a caseboard, a
-              completion score and a status per client. Your team does not comb through a passport or a bank statement to
-              check it — Toplance&apos;s reviewers do.
+            <p className="d-md max-w-[34ch]">
+              You do the visas. We take care of everything before them.
             </p>
-            <ul className="flex flex-col justify-center gap-3">
-              {[
-                "Open a case and invite your client by email",
-                "One caseboard across every corridor you run",
-                "Consolidated invoicing and a named account contact",
-              ].map((line) => (
-                <li key={line} className="flex items-start gap-3">
-                  <Check className="mt-0.5 size-4 shrink-0 text-brand-text" aria-hidden />
-                  <span className="text-[15px] text-ink-2">{line}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-6 grid gap-8 lg:grid-cols-[1.35fr_1fr]">
+              <p className="t-body-lg text-ink-2">
+                For every traveler you take on, we make sure they know exactly
+                what to send, and that what they send is right — before it ever
+                reaches your team. You always know where each traveler stands,
+                and your staff only pick up files that are ready to work. No
+                more chasing documents, no more nasty surprises weeks down the
+                line.
+              </p>
+              <ul className="flex flex-col justify-center gap-3">
+                {[
+                  "Every traveler knows exactly what to bring",
+                  "The wrong or unusable documents get caught early",
+                  "You see where every traveler stands, in one place",
+                ].map((line) => (
+                  <li key={line} className="flex items-start gap-3">
+                    <Check className="mt-0.5 size-4 shrink-0 text-brand-text" aria-hidden />
+                    <span className="text-[15px] text-ink-2">{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </Shell>
       </header>
@@ -410,8 +528,8 @@ export default async function HomePage() {
       {/* ---------- the problem ---------- */}
       <Section label="The problem">
         <Head
-          title="Clients don't leave over a refusal. They leave over silence."
-          lead="A case goes wrong in the gap between telling a client what to send you and finding out, weeks later, what they did not send."
+          title="Most travelers don't leave over a refusal. They leave over silence."
+          lead="The damage is done in the gap — between telling a traveler what to send and finding out, weeks later, what they never sent, or sent wrong. By then the appointment has moved and your name is the one that looks unreliable. One bad story travels further than ten good ones. We close that gap, so nothing sits unnoticed."
         />
 
         <div className="mt-11 border-t border-border-strong">
@@ -420,7 +538,7 @@ export default async function HomePage() {
               names — the one place on the page where a heading and its
               content did not line up. */}
           <div className="hidden grid-cols-2 gap-x-12 py-3 sm:grid">
-            <span className="tag">Managing it yourself</span>
+            <span className="tag">Doing it yourself</span>
             <span className="tag border-l border-transparent pl-12 text-brand-text">
               With Toplance
             </span>
@@ -431,7 +549,7 @@ export default async function HomePage() {
               className="grid gap-x-12 gap-y-5 border-t border-border py-7 sm:grid-cols-2"
             >
               <div>
-                <span className="tag mb-2 block sm:hidden">Managing it yourself</span>
+                <span className="tag mb-2 block sm:hidden">Doing it yourself</span>
                 <p className="text-[17px] leading-relaxed text-ink-3">{row.alone}</p>
               </div>
               <div className="sm:border-l sm:border-[color-mix(in_srgb,var(--brand)_35%,transparent)] sm:pl-12">
@@ -448,11 +566,8 @@ export default async function HomePage() {
       </Section>
 
       {/* ---------- how it works ---------- */}
-      <Section id="how" label="How it works" datum="Steps 01–02 need no commitment">
-        <Head
-          title="Four steps, and the first two cost you nothing"
-          lead="Scoping the corridors you work and pricing them is free and yours to take to a client. Everything after that is what each case pays for."
-        />
+      <Section id="how" label="How it works">
+        <Head title="From a new traveler to a file your team can process — in four steps." />
 
         {/* Subgrid, so the rule, the meta line, the title and the body each
             share a row across the columns. Without it a title that wraps to
@@ -471,21 +586,10 @@ export default async function HomePage() {
             >
               <span
                 aria-hidden
-                className={cn(
-                  "block h-[3px] rounded-[var(--radius-pill)]",
-                  step.contracted ? "bg-border-strong" : "bg-brand"
-                )}
+                className="block h-[3px] rounded-[var(--radius-pill)] bg-brand"
               />
               <div className="mt-4 flex items-baseline justify-between gap-3">
                 <span className="tag">Step {String(i + 1).padStart(2, "0")}</span>
-                <span
-                  className={cn(
-                    "tag",
-                    step.contracted ? "text-ink-3" : "text-brand-text"
-                  )}
-                >
-                  {step.contracted ? "Contracted" : "Open"}
-                </span>
               </div>
               <h3 className="d-md mt-3">{step.title}</h3>
               <p className="t-muted mt-3 text-[15px]">{step.body}</p>
@@ -495,15 +599,15 @@ export default async function HomePage() {
       </Section>
 
       {/* ---------- what you get ---------- */}
+      {/* No heading above the cards: the copy doc supplies the six claims
+          and nothing to introduce them with, and a title invented here
+          would be the one line on the page the client never wrote. The
+          rail label carries the section's name. */}
       <Section label="What you get">
-        <Head
-          title="Built around the two things that actually go wrong"
-          lead="Clients submit the wrong documents, and then nobody tells anyone what is happening. Every item here closes one of those two gaps — for your client, and for the person running their file."
-        />
         {/* The one marketing section drawn as the product's own case-file
             cards — these six claims are what the signed-in screens
             actually look like, so they borrow that surface verbatim. */}
-        <dl className="mt-12 grid gap-6 md:grid-cols-2">
+        <dl className="grid gap-6 md:grid-cols-2">
           {FEATURES.map((f) => (
             <div
               key={f.title}
@@ -516,7 +620,7 @@ export default async function HomePage() {
         </dl>
       </Section>
 
-      {/* ---------- the console ---------- */}
+      {/* ---------- your dashboard ---------- */}
       {/* The single dark beat, and the only place `--brand-2` is allowed to
           light anything. `dark` redefines every token for this subtree, so
           nothing below is hand-picked for a dark ground and the section
@@ -525,34 +629,32 @@ export default async function HomePage() {
           `bg-surface`, not `bg-bg`: in dark mode `bg-bg` resolves to the
           page background and the beat disappears entirely.
 
-          This section used to carry the whole B2B pitch on a page that was
-          otherwise addressed to travellers. Now that the page is the pitch,
-          it does the narrower job it was always better at: showing the
-          console rather than arguing for it. */}
+          Was "The console" until the client's copy renamed it. The `orgs`
+          id stays — it is linked from the footer and from anywhere else
+          that has ever pointed at this section. */}
       <Section
         id="orgs"
-        label="The console"
+        label="Your dashboard"
         glow
         className="dark overflow-hidden bg-surface text-ink"
       >
         <div className="grid items-start gap-12 xl:grid-cols-[1fr_0.85fr]">
           <div>
             <h2 className="d-lg max-w-[20ch]">
-              One screen that answers &ldquo;is anyone stuck?&rdquo;
+              See who&apos;s ready and who&apos;s stuck, at a glance.
             </h2>
             <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
-              You need to know who is on track and who is not — and your staff
-              shouldn&apos;t have to open a passport or a bank statement to
-              find out. The caseboard gives you a completion score and a
-              status per client, and deliberately nothing else to manage.
+              One place that shows how far each traveler has got and what&apos;s
+              holding them up — and tells you the moment a file is ready for
+              your team.
             </p>
             <ul className="mt-8 flex flex-col gap-3">
               {[
-                "Open a case and invite your client by email",
-                "One caseboard with completion, status and destination per client",
-                "Follow up on anyone who has stalled without calling them",
-                "Revoke a pending invitation and release the case",
-                "Consolidated invoicing and a named account contact",
+                "Bring in a new traveler in seconds",
+                "See progress and destination for every traveler",
+                "Know the moment someone's documents are all in",
+                "Message a traveler, or nudge anyone who's gone quiet",
+                "Cancel an invite you no longer need",
               ].map((x) => (
                 <li key={x} className="flex items-start gap-3">
                   <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
@@ -563,7 +665,7 @@ export default async function HomePage() {
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
                 <Link href="/employer/sign-up">
-                  <Briefcase /> Talk to us about your caseload
+                  <Briefcase /> Talk to us about your travelers
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
@@ -608,86 +710,40 @@ export default async function HomePage() {
         </div>
       </Section>
 
-      {/* ---------- corridors ---------- */}
+      {/* ---------- where your travelers can go ---------- */}
+      {/* The badge is counted rather than typed. The copy doc asks for
+          "50+ routes live", which is a rounded claim about a number this
+          page can read exactly — and a hardcoded 50 would go stale in the
+          direction that understates the product. */}
       <Section
         id="where"
-        label="Where we work"
-        datum={`${LIVE_CORRIDORS.length} live · more in build`}
+        label="Where your travelers can go"
+        datum={`${LIVE_CORRIDORS.length} routes live · more on the way`}
       >
         <Head
-          title="Corridors, not countries"
-          lead="A corridor is one nationality travelling to one destination for one purpose. That is the unit a checklist is built from — so the question is not whether we cover Canada, it is whether we cover the corridors your clients actually need. A Nigerian passport holder going to the UK for work needs a different file to a Ghanaian going to study."
+          title="What a traveler needs comes down to three things: the passport they hold, where they're going, and why."
+          lead="A Nigerian going to the UK for work needs a completely different file from a Ghanaian going to study. So the real question isn't “do you cover Canada?” — it's “do you cover the exact trips my travelers take?”"
         />
+        {/* The copy doc closes this section with "Don't see a route you
+            need? Ask for it, and we'll add it." `CorridorBoard` already
+            ends with that message in its own words ("Missing a corridor?
+            Ask for it and it enters the build queue with the demand
+            attached to it."), and printing both put two consecutive
+            invitations to ask for a route on the page. The board's line
+            wins because it is the shared component `/travellers` renders
+            too — rewording it is a change to both pages, not this one. */}
         <div className="mt-11">
           <CorridorBoard />
         </div>
       </Section>
 
       {/* ---------- proof ---------- */}
-      <Section label="Proof">
-        <Head
-          title="What we can prove, and what we cannot yet"
-          lead="Toplance is pre-launch. Rather than print numbers nobody has earned, the figures below stay blank until the client supplies them — and on a page read by people who will quote them in a procurement review, a blank is the only honest option."
-        />
-
-        <dl className="mt-11 border-t border-border-strong">
-          {REGISTER.map((row) => (
-            <div
-              key={row.label}
-              className="grid items-baseline gap-x-8 gap-y-1 border-b border-border py-6 sm:grid-cols-[1fr_96px_1fr]"
-            >
-              <dt className="d-sm">{row.label}</dt>
-              <dd
-                className={cn(
-                  "num text-[28px] font-semibold sm:text-right",
-                  row.value ? "text-brand-text" : "text-ink-3"
-                )}
-              >
-                {row.value ?? (
-                  <span
-                    aria-label="Awaiting a real figure"
-                    className="inline-block w-[74px] border-b-2 border-dashed border-border-strong align-middle"
-                  />
-                )}
-              </dd>
-              <dd className="tag sm:text-right">{row.note}</dd>
-            </div>
-          ))}
-        </dl>
-
-        <p className="tag mt-12">In their own words</p>
-        <div className="mt-4 grid gap-6 md:grid-cols-3">
-          {[
-            "An agency ops lead on caseboard visibility",
-            "A finance contact on consolidated invoicing",
-            "A second agency, so this does not read as one account",
-          ].map((slot) => (
-            <figure
-              key={slot}
-              className="flex min-h-[170px] flex-col justify-between rounded-md border border-dashed border-border-strong p-6"
-            >
-              <span aria-hidden className="d-lg leading-none text-border-strong">
-                &rdquo;
-              </span>
-              <figcaption className="t-muted text-[15px]">
-                Awaiting a real, attributed sentence — {slot.toLowerCase()}.
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-
-        <p className="tag mt-11">Agencies we work with</p>
-        <div className="mt-4 flex flex-wrap gap-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <span
-              key={i}
-              className="tag grid h-14 min-w-[130px] flex-1 place-items-center rounded-sm border border-dashed border-border-strong"
-            >
-              Logo {i}
-            </span>
-          ))}
-        </div>
-      </Section>
+      {/* Held at the client's instruction (2026-09-05), not lost: the live
+          stat register, the three testimonial slots and the agency logo
+          strip were all placeholders, and empty cards next to real copy
+          argue against the page rather than for it. It comes back when
+          there are signed agencies whose results and words can be quoted.
+          The markup is in git history at f7efb82 if it is wanted verbatim. */}
 
       {/* ---------- pricing ---------- */}
       <Section
@@ -696,8 +752,8 @@ export default async function HomePage() {
         datum={`${baseFee}/month + per application`}
       >
         <Head
-          title="You pay for the applications that finish"
-          lead="A monthly fee for the account, plus a fee for every application your client actually completes. The per-application fee falls as your volume rises, and it is charged in layers — so crossing a threshold only ever changes the price of the applications above it."
+          title="You only pay for the applications that finish."
+          lead="A flat monthly fee for your account, plus a fee for each application a traveler completes. The more you handle, the less each one costs. Nothing's charged until an application finishes. Invites nobody accepts, and half-finished files, are never billed."
         />
 
         {/* The bands, before the calculator. A buyer who is shown a total
@@ -758,11 +814,11 @@ export default async function HomePage() {
             <p className="d-sm mt-3">What every application carries</p>
 
             {/* Split rather than one flat list: a buyer needs to see which
-                half of this is the service their traveller receives and
-                which half is the console they log into themselves. */}
+                half of this is the service their traveler receives and
+                which half is the dashboard they log into themselves. */}
             <div className="mb-8 mt-8 grid gap-8 lg:grid-cols-2 lg:gap-x-10">
               <div>
-                <p className="tag mb-4">What your client gets</p>
+                <p className="tag mb-4">Your traveler gets</p>
                 <ul className="grid gap-3">
                   {SEAT_INCLUDES.traveller.map((f) => (
                     <li key={f} className="flex items-start gap-3">
@@ -773,7 +829,7 @@ export default async function HomePage() {
                 </ul>
               </div>
               <div>
-                <p className="tag mb-4">What your agency gets</p>
+                <p className="tag mb-4">Your agency gets</p>
                 <ul className="grid gap-3">
                   {SEAT_INCLUDES.organisation.map((f) => (
                     <li key={f} className="flex items-start gap-3">
@@ -838,7 +894,7 @@ export default async function HomePage() {
 
       {/* ---------- questions ---------- */}
       <Section label="Questions">
-        <Head title="The ones buyers actually ask" />
+        <Head title="The questions agencies actually ask." />
         <Accordion
           type="single"
           collapsible
@@ -855,7 +911,7 @@ export default async function HomePage() {
         </Accordion>
 
         <p className="t-muted mt-9 text-[15px]">
-          Booking your own visa rather than running it for a client?{" "}
+          Booking your own visa rather than running it for a traveler?{" "}
           <Link
             href="/travellers"
             className="font-medium text-brand-text underline underline-offset-4"
@@ -869,20 +925,18 @@ export default async function HomePage() {
       {/* ---------- closing ---------- */}
       {/* The one section with no rail. The register ends; this is the coda,
           and it returns to the same object the page opened on, with the
-          corridor you chose still in it — nobody who read the whole way
+          trip you chose still in it — nobody who read the whole way
           down should have to travel back up to act. */}
       <section className="border-t border-border bg-[color-mix(in_srgb,var(--brand)_5%,var(--bg))] py-20 md:py-24">
         <Shell>
-          <h2 className="d-lg max-w-[22ch]">
-            Tell us who you&apos;re running cases for, and where.
-          </h2>
+          <h2 className="d-lg max-w-[22ch]">Tell us where your travelers go.</h2>
           <p className="t-body-lg mt-5 max-w-[54ch] text-ink-2">
-            Scoping your corridors and pricing them costs nothing and commits you
-            to nothing. You leave with a quote you can compare against what
-            you&apos;re doing today, whether or not you come back.
+            Finding out what you&apos;d pay costs nothing and commits you to
+            nothing. You&apos;ll leave with a price you can compare to how you
+            work today — whether or not you come back.
           </p>
           <div className="mt-10">
-            <CorridorBar ctaLabel="Talk to us about your caseload" />
+            <CorridorBar ctaLabel="Talk to us about your travelers" />
           </div>
         </Shell>
       </section>

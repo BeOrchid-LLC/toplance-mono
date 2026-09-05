@@ -9,7 +9,7 @@ const COLUMNS = [
     heading: "Product",
     links: [
       { href: "/#how", label: "How it works" },
-      { href: "/#orgs", label: "The console" },
+      { href: "/#orgs", label: "Your dashboard" },
       { href: "/#where", label: "Where we work" },
       { href: "/#pricing", label: "Pricing" },
       // The nav drops "Sign in" below 640px to keep the bar from

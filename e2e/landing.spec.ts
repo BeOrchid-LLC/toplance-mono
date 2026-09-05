@@ -11,10 +11,11 @@ import { expect, test } from "@playwright/test";
  *
  * That buyer has since been named more precisely: the page sold "seats"
  * to employers relocating staff, and now sells case management to travel
- * agencies running visas for their clients. The vocabulary moved with it
- * — a seat became a case, and an organisation became an agency with
- * clients of its own — so the assertions below are pinned to the agency
- * wording rather than the employer wording they were written in.
+ * agencies running visas for their travelers. The vocabulary moved with
+ * it — a seat became a case, an organisation became an agency, and the
+ * client's copy doc of 2026-09-05 renamed that agency's client a
+ * "traveler" — so the assertions below are pinned to the agency wording
+ * rather than the employer wording they were written in.
  *
  * Both halves of that need pinning. Nothing stops the B2C voice drifting
  * back into `/` one well-meant copy edit at a time, and nothing stops
@@ -33,7 +34,7 @@ test("the home page sells case management to agencies, not checklists to travell
 
   await expect(
     page.getByRole("heading", {
-      name: "Take the case. Track the file. Stop chasing it by hand.",
+      name: "Handle more travelers, with far less chasing.",
       level: 1,
     })
   ).toBeVisible();
@@ -47,10 +48,10 @@ test("the home page sells case management to agencies, not checklists to travell
 
   // Both halves of what a case buys are named, so the page cannot
   // collapse back to one undifferentiated feature list. The agency and
-  // the client it acts for want different things from the same case,
+  // the traveler it acts for want different things from the same case,
   // and the page has to say both.
-  await expect(page.getByText("What your client gets")).toBeVisible();
-  await expect(page.getByText("What your agency gets")).toBeVisible();
+  await expect(page.getByText("Your traveler gets")).toBeVisible();
+  await expect(page.getByText("Your agency gets")).toBeVisible();
 });
 
 /**

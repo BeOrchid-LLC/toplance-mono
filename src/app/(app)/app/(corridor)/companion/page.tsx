@@ -6,6 +6,7 @@ import {
   MapPin,
   ShieldAlert,
   Sparkles,
+  Thermometer,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
 import { arrivalChecklist, renewalGuidance } from "@/lib/domain/companion";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { refreshAdvisoriesIfStale } from "@/lib/data/advisories";
+import { fetchOutlook } from "@/lib/weather/fetch-outlook";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { track } from "@/lib/analytics/track";
@@ -68,6 +70,10 @@ export default async function CompanionPage() {
     application.id,
     corridor.destinationIso
   );
+
+  // Context rather than an alert, and null for any destination without a
+  // curated capital — see `capitalFor`.
+  const weather = await fetchOutlook(corridor.destinationIso);
 
   await track("toplance.companion_viewed", { applicationId: application.id }, profile.id);
 
@@ -153,6 +159,32 @@ export default async function CompanionPage() {
                 />
               </PanelBody>
             </Panel>
+
+            {/* ---- this week's weather ---- */}
+            {weather && (
+              <Panel>
+                <PanelHeader
+                  label="This week"
+                  aside={
+                    <Badge variant="neutral">
+                      <Thermometer className="size-3.5" aria-hidden />{" "}
+                      {weather.city}
+                    </Badge>
+                  }
+                />
+                <PanelBody>
+                  <p className="t-body">
+                    Over the next{" "}
+                    <span className="num">{weather.outlook.days}</span> days in{" "}
+                    {weather.city}, expect highs around{" "}
+                    <span className="num">{weather.outlook.highC}</span>
+                    {weather.outlook.unit} and lows around{" "}
+                    <span className="num">{weather.outlook.lowC}</span>
+                    {weather.outlook.unit}.
+                  </p>
+                </PanelBody>
+              </Panel>
+            )}
 
             {/* ---- travel advice ---- */}
             {advisories.length > 0 && (

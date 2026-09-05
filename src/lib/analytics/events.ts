@@ -65,6 +65,13 @@ export const EVENT_NAMES = [
   /** A reviewer's note on a case — the traveller reads these too. */
   "toplance.case_note_added",
 
+  /**
+   * Every required document on a checklist was collected — the brief's
+   * "score reaches 100%". Recorded once per application, at the same
+   * moment the review desk is told.
+   */
+  "toplance.checklist_completed",
+
   /** An arrival plan generated (or refreshed) on approval. */
   "toplance.itinerary_generated",
 

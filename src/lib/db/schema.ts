@@ -143,6 +143,13 @@ export const notificationKind = pgEnum("notification_kind", [
    * notification has nothing of ours in it beyond the framing.
    */
   "advisory_changed",
+  /**
+   * → staff: a traveller's required checklist reached 100% collected.
+   * The brief asks for this separately from submission, and the two are
+   * genuinely different moments — somebody can upload everything and
+   * never press Submit, and until this existed nobody found out.
+   */
+  "checklist_complete",
 ]);
 
 /**
@@ -407,6 +414,28 @@ export const applications = pgTable(
      * directly belongs to no business, so nobody is billed for them.
      */
     billableAt: timestamp({ withTimezone: true }),
+    /**
+     * The instant every required document had been collected — the
+     * brief's "score reaches 100%", which items 9 and 11 want the review
+     * desk told about.
+     *
+     * A column for the same reason `billable_at` is one, and set the
+     * same way: completion is not monotonic, so read as live state a
+     * flag-and-re-upload cycle is a second arrival at 100% and would be
+     * a second email about one traveller. `markChecklistCompleteIfDone`
+     * stamps it under `where checklist_complete_at is null`, so
+     * concurrent uploads finishing together cannot race out two.
+     *
+     * Unlike `billable_at` it is stamped whether or not an organisation
+     * sponsors the application: there is nobody to charge for a
+     * traveller who came on their own, but there is still somebody to
+     * review them.
+     *
+     * It is not the submission. A traveller can be at 100% collected and
+     * never press Submit — that person is precisely who this exists to
+     * make visible.
+     */
+    checklistCompleteAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

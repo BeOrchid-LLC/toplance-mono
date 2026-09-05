@@ -41,6 +41,35 @@ export function submissionEmail({
   };
 }
 
+/**
+ * → staff: a traveller's checklist reached 100% collected.
+ *
+ * Not the same email as `submissionEmail`, and deliberately so. That one
+ * says a file is ready for review; this one says every document is in
+ * and the traveller has not sent it. The two need different actions from
+ * a reviewer — one opens a case, the other nudges a person — so they
+ * must not read alike.
+ */
+export function checklistCompleteEmail({
+  caseRef,
+  url,
+}: {
+  caseRef: string;
+  url: string;
+}): EmailContent {
+  return {
+    subject: `${caseRef} has every document, but has not been submitted`,
+    ...renderEmail({
+      heading: `${caseRef} reached 100%`,
+      paragraphs: [
+        "Every required document on this checklist has been uploaded. The traveller has not pressed Submit, so the case is not in the review queue yet.",
+        "They may still be checking their file — or they may be waiting for something nobody has told them about.",
+      ],
+      cta: { href: url, label: "Open the case" },
+    }),
+  };
+}
+
 /** → traveller. `message` is staff-authored free text. */
 export function statusChangedEmail({
   statusLabel,

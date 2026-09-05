@@ -8,6 +8,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import {
   advisoryChangedEmail,
   checklistChangedEmail,
+  checklistCompleteEmail,
   companionDigestEmail,
   documentFlaggedEmail,
   itineraryReadyEmail,
@@ -64,6 +65,7 @@ export function appUrl(path: string): string {
  */
 export type NotificationPayload = {
   application_submitted: { caseRef: string; url: string };
+  checklist_complete: { caseRef: string; url: string };
   status_changed: { statusLabel: string; message: string; url: string };
   document_flagged: { documentName: string; reason: string; url: string };
   message_received: { senderName: string; preview: string; url: string };
@@ -97,6 +99,10 @@ function templateFor<K extends keyof NotificationPayload>(
   switch (kind) {
     case "application_submitted":
       return submissionEmail(payload as NotificationPayload["application_submitted"]);
+    case "checklist_complete":
+      return checklistCompleteEmail(
+        payload as NotificationPayload["checklist_complete"]
+      );
     case "status_changed":
       return statusChangedEmail(payload as NotificationPayload["status_changed"]);
     case "document_flagged":

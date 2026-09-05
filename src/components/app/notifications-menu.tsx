@@ -26,6 +26,7 @@ type NotificationKind = Notification["kind"];
  */
 const KIND_COPY: Record<NotificationKind, string> = {
   application_submitted: "A case reached 100% and was submitted",
+  checklist_complete: "A case reached 100% but has not been submitted",
   status_changed: "Your application status changed",
   document_flagged: "A document needs another look",
   message_received: "You have a new message",

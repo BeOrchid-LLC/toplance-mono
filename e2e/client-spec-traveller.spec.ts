@@ -3,7 +3,14 @@ import { join } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
 
 import { resetFixtures, signUpInvited, testEmail } from "./helpers/auth";
-import { approveApplicationFor, seedInvitation } from "./helpers/db";
+import {
+  approveApplicationFor,
+  collectAllRequiredButOne,
+  noticesOfKindFor,
+  removeStaffRecipient,
+  seedInvitation,
+  seedStaffRecipient,
+} from "./helpers/db";
 
 /**
  * The client's brief, item by item.
@@ -635,20 +642,54 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
 
   /**
    * Items 9 and 11: an automatic notification when a traveller reaches
-   * 100%. Staff are notified — but by `submitApplication`, which is a
-   * button the traveller presses, and only once every required document
-   * has been human-verified. Nothing watches the score.
+   * 100%, by "email + dashboard alert".
    *
-   * So the two thresholds the brief treats as one are three apart in
-   * the product: 100% uploaded (nothing fires), 100% verified (nothing
-   * fires, a Submit button appears), submitted (staff are notified).
-   * A traveller who uploads everything and never presses Submit is
-   * invisible to the review team.
+   * The gap this closes: staff used to hear about a case only from
+   * `submitApplication`, a button the traveller presses, and only once
+   * every required document had been human-verified. So the two
+   * thresholds the brief treats as one were three apart — 100%
+   * uploaded (nothing fired), 100% verified (nothing fired, a Submit
+   * button appeared), submitted (staff notified) — and a traveller who
+   * uploaded everything and never pressed Submit was invisible.
+   *
+   * `markChecklistCompleteIfDone` now stamps the moment the last
+   * required document lands and `notifyDeskIfComplete` tells the desk,
+   * on the upload path, before any human verdict and with no Submit
+   * press. The stamp is a column so it fires once however many times a
+   * flag-and-re-upload cycle refills the checklist; that property is
+   * pinned in `src/lib/data/checklist.test.ts` rather than bought here
+   * with a reviewer's clicks.
+   *
+   * The rest of the checklist is filled in the database. Uploading five
+   * more files through the browser would prove the upload control works
+   * five more times and say nothing further about the threshold, which
+   * is what this test is about.
    */
-  test.fixme("item 9 — reaching 100% notifies the admin without being asked", async () => {
-    // With the gap closed, uploading the last required document should
-    // write a staff notification on its own — no Submit press, and
-    // before any human verdict.
+  test("item 9 — reaching 100% notifies the admin without being asked", async () => {
+    const staffId = await seedStaffRecipient();
+    try {
+      const remaining = await collectAllRequiredButOne(EMAIL);
+
+      await page.goto("/app/documents");
+      const last = documentRow(page, remaining);
+      await last.locator('input[type="file"]').last().setInputFiles(FIXTURE);
+      await page.getByRole("dialog").getByRole("button", { name: "Continue" }).click();
+      await expect(last.getByText("Checking")).toBeVisible();
+
+      // The notice is written after the response, inside the same
+      // `after()` hook the pre-check runs in, so it is polled for rather
+      // than asserted the instant the dialog closes.
+      await expect
+        .poll(() => noticesOfKindFor(EMAIL, "checklist_complete"), {
+          timeout: 15_000,
+        })
+        .toBeGreaterThan(0);
+
+      // And no Submit was pressed to get it.
+      await expect(page.getByRole("button", { name: /submit/i })).toHaveCount(0);
+    } finally {
+      await removeStaffRecipient(staffId);
+    }
   });
 });
 

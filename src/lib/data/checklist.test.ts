@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 /**
  * Materialising a rule set into an application's checklist.
@@ -227,3 +227,154 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
     expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
   });
 });
+
+/**
+ * When a traveller's required checklist reaches 100%.
+ *
+ * Brief items 9 and 11: "When score reaches 100%, trigger an automatic
+ * admin notification", and the admin "must be notified immediately
+ * (email + dashboard alert) when any user reaches 100% document
+ * completion". Until this existed the only thing that reached the review
+ * desk was the traveller pressing Submit — so somebody who uploaded
+ * every document and then stopped was invisible, which is exactly the
+ * person most worth a nudge.
+ *
+ * It deliberately mirrors `markBillableIfComplete` and deliberately
+ * differs from it in one place: billing needs an organisation to charge
+ * and returns early without one, while a traveller who came on their own
+ * still has to reach a reviewer.
+ *
+ * Skipped without a database. Run `npm run db:up` to include them.
+ */
+describe.skipIf(!process.env.DATABASE_URL)(
+  "markChecklistCompleteIfDone",
+  async () => {
+    const { db } = await import("@/lib/db/client");
+    const { applications, documents, profiles } = await import("@/lib/db/schema");
+    const { markChecklistCompleteIfDone } = await import("@/lib/data/checklist");
+
+    const TRAVELLER = "test_complete_traveller";
+    let applicationId = "";
+
+    const completeAt = async () => {
+      const [row] = await db
+        .select({ at: applications.checklistCompleteAt })
+        .from(applications)
+        .where(eq(applications.id, applicationId))
+        .limit(1);
+      return row?.at ?? null;
+    };
+
+    const setState = async (
+      docKey: string,
+      state: "checking" | "flagged" | "verified"
+    ) => {
+      // Scoped to this application as well as the key. `passport` is a
+      // docKey on nearly every application in the database, so a clause
+      // on docKey alone rewrites other suites' fixtures.
+      await db
+        .update(documents)
+        .set({ state })
+        .where(
+          and(
+            eq(documents.applicationId, applicationId),
+            eq(documents.docKey, docKey)
+          )
+        );
+    };
+
+    beforeEach(async () => {
+      // Delete-then-insert: an interrupted run leaves the profile behind,
+      // and a bare insert would fail every later run on the primary key.
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+      await db.insert(profiles).values({
+        id: TRAVELLER,
+        fullName: "Completion Test",
+        email: `${TRAVELLER}@test.invalid`,
+      });
+
+      const [app] = await db
+        .insert(applications)
+        .values({ travelerId: TRAVELLER })
+        .returning({ id: applications.id });
+      applicationId = app.id;
+
+      await db.insert(documents).values([
+        { applicationId, docKey: "passport", name: "Passport", isRequired: true, sortOrder: 1 },
+        { applicationId, docKey: "cas", name: "CAS", isRequired: true, sortOrder: 2 },
+        { applicationId, docKey: "tb", name: "TB test", isRequired: false, sortOrder: 3 },
+      ]);
+    });
+
+    afterEach(async () => {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+    });
+
+    it("stays quiet while the checklist is still being filled", async () => {
+      await setState("passport", "checking");
+
+      const result = await markChecklistCompleteIfDone(db, applicationId);
+
+      expect(result.becameComplete).toBe(false);
+      expect(await completeAt()).toBeNull();
+    });
+
+    it("fires once every required document is collected", async () => {
+      await setState("passport", "checking");
+      await setState("cas", "checking");
+
+      const result = await markChecklistCompleteIfDone(db, applicationId);
+
+      expect(result.becameComplete).toBe(true);
+      expect(await completeAt()).toBeInstanceOf(Date);
+    });
+
+    it("does not wait on an optional document", async () => {
+      await setState("passport", "checking");
+      await setState("cas", "verified");
+
+      const result = await markChecklistCompleteIfDone(db, applicationId);
+
+      expect(result.becameComplete).toBe(true);
+    });
+
+    it("fires for a traveller who came on their own", async () => {
+      // The one place this parts company with `markBillableIfComplete`,
+      // which returns early without an `org_id` because there is nobody
+      // to charge. There is still somebody to review.
+      await setState("passport", "checking");
+      await setState("cas", "checking");
+
+      const result = await markChecklistCompleteIfDone(db, applicationId);
+
+      expect(result.becameComplete).toBe(true);
+    });
+
+    it("notifies once, however often the checklist re-completes", async () => {
+      // Complete, a reviewer flags one, the traveller re-uploads. That is
+      // one traveller reaching the desk, not two.
+      await setState("passport", "checking");
+      await setState("cas", "checking");
+      await markChecklistCompleteIfDone(db, applicationId);
+      const first = await completeAt();
+
+      await setState("cas", "flagged");
+      await markChecklistCompleteIfDone(db, applicationId);
+
+      await setState("cas", "verified");
+      const again = await markChecklistCompleteIfDone(db, applicationId);
+
+      expect(again.becameComplete).toBe(false);
+      expect((await completeAt())?.getTime()).toBe(first?.getTime());
+    });
+
+    it("says nothing about an application with no required documents", async () => {
+      await db.delete(documents).where(eq(documents.applicationId, applicationId));
+
+      const result = await markChecklistCompleteIfDone(db, applicationId);
+
+      expect(result.becameComplete).toBe(false);
+      expect(await completeAt()).toBeNull();
+    });
+  }
+);

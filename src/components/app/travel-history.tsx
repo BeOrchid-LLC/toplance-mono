@@ -61,7 +61,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
             aria-label={`Remove the trip to ${trip.country}`}
             onClick={() => remove(trip)}
             disabled={pending}
-            className="-my-2 -mr-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-danger"
+            className="-my-2 -me-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-danger"
           >
             <Trash2 className="size-4" />
           </button>
@@ -71,7 +71,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
       {adding ? (
         <form ref={formRef} action={save} className="mt-5 grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="trip_country">Country you travelled to</Label>
+            <Label htmlFor="trip_country">Country you traveled to</Label>
             <input
               id="trip_country"
               name="country"

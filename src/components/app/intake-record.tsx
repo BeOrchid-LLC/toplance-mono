@@ -110,7 +110,7 @@ export function RecordDocument({
       className="ovi-edge mx-auto w-full max-w-[720px] rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5"
     >
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-        <p className="special-caps truncate">Traveller record</p>
+        <p className="special-caps truncate">Traveler record</p>
         {/* Two readings of one fact, as the tick meter used to carry.
             Sighted, "3 / 10" sits over ten fields that say what it
             counts; read aloud it could be anything, so the spoken
@@ -226,7 +226,7 @@ function RecordField({
         // the field still holds a real answer until the replacement
         // lands, and washing it in a colour would say it had been
         // cleared when it has not.
-        reopened && "-ml-3 rounded-l-none border-l-2 border-l-brand-accent pl-3"
+        reopened && "-ms-3 rounded-s-none border-s-2 border-s-brand-accent ps-3"
       )}
     >
       <dt className={cn("special", (asking || reopened) && "text-brand-text")}>

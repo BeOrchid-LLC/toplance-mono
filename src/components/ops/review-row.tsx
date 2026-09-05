@@ -62,7 +62,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
       toast.success(
         verdict === "verified"
           ? `${doc.name} verified`
-          : `${doc.name} flagged — the traveller sees your reason`
+          : `${doc.name} flagged — the traveler sees your reason`
       );
     });
   }
@@ -75,7 +75,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
            card's edge, matching `document-row.tsx`. */
         "border-b border-border px-5 py-5 last:border-b-0 sm:px-6",
         doc.state === "flagged" &&
-          "border-l-2 border-l-warning bg-[color-mix(in_srgb,var(--warning)_9%,transparent)]"
+          "border-s-2 border-s-warning bg-[color-mix(in_srgb,var(--warning)_9%,transparent)]"
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
@@ -134,7 +134,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
             autoFocus
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="What is wrong, and what should they upload instead? The traveller reads this."
+            placeholder="What is wrong, and what should they upload instead? The traveler reads this."
             rows={3}
           />
           <div className="mt-3 flex gap-3">
@@ -144,7 +144,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               onClick={() => submit("flagged")}
               disabled={pending || !reason.trim()}
             >
-              <Flag /> Flag for the traveller
+              <Flag /> Flag for the traveler
             </Button>
             <Button
               variant="tertiary"

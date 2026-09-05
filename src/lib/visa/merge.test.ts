@@ -35,6 +35,7 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
       isRequired: true,
       sortOrder: 1,
       sourceUrl: null,
+      appliesWhen: null,
     },
   ],
   ...over,
@@ -307,6 +308,7 @@ describe("fillGaps", () => {
           isRequired: true,
           sortOrder: 1,
           sourceUrl: null,
+          appliesWhen: null,
         },
       ],
     });

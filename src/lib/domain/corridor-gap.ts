@@ -34,7 +34,7 @@ const or = (items: string[]) =>
   new Intl.ListFormat("en-GB", { type: "disjunction" }).format(items);
 
 const COUNTED =
-  "Your request has been counted towards it — corridors are prioritised " +
+  "Your request has been counted towards it — routes are prioritised " +
   "by real demand, not guesswork.";
 
 /**
@@ -125,9 +125,9 @@ export function corridorGap({
     kind: "gap",
     heading: nationality
       ? `We do not cover ${nationality} passports yet`
-      : "We do not cover that corridor yet",
+      : "We do not cover that route yet",
     lead:
-      `Your answers are saved. Every corridor we have built so far starts ` +
+      `Your answers are saved. Every route we have built so far starts ` +
       `from ${or(liveNationalities())}, so changing destination will not ` +
       `help yet. ${COUNTED}`,
     action: "Review my answers",

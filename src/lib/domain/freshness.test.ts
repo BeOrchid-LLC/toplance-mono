@@ -23,7 +23,7 @@ describe("freshnessOf", () => {
     // No date is claimed at all — the state carries no `checked` field,
     // so there is nothing a screen could accidentally render as one.
     expect(result).not.toHaveProperty("checked");
-    expect(result.notice).toContain("No one has checked this");
+    expect(result.notice).toContain("Nobody has checked this route");
   });
 
   it("treats an unreadable timestamp as never checked", () => {
@@ -64,6 +64,28 @@ describe("freshnessOf", () => {
     // Still carries its date: the checklist is dated, not withdrawn.
     expect(result).toMatchObject({ checked: "14 February 2026" });
     expect(result.notice).toContain("200 days ago");
+  });
+});
+
+describe("who the notices are written for", () => {
+  /**
+   * These sentences moved from the traveller's requirements screen to
+   * the ops console after the 01/09 review, and the reason they moved
+   * is the reason this test exists: a traveller cannot act on doubt
+   * about our own sourcing, and telling them about it only spends the
+   * credibility of a checklist that is very probably right. Whoever
+   * rewrites this copy should keep it addressed to the person who can
+   * open the source and record a check.
+   */
+  it("asks staff to check, rather than asking the traveller to", () => {
+    const notices = [
+      freshnessOf(null, "work", NOW).notice,
+      freshnessOf(daysAgo(200), "work", NOW).notice,
+    ];
+
+    for (const notice of notices) {
+      expect(notice).not.toMatch(/your trip|your visa|you should/i);
+    }
   });
 });
 

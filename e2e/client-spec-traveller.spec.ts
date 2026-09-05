@@ -481,7 +481,7 @@ test.describe("phase 2 · the travel profile", () => {
     await page.goto("/app/profile");
 
     await page.getByRole("button", { name: "Add a past trip" }).click();
-    await page.getByLabel("Country you travelled to").fill("Ghana");
+    await page.getByLabel("Country you traveled to").fill("Ghana");
     await page.getByLabel("What the trip was for").fill("Family visit");
     await page.getByRole("button", { name: "Save trip" }).click();
 
@@ -521,8 +521,15 @@ test.describe("phase 3 · requirements, checklist and verification", () => {
     await expect(page.getByText(/819/)).toBeVisible();
 
     // Whose rule set it is, and from when — the brief's "current".
+    // The internal version number and our own last-checked date were
+    // taken off this screen after the 01/09 review: they are staff
+    // facts, and they now sit on the corridor's page in `/ops`. What
+    // stays is what the traveller can act on — the mission's source and
+    // the date the mission's own rules took effect.
     await expect(page.getByRole("link", { name: "www.gov.uk" })).toBeVisible();
-    await expect(page.getByText(/Rule set v\d+/)).toBeVisible();
+    await expect(page.getByText(/In effect since/)).toBeVisible();
+    await expect(page.getByText(/Rule set v\d+/)).toHaveCount(0);
+    await expect(page.getByText(/Not checked by us/)).toHaveCount(0);
   });
 
   /**
@@ -866,7 +873,7 @@ test.describe("phases 5 & 6 · after approval", () => {
     await expect(page.getByText("Updated automatically after every interaction.")).toBeVisible();
 
     // Derived from the chips tapped in phase 1, not restated from them.
-    await expect(page.getByText("Travelling — just me")).toBeVisible();
+    await expect(page.getByText("Traveling — just me")).toBeVisible();
     await expect(page.getByText("Sets who is on the document checklist")).toBeVisible();
     await expect(page.getByText("Employer housing").first()).toBeVisible();
     await expect(page.getByText("Visa history — no")).toBeVisible();
@@ -980,7 +987,7 @@ test.describe("technical requirements", () => {
       // fields are on screen rather than behind a "Your profile" button.
       await page.goto("/app/agent");
       await expect(page.locator("#intake-record")).toBeVisible();
-      await expect(page.getByText("Traveller record")).toBeVisible();
+      await expect(page.getByText("Traveler record")).toBeVisible();
     } finally {
       await page.setViewportSize({ width: 1280, height: 720 });
     }

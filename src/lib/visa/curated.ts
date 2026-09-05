@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { corridorRequirements, corridors } from "@/lib/db/schema";
+import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import type {
   CorridorQuery,
   CorridorRuleSet,
@@ -93,6 +94,11 @@ export const curatedProvider: VisaDataProvider = {
         isRequired: r.isRequired,
         sortOrder: r.sortOrder,
         sourceUrl: r.sourceUrl,
+        // The column is `jsonb`, so it is parsed rather than cast: a row
+        // written by hand or by an older script can hold anything, and
+        // `parseAppliesWhen` turns anything unreadable back into "no
+        // rule yet" rather than into a rule that hides a document.
+        appliesWhen: parseAppliesWhen(r.appliesWhen),
       })),
     };
   },

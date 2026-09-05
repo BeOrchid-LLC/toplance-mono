@@ -26,8 +26,14 @@ const isPublicRoute = createRouteMatcher([
   // It needs naming separately because `"/"` matches only `/` itself —
   // when the traveller copy moved off the home page it silently became
   // a protected route, and a signed-out visitor following "For
-  // travellers" from the nav was bounced to `/sign-in`, which is a door
+  // travelers" from the nav was bounced to `/sign-in`, which is a door
   // invite-only travellers cannot open.
+  "/travelers",
+  // The pre-01/09 spelling, kept public so the permanent redirect in
+  // `next.config.ts` is the thing that answers it. Whether this proxy
+  // runs before or after that redirect is a detail of the framework's
+  // routing order, and an old link in someone's inbox should not depend
+  // on which way round it is.
   "/travellers",
   ...authRoutes.map((r) => `${r.prefix}(.*)`),
   // Not an auth route: a signed-in traveller must also reach this page
@@ -45,6 +51,7 @@ const isPublicRoute = createRouteMatcher([
   // secret check that makes it safe lives in the route, not here.
   "/api/cron/visa-warm",
   "/api/cron/corridor-recheck",
+  "/api/cron/fx-rates",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

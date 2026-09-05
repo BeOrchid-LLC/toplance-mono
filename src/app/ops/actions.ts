@@ -14,9 +14,11 @@ import {
   approveCorridorTx,
   checklistChangesFrom,
   rejectCorridorTx,
+  setRequirementCondition as setRequirementConditionTx,
 } from "@/lib/data/corridors";
 import { reviewDocumentTx } from "@/lib/data/review";
 import { STAFF_REACHABLE_STATUSES, changeStatusTx } from "@/lib/data/transitions";
+import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import { STATUS, type ApplicationStatus } from "@/lib/domain/status";
 import { appUrl, notify } from "@/lib/notifications/notify";
 
@@ -283,7 +285,7 @@ export async function approveCorridor(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: "Only a super admin can approve a corridor." };
+    return { error: "Only a super admin can approve a route." };
   }
 
   const result = await approveCorridorTx(corridorId, actor.userId);
@@ -334,7 +336,7 @@ export async function rejectCorridor(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: "Only a super admin can reject a corridor." };
+    return { error: "Only a super admin can reject a route." };
   }
 
   const result = await rejectCorridorTx(corridorId, reason);
@@ -344,6 +346,65 @@ export async function rejectCorridor(formData: FormData) {
   await audit(actor.userId, "corridor.rejected", "corridor", corridorId, {
     reason: reason.trim(),
   });
+
+  revalidatePath("/ops", "layout");
+  return { ok: true };
+}
+
+
+/**
+ * Write the rule that decides which travellers one conditional document
+ * applies to — the 01/09 review's "tell them what applies", in the one
+ * place where somebody actually knows the answer.
+ *
+ * Owner-only, like approval: a rule decides who is *asked* for a
+ * document, so a careless one hides a requirement from the people who
+ * need it. Clearing it (no topic chosen) is allowed and puts the
+ * document back on the hedged list, which is the honest state for a
+ * rule nobody is sure about.
+ *
+ * The rule is parsed before it is written and rejected if it does not
+ * name a real intake topic — the alternative is a rule that silently
+ * never matches, and a document that silently never appears.
+ */
+export async function setRequirementCondition(formData: FormData) {
+  const requirementId = String(formData.get("requirement_id") ?? "");
+  const answer = String(formData.get("answer") ?? "").trim();
+  const options = formData
+    .getAll("options")
+    .map((o) => String(o).trim())
+    .filter(Boolean);
+
+  const gate = await requireStaffAction();
+  if ("error" in gate) return gate;
+  const { actor } = gate;
+
+  if (!canWriteCorridors(actor)) {
+    return { error: "Only a super admin can write a requirement rule." };
+  }
+
+  let appliesWhen: unknown = null;
+
+  if (answer) {
+    if (!options.length) {
+      return { error: "Choose at least one answer this document applies to." };
+    }
+
+    appliesWhen = parseAppliesWhen([{ answer, in: options }]);
+    if (!appliesWhen) {
+      return { error: "That rule does not name an intake question we ask." };
+    }
+  }
+
+  const result = await setRequirementConditionTx(requirementId, appliesWhen);
+  if ("error" in result) return result;
+
+  await track(
+    "toplance.requirement_condition_set",
+    { requirementId, answer: answer || null, cleared: !answer },
+    actor.userId
+  );
+  await audit(actor.userId, "requirement.condition_set", "requirement", requirementId);
 
   revalidatePath("/ops", "layout");
   return { ok: true };

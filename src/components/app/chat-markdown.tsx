@@ -56,7 +56,7 @@ export function ChatMarkdown({ children }: { children: string }) {
           );
         },
         blockquote: ({ children: quoteChildren }) => (
-          <blockquote className="mt-3 border-l-2 border-brand pl-4 text-ink-2">
+          <blockquote className="mt-3 border-s-2 border-brand ps-4 text-ink-2">
             {quoteChildren}
           </blockquote>
         ),
@@ -93,7 +93,7 @@ export function ChatMarkdown({ children }: { children: string }) {
         ),
         table: ({ children: tableChildren }) => (
           <div className="mt-3 max-w-full overflow-x-auto rounded-md border border-border first:mt-0">
-            <table className="w-full border-collapse text-left text-base">
+            <table className="w-full border-collapse text-start text-base">
               {tableChildren}
             </table>
           </div>

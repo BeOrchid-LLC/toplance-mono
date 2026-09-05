@@ -115,11 +115,11 @@ export function DocumentRow({
         /* The tint mixes toward `transparent`, not toward `--mix`. These
            rows sit on the ruled ground the laminate above them refracts;
            an opaque tint would punch a solid rectangle through it. */
-        needsAttention && "border-l-2",
+        needsAttention && "border-s-2",
         needsAttention &&
           (doc.state === "failed"
-            ? "border-l-danger bg-[color-mix(in_srgb,var(--danger)_7%,transparent)]"
-            : "border-l-warning bg-[color-mix(in_srgb,var(--warning)_9%,transparent)]")
+            ? "border-s-danger bg-[color-mix(in_srgb,var(--danger)_7%,transparent)]"
+            : "border-s-warning bg-[color-mix(in_srgb,var(--warning)_9%,transparent)]")
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">

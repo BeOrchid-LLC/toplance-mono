@@ -90,32 +90,6 @@ export const STATUS: Record<
  * `server-only` into the browser bundle. `changeStatusTx` re-exports it
  * for its own callers.
  */
-/**
- * The traveller's half of the machine: the statuses a case may be
- * submitted from.
- *
- * Here rather than in `@/lib/data/submissions` (which enforces it) for
- * the same reason `STAFF_TRANSITIONS` is here — the documents screen
- * needs to read it to decide whether to draw the submit panel, and must
- * not pull `db` and `server-only` into that page to do so.
- *
- * That screen used to draw the panel from the checklist alone, so a case
- * already with the review desk still showed "Everything is verified" and
- * a Submit button; the transaction refused the second click with a red
- * toast, which is a correct system telling a traveller off for believing
- * its own screen. `submitApplicationTx` re-exports this for its callers.
- */
-export const RESUBMITTABLE: readonly ApplicationStatus[] = [
-  "draft",
-  "collecting_documents",
-  "additional_documents",
-];
-
-/** Whether the traveller may send this case to the desk from here. */
-export function canSubmitFrom(status: ApplicationStatus): boolean {
-  return RESUBMITTABLE.includes(status);
-}
-
 export const STAFF_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
   draft: [],
   collecting_documents: [],
@@ -141,6 +115,32 @@ export const TERMINAL_STATUSES: readonly ApplicationStatus[] = ["approved", "rej
 
 export function isTerminalStatus(status: ApplicationStatus): boolean {
   return TERMINAL_STATUSES.includes(status);
+}
+
+/**
+ * The traveller's half of the machine: the statuses a case may be
+ * submitted from.
+ *
+ * Here rather than in `@/lib/data/submissions` (which enforces it) for
+ * the same reason `STAFF_TRANSITIONS` is here — the documents screen
+ * needs to read it to decide whether to draw the submit panel, and must
+ * not pull `db` and `server-only` into that page to do so.
+ *
+ * That screen used to draw the panel from the checklist alone, so a case
+ * already with the review desk still showed "Everything is verified" and
+ * a Submit button; the transaction refused the second click with a red
+ * toast, which is a correct system telling a traveller off for believing
+ * its own screen. `submitApplicationTx` re-exports this for its callers.
+ */
+export const RESUBMITTABLE: readonly ApplicationStatus[] = [
+  "draft",
+  "collecting_documents",
+  "additional_documents",
+];
+
+/** Whether the traveller may send this case to the desk from here. */
+export function canSubmitFrom(status: ApplicationStatus): boolean {
+  return RESUBMITTABLE.includes(status);
 }
 
 export const DOC_STATE: Record<DocumentState, { label: string; variant: BadgeVariant }> = {

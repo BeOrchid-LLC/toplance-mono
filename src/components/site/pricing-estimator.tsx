@@ -64,9 +64,13 @@ export function PricingEstimator({ card }: { card: RateCard }) {
           </dd>
         </div>
 
-        {estimate.layers.map((layer) => (
+        {/* Keyed by position: the layers come out of `quote` in band
+            order, and two bands are allowed to share a rate (a card with
+            $18 either side of a threshold is odd but legal), which makes
+            the rate itself a key that can collide. */}
+        {estimate.layers.map((layer, i) => (
           <div
-            key={layer.rateMinor}
+            key={i}
             className="flex items-baseline justify-between gap-4"
           >
             <dt className="text-[15px] text-ink-2">
@@ -94,10 +98,17 @@ export function PricingEstimator({ card }: { card: RateCard }) {
         </div>
       </dl>
 
+      {/* Says exactly what the code counts. This used to promise that
+          "abandoned" applications are never charged, which was a wider
+          claim than `markBillableIfComplete` keeps — it bills on a
+          complete checklist, and whether a complete checklist that is
+          never submitted should be billed is a question for the client,
+          not one to answer by implication on a pricing page. */}
       <p className="t-muted mt-5 max-w-[62ch]">
         Only applications that finish are counted — a checklist your client
-        completes. Invited, in-progress and abandoned applications are never
-        charged.
+        completes, and every document past its check. An invitation nobody
+        accepts, a checklist still being filled and one whose documents came
+        back rejected are never charged.
       </p>
     </div>
   );

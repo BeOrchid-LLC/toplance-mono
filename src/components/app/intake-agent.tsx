@@ -142,14 +142,30 @@ function LiveIntake({
   // about what was asked.
   const [opening] = React.useState(() => nextIntakeQuestion(initialAnswers));
 
+  // A single failed turn is usually the provider blipping — a rate limit,
+  // a timeout — not the model being unreachable, and retrying it costs a
+  // traveller nothing. Dropping to the scripted flow on the first error
+  // used to make that guess permanently on their behalf: one blip, and
+  // the rest of the conversation silently lost the model for good. Only
+  // consecutive failures earn the fallback.
+  const errorStreak = React.useRef(0);
+
   const { messages, sendMessage, status } = useChat({
     transport,
     onError: (error) => {
       console.error("[intake] the conversation failed", error);
+      errorStreak.current += 1;
+      if (errorStreak.current < 2) {
+        toast.error("That didn't go through. Try again.");
+        return;
+      }
       toast.error(
         "The agent stopped responding. Carrying on with the short questions.",
       );
       onDegrade(answersRef.current);
+    },
+    onFinish: ({ isError }) => {
+      if (!isError) errorStreak.current = 0;
     },
   });
 

@@ -193,6 +193,7 @@ export function DocumentRow({
         accept="image/*"
         capture="environment"
         className="sr-only"
+        aria-label={`Take a photo of ${doc.name}`}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) upload(f);
@@ -204,6 +205,7 @@ export function DocumentRow({
         type="file"
         accept={ACCEPT}
         className="sr-only"
+        aria-label={`Upload ${doc.name}`}
         onChange={(e) => {
           const f = e.target.files?.[0];
           if (f) upload(f);

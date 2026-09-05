@@ -84,7 +84,7 @@ export function PhoneField({
             aria-haspopup="listbox"
             aria-expanded={open}
             aria-label={`Country code: ${country.name} ${country.dial}`}
-            className="flex shrink-0 items-center gap-1 border-r border-border px-3 text-xl transition-colors hover:bg-surface-2"
+            className="flex shrink-0 items-center gap-1 border-e border-border px-3 text-xl transition-colors hover:bg-surface-2"
           >
             <span aria-hidden>{country.flag}</span>
             <ChevronDown className="size-4 text-ink-3" />
@@ -110,7 +110,7 @@ export function PhoneField({
         <input type="hidden" name={countryName} value={iso} />
 
         {open && (
-          <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-md border border-border bg-surface shadow-[var(--shadow-lg)]">
+          <div className="absolute start-0 end-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-md border border-border bg-surface shadow-[var(--shadow-lg)]">
             <div className="flex items-center gap-2 border-b border-border px-4">
               <Search className="size-5 shrink-0 text-ink-3" />
               <input
@@ -139,7 +139,7 @@ export function PhoneField({
                     aria-selected={c.iso === iso}
                     onClick={() => pick(c)}
                     className={cn(
-                      "flex min-h-[var(--row-h)] w-full items-center gap-3 rounded-sm px-3 text-left text-base transition-colors hover:bg-surface-2",
+                      "flex min-h-[var(--row-h)] w-full items-center gap-3 rounded-sm px-3 text-start text-base transition-colors hover:bg-surface-2",
                       c.iso === iso && "font-semibold text-brand-text"
                     )}
                   >

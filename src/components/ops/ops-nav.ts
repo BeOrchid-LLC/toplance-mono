@@ -19,5 +19,5 @@ import type { NavItem } from "@/components/app/app-nav";
  */
 export const opsNav: NavItem[] = [
   { href: "/ops", label: "Case queue" },
-  { href: "/ops/corridors", label: "Corridors" },
+  { href: "/ops/corridors", label: "Routes" },
 ];

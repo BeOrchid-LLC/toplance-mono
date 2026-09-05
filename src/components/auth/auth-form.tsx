@@ -570,7 +570,7 @@ export function AuthForm(props: AuthFormProps) {
           ? "Organisation"
           : audience === "operations"
             ? "Toplance operations"
-            : "Traveller"
+            : "Traveler"
       }
       className="mx-auto w-full max-w-[560px]"
     >

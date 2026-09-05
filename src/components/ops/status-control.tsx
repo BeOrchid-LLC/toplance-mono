@@ -61,7 +61,7 @@ export function StatusControl({
       }
       setMessage("");
       setConfirming(null);
-      toast.success(`Case moved to "${STATUS[to].label}" — the traveller has been told`);
+      toast.success(`Case moved to "${STATUS[to].label}" — the traveler has been told`);
     });
   }
 
@@ -77,7 +77,7 @@ export function StatusControl({
     return (
       <p className="t-muted">
         No staff action from this state — it is either terminal, or waiting on the
-        traveller.
+        traveler.
       </p>
     );
   }
@@ -90,7 +90,7 @@ export function StatusControl({
           setMessage(e.target.value);
           setConfirming(null);
         }}
-        placeholder="Message to the traveller — every status change sends one."
+        placeholder="Message to the traveler — every status change sends one."
         rows={3}
         maxLength={2000}
         disabled={pending}

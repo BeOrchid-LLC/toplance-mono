@@ -90,7 +90,7 @@ async function raisePendingCopy(
       .where(eq(corridors.id, corridorId))
       .limit(1);
 
-    if (!live) throw new Error("corridor disappeared mid-check");
+    if (!live) throw new Error("route disappeared mid-check");
 
     const [{ max }] = await tx
       .select({ max: sql<number>`coalesce(max(${corridors.version}), 0)` })

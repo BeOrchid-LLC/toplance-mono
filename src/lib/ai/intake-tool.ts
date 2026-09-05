@@ -24,5 +24,5 @@ export const intakeAnswerSchema = z.object({
 
 /** Why the model would call it, in the words both agents are given. */
 export const INTAKE_TOOL_DESCRIPTION =
-  "Save one intake answer. Call this the moment the traveller " +
+  "Save one intake answer. Call this the moment the traveler " +
   "answers a topic, before replying to them.";

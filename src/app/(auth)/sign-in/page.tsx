@@ -19,7 +19,7 @@ export default function SignInPage() {
       <Suspense fallback={<Skeleton className="h-[360px] w-full" />}>
         <AuthForm mode="sign-in" />
       </Suspense>
-      <OtherDoors heading="Not a traveller?" entries={SIGN_IN_DOORS} />
+      <OtherDoors heading="Not a traveler?" entries={SIGN_IN_DOORS} />
     </div>
   );
 }

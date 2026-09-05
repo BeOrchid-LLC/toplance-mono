@@ -47,7 +47,7 @@ export default function NotFound() {
               <span>
                 <span className="t-title block">Start from the beginning</span>
                 <span className="t-muted mt-1 block">
-                  Pick a corridor and see what it asks for
+                  Pick a route and see what it asks for
                 </span>
               </span>
               <ArrowRight

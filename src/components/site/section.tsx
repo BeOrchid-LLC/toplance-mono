@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  * label; with nothing true to say, the rail carries only the name.
  *
  * Extracted from the landing page when the register grew a second
- * reader: `/` addresses the organisation buying seats, `/travellers`
+ * reader: `/` addresses the organisation buying seats, `/travelers`
  * addresses the person travelling. Two copies of the rail would drift,
  * and the whole point of the measure is that both pages scan as one
  * document.
@@ -48,7 +48,7 @@ export function Section({
       {glow && (
         <div
           aria-hidden
-          className="pointer-events-none absolute -right-[10%] -top-[40%] -z-10 size-[680px] rounded-full opacity-40 blur-[130px] [background:radial-gradient(circle,var(--brand-2),transparent_70%)]"
+          className="pointer-events-none absolute -end-[10%] -top-[40%] -z-10 size-[680px] rounded-full opacity-40 blur-[130px] [background:radial-gradient(circle,var(--brand-2),transparent_70%)]"
         />
       )}
       <Shell className="grid gap-x-14 gap-y-9 py-20 md:py-24 lg:grid-cols-[184px_1fr]">

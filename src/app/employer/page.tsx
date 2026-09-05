@@ -358,7 +358,7 @@ export default async function EmployerConsolePage() {
                 </p>
                 <p className="t-muted mt-2 max-w-[74ch]">
                   Passports, bank statements and police certificates stay
-                  between the traveller and Toplance. You see the completion
+                  between the traveler and Toplance. You see the completion
                   score, the status and whether someone is stuck.
                 </p>
               </div>
@@ -417,17 +417,17 @@ export default async function EmployerConsolePage() {
                       <p className="t-body truncate">
                         {destination?.name ??
                           r.destinationIso?.toUpperCase() ??
-                          "Corridor not set"}
+                          "Route not set"}
                       </p>
                       <p className="special mt-1 truncate" title={r.visaName ?? ""}>
-                        {r.visaName ?? "Corridor not set"}
+                        {r.visaName ?? "Route not set"}
                       </p>
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
                         <Progress value={pct} className="flex-1" />
-                        <span className="w-12 shrink-0 text-right text-base font-semibold">
+                        <span className="w-12 shrink-0 text-end text-base font-semibold">
                           {pct}%
                         </span>
                       </div>

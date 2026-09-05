@@ -31,20 +31,17 @@ import { hasDatabaseEnv } from "@/lib/db/client";
  * to that reader. The account model underneath is unchanged (same
  * `/employer/sign-up` door, same case/roster mechanics, same document
  * boundary) — this is a copy-only re-audience, not a new account type.
- * The traveller copy was not thrown away — it is `/travellers`, unchanged.
+ * The traveller copy was not thrown away — it is `/travelers`, unchanged.
  *
  * The prose was replaced wholesale on 2026-09-05 from the client's copy
- * doc ("Toplance — Website Copy · Agency page"). Two deliberate departures
- * from `CONTEXT.md`, agreed with the client on the same day and scoped to
- * this page only:
- *
- *   - "traveler", one l. The glossary asks for two, and `/travellers` and
- *     the nav still spell it that way. The copy doc is consistently
- *     American and the client chose to keep it.
- *   - "route" and "trip" rather than "corridor". The glossary lists Route
- *     under _Avoid_, and it stays avoided in code, in staff-facing UI and
- *     in the shared `CorridorBar`/`CorridorBoard` — this substitution is
- *     marketing prose on this page and nowhere else.
+ * doc ("Toplance — Website Copy · Agency page"). Its two departures from
+ * the old glossary — "traveler" with one l, and "route" rather than
+ * "corridor" — are no longer local to this page: the client asked for
+ * both across the whole interface, and `CONTEXT.md` now records them as
+ * the rule rather than the exception. Code, tables, columns, types and
+ * analytics events still say `corridor` and `traveller`; every string a
+ * user reads says route and traveler. `CorridorBar` and `CorridorBoard`
+ * keep their names and moved their copy.
  *
  * Statically rendered and cached at the edge — the sticky nav, the
  * corridor state, the FAQ accordion and the theme switch are the only
@@ -539,7 +536,7 @@ export default async function HomePage() {
               content did not line up. */}
           <div className="hidden grid-cols-2 gap-x-12 py-3 sm:grid">
             <span className="tag">Doing it yourself</span>
-            <span className="tag border-l border-transparent pl-12 text-brand-text">
+            <span className="tag border-s border-transparent ps-12 text-brand-text">
               With Toplance
             </span>
           </div>
@@ -552,7 +549,7 @@ export default async function HomePage() {
                 <span className="tag mb-2 block sm:hidden">Doing it yourself</span>
                 <p className="text-[17px] leading-relaxed text-ink-3">{row.alone}</p>
               </div>
-              <div className="sm:border-l sm:border-[color-mix(in_srgb,var(--brand)_35%,transparent)] sm:pl-12">
+              <div className="sm:border-s sm:border-[color-mix(in_srgb,var(--brand)_35%,transparent)] sm:ps-12">
                 <span className="tag mb-2 block text-brand-text sm:hidden">
                   With Toplance
                 </span>
@@ -700,7 +697,7 @@ export default async function HomePage() {
                   <span className="hidden w-20 shrink-0 sm:block">
                     <Progress value={p.pct} />
                   </span>
-                  <span className="tag w-[124px] shrink-0 whitespace-nowrap text-right text-ink-2">
+                  <span className="tag w-[124px] shrink-0 whitespace-nowrap text-end text-ink-2">
                     {p.state}
                   </span>
                 </div>
@@ -726,11 +723,11 @@ export default async function HomePage() {
         />
         {/* The copy doc closes this section with "Don't see a route you
             need? Ask for it, and we'll add it." `CorridorBoard` already
-            ends with that message in its own words ("Missing a corridor?
+            ends with that message in its own words ("Missing a route?
             Ask for it and it enters the build queue with the demand
             attached to it."), and printing both put two consecutive
             invitations to ask for a route on the page. The board's line
-            wins because it is the shared component `/travellers` renders
+            wins because it is the shared component `/travelers` renders
             too — rewording it is a change to both pages, not this one. */}
         <div className="mt-11">
           <CorridorBoard />
@@ -902,7 +899,7 @@ export default async function HomePage() {
         >
           {faqFor(rateCard).map((f, i) => (
             <AccordionItem key={f.q} value={`q${i}`}>
-              <AccordionTrigger className="d-sm text-left">{f.q}</AccordionTrigger>
+              <AccordionTrigger className="d-sm text-start">{f.q}</AccordionTrigger>
               <AccordionContent className="max-w-[74ch] text-[15px]">
                 {f.a}
               </AccordionContent>
@@ -913,7 +910,7 @@ export default async function HomePage() {
         <p className="t-muted mt-9 text-[15px]">
           Booking your own visa rather than running it for a traveler?{" "}
           <Link
-            href="/travellers"
+            href="/travelers"
             className="font-medium text-brand-text underline underline-offset-4"
           >
             The individual path

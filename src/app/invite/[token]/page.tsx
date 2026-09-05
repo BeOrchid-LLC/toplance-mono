@@ -41,7 +41,7 @@ function InviteChrome({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-col">
       <header className="bar-edge flex h-[var(--bar-h)] items-center gap-4 px-[max(16px,calc((100%-1140px)/2))]">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-2">
           <SettingsCluster />
         </div>
       </header>
@@ -247,11 +247,11 @@ export default async function InvitePage({
         <Panel>
           <PanelBody>
             <p className="tag">Invitation</p>
-            <h1 className="t-h2 mt-3">This invitation is for a traveller account</h1>
+            <h1 className="t-h2 mt-3">This invitation is for a traveler account</h1>
             <p className="t-muted mt-3 max-w-[48ch]">
               You are signed in with an organisation or staff account, which
               cannot accept a sponsorship invitation. Open the link in a
-              browser signed in as the traveller it was sent to, or sign out
+              browser signed in as the traveler it was sent to, or sign out
               first.
             </p>
             <SignOutLink redirectUrl={`/invite/${token}`}>

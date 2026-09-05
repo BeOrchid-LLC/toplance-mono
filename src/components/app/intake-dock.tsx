@@ -84,7 +84,7 @@ export function AgentDock({
             onClick={onToggleTranscript}
             aria-expanded={transcriptOpen}
             aria-controls="intake-transcript"
-            className="special -mr-2 flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+            className="special -me-2 flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
           >
             {transcriptOpen ? (
               <X aria-hidden className="size-4" />

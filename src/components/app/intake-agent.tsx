@@ -808,7 +808,7 @@ function TranscriptPanel({
           type="button"
           onClick={onClose}
           aria-label="Close the conversation and go back to your record"
-          className="-mr-2 grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+          className="-me-2 grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
         >
           <X aria-hidden className="size-4" />
         </button>

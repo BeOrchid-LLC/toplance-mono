@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
  * `/` used to address the traveller while its own call to action led to
  * `/employer/sign-up` — a door travellers cannot open, since they became
  * invite-only. The fix turned `/` over to the organisations who actually
- * buy, and moved the traveller copy, unchanged, to `/travellers` (the
+ * buy, and moved the traveller copy, unchanged, to `/travelers` (the
  * client asked for the B2B to be expanded and the B2C kept).
  *
  * That buyer has since been named more precisely: the page sold "seats"
@@ -19,7 +19,7 @@ import { expect, test } from "@playwright/test";
  *
  * Both halves of that need pinning. Nothing stops the B2C voice drifting
  * back into `/` one well-meant copy edit at a time, and nothing stops
- * `/travellers` being quietly dropped as an orphan — it is reachable
+ * `/travelers` being quietly dropped as an orphan — it is reachable
  * only from the chrome, so a nav tidy-up could strand a page the client
  * is still reviewing.
  *
@@ -73,6 +73,19 @@ test("the home page makes no promise a traveller could act on", async ({
   ).toHaveCount(0);
 });
 
+/**
+ * The page was `/travellers` until the 01/09 review moved the interface
+ * to the US spelling. It is linked from the nav and the footer, so the
+ * old path is somebody's bookmark: it redirects rather than 404s, and
+ * this pins that it keeps doing so.
+ */
+test("the pre-rename traveller URL still lands on the page", async ({ page }) => {
+  const response = await page.goto("/travellers");
+
+  await expect(page).toHaveURL(/\/travelers$/);
+  expect(response?.status()).toBe(200);
+});
+
 test("the traveller page survives, and the chrome still reaches it", async ({
   page,
 }) => {
@@ -82,10 +95,10 @@ test("the traveller page survives, and the chrome still reaches it", async ({
   // and the point here is that the top-level chrome names it too.
   await page
     .getByRole("navigation")
-    .getByRole("link", { name: "For travellers" })
+    .getByRole("link", { name: "For travelers" })
     .click();
 
-  await expect(page).toHaveURL(/\/travellers$/);
+  await expect(page).toHaveURL(/\/travelers$/);
 
   // The B2C copy the client asked us not to delete, word for word.
   await expect(
@@ -123,7 +136,7 @@ test.describe("the small-screen menu", () => {
     await page.getByRole("button", { name: "Open menu" }).click();
 
     const menu = page.getByRole("dialog");
-    for (const label of ["How it works", "Where you can go", "Pricing", "For travellers", "Sign in"]) {
+    for (const label of ["How it works", "Where you can go", "Pricing", "For travelers", "Sign in"]) {
       await expect(menu.getByRole("link", { name: label })).toBeVisible();
     }
 

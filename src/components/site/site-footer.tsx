@@ -25,7 +25,7 @@ const COLUMNS = [
       { href: "/employer/sign-up", label: "Run your first case" },
       { href: "/employer/sign-in", label: "Agency sign-in" },
       { href: "/#pricing", label: "Talk to sales" },
-      { href: "/#where", label: "Request a corridor" },
+      { href: "/#where", label: "Request a route" },
     ],
   },
   {
@@ -57,10 +57,10 @@ export function SiteFooter() {
                 line under the blurb is where a reader who is not the buyer
                 actually looks. */}
             <Link
-              href="/travellers"
+              href="/travelers"
               className="mt-3 inline-flex min-h-[var(--row-h)] items-center text-base font-medium text-brand-text underline underline-offset-4"
             >
-              Travelling yourself? The individual path
+              Traveling yourself? The individual path
             </Link>
             <div className="mt-5 flex items-center gap-3">
               <LocaleMenu />

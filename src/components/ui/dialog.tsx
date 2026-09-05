@@ -41,7 +41,7 @@ function DialogContent({
         {children}
         <DialogPrimitive.Close
           aria-label="Close"
-          className="absolute right-4 top-4 grid size-[var(--row-h)] place-items-center rounded-sm text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+          className="absolute end-4 top-4 grid size-[var(--row-h)] place-items-center rounded-sm text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
         >
           <X className="size-5" />
         </DialogPrimitive.Close>

@@ -47,7 +47,7 @@ export function AppNavMenu({ nav }: { nav: NavItem[] }) {
                 // colour, rotated to suit the axis — rather than the
                 // tinted fill the bar itself no longer uses.
                 className={cn(
-                  "nav-label border-l-2 border-transparent",
+                  "nav-label border-s-2 border-transparent",
                   active && "border-brand font-semibold text-ink",
                   item.locked && "pointer-events-none text-ink-3",
                 )}

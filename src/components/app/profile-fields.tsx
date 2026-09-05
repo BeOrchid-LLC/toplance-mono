@@ -83,7 +83,7 @@ function Row({
           type="button"
           aria-label={`Edit ${label.toLowerCase()}`}
           onClick={() => setEditing(true)}
-          className="-my-2 -mr-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+          className="-my-2 -me-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
         >
           <Pencil className="size-4" />
         </button>

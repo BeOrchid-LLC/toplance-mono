@@ -51,7 +51,7 @@ export function PricingEstimator({ card }: { card: RateCard }) {
             const next = Number(e.target.value);
             setValue(Number.isFinite(next) && next >= 0 ? Math.floor(next) : 0);
           }}
-          className="num w-28 rounded-sm border border-border-strong bg-surface px-3 py-2 text-right text-base"
+          className="num w-28 rounded-sm border border-border-strong bg-surface px-3 py-2 text-end text-base"
           aria-label="Applications completed in a month"
         />
       </div>

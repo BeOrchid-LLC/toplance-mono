@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
 
+import type { AppliesWhen } from "@/lib/domain/applies-when";
+
 /**
  * Materialising a rule set into an application's checklist.
  *
@@ -57,6 +59,9 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
       isRequired: true,
       sortOrder,
       sourceUrl: null,
+      // Widened so a test can attach a rule to a copy of this fixture;
+      // inferred from `null` it would be typed as `null` forever.
+      appliesWhen: null as AppliesWhen | null,
     })),
   });
 
@@ -225,6 +230,117 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
     await adoptRuleSet(applicationId, ruleSet([["passport", "Passport", 1]]));
 
     expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
+  });
+
+  /**
+   * The 01/09 review, in the client's words: "We shouldn't give the
+   * travellers a list with 'only if it applies'. That's exactly the
+   * thing we exist to solve." A conditional requirement carrying a rule
+   * is decided here, against the answers, before the traveller ever sees
+   * it — so what reaches the checklist is theirs rather than a maybe.
+   */
+  describe("conditional requirements", () => {
+    /** A rule set whose second document only applies to a partner. */
+    const withSpouseRule = () => {
+      const set = ruleSet([
+        ["passport", "Passport", 1],
+        ["marriage_cert", "Marriage certificate", 2],
+      ]);
+
+      set.requirements[1].isRequired = false;
+      set.requirements[1].appliesWhen = [
+        { answer: "companions", in: ["Partner", "Partner and children"] },
+      ];
+
+      return set;
+    };
+
+    it("makes a matched document required for that traveller", async () => {
+      await adoptRuleSet(applicationId, withSpouseRule(), {
+        companions: "Partner",
+      });
+
+      const row = (await checklist()).find((d) => d.docKey === "marriage_cert");
+
+      // Not merely present: required. For this traveller it is not a
+      // maybe, and a checklist that still called it optional would be
+      // the same hedge in smaller type.
+      expect(row?.isRequired).toBe(true);
+    });
+
+    it("leaves an unmatched document off the checklist entirely", async () => {
+      await adoptRuleSet(applicationId, withSpouseRule(), {
+        companions: "Just me",
+      });
+
+      expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
+    });
+
+    it("keeps the hedge when no rule has been written", async () => {
+      const set = ruleSet([
+        ["passport", "Passport", 1],
+        ["bank_statement", "Bank statement", 2],
+      ]);
+      set.requirements[1].isRequired = false;
+
+      await adoptRuleSet(applicationId, set, { companions: "Just me" });
+
+      const row = (await checklist()).find((d) => d.docKey === "bank_statement");
+
+      // Present, and still optional. Until somebody writes the rule, the
+      // honest answer is "this might be yours" — dropping it would be a
+      // confident guess against a traveller's file.
+      expect(row?.isRequired).toBe(false);
+    });
+
+    it("behaves as it always did when given no answers at all", async () => {
+      // The old two-argument call. Every conditional document is
+      // materialised with its hedge intact, which is what the intake
+      // did before conditions existed.
+      await adoptRuleSet(applicationId, withSpouseRule());
+
+      const row = (await checklist()).find((d) => d.docKey === "marriage_cert");
+
+      expect(row?.isRequired).toBe(false);
+    });
+
+    it("removes a document that stops applying, unless it was uploaded", async () => {
+      await adoptRuleSet(applicationId, withSpouseRule(), {
+        companions: "Partner",
+      });
+
+      // The traveller reopens the answer and is now going alone.
+      await adoptRuleSet(applicationId, withSpouseRule(), {
+        companions: "Just me",
+      });
+
+      expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
+    });
+
+    it("keeps an uploaded document even after it stops applying", async () => {
+      await adoptRuleSet(applicationId, withSpouseRule(), {
+        companions: "Partner",
+      });
+
+      await db
+        .update(documents)
+        .set({ state: "checking" })
+        .where(
+          and(
+            eq(documents.applicationId, applicationId),
+            eq(documents.docKey, "marriage_cert")
+          )
+        );
+
+      await adoptRuleSet(applicationId, withSpouseRule(), {
+        companions: "Just me",
+      });
+
+      // Deleting a file somebody uploaded because they later changed an
+      // answer is not a checklist decision, and their reviewer may
+      // already be looking at it.
+      expect((await checklist()).map((d) => d.docKey)).toContain("marriage_cert");
+    });
   });
 });
 

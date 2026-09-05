@@ -20,10 +20,10 @@ function Toaster({ ...props }: ToasterProps) {
           toast:
             "group toast !bg-surface !text-ink !border !border-border-strong !rounded-md !shadow-[var(--shadow-lg)] !text-base",
           description: "!text-ink-2",
-          success: "!border-l-[3px] !border-l-success",
-          warning: "!border-l-[3px] !border-l-warning",
-          error: "!border-l-[3px] !border-l-danger",
-          info: "!border-l-[3px] !border-l-info",
+          success: "!border-s-[3px] !border-s-success",
+          warning: "!border-s-[3px] !border-s-warning",
+          error: "!border-s-[3px] !border-s-danger",
+          info: "!border-s-[3px] !border-s-info",
         },
       }}
       {...props}

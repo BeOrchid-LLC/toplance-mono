@@ -215,7 +215,7 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
 
     expect(result).toEqual({
       error:
-        "This account is a traveller account — use a different email for your organisation.",
+        "This account is a traveler account — use a different email for your organisation.",
     });
     expect(await membershipsOf(userId)).toHaveLength(0);
     expect(await roleOf(userId)).toBe("traveler");

@@ -100,7 +100,7 @@ test("a reviewer takes a submitted case through review to approved", async ({ pa
   await expect(page.getByText("Verified", { exact: true })).toBeVisible();
 
   // ---- the decision, in two moves ----
-  const message = page.getByPlaceholder("Message to the traveller");
+  const message = page.getByPlaceholder("Message to the traveler");
 
   await message.fill("Opening your file now — I will come back within three days.");
   await page.getByRole("button", { name: "Under review", exact: true }).click();
@@ -115,7 +115,7 @@ test("a reviewer takes a submitted case through review to approved", async ({ pa
   await verifyRemainingDocuments(seeded.applicationId);
   await page.reload();
 
-  await page.getByPlaceholder("Message to the traveller").fill(
+  await page.getByPlaceholder("Message to the traveler").fill(
     "Approved. Your arrival plan is now in the app."
   );
   // Terminal states take two clicks on the same button, on purpose.

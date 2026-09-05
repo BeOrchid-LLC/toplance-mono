@@ -26,7 +26,7 @@ export default function AuthLayout({
     <div className="flex min-h-dvh flex-col">
       <header className="bar-edge sticky top-0 z-90 flex h-[var(--bar-h)] items-center gap-4 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-[max(16px,calc((100%-1140px)/2))] backdrop-blur-md">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
-        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <div className="ms-auto flex items-center gap-2 sm:gap-3">
           <SettingsCluster />
         </div>
       </header>

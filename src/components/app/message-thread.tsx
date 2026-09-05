@@ -42,7 +42,7 @@ export function MessageThread({ messages }: { messages: MessageView[] }) {
       {messages.map((m) => (
         <li key={m.id} className="border-b border-border py-3 last:border-b-0">
           <p className="special">
-            {m.senderName ?? (m.senderRole === "staff" ? "Toplance team" : "Traveller")}{" "}
+            {m.senderName ?? (m.senderRole === "staff" ? "Toplance team" : "Traveler")}{" "}
             · {relativeTime(m.createdAt)}
           </p>
           <p className="t-body mt-1 max-w-[62ch] whitespace-pre-wrap">{m.body}</p>

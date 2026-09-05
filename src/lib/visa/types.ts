@@ -1,3 +1,4 @@
+import type { AppliesWhen } from "@/lib/domain/applies-when";
 import type { travelPurpose } from "@/lib/db/schema";
 
 export type TravelPurpose = (typeof travelPurpose.enumValues)[number];
@@ -26,6 +27,16 @@ export type RequirementSpec = {
    * own source; the screen simply shows no link for those.
    */
   sourceUrl: string | null;
+  /**
+   * When a conditional document applies, as clauses against the intake
+   * answers — see `@/lib/domain/applies-when`.
+   *
+   * Null on every requirement from a provider that is not our own
+   * curated data: a vendor sells a list of documents, not the rule for
+   * which traveller needs which. Those keep the hedge, which is the
+   * honest outcome for a list nobody here has reasoned about.
+   */
+  appliesWhen: AppliesWhen | null;
 };
 
 /**

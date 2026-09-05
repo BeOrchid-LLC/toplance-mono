@@ -34,7 +34,7 @@ export function CorridorDecision({
   if (!canApprove) {
     return (
       <p className="t-muted max-w-[62ch]">
-        Only a super admin can approve a corridor. You can read this draft
+        Only a super admin can approve a route. You can read this draft
         and its sources, but the decision is not yours to record.
       </p>
     );
@@ -57,7 +57,7 @@ export function CorridorDecision({
 
       toast.success(
         action === "approve"
-          ? "Approved — travellers on this corridor see it now"
+          ? "Approved — travelers on this route see it now"
           : "Sent back with your reason"
       );
       setReason("");
@@ -73,8 +73,8 @@ export function CorridorDecision({
           to undo — a further version supersedes it — but that it is
           immediately public, and that is worth saying in words. */}
       <p className="t-muted max-w-[62ch]">
-        Approving publishes this version to every traveller on the
-        corridor and records you as the person who checked it.
+        Approving publishes this version to every traveler on the
+        route and records you as the person who checked it.
       </p>
 
       <div className="flex flex-wrap items-center gap-3">

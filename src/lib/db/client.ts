@@ -4,6 +4,9 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import * as schema from "@/lib/db/schema";
+import { isPrivateHost } from "@/lib/db/private-host";
+
+export { isPrivateHost };
 
 /**
  * Whether this process has a database to talk to.
@@ -21,14 +24,6 @@ export const SETUP_STEPS = [
   "npm run db:migrate     # applies the schema",
   "npm run db:seed        # loads the corridors",
 ] as const;
-
-/**
- * Hosts where an unencrypted connection is not a finding. The socket
- * never leaves the machine (or the Docker network `db:up` creates), so
- * demanding TLS there would only mean every developer generating a
- * self-signed certificate to protect a loopback.
- */
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
 /**
  * Names a connection string that would cross a network in the clear.
@@ -65,9 +60,9 @@ export function insecureConnectionReason(url: string | undefined): string | null
     return null;
   }
 
-  // `new URL` keeps the brackets on an IPv6 literal; the set does not.
+  // `new URL` keeps the brackets on an IPv6 literal; the check does not.
   const host = parsed.hostname.replace(/^\[|\]$/g, "");
-  if (LOOPBACK_HOSTS.has(host)) return null;
+  if (isPrivateHost(host)) return null;
 
   const sslmode = parsed.searchParams.get("sslmode");
   if (!sslmode) {
@@ -91,25 +86,63 @@ export function insecureConnectionReason(url: string | undefined): string | null
  */
 const globalForDb = globalThis as unknown as { pool?: Pool; sslWarned?: boolean };
 
+export type InsecureConnectionAction = "allow" | "warn" | "refuse";
+
+/**
+ * What to do about a connection string that would cross a network in
+ * the clear. Pure, so the choice can be tested without a live pool.
+ *
+ * Production refuses; everywhere else warns. Both halves are deliberate.
+ *
+ * Refusing in production makes an unencrypted connection carrying
+ * passport numbers impossible rather than merely noticed, and the cost —
+ * a missing query parameter becoming an outage on deploy — is now much
+ * smaller than it was when this only warned. `isPrivateHost` no longer
+ * fires on Coolify's own Docker network, so reaching this branch in
+ * production means the database really is being addressed across a
+ * network we do not control, with no `sslmode` to protect it. That is
+ * not a configuration slip to log and carry on from.
+ *
+ * Warning elsewhere keeps a developer pointing at a staging database, or
+ * a CI job with a bare connection string, out of the same trap: those
+ * are not carrying real travellers' data, and an outage there teaches
+ * nothing.
+ *
+ * The remaining risk is honest and worth stating: a production deploy
+ * whose `DATABASE_URL` loses its `sslmode` will not start. That is the
+ * intended behaviour — a site that is down leaks nothing.
+ */
+export function actionForInsecureConnection(input: {
+  reason: string | null;
+  isProduction: boolean;
+}): InsecureConnectionAction {
+  if (!input.reason) return "allow";
+  return input.isProduction ? "refuse" : "warn";
+}
+
 /**
  * Said at module load, before a single row moves — a connection that
  * should have been encrypted and was not cannot be un-sent once it is
  * noticed.
  *
- * A warning and not a throw, deliberately, and the trade is worth
- * naming: refusing to boot would make an unencrypted connection
- * impossible, at the cost of turning a missing query parameter into an
- * outage on deploy. Warning keeps the deploy and relies on somebody
- * reading the log — which is exactly the assumption that let this go
- * unnoticed in the first place. So it is loud, it names the host, and it
- * says what to add.
- *
- * Once per process. The pool is cached on `globalThis` because Next
- * re-executes this module on every hot reload; without the same latch
- * the warning would repeat until it became scenery.
+ * The warning latches once per process. The pool is cached on
+ * `globalThis` because Next re-executes this module on every hot reload;
+ * without the same latch the warning would repeat until it became
+ * scenery.
  */
 const insecure = insecureConnectionReason(process.env.DATABASE_URL);
-if (insecure && !globalForDb.sslWarned) {
+const action = actionForInsecureConnection({
+  reason: insecure,
+  isProduction: process.env.NODE_ENV === "production",
+});
+
+if (action === "refuse") {
+  // Not a warning that can be scrolled past: nothing downstream of this
+  // module gets a pool, so no query can be made in the clear.
+  throw new Error(`INSECURE DATABASE CONNECTION\n${insecure}`);
+}
+
+if (action === "warn" && !globalForDb.sslWarned) {
   globalForDb.sslWarned = true;
   console.warn(`⚠️  INSECURE DATABASE CONNECTION\n   ${insecure}`);
 }

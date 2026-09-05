@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { securityHeaders } from "./src/lib/security/headers";
+
 const nextConfig: NextConfig = {
   // Coolify runs the app from a Docker image; standalone output keeps the
   // image to the traced server files instead of the full node_modules.
@@ -19,6 +21,19 @@ const nextConfig: NextConfig = {
       // multipart body, so leave room for boundary/header overhead.
       bodySizeLimit: "11mb",
     },
+  },
+  /**
+   * Every route, including the API handlers and the signed-URL
+   * redirects. See `src/lib/security/headers.ts` for what each one is
+   * for and why HSTS is production-only.
+   */
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: securityHeaders(process.env.NODE_ENV === "production"),
+      },
+    ];
   },
 };
 

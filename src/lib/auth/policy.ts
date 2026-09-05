@@ -95,6 +95,20 @@ export const canReadItinerary: Permission = (actor, app) =>
 export const canReadCompanion: Permission = (actor, app) =>
   ownsApplication(actor, app) || isStaff(actor);
 
+/**
+ * The expiry date printed on the traveller's own visa.
+ *
+ * Narrower than every other write on a case, and deliberately so: not
+ * staff, not sponsors, only the person holding the document. The value
+ * is a fact about someone's legal status that nothing here verified, and
+ * the desk typing one in would make it look like a record of ours — the
+ * invented-expiry problem `renewalGuidance` was written to refuse. If
+ * the desk knows the date, the traveller does too, and it is theirs to
+ * enter.
+ */
+export const canWriteVisaExpiry: Permission = (actor, app) =>
+  ownsApplication(actor, app);
+
 /** Same privacy boundary as case notes: participants only, sponsors never. */
 export const canReadMessages: Permission = (actor, app) =>
   ownsApplication(actor, app) || isStaff(actor);

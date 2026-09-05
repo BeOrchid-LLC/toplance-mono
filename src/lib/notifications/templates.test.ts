@@ -8,6 +8,8 @@ import {
   messageReceivedEmail,
   statusChangedEmail,
   submissionEmail,
+  advisoryChangedEmail,
+  visaExpiringEmail,
 } from "@/lib/notifications/templates";
 
 const SCRIPT = "<script>alert(1)</script>";
@@ -64,6 +66,137 @@ describe("email templates", () => {
     const email = itineraryReadyEmail({ url: "https://x.test/app" });
     expect(email.subject).not.toHaveLength(0);
     expect(email.html).toContain("https://x.test/app");
+  });
+
+  it("visaExpiringEmail names the visa, the date and how long is left", () => {
+    const email = visaExpiringEmail({
+      visaName: "Skilled Worker visa",
+      expiresOn: "2027-03-14",
+      daysRemaining: 30,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.subject).not.toHaveLength(0);
+    expect(email.subject).toContain("30");
+    expect(email.html).toContain("Skilled Worker visa");
+    expect(email.html).toContain("14 Mar 2027");
+    expect(email.html).toContain("https://x.test/app/companion");
+    expect(email.text).toContain("https://x.test/app/companion");
+  });
+
+  it("visaExpiringEmail counts the days that are actually left, not the threshold", () => {
+    // The regression this guards. The reminder fires on a 60/30/7
+    // threshold, but a traveller inside that band has some other number
+    // of days left — and the body states the real date two lines down, so
+    // printing the threshold contradicted the email's own content.
+    const email = visaExpiringEmail({
+      visaName: "Skilled Worker visa",
+      expiresOn: "2027-03-14",
+      daysRemaining: 31,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.subject).toContain("31");
+    expect(email.subject).not.toContain("60");
+    expect(email.html).toContain("31 days");
+  });
+
+  it("visaExpiringEmail names the last two days rather than counting them", () => {
+    const tomorrow = visaExpiringEmail({
+      visaName: "Skilled Worker visa",
+      expiresOn: "2027-03-14",
+      daysRemaining: 1,
+      url: "https://x.test/app/companion",
+    });
+    expect(tomorrow.subject).toContain("tomorrow");
+    expect(tomorrow.subject).not.toContain("1 days");
+    expect(tomorrow.html).not.toContain("1 days");
+
+    const today = visaExpiringEmail({
+      visaName: "Skilled Worker visa",
+      expiresOn: "2027-03-14",
+      daysRemaining: 0,
+      url: "https://x.test/app/companion",
+    });
+    expect(today.subject).toContain("today");
+    expect(today.subject).not.toContain("0 days");
+    expect(today.html).not.toContain("0 days");
+  });
+
+  it("visaExpiringEmail falls back to a plain noun when no corridor named the visa", () => {
+    const email = visaExpiringEmail({
+      visaName: null,
+      expiresOn: "2027-03-14",
+      daysRemaining: 7,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.html.toLowerCase()).toContain("your visa");
+    expect(email.html).not.toContain("null");
+  });
+
+  it("visaExpiringEmail escapes the visa name", () => {
+    const email = visaExpiringEmail({
+      visaName: SCRIPT,
+      expiresOn: "2027-03-14",
+      daysRemaining: 60,
+      url: "https://x.test/app/companion",
+    });
+    expect(email.html).not.toContain("<script>");
+  });
+
+  it("advisoryChangedEmail quotes the source and links to its page", () => {
+    const email = advisoryChangedEmail({
+      destination: "United Arab Emirates",
+      source: "UK FCDO",
+      level: null,
+      changeNote: "Updated information about regional tensions.",
+      url: "https://www.gov.uk/foreign-travel-advice/united-arab-emirates",
+    });
+    expect(email.subject).toContain("United Arab Emirates");
+    expect(email.html).toContain("Updated information about regional tensions.");
+    expect(email.html).toContain("UK FCDO");
+    expect(email.html).toContain("https://www.gov.uk/foreign-travel-advice/united-arab-emirates");
+  });
+
+  it("advisoryChangedEmail falls back to the level when there is no change note", () => {
+    const email = advisoryChangedEmail({
+      destination: "United Kingdom",
+      source: "US State Department",
+      level: "Level 2: Exercise Increased Caution",
+      changeNote: null,
+      url: "https://travel.state.gov/uk.html",
+    });
+    expect(email.html).toContain("Level 2: Exercise Increased Caution");
+    expect(email.html).not.toContain("null");
+  });
+
+  it("advisoryChangedEmail says something honest when there is neither a note nor a level", () => {
+    // Exactly the shape an FCDO advisory takes when the response carries
+    // no `change_description`: that source publishes no level at all by
+    // design, so both fallbacks are null and the sentence used to
+    // interpolate one — "UK FCDO now rates Germany as null."
+    const email = advisoryChangedEmail({
+      destination: "Germany",
+      source: "UK FCDO",
+      level: null,
+      changeNote: null,
+      url: "https://www.gov.uk/foreign-travel-advice/germany",
+    });
+    expect(email.html).not.toContain("null");
+    expect(email.text).not.toContain("null");
+    expect(email.html).toContain("UK FCDO");
+    expect(email.html).toContain("Germany");
+  });
+
+  it("advisoryChangedEmail escapes third-party advisory text", () => {
+    // The note is written by a government website, not by us. It is still
+    // third-party text arriving over the network into an HTML body.
+    const email = advisoryChangedEmail({
+      destination: "Germany",
+      source: "UK FCDO",
+      level: null,
+      changeNote: SCRIPT,
+      url: "https://www.gov.uk/foreign-travel-advice/germany",
+    });
+    expect(email.html).not.toContain("<script>");
   });
 
   it("invitationEmail contains the invite URL and escapes the org name", () => {

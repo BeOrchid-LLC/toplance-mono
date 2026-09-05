@@ -18,6 +18,7 @@ import {
   canWriteDocuments,
   canWriteIntakeAnswers,
   canWriteMessages,
+  canWriteVisaExpiry,
   canManageInvitations,
   isOrgMemberOf,
   isOwner,
@@ -244,6 +245,24 @@ describe("companion", () => {
   it("is hidden from a sponsoring org and unrelated travellers", () => {
     expect(canReadCompanion(hrAdmin, sponsored)).toBe(false);
     expect(canReadCompanion(otherTraveller, sponsored)).toBe(false);
+  });
+});
+
+describe("visa expiry", () => {
+  it("is writable only by the traveller whose visa it is", () => {
+    expect(canWriteVisaExpiry(traveller, sponsored)).toBe(true);
+  });
+
+  it("is not writable by staff — the date is read off the traveller's own document", () => {
+    // Deliberately narrower than every other write on a case. Letting the
+    // desk type a date into someone's legal status is the invented-expiry
+    // problem `renewalGuidance` exists to refuse.
+    expect(canWriteVisaExpiry(reviewer, sponsored)).toBe(false);
+  });
+
+  it("is not writable by a sponsoring org or an unrelated traveller", () => {
+    expect(canWriteVisaExpiry(hrAdmin, sponsored)).toBe(false);
+    expect(canWriteVisaExpiry(otherTraveller, sponsored)).toBe(false);
   });
 });
 

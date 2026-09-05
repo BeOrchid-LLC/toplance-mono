@@ -128,6 +128,28 @@ export const notificationKind = pgEnum("notification_kind", [
    * news to them.
    */
   "checklist_changed",
+  /**
+   * → traveller: their visa is approaching the expiry date they gave us.
+   * Sent at most three times per application (see `EXPIRY_THRESHOLDS`),
+   * and never after the date has passed. The `daysOut` in the payload is
+   * which notice it was, and reading those back is how the cron knows
+   * not to repeat one.
+   */
+  "visa_expiring",
+  /**
+   * → traveller: a government travel advisory for their destination
+   * changed. The payload carries the issuing source's own words and a
+   * link to its page — this product never restates an advisory, so the
+   * notification has nothing of ours in it beyond the framing.
+   */
+  "advisory_changed",
+  /**
+   * → staff: a traveller's required checklist reached 100% collected.
+   * The brief asks for this separately from submission, and the two are
+   * genuinely different moments — somebody can upload everything and
+   * never press Submit, and until this existed nobody found out.
+   */
+  "checklist_complete",
 ]);
 
 /**
@@ -360,6 +382,21 @@ export const applications = pgTable(
     decidedAt: timestamp({ withTimezone: true }),
     slaDueAt: timestamp({ withTimezone: true }),
     /**
+     * When the traveller's visa runs out, as they read it off their own
+     * document after approval. Drives the renewal card and the expiry
+     * reminders in `@/lib/domain/expiry`.
+     *
+     * `date`, not `timestamp`: this is a date printed on a document, with
+     * no time and no zone, and storing an instant would invent both.
+     *
+     * Traveller-supplied and never derived. A corridor carries no
+     * validity duration, so the only alternative would be calculating an
+     * expiry from the approval date — a guess about somebody's legal
+     * status, which is exactly what `renewalGuidance` refuses to make.
+     * Null is the normal state: nobody is required to tell us.
+     */
+    visaExpiresOn: date(),
+    /**
      * The instant this application first became billable — every
      * required document uploaded, which is the moment Peace's pricing
      * document calls "the application reaches done".
@@ -377,6 +414,28 @@ export const applications = pgTable(
      * directly belongs to no business, so nobody is billed for them.
      */
     billableAt: timestamp({ withTimezone: true }),
+    /**
+     * The instant every required document had been collected — the
+     * brief's "score reaches 100%", which items 9 and 11 want the review
+     * desk told about.
+     *
+     * A column for the same reason `billable_at` is one, and set the
+     * same way: completion is not monotonic, so read as live state a
+     * flag-and-re-upload cycle is a second arrival at 100% and would be
+     * a second email about one traveller. `markChecklistCompleteIfDone`
+     * stamps it under `where checklist_complete_at is null`, so
+     * concurrent uploads finishing together cannot race out two.
+     *
+     * Unlike `billable_at` it is stamped whether or not an organisation
+     * sponsors the application: there is nobody to charge for a
+     * traveller who came on their own, but there is still somebody to
+     * review them.
+     *
+     * It is not the submission. A traveller can be at 100% collected and
+     * never press Submit — that person is precisely who this exists to
+     * make visible.
+     */
+    checklistCompleteAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
@@ -393,6 +452,25 @@ export const applications = pgTable(
     unique("applications_traveler_key").on(t.travelerId),
     index("applications_org_idx").on(t.orgId),
     index("applications_status_idx").on(t.status, t.slaDueAt),
+    /**
+     * Not for a read — for the delete on the other end of the foreign
+     * key. `corridor_id` is `on delete set null`, so without an index
+     * Postgres scans the whole of `applications` for every corridor
+     * deleted, and takes row locks while it does. That is how a fixture
+     * tearing down one corridor timed out unrelated suites inserting
+     * applications in parallel, which reads as a flaky test rather than
+     * a missing index.
+     *
+     * It earns its keep on reads too: the advisory sweep joins
+     * `applications` to `corridors` on it every night.
+     */
+    index("applications_corridor_idx").on(t.corridorId),
+    /**
+     * Same argument, different column. `assignee_id` points at
+     * `profiles`, so removing a staff account scanned this table as
+     * well — and the ops queue filters by assignee to answer "my cases".
+     */
+    index("applications_assignee_idx").on(t.assigneeId),
   ]
 );
 

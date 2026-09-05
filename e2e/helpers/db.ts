@@ -533,3 +533,55 @@ export async function clearSeededCorridor(): Promise<void> {
     );
   });
 }
+
+/**
+ * A staff recipient, conjured directly.
+ *
+ * `notifyStaff` fans out to every `profiles` row with `role = 'staff'`,
+ * so a spec that asserts a staff notification needs at least one to
+ * exist. Signing one up through Clerk would be the honest route and is
+ * what `ops.spec.ts` does — but that spec is about a reviewer *doing*
+ * something, and this one only needs somebody for a row to point at.
+ * Buying a real account for a recipient that never signs in would spend
+ * a shared dev instance's user list on nothing.
+ *
+ * The id is a synthetic Clerk-shaped string. Nothing signs in as it.
+ */
+export async function seedStaffRecipient(): Promise<string> {
+  const id = `test_staff_recipient_${Date.now()}`;
+  await withClient(async (client) => {
+    await client.query(
+      `insert into profiles (id, full_name, email, role, staff_role)
+       values ($1, 'Notification Recipient', $2, 'staff', 'reviewer')`,
+      [id, `${id}@test.invalid`]
+    );
+  });
+  return id;
+}
+
+export async function removeStaffRecipient(id: string): Promise<void> {
+  await withClient(async (client) => {
+    await client.query("delete from profiles where id = $1", [id]);
+  });
+}
+
+/**
+ * How many notifications of one kind exist on this traveller's
+ * application, whoever they were addressed to.
+ */
+export async function noticesOfKindFor(
+  email: string,
+  kind: string
+): Promise<number> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ count: string }>(
+      `select count(*)::text as count
+         from notifications n
+         join applications a on a.id = n.application_id
+         join profiles p on p.id = a.traveler_id
+        where p.email = $1 and n.kind = $2`,
+      [email, kind]
+    );
+    return Number(rows[0]?.count ?? 0);
+  });
+}

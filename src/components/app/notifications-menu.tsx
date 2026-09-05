@@ -26,12 +26,15 @@ type NotificationKind = Notification["kind"];
  */
 const KIND_COPY: Record<NotificationKind, string> = {
   application_submitted: "A case reached 100% and was submitted",
+  checklist_complete: "A case reached 100% but has not been submitted",
   status_changed: "Your application status changed",
   document_flagged: "A document needs another look",
   message_received: "You have a new message",
   itinerary_ready: "Your arrival plan is ready",
   companion_digest: "Your weekly digest is ready",
   checklist_changed: "Your document checklist changed",
+  visa_expiring: "Your visa is approaching its expiry date",
+  advisory_changed: "Travel advice for your destination changed",
 };
 
 function relativeTime(date: Date): string {

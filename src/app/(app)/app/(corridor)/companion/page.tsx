@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { CalendarClock, ClipboardList, MapPin, Sparkles } from "lucide-react";
+import {
+  CalendarClock,
+  ClipboardList,
+  MapPin,
+  ShieldAlert,
+  Sparkles,
+  Thermometer,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
+import { VisaExpiryField } from "@/components/app/visa-expiry-field";
 import {
   getCorridorFor,
   getOrCreateApplication,
@@ -13,6 +21,8 @@ import {
 } from "@/lib/data/applications";
 import { arrivalChecklist, renewalGuidance } from "@/lib/domain/companion";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
+import { refreshAdvisoriesIfStale } from "@/lib/data/advisories";
+import { fetchOutlook } from "@/lib/weather/fetch-outlook";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { track } from "@/lib/analytics/track";
@@ -42,12 +52,33 @@ export default async function CompanionPage() {
   if (!corridor) redirect("/app");
 
   const checklist = arrivalChecklist(corridor.destinationIso, corridor.purpose);
-  const renewal = renewalGuidance(corridor, application.decidedAt);
+  const renewal = renewalGuidance(
+    corridor,
+    application.decidedAt,
+    application.visaExpiresOn
+  );
 
-  // Regenerates (or reuses) the cached tips — the same helper the
-  // weekly digest cron calls, so the two can never disagree on what
-  // "stale" means or how a refresh gets written.
-  const tips = await refreshLocalTipsIfStale(application.id, profile.id);
+  // Three independent round trips — a model call, two government
+  // endpoints on an 8s timeout, and a forecast on a 6s one — so they are
+  // awaited together rather than one after another. Run in sequence, an
+  // unlucky traveller paid all three timeouts before a single byte of
+  // this page was produced, and every one of them feeds a supplementary
+  // panel: the real payload is the arrival checklist above.
+  const [tips, { advisories }, weather] = await Promise.all([
+    // Regenerates (or reuses) the cached tips — the same helper the
+    // weekly digest cron calls, so the two can never disagree on what
+    // "stale" means or how a refresh gets written.
+    refreshLocalTipsIfStale(application.id, profile.id),
+    // `changed` is ignored here on purpose: rendering a page is not the
+    // moment to email somebody. That is safe because
+    // `refreshAdvisoriesIfStale` never moves the alerted baseline — the
+    // sweep still finds this change tonight. It did not used to be, and
+    // the alert was silently lost to whoever opened this page first.
+    refreshAdvisoriesIfStale(application.id, corridor.destinationIso),
+    // Context rather than an alert, and null for any destination without
+    // a curated capital — see `capitalFor`.
+    fetchOutlook(corridor.destinationIso),
+  ]);
 
   await track("toplance.companion_viewed", { applicationId: application.id }, profile.id);
 
@@ -127,8 +158,87 @@ export default async function CompanionPage() {
               />
               <PanelBody>
                 <p className="t-body">{renewal}</p>
+                <VisaExpiryField
+                  applicationId={application.id}
+                  expiresOn={application.visaExpiresOn}
+                />
               </PanelBody>
             </Panel>
+
+            {/* ---- this week's weather ---- */}
+            {weather && (
+              <Panel>
+                <PanelHeader
+                  label="This week"
+                  aside={
+                    <Badge variant="neutral">
+                      <Thermometer className="size-3.5" aria-hidden />{" "}
+                      {weather.city}
+                    </Badge>
+                  }
+                />
+                <PanelBody>
+                  <p className="t-body">
+                    Over the next{" "}
+                    <span className="num">{weather.outlook.days}</span> days in{" "}
+                    {weather.city}, expect highs around{" "}
+                    <span className="num">{weather.outlook.highC}</span>
+                    {weather.outlook.unit} and lows around{" "}
+                    <span className="num">{weather.outlook.lowC}</span>
+                    {weather.outlook.unit}.
+                  </p>
+                </PanelBody>
+              </Panel>
+            )}
+
+            {/* ---- travel advice ---- */}
+            {advisories.length > 0 && (
+              <Panel>
+                <PanelHeader
+                  label="Travel advice"
+                  aside={
+                    <Badge variant="neutral">
+                      <ShieldAlert className="size-3.5" aria-hidden /> Official
+                    </Badge>
+                  }
+                />
+                <PanelBody className="pt-2">
+                  {/*
+                    Every word below belongs to the issuing government and
+                    is shown with its name on it. Nothing here is
+                    summarised, rated or reworded by us — a paraphrased
+                    safety advisory would be a claim about someone's
+                    safety that this product has no standing to make.
+                  */}
+                  <ul>
+                    {advisories.map((advisory) => (
+                      <li
+                        key={advisory.source}
+                        className="border-b border-border py-4 last:border-b-0"
+                      >
+                        <p className="t-title">{advisory.source}</p>
+                        {advisory.level && (
+                          <p className="t-body mt-1">{advisory.level}</p>
+                        )}
+                        {advisory.changeNote && (
+                          <p className="t-muted mt-1 italic">
+                            “{advisory.changeNote}”
+                          </p>
+                        )}
+                        <a
+                          className="t-muted mt-2 inline-block underline"
+                          href={advisory.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                        >
+                          Read it on {advisory.source}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </PanelBody>
+              </Panel>
+            )}
 
             {/* ---- destination ---- */}
             <Panel>

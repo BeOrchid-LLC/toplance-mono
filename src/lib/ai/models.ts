@@ -39,4 +39,21 @@ export const COMPANION_MODEL = "gpt-5.4-mini";
  */
 export const CORRIDOR_DRAFT_MODEL = "gpt-5.4";
 
+/**
+ * Reading an itinerary aloud — `/api/itinerary/speech`.
+ *
+ * The mini speech model on purpose. Every other entry here names a model
+ * that decides something; this one only pronounces a text that a person
+ * has already been shown on the page, so the quality that matters is
+ * how it sounds, not how well it reasons. Nothing it produces is new
+ * information, and it is given no latitude to add any.
+ */
+export const SPEECH_MODEL = "gpt-4o-mini-tts";
+
+/**
+ * Which voice reads it. `alloy` is the neutral one — this is somebody's
+ * relocation plan, not a performance.
+ */
+export const SPEECH_VOICE = "alloy";
+
 export const aiEnabled = () => !!process.env.OPENAI_API_KEY;

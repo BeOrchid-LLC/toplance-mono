@@ -1,8 +1,17 @@
 import { getCorridorFor } from "@/lib/data/applications";
 import { countDueForDigest, travellersDueForDigest } from "@/lib/data/digest";
+import { travellersDueForExpiryReminder } from "@/lib/data/expiry";
+import {
+  approvedTravellersForAdvisories,
+  markAdvisoriesAlerted,
+  refreshAdvisoriesIfStale,
+} from "@/lib/data/advisories";
+import { destinationNameFor } from "@/lib/safety/advisories";
+import { newAdvisoryFetch } from "@/lib/safety/fetch-advisories";
 import { refreshLocalTipsIfStale } from "@/lib/ai/companion-tips";
 import { arrivalChecklist } from "@/lib/domain/companion";
 import { appUrl, notify } from "@/lib/notifications/notify";
+import { track } from "@/lib/analytics/track";
 
 /**
  * How many recipients one invocation processes. Each one is a
@@ -92,13 +101,16 @@ export async function GET(request: Request) {
 
       if (highlights.length === 0) continue;
 
-      await notify(
+      // Counted on what `notify` reports rather than on reaching the next
+      // line — see `remindExpiringVisas` below for why the try/catch
+      // cannot stand in for this.
+      const ok = await notify(
         travelerId,
         "companion_digest",
         { url: appUrl("/app/companion"), highlights },
         applicationId
       );
-      notified += 1;
+      if (ok) notified += 1;
     } catch (error) {
       console.error(
         `[cron/companion] could not send the digest for application ${applicationId}`,
@@ -106,6 +118,9 @@ export async function GET(request: Request) {
       );
     }
   }
+
+  const expiry = await remindExpiringVisas();
+  const advisories = await alertAdvisoryChanges();
 
   // `eligible` is the true population size (a cheap COUNT, no per-row
   // work); `skipped` is what this run's cap left for a later run to
@@ -116,7 +131,166 @@ export async function GET(request: Request) {
     notified,
     eligible: eligibleCount,
     skipped: Math.max(0, eligibleCount - checked),
+    expiryReminded: expiry.reminded,
+    advisoriesChecked: advisories.checked,
+    advisoriesAlerted: advisories.alerted,
   });
+}
+
+/**
+ * The third sweep: re-read each approved traveller's destination
+ * advisories and tell them when one has actually moved.
+ *
+ * The alert carries the issuing government's own words — this product
+ * never restates an advisory — so there is no generation step here and
+ * nothing to degrade when a model is unavailable.
+ *
+ * `refreshAdvisoriesIfStale` is the same function the companion page
+ * calls on render, which is deliberate: the page and this sweep can
+ * never disagree about what is cached or when it went stale. It reports
+ * a change only when there was a previous reading to compare against, so
+ * a traveller checked for the first time here is recorded silently
+ * rather than mailed about advice that has not changed.
+ */
+async function alertAdvisoryChanges(): Promise<{
+  checked: number;
+  alerted: number;
+}> {
+  let checked = 0;
+  let alerted = 0;
+
+  const travellers = await approvedTravellersForAdvisories(CRON_BATCH_LIMIT);
+
+  // One memo for the whole sweep. The State Department feed is a single
+  // ~1 MB document covering every country, so every traveller below wants
+  // the same bytes; without this each one downloaded and re-scanned it.
+  const memo = newAdvisoryFetch();
+
+  for (const { applicationId, travelerId, destinationIso } of travellers) {
+    checked += 1;
+
+    try {
+      const { changed } = await refreshAdvisoriesIfStale(
+        applicationId,
+        destinationIso,
+        memo
+      );
+      if (changed.length === 0) continue;
+
+      const destination = destinationNameFor(destinationIso) ?? destinationIso.toUpperCase();
+
+      const sent: string[] = [];
+
+      for (const advisory of changed) {
+        const ok = await notify(
+          travelerId,
+          "advisory_changed",
+          {
+            destination,
+            source: advisory.source,
+            level: advisory.level,
+            changeNote: advisory.changeNote,
+            url: advisory.url,
+          },
+          applicationId
+        );
+
+        if (!ok) continue;
+        sent.push(advisory.source);
+        alerted += 1;
+      }
+
+      if (sent.length === 0) continue;
+
+      // Only now is the traveller on record as having been told. Doing
+      // this inside `refreshAdvisoriesIfStale` is what broke the feature
+      // before: the page calls that too, and it consumed the change
+      // without sending anything. A partial send leaves the baseline
+      // where it is, so the source that failed is retried next sweep.
+      if (sent.length === changed.length) {
+        await markAdvisoriesAlerted(applicationId);
+      }
+
+      await track(
+        "toplance.advisory_change_notified",
+        { applicationId, sources: sent },
+        null
+      );
+    } catch (error) {
+      console.error(
+        `[cron/companion] could not check advisories for application ${applicationId}`,
+        error
+      );
+    }
+  }
+
+  return { checked, alerted };
+}
+
+/**
+ * The second sweep: warn travellers whose visa is running out.
+ *
+ * It rides this route rather than getting one of its own because a new
+ * route means new deploy-time scheduler config, and that config is the
+ * single part of this system no test can reach. One URL on a timer stays
+ * one URL on a timer.
+ *
+ * Sharing the handler is all it shares. Who is due is decided by
+ * `travellersDueForExpiryReminder`, which deliberately ignores the
+ * digest preference: `companionDigest: "off"` silences weekly
+ * orientation mail, never a warning that someone's leave to remain is
+ * ending. A failure on one traveller is logged and stepped over, the
+ * same as the digest loop above — one bad row must not cost everybody
+ * else their notice.
+ */
+async function remindExpiringVisas(): Promise<{ reminded: number }> {
+  let reminded = 0;
+
+  const due = await travellersDueForExpiryReminder(CRON_BATCH_LIMIT);
+
+  for (const row of due) {
+    try {
+      const ok = await notify(
+        row.travelerId,
+        "visa_expiring",
+        {
+          visaName: row.visaName,
+          expiresOn: row.expiresOn,
+          thresholdDays: row.thresholdDays,
+          daysRemaining: row.daysRemaining,
+          url: appUrl("/app/companion"),
+        },
+        row.applicationId
+      );
+
+      // Gated on what `notify` reports, not on reaching this line.
+      // `notify` never throws — it swallows its own failures by design —
+      // so a try/catch around it cannot tell a sent reminder from a
+      // failed one, and counting in the happy path counted every failure
+      // as a success. The notification row is what stops the next run
+      // repeating this notice, so an event claiming a reminder the
+      // traveller never got is a lie the dedupe then makes permanent.
+      if (!ok) continue;
+
+      await track(
+        "toplance.expiry_reminder_sent",
+        {
+          applicationId: row.applicationId,
+          thresholdDays: row.thresholdDays,
+          daysRemaining: row.daysRemaining,
+        },
+        null
+      );
+      reminded += 1;
+    } catch (error) {
+      console.error(
+        `[cron/companion] could not send the expiry reminder for application ${row.applicationId}`,
+        error
+      );
+    }
+  }
+
+  return { reminded };
 }
 
 /** The checklist's own item titles, when there are no AI tips to summarise instead. */

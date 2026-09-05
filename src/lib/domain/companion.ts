@@ -11,6 +11,8 @@
  * rather than a guess.
  */
 
+import { hasExpired } from "@/lib/domain/expiry";
+
 export type ChecklistItem = { title: string; detail: string };
 
 /**
@@ -185,24 +187,58 @@ function formatApprovalDate(decidedAt: Date): string {
 }
 
 /**
+ * A `YYYY-MM-DD` expiry, as read off a document, rendered for prose.
+ *
+ * Pinned to UTC — unlike `formatApprovalDate` above, which formats a
+ * real instant. A date-only value has no time and no zone, so parsing it
+ * as local midnight and formatting it locally renders the previous day
+ * for every reader west of Greenwich. Telling someone their visa expires
+ * a day earlier than it does is the kind of small wrongness this card
+ * exists to avoid.
+ */
+function formatExpiryDate(expiresOn: string): string {
+  return new Date(`${expiresOn}T00:00:00Z`).toLocaleDateString("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/**
  * What to check about renewal, and where — built only from facts this
  * product actually has: the visa's name, its approval date (when
- * recorded) and curated, per-destination phrasing about where the real
- * expiry lives. Visa validity itself is never stored here, so this NEVER
- * states or calculates an expiry date; it only ever points the traveller
- * at their own document.
+ * recorded), the expiry the traveller themselves supplied (when they
+ * have), and curated, per-destination phrasing about where the real
+ * expiry lives.
+ *
+ * This still NEVER calculates an expiry. `expiresOn` is what a traveller
+ * read off their own document and typed in; it is repeated back to them
+ * attributed ("you told us"), never asserted as a record of ours, since
+ * nothing here verified it. With no date supplied the output is
+ * byte-identical to what it was before this parameter existed — the
+ * same enhancement-not-dependency shape the itinerary's country
+ * grounding uses.
  */
 export function renewalGuidance(
   corridor: { visaName: string; destinationIso: string },
-  decidedAt: Date | null
+  decidedAt: Date | null,
+  expiresOn?: string | null,
+  now: Date = new Date()
 ): string {
   const approved = decidedAt
     ? `Your ${corridor.visaName} was approved on ${formatApprovalDate(decidedAt)}. `
     : `Your ${corridor.visaName} has been approved. `;
 
+  const supplied = expiresOn
+    ? hasExpired(expiresOn, now)
+      ? `You told us it expired on ${formatExpiryDate(expiresOn)}, and that date has passed. `
+      : `You told us it expires on ${formatExpiryDate(expiresOn)}. `
+    : "";
+
   const guidance =
     RENEWAL_GUIDANCE_BY_DESTINATION[corridor.destinationIso.toLowerCase()] ??
     GENERIC_RENEWAL_GUIDANCE;
 
-  return approved + guidance;
+  return approved + supplied + guidance;
 }

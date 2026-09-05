@@ -41,6 +41,35 @@ export function submissionEmail({
   };
 }
 
+/**
+ * → staff: a traveller's checklist reached 100% collected.
+ *
+ * Not the same email as `submissionEmail`, and deliberately so. That one
+ * says a file is ready for review; this one says every document is in
+ * and the traveller has not sent it. The two need different actions from
+ * a reviewer — one opens a case, the other nudges a person — so they
+ * must not read alike.
+ */
+export function checklistCompleteEmail({
+  caseRef,
+  url,
+}: {
+  caseRef: string;
+  url: string;
+}): EmailContent {
+  return {
+    subject: `${caseRef} has every document, but has not been submitted`,
+    ...renderEmail({
+      heading: `${caseRef} reached 100%`,
+      paragraphs: [
+        "Every required document on this checklist has been uploaded. The traveller has not pressed Submit, so the case is not in the review queue yet.",
+        "They may still be checking their file — or they may be waiting for something nobody has told them about.",
+      ],
+      cta: { href: url, label: "Open the case" },
+    }),
+  };
+}
+
 /** → traveller. `message` is staff-authored free text. */
 export function statusChangedEmail({
   statusLabel,
@@ -109,6 +138,123 @@ export function itineraryReadyEmail({ url }: { url: string }): EmailContent {
       heading: "Your arrival plan is ready",
       paragraphs: ["We have put together an itinerary for your trip."],
       cta: { href: url, label: "Open it" },
+    }),
+  };
+}
+
+/**
+ * → traveller: their visa is approaching the expiry date they gave us.
+ *
+ * The date is theirs, so it is repeated back in the same terms the
+ * renewal card uses — attributed, and formatted in UTC, because a
+ * date-only value formatted locally reads as the previous day for every
+ * recipient west of Greenwich.
+ *
+ * This email states no rule and promises no outcome: it names a date the
+ * traveller supplied and sends them to the card that explains where the
+ * real renewal route is. `visaName` comes off a curated corridor row and
+ * is null when none resolved, which is a fallback rather than the string
+ * "null" in someone's inbox.
+ *
+ * `daysRemaining` is the real count to the date, never the threshold that
+ * triggered the send. The two are not the same number and the difference
+ * is not cosmetic: the expiry field only appears after approval, so most
+ * travellers enter a date that is already inside a band, and printing the
+ * band would tell someone with 31 days left that they have 60 — a claim
+ * the body of the very same email then contradicts.
+ */
+export function visaExpiringEmail({
+  visaName,
+  expiresOn,
+  daysRemaining,
+  url,
+}: {
+  visaName: string | null;
+  expiresOn: string;
+  daysRemaining: number;
+  url: string;
+}): EmailContent {
+  const visa = visaName ?? "visa";
+  const when = new Date(`${expiresOn}T00:00:00Z`).toLocaleDateString("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
+  // "in 0 days" and "in 1 days" are both things a count reaches and
+  // neither is a sentence, so the last two days are named rather than
+  // counted. Everything below one day is "today": the reminder is keyed
+  // on a date, and there is no negative case here — `dueThreshold`
+  // returns null once the date is behind us.
+  const remaining =
+    daysRemaining <= 0
+      ? "today"
+      : daysRemaining === 1
+        ? "tomorrow"
+        : `in ${daysRemaining} days`;
+
+  return {
+    subject: `Your ${visa} expires ${remaining}`,
+    ...renderEmail({
+      heading:
+        daysRemaining <= 1
+          ? `Your ${visa} expires ${remaining}`
+          : `${daysRemaining} days until your ${visa} expires`,
+      paragraphs: [
+        `You told us your ${visa} expires on ${when}.`,
+        "If you plan to stay, start your extension or renewal before that date — most routes will not accept an application filed after it.",
+      ],
+      cta: { href: url, label: "See what to check" },
+    }),
+  };
+}
+
+/**
+ * → traveller: a government travel advisory for their destination moved.
+ *
+ * Every substantive sentence here belongs to the issuing government and
+ * is quoted with its name attached. This product does not summarise,
+ * rank or interpret a safety advisory — it says who changed what, and
+ * sends the traveller to read it at the source. The note arrives over
+ * the network from a third party, so it is passed to `renderEmail` raw
+ * and escaped at that boundary like every other untrusted string here.
+ */
+export function advisoryChangedEmail({
+  destination,
+  source,
+  level,
+  changeNote,
+  url,
+}: {
+  destination: string;
+  source: string;
+  level: string | null;
+  changeNote: string | null;
+  url: string;
+}): EmailContent {
+  // The note is what the source itself said changed; the level is the
+  // fallback when a source publishes a rating but no note. Neither is
+  // guaranteed — an FCDO advisory has no level at all by design (see
+  // `toFcdoAdvisory`) and carries no note whenever the response omits
+  // `change_description` — so there is a third rung. Without it that case
+  // interpolated a null and mailed somebody the sentence "UK FCDO now
+  // rates Germany as null."
+  const detail = changeNote
+    ? `“${changeNote}” — ${source}`
+    : level
+      ? `${source} now rates ${destination} as ${level}.`
+      : `${source} has updated its travel advice for ${destination}.`;
+
+  return {
+    subject: `Travel advice for ${destination} has been updated`,
+    ...renderEmail({
+      heading: `Travel advice for ${destination} has been updated`,
+      paragraphs: [
+        detail,
+        "This is their wording, not ours. Read the full advice on their own page before you act on it.",
+      ],
+      cta: { href: url, label: `Read it on ${source}` },
     }),
   };
 }

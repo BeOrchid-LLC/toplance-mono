@@ -6,13 +6,16 @@ import { db } from "@/lib/db/client";
 import { notifications, profiles, type Notification } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/notifications/email";
 import {
+  advisoryChangedEmail,
   checklistChangedEmail,
+  checklistCompleteEmail,
   companionDigestEmail,
   documentFlaggedEmail,
   itineraryReadyEmail,
   messageReceivedEmail,
   statusChangedEmail,
   submissionEmail,
+  visaExpiringEmail,
 } from "@/lib/notifications/templates";
 
 /**
@@ -62,10 +65,32 @@ export function appUrl(path: string): string {
  */
 export type NotificationPayload = {
   application_submitted: { caseRef: string; url: string };
+  checklist_complete: { caseRef: string; url: string };
   status_changed: { statusLabel: string; message: string; url: string };
   document_flagged: { documentName: string; reason: string; url: string };
   message_received: { senderName: string; preview: string; url: string };
   itinerary_ready: { url: string };
+  advisory_changed: {
+    destination: string;
+    source: string;
+    level: string | null;
+    changeNote: string | null;
+    url: string;
+  };
+  /**
+   * Two day-counts, deliberately. `thresholdDays` is which of the three
+   * notices this is (60, 30 or 7) and exists so the next run can see it
+   * has already gone out — it is a dedupe key and is never shown to
+   * anyone. `daysRemaining` is the true count to `expiresOn` on the day
+   * of sending, and is the only one the copy may use.
+   */
+  visa_expiring: {
+    visaName: string | null;
+    expiresOn: string;
+    thresholdDays: number;
+    daysRemaining: number;
+    url: string;
+  };
   companion_digest: { url: string; highlights: string[] };
   checklist_changed: {
     visaName: string;
@@ -82,6 +107,10 @@ function templateFor<K extends keyof NotificationPayload>(
   switch (kind) {
     case "application_submitted":
       return submissionEmail(payload as NotificationPayload["application_submitted"]);
+    case "checklist_complete":
+      return checklistCompleteEmail(
+        payload as NotificationPayload["checklist_complete"]
+      );
     case "status_changed":
       return statusChangedEmail(payload as NotificationPayload["status_changed"]);
     case "document_flagged":
@@ -90,6 +119,12 @@ function templateFor<K extends keyof NotificationPayload>(
       return messageReceivedEmail(payload as NotificationPayload["message_received"]);
     case "itinerary_ready":
       return itineraryReadyEmail(payload as NotificationPayload["itinerary_ready"]);
+    case "advisory_changed":
+      return advisoryChangedEmail(
+        payload as NotificationPayload["advisory_changed"]
+      );
+    case "visa_expiring":
+      return visaExpiringEmail(payload as NotificationPayload["visa_expiring"]);
     case "companion_digest":
       return companionDigestEmail(payload as NotificationPayload["companion_digest"]);
     case "checklist_changed":
@@ -104,13 +139,21 @@ function templateFor<K extends keyof NotificationPayload>(
  * for one person. Entire body try/caught — never throws. A notification
  * is not worth failing the write that triggered it, the same philosophy
  * as `track()` in `@/lib/analytics/track`.
+ *
+ * Because it never throws, it *reports*: `true` once the row and the
+ * email are both away, `false` when either failed. Callers are free to
+ * ignore that — most do, and the return is additive for them — but a
+ * caller that counts what it sent, or emits an analytics event claiming
+ * a delivery, has no other way to know. Wrapping a call to this in a
+ * try/catch and counting in the happy path counts every failure as a
+ * success, because there is no throw for the catch to see.
  */
 export async function notify<K extends keyof NotificationPayload>(
   recipientId: string,
   kind: K,
   payload: NotificationPayload[K],
   applicationId?: string
-): Promise<void> {
+): Promise<boolean> {
   try {
     await db.insert(notifications).values({
       recipientId,
@@ -132,12 +175,17 @@ export async function notify<K extends keyof NotificationPayload>(
     // insert and this select: the in-app row still exists (it's the
     // source of truth for the bell — see the schema comment on
     // `notifications`), there is just nowhere left to send an email.
-    if (!recipient) return;
+    // Reported as sent, not failed: the in-app row is the notification
+    // (it is what the bell reads and what dedupe checks), and it is
+    // written. There is simply nowhere left to deliver a copy to.
+    if (!recipient) return true;
 
     const template = templateFor(kind, payload);
     await sendEmail({ to: recipient.email, ...template });
+    return true;
   } catch (error) {
     console.error(`[notifications] could not notify "${kind}"`, error);
+    return false;
   }
 }
 

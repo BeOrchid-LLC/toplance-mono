@@ -17,6 +17,7 @@ import {
   canWriteDocuments,
   canWriteIntakeAnswers,
   canWriteMessages,
+  canWriteVisaExpiry,
   isStaff,
 } from "@/lib/auth/policy";
 import { requireStaffAction } from "@/lib/auth/staff-gate";
@@ -37,9 +38,11 @@ import {
   addTravelRecord as insertTravelRecord,
   removeTravelRecord as deleteTravelRecord,
 } from "@/lib/data/travel-records";
+import { markChecklistCompleteIfDone } from "@/lib/data/checklist";
 import { avatarKey, validateAvatarFile } from "@/lib/domain/avatar";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
 import { isDigestFrequency } from "@/lib/domain/digest";
+import { parseVisaExpiry } from "@/lib/domain/expiry";
 import { isLocale } from "@/lib/i18n/locales";
 import { track } from "@/lib/analytics/track";
 import {
@@ -225,11 +228,13 @@ export async function uploadDocument(formData: FormData) {
       // application should not become unbillable because a model call
       // timed out.
       await billIfComplete(applicationId, actorId);
+      await notifyDeskIfComplete(applicationId, actorId);
     });
   } else {
     // No pre-check was scheduled, so no verdict is ever coming and there
     // is nothing to wait for.
     await billIfComplete(applicationId, actorId);
+    await notifyDeskIfComplete(applicationId, actorId);
   }
 
   revalidatePath("/app", "layout");
@@ -259,6 +264,54 @@ async function billIfComplete(applicationId: string, actorId: string) {
   } catch (error) {
     console.error(
       `[actions] billing check failed for application ${applicationId}`,
+      error
+    );
+  }
+}
+
+/**
+ * Tell the review desk when this upload was the one that finished the
+ * checklist.
+ *
+ * The brief asks for it twice — item 9 wants 100% to "trigger an
+ * automatic admin notification", item 11 wants that notification to be
+ * "email + dashboard alert". Until now the desk heard about a case only
+ * when the traveller pressed Submit, so somebody who uploaded every
+ * document and then stopped never reached anyone. That is the person
+ * this is for: at 100% and going nowhere.
+ *
+ * Runs at the same moment as the billing stamp and for the same reason —
+ * after the pre-check, so a set of documents that is about to be flagged
+ * has already been flagged and the checklist is not, in fact, complete.
+ *
+ * Best-effort like everything else on this path. `notifyStaff` never
+ * throws on its own, but `markChecklistCompleteIfDone` writes, and a
+ * traveller watching an upload spinner must not be told their passport
+ * failed because a notification could not be sent.
+ */
+async function notifyDeskIfComplete(applicationId: string, actorId: string) {
+  try {
+    const { becameComplete } = await markChecklistCompleteIfDone(db, applicationId);
+    if (!becameComplete) return;
+
+    const [app] = await db
+      .select({ caseRef: applications.caseRef })
+      .from(applications)
+      .where(eq(applications.id, applicationId))
+      .limit(1);
+
+    if (app) {
+      await notifyStaff(
+        "checklist_complete",
+        { caseRef: app.caseRef, url: appUrl(`/ops/cases/${applicationId}`) },
+        applicationId
+      );
+    }
+
+    await track("toplance.checklist_completed", { applicationId }, actorId);
+  } catch (error) {
+    console.error(
+      `[actions] completion notice failed for application ${applicationId}`,
       error
     );
   }
@@ -733,6 +786,52 @@ export async function markNotificationsRead() {
   try {
     const actor = await requireActor();
     await markOwnNotificationsRead(actor.userId);
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Record the expiry date printed on the traveller's own visa.
+ *
+ * Guarded by `canWriteVisaExpiry`, which is narrower than every other
+ * write here: the owning traveller and nobody else, not even staff. The
+ * date is a fact about somebody's legal status that nothing in this
+ * product verified, and the desk entering one would dress a third-hand
+ * reading up as a record of ours.
+ *
+ * An empty field clears the date rather than failing — the traveller was
+ * never obliged to give us one, so taking it back has to be possible.
+ * Validation itself lives in `@/lib/domain/expiry` so the rules are
+ * testable without a session or a database.
+ */
+export async function setVisaExpiry(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+
+  try {
+    const { actor } = await requireApplicationAccess(
+      applicationId,
+      canWriteVisaExpiry
+    );
+
+    const parsed = parseVisaExpiry(String(formData.get("visa_expires_on") ?? ""));
+    if (!parsed.ok) return { error: parsed.error };
+
+    await db
+      .update(applications)
+      .set({ visaExpiresOn: parsed.value, updatedAt: new Date() })
+      .where(eq(applications.id, applicationId));
+
+    await track(
+      "toplance.visa_expiry_set",
+      { applicationId, cleared: parsed.value === null },
+      actor.userId
+    );
+
+    revalidatePath("/app", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

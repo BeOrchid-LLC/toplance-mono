@@ -83,9 +83,11 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
 
   it("never throws when RESEND_API_KEY is unset", async () => {
     expect(process.env.RESEND_API_KEY).toBeUndefined();
+    // Reported as sent: the in-app row is written, and skipping the email
+    // for want of a key is not a delivery failure.
     await expect(
       notify(TRAVELLER, "itinerary_ready", { url: appUrl("/app") })
-    ).resolves.toBeUndefined();
+    ).resolves.toBe(true);
   });
 
   it("swallows the insert's foreign-key violation when the recipient has no profile row at all", async () => {
@@ -95,9 +97,12 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     // This is that DB error being caught, logged and swallowed.
     const logged = vi.spyOn(console, "error").mockImplementation(() => {});
 
+    // Swallowed, but reported as failed — this is the case a caller that
+    // counts what it sent, or emits an analytics event claiming a
+    // delivery, has to be able to see.
     await expect(
       notify("no_such_profile", "itinerary_ready", { url: appUrl("/app") })
-    ).resolves.toBeUndefined();
+    ).resolves.toBe(false);
 
     expect(logged).toHaveBeenCalledOnce();
 

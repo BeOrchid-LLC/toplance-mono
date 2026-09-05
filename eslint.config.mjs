@@ -19,6 +19,11 @@ const eslintConfig = defineConfig([
     // Playwright's own output: reports, traces, screenshots.
     "playwright-report/**",
     "test-results/**",
+    // Agent worktrees are whole checkouts of this same repo on other
+    // branches. Linting them reports another branch's problems as this
+    // one's — `npm run lint` went from clean to 789 errors the moment
+    // one appeared — and they are already excluded from git.
+    ".claude/worktrees/**",
   ]),
 ]);
 

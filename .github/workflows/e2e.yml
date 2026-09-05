@@ -1,9 +1,16 @@
 name: End-to-end
 
-# Manual only, and deliberately so. Every run signs real accounts into a
-# Clerk **development** instance and deletes them again; putting that on
-# every push would burn a dev instance's usage limits and make a shared
-# environment's user list a race between branches.
+# Post-merge and on demand — never per push to a branch. Every run signs
+# real accounts into a Clerk **development** instance and deletes them
+# again, so running it on every push would burn a dev instance's usage
+# limits, and running two at once would make a shared environment's user
+# list a race between branches.
+#
+# `push: main` is one run per merge rather than one per commit on a
+# branch, and the `concurrency` group below serialises whatever is left:
+# a queued run waits for the one in flight instead of signing a second
+# set of accounts into the same instance. `cancel-in-progress` stays
+# false on purpose — a cancelled run leaves its fixtures behind.
 #
 # Repository secrets it needs, both from the same Clerk *development*
 # application (a production key makes the suite refuse to start):
@@ -16,6 +23,12 @@ name: End-to-end
 # the runner.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: e2e-clerk-dev-instance
+  cancel-in-progress: false
 
 jobs:
   e2e:

@@ -36,6 +36,32 @@ const STATE_DEPT_URL = "https://travel.state.gov/_res/rss/TAsTWs.xml";
  */
 const TIMEOUT_MS = 8_000;
 
+/**
+ * One invocation's memo of the shared State Department feed.
+ *
+ * The feed is a single ~1 MB document covering every country, so it is
+ * the same bytes for every traveller in a sweep — but `fetchAdvisories`
+ * is called once per traveller, and without this each call re-downloaded
+ * and re-scanned the whole thing. At the cron's batch limit that is ~25
+ * MB and twenty-five full-document regex passes inside one function
+ * timeout.
+ *
+ * Next's fetch cache does not cover it: `getText` passes an
+ * `AbortSignal`, and this runs inside a route handler. The memo holds the
+ * *promise*, so travellers processed concurrently share one request
+ * rather than racing to start their own.
+ *
+ * Deliberately per-invocation and passed in, not module-level. A
+ * long-lived process must not serve a day-old advisory feed because a
+ * previous request happened to warm a global.
+ */
+export type AdvisoryFetch = { stateDeptFeed?: Promise<string | null> };
+
+/** A fresh memo for one sweep or one page render. */
+export function newAdvisoryFetch(): AdvisoryFetch {
+  return {};
+}
+
 async function getText(url: string): Promise<string | null> {
   try {
     const response = await fetch(url, {
@@ -74,14 +100,18 @@ async function fetchFcdo(destinationIso: string): Promise<Advisory | null> {
   }
 }
 
-async function fetchStateDept(destinationIso: string): Promise<Advisory | null> {
+async function fetchStateDept(
+  destinationIso: string,
+  memo: AdvisoryFetch
+): Promise<Advisory | null> {
   // Checked before the request, not after: the feed is about a megabyte
   // of XML, and a destination with no curated name can never match a row
   // in it. Downloading it to find that out is a round trip for an answer
   // already known.
   if (!destinationNameFor(destinationIso)) return null;
 
-  const body = await getText(STATE_DEPT_URL);
+  memo.stateDeptFeed ??= getText(STATE_DEPT_URL);
+  const body = await memo.stateDeptFeed;
   if (!body) return null;
   return stateDeptAdvisoryFor(body, destinationIso);
 }
@@ -96,11 +126,18 @@ async function fetchStateDept(destinationIso: string): Promise<Advisory | null> 
  * Order is stable — FCDO first when present — so a cached payload does
  * not appear to have changed just because two promises resolved in a
  * different order.
+ *
+ * `memo` carries the shared State Department feed across the travellers
+ * of one sweep; omit it and each call fetches its own, which is the right
+ * default for a single page render.
  */
-export async function fetchAdvisories(destinationIso: string): Promise<Advisory[]> {
+export async function fetchAdvisories(
+  destinationIso: string,
+  memo: AdvisoryFetch = newAdvisoryFetch()
+): Promise<Advisory[]> {
   const [fcdo, stateDept] = await Promise.all([
     fetchFcdo(destinationIso),
-    fetchStateDept(destinationIso),
+    fetchStateDept(destinationIso, memo),
   ]);
 
   return [fcdo, stateDept].filter((a): a is Advisory => a !== null);

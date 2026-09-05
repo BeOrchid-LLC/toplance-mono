@@ -4,7 +4,11 @@ import { and, eq, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, corridors, notifications } from "@/lib/db/schema";
-import { EXPIRY_THRESHOLDS, dueThreshold } from "@/lib/domain/expiry";
+import {
+  EXPIRY_THRESHOLDS,
+  daysUntilExpiry,
+  dueThreshold,
+} from "@/lib/domain/expiry";
 
 /** The widest notice, and so how far ahead a row is worth looking at at all. */
 const WIDEST_THRESHOLD = Math.max(...EXPIRY_THRESHOLDS);
@@ -16,8 +20,10 @@ export type ExpiryReminder = {
   visaName: string | null;
   /** `YYYY-MM-DD`, exactly as the traveller supplied it. */
   expiresOn: string;
-  /** Which notice this is: 60, 30 or 7. */
-  daysOut: number;
+  /** Which notice this is: 60, 30 or 7. A dedupe key, never shown to anyone. */
+  thresholdDays: number;
+  /** Whole days from today to `expiresOn`. The only count the email may print. */
+  daysRemaining: number;
 };
 
 /**
@@ -46,20 +52,32 @@ export async function travellersDueForExpiryReminder(
 ): Promise<ExpiryReminder[]> {
   const today = now.toISOString().slice(0, 10);
 
-  // Which notices each application has already had. Read back off the
-  // notifications table itself — the same way the digest reads its own
-  // history — rather than kept in a column that could drift from what
-  // was actually delivered.
+  // Which notices each application has already had, **for which expiry
+  // date**. Read back off the notifications table itself — the same way
+  // the digest reads its own history — rather than kept in a column that
+  // could drift from what was actually delivered.
+  //
+  // The date is half the key, not decoration. A notice is only a reason
+  // to stay quiet about the date it was actually about: a traveller who
+  // got the 60-day notice for a 2027 expiry, then had their visa extended
+  // and updated the field to 2028, must get the whole run of notices
+  // again. Grouped on `applicationId` alone they would silently drop
+  // straight to the 30-day one a year later.
   const sentNotices = db
     .select({
       applicationId: notifications.applicationId,
-      daysOut: sql<
+      expiresOn: sql<string>`${notifications.payload} ->> 'expiresOn'`.as(
+        "expires_on"
+      ),
+      thresholdDays: sql<
         number[]
-      >`array_agg((${notifications.payload} ->> 'daysOut')::int)`.as("days_out"),
+      >`array_agg((${notifications.payload} ->> 'thresholdDays')::int)`.as(
+        "threshold_days"
+      ),
     })
     .from(notifications)
     .where(eq(notifications.kind, "visa_expiring"))
-    .groupBy(notifications.applicationId)
+    .groupBy(notifications.applicationId, sql`${notifications.payload} ->> 'expiresOn'`)
     .as("sent_notices");
 
   const candidates = await db
@@ -68,11 +86,23 @@ export async function travellersDueForExpiryReminder(
       travelerId: applications.travelerId,
       visaName: corridors.visaName,
       expiresOn: applications.visaExpiresOn,
-      sentDaysOut: sentNotices.daysOut,
+      sentThresholds: sentNotices.thresholdDays,
     })
     .from(applications)
     .leftJoin(corridors, eq(corridors.id, applications.corridorId))
-    .leftJoin(sentNotices, eq(sentNotices.applicationId, applications.id))
+    .leftJoin(
+      sentNotices,
+      and(
+        eq(sentNotices.applicationId, applications.id),
+        // The column is cast to text, not the JSON value to a date. Both
+        // sides are then `YYYY-MM-DD` — that is what `parseVisaExpiry`
+        // stores and what a `date` renders as under ISO DateStyle — and
+        // no row can make this throw. Casting the other way would put
+        // `::date` over arbitrary payload text, where one malformed
+        // value is a 22007 that takes down the whole sweep.
+        sql`${sentNotices.expiresOn} = ${applications.visaExpiresOn}::text`
+      )
+    )
     .where(
       and(
         eq(applications.status, "approved"),
@@ -90,15 +120,20 @@ export async function travellersDueForExpiryReminder(
   for (const row of candidates) {
     if (!row.expiresOn) continue;
 
-    const daysOut = dueThreshold(row.expiresOn, row.sentDaysOut ?? [], now);
-    if (daysOut === null) continue;
+    const thresholdDays = dueThreshold(row.expiresOn, row.sentThresholds ?? [], now);
+    if (thresholdDays === null) continue;
 
     due.push({
       applicationId: row.applicationId,
       travelerId: row.travelerId,
       visaName: row.visaName,
       expiresOn: row.expiresOn,
-      daysOut,
+      thresholdDays,
+      // The threshold says which notice this is; this says what is
+      // actually true on the day it goes out. Computed here, from the
+      // same `now` the threshold was chosen with, so the email can never
+      // print one while meaning the other.
+      daysRemaining: daysUntilExpiry(row.expiresOn, now),
     });
 
     if (due.length >= limit) break;

@@ -97,4 +97,29 @@ describe("toOutlook", () => {
     expect(outlook!.lowC).toBe(13);
     expect(outlook!.days).toBe(2);
   });
+
+  it("counts the days it has readings for, not the days it asked about", () => {
+    // `daily.time` is the window requested and stays at seven however
+    // many days come back empty. Labelling a two-day range "over the next
+    // 7 days" states a week of weather off two days of data.
+    const outlook = toOutlook(
+      response({
+        daily: {
+          time: [
+            "2026-09-05",
+            "2026-09-06",
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+          ],
+          temperature_2m_max: [21.4, 22.1, null, null, null, null, null],
+          temperature_2m_min: [12.6, 13.4, null, null, null, null, null],
+        },
+      })
+    );
+
+    expect(outlook!.days).toBe(2);
+  });
 });

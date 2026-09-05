@@ -55,20 +55,42 @@ const NAME_BY_ISO = Object.fromEntries(
 /**
  * Destinations whose FCDO slug is not simply their curated name.
  *
- * `gb` is null on purpose and is the entry that matters: FCDO publishes
- * no advice about the UK, so asking for one would 404 on every run.
+ * `gb` is null on purpose: FCDO publishes no advice about the UK, so
+ * asking for one would 404 on every run.
+ *
+ * The other three are places where gov.uk's slug and this product's
+ * curated name genuinely disagree. Every one of the fifty destinations in
+ * `DESTINATION_ISO` was checked against the content API on 2026-09-05,
+ * and these are the only four that do not resolve from the name alone —
+ * "Czechia" and "United Arab Emirates" both work as derived, so they are
+ * deliberately *not* listed here.
+ *
+ * `us` is the entry that mattered most. A derived "united-states" 404s,
+ * and the State Department feed carries no row for the United States
+ * either — a government does not advise on itself, which is the same hole
+ * `gb` has from the other side. Left underived, a US-bound traveller (a
+ * live corridor on the marketing board) saw an empty advisory panel and
+ * was never alerted to anything.
  */
 const FCDO_SLUG_OVERRIDES: Record<string, string | null> = {
   gb: null,
+  us: "usa",
+  tr: "turkey",
+  ci: "cote-d-ivoire",
 };
 
 /**
  * The `gov.uk` slug for a destination, or null when there is no page to ask for.
  *
- * Derived from the curated name rather than kept as a second table, so a
- * destination added to `DESTINATION_ISO` is covered without a matching
- * edit here. A derived slug that turns out not to exist simply 404s and
- * the fetch layer returns null — a missing advisory, never a wrong one.
+ * Derived from the curated name where the two agree, so most destinations
+ * added to `DESTINATION_ISO` are covered without a matching edit here;
+ * `FCDO_SLUG_OVERRIDES` carries the ones where they do not.
+ *
+ * A derived slug that turns out not to exist simply 404s and the fetch
+ * layer returns null — a missing advisory, never a wrong one. That is a
+ * safe failure but a silent one, which is why the override list was
+ * checked against the live API rather than reasoned about: nothing in
+ * this product would have reported the four that were missing.
  */
 export function fcdoSlugFor(destinationIso: string): string | null {
   const iso = destinationIso.toLowerCase();

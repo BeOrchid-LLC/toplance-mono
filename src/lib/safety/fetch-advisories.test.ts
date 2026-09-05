@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchAdvisories } from "@/lib/safety/fetch-advisories";
+import { fetchAdvisories, newAdvisoryFetch } from "@/lib/safety/fetch-advisories";
 
 const FCDO_BODY = {
   base_path: "/foreign-travel-advice/germany",
@@ -113,5 +113,45 @@ describe("fetchAdvisories", () => {
 
     await expect(fetchAdvisories("zz")).resolves.toEqual([]);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("reads the shared State Department feed once per sweep", async () => {
+    // The feed is a single ~1 MB document covering every country, so it
+    // is the same bytes for every traveller in a batch. Fetched per
+    // traveller, a full cron run pulled tens of megabytes and ran a
+    // full-document regex scan for each one inside one function timeout.
+    // Next's fetch cache does not cover this: the request carries an
+    // `AbortSignal` and the caller is a route handler.
+    stubFetch((url) =>
+      url.includes("gov.uk")
+        ? { ok: true, body: JSON.stringify(FCDO_BODY) }
+        : { ok: true, body: RSS_BODY }
+    );
+
+    const memo = newAdvisoryFetch();
+    await fetchAdvisories("de", memo);
+    await fetchAdvisories("ca", memo);
+    await fetchAdvisories("us", memo);
+
+    const calls = vi.mocked(fetch).mock.calls.map(([input]) => String(input));
+    const feedCalls = calls.filter((url) => url.includes("travel.state.gov"));
+
+    expect(feedCalls).toHaveLength(1);
+    // The per-destination source is still read per destination — only the
+    // shared document is memoised.
+    expect(calls.filter((url) => url.includes("gov.uk"))).toHaveLength(3);
+  });
+
+  it("does not carry a feed between sweeps", async () => {
+    // The memo is per invocation and passed in, never module-level. A
+    // long-lived process must not serve a day-old advisory feed because
+    // an earlier request happened to warm a global.
+    stubFetch(() => ({ ok: true, body: RSS_BODY }));
+
+    await fetchAdvisories("de");
+    await fetchAdvisories("de");
+
+    const calls = vi.mocked(fetch).mock.calls.map(([input]) => String(input));
+    expect(calls.filter((url) => url.includes("travel.state.gov"))).toHaveLength(2);
   });
 });

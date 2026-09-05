@@ -17,8 +17,11 @@ describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
   const { applications, companionUpdates, corridors, profiles } = await import(
     "@/lib/db/schema"
   );
-  const { approvedTravellersForAdvisories, refreshAdvisoriesIfStale } =
-    await import("@/lib/data/advisories");
+  const {
+    approvedTravellersForAdvisories,
+    markAdvisoriesAlerted,
+    refreshAdvisoriesIfStale,
+  } = await import("@/lib/data/advisories");
 
   const APPROVED = "test_adv_approved";
   const PENDING = "test_adv_pending";
@@ -121,6 +124,14 @@ describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
     await db.delete(profiles).where(inArray(profiles.id, IDS));
   });
 
+  /** Age the cached row past `STALE_AFTER_DAYS` so the next call re-reads. */
+  async function staleCache() {
+    await db
+      .update(companionUpdates)
+      .set({ generatedAt: new Date("2020-01-01T00:00:00Z") })
+      .where(eq(companionUpdates.applicationId, approvedAppId));
+  }
+
   describe("refreshAdvisoriesIfStale", () => {
     it("stores what it read and reports no change on the first look", async () => {
       // Rolling this out must not alert every approved traveller about
@@ -193,6 +204,64 @@ describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
       // advisory we actually read, and nobody is alerted about nothing.
       expect(result.advisories).toHaveLength(1);
       expect(result.changed).toEqual([]);
+    });
+
+    it("keeps reporting a change that nobody has been told about yet", async () => {
+      // The regression. The companion page calls this on render and
+      // discards `changed` — rendering a page is not the moment to email
+      // somebody. When a refresh also moved the comparison baseline, that
+      // page view consumed the change permanently and the nightly sweep,
+      // comparing against the already-updated copy, found nothing to
+      // send. The page is approved-only, so it is exactly the sweep's
+      // population.
+      stubSources("Tue, 13 May 2025");
+      await refreshAdvisoriesIfStale(approvedAppId, "de");
+
+      await staleCache();
+      stubSources("Thu, 04 Sep 2026");
+
+      // Stands in for the page: refreshes, ignores what it found.
+      await refreshAdvisoriesIfStale(approvedAppId, "de");
+
+      // Now the sweep. The cache is fresh — the page just wrote it — so
+      // this reads no source at all and must still say what is owed.
+      const sweep = await refreshAdvisoriesIfStale(approvedAppId, "de");
+
+      expect(sweep.changed).toHaveLength(1);
+      expect(sweep.changed[0].source).toBe("US State Department");
+    });
+
+    it("goes quiet once the traveller has actually been told", async () => {
+      stubSources("Tue, 13 May 2025");
+      await refreshAdvisoriesIfStale(approvedAppId, "de");
+
+      await staleCache();
+      stubSources("Thu, 04 Sep 2026");
+      const found = await refreshAdvisoriesIfStale(approvedAppId, "de");
+      expect(found.changed).toHaveLength(1);
+
+      await markAdvisoriesAlerted(approvedAppId);
+
+      const after = await refreshAdvisoriesIfStale(approvedAppId, "de");
+      expect(after.changed).toEqual([]);
+      // The reading itself is untouched — this is bookkeeping about what
+      // was said, not a refresh.
+      expect(after.advisories).toHaveLength(1);
+    });
+
+    it("leaves the alert pending when the send failed", async () => {
+      // `markAdvisoriesAlerted` is called only after `notify` reports the
+      // alert went out. Without that call the change stays owed, so a
+      // failed send is retried on the next sweep rather than swallowed.
+      stubSources("Tue, 13 May 2025");
+      await refreshAdvisoriesIfStale(approvedAppId, "de");
+
+      await staleCache();
+      stubSources("Thu, 04 Sep 2026");
+      await refreshAdvisoriesIfStale(approvedAppId, "de");
+
+      const retry = await refreshAdvisoriesIfStale(approvedAppId, "de");
+      expect(retry.changed).toHaveLength(1);
     });
   });
 

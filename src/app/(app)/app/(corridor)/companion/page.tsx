@@ -58,22 +58,27 @@ export default async function CompanionPage() {
     application.visaExpiresOn
   );
 
-  // Regenerates (or reuses) the cached tips — the same helper the
-  // weekly digest cron calls, so the two can never disagree on what
-  // "stale" means or how a refresh gets written.
-  const tips = await refreshLocalTipsIfStale(application.id, profile.id);
-
-  // The same helper the cron sweep calls, so the page and the alert can
-  // never disagree on what is cached. `changed` is ignored here on
-  // purpose — rendering a page is not the moment to email somebody.
-  const { advisories } = await refreshAdvisoriesIfStale(
-    application.id,
-    corridor.destinationIso
-  );
-
-  // Context rather than an alert, and null for any destination without a
-  // curated capital — see `capitalFor`.
-  const weather = await fetchOutlook(corridor.destinationIso);
+  // Three independent round trips — a model call, two government
+  // endpoints on an 8s timeout, and a forecast on a 6s one — so they are
+  // awaited together rather than one after another. Run in sequence, an
+  // unlucky traveller paid all three timeouts before a single byte of
+  // this page was produced, and every one of them feeds a supplementary
+  // panel: the real payload is the arrival checklist above.
+  const [tips, { advisories }, weather] = await Promise.all([
+    // Regenerates (or reuses) the cached tips — the same helper the
+    // weekly digest cron calls, so the two can never disagree on what
+    // "stale" means or how a refresh gets written.
+    refreshLocalTipsIfStale(application.id, profile.id),
+    // `changed` is ignored here on purpose: rendering a page is not the
+    // moment to email somebody. That is safe because
+    // `refreshAdvisoriesIfStale` never moves the alerted baseline — the
+    // sweep still finds this change tonight. It did not used to be, and
+    // the alert was silently lost to whoever opened this page first.
+    refreshAdvisoriesIfStale(application.id, corridor.destinationIso),
+    // Context rather than an alert, and null for any destination without
+    // a curated capital — see `capitalFor`.
+    fetchOutlook(corridor.destinationIso),
+  ]);
 
   await track("toplance.companion_viewed", { applicationId: application.id }, profile.id);
 

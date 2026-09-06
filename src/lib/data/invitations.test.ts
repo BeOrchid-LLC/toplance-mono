@@ -54,16 +54,21 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
   }
 
   afterEach(async () => {
-    if (createdOrgIds.length) {
-      await db.delete(organisations).where(inArray(organisations.id, createdOrgIds));
-      createdOrgIds.length = 0;
-    }
+    // Profiles first, and the order is load-bearing since v1.3:
+    // `applications.org_id` is `restrict`, so deleting an organisation
+    // while one of its cases still exists throws — and a throw here
+    // aborts the rest of the cleanup, leaving rows that break the next
+    // run's inserts.
     if (createdProfileIds.length) {
       // Cascades to org_members and applications for these profiles.
       // invitations.invitedBy / acceptedBy are `set null` on delete, not
       // cascaded — the invitation row itself is only removed with its org.
       await db.delete(profiles).where(inArray(profiles.id, createdProfileIds));
       createdProfileIds.length = 0;
+    }
+    if (createdOrgIds.length) {
+      await db.delete(organisations).where(inArray(organisations.id, createdOrgIds));
+      createdOrgIds.length = 0;
     }
   });
 
@@ -573,7 +578,12 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(stored.acceptedAt).not.toBeNull();
     });
 
-    it("attaches the org when the traveller's application already exists", async () => {
+    // Re-accepting an invitation from the agency the traveller is
+    // already with. There is no longer an agency-less application to
+    // attach — `org_id` is `not null` — so what this proves is that a
+    // second acceptance from the same agency is idempotent rather than a
+    // refusal.
+    it("accepts again when the traveller is already with this agency", async () => {
       const orgId = await makeOrg("Acme Logistics Ltd");
       const inviterId = "test_accept_inviter_2";
       await makeProfile(inviterId, { role: "org_member" });
@@ -581,7 +591,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
 
       const travelerId = "test_accept_traveller_2";
       await makeProfile(travelerId, { email: "has-app-already@example.com" });
-      await db.insert(applications).values({ travelerId });
+      await db.insert(applications).values({ travelerId, orgId });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({ ok: true, orgId });

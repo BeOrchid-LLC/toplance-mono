@@ -73,8 +73,8 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     ]);
 
     await db.insert(orgMembers).values([
-      { orgId: ORG_ID, userId: AGENCY, role: "hr_admin" },
-      { orgId: RIVAL_ORG_ID, userId: RIVAL, role: "hr_admin" },
+      { orgId: ORG_ID, userId: AGENCY, role: "reviewer" },
+      { orgId: RIVAL_ORG_ID, userId: RIVAL, role: "reviewer" },
     ]);
 
     const [tenantCase] = await db

@@ -6,6 +6,7 @@ import { inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, notifications, profiles } = await import("@/lib/db/schema");
   const { travellersDueForExpiryReminder } = await import("@/lib/data/expiry");
 
@@ -32,7 +33,12 @@ describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", asy
 
   const IDS = [DUE, SENT, MUTED, PENDING, NO_DATE, EXPIRED, FAR_OFF, MOVED];
 
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0008";
+
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db.insert(profiles).values(
       IDS.map((id) => ({
         id,
@@ -45,14 +51,14 @@ describe.skipIf(!process.env.DATABASE_URL)("travellersDueForExpiryReminder", asy
     );
 
     await db.insert(applications).values([
-      { travelerId: DUE, status: "approved", visaExpiresOn: inDays(45) },
-      { travelerId: SENT, status: "approved", visaExpiresOn: inDays(45) },
-      { travelerId: MUTED, status: "approved", visaExpiresOn: inDays(45) },
-      { travelerId: PENDING, status: "under_review", visaExpiresOn: inDays(45) },
-      { travelerId: NO_DATE, status: "approved", visaExpiresOn: null },
-      { travelerId: EXPIRED, status: "approved", visaExpiresOn: inDays(-3) },
-      { travelerId: FAR_OFF, status: "approved", visaExpiresOn: inDays(120) },
-      { travelerId: MOVED, status: "approved", visaExpiresOn: inDays(45) },
+      { orgId: TEST_AGENCY, travelerId: DUE, status: "approved", visaExpiresOn: inDays(45) },
+      { orgId: TEST_AGENCY, travelerId: SENT, status: "approved", visaExpiresOn: inDays(45) },
+      { orgId: TEST_AGENCY, travelerId: MUTED, status: "approved", visaExpiresOn: inDays(45) },
+      { orgId: TEST_AGENCY, travelerId: PENDING, status: "under_review", visaExpiresOn: inDays(45) },
+      { orgId: TEST_AGENCY, travelerId: NO_DATE, status: "approved", visaExpiresOn: null },
+      { orgId: TEST_AGENCY, travelerId: EXPIRED, status: "approved", visaExpiresOn: inDays(-3) },
+      { orgId: TEST_AGENCY, travelerId: FAR_OFF, status: "approved", visaExpiresOn: inDays(120) },
+      { orgId: TEST_AGENCY, travelerId: MOVED, status: "approved", visaExpiresOn: inDays(45) },
     ]);
 
     // SENT has already had the sixty-day notice.

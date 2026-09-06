@@ -11,7 +11,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   getDocuments,
   getIntakeAnswers,
-  getOrCreateApplication,
+  getApplication,
 } from "@/lib/data/applications";
 import { adoptRuleSet } from "@/lib/data/checklist";
 import { appliesToTraveller } from "@/lib/domain/applies-when";
@@ -223,7 +223,7 @@ export default async function RequirementsPage() {
 
   const locale = await getLocale();
   const t = REQUIREMENTS;
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!application) redirect("/sign-in?next=/app/requirements");
   if (!application.intakeComplete) redirect("/app/agent");
 

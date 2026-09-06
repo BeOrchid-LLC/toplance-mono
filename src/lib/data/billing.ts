@@ -53,10 +53,8 @@ export async function activeRateCard(at: Date = new Date()): Promise<RateCard> {
  * the pre-check and the reviewer's verdict — because "the checklist is
  * complete" is not a thing the application knows about itself.
  *
- * Three conditions, and each is load-bearing:
+ * Two conditions, and each is load-bearing:
  *
- *  - **`org_id` is not null.** A traveller who signed up directly is
- *    nobody's client, and there is no business to charge for them.
  *  - **`billable_at is null`**, enforced in the UPDATE's own WHERE rather
  *    than checked first. Two documents verified concurrently would both
  *    see a complete checklist; only one row update can win.
@@ -72,12 +70,16 @@ export async function markBillableIfComplete(
   applicationId: string
 ): Promise<{ becameBillable: boolean }> {
   const [app] = await tx
-    .select({ orgId: applications.orgId, billableAt: applications.billableAt })
+    .select({ billableAt: applications.billableAt })
     .from(applications)
     .where(eq(applications.id, applicationId))
     .limit(1);
 
-  if (!app || !app.orgId || app.billableAt) return { becameBillable: false };
+  // The third condition used to be `org_id is not null` — "a traveller
+  // who signed up directly is nobody's client". Since the v1.3 tenancy
+  // that state does not exist: every case belongs to an agency, and the
+  // column is `not null`.
+  if (!app || app.billableAt) return { becameBillable: false };
 
   const rows = await tx
     .select({ state: documents.state, isRequired: documents.isRequired })

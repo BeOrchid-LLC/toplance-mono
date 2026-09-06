@@ -270,8 +270,8 @@ describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
     ]);
 
     await db.insert(orgMembers).values([
-      { orgId: ORG, userId: REVIEWER, role: "hr_admin" },
-      { orgId: RIVAL_ORG, userId: RIVAL, role: "hr_admin" },
+      { orgId: ORG, userId: REVIEWER, role: "reviewer" },
+      { orgId: RIVAL_ORG, userId: RIVAL, role: "reviewer" },
     ]);
 
     const [app] = await db
@@ -316,21 +316,10 @@ describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
     expect(await getNotifications(STAFF)).toHaveLength(0);
   });
 
-  it("tells nobody about a case with no agency, and does not throw", async () => {
-    const [orphan] = await db
-      .insert(applications)
-      .values({ travelerId: LONE, orgId: null })
-      .returning({ id: applications.id });
-
-    await expect(
-      notifyAgency(orphan.id, "checklist_complete", {
-        caseRef: "TPL-000043",
-        url: "https://x.test/agency/cases/2",
-      })
-    ).resolves.toBeUndefined();
-
-    expect(await getNotifications(REVIEWER)).toHaveLength(0);
-  });
+  // A case with no agency used to need a test here. It is no longer
+  // expressible: `applications.org_id` is `not null`, which
+  // `schema.test.ts` proves directly. What is left of that path is the
+  // missing-application case below.
 
   it("never throws on an application that does not exist", async () => {
     await expect(

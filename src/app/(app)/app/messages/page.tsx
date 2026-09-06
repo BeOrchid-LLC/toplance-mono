@@ -6,7 +6,7 @@ import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MessageThread } from "@/components/app/message-thread";
-import { getOrCreateApplication, getProfile } from "@/lib/data/applications";
+import { getApplication, getProfile } from "@/lib/data/applications";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -32,7 +32,7 @@ export default async function MessagesPage() {
 
   const locale = await getLocale();
   const profile = await getProfile();
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/messages");
 
   // Pre-intake there is no case to message anyone about yet.

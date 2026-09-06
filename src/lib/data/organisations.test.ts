@@ -38,14 +38,20 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
   }
 
   afterEach(async () => {
-    if (createdOrgIds.length) {
-      await db.delete(organisations).where(inArray(organisations.id, createdOrgIds));
-      createdOrgIds.length = 0;
-    }
+    // Profiles first, and the order is load-bearing since v1.3:
+    // `applications.org_id` is `restrict`, so deleting an organisation
+    // while one of its cases still exists throws — and a throw here
+    // aborts the rest of the cleanup, leaving rows that break the next
+    // run's inserts. Deleting the profiles cascades the applications
+    // out of the way first.
     if (createdProfileIds.length) {
       // Cascades to org_members and applications for these profiles.
       await db.delete(profiles).where(inArray(profiles.id, createdProfileIds));
       createdProfileIds.length = 0;
+    }
+    if (createdOrgIds.length) {
+      await db.delete(organisations).where(inArray(organisations.id, createdOrgIds));
+      createdOrgIds.length = 0;
     }
   });
 
@@ -209,7 +215,14 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
   it("refuses a traveller with an application in flight — they must not silently become an employer", async () => {
     const userId = "test_org_traveller_with_app";
     await makeProfile(userId);
-    await db.insert(applications).values({ travelerId: userId });
+    // Every case belongs to an agency since v1.3, so the application
+    // this test needs in flight has to be held by one.
+    const [holding] = await db
+      .insert(organisations)
+      .values({ name: "Holding Agency Ltd" })
+      .returning({ id: organisations.id });
+    createdOrgIds.push(holding.id);
+    await db.insert(applications).values({ travelerId: userId, orgId: holding.id });
 
     const result = await createOrganisationTx(userId, "Side Hustle Inc");
 

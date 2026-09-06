@@ -12,6 +12,7 @@ import { eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("assignments", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, profiles } = await import("@/lib/db/schema");
   const { claimCase, releaseCase } = await import("@/lib/data/assignments");
 
@@ -19,9 +20,14 @@ describe.skipIf(!process.env.DATABASE_URL)("assignments", async () => {
   const REVIEWER_A = "test_assign_reviewer_a";
   const REVIEWER_B = "test_assign_reviewer_b";
   const OWNER = "test_assign_owner";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0002";
+
   let applicationId = "";
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db
       .insert(profiles)
       .values({ id: TRAVELLER, email: "assign-t@test.invalid", fullName: "Ada" });
@@ -49,7 +55,7 @@ describe.skipIf(!process.env.DATABASE_URL)("assignments", async () => {
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, status: "submitted" })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, status: "submitted" })
       .returning({ id: applications.id });
     applicationId = app.id;
   });

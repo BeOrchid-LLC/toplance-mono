@@ -83,13 +83,32 @@ export async function getActor(): Promise<Actor | null> {
 }
 
 /**
- * A traveller has one application in flight at a time. This returns it,
- * creating a draft on first visit so the intake agent always has
- * somewhere to write answers.
+ * A traveller's one application in flight, or null.
+ *
+ * This used to create a draft on first visit, which is where orphan
+ * cases came from: an application with no agency. Under the v1.3
+ * tenancy every case belongs to exactly one agency, and the only thing
+ * that knows which agency a traveller belongs to is the invitation they
+ * accepted — so `acceptInvitation` is now the sole creator, and it has
+ * always written `org_id` from the invitation.
+ *
+ * Nothing is lost by not creating here. Travellers have been invite-only
+ * since 2026-08-31, so a signed-in traveller with no application is
+ * someone who never accepted one; the nine callers all redirect on null,
+ * which is the right answer for a person the product cannot serve.
+ * `applications.org_id` is `not null`, so this is also no longer
+ * expressible: the insert this function used to make does not compile.
  */
-export async function getOrCreateApplication(): Promise<Application | null> {
+export async function getApplication(): Promise<Application | null> {
   const profile = await getProfile();
   if (!profile) return null;
+
+  // Only a traveller owns an application. The `(app)` layout already
+  // turns anyone else away, but a layout's `redirect()` does not stop
+  // the segments beneath it — Next renders them concurrently, and they
+  // call this too — so the invariant is kept here rather than at one of
+  // nine call sites.
+  if (profile.role !== "traveler") return null;
 
   const [existing] = await db
     .select()
@@ -98,33 +117,7 @@ export async function getOrCreateApplication(): Promise<Application | null> {
     .orderBy(desc(applications.createdAt))
     .limit(1);
 
-  if (existing) return existing;
-
-  // Only a traveller owns an application. The `(app)` layout already
-  // turns anyone else away, but a layout's `redirect()` does not stop
-  // the segments beneath it — Next renders them concurrently, and they
-  // call this too — so the invariant is kept here, at the write, rather
-  // than at one of nine call sites.
-  if (profile.role !== "traveler") return null;
-
-  // The layout and the page it wraps both resolve the application
-  // concurrently, so first visits race here. Same shape as the profile
-  // provisioning above: whoever loses the insert reads the winner's row.
-  const [created] = await db
-    .insert(applications)
-    .values({ travelerId: profile.id })
-    .onConflictDoNothing()
-    .returning();
-
-  if (created) return created;
-
-  const [raced] = await db
-    .select()
-    .from(applications)
-    .where(eq(applications.travelerId, profile.id))
-    .limit(1);
-
-  return raced ?? null;
+  return existing ?? null;
 }
 
 export async function getIntakeAnswers(applicationId: string) {

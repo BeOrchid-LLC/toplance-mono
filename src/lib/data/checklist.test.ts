@@ -18,12 +18,17 @@ import type { AppliesWhen } from "@/lib/domain/applies-when";
  */
 describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, corridors, documents, profiles } = await import(
     "@/lib/db/schema"
   );
   const { adoptRuleSet } = await import("@/lib/data/checklist");
 
   const TRAVELLER = "test_adopt_traveller";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0004";
+
   let applicationId = "";
   let corridorId = "";
 
@@ -66,13 +71,14 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
   });
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db
       .insert(profiles)
       .values({ id: TRAVELLER, email: "adopt@test.invalid", fullName: "Ada" });
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, intakeComplete: true })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, intakeComplete: true })
       .returning({ id: applications.id });
     applicationId = app.id;
 
@@ -368,7 +374,10 @@ describe.skipIf(!process.env.DATABASE_URL)(
     const { db } = await import("@/lib/db/client");
     const { applications, documents, profiles } = await import("@/lib/db/schema");
     const { markChecklistCompleteIfDone } = await import("@/lib/data/checklist");
+    const { seedTestAgency } = await import("@/lib/db/test-agency");
 
+    /** Every case belongs to an agency since v1.3. */
+    const TEST_AGENCY_2 = "00000000-0000-4000-8000-0000000c0104";
     const TRAVELLER = "test_complete_traveller";
     let applicationId = "";
 
@@ -400,6 +409,8 @@ describe.skipIf(!process.env.DATABASE_URL)(
     };
 
     beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY_2);
+
       // Delete-then-insert: an interrupted run leaves the profile behind,
       // and a bare insert would fail every later run on the primary key.
       await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
@@ -411,7 +422,7 @@ describe.skipIf(!process.env.DATABASE_URL)(
 
       const [app] = await db
         .insert(applications)
-        .values({ travelerId: TRAVELLER })
+        .values({ orgId: TEST_AGENCY_2, travelerId: TRAVELLER })
         .returning({ id: applications.id });
       applicationId = app.id;
 

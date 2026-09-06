@@ -38,7 +38,17 @@ import {
 
 export const appRole = pgEnum("app_role", ["traveler", "org_member", "staff"]);
 export const staffRole = pgEnum("staff_role", ["reviewer", "owner"]);
-export const orgRoleEnum = pgEnum("org_role", ["hr_admin", "owner"]);
+/**
+ * The two roles inside an agency. `hr_admin` arrived with the employer
+ * console and described nobody in a travel agency; the v1.3 correction
+ * replaced it with `reviewer`, who is the person that actually reads a
+ * traveller's documents and decides their case.
+ *
+ * Same two words as `staff_role`, deliberately, but a different type and
+ * a different side of the boundary: an agency reviewer reviews cases, a
+ * platform reviewer reads corridor drafts and cannot publish them.
+ */
+export const orgRoleEnum = pgEnum("org_role", ["reviewer", "owner"]);
 
 /**
  * Locked status model. Colour mapping lives in the design system:
@@ -239,7 +249,7 @@ export const orgMembers = pgTable(
     userId: text()
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
-    role: orgRoleEnum().notNull().default("hr_admin"),
+    role: orgRoleEnum().notNull().default("reviewer"),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.orgId, t.userId] })]
@@ -392,7 +402,19 @@ export const applications = pgTable(
     travelerId: text()
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
-    orgId: uuid().references(() => organisations.id, { onDelete: "set null" }),
+    /**
+     * The agency the case belongs to. Mandatory: a traveller with no
+     * agency has no reviewer, so the record is unservable rather than
+     * merely unbilled.
+     *
+     * `restrict`, not `cascade` or `set null`. Removing an agency means
+     * suspending it — a cascade would let a billing decision destroy a
+     * live visa case, and a `set null` would recreate the orphan this
+     * column exists to forbid.
+     */
+    orgId: uuid()
+      .notNull()
+      .references(() => organisations.id, { onDelete: "restrict" }),
     corridorId: uuid().references(() => corridors.id, { onDelete: "set null" }),
     status: applicationStatus().notNull().default("draft"),
     assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),

@@ -208,7 +208,7 @@ export const canManageInvitations = isOrgMemberOf; // platform staff deliberatel
  *                                 the platform console
  *
  * applications
- *   travellers read own ......... getOrCreateApplication filters on the
+ *   travellers read own ......... getApplication filters on the
  *                                 caller's own id
  *   travellers create own ....... same function; it can only insert a
  *                                 row naming the caller

@@ -14,7 +14,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   completionOf,
   getDocuments,
-  getOrCreateApplication,
+  getApplication,
   type DocumentRow as Doc,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -35,7 +35,7 @@ export default async function DocumentsPage() {
 
   const locale = await getLocale();
   const t = DOCUMENTS;
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!application) redirect("/sign-in?next=/app/documents");
   if (!application.intakeComplete) redirect("/app/agent");
 

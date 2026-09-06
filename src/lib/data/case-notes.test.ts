@@ -10,14 +10,20 @@ import { eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("case notes", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, profiles } = await import("@/lib/db/schema");
   const { addCaseNote, getCaseNotes } = await import("@/lib/data/case-notes");
 
   const TRAVELLER = "test_notes_traveller";
   const REVIEWER = "test_notes_reviewer";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0003";
+
   let applicationId = "";
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db.insert(profiles).values({
       id: TRAVELLER,
       email: "notes@test.invalid",
@@ -32,7 +38,7 @@ describe.skipIf(!process.env.DATABASE_URL)("case notes", async () => {
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, intakeComplete: true })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, intakeComplete: true })
       .returning({ id: applications.id });
     applicationId = app.id;
   });

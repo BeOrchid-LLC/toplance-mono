@@ -19,15 +19,21 @@ import { and, eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, documents, profiles } = await import("@/lib/db/schema");
   const { applyPrecheckTx } = await import("@/lib/data/precheck");
 
   const TRAVELLER = "test_precheck_traveller";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0011";
+
   let applicationId = "";
   const STORAGE_PATH_A = "app/passport/a.jpg";
   const STORAGE_PATH_B = "app/passport/b.jpg";
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db.insert(profiles).values({
       id: TRAVELLER,
       email: "precheck@test.invalid",
@@ -36,7 +42,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, intakeComplete: true })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, intakeComplete: true })
       .returning({ id: applications.id });
     applicationId = app.id;
 

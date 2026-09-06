@@ -19,12 +19,17 @@ import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
  */
 describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, documents, intakeAnswers, profiles } = await import(
     "@/lib/db/schema"
   );
   const { recordIntakeAnswer } = await import("@/lib/data/intake");
 
   const TRAVELLER = "test_intake_traveller";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0009";
+
   let applicationId = "";
 
   /** The one corridor shape the seeded `corridors` table can serve. */
@@ -35,13 +40,14 @@ describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
   };
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db
       .insert(profiles)
       .values({ id: TRAVELLER, email: "intake@test.invalid", fullName: "Ada" });
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER })
       .returning({ id: applications.id });
     applicationId = app.id;
   });

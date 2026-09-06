@@ -126,23 +126,10 @@ describe.skipIf(!process.env.DATABASE_URL)("markBillableIfComplete", async () =>
     expect((await billableAt())?.getTime()).toBe(first?.getTime());
   });
 
-  it("charges nobody for a traveller who came on their own", async () => {
-    // No `org_id` — there is no business to bill, and stamping the
-    // column anyway would put the application into a cycle count that
-    // belongs to no one.
-    await db
-      .update(applications)
-      .set({ orgId: null })
-      .where(eq(applications.id, applicationId));
-
-    await setState("passport", "checking");
-    await setState("cas", "checking");
-
-    const result = await markBillableIfComplete(db, applicationId);
-
-    expect(result.becameBillable).toBe(false);
-    expect(await billableAt()).toBeNull();
-  });
+  // "charges nobody for a traveller who came on their own" stood here.
+  // It set `org_id` to null to reach the no-business-to-bill branch, and
+  // neither the state nor the branch exists any more: every case belongs
+  // to an agency, and `schema.test.ts` proves the column refuses null.
 
   it("counts a completed application in the cycle it completed in", async () => {
     await setState("passport", "checking");

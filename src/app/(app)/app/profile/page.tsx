@@ -14,7 +14,7 @@ import {
   getDocuments,
   getIntakeAnswers,
   getItinerary,
-  getOrCreateApplication,
+  getApplication,
   getOrgName,
   getProfile,
   getStatusEvents,
@@ -120,7 +120,7 @@ export default async function ProfilePage() {
   const uiLocale = await getLocale();
   const t = PROFILE;
   const profile = await getProfile();
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/profile");
 
   // The profile is the intake's output; before it there is nothing to show.

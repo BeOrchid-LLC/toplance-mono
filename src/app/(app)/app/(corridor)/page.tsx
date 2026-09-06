@@ -14,7 +14,7 @@ import {
   completionOf,
   getDocuments,
   getIntakeAnswers,
-  getOrCreateApplication,
+  getApplication,
   getProfile,
 } from "@/lib/data/applications";
 import { unreadCountFor } from "@/lib/data/messages";
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
   const locale = await getLocale();
   const t = DASHBOARD;
   const profile = await getProfile();
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!profile || !application) redirect("/sign-in?next=/app");
 
   // Intake first — there is nothing meaningful to show before it.

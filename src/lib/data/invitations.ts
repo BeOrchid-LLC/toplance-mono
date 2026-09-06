@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -412,14 +412,17 @@ export async function revokeInvitation(
  * than from an argument. A caller that could pass the email is a caller
  * that could pass the wrong one.
  *
- * Attaching the org handles both orders an application can arrive in:
- * an invitee with no account yet (the insert below wins, carrying the
- * org from the start) and a traveller who already began their intake
- * before the invitation landed (the insert loses to the unique
- * `travelerId` row `getOrCreateApplication` wrote, so the update
- * attaches the org to it instead). A traveller already sponsored by a
- * DIFFERENT org matches neither branch and is refused rather than
- * silently reassigned.
+ * Since the v1.3 tenancy this is the only thing that creates an
+ * application, because it is the only thing that knows which agency a
+ * traveller belongs to. `getApplication` used to open a draft on first
+ * visit and no longer does — an agency-less case is not expressible,
+ * `applications.org_id` being `not null`.
+ *
+ * The update branch below therefore handles exactly one case: the same
+ * agency inviting the same traveller twice, which is a no-op success. A
+ * traveller already held by a DIFFERENT agency matches neither branch
+ * and is refused rather than silently reassigned — one traveller
+ * belongs to one agency, and a move is a support operation.
  */
 export async function acceptInvitationTx(
   token: string,
@@ -485,10 +488,7 @@ export async function acceptInvitationTx(
         .where(
           and(
             eq(applications.travelerId, travelerId),
-            or(
-              isNull(applications.orgId),
-              eq(applications.orgId, invitation.orgId)
-            )
+            eq(applications.orgId, invitation.orgId)
           )
         )
         .returning({ id: applications.id });

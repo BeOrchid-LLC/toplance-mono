@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { eq, inArray } from "drizzle-orm";
 
 /**
@@ -295,5 +295,68 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
       { orgId: oks[0].orgId, role: "owner" },
     ]);
     expect(await roleOf(userId)).toBe("org_member");
+  });
+});
+
+/**
+ * Who inside an agency may invite a colleague.
+ *
+ * §1 of the tenancy gives an owner everything a reviewer can do plus
+ * staff invitations and billing. Without this check any reviewer could
+ * hire, which is the quiet kind of privilege escalation: nothing looks
+ * broken, the agency simply grows people nobody senior approved.
+ *
+ * Skipped without a database. Run `npm run db:up` to include them.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("isAgencyOwner", async () => {
+  const { inArray } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { orgMembers, organisations, profiles } = await import("@/lib/db/schema");
+  const { isAgencyOwner } = await import("@/lib/data/organisations");
+
+  const OWNER = "test_owner_check_owner";
+  const REVIEWER = "test_owner_check_reviewer";
+  const OUTSIDER = "test_owner_check_outsider";
+  const IDS = [OWNER, REVIEWER, OUTSIDER];
+  const ORG = "00000000-0000-4000-8000-0000000e0001";
+  const OTHER_ORG = "00000000-0000-4000-8000-0000000e0002";
+
+  beforeEach(async () => {
+    await db.insert(profiles).values([
+      { id: OWNER, email: "oc-owner@test.invalid", fullName: "Amara" },
+      { id: REVIEWER, email: "oc-reviewer@test.invalid", fullName: "Chidi" },
+      { id: OUTSIDER, email: "oc-outsider@test.invalid", fullName: "Sade" },
+    ]);
+    await db.insert(organisations).values([
+      { id: ORG, name: "Owner Check Agency" },
+      { id: OTHER_ORG, name: "Other Agency" },
+    ]);
+    await db.insert(orgMembers).values([
+      { orgId: ORG, userId: OWNER, role: "owner" },
+      { orgId: ORG, userId: REVIEWER, role: "reviewer" },
+      { orgId: OTHER_ORG, userId: OUTSIDER, role: "owner" },
+    ]);
+  });
+
+  afterEach(async () => {
+    await db.delete(profiles).where(inArray(profiles.id, IDS));
+    await db.delete(organisations).where(inArray(organisations.id, [ORG, OTHER_ORG]));
+  });
+
+  it("is true for the agency's owner", async () => {
+    expect(await isAgencyOwner(OWNER, ORG)).toBe(true);
+  });
+
+  it("is false for a reviewer at the same agency", async () => {
+    expect(await isAgencyOwner(REVIEWER, ORG)).toBe(false);
+  });
+
+  it("is false for an owner of a different agency", async () => {
+    // Seniority does not travel between tenants.
+    expect(await isAgencyOwner(OUTSIDER, ORG)).toBe(false);
+  });
+
+  it("is false for somebody with no membership at all", async () => {
+    expect(await isAgencyOwner("test_owner_check_nobody", ORG)).toBe(false);
   });
 });

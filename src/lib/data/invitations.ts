@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import {
   applications,
   invitations,
+  orgMembers,
   organisations,
   profiles,
   type Invitation,
@@ -38,6 +39,7 @@ export type ListedInvitation = Omit<Invitation, "token">;
 export type InvitationPreview = {
   orgName: string;
   fullName: string;
+  kind: Invitation["kind"];
   destinationIso: string | null;
   purpose: TravelPurpose | null;
   status: Invitation["status"];
@@ -57,6 +59,13 @@ export async function createInvitation(
   input: {
     email: string;
     fullName?: string;
+    /**
+     * `client` (the default) invites somebody whose visa the agency is
+     * handling; `staff` invites a colleague who will review those
+     * applications. See `invitationKind` in the schema for why both live
+     * on one table.
+     */
+    kind?: "client" | "staff";
     jobTitle?: string;
     destinationIso?: string;
     purpose?: TravelPurpose;
@@ -88,6 +97,7 @@ export async function createInvitation(
       invitedBy,
       email,
       fullName: input.fullName?.trim() || "",
+      kind: input.kind ?? "client",
       jobTitle: input.jobTitle?.trim() || null,
       destinationIso: input.destinationIso || null,
       purpose: input.purpose,
@@ -116,6 +126,7 @@ export async function listInvitations(orgId: string): Promise<ListedInvitation[]
       orgId: invitations.orgId,
       email: invitations.email,
       fullName: invitations.fullName,
+      kind: invitations.kind,
       jobTitle: invitations.jobTitle,
       destinationIso: invitations.destinationIso,
       purpose: invitations.purpose,
@@ -153,6 +164,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
     .select({
       status: invitations.status,
       fullName: invitations.fullName,
+      kind: invitations.kind,
       destinationIso: invitations.destinationIso,
       purpose: invitations.purpose,
       expiresAt: invitations.expiresAt,
@@ -171,6 +183,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
   return {
     orgName: row.orgName,
     fullName: row.fullName,
+    kind: row.kind,
     destinationIso: row.destinationIso,
     purpose: row.purpose,
     status,
@@ -475,26 +488,50 @@ export async function acceptInvitationTx(
       return { error: "This invitation was sent to a different email address." };
     }
 
-    const created = await tx
-      .insert(applications)
-      .values({ travelerId, orgId: invitation.orgId })
-      .onConflictDoNothing({ target: applications.travelerId })
-      .returning({ id: applications.id });
+    if (invitation.kind === "staff") {
+      // A colleague gets a seat, not a case. `reviewer` rather than
+      // `owner`: an invitation cannot mint someone with the authority to
+      // bill and to invite, which has to stay with the person who
+      // already has it.
+      //
+      // `onConflictDoNothing` on the composite key makes re-accepting a
+      // no-op rather than a demotion — an owner who accepts a second
+      // invitation stays an owner.
+      await tx
+        .insert(orgMembers)
+        .values({ orgId: invitation.orgId, userId: travelerId, role: "reviewer" })
+        .onConflictDoNothing();
 
-    if (!created.length) {
-      const updated = await tx
-        .update(applications)
-        .set({ orgId: invitation.orgId })
-        .where(
-          and(
-            eq(applications.travelerId, travelerId),
-            eq(applications.orgId, invitation.orgId)
-          )
-        )
+      // So they read as agency rather than as a traveller everywhere the
+      // persona is resolved. Narrowed to `traveler` for the same reason
+      // `createOrganisationTx` narrows it: this is an invitation, not a
+      // general role editor, and it must not quietly demote staff.
+      await tx
+        .update(profiles)
+        .set({ role: "org_member" })
+        .where(and(eq(profiles.id, travelerId), eq(profiles.role, "traveler")));
+    } else {
+      const created = await tx
+        .insert(applications)
+        .values({ travelerId, orgId: invitation.orgId })
+        .onConflictDoNothing({ target: applications.travelerId })
         .returning({ id: applications.id });
 
-      if (!updated.length) {
-        return { error: "This account is already sponsored by another organisation." };
+      if (!created.length) {
+        const updated = await tx
+          .update(applications)
+          .set({ orgId: invitation.orgId })
+          .where(
+            and(
+              eq(applications.travelerId, travelerId),
+              eq(applications.orgId, invitation.orgId)
+            )
+          )
+          .returning({ id: applications.id });
+
+        if (!updated.length) {
+          return { error: "This account is already sponsored by another organisation." };
+        }
       }
     }
 

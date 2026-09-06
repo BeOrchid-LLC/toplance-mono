@@ -144,3 +144,30 @@ export async function createOrganisationTx(
     return { ok: true, orgId: org.id };
   });
 }
+
+/**
+ * Whether this person is an owner of this agency.
+ *
+ * §1 gives an agency owner everything a reviewer can do plus staff
+ * invitations and billing, so this is the check that separates the two.
+ * A reviewer able to invite colleagues is the quiet kind of privilege
+ * escalation: nothing looks broken, the agency simply grows people
+ * nobody senior approved.
+ *
+ * Scoped to one agency on purpose. Seniority does not travel between
+ * tenants — an owner of agency A is nothing at agency B.
+ *
+ * Not in `policy.ts` because that file is pure and `Actor` carries only
+ * the ids of the agencies somebody belongs to, not their rank inside
+ * each. Widening `Actor` for one caller would put a query on the path of
+ * every access decision in the product.
+ */
+export async function isAgencyOwner(userId: string, orgId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ role: orgMembers.role })
+    .from(orgMembers)
+    .where(and(eq(orgMembers.userId, userId), eq(orgMembers.orgId, orgId)))
+    .limit(1);
+
+  return row?.role === "owner";
+}

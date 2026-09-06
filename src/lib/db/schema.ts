@@ -116,6 +116,20 @@ export const travelPurpose = pgEnum("travel_purpose", [
   "business",
 ]);
 
+/**
+ * What an invitation attaches when it is accepted.
+ *
+ * One table carries both invitations an agency sends. A `client` invite
+ * attaches an application — somebody whose visa the agency is handling.
+ * A `staff` invite attaches a membership — a colleague who will review
+ * those applications.
+ *
+ * A discriminator rather than a second table: one token format, one
+ * accept page, one expiry policy and one revoke button already exist,
+ * and a second table would duplicate all four to carry one column.
+ */
+export const invitationKind = pgEnum("invitation_kind", ["client", "staff"]);
+
 export const invitationStatus = pgEnum("invitation_status", [
   "pending",
   "accepted",
@@ -280,6 +294,7 @@ export const invitations = pgTable(
       .references(() => organisations.id, { onDelete: "cascade" }),
     email: text().notNull(),
     fullName: text().notNull().default(""),
+    kind: invitationKind().notNull().default("client"),
     jobTitle: text(),
     destinationIso: text(),
     purpose: travelPurpose(),

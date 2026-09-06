@@ -372,7 +372,7 @@ export default async function EmployerConsolePage() {
                 />
               )}
             </div>
-            <InviteDialog />
+            <InviteDialog canInviteStaff={org.role === "owner"} />
           </div>
 
           {/*

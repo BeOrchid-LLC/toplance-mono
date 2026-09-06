@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n/locales";
 type L = Record<Locale, string>;
 
 /**
- * The error strings `@/app/employer/actions.ts` returns as `{ error }`.
+ * The error strings `@/app/agency/actions.ts` returns as `{ error }`.
  *
  * Same shape and the same reasoning as `ops-actions.ts`: resolved
  * server-side with `getLocale()`, because a Server Action runs as a POST
@@ -14,7 +14,7 @@ type L = Record<Locale, string>;
  * NEEDS NATIVE REVIEW before launch. Translated in-house from the
  * English, the same way `hero.ts` and `intake.ts` were.
  */
-export const EMPLOYER_ACTIONS: {
+export const AGENCY_ACTIONS: {
   onlyOwnerInvitesStaff: L;
 } = {
   onlyOwnerInvitesStaff: {

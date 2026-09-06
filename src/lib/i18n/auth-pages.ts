@@ -180,7 +180,7 @@ export const SIGN_UP_PAGE: {
  * sign-in pages — deliberately identical text in both places, in the
  * same words and order as the landing page's organisations section.
  */
-export const EMPLOYER_DOOR_PANEL: {
+export const AGENCY_DOOR_PANEL: {
   tag: L;
   heading: L;
   body: L;

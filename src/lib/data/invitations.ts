@@ -530,7 +530,23 @@ export async function acceptInvitationTx(
           .returning({ id: applications.id });
 
         if (!updated.length) {
-          return { error: "This account is already sponsored by another organisation." };
+          // One traveller belongs to one agency, so a second agency
+          // inviting the same person is refused rather than silently
+          // reassigning them. A move is a support operation — it
+          // reassigns `org_id`, which is metadata, so it stays inside
+          // the boundary BeOrchid keeps to.
+          //
+          // Deliberately not vague. The person reading this is the
+          // traveller, who already knows which agency they are with, so
+          // naming the situation tells them nothing they did not know
+          // and tells them what to do about it. The inviting agency
+          // learns nothing either way: this returns before the status
+          // update, so their roster still shows `pending` and cannot be
+          // read as a signal that somebody else holds this client.
+          return {
+            error:
+              "You are already working with another agency. Ask them to contact us to move your case.",
+          };
         }
       }
     }

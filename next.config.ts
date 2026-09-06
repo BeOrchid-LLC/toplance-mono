@@ -24,6 +24,18 @@ const nextConfig: NextConfig = {
   redirects() {
     return [
       { source: "/travellers", destination: "/travelers", permanent: true },
+      /**
+       * `/employer` was the agency console until the v1.3 correction
+       * made the agency the tenant. A URL is a string a user reads, so
+       * it follows the word the interface uses rather than the word the
+       * code does — the tables still say `organisation`.
+       *
+       * Permanent, and covering the children too: `/employer/sign-in`
+       * and `/employer/sign-up` are printed in invitation emails that
+       * have already been sent, and live invitations last 30 days.
+       */
+      { source: "/employer", destination: "/agency", permanent: true },
+      { source: "/employer/:path*", destination: "/agency/:path*", permanent: true },
     ];
   },
   experimental: {

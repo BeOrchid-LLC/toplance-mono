@@ -8,7 +8,7 @@ import { eq, inArray } from "drizzle-orm";
  *
  * Like `submitApplicationTx`, the function decides nothing about who is
  * signed in; its caller (`createOrganisation` in
- * `@/app/employer/actions.ts`) resolves `userId` from the session.
+ * `@/app/agency/actions.ts`) resolves `userId` from the session.
  *
  * Skipped without a database. Run `npm run db:up` to include them.
  */
@@ -107,7 +107,7 @@ describe.skipIf(!process.env.DATABASE_URL)("createOrganisationTx", async () => {
     });
 
     it("leaves the row alone when one already exists", async () => {
-      // A traveller or a staff account opening /employer must not be
+      // A traveller or a staff account opening /agency must not be
       // quietly turned into an employer by the safety net.
       await makeProfile(USER, { email: "existing@test.invalid", role: "traveler" });
 

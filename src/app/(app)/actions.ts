@@ -319,7 +319,7 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
     if (app) {
       await notifyAgency(applicationId, "checklist_complete", {
         caseRef: app.caseRef,
-        url: appUrl("/employer"),
+        url: appUrl("/agency"),
       });
     }
 
@@ -504,7 +504,7 @@ export async function submitApplication(applicationId: string) {
       if (app) {
         await notifyAgency(applicationId, "application_submitted", {
           caseRef: app.caseRef,
-          url: appUrl("/employer"),
+          url: appUrl("/agency"),
         });
       }
 
@@ -574,7 +574,7 @@ export async function sendMessage(formData: FormData) {
       const payload = {
         senderName: sender?.fullName || "Unnamed",
         preview,
-        url: appUrl("/employer"),
+        url: appUrl("/agency"),
       } as const;
 
       if (row?.assigneeId) {

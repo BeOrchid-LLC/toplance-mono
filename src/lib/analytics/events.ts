@@ -119,7 +119,7 @@ export const EVENT_NAMES = [
   /**
    * The invitation lifecycle: sent from `inviteTraveller`, resent from
    * `resendInvitation`, revoked from `revokeInvitation` (all three in
-   * `@/app/employer/actions.ts`), accepted from `acceptInvitation` in
+   * `@/app/agency/actions.ts`), accepted from `acceptInvitation` in
    * `@/app/invite/actions.ts`.
    *
    * A resend is counted apart from a send rather than folded into it.

@@ -7,11 +7,11 @@
  * their destination here so the two can never disagree.
  *
  * Order matters: the more specific prefixes come first, since `/sign-in`
- * would otherwise shadow `/employer/sign-in` in a first-match search.
+ * would otherwise shadow `/agency/sign-in` in a first-match search.
  */
 export const authRoutes = [
-  { prefix: "/employer/sign-in", home: "/employer" },
-  { prefix: "/employer/sign-up", home: "/employer" },
+  { prefix: "/agency/sign-in", home: "/agency" },
+  { prefix: "/agency/sign-up", home: "/agency" },
   { prefix: "/ops/sign-in", home: "/ops" },
   // The generic doors cannot know who walked in — staff and employers
   // sign in here too, and roles live in Postgres where neither this
@@ -31,7 +31,7 @@ export function homeFor(role: "traveler" | "org_member" | "staff"): string {
     case "staff":
       return "/ops";
     case "org_member":
-      return "/employer";
+      return "/agency";
     default:
       return "/app";
   }
@@ -39,7 +39,7 @@ export function homeFor(role: "traveler" | "org_member" | "staff"): string {
 
 /**
  * Which sign-in door a signed-out visitor at `pathname` should be sent
- * to. `/employer` and `/ops` are branded, audience-specific doors with
+ * to. `/agency` and `/ops` are branded, audience-specific doors with
  * their own copy — a staff member whose 30-minute idle session lapses on
  * a case page should land back on "Staff access only", not the generic
  * traveller door with its invite-only "Create an account" link, which
@@ -48,8 +48,8 @@ export function homeFor(role: "traveler" | "org_member" | "staff"): string {
  * of its own) falls back to the generic door.
  */
 export function signInDoorFor(pathname: string): string {
-  if (pathname === "/employer" || pathname.startsWith("/employer/")) {
-    return "/employer/sign-in";
+  if (pathname === "/agency" || pathname.startsWith("/agency/")) {
+    return "/agency/sign-in";
   }
   if (pathname === "/ops" || pathname.startsWith("/ops/")) {
     return "/ops/sign-in";

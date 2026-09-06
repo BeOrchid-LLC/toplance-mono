@@ -23,7 +23,7 @@ const NAME_MAX = ORG_NAME_MAX;
  * brand-new session navigates the page out from under it, cancelling the
  * write. That used to be invisible: `getProfile` provisioned a row for
  * anyone holding a session. Since travellers became invite-only it does
- * not, so the employer arrived at `/employer`, was found to have no
+ * not, so the employer arrived at `/agency`, was found to have no
  * profile, and was sent to `/go` to be told they had no account —
  * moments after creating one.
  *
@@ -35,7 +35,7 @@ const NAME_MAX = ORG_NAME_MAX;
  * cannot become a way around the invitation.
  *
  * `onConflictDoNothing`, so a traveller or a staff account that opens
- * `/employer` is left exactly as it was rather than quietly becoming an
+ * `/agency` is left exactly as it was rather than quietly becoming an
  * employer. `true` means a row exists now, not that this call wrote it.
  */
 export async function provisionEmployerProfile(
@@ -70,7 +70,7 @@ export async function provisionEmployerProfile(
  * just wrote and refuses.
  *
  * Decides nothing about who is signed in. Its caller, `createOrganisation`
- * in `@/app/employer/actions.ts`, resolves `userId` from the session.
+ * in `@/app/agency/actions.ts`, resolves `userId` from the session.
  */
 export async function createOrganisationTx(
   userId: string,

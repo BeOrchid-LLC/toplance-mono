@@ -14,7 +14,7 @@ export type NavItem = { href: string; label: string; locked?: boolean };
  * drift from the truth, and it is the one thing on this bar that needs
  * the client.
  *
- * The first item is the section root (`/app`, `/employer`, `/ops`), so
+ * The first item is the section root (`/app`, `/agency`, `/ops`), so
  * it matches exactly. Everything else also matches its children, which
  * is what keeps `Documents` lit on a document's own page.
  */

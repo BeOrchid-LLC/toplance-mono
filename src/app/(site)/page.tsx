@@ -45,7 +45,7 @@ import {
  * is a travel agency running visa/relocation cases for its own clients as
  * its business, not an employer moving employees — so the copy is written
  * to that reader. The account model underneath is unchanged (same
- * `/employer/sign-up` door, same case/roster mechanics, same document
+ * `/agency/sign-up` door, same case/roster mechanics, same document
  * boundary) — this is a copy-only re-audience, not a new account type.
  * The traveller copy was not thrown away — it is `/travelers`, unchanged.
  *
@@ -339,7 +339,7 @@ export default async function HomePage() {
                 style={{ animationDelay: "130ms" }}
               >
                 <Button asChild>
-                  <Link href="/employer/sign-up">
+                  <Link href="/agency/sign-up">
                     {SITE_HOME.heroCtaGetStarted[locale]} <ArrowRight />
                   </Link>
                 </Button>
@@ -564,12 +564,12 @@ export default async function HomePage() {
             </ul>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/employer/sign-up">
+                <Link href="/agency/sign-up">
                   <Briefcase /> {SITE_HOME.talkToUsAboutTravelers[locale]}
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
-                <Link href="/employer/sign-in">
+                <Link href="/agency/sign-in">
                   {SITE_CHROME.agencySignIn[locale]} <ArrowRight />
                 </Link>
               </Button>
@@ -744,7 +744,7 @@ export default async function HomePage() {
             </div>
 
             <Button asChild size="block" variant="primary" className="lg:max-w-[320px]">
-              <Link href="/employer/sign-up">{SITE_CHROME.runYourFirstCase[locale]}</Link>
+              <Link href="/agency/sign-up">{SITE_CHROME.runYourFirstCase[locale]}</Link>
             </Button>
           </div>
 

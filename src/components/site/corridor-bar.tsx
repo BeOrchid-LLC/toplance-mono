@@ -209,7 +209,7 @@ export function CorridorBar({
                   "bg-brand-accent text-ink hover:bg-[color-mix(in_srgb,var(--brand-accent)_85%,#fff)]"
               )}
             >
-              <Link href="/employer/sign-up">
+              <Link href="/agency/sign-up">
                 {soon
                   ? t(CORRIDOR_PICKER.requestThisRoute)
                   : (ctaLabel ?? t(HERO.ctaSecondary))}

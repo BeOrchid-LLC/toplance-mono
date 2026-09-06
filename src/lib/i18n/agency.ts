@@ -17,12 +17,12 @@ type L = Record<Locale, string>;
  * A handful of strings carry `{placeholder}` tokens rather than being
  * interpolated with template literals, because the value has to survive
  * being chosen by locale first — see `fill` in
- * `src/app/employer/page.tsx`.
+ * `src/app/agency/page.tsx`.
  *
  * NEEDS NATIVE REVIEW before launch, like every non-English string in
  * this codebase translated in-house rather than supplied by the client.
  */
-export const EMPLOYER: {
+export const AGENCY: {
   pageTitle: L;
   navDashboard: L;
   roleLabel: { owner: L; reviewer: L };

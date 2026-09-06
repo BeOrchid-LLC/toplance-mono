@@ -72,11 +72,11 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await signUp(page, {
     email: EMPLOYER_EMAIL,
     fullName: "Bola Adeyemi",
-    path: "/employer/sign-up",
+    path: "/agency/sign-up",
     orgName: ORG,
     locale: "Hausa",
   });
-  await page.waitForURL("**/employer");
+  await page.waitForURL("**/agency");
 
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 

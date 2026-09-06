@@ -35,10 +35,10 @@ export async function resetFixtures(
  * whatever `completeProfile` writes on the way through.
  *
  * `path` decides which door. Since travellers became invite-only
- * (2026-08-31) the only two that open are `/employer/sign-up` and
+ * (2026-08-31) the only two that open are `/agency/sign-up` and
  * `/sign-up?token=…`, so specs that just need *an account* — the staff
  * ones, which promote it afterwards — go through the employer door.
- * That door asks for no phone number and lands on `/employer`, which
+ * That door asks for no phone number and lands on `/agency`, which
  * unlike `/app` opens no draft application for an account that is about
  * to become staff.
  *
@@ -51,7 +51,7 @@ export async function signUp(
   {
     email,
     fullName,
-    path = "/employer/sign-up",
+    path = "/agency/sign-up",
     orgName,
     locale,
   }: {

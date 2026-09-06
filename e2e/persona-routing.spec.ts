@@ -62,7 +62,7 @@ test("a signed-out visitor sees the marketing nav, not a console bar", async ({
  * already has an account arrives — including the two audiences whose
  * consoles it is not. Before this, crossing to either meant knowing the
  * URL: the ops door was a footer entry and the employer door was named
- * only from `/employer/sign-up`.
+ * only from `/agency/sign-up`.
  *
  * Signed out and asserted on the hrefs, so it needs no account and
  * cannot be satisfied by a link that merely reads right.
@@ -75,7 +75,7 @@ test("the generic sign-in door names the organisation and operations doors", asy
   const main = page.getByRole("main");
   await expect(
     main.getByRole("link", { name: /Organisation sign-in/ })
-  ).toHaveAttribute("href", "/employer/sign-in");
+  ).toHaveAttribute("href", "/agency/sign-in");
   await expect(
     main.getByRole("link", { name: /Toplance operations sign-in/ })
   ).toHaveAttribute("href", "/ops/sign-in");
@@ -114,7 +114,7 @@ test("a reviewer sees the unchanged marketing header and never the traveller sur
 }) => {
   await resetFixtures([STAFF_EMAIL], [STAFF_ORG]);
   // The employer door, which is `signUp`'s default now that the
-  // traveller one needs an invitation. It lands on `/employer` rather
+  // traveller one needs an invitation. It lands on `/agency` rather
   // than `/app`, so no draft application is opened for an account that
   // is about to become staff — and no invitation has to be minted and
   // thrown away just to get a session.
@@ -177,7 +177,7 @@ test("a reviewer who opens the traveller console is sent to their own", async ({
 /**
  * The employer console's own version of the guard above. A new employer
  * now arrives already holding `org_member` — `completeProfile` writes it
- * at sign-up — but with no membership row, so `/employer` still cannot
+ * at sign-up — but with no membership row, so `/agency` still cannot
  * decide by role alone. It turns away exactly the two accounts
  * `createOrganisationTx` refuses: no more, or the sign-up below would be
  * walled off, and no fewer, or they get a form that fails at submit.
@@ -203,7 +203,7 @@ test("a traveller mid-case who opens the employer console is sent back to their 
     .poll(() => applicationCountFor(TRAVELLER_ON_EMPLOYER_EMAIL))
     .toBe(1);
 
-  await page.goto("/employer");
+  await page.goto("/agency");
   await expect(page).toHaveURL(/\/app(\/agent)?$/);
   // Not the dead-end form it used to be handed.
   await expect(
@@ -222,7 +222,7 @@ test("a reviewer who opens the employer console is sent to the case queue", asyn
   });
   await promoteToStaff(STAFF_ON_EMPLOYER_EMAIL);
 
-  await page.goto("/employer");
+  await page.goto("/agency");
   await expect(page).toHaveURL(/\/ops\/corridors$/);
 });
 
@@ -235,10 +235,10 @@ test("an employer sees the unchanged marketing header and the generic door leads
   await signUp(page, {
     email: EMPLOYER_EMAIL,
     fullName: "Folake Adebayo",
-    path: "/employer/sign-up",
+    path: "/agency/sign-up",
     orgName: ORG,
   });
-  await expect(page).toHaveURL(/\/employer$/);
+  await expect(page).toHaveURL(/\/agency$/);
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
   await page.goto("/");
@@ -249,5 +249,5 @@ test("an employer sees the unchanged marketing header and the generic door leads
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
   await page.goto("/sign-in");
-  await expect(page).toHaveURL(/\/employer$/);
+  await expect(page).toHaveURL(/\/agency$/);
 });

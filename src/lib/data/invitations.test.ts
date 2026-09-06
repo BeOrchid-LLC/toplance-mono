@@ -686,7 +686,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(app.orgId).toBe(orgId);
     });
 
-    it("refuses when the traveller is already sponsored by a different organisation", async () => {
+    it("refuses when the traveller is already with a different agency", async () => {
       const orgId = await makeOrg("Acme Logistics Ltd");
       const otherOrgId = await makeOrg("Other Co");
       const inviterId = "test_accept_inviter_7";
@@ -699,7 +699,8 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({
-        error: "This account is already sponsored by another organisation.",
+        error:
+          "You are already working with another agency. Ask them to contact us to move your case.",
       });
 
       const app = await applicationOf(travelerId);

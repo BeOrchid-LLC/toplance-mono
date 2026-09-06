@@ -374,6 +374,23 @@ export const corridors = pgTable(
     effectiveFrom: date().notNull().default(sql`current_date`),
     sourceName: text(),
     sourceUrl: text(),
+    /**
+     * The official application form for this route, and what it is
+     * called — "Form VAF1A", "DS-160", "IMM 1294".
+     *
+     * A link to the issuing authority's own copy, deliberately not a
+     * file of ours. Mirroring a government PDF means serving whichever
+     * version we last downloaded, and somebody submitting a superseded
+     * form is refused for a reason nobody can see from the paperwork.
+     * The freshness discipline is the same as `sourceUrl`'s: a person
+     * reads it against the source and stamps `lastVerifiedAt`.
+     *
+     * Null where the route has no downloadable form — plenty are filled
+     * in entirely online, and saying nothing is better than inventing a
+     * link.
+     */
+    formName: text(),
+    formUrl: text(),
     processingWeeksMin: integer(),
     processingWeeksMax: integer(),
     governmentFeeMinor: bigint({ mode: "number" }),

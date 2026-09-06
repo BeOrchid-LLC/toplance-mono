@@ -69,6 +69,8 @@ export const curatedProvider: VisaDataProvider = {
       lastVerifiedAt: corridor.lastVerifiedAt?.toISOString() ?? null,
       sourceName: corridor.sourceName,
       sourceUrl: corridor.sourceUrl,
+      formName: corridor.formName,
+      formUrl: corridor.formUrl,
       // Our own curation of public embassy guidance: no licence, and so
       // nothing to credit.
       attribution: null,

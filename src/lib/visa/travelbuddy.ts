@@ -190,6 +190,10 @@ export function toEntryRules(payload: unknown): CorridorRuleSet | null {
     lastVerifiedAt: new Date().toISOString(),
     sourceName: "Travel Buddy",
     sourceUrl: embassyUrl,
+    // Providers do not return an application form; only curated
+    // corridors carry one.
+    formName: null,
+    formUrl: null,
     attribution: null,
     contributions: [],
     allowedStay: rules?.primary_rule?.duration ?? null,

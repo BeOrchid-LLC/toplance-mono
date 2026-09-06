@@ -13,6 +13,8 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   lastVerifiedAt: null,
   sourceName: "Travel Buddy",
   sourceUrl: null,
+  formName: null,
+  formUrl: null,
   attribution: null,
   contributions: [],
   allowedStay: null,

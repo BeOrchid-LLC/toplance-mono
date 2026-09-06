@@ -234,6 +234,8 @@ export function toEntryRules(entry: VisaRequirement): CorridorRuleSet | null {
     lastVerifiedAt: entry.updatedAt,
     sourceName: "VisaList",
     sourceUrl: null,
+    formName: null,
+    formUrl: null,
     /**
      * Unconfirmed. The plan requires VisaList's caching and display
      * terms in writing before any of this ships, and until that arrives

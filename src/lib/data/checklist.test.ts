@@ -52,6 +52,8 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
     lastVerifiedAt: null,
     sourceName: null,
     sourceUrl: null,
+    formName: null,
+    formUrl: null,
     processingWeeksMin: null,
     processingWeeksMax: null,
     governmentFeeMinor: null,
@@ -64,6 +66,8 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
       isRequired: true,
       sortOrder,
       sourceUrl: null,
+      formName: null,
+      formUrl: null,
       // Widened so a test can attach a rule to a copy of this fixture;
       // inferred from `null` it would be typed as `null` forever.
       appliesWhen: null as AppliesWhen | null,

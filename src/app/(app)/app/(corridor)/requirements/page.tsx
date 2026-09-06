@@ -596,6 +596,29 @@ export default async function RequirementsPage() {
           </div>
         </Panel>
 
+        {ruleSet.formUrl && (
+          <Panel className="mt-6">
+            <PanelHeader label={t.applicationFormLabel[locale]} />
+            <div className="px-5 py-5 sm:px-6">
+              <a
+                href={ruleSet.formUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="t-title text-brand-text hover:underline"
+              >
+                {ruleSet.formName ?? t.applicationFormLabel[locale]}
+              </a>
+              {/* Linked, never mirrored. A copy of ours is whichever
+                  version we last downloaded, and somebody submitting a
+                  superseded form is refused for a reason nobody can see
+                  from the paperwork. */}
+              <p className="t-muted mt-1.5 max-w-[74ch]">
+                {t.applicationFormBody[locale]}
+              </p>
+            </div>
+          </Panel>
+        )}
+
         <Panel className="mt-6">
           <PanelHeader
             label={t.whatYouMustProvide[locale]}

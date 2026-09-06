@@ -10,6 +10,9 @@ import { RequirementBadge } from "@/components/shared/requirement-badge";
 import { documentUrl, removeDocument, uploadDocument } from "@/app/(app)/actions";
 import { useUploadOutcome } from "@/components/app/upload-outcome";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
+import { DocumentSpecimen } from "@/components/app/document-specimen";
+import { documentGuidance } from "@/lib/domain/document-guidance";
+import { specimenFor } from "@/lib/domain/specimens";
 import { ACCEPT } from "@/lib/domain/uploads";
 import { cn } from "@/lib/utils";
 import { useT } from "@/components/locale-provider";
@@ -53,6 +56,21 @@ export function DocumentRow({
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const needsAttention = doc.state === "flagged" || doc.state === "failed";
+
+  /**
+   * The rejection and the guidance answer different questions, so the row
+   * shows both. It used to show one *or* the other, which meant a flagged
+   * document lost its instructions at the exact moment the traveller was
+   * being asked to upload again: told the file was wrong, and no longer
+   * told what a right one looks like.
+   */
+  const { rejection, guidance } = documentGuidance({
+    reason: doc.reason,
+    description,
+  });
+
+  /** The drawn example, where one has been drawn for this document type. */
+  const specimen = specimenFor(doc.docKey);
 
   /**
    * The outcome dialog is owned by the page, not by this row: uploading
@@ -132,10 +150,31 @@ export function DocumentRow({
             <DocStateBadge state={doc.state} />
             <RequirementBadge required={doc.isRequired} />
           </div>
-          {doc.reason ? (
-            <p className="t-body mt-2 max-w-[74ch] text-ink-2">{doc.reason}</p>
-          ) : description ? (
-            <p className="t-muted mt-2 max-w-[74ch]">{description}</p>
+          {rejection ? (
+            <p className="t-body mt-2 max-w-[74ch] text-ink-2">{rejection}</p>
+          ) : null}
+          {guidance ? (
+            <p className="t-muted mt-2 max-w-[74ch]">{guidance}</p>
+          ) : null}
+          {specimen ? (
+            /* A native disclosure rather than a tooltip. A tooltip has no
+               resting place on a touch screen, and this is exactly the
+               content someone wants open while they line up the shot. */
+            <details className="group mt-2 max-w-[74ch]">
+              <summary className="t-muted cursor-pointer list-none underline decoration-dotted underline-offset-4">
+                <span className="group-open:hidden">
+                  {t(DOCUMENT_ROW.seeExample)}
+                </span>
+                <span className="hidden group-open:inline">
+                  {t(DOCUMENT_ROW.hideExample)}
+                </span>
+              </summary>
+              <DocumentSpecimen
+                specimen={specimen}
+                caption={t(DOCUMENT_ROW.exampleCaption)}
+                pitfallLabel={t(DOCUMENT_ROW.commonlySentBack)}
+              />
+            </details>
           ) : null}
         </div>
 

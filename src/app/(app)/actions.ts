@@ -584,8 +584,8 @@ export async function sendMessage(formData: FormData) {
       }
     }
 
-    // The traveller's messages page and the ops case screen both read
-    // this thread.
+    // The traveller's messages page reads this thread. The agency's own
+    // case screen will too, once it exists.
     revalidatePath("/app", "layout");
     revalidatePath("/ops", "layout");
     return { ok: true };

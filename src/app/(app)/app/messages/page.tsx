@@ -51,6 +51,17 @@ export default async function MessagesPage() {
         <Panel>
           <PanelHeader label={MESSAGES.panelLabel[locale]} />
           <PanelBody>
+            {/* 4.10: an unassigned thread goes to the agency as a
+                whole. A shared inbox is the honest model for a small
+                agency — auto-assigning looks tidier but puts a name
+                against a case nobody has looked at — and silence from a
+                shared inbox reads as being ignored by a person unless
+                the traveller is told what it actually is. */}
+            {!application.assigneeId && (
+              <p className="t-muted mb-5 max-w-[74ch]">
+                {MESSAGES.unclaimedNotice[locale]}
+              </p>
+            )}
             <MessageThread messages={thread} />
             <div className="mt-5 border-t border-border pt-5">
               <MessageComposer applicationId={application.id} />

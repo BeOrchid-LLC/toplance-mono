@@ -1,0 +1,2 @@
+CREATE TYPE "public"."flag_reason" AS ENUM('unreadable', 'expired', 'wrong_document', 'incomplete', 'mismatch', 'other');--> statement-breakpoint
+ALTER TABLE "documents" ADD COLUMN "reason_code" "flag_reason";

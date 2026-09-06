@@ -66,6 +66,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       .select({
         state: documents.state,
         reason: documents.reason,
+        reasonCode: documents.reasonCode,
         precheck: documents.precheck,
         storagePath: documents.storagePath,
       })
@@ -86,7 +87,13 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "flag",
       reason: "The photo page is too dark to read — retake it in better light.",
-      raw: { verdict: "flag", reason: "too dark", notes: ["low light"] },
+      reasonCode: "unreadable",
+      raw: {
+        verdict: "flag",
+        reasonCode: "unreadable",
+        reason: "too dark",
+        notes: ["low light"],
+      },
     });
 
     expect(result).toEqual({ applied: true, travelerId: TRAVELLER });
@@ -96,9 +103,13 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
     expect(row.reason).toBe(
       "The photo page is too dark to read — retake it in better light."
     );
+    // The class support debugs from, since nobody outside the agency can
+    // open the file itself.
+    expect(row.reasonCode).toBe("unreadable");
     expect(row.precheck).toEqual({
       verdict: "flag",
       reason: "too dark",
+      reasonCode: "unreadable",
       notes: ["low light"],
     });
   });
@@ -120,6 +131,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "flag",
       reason: "Should never land.",
+      reasonCode: "unreadable",
       raw: { verdict: "flag", reason: "Should never land.", notes: [] },
     });
 
@@ -151,6 +163,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "flag",
       reason: "Stale verdict for the old upload.",
+      reasonCode: "unreadable",
       raw: { verdict: "flag", reason: "Stale verdict for the old upload.", notes: [] },
     });
 
@@ -169,6 +182,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "pass",
       reason: "",
+      reasonCode: "other",
       raw: { verdict: "pass", reason: "", notes: [] },
     });
 

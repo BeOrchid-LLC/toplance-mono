@@ -65,6 +65,34 @@ export const applicationStatus = pgEnum("application_status", [
   "rejected",
 ]);
 
+/**
+ * Why a document was sent back, as a class rather than a sentence.
+ *
+ * Decision 5 of 6 September removed BeOrchid's every path to a
+ * traveller's documents, which made the flag reason the whole of what
+ * support outside the agency can debug from — and that reason is free
+ * text, usually written by a model. Prose cannot be aggregated, compared
+ * across cases, or trusted to mean the same thing twice.
+ *
+ * The class is for whoever is debugging; the sentence beside it is for
+ * the traveller, and stays. `other` exists so nothing is forced into a
+ * wrong bucket, and a rising `other` count is itself the signal that
+ * this list needs another entry.
+ */
+export const flagReason = pgEnum("flag_reason", [
+  /** Blurry, dark, cropped, glare — the file is fine, the capture is not. */
+  "unreadable",
+  /** In date terms, not usable. */
+  "expired",
+  /** They uploaded something else. */
+  "wrong_document",
+  /** The right document, missing pages or fields. */
+  "incomplete",
+  /** Details do not match what they told us — usually the name. */
+  "mismatch",
+  "other",
+]);
+
 export const documentState = pgEnum("document_state", [
   "not_started",
   "uploaded",
@@ -609,7 +637,10 @@ export const documents = pgTable(
     description: text(),
     state: documentState().notNull().default("not_started"),
     storagePath: text(),
+    /** The sentence the traveller reads. */
     reason: text(),
+    /** The same refusal as a class, for whoever has to debug it later. */
+    reasonCode: flagReason(),
     /**
      * Structured result of the AI pre-check that runs after upload; the
      * traveller-facing sentence goes in `reason`, this column keeps the
@@ -891,3 +922,5 @@ export type CaseNote = typeof caseNotes.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type CompanionUpdate = typeof companionUpdates.$inferSelect;
 export type FxRate = typeof fxRates.$inferSelect;
+
+export type FlagReason = (typeof flagReason.enumValues)[number];

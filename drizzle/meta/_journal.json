@@ -148,6 +148,13 @@
       "when": 1788699856541,
       "tag": "0020_many_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788700965346,
+      "tag": "0021_outgoing_devos",
+      "breakpoints": true
     }
   ]
 }

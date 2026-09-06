@@ -4,11 +4,11 @@ import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { markBillableIfComplete } from "@/lib/data/billing";
-import { applications, documents } from "@/lib/db/schema";
+import { applications, documents, type FlagReason } from "@/lib/db/schema";
 
 export type ReviewVerdict =
   | { verdict: "verified" }
-  | { verdict: "flagged"; reason: string };
+  | { verdict: "flagged"; reason: string; reasonCode: FlagReason };
 
 /**
  * `documentName` and `travelerId` are what the caller needs to tell the
@@ -113,12 +113,14 @@ export async function reviewDocumentTx(
           ? {
               state: "verified",
               reason: null,
+              reasonCode: null,
               checkedAt: new Date(),
               verifiedBy: reviewerId,
             }
           : {
               state: "flagged",
               reason: review.reason.trim(),
+              reasonCode: review.reasonCode,
               checkedAt: new Date(),
               verifiedBy: null,
             }

@@ -26,6 +26,10 @@ export const DOCUMENT_ROW: {
   upload: L;
   removedToast: L;
   openFailed: L;
+  seeExample: L;
+  hideExample: L;
+  exampleCaption: L;
+  commonlySentBack: L;
 } = {
   viewAria: {
     en: "View {name}",
@@ -170,5 +174,53 @@ export const DOCUMENT_ROW: {
     ar: "تعذّر فتح هذا الملف.",
     tw: "Wɔantumi ammue saa faele no.",
     zu: "Leli fayela alikwazanga ukuvulwa.",
+  },
+  seeExample: {
+    en: "What does an acceptable one look like?",
+    ha: "Yaya wanda ya dace yake kama?",
+    yo: "Kí ni ìrísí èyí tí ó bá tọ́?",
+    ig: "Gịnị ka nke a nabatara na-adị ka ya?",
+    fr: "À quoi ressemble un document acceptable ?",
+    pt: "Qual é o aspeto de um documento aceitável?",
+    sw: "Inayokubalika inaonekanaje?",
+    ar: "كيف يبدو المستند المقبول؟",
+    tw: "Deɛ wɔgye tom no te sɛn?",
+    zu: "Elamukelekayo libukeka kanjani?",
+  },
+  hideExample: {
+    en: "Hide the example",
+    ha: "Ɓoye misalin",
+    yo: "Fi àpẹẹrẹ pamọ́",
+    ig: "Zoo ihe atụ ahụ",
+    fr: "Masquer l'exemple",
+    pt: "Ocultar o exemplo",
+    sw: "Ficha mfano",
+    ar: "إخفاء المثال",
+    tw: "Fa nhwɛsoɔ no sie",
+    zu: "Fihla isibonelo",
+  },
+  exampleCaption: {
+    en: "A drawing, not a real document. Yours will look different — these are the parts that have to be readable.",
+    ha: "Zane ne, ba takarda ta gaske ba. Taka za ta bambanta — waɗannan su ne sassan da dole a iya karantawa.",
+    yo: "Àwòrán ni, kì í ṣe ìwé gidi. Tirẹ yóò yàtọ̀ — àwọn wọ̀nyí ni apá tí ó gbọ́dọ̀ ṣeé kà.",
+    ig: "Ọ bụ eserese, ọ bụghị ezigbo akwụkwọ. Nke gị ga-adị iche — ndị a bụ akụkụ ndị a ga-agụ agụ.",
+    fr: "Un schéma, pas un vrai document. Le vôtre sera différent — voici les parties qui doivent être lisibles.",
+    pt: "Um desenho, não um documento real. O seu será diferente — estas são as partes que têm de estar legíveis.",
+    sw: "Ni mchoro, si hati halisi. Yako itaonekana tofauti — haya ndiyo maeneo yanayopaswa kusomeka.",
+    ar: "هذا رسم توضيحي وليس مستنداً حقيقياً. سيبدو مستندك مختلفاً — هذه هي الأجزاء التي يجب أن تكون واضحة.",
+    tw: "Ɛyɛ mfonini, ɛnyɛ krataa ankasa. Wo deɛ no bɛsono — yeinom ne afaafa a ɛsɛ sɛ wɔtumi kenkan.",
+    zu: "Umdwebo, hhayi idokhumenti langempela. Elakho lizobukeka lihlukile — lezi yizingxenye okumele zifundeke.",
+  },
+  commonlySentBack: {
+    en: "Most often sent back because:",
+    ha: "Mafi yawan dalilin da ake mayarwa:",
+    yo: "Ìdí tí a fi ń dá a padà jùlọ:",
+    ig: "Ihe kacha eme ka e weghachi ya:",
+    fr: "Le plus souvent renvoyé parce que :",
+    pt: "Mais frequentemente devolvido porque:",
+    sw: "Mara nyingi hurudishwa kwa sababu:",
+    ar: "غالباً ما يُعاد لهذا السبب:",
+    tw: "Deɛ enti a wɔsan de ba mpɛn pii:",
+    zu: "Ivamise ukubuyiswa ngoba:",
   },
 };

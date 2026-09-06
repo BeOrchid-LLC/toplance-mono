@@ -33,3 +33,42 @@ export const ACCEPTED_LABEL = "JPG, PNG, HEIC or PDF";
  * they take the picture — afterwards it costs them a round trip.
  */
 export const UPLOAD_GUIDANCE = `Upload a clear, high-resolution image or PDF — a blurred, cropped or dark file cannot be read and will be sent back. ${ACCEPTED_LABEL}, up to ${MAX_UPLOAD_LABEL} each.`;
+
+/** Why a file was refused. Keys into `UPLOAD_ACTIONS`, never prose. */
+export type UploadRejection = "empty" | "tooLarge" | "unsupportedType";
+
+/**
+ * Whether the server takes this MIME type.
+ *
+ * `ACCEPT` filters the file dialog, and every browser lets a determined
+ * person past it — "All files" in the picker, a drag from the desktop, a
+ * hand-rolled POST. `uploadDocument` checked emptiness and size and
+ * nothing else, so a `.docx` or an `.exe` was stored in the documents
+ * bucket under a traveller's application and waited there for a reviewer
+ * to open it.
+ *
+ * Derived from the same two facts `ACCEPT` advertises rather than a
+ * second list beside it, because a second list is a list that drifts.
+ */
+export function isAcceptedType(mimeType: string): boolean {
+  return mimeType.startsWith("image/") || mimeType === "application/pdf";
+}
+
+/**
+ * The server's verdict on a chosen file, before anything is uploaded.
+ *
+ * Order matters and is not arbitrary: someone who picked the wrong thing
+ * entirely should be told that, rather than told to photograph their
+ * spreadsheet at a lower resolution. Emptiness first (they picked
+ * nothing), then type (they picked the wrong kind of thing), then size
+ * (they picked the right thing badly).
+ */
+export function validateUpload(file: {
+  size: number;
+  type: string;
+}): UploadRejection | null {
+  if (file.size === 0) return "empty";
+  if (!isAcceptedType(file.type)) return "unsupportedType";
+  if (file.size > MAX_UPLOAD_BYTES) return "tooLarge";
+  return null;
+}

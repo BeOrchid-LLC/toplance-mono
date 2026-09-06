@@ -24,7 +24,9 @@ import { requireStaffAction } from "@/lib/auth/staff-gate";
 import { audit } from "@/lib/audit";
 import { aiEnabled } from "@/lib/ai/models";
 import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
-import { MAX_UPLOAD_BYTES, MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
+import { MAX_UPLOAD_LABEL, validateUpload } from "@/lib/domain/uploads";
+import { UPLOAD_ACTIONS } from "@/lib/i18n/upload-actions";
+import { getLocale } from "@/lib/i18n/server";
 import {
   deleteDocument,
   putDocument,
@@ -115,12 +117,32 @@ export async function uploadDocument(formData: FormData) {
 
   const file = formData.get("file");
 
-  if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choose a file or take a photo first." };
+  /**
+   * Read once, used by every refusal below. These messages reach a
+   * traveller mid-upload, usually on a phone — the one moment the
+   * product has to be in their own language, and the one place it was
+   * hard-coded English until 05/09.
+   */
+  const locale = await getLocale();
+
+  if (!(file instanceof File)) {
+    return { error: UPLOAD_ACTIONS.empty[locale] };
   }
-  if (file.size > MAX_UPLOAD_BYTES) {
+
+  /**
+   * Emptiness, then type, then size — the order a person can act on.
+   * The type check is the new one: `ACCEPT` filters the picker and every
+   * browser lets a determined person past it, so until now a `.docx`
+   * was stored in the documents bucket under a traveller's application
+   * and waited there for a reviewer to open.
+   *
+   * `{size}` appears only in `tooLarge`; the replace is a no-op on the
+   * rest, the same way `DOCUMENT_ROW`'s `{name}` replacements are.
+   */
+  const rejection = validateUpload(file);
+  if (rejection) {
     return {
-      error: `That file is over ${MAX_UPLOAD_LABEL}. Photograph it again at a lower size.`,
+      error: UPLOAD_ACTIONS[rejection][locale].replace("{size}", MAX_UPLOAD_LABEL),
     };
   }
 
@@ -142,7 +164,7 @@ export async function uploadDocument(formData: FormData) {
     )
     .limit(1);
 
-  if (!previous) return { error: "That document is not on your checklist." };
+  if (!previous) return { error: UPLOAD_ACTIONS.notOnChecklist[locale] };
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
   const path = `${applicationId}/${docKey}/${Date.now()}-${safeName}`;
@@ -150,10 +172,7 @@ export async function uploadDocument(formData: FormData) {
   try {
     await putDocument(path, file);
   } catch {
-    return {
-      error:
-        "That upload did not complete. Your place is saved — try again when you have signal.",
-    };
+    return { error: UPLOAD_ACTIONS.uploadFailed[locale] };
   }
 
   await db

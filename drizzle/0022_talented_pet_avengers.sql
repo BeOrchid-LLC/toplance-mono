@@ -1,0 +1,2 @@
+ALTER TABLE "profiles" DROP CONSTRAINT "locale_supported";--> statement-breakpoint
+ALTER TABLE "profiles" ADD CONSTRAINT "locale_supported" CHECK ("profiles"."locale" in ('en', 'ha', 'yo', 'ig', 'fr', 'pt', 'sw', 'ar', 'tw', 'zu'));

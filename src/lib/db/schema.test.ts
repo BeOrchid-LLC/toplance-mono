@@ -317,3 +317,57 @@ describe.skipIf(!process.env.DATABASE_URL)("applications indexes", async () => {
     }
   });
 });
+
+/**
+ * The second defect the v1.3 correction found. `LOCALES` carries ten
+ * codes and the check constraint allowed four, so selecting French,
+ * Portuguese, Swahili, Arabic, Twi or isiZulu failed the write — six of
+ * the ten languages in the menu could not be saved.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("profiles.locale", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { profiles } = await import("@/lib/db/schema");
+  const { LOCALES } = await import("@/lib/i18n/locales");
+
+  const USER = "test_locale_constraint";
+
+  it("accepts every locale the interface offers", async () => {
+    await db
+      .insert(profiles)
+      .values({ id: USER, email: "locale@test.invalid", fullName: "Ada" });
+
+    try {
+      for (const { code } of LOCALES) {
+        await db.update(profiles).set({ locale: code }).where(eq(profiles.id, USER));
+
+        const [row] = await db
+          .select({ locale: profiles.locale })
+          .from(profiles)
+          .where(eq(profiles.id, USER));
+        expect(row.locale, code).toBe(code);
+      }
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, USER));
+    }
+  });
+
+  it("still refuses a code the interface does not offer", async () => {
+    // The constraint is not merely widened away — a language nobody
+    // translated must not reach the column, or a page renders blank
+    // where a string should be.
+    await db
+      .insert(profiles)
+      .values({ id: USER, email: "locale@test.invalid", fullName: "Ada" });
+
+    try {
+      await expect(
+        db.update(profiles).set({ locale: "de" }).where(eq(profiles.id, USER))
+      ).rejects.toThrow();
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, USER));
+    }
+  });
+});

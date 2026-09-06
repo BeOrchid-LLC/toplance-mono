@@ -234,7 +234,22 @@ export const profiles = pgTable(
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    check("locale_supported", sql`${t.locale} in ('en', 'ha', 'yo', 'ig')`),
+    /**
+     * Kept in step with `LOCALES` in `@/lib/i18n/locales`, by hand,
+     * because a check constraint cannot read TypeScript. It listed four
+     * codes while the menu offered ten, so a traveller selecting French,
+     * Portuguese, Swahili, Arabic, Twi or isiZulu failed the write —
+     * six of the ten languages could not be saved at all.
+     *
+     * Still a closed list rather than no constraint: a language nobody
+     * has translated must not reach this column, or a page renders blank
+     * where a string should be. Adding a language means adding it here
+     * too, and `schema.test.ts` fails if the two drift apart.
+     */
+    check(
+      "locale_supported",
+      sql`${t.locale} in ('en', 'ha', 'yo', 'ig', 'fr', 'pt', 'sw', 'ar', 'tw', 'zu')`
+    ),
     check(
       "staff_role_only_for_staff",
       sql`${t.staffRole} is null or ${t.role} = 'staff'`

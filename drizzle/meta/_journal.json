@@ -155,6 +155,13 @@
       "when": 1788700965346,
       "tag": "0021_outgoing_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788701883133,
+      "tag": "0022_talented_pet_avengers",
+      "breakpoints": true
     }
   ]
 }

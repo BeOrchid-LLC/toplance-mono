@@ -23,7 +23,8 @@
     "e2e": "playwright test",
     "encryption:verify": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-encryption.mts",
     "sources:verify": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-sources.mts",
-    "db:intake-codes": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/intake-codes.mts"
+    "db:intake-codes": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/intake-codes.mts",
+    "email:verify": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/notifications/verify-dns.mts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.47",

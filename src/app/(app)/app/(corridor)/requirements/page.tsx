@@ -11,6 +11,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   getDocuments,
   getIntakeAnswers,
+  getIntakeCodes,
   getApplication,
 } from "@/lib/data/applications";
 import { adoptRuleSet } from "@/lib/data/checklist";
@@ -227,18 +228,21 @@ export default async function RequirementsPage() {
   if (!application) redirect("/sign-in?next=/app/requirements");
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [initialDocs, answers] = await Promise.all([
+  const [initialDocs, answers, codes] = await Promise.all([
     getDocuments(application.id),
     getIntakeAnswers(application.id),
+    getIntakeCodes(application.id),
   ]);
   let docs = initialDocs;
 
   // Resolved from the answers rather than read from the corridors table,
   // so a provider with no row of ours behind it serves this screen the
   // same way the curated data does.
-  const nationality = NATIONALITY_ISO[answers.nationality];
-  const destination = DESTINATION_ISO[answers.destination];
-  const purpose = PURPOSE_ISO[answers.purpose];
+  // Codes, not answers: these maps are keyed on canonical values, so a
+  // chip tapped in Hausa resolves here exactly as the English one does.
+  const nationality = codes.nationality ? NATIONALITY_ISO[codes.nationality] : undefined;
+  const destination = codes.destination ? DESTINATION_ISO[codes.destination] : undefined;
+  const purpose = codes.purpose ? PURPOSE_ISO[codes.purpose] : undefined;
 
   // All three or nothing. Nationality used to fall back to `ng`, which
   // served a traveller holding some other passport the Nigerian rule set
@@ -295,7 +299,7 @@ export default async function RequirementsPage() {
   // takes. `adoptRuleSet` is idempotent, so re-running it over a
   // surviving checklist adds nothing and keeps uploads.
   if (docs.length === 0 || !application.corridorId) {
-    await adoptRuleSet(application.id, ruleSet, answers);
+    await adoptRuleSet(application.id, ruleSet, codes);
     docs = await getDocuments(application.id);
   }
 

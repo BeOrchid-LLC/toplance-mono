@@ -282,6 +282,34 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
       expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
     });
 
+    it("keeps the marriage certificate when the answer could not be normalised", async () => {
+      // The client's defect, at the layer it bit. Free text is allowed on
+      // every question, so a traveller who typed "my wife and our son"
+      // rather than tapping "Partner and children" produced no code.
+      // Matching the raw answer resolved that to a certain NO and the
+      // certificate left the checklist — a document they genuinely need,
+      // dropped, and recorded as certain.
+      //
+      // A null code now means the rule cannot be evaluated for this
+      // traveller, so the document stays, hedged. Worse screen, right
+      // answer: a hedge is a question, a missing certificate is a
+      // refused visa.
+      await adoptRuleSet(applicationId, withSpouseRule(), { companions: null });
+
+      const row = (await checklist()).find((d) => d.docKey === "marriage_cert");
+
+      expect(row).toBeDefined();
+      expect(row?.isRequired).toBe(false);
+    });
+
+    it("keeps the hedge when the traveller was never asked", async () => {
+      await adoptRuleSet(applicationId, withSpouseRule(), {});
+
+      const row = (await checklist()).find((d) => d.docKey === "marriage_cert");
+      expect(row).toBeDefined();
+      expect(row?.isRequired).toBe(false);
+    });
+
     it("keeps the hedge when no rule has been written", async () => {
       const set = ruleSet([
         ["passport", "Passport", 1],

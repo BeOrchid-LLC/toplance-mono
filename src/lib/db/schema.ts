@@ -558,7 +558,25 @@ export const intakeAnswers = pgTable(
       .notNull()
       .references(() => applications.id, { onDelete: "cascade" }),
     questionKey: text().notNull(),
+    /** What the traveller actually said. This is what a reviewer reads. */
     value: text().notNull(),
+    /**
+     * `value` reduced to a canonical chip value by `normaliseAnswer`, or
+     * null when it could not be.
+     *
+     * Conditional requirement rules match this, never `value`. Free text
+     * is allowed on every question, so matching the raw answer meant a
+     * traveller who wrote "my wife and our son" instead of tapping
+     * *Partner and children* matched no rule and was resolved as a
+     * certain no — the marriage certificate left their checklist and the
+     * engine recorded that as certain rather than unknown.
+     *
+     * Null is a real and useful state: the rule cannot be evaluated for
+     * this traveller, so the requirement stays hedged rather than being
+     * hidden. Both columns are kept because they answer different
+     * questions — what somebody said, and what the engine may act on.
+     */
+    code: text(),
     answeredAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique("intake_answers_question_key").on(t.applicationId, t.questionKey)]

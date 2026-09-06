@@ -26,7 +26,11 @@ import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 export type AppliesWhenClause = {
   /** An `INTAKE_QUESTIONS` key — `companions`, `purpose`, `history`. */
   answer: string;
-  /** The answers that make this document apply. Matched case-insensitively. */
+  /**
+   * The canonical chip values that make this document apply. Matched
+   * against the *code* `normaliseAnswer` derived, not against whatever
+   * the traveller typed.
+   */
   in: string[];
 };
 
@@ -78,27 +82,35 @@ export type AppliesResult =
  * the checklist, a certain no disappears, and an uncertain one stays in
  * the "only if it applies" list until somebody writes the rule.
  *
- * An answer that is missing from the intake yields the uncertain
- * outcome, not a no. Intake is complete before a checklist exists, so a
- * missing answer means the rule names a topic this traveller was never
- * asked — a data problem — and dropping a document over it is how
- * somebody arrives at a mission without their marriage certificate.
+ * `answers` are **codes**, from `normaliseAnswer` — not the traveller's
+ * own words. That is the whole of the fix to the defect this used to
+ * carry. Free text is allowed on every question, so this once compared
+ * rules against whatever somebody typed: a traveller who wrote "my wife
+ * and our son" rather than tapping *Partner and children* matched
+ * nothing and was resolved as a certain NO, which dropped the marriage
+ * certificate off their checklist and recorded that as certain.
+ *
+ * A null code is now the uncertain outcome, and so is a missing answer.
+ * Both mean the rule could not be evaluated for this traveller, and an
+ * unevaluable rule leaves the requirement hedged rather than hidden. The
+ * asymmetry is deliberate: a hedge is a worse screen, and a wrongly
+ * hidden document is a refused visa.
+ *
+ * Matching is exact. `normaliseAnswer` owns every bit of lenience about
+ * what a traveller's words mean, because two files deciding that can
+ * disagree and only one of them is tested against the chips.
  */
 export function appliesToTraveller(
   rule: AppliesWhen | null,
-  answers: Record<string, string | undefined>
+  answers: Record<string, string | null | undefined>
 ): AppliesResult {
   if (!rule || rule.length === 0) return { applies: true, certain: false };
 
   for (const clause of rule) {
-    const given = answers[clause.answer];
-    if (given == null || !given.trim()) return { applies: true, certain: false };
+    const code = answers[clause.answer];
+    if (code == null || !code.trim()) return { applies: true, certain: false };
 
-    const match = clause.in.some(
-      (option) => option.trim().toLowerCase() === given.trim().toLowerCase()
-    );
-
-    if (!match) return { applies: false, certain: true };
+    if (!clause.in.includes(code)) return { applies: false, certain: true };
   }
 
   return { applies: true, certain: true };

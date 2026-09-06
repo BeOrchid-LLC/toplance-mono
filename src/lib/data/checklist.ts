@@ -27,12 +27,16 @@ export async function adoptRuleSet(
   applicationId: string,
   ruleSet: CorridorRuleSet,
   /**
-   * The traveller's intake answers, which decide which conditional
-   * documents are theirs. Optional, and an empty set behaves exactly as
-   * this function did before conditions existed: every conditional
-   * document is materialised with its hedge intact.
+   * The traveller's intake answers as canonical codes, which decide
+   * which conditional documents are theirs. Optional, and an empty set
+   * behaves exactly as this function did before conditions existed:
+   * every conditional document is materialised with its hedge intact.
+   *
+   * Codes, never the traveller's own words — a null code means the
+   * answer matched no chip, and `appliesToTraveller` reads that as "we
+   * cannot evaluate this rule" rather than as a no.
    */
-  answers: Record<string, string | undefined> = {}
+  answers: Record<string, string | null | undefined> = {}
 ): Promise<void> {
   /**
    * The rule set, narrowed to this one traveller.

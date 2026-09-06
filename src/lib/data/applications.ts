@@ -138,6 +138,7 @@ export async function getApplication(): Promise<Application | null> {
   return existing ?? null;
 }
 
+/** What the traveller said, for the screens a person reads. */
 export async function getIntakeAnswers(applicationId: string) {
   const rows = await db
     .select({
@@ -148,6 +149,30 @@ export async function getIntakeAnswers(applicationId: string) {
     .where(eq(intakeAnswers.applicationId, applicationId));
 
   return Object.fromEntries(rows.map((r) => [r.questionKey, r.value]));
+}
+
+/**
+ * The same answers as canonical codes, for the engine.
+ *
+ * Separate from `getIntakeAnswers` rather than a second field on it,
+ * because the two are read by different callers for different reasons
+ * and mixing them is how the raw answer ends up back in a rule match.
+ * A null code is a real value here: the answer matched no chip, so any
+ * rule naming that topic cannot be evaluated and the requirement stays
+ * hedged.
+ */
+export async function getIntakeCodes(
+  applicationId: string
+): Promise<Record<string, string | null>> {
+  const rows = await db
+    .select({
+      questionKey: intakeAnswers.questionKey,
+      code: intakeAnswers.code,
+    })
+    .from(intakeAnswers)
+    .where(eq(intakeAnswers.applicationId, applicationId));
+
+  return Object.fromEntries(rows.map((r) => [r.questionKey, r.code]));
 }
 
 export async function getDocuments(applicationId: string): Promise<DocumentRow[]> {

@@ -64,12 +64,26 @@ describe("appliesToTraveller", () => {
     });
   });
 
-  it("ignores case and surrounding space", () => {
-    // The answer can arrive from a chip, from free text, or from the
-    // model repeating the chip's label back — three paths, one string.
-    expect(
-      appliesToTraveller(MARRIED, { companions: "  partner  " }).applies
-    ).toBe(true);
+  it("hedges rather than hides when the answer could not be normalised", () => {
+    // The defect this closes. Free text is allowed on every question, so
+    // a traveller who typed "my wife and our son" produced no code —
+    // and this used to read the raw text, match nothing, and resolve to
+    // a certain NO, dropping the marriage certificate off the checklist
+    // and recording the decision as certain.
+    expect(appliesToTraveller(MARRIED, { companions: null })).toEqual({
+      applies: true,
+      certain: false,
+    });
+  });
+
+  it("matches codes exactly, leaving the lenience to normaliseAnswer", () => {
+    // One place decides what a traveller's words mean. Accepting a
+    // near-match here as well would put that judgement in two files that
+    // can disagree.
+    expect(appliesToTraveller(MARRIED, { companions: "  partner  " })).toEqual({
+      applies: false,
+      certain: true,
+    });
   });
 
   it("ANDs its clauses", () => {

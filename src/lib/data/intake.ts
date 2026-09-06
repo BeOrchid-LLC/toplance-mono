@@ -4,6 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, intakeAnswers } from "@/lib/db/schema";
+import { normaliseAnswer } from "@/lib/domain/normalise-answer";
 import { adoptRuleSet } from "@/lib/data/checklist";
 import {
   DESTINATION_ISO,
@@ -40,13 +41,19 @@ export async function recordIntakeAnswer(
 
   const laterKeys = INTAKE_QUESTIONS.slice(index + 1).map((q) => q.key);
 
+  // Stored beside the answer, not instead of it: the reviewer reads what
+  // the traveller wrote, the rules match the code. Null when the answer
+  // matches no chip, which leaves every rule naming this topic
+  // unevaluable — and an unevaluable rule hedges rather than hides.
+  const code = normaliseAnswer(questionKey, value);
+
   await db
     .insert(intakeAnswers)
-    .values({ applicationId, questionKey, value })
+    .values({ applicationId, questionKey, value, code })
     .onConflictDoUpdate({
       target: [intakeAnswers.applicationId, intakeAnswers.questionKey],
       // Re-answering is a new answer, so it carries a new timestamp.
-      set: { value, answeredAt: new Date() },
+      set: { value, code, answeredAt: new Date() },
     });
 
   if (laterKeys.length) {
@@ -64,15 +71,21 @@ export async function recordIntakeAnswer(
     .select({
       questionKey: intakeAnswers.questionKey,
       value: intakeAnswers.value,
+      code: intakeAnswers.code,
     })
     .from(intakeAnswers)
     .where(eq(intakeAnswers.applicationId, applicationId));
 
+  // Completeness is about having answered, so it reads `value`: an
+  // answer nothing could normalise is still an answer, and a traveller
+  // must not be held at 10 of 11 questions for phrasing one in their own
+  // words. The checklist gets the codes, which is a different question.
   const map = Object.fromEntries(answers.map((a) => [a.questionKey, a.value]));
+  const codes = Object.fromEntries(answers.map((a) => [a.questionKey, a.code]));
   const complete = INTAKE_QUESTIONS.every((q) => map[q.key]);
 
   if (complete) {
-    await buildChecklist(applicationId, map, userId);
+    await buildChecklist(applicationId, codes, map, userId);
     await track("toplance.intake_completed", { applicationId }, userId);
   } else {
     await db
@@ -96,12 +109,19 @@ export async function recordIntakeAnswer(
  */
 async function buildChecklist(
   applicationId: string,
+  /** Canonical codes, for everything the engine acts on. */
+  codes: Record<string, string | null>,
+  /** The traveller's own words, for what a person will read. */
   answers: Record<string, string>,
   userId: string
 ) {
-  const nationality = NATIONALITY_ISO[answers.nationality];
-  const destination = DESTINATION_ISO[answers.destination];
-  const purpose = PURPOSE_ISO[answers.purpose];
+  // Keyed on canonical values, so these read the code rather than the
+  // answer — which also fixes a quieter bug: a Hausa speaker tapping
+  // "Najeriya" produced no lookup at all, and fell into the unserved
+  // branch below as though we did not cover their passport.
+  const nationality = codes.nationality ? NATIONALITY_ISO[codes.nationality] : undefined;
+  const destination = codes.destination ? DESTINATION_ISO[codes.destination] : undefined;
+  const purpose = codes.purpose ? PURPOSE_ISO[codes.purpose] : undefined;
 
   if (!nationality || !destination || !purpose) {
     // An answer we have no code for is still demand. Record what they
@@ -181,7 +201,8 @@ async function buildChecklist(
 
   // The answers decide which conditional documents are this traveller's,
   // so the checklist is materialised against them rather than in full.
-  await adoptRuleSet(applicationId, ruleSet, answers);
+  // Codes, not answers: the rules match canonical values.
+  await adoptRuleSet(applicationId, ruleSet, codes);
 
   await db
     .update(applications)

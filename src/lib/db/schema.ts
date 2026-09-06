@@ -208,6 +208,22 @@ export const organisations = pgTable(
     domain: text(),
     seatsPurchased: integer().notNull().default(0),
     billingContact: text(),
+    /**
+     * When BeOrchid suspended this agency, or null while it is live.
+     *
+     * Suspension is how an agency is removed — the row is never deleted,
+     * so every application, document and message stays intact and the
+     * decision is reversible on the day they pay. What it takes away is
+     * the agency's reach: `liveOrgIdsFor` drops a suspended membership
+     * before it ever reaches `Actor.orgIds`, so every policy that asks
+     * `isAgencyFor` answers no at once.
+     *
+     * The traveller keeps their own case throughout. `ownsApplication`
+     * never consults the agency, which is deliberate: a billing dispute
+     * must not lock somebody out of their own passport scan nine days
+     * before an interview.
+     */
+    suspendedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check("seats_not_negative", sql`${t.seatsPurchased} >= 0`)]

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { auth } from "@clerk/nextjs/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -61,6 +61,29 @@ export async function getProfile(): Promise<Profile | null> {
 }
 
 /**
+ * The agencies this person works for, excluding any that are suspended.
+ *
+ * One join is the whole of suspension enforcement. Filtering here means
+ * a suspended agency's members carry no `orgIds`, so `isAgencyFor`
+ * returns false for every policy at once — rather than fifteen surfaces
+ * each remembering to check a flag, which is the arrangement that
+ * eventually forgets.
+ *
+ * Separate from `getActor` because that reads the Clerk session and this
+ * does not, which is what makes the rule testable against a real
+ * database.
+ */
+export async function liveOrgIdsFor(userId: string): Promise<string[]> {
+  const memberships = await db
+    .select({ orgId: orgMembers.orgId })
+    .from(orgMembers)
+    .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
+    .where(and(eq(orgMembers.userId, userId), isNull(organisations.suspendedAt)));
+
+  return memberships.map((m) => m.orgId);
+}
+
+/**
  * The profile plus everything an access decision needs, in the shape
  * `@/lib/auth/policy` expects. Roles live in Postgres, never in Clerk
  * metadata, so this is the only place they are read from.
@@ -69,16 +92,11 @@ export async function getActor(): Promise<Actor | null> {
   const profile = await getProfile();
   if (!profile) return null;
 
-  const memberships = await db
-    .select({ orgId: orgMembers.orgId })
-    .from(orgMembers)
-    .where(eq(orgMembers.userId, profile.id));
-
   return {
     userId: profile.id,
     role: profile.role,
     staffRole: profile.staffRole ?? null,
-    orgIds: memberships.map((m) => m.orgId),
+    orgIds: await liveOrgIdsFor(profile.id),
   };
 }
 

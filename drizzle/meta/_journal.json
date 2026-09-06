@@ -120,6 +120,13 @@
       "when": 1788696210216,
       "tag": "0016_colossal_cargill",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788697245593,
+      "tag": "0017_cool_sentry",
+      "breakpoints": true
     }
   ]
 }

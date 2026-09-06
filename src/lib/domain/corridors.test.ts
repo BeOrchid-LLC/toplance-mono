@@ -12,6 +12,7 @@ import {
   countryFromIso2,
   isCorridorLive,
   liveDestinationsFor,
+  isNationalityServed,
   liveNationalities,
   livePurposesFor,
 } from "@/lib/domain/corridors";
@@ -329,5 +330,50 @@ describe("every code the menus offer resolves to a country", () => {
     // traveller's own data page.
     expect(countryFromIso2("xx")).toBeNull();
     expect(corridorMrz("ng", "xx", "business")).toBeNull();
+  });
+});
+
+/**
+ * The gate. `NATIONALITY_ISO` offers five passports and `LIVE_CORRIDORS`
+ * covers one, so four of the five chips resolve to nothing: a traveller
+ * can be invited, answer eleven questions and arrive at an empty
+ * checklist with no explanation.
+ *
+ * Curation to full parity is the plan and is deferred. Until it lands,
+ * this is what stands between that traveller and the empty screen.
+ */
+describe("isNationalityServed", () => {
+  it("is true for a nationality with live corridors", () => {
+    expect(isNationalityServed("Nigeria")).toBe(true);
+  });
+
+  it("is false for a nationality the menu offers but nothing covers", () => {
+    // Ghana, Kenya, South Africa and Cameroon are all on the intake's
+    // chips today. None has a single live route behind it.
+    expect(isNationalityServed("Ghana")).toBe(false);
+    expect(isNationalityServed("Kenya")).toBe(false);
+    expect(isNationalityServed("South Africa")).toBe(false);
+    expect(isNationalityServed("Cameroon")).toBe(false);
+  });
+
+  it("is false for a country that is not on the menu at all", () => {
+    expect(isNationalityServed("Senegal")).toBe(false);
+  });
+
+  it("is false for an answer that could not be normalised", () => {
+    // A null code reaches here whenever the traveller wrote something
+    // free-text. Unserved is the safe reading: it offers them the
+    // waiting list rather than a checklist built from a guess.
+    expect(isNationalityServed(null)).toBe(false);
+  });
+
+  it("agrees with liveNationalities, which the marketing surface reads", () => {
+    // Two answers to "do we serve this passport" that can disagree is
+    // how a landing page advertises a corridor the intake then refuses.
+    for (const nationality of Object.keys(NATIONALITY_ISO)) {
+      expect(isNationalityServed(nationality)).toBe(
+        liveNationalities().includes(nationality)
+      );
+    }
   });
 });

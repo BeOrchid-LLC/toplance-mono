@@ -31,6 +31,13 @@ export const INTAKE_UI: {
    * vocative in most of these languages.
    */
   greetingFallbackName: L;
+  /**
+   * Shown the moment a traveller names a passport the product does not
+   * cover yet, rather than ten questions later as an empty checklist.
+   * Honest about the state and about what happens next — their answer is
+   * counted towards the coverage decision.
+   */
+  toastUnservedNationality: L;
   toastDegraded: L;
   toastRetry: L;
   toastReopenedLive: L;
@@ -116,6 +123,18 @@ export const INTAKE_UI: {
     ar: "صديقي",
     tw: "adamfo",
     zu: "mngane",
+  },
+  toastUnservedNationality: {
+    en: "We do not cover that passport yet. Your answer is counted — it is how we choose which country to add next.",
+    ha: "Ba mu rufe wannan fasfo ɗin ba tukuna. An ƙidaya amsarka — ita ce hanyar da muke zaɓar ƙasar da za mu ƙara.",
+    yo: "A kò tíì bo ìwé ìrìnà jádè yẹn. A ti ka ìdáhùn rẹ — bẹ́ẹ̀ ni a ṣe ń yan orílẹ̀-èdè tí a ó fi kún un.",
+    ig: "Anyị ekpuchibeghị paspọtụ ahụ. A gụọla azịza gị — ọ bụ otú anyị si ahọrọ mba anyị ga-agbakwunye.",
+    fr: "Nous ne couvrons pas encore ce passeport. Votre réponse est comptée — c'est ainsi que nous choisissons le prochain pays à ajouter.",
+    pt: "Ainda não cobrimos esse passaporte. A sua resposta é contada — é assim que escolhemos o próximo país a acrescentar.",
+    sw: "Bado hatujashughulikia pasipoti hiyo. Jibu lako limehesabiwa — ndivyo tunavyochagua nchi ya kuongeza.",
+    ar: "لا نغطي هذا الجواز بعد. تم احتساب إجابتك — وبها نختار الدولة التالية التي نضيفها.",
+    tw: "Yɛnnya nkataa saa paase no so. Yɛakan wo mmuae — saa na yɛfa so paw ɔman a yɛde bɛka ho.",
+    zu: "Asikakalufaki lolo phasipoti. Impendulo yakho ibaliwe — yindlela esikhetha ngayo izwe elilandelayo.",
   },
   toastDegraded: {
     en: "The agent stopped responding. Carrying on with the short questions.",

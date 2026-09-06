@@ -449,6 +449,33 @@ export function liveDestinationsFor(nationality: string): string[] {
  * than written down, so the sentence that tells a traveller whose
  * passport we do serve cannot go stale the day a corridor is added.
  */
+/**
+ * Whether a passport has any live route behind it.
+ *
+ * `NATIONALITY_ISO` offers five and `LIVE_CORRIDORS` covers one, so four
+ * of the five chips the intake shows resolve to nothing. Without this
+ * check a Ghanaian traveller can be invited, answer eleven questions and
+ * arrive at an empty checklist with no explanation — which is the
+ * product silently failing rather than honestly declining.
+ *
+ * Curating the other four passports to parity is the plan, and it is
+ * deferred: it is data work, and it will be done. This is what holds
+ * until it is, and it is why gating stopped being optional the moment
+ * that curation moved out of the milestone.
+ *
+ * Derived from `liveNationalities` rather than kept beside it, because
+ * two answers to "do we serve this passport" is how a landing page
+ * advertises a corridor the intake then refuses.
+ *
+ * A null code — the traveller wrote something no chip matches — is
+ * unserved. That offers them the waiting list instead of a checklist
+ * built from a guess.
+ */
+export function isNationalityServed(nationality: string | null): boolean {
+  if (!nationality) return false;
+  return liveNationalities().includes(nationality);
+}
+
 export function liveNationalities(): string[] {
   return Object.keys(NATIONALITY_ISO).filter((nationality) =>
     liveDestinationsFor(nationality).length > 0

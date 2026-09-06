@@ -4,6 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, intakeAnswers } from "@/lib/db/schema";
+import { isNationalityServed } from "@/lib/domain/corridors";
 import { normaliseAnswer } from "@/lib/domain/normalise-answer";
 import { adoptRuleSet } from "@/lib/data/checklist";
 import {
@@ -15,7 +16,18 @@ import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { resolveRuleSet } from "@/lib/visa";
 import { track } from "@/lib/analytics/track";
 
-export type IntakeAnswerResult = { complete: boolean } | { error: string };
+export type IntakeAnswerResult =
+  | {
+      complete: boolean;
+      /**
+       * They hold a passport nothing covers yet. The answer is still
+       * recorded — it is what the interest log counts — but the screen
+       * has to say so now rather than let them answer ten more
+       * questions and meet an empty checklist.
+       */
+      unservedNationality?: true;
+    }
+  | { error: string };
 
 /**
  * Record one intake answer. Re-answering an earlier question clears
@@ -56,6 +68,21 @@ export async function recordIntakeAnswer(
       set: { value, code, answeredAt: new Date() },
     });
 
+  // The gate, at selection rather than at the end. Answering
+  // "Ghana" today resolves to no corridor, and without this the
+  // traveller finds that out eleven questions later, as an empty
+  // checklist with no explanation.
+  const unservedNationality =
+    questionKey === "nationality" && !isNationalityServed(code);
+
+  if (unservedNationality) {
+    await track(
+      "toplance.nationality_unserved",
+      { applicationId, nationality: code ?? value },
+      userId
+    );
+  }
+
   if (laterKeys.length) {
     await db
       .delete(intakeAnswers)
@@ -94,7 +121,7 @@ export async function recordIntakeAnswer(
       .where(eq(applications.id, applicationId));
   }
 
-  return { complete };
+  return unservedNationality ? { complete, unservedNationality } : { complete };
 }
 
 /**

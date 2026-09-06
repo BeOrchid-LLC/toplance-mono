@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 
@@ -199,4 +199,44 @@ describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
     expect(result).toEqual({ error: "Unknown question." });
     expect(await storedAnswers()).toEqual({});
   });
+
+  it("flags a passport nothing covers yet, and still records the answer", async () => {
+    // At selection, not eleven questions later. Without this a Ghanaian
+    // traveller answers the whole intake and meets an empty checklist
+    // with no explanation — the product silently failing rather than
+    // honestly declining.
+    const result = await recordIntakeAnswer(
+      applicationId,
+      "nationality",
+      "Ghana",
+      TRAVELLER
+    );
+
+    expect(result).toEqual({ complete: false, unservedNationality: true });
+
+    // Recorded regardless: the answer is what the interest log counts,
+    // and which passport to curate next should come from who asked.
+    const stored = await db
+      .select({ value: intakeAnswers.value, code: intakeAnswers.code })
+      .from(intakeAnswers)
+      .where(
+        and(
+          eq(intakeAnswers.applicationId, applicationId),
+          eq(intakeAnswers.questionKey, "nationality")
+        )
+      );
+    expect(stored).toEqual([{ value: "Ghana", code: "Ghana" }]);
+  });
+
+  it("says nothing about a passport that is covered", async () => {
+    const result = await recordIntakeAnswer(
+      applicationId,
+      "nationality",
+      "Nigeria",
+      TRAVELLER
+    );
+
+    expect(result).toEqual({ complete: false });
+  });
+
 });

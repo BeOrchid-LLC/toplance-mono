@@ -165,11 +165,18 @@ export async function adoptRuleSet(
  * Until this existed that person was invisible to the desk, which is
  * the opposite of what a checklist at 100% should mean.
  *
- * "Collected" is the same definition `completionOf` draws the ring
- * from — uploaded and either awaiting or past review — not "verified".
- * Waiting for verification would make this fire when a reviewer
- * finished, which is news to nobody, since a reviewer is already
- * looking.
+ * "Collected" here means uploaded and awaiting or past review, and it
+ * deliberately parted company with `completionOf` on 6 September. The
+ * ring counts a flagged document, so a traveller told their passport
+ * photo is blurry does not watch their progress fall backwards. This
+ * does not: a flag is the reviewer saying that document is outstanding,
+ * and telling them "the checklist is complete" the moment after they
+ * flagged something is noise from a desk they are already sitting at.
+ *
+ * Not "verified" either. Waiting for verification would make this fire
+ * when a reviewer finished, which is news to nobody, since a reviewer is
+ * already looking. Billing does gate on verified — see
+ * `markBillableIfComplete` — because that answers a different question.
  *
  * Written the way `markBillableIfComplete` is, and for the same reason:
  * completion is not monotonic, so the column is what makes one

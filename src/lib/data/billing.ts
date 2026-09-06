@@ -58,8 +58,10 @@ export async function activeRateCard(at: Date = new Date()): Promise<RateCard> {
  *  - **`billable_at is null`**, enforced in the UPDATE's own WHERE rather
  *    than checked first. Two documents verified concurrently would both
  *    see a complete checklist; only one row update can win.
- *  - **every required document collected**, which is `completionOf`'s
- *    100% — uploaded and past pre-check.
+ *  - **every required document verified**, which is a reviewer's
+ *    verdict on each one, not `completionOf`'s 100%. The ring measures
+ *    collecting; this measures finishing, and they parted company on
+ *    6 September.
  *
  * Takes the transaction it is called inside so the stamp commits with
  * the document write that caused it: a crash between the two would
@@ -89,10 +91,17 @@ export async function markBillableIfComplete(
   const required = rows.filter((d) => d.isRequired);
   if (required.length === 0) return { becameBillable: false };
 
-  const collected = required.filter(
-    (d) => d.state === "checking" || d.state === "verified"
-  ).length;
-  if (collected < required.length) return { becameBillable: false };
+  // Verified, not collected. Decision 4 of 6 September: an application
+  // "finishes" when every document has passed its check — an invitation
+  // nobody accepted, a checklist still being filled and one whose
+  // documents came back rejected are never charged. A flagged document
+  // is the reviewer saying this is not done, so it holds the meter.
+  //
+  // The cost was named and accepted: the party being billed decides when
+  // it is billed, and an agency that never reviews is never charged.
+  // There is deliberately no timer and no auto-verify.
+  const done = required.filter((d) => d.state === "verified").length;
+  if (done < required.length) return { becameBillable: false };
 
   const updated = await tx
     .update(applications)

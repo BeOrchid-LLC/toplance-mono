@@ -185,22 +185,30 @@ export async function getDocuments(applicationId: string): Promise<DocumentRow[]
 
 /**
  * One definition of "percent complete", shared by the traveller's
- * dashboard, the reviewer's queue and the employer's roster. Optional
- * documents are excluded so an applicant is never held below 100% by a
- * document nobody requires.
+ * dashboard and the agency's roster. Optional documents are excluded so
+ * an applicant is never held below 100% by a document nobody requires.
  *
  * The percentage measures *collecting*: a document counts once it is
- * uploaded and either awaiting or past review. Keying it on `verified`
- * alone held the ring at 0% for the whole collecting phase, which reads
- * as "nothing happened" right after an upload. `verified` is still
- * reported on its own because submission gates on it — a file full of
- * `checking` documents is 100% collected and still not submittable.
+ * uploaded, whatever a reviewer has since said about it. Keying it on
+ * `verified` alone held the ring at 0% for the whole collecting phase,
+ * which reads as "nothing happened" right after an upload.
+ *
+ * `flagged` counts too, and that is the fix of 6 September. Taking a
+ * flagged document back out of the numerator dropped the ring the moment
+ * somebody was told their passport photo was blurry — it read as losing
+ * work they had already done, when what actually happened is that one
+ * file needs replacing. `failed` does not count, because that is an
+ * upload that never landed rather than a verdict on one.
+ *
+ * `verified` is still reported on its own because submission gates on
+ * it, and since 6 September billing does too — a file full of `checking`
+ * documents is 100% collected, not submittable, and not billable.
  */
 export function completionOf(docs: DocumentRow[]): Completion {
   const required = docs.filter((d) => d.isRequired);
   const verified = required.filter((d) => d.state === "verified").length;
   const collected = required.filter(
-    (d) => d.state === "checking" || d.state === "verified"
+    (d) => d.state === "checking" || d.state === "verified" || d.state === "flagged"
   ).length;
   const total = required.length;
   return {

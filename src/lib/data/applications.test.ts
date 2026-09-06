@@ -26,8 +26,21 @@ describe("completionOf", () => {
     expect(pct).toBe(100);
   });
 
-  it("does not count flagged or failed documents — they need action", () => {
-    const { pct } = completionOf([doc("flagged"), doc("checking")]);
+  it("counts a flagged document as collected — the file is in", () => {
+    // The ring measures collecting, and a flagged document has been
+    // collected: the traveller uploaded it and a reviewer looked. Taking
+    // it back out dropped the ring the moment somebody was told their
+    // passport photo was blurry, which reads as losing work they did.
+    // `verified` still excludes it, and that is what the submit gate
+    // reads.
+    const { pct, verified } = completionOf([doc("flagged"), doc("checking")]);
+    expect(pct).toBe(100);
+    expect(verified).toBe(0);
+  });
+
+  it("does not count a failed document — nothing was stored", () => {
+    // `failed` is an upload that never landed, not a verdict on one.
+    const { pct } = completionOf([doc("failed"), doc("checking")]);
     expect(pct).toBe(50);
   });
 

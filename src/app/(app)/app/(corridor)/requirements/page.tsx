@@ -616,12 +616,30 @@ export default async function RequirementsPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="t-title">{r.name}</p>
-                  {r.description && (
-                    <p className="t-muted mt-1.5 max-w-[74ch]">
-                      {r.description}
-                    </p>
+                  {/* The names carry the list; the guidance is what
+                      someone opens when they are about to photograph
+                      that one document. A native disclosure rather than
+                      a tooltip, the same idiom `document-row.tsx` uses
+                      and for the same reason: a tooltip has no resting
+                      place on a touch screen. A checklist of fourteen
+                      requirements was otherwise a wall of prose nobody
+                      could scan for the one they were looking for. */}
+                  {r.description ? (
+                    <details className="group mt-1.5 max-w-[74ch]">
+                      <summary className="t-muted cursor-pointer list-none underline decoration-dotted underline-offset-4">
+                        <span className="group-open:hidden">
+                          {t.whatThisMeans[locale]}
+                        </span>
+                        <span className="hidden group-open:inline">
+                          {t.hideDetail[locale]}
+                        </span>
+                      </summary>
+                      <p className="t-muted mt-1.5">{r.description}</p>
+                      <RequirementSource url={r.sourceUrl} locale={locale} />
+                    </details>
+                  ) : (
+                    <RequirementSource url={r.sourceUrl} locale={locale} />
                   )}
-                  <RequirementSource url={r.sourceUrl} locale={locale} />
                 </div>
               </li>
             ))}

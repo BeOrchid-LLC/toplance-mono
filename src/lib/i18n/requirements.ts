@@ -53,6 +53,8 @@ export const REQUIREMENTS: {
   documentsBadge: L;
   onlyIfItApplies: L;
   onlyIfLabel: L;
+  whatThisMeans: L;
+  hideDetail: L;
   conditionalBadge: L;
   startUploading: L;
 } = {
@@ -391,6 +393,30 @@ export const REQUIREMENTS: {
     ar: "مستندات",
     tw: "nkrataa",
     zu: "amadokhumenti",
+  },
+  whatThisMeans: {
+    en: "What this means",
+    ha: "Ma'anar wannan",
+    yo: "Ohun tí èyí túmọ̀ sí",
+    ig: "Ihe nke a pụtara",
+    fr: "Ce que cela signifie",
+    pt: "O que isto significa",
+    sw: "Maana yake",
+    ar: "ما معنى ذلك",
+    tw: "Deɛ yei kyerɛ",
+    zu: "Okushiwo yilokhu",
+  },
+  hideDetail: {
+    en: "Hide",
+    ha: "Ɓoye",
+    yo: "Fi pamọ́",
+    ig: "Zoo",
+    fr: "Masquer",
+    pt: "Ocultar",
+    sw: "Ficha",
+    ar: "إخفاء",
+    tw: "Fa sie",
+    zu: "Fihla",
   },
   onlyIfLabel: {
     en: "Only if",

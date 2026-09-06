@@ -4,7 +4,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents } from "@/lib/db/schema";
-import { appliesToTraveller } from "@/lib/domain/applies-when";
+import { appliesToTraveller, describeAppliesWhen } from "@/lib/domain/applies-when";
 import type { CorridorRuleSet } from "@/lib/visa/types";
 
 /**
@@ -39,22 +39,40 @@ export async function adoptRuleSet(
   answers: Record<string, string | null | undefined> = {}
 ): Promise<void> {
   /**
-   * The rule set, narrowed to this one traveller.
+   * The rule set, narrowed to this one traveller. Four outcomes, not
+   * three — 4.8 splits the hedge in two because the halves want opposite
+   * treatment.
    *
-   * A conditional document whose rule they match stops being
-   * conditional — it is stored as required, because for them it is. One
-   * whose rule they do not match is dropped here, and the stale-row
-   * sweep further down removes it from a checklist it had already been
-   * added to (unless they have uploaded it, which that sweep protects).
-   * One with no rule yet keeps `isRequired: false` and the hedge.
+   * Matched: stops being conditional and is stored as required, because
+   * for them it is.
+   *
+   * Not matched: dropped here, and the stale-row sweep further down
+   * removes it from a checklist it had already been added to (unless
+   * they have uploaded it, which that sweep protects).
+   *
+   * Rule exists, could not be evaluated: kept, not required, and
+   * carrying its condition in the words the traveller was asked. This is
+   * the only unresolved state they can act on, and showing them the
+   * condition is what turns "only if it applies" into a real question.
+   *
+   * No rule written: dropped from the traveller's checklist entirely.
+   * That is BeOrchid's unfinished curation, and putting it in front of a
+   * traveller asks them to decide the exact thing this product exists to
+   * decide for them. `corridorCoverageGaps` raises it on the agency side
+   * instead.
    */
   const requirements = ruleSet.requirements.flatMap((r) => {
-    if (r.isRequired) return [r];
+    if (r.isRequired) return [{ ...r, condition: null }];
 
     const verdict = appliesToTraveller(r.appliesWhen, answers);
     if (!verdict.applies) return [];
 
-    return [{ ...r, isRequired: verdict.certain }];
+    if (verdict.certain) return [{ ...r, isRequired: true, condition: null }];
+    if (verdict.reason === "unwritten") return [];
+
+    return [
+      { ...r, isRequired: false, condition: describeAppliesWhen(r.appliesWhen) },
+    ];
   });
 
   const existing = await db
@@ -79,6 +97,7 @@ export async function adoptRuleSet(
       // has no corridor row of ours behind it. See the column comment.
       description: r.description,
       isRequired: r.isRequired,
+      condition: r.condition,
       sortOrder: r.sortOrder,
     }));
 

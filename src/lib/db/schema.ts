@@ -618,6 +618,19 @@ export const documents = pgTable(
     precheck: jsonb(),
     attempts: integer().notNull().default(0),
     isRequired: boolean().notNull().default(true),
+    /**
+     * Why this requirement is still a maybe, in the words the traveller
+     * was asked — "Who is coming with you? — Partner or Partner and
+     * children".
+     *
+     * Set only on a requirement whose rule exists but could not be
+     * evaluated for this traveller, which is the one unresolved state
+     * they can actually do something about. A requirement nobody has
+     * written a rule for never reaches a checklist at all: that is
+     * BeOrchid's unfinished curation and is raised on the agency side
+     * instead. Null on everything decided.
+     */
+    condition: text(),
     sortOrder: integer().notNull().default(0),
     checkedAt: timestamp({ withTimezone: true }),
     verifiedBy: text().references(() => profiles.id, { onDelete: "set null" }),

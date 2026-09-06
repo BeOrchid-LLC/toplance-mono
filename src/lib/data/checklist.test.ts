@@ -282,6 +282,21 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
       expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
     });
 
+    it("shows an unevaluable requirement with its condition in plain language", async () => {
+      // 4.8, the half the traveller can act on. A rule exists; their
+      // answer could not be matched to it. Telling them the condition is
+      // what turns "only if it applies" into a question they can
+      // actually answer.
+      await adoptRuleSet(applicationId, withSpouseRule(), { companions: null });
+
+      const row = (await checklist()).find((d) => d.docKey === "marriage_cert");
+
+      expect(row?.isRequired).toBe(false);
+      expect(row?.condition).toBe(
+        "Who is coming with you? — Partner or Partner and children"
+      );
+    });
+
     it("keeps the marriage certificate when the answer could not be normalised", async () => {
       // The client's defect, at the layer it bit. Free text is allowed on
       // every question, so a traveller who typed "my wife and our son"
@@ -310,7 +325,38 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
       expect(row?.isRequired).toBe(false);
     });
 
-    it("keeps the hedge when no rule has been written", async () => {
+    it("keeps both unresolved states out of the completion figure", async () => {
+      // The §5 loop, closed. An item still being requested at 100% is
+      // what happens when something undecided sits in the denominator.
+      // Neither kind of unresolved requirement may: the unwritten one is
+      // not on the checklist at all, and the unevaluable one is on it
+      // and not required.
+      const set = ruleSet([
+        ["passport", "Passport", 1],
+        ["marriage_cert", "Marriage certificate", 2],
+        ["bank_statement", "Bank statement", 3],
+      ]);
+      // A rule that cannot be evaluated for this traveller.
+      set.requirements[1].isRequired = false;
+      set.requirements[1].appliesWhen = [{ answer: "companions", in: ["Partner"] }];
+      // A requirement nobody has written a rule for.
+      set.requirements[2].isRequired = false;
+
+      await adoptRuleSet(applicationId, set, { companions: null });
+
+      const rows = await checklist();
+      const required = rows.filter((d) => d.isRequired);
+
+      expect(required.map((d) => d.docKey)).toEqual(["passport"]);
+      expect(rows.map((d) => d.docKey)).toEqual(["passport", "marriage_cert"]);
+    });
+
+    it("hides a requirement nobody has written a rule for", async () => {
+      // 4.8, the other half. A requirement with no rule is BeOrchid's
+      // unfinished curation, and putting it on a traveller's screen asks
+      // them to decide the exact thing this product exists to decide.
+      // It is raised as a coverage gap on the agency side instead —
+      // `corridorCoverageGaps` — and never shown to the traveller.
       const set = ruleSet([
         ["passport", "Passport", 1],
         ["bank_statement", "Bank statement", 2],
@@ -319,12 +365,7 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
 
       await adoptRuleSet(applicationId, set, { companions: "Just me" });
 
-      const row = (await checklist()).find((d) => d.docKey === "bank_statement");
-
-      // Present, and still optional. Until somebody writes the rule, the
-      // honest answer is "this might be yours" — dropping it would be a
-      // confident guess against a traveller's file.
-      expect(row?.isRequired).toBe(false);
+      expect((await checklist()).map((d) => d.docKey)).toEqual(["passport"]);
     });
 
     it("behaves as it always did when given no answers at all", async () => {

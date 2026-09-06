@@ -64,6 +64,33 @@ describe("appliesToTraveller", () => {
     });
   });
 
+  it("says WHY it is unresolved, so the two states can be told apart", () => {
+    // 4.8. Two different things were collapsed into one hedge, and they
+    // want opposite treatment. Nobody has written the rule yet — that is
+    // BeOrchid's unfinished curation, and showing it to a traveller asks
+    // them to decide something the product exists to decide. The rule
+    // exists but this traveller's answer cannot be matched to it — that
+    // one IS theirs to resolve, and they can if we show them the
+    // condition.
+    expect(appliesToTraveller(null, {})).toEqual({
+      applies: true,
+      certain: false,
+      reason: "unwritten",
+    });
+
+    expect(appliesToTraveller(MARRIED, { companions: null })).toEqual({
+      applies: true,
+      certain: false,
+      reason: "unevaluable",
+    });
+
+    expect(appliesToTraveller(MARRIED, {})).toEqual({
+      applies: true,
+      certain: false,
+      reason: "unevaluable",
+    });
+  });
+
   it("hedges rather than hides when the answer could not be normalised", () => {
     // The defect this closes. Free text is allowed on every question, so
     // a traveller who typed "my wife and our son" produced no code —
@@ -73,6 +100,7 @@ describe("appliesToTraveller", () => {
     expect(appliesToTraveller(MARRIED, { companions: null })).toEqual({
       applies: true,
       certain: false,
+      reason: "unevaluable",
     });
   });
 
@@ -101,10 +129,15 @@ describe("appliesToTraveller", () => {
     // never asked is a data problem — and resolving it as "does not
     // apply" is how somebody reaches a mission without their marriage
     // certificate.
-    expect(appliesToTraveller(MARRIED, {})).toEqual({ applies: true, certain: false });
+    expect(appliesToTraveller(MARRIED, {})).toEqual({
+      applies: true,
+      certain: false,
+      reason: "unevaluable",
+    });
     expect(appliesToTraveller(MARRIED, { companions: "" })).toEqual({
       applies: true,
       certain: false,
+      reason: "unevaluable",
     });
   });
 
@@ -115,6 +148,7 @@ describe("appliesToTraveller", () => {
     expect(appliesToTraveller(null, { companions: "Just me" })).toEqual({
       applies: true,
       certain: false,
+      reason: "unwritten",
     });
   });
 });

@@ -71,8 +71,22 @@ export type AppliesResult =
   | { applies: true; certain: true }
   /** A rule exists and this traveller does not match it. */
   | { applies: false; certain: true }
-  /** No rule, or a rule we could not answer — offer it with a hedge. */
-  | { applies: true; certain: false };
+  /**
+   * Unresolved, and which kind matters — 4.8 splits them because they
+   * want opposite treatment.
+   *
+   * `unwritten`: nobody has written a rule for this requirement yet.
+   * That is BeOrchid's unfinished curation, and putting it in front of a
+   * traveller asks them to decide the exact thing the product exists to
+   * decide for them. It is hidden from the traveller and raised on the
+   * agency side as a coverage gap.
+   *
+   * `unevaluable`: a rule exists, and this traveller's answer could not
+   * be matched to it — they wrote something free-text, or were never
+   * asked the topic it names. That one IS theirs to resolve, and they
+   * can, if the screen shows them the condition in plain language.
+   */
+  | { applies: true; certain: false; reason: "unwritten" | "unevaluable" };
 
 /**
  * Whether one conditional document applies to one traveller.
@@ -104,11 +118,15 @@ export function appliesToTraveller(
   rule: AppliesWhen | null,
   answers: Record<string, string | null | undefined>
 ): AppliesResult {
-  if (!rule || rule.length === 0) return { applies: true, certain: false };
+  if (!rule || rule.length === 0) {
+    return { applies: true, certain: false, reason: "unwritten" };
+  }
 
   for (const clause of rule) {
     const code = answers[clause.answer];
-    if (code == null || !code.trim()) return { applies: true, certain: false };
+    if (code == null || !code.trim()) {
+      return { applies: true, certain: false, reason: "unevaluable" };
+    }
 
     if (!clause.in.includes(code)) return { applies: false, certain: true };
   }

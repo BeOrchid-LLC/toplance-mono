@@ -52,6 +52,7 @@ export const REQUIREMENTS: {
   whatYouMustProvide: L;
   documentsBadge: L;
   onlyIfItApplies: L;
+  onlyIfLabel: L;
   conditionalBadge: L;
   startUploading: L;
 } = {
@@ -390,6 +391,18 @@ export const REQUIREMENTS: {
     ar: "مستندات",
     tw: "nkrataa",
     zu: "amadokhumenti",
+  },
+  onlyIfLabel: {
+    en: "Only if",
+    ha: "Sai idan",
+    yo: "Bí ó bá jẹ́ pé",
+    ig: "Naanị ma ọ bụrụ na",
+    fr: "Seulement si",
+    pt: "Apenas se",
+    sw: "Ikiwa tu",
+    ar: "فقط إذا",
+    tw: "Sɛ",
+    zu: "Kuphela uma",
   },
   onlyIfItApplies: {
     en: "Only if it applies",

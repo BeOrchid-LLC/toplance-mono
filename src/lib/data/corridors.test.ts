@@ -354,3 +354,78 @@ describe.skipIf(!process.env.DATABASE_URL)("checklistChangesFrom", async () => {
     expect(change.removed).toEqual(["Doc funds"]);
   });
 });
+
+/**
+ * The other half of 4.8. A requirement with no rule is hidden from the
+ * traveller — asking them to decide it is asking them to do the job this
+ * product exists to do — so it has to surface somewhere, or an agency
+ * hands a client a checklist quietly missing a document.
+ *
+ * Skipped without a database. Run `npm run db:up` to include them.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("corridorCoverageGaps", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { corridorRequirements, corridors } = await import("@/lib/db/schema");
+  const { corridorCoverageGaps } = await import("@/lib/data/corridors");
+
+  const QUERY = {
+    nationalityIso: "zg",
+    destinationIso: "zh",
+    purpose: "work" as const,
+  };
+
+  let corridorId = "";
+
+  beforeEach(async () => {
+    const [row] = await db
+      .insert(corridors)
+      .values({ ...QUERY, visaName: "Gap Test Visa", isLive: true })
+      .returning({ id: corridors.id });
+    corridorId = row.id;
+
+    await db.insert(corridorRequirements).values([
+      { corridorId, docKey: "passport", name: "Passport", isRequired: true, sortOrder: 1 },
+      {
+        corridorId,
+        docKey: "marriage_cert",
+        name: "Marriage certificate",
+        isRequired: false,
+        appliesWhen: [{ answer: "companions", in: ["Partner"] }],
+        sortOrder: 2,
+      },
+      {
+        corridorId,
+        docKey: "bank_statement",
+        name: "Bank statement",
+        isRequired: false,
+        sortOrder: 3,
+      },
+    ]);
+  });
+
+  afterEach(async () => {
+    await db.delete(corridors).where(eq(corridors.id, corridorId));
+  });
+
+  it("names only the conditional requirements with no rule written", async () => {
+    const gaps = await corridorCoverageGaps(corridorId);
+
+    expect(gaps.map((g) => g.docKey)).toEqual(["bank_statement"]);
+  });
+
+  it("carries the name, so the gap reads as a document rather than a key", async () => {
+    const [gap] = await corridorCoverageGaps(corridorId);
+
+    expect(gap.name).toBe("Bank statement");
+  });
+
+  it("is empty for a corridor whose rules are all written", async () => {
+    await db
+      .update(corridorRequirements)
+      .set({ appliesWhen: [{ answer: "purpose", in: ["Work"] }] })
+      .where(eq(corridorRequirements.corridorId, corridorId));
+
+    expect(await corridorCoverageGaps(corridorId)).toEqual([]);
+  });
+});

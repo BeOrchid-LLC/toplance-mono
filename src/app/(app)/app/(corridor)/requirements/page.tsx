@@ -15,7 +15,7 @@ import {
   getApplication,
 } from "@/lib/data/applications";
 import { adoptRuleSet } from "@/lib/data/checklist";
-import { appliesToTraveller } from "@/lib/domain/applies-when";
+import { appliesToTraveller, describeAppliesWhen } from "@/lib/domain/applies-when";
 import { corridorGap } from "@/lib/domain/corridor-gap";
 import { currencyForCountryName } from "@/lib/domain/currencies";
 import { convertFee, formatApproximate } from "@/lib/domain/fx";
@@ -306,20 +306,26 @@ export default async function RequirementsPage() {
   /**
    * The checklist, decided against this traveller's own answers.
    *
-   * Three outcomes per requirement, and the middle one is the point of
-   * the exercise: a conditional document whose rule this traveller
+   * Four outcomes per requirement since 4.8, and the split in the middle
+   * is the point. A conditional document whose rule this traveller
    * matches is simply theirs, and joins the list they must provide
    * rather than a list of maybes. One whose rule they do not match is
-   * not shown at all. One with no rule written yet keeps the hedge —
-   * which is how the "only if it applies" panel empties, corridor by
-   * corridor, as approvers write the rules rather than all at once by
-   * deleting the panel.
+   * not shown at all.
+   *
+   * The two unresolved ones are no longer the same thing. A rule that
+   * could not be evaluated for this traveller stays on the "only if it
+   * applies" panel, and now carries its condition in the words they were
+   * asked — which turns a shrug into a question they can answer. One
+   * with no rule written at all leaves this screen entirely: that is
+   * BeOrchid's unfinished curation, and asking a traveller to decide it
+   * is asking them to do the job this product exists to do. It surfaces
+   * on the agency side instead, through `corridorCoverageGaps`.
    */
   const decided = ruleSet.requirements.map((r) => ({
     requirement: r,
     verdict: r.isRequired
       ? ({ applies: true, certain: true } as const)
-      : appliesToTraveller(r.appliesWhen, answers),
+      : appliesToTraveller(r.appliesWhen, codes),
   }));
 
   const required = decided
@@ -327,7 +333,9 @@ export default async function RequirementsPage() {
     .map((d) => d.requirement);
 
   const conditional = decided
-    .filter((d) => d.verdict.applies && !d.verdict.certain)
+    .filter(
+      (d) => d.verdict.applies && !d.verdict.certain && d.verdict.reason === "unevaluable"
+    )
     .map((d) => d.requirement);
 
   const effective = new Date(ruleSet.effectiveFrom).toLocaleDateString("en-GB", {
@@ -638,6 +646,16 @@ export default async function RequirementsPage() {
                   className="border-b border-dashed border-border-strong px-5 py-5 last:border-0 sm:px-6"
                 >
                   <p className="t-title">{r.name}</p>
+                  {describeAppliesWhen(r.appliesWhen) && (
+                    <p className="t-muted mt-1.5 max-w-[74ch]">
+                      {/* The condition, in the words they were asked it.
+                          Without this the panel says "some of these
+                          might be yours" and leaves the reader to guess
+                          which — the hedge the client objected to. */}
+                      <span className="tag">{t.onlyIfLabel[locale]}</span>{" "}
+                      {describeAppliesWhen(r.appliesWhen)}
+                    </p>
+                  )}
                   {r.description && (
                     <p className="t-muted mt-1.5 max-w-[74ch]">
                       {r.description}

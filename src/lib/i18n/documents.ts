@@ -20,6 +20,15 @@ export const DOCUMENTS: {
   title: L;
   heading: L;
   intro: L;
+  /**
+   * Mandatory copy, not a nicety. Decision 2 of 6 September made the AI
+   * pre-check unconditional — no per-agency switch — so every traveller
+   * on the platform has their document read by a machine, and there is
+   * no configuration under which that is not true. Telling them is the
+   * only thing that makes it honest, and it has to be said where they
+   * upload rather than buried in terms.
+   */
+  precheckDisclosure: L;
   needsAttention: L;
   stillToUpload: L;
   done: L;
@@ -52,6 +61,18 @@ export const DOCUMENTS: {
     ar: "مستنداتك",
     tw: "Wo nkrataa",
     zu: "Amadokhumenti akho",
+  },
+  precheckDisclosure: {
+    en: "Every file you upload is checked by software first — it looks for photos that are too dark, cropped or out of date, so you hear about those in minutes rather than days. No one at Toplance reads your documents; only your agency does.",
+    ha: "Ana duba kowace fayil da ka aika da software da farko — tana neman hotuna masu duhu, waɗanda aka yanke, ko waɗanda suka ƙare, don ka ji labari cikin mintuna maimakon kwanaki. Babu wanda ke Toplance da ke karanta takardunka; hukumarka kaɗai.",
+    yo: "Sọ́fítíwéà ni ó kọ́kọ́ ń yẹ gbogbo fáìlì tí o bá gbé wọlé wò — ó ń wá àwọn fọ́tò tí ó ṣú, tí a gé, tàbí tí ó ti pé, kí o lè gbọ́ nípa wọn ní ìṣẹ́jú dípò ọjọ́. Kò sí ẹnìkan ní Toplance tí ó ń ka àwọn ìwé rẹ; ilé-iṣẹ́ rẹ nìkan ni.",
+    ig: "A na-eburu ụzọ jiri sọftwia nyochaa faịlụ ọ bụla ị bugoro — ọ na-achọ foto gbara ọchịchịrị, nke a bipụrụ, ma ọ bụ nke gafeworo oge, ka ị nụ maka ha n'ime nkeji kama ụbọchị. Ọ dịghị onye nọ na Toplance na-agụ akwụkwọ gị; naanị ụlọ ọrụ gị.",
+    fr: "Chaque fichier que vous envoyez est d'abord vérifié par un logiciel — il repère les photos trop sombres, mal cadrées ou périmées, pour que vous le sachiez en quelques minutes plutôt qu'en plusieurs jours. Personne chez Toplance ne lit vos documents ; seule votre agence le fait.",
+    pt: "Cada ficheiro que envia é primeiro verificado por software — procura fotografias demasiado escuras, cortadas ou fora de validade, para que saiba em minutos em vez de dias. Ninguém na Toplance lê os seus documentos; apenas a sua agência.",
+    sw: "Kila faili unalopakia hukaguliwa kwanza na programu — hutafuta picha zenye giza, zilizokatwa, au zilizopitwa na wakati, ili ujue ndani ya dakika badala ya siku. Hakuna mtu Toplance anayesoma nyaraka zako; wakala wako pekee.",
+    ar: "يُفحَص كل ملف ترفعه بواسطة برنامج أولاً — يبحث عن الصور المظلمة أو المقصوصة أو منتهية الصلاحية، لتعرف ذلك خلال دقائق بدل أيام. لا أحد في Toplance يقرأ مستنداتك؛ وكالتك وحدها.",
+    tw: "Software na edi kan hwɛ fael biara a wode ba — ɛhwehwɛ mfonini a esum, wɔatwa mu, anaa ne berɛ atwam, sɛdeɛ wobɛte wɔ simma mu na ɛnyɛ nna. Obiara nni Toplance a ɔkenkan wo nkrataa; wo ahyehyɛdeɛ nko ara.",
+    zu: "Yonke ifayela olilayishayo lihlolwa kuqala isofthiwe — ifuna izithombe ezimnyama kakhulu, ezinqunyiwe, noma ezidlulelwe yisikhathi, ukuze uzwe ngazo ngemizuzu esikhundleni sezinsuku. Akekho e-Toplance ofunda amadokhumenti akho; inkampani yakho kuphela.",
   },
   intro: {
     en: "Each file is checked automatically within a few seconds of arriving, then confirmed by a person before submission.",

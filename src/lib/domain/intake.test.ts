@@ -340,3 +340,80 @@ describe("resolveChips", () => {
     );
   });
 });
+
+/**
+ * The city question offered Lagos, Abuja, Port Harcourt, Kano and
+ * Ibadan to everybody — including the traveller who had just answered
+ * "Ghana" to the question immediately before it. The intake asks for the
+ * country first for exactly this reason; it just never used the answer.
+ */
+describe("resolveChips — cities follow the country already answered", () => {
+  const residence = INTAKE_QUESTIONS.find((q) => q.key === "residence")!;
+
+  it("offers Ghanaian cities to somebody living in Ghana", () => {
+    const chips = resolveChips(residence, {
+      fullName: "Ada",
+      answers: { residence_country: "Ghana" },
+    });
+
+    expect(chips.map((c) => c.value)).toContain("Accra");
+    expect(chips.map((c) => c.value)).not.toContain("Lagos");
+  });
+
+  it("offers Nigerian cities to somebody living in Nigeria", () => {
+    const chips = resolveChips(residence, {
+      fullName: "Ada",
+      answers: { residence_country: "Nigeria" },
+    });
+
+    expect(chips.map((c) => c.value)).toContain("Lagos");
+    expect(chips.map((c) => c.value)).not.toContain("Accra");
+  });
+
+  it("offers no city chips at all when the country is not one we list", () => {
+    // Free text still answers it. Guessing a city list for a country we
+    // have no data on would put words in their mouth, and the answer is
+    // used to decide which mission they apply at.
+    const chips = resolveChips(residence, {
+      fullName: "Ada",
+      answers: { residence_country: "Senegal" },
+    });
+
+    expect(chips).toEqual([]);
+  });
+
+  it("offers no city chips before the country has been answered", () => {
+    const chips = resolveChips(residence, { fullName: "Ada", answers: {} });
+
+    expect(chips).toEqual([]);
+  });
+
+  it("leaves every other question's chips alone", () => {
+    const nationality = INTAKE_QUESTIONS.find((q) => q.key === "nationality")!;
+    const chips = resolveChips(nationality, { fullName: "Ada", answers: {} });
+
+    expect(chips.map((c) => c.value)).toEqual([
+      "Nigeria",
+      "Ghana",
+      "Kenya",
+      "South Africa",
+      "Cameroon",
+    ]);
+  });
+
+  it("gives every city a label in every language", () => {
+    for (const country of ["Nigeria", "Ghana", "Kenya", "South Africa", "Cameroon"]) {
+      const chips = resolveChips(residence, {
+        fullName: "Ada",
+        answers: { residence_country: country },
+      });
+
+      expect(chips.length, country).toBeGreaterThan(0);
+      for (const chip of chips) {
+        for (const { code } of LOCALES) {
+          expect(chip.label[code], `${country}/${chip.value}/${code}`).toBeTruthy();
+        }
+      }
+    }
+  });
+});

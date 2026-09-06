@@ -2,7 +2,7 @@
 // under plain `node --experimental-strip-types`, which resolves no
 // tsconfig paths. `intake.ts` itself imports only a type across the
 // alias, and types are erased, so this is the one edge that had to move.
-import { INTAKE_QUESTIONS } from "./intake.ts";
+import { allChipsFor, INTAKE_QUESTIONS } from "./intake.ts";
 
 /**
  * One intake answer, reduced to the canonical value a rule can match —
@@ -42,10 +42,12 @@ export function normaliseAnswer(questionKey: string, value: string): string | nu
   const answer = value.trim().toLowerCase();
   if (!answer) return null;
 
-  const question = INTAKE_QUESTIONS.find((q) => q.key === questionKey);
-  if (!question) return null;
+  if (!INTAKE_QUESTIONS.some((q) => q.key === questionKey)) return null;
 
-  for (const chip of question.chips) {
+  // Every chip the question could offer, not the ones this traveller was
+  // shown: the city list is narrowed by their country when they are
+  // asked, and there is no country in scope here.
+  for (const chip of allChipsFor(questionKey)) {
     if (chip.value.trim().toLowerCase() === answer) return chip.value;
 
     for (const label of Object.values(chip.label)) {

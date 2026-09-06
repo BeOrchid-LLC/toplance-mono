@@ -50,6 +50,80 @@ const NATIONS = {
   cameroon: c("Cameroon", { en: "Cameroon", ha: "Kamaru", yo: "Kamerúùnù", ig: "Cameroon", fr: "Cameroun", pt: "Camarões", sw: "Kameruni", ar: "الكاميرون", tw: "Kamerun", zu: "iKamerun" }),
 };
 
+
+/**
+ * A city name that is the same in every Latin-script locale, with room
+ * for the forms that genuinely differ.
+ *
+ * Most place names do not translate — Accra is Accra in nine of the ten
+ * languages here. Writing them out ten times each would be 250 strings
+ * nobody can proofread, and the transposition risk `c` was built to
+ * avoid. Arabic is not Latin script so it always needs its own form, and
+ * a handful of Nigerian cities have real Hausa, Yoruba or Igbo names
+ * that a traveller would recognise.
+ */
+const city = (
+  value: string,
+  ar: string,
+  overrides: Partial<Record<Locale, string>> = {}
+): IntakeQuestion["chips"][number] => ({
+  value,
+  label: {
+    en: value, ha: value, yo: value, ig: value, fr: value,
+    pt: value, sw: value, tw: value, zu: value,
+    ar,
+    ...overrides,
+  },
+});
+
+/**
+ * The cities offered for each country the intake serves.
+ *
+ * The country question is asked immediately before the city one, and
+ * exists to narrow it: a traveller who has just said Ghana was still
+ * being offered Lagos, Abuja and Port Harcourt. A country with no list
+ * here offers no chips at all rather than a guess — free text answers
+ * the question, and the answer decides which mission they apply at, so
+ * putting a city in their mouth is not a small error.
+ */
+const CITIES: Record<string, IntakeQuestion["chips"]> = {
+  Nigeria: [
+    city("Lagos", "لاغوس", { ha: "Legas", yo: "Èkó", zu: "iLagos" }),
+    city("Abuja", "أبوجا", { yo: "Àbùjá", zu: "i-Abuja" }),
+    city("Port Harcourt", "بورت هاركورت", { ha: "Fatakwal", yo: "Pọ́ọ̀tì Hákọ́tì", ig: "Pọtakọt" }),
+    city("Kano", "كانو", { yo: "Kánò" }),
+    city("Ibadan", "إيبادان", { yo: "Ìbàdàn", zu: "i-Ibadan" }),
+  ],
+  Ghana: [
+    city("Accra", "أكرا", { zu: "i-Accra" }),
+    city("Kumasi", "كوماسي"),
+    city("Takoradi", "تاكورادي"),
+    city("Tamale", "تامالي"),
+    city("Cape Coast", "كيب كوست"),
+  ],
+  Kenya: [
+    city("Nairobi", "نيروبي", { zu: "iNairobi" }),
+    city("Mombasa", "مومباسا"),
+    city("Kisumu", "كيسومو"),
+    city("Nakuru", "ناكورو"),
+    city("Eldoret", "إلدوريت"),
+  ],
+  "South Africa": [
+    city("Johannesburg", "جوهانسبرغ", { zu: "iGoli" }),
+    city("Cape Town", "كيب تاون", { zu: "iKapa", fr: "Le Cap", pt: "Cidade do Cabo" }),
+    city("Durban", "ديربان", { zu: "iThekwini" }),
+    city("Pretoria", "بريتوريا", { zu: "iPitoli" }),
+    city("Gqeberha", "غقبيرها"),
+  ],
+  Cameroon: [
+    city("Douala", "دوالا"),
+    city("Yaoundé", "ياوندي"),
+    city("Bamenda", "باميندا"),
+    city("Bafoussam", "بافوسام"),
+    city("Garoua", "غاروا"),
+  ],
+};
+
 /**
  * Eleven topics, asked one at a time. Every answer stays editable:
  * reopening one truncates the conversation at that point, clears what
@@ -146,13 +220,12 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       tw: "Na kurow bɛn mu na wowɔ seesei?",
       zu: "Futhi ukuliphi idolobha noma idolobhana?",
     },
-    chips: [
-      c("Lagos", { en: "Lagos", ha: "Legas", yo: "Èkó", ig: "Lagos", fr: "Lagos", pt: "Lagos", sw: "Lagos", ar: "لاغوس", tw: "Lagos", zu: "iLagos" }),
-      c("Abuja", { en: "Abuja", ha: "Abuja", yo: "Àbùjá", ig: "Abuja", fr: "Abuja", pt: "Abuja", sw: "Abuja", ar: "أبوجا", tw: "Abuja", zu: "i-Abuja" }),
-      c("Port Harcourt", { en: "Port Harcourt", ha: "Fatakwal", yo: "Pọ́ọ̀tì Hákọ́tì", ig: "Pọtakọt", fr: "Port Harcourt", pt: "Port Harcourt", sw: "Port Harcourt", ar: "بورت هاركورت", tw: "Port Harcourt", zu: "iPort Harcourt" }),
-      c("Kano", { en: "Kano", ha: "Kano", yo: "Kánò", ig: "Kano", fr: "Kano", pt: "Kano", sw: "Kano", ar: "كانو", tw: "Kano", zu: "iKano" }),
-      c("Ibadan", { en: "Ibadan", ha: "Ibadan", yo: "Ìbàdàn", ig: "Ibadan", fr: "Ibadan", pt: "Ibadan", sw: "Ibadan", ar: "إيبادان", tw: "Ibadan", zu: "i-Ibadan" }),
-    ],
+    /**
+     * Empty here, and filled by `resolveChips` from the country answered
+     * immediately before. A static list offered Lagos and Port Harcourt
+     * to a traveller who had just said Ghana.
+     */
+    chips: [],
   },
   {
     key: "destination",
@@ -353,11 +426,24 @@ export const HISTORY_NOTE =
  */
 export function resolveChips(
   question: IntakeQuestion,
-  { fullName }: { fullName: string }
+  {
+    fullName,
+    answers = {},
+  }: { fullName: string; answers?: Record<string, string | undefined> }
 ): IntakeQuestion["chips"] {
   const name = fullName.trim();
 
-  return question.chips.flatMap((chip) => {
+  // The city question is narrowed by the country asked immediately
+  // before it. A country with no list offers no chips rather than a
+  // guess: free text answers the question either way, and this answer
+  // decides which mission the traveller applies at, so putting a city in
+  // their mouth is not a small error.
+  const chips =
+    question.key === "residence"
+      ? (CITIES[answers.residence_country ?? ""] ?? [])
+      : question.chips;
+
+  return chips.flatMap((chip) => {
     if (!chip.value.includes(FULL_NAME_TOKEN)) return [chip];
     if (!name) return [];
 
@@ -373,6 +459,21 @@ export function resolveChips(
       },
     ];
   });
+}
+
+/**
+ * Every chip a question could ever offer, ignoring context.
+ *
+ * `resolveChips` narrows the city list to the country a traveller
+ * answered, which is right for asking them. Two callers cannot narrow:
+ * `normaliseAnswer` is handed one answer and no context, and the rule
+ * editor in `/ops` is choosing values for a rule that will be applied to
+ * everybody. Both need the full set, and getting it from here means the
+ * three cannot drift apart.
+ */
+export function allChipsFor(questionKey: string): IntakeQuestion["chips"] {
+  if (questionKey === "residence") return Object.values(CITIES).flat();
+  return INTAKE_QUESTIONS.find((q) => q.key === questionKey)?.chips ?? [];
 }
 
 /**

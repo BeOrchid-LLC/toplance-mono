@@ -43,6 +43,19 @@ describe("normaliseAnswer", () => {
     expect(normaliseAnswer("companions", "   ")).toBeNull();
   });
 
+  it("resolves a city, whichever country it belongs to", () => {
+    // `resolveChips` narrows the city list to the country the traveller
+    // answered. Normalising cannot: it is handed one answer and no
+    // context, so it matches against every city the intake offers.
+    expect(normaliseAnswer("residence", "Accra")).toBe("Accra");
+    expect(normaliseAnswer("residence", "  lagos ")).toBe("Lagos");
+    expect(normaliseAnswer("residence", "Èkó")).toBe("Lagos");
+  });
+
+  it("returns null for a city nobody lists", () => {
+    expect(normaliseAnswer("residence", "Dakar")).toBeNull();
+  });
+
   it("returns null for a question that has no chips to match against", () => {
     // `passport_name` is a free-text answer by design. There is no
     // canonical set, so there is no code, and no rule can be written

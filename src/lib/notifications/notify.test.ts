@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { eq, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 
 /**
  * `vitest.setup.mts` loads a developer's real `.env.local`, which could
@@ -222,5 +222,122 @@ describe("appUrl", async () => {
     vi.stubEnv("NODE_ENV", "production");
 
     expect(() => appUrl("/invite/abc123")).toThrow(/APP_URL/);
+  });
+});
+
+/**
+ * The v1.3 tenancy: a case belongs to an agency, and the agency is who
+ * hears about it. `notifyStaff` used to carry these events to every
+ * BeOrchid profile, with a link to a review screen that no longer
+ * exists.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
+  delete process.env.RESEND_API_KEY;
+
+  const { db } = await import("@/lib/db/client");
+  const { applications, orgMembers, organisations, profiles } = await import(
+    "@/lib/db/schema"
+  );
+  const { notifyAgency, getNotifications } = await import(
+    "@/lib/notifications/notify"
+  );
+
+  const TRAVELLER = "test_agencynotify_traveller";
+  const REVIEWER = "test_agencynotify_reviewer";
+  const RIVAL = "test_agencynotify_rival";
+  const STAFF = "test_agencynotify_staff";
+  /** `applications_traveler_key` is unique, so an orphan case needs its own. */
+  const LONE = "test_agencynotify_lone";
+  const IDS = [TRAVELLER, REVIEWER, RIVAL, STAFF, LONE];
+
+  const ORG = "00000000-0000-4000-8000-0000000a9001";
+  const RIVAL_ORG = "00000000-0000-4000-8000-0000000a9002";
+
+  let applicationId = "";
+
+  beforeEach(async () => {
+    await db.insert(profiles).values([
+      { id: TRAVELLER, email: "an-traveller@test.invalid", fullName: "Ada" },
+      { id: REVIEWER, email: "an-reviewer@test.invalid", fullName: "Chidi" },
+      { id: RIVAL, email: "an-rival@test.invalid", fullName: "Sade" },
+      { id: STAFF, email: "an-staff@test.invalid", fullName: "Grace", role: "staff" },
+      { id: LONE, email: "an-lone@test.invalid", fullName: "Tunde" },
+    ]);
+
+    await db.insert(organisations).values([
+      { id: ORG, name: "Agency of record" },
+      { id: RIVAL_ORG, name: "Rival agency" },
+    ]);
+
+    await db.insert(orgMembers).values([
+      { orgId: ORG, userId: REVIEWER, role: "hr_admin" },
+      { orgId: RIVAL_ORG, userId: RIVAL, role: "hr_admin" },
+    ]);
+
+    const [app] = await db
+      .insert(applications)
+      .values({ travelerId: TRAVELLER, orgId: ORG })
+      .returning({ id: applications.id });
+
+    applicationId = app.id;
+  });
+
+  afterEach(async () => {
+    await db.delete(profiles).where(inArray(profiles.id, IDS));
+    await db.delete(organisations).where(inArray(organisations.id, [ORG, RIVAL_ORG]));
+  });
+
+  it("reaches the reviewer at the agency the case belongs to", async () => {
+    await notifyAgency(applicationId, "checklist_complete", {
+      caseRef: "TPL-000042",
+      url: "https://x.test/agency/cases/1",
+    });
+
+    const received = await getNotifications(REVIEWER);
+    expect(received).toHaveLength(1);
+    expect(received[0].kind).toBe("checklist_complete");
+  });
+
+  it("reaches nobody at another agency", async () => {
+    await notifyAgency(applicationId, "checklist_complete", {
+      caseRef: "TPL-000042",
+      url: "https://x.test/agency/cases/1",
+    });
+
+    expect(await getNotifications(RIVAL)).toHaveLength(0);
+  });
+
+  it("reaches no BeOrchid staff — that is the whole point of the change", async () => {
+    await notifyAgency(applicationId, "checklist_complete", {
+      caseRef: "TPL-000042",
+      url: "https://x.test/agency/cases/1",
+    });
+
+    expect(await getNotifications(STAFF)).toHaveLength(0);
+  });
+
+  it("tells nobody about a case with no agency, and does not throw", async () => {
+    const [orphan] = await db
+      .insert(applications)
+      .values({ travelerId: LONE, orgId: null })
+      .returning({ id: applications.id });
+
+    await expect(
+      notifyAgency(orphan.id, "checklist_complete", {
+        caseRef: "TPL-000043",
+        url: "https://x.test/agency/cases/2",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(await getNotifications(REVIEWER)).toHaveLength(0);
+  });
+
+  it("never throws on an application that does not exist", async () => {
+    await expect(
+      notifyAgency("00000000-0000-4000-8000-00000000dead", "checklist_complete", {
+        caseRef: "TPL-000044",
+        url: "https://x.test/agency/cases/3",
+      })
+    ).resolves.toBeUndefined();
   });
 });

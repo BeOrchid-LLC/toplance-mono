@@ -3,34 +3,29 @@ import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import type { Locale } from "@/lib/i18n/locales";
 
 /**
- * The staff console's nav, in one place.
+ * The platform console's nav, in one place.
  *
- * Unlike the traveller side there is no `/ops` layout — every page builds
- * its own `AppBar` — so the list was pasted per page and drifted: the two
- * corridor screens carried a Corridors link and the two case screens did
- * not, which made the entry disappear the moment a reviewer opened a case.
- * Same fix as `travellerNav`: one answer, so the four screens cannot
- * disagree.
+ * There is no `/ops` layout — every page builds its own `AppBar` — so
+ * the list was pasted per page and drifted. One answer here means the
+ * screens cannot disagree.
  *
- * A constant rather than a function because nothing here is conditional —
- * the console is staff-only already, so there is no state to vary on.
+ * One entry, because route curation is what the platform console is now.
+ * The v1.3 tenancy moved review into the agency and deleted the case
+ * queue and case detail screens with it: they read documents directly,
+ * without passing through `requireApplicationAccess`, so they were the
+ * enforcement gap rather than merely a surface nobody should visit.
+ * Tenant provisioning and an audit-log reader belong here when they are
+ * built; nothing that reaches a traveller's case ever does.
  *
- * `/ops` stays first: `AppNav.isActive` treats item 0 as the section root
- * and matches it exactly, so reordering this list would light the wrong
- * pill on every child route.
+ * `AppNav.isActive` matches item 0 exactly as the section root, so the
+ * first entry is the console's landing page — `/ops` redirects to it.
  *
  * Kept in English here — `ops-nav.test.ts` asserts against this shape —
  * and localised for actual rendering by `localizedOpsNav` below.
  */
-export const opsNav: NavItem[] = [
-  { href: "/ops", label: "Case queue" },
-  { href: "/ops/corridors", label: "Routes" },
-];
+export const opsNav: NavItem[] = [{ href: "/ops/corridors", label: "Routes" }];
 
 /** `opsNav`, with each label resolved to `locale` — what every ops page actually renders. */
 export function localizedOpsNav(locale: Locale): NavItem[] {
-  return [
-    { ...opsNav[0], label: OPS_COMMON.nav.caseQueue[locale] },
-    { ...opsNav[1], label: OPS_COMMON.nav.routes[locale] },
-  ];
+  return [{ ...opsNav[0], label: OPS_COMMON.nav.routes[locale] }];
 }

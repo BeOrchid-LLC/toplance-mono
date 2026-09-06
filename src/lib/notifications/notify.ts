@@ -3,7 +3,13 @@ import "server-only";
 import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { notifications, profiles, type Notification } from "@/lib/db/schema";
+import {
+  applications,
+  notifications,
+  orgMembers,
+  profiles,
+  type Notification,
+} from "@/lib/db/schema";
 import { sendEmail } from "@/lib/notifications/email";
 import {
   advisoryChangedEmail,
@@ -216,6 +222,45 @@ export async function notifyStaff<K extends keyof NotificationPayload>(
     await Promise.all(staff.map((s) => notify(s.id, kind, payload, applicationId)));
   } catch (error) {
     console.error(`[notifications] could not notify staff of "${kind}"`, error);
+  }
+}
+
+/**
+ * The same event to everyone at the agency that holds a case.
+ *
+ * This replaces `notifyStaff` on every case event. Under the v1.3
+ * tenancy the agency reviews the documents, decides the application and
+ * receives the completion alert; BeOrchid hears about none of it, so a
+ * fan-out over `profiles.role = "staff"` would now be both a dead link
+ * and a leak of which of an agency's clients are active.
+ *
+ * A case with no agency notifies nobody. There is no reviewer to tell —
+ * see `isAgencyFor` in `@/lib/auth/policy` for why that state is
+ * unservable rather than merely unbilled.
+ *
+ * Never throws, for the same reason `notifyStaff` did not: callers run
+ * this beside a committed write, and `toActionError` does not recognise
+ * a raw database error, so an uncaught failure here would surface to a
+ * traveller as a failed upload that actually succeeded.
+ */
+export async function notifyAgency<K extends keyof NotificationPayload>(
+  applicationId: string,
+  kind: K,
+  payload: NotificationPayload[K]
+): Promise<void> {
+  try {
+    const members = await db
+      .select({ id: orgMembers.userId })
+      .from(applications)
+      .innerJoin(orgMembers, eq(orgMembers.orgId, applications.orgId))
+      .where(eq(applications.id, applicationId));
+
+    await Promise.all(members.map((m) => notify(m.id, kind, payload, applicationId)));
+  } catch (error) {
+    console.error(
+      `[notifications] could not notify the agency for application ${applicationId} of "${kind}"`,
+      error
+    );
   }
 }
 

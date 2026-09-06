@@ -138,8 +138,10 @@ test("a reviewer sees the unchanged marketing header and never the traveller sur
   // is also how a reviewer now leaves this page, the header having no
   // console link of its own to offer them.
   await page.goto("/sign-in");
-  await expect(page).toHaveURL(/\/ops$/);
-  await expect(page.getByRole("heading", { name: "Case queue" })).toBeVisible();
+  await expect(page).toHaveURL(/\/ops\/corridors$/);
+  // `/ops` redirects here: route curation is what the platform console
+  // does now, and the case queue it used to open on is deleted.
+  await expect(page.getByRole("heading", { name: "Route coverage" })).toBeVisible();
 });
 
 /**
@@ -164,7 +166,7 @@ test("a reviewer who opens the traveller console is sent to their own", async ({
   // existed for this account" rather than "none was added back".
 
   await page.goto("/app");
-  await expect(page).toHaveURL(/\/ops$/);
+  await expect(page).toHaveURL(/\/ops\/corridors$/);
 
   // The guard has to land before the console provisions anything: the
   // traveller layout opens a draft application on sight, and a reviewer
@@ -221,7 +223,7 @@ test("a reviewer who opens the employer console is sent to the case queue", asyn
   await promoteToStaff(STAFF_ON_EMPLOYER_EMAIL);
 
   await page.goto("/employer");
-  await expect(page).toHaveURL(/\/ops$/);
+  await expect(page).toHaveURL(/\/ops\/corridors$/);
 });
 
 test("an employer sees the unchanged marketing header and the generic door leads to their console", async ({

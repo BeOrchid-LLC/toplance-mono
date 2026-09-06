@@ -29,10 +29,14 @@ vi.mock("@/lib/data/applications", () => ({
 
 const OWNER = "test_guard_owner";
 const STRANGER = "test_guard_stranger";
-const SPONSOR = "test_guard_sponsor";
-const USER_IDS = [OWNER, STRANGER, SPONSOR];
+const AGENCY = "test_guard_agency";
+const RIVAL = "test_guard_rival";
+const PLATFORM = "test_guard_platform";
+const USER_IDS = [OWNER, STRANGER, AGENCY, RIVAL, PLATFORM];
 
 const ORG_ID = "00000000-0000-4000-8000-00000000f001";
+const RIVAL_ORG_ID = "00000000-0000-4000-8000-00000000f002";
+const ORG_IDS = [ORG_ID, RIVAL_ORG_ID];
 const ABSENT_APPLICATION = "00000000-0000-4000-8000-00000000dead";
 
 describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
@@ -52,46 +56,53 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     canWriteIntakeAnswers,
   } = await import("@/lib/auth/policy");
 
-  let sponsoredApplicationId = "";
+  let tenantApplicationId = "";
 
   beforeAll(async () => {
     await db.insert(profiles).values([
       { id: OWNER, email: "owner@test.invalid", fullName: "Owner" },
       { id: STRANGER, email: "stranger@test.invalid", fullName: "Stranger" },
-      { id: SPONSOR, email: "sponsor@test.invalid", fullName: "Sponsor" },
+      { id: AGENCY, email: "agency@test.invalid", fullName: "Agency" },
+      { id: RIVAL, email: "rival@test.invalid", fullName: "Rival" },
+      { id: PLATFORM, email: "platform@test.invalid", fullName: "Platform" },
     ]);
 
-    await db
-      .insert(organisations)
-      .values({ id: ORG_ID, name: "Test Sponsor Ltd" });
+    await db.insert(organisations).values([
+      { id: ORG_ID, name: "Test Agency Ltd" },
+      { id: RIVAL_ORG_ID, name: "Rival Agency Ltd" },
+    ]);
 
-    await db
-      .insert(orgMembers)
-      .values({ orgId: ORG_ID, userId: SPONSOR, role: "hr_admin" });
+    await db.insert(orgMembers).values([
+      { orgId: ORG_ID, userId: AGENCY, role: "hr_admin" },
+      { orgId: RIVAL_ORG_ID, userId: RIVAL, role: "hr_admin" },
+    ]);
 
-    const [sponsored] = await db
+    const [tenantCase] = await db
       .insert(applications)
       .values({ travelerId: OWNER, orgId: ORG_ID })
       .returning({ id: applications.id });
 
-    sponsoredApplicationId = sponsored.id;
+    tenantApplicationId = tenantCase.id;
   });
 
   afterAll(async () => {
-    // Cascades take the applications and the membership with them.
+    // Cascades take the applications and the memberships with them.
     await db.delete(profiles).where(inArray(profiles.id, USER_IDS));
-    await db.delete(organisations).where(inArray(organisations.id, [ORG_ID]));
+    await db.delete(organisations).where(inArray(organisations.id, ORG_IDS));
   });
 
-  function signIn(userId: string, orgIds: string[] = []) {
-    actor = { userId, role: "traveler", staffRole: null, orgIds };
+  function signIn(
+    userId: string,
+    { orgIds = [], role = "traveler", staffRole = null }: Partial<Actor> = {}
+  ) {
+    actor = { userId, role, staffRole, orgIds };
   }
 
   it("lets the traveller write their own intake answers", async () => {
     signIn(OWNER);
 
     const { application } = await requireApplicationAccess(
-      sponsoredApplicationId,
+      tenantApplicationId,
       canWriteIntakeAnswers
     );
 
@@ -102,7 +113,7 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     signIn(STRANGER);
 
     await expect(
-      requireApplicationAccess(sponsoredApplicationId, canWriteIntakeAnswers)
+      requireApplicationAccess(tenantApplicationId, canWriteIntakeAnswers)
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -117,7 +128,7 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     ).catch((error: unknown) => error);
 
     const forbidden = await requireApplicationAccess(
-      sponsoredApplicationId,
+      tenantApplicationId,
       canReadApplication
     ).catch((error: unknown) => error);
 
@@ -126,24 +137,64 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     expect((absent as Error).message).toBe((forbidden as Error).message);
   });
 
-  it("lets a sponsoring organisation see the application", async () => {
-    signIn(SPONSOR, [ORG_ID]);
+  it("lets the agency that holds the case see the application", async () => {
+    signIn(AGENCY, { orgIds: [ORG_ID], role: "org_member" });
 
     const { application } = await requireApplicationAccess(
-      sponsoredApplicationId,
+      tenantApplicationId,
       canReadApplication
     );
 
     expect(application.orgId).toBe(ORG_ID);
   });
 
-  it("never lets a sponsoring organisation reach the documents", async () => {
-    signIn(SPONSOR, [ORG_ID]);
+  it("lets the agency that holds the case reach the documents", async () => {
+    signIn(AGENCY, { orgIds: [ORG_ID], role: "org_member" });
 
-    // The privacy boundary the employer console is built on: an employer
-    // sees that someone is at 60%, never which passport page failed.
+    // Inverted by the v1.3 tenancy: the agency is the reviewer, so
+    // reviewing its own traveller's documents is the job it was hired
+    // for. This assertion used to say the exact opposite.
+    const { application } = await requireApplicationAccess(
+      tenantApplicationId,
+      canReadDocuments
+    );
+
+    expect(application.orgId).toBe(ORG_ID);
+  });
+
+  it("never lets another agency reach the case at all", async () => {
+    signIn(RIVAL, { orgIds: [RIVAL_ORG_ID], role: "org_member" });
+
     await expect(
-      requireApplicationAccess(sponsoredApplicationId, canReadDocuments)
+      requireApplicationAccess(tenantApplicationId, canReadApplication)
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      requireApplicationAccess(tenantApplicationId, canReadDocuments)
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("never lets platform staff reach a traveller's case", async () => {
+    signIn(PLATFORM, { role: "staff", staffRole: "owner" });
+
+    // The claim in every agency's client terms: no one at BeOrchid can
+    // open your clients' documents. Not narrowed to an audited
+    // exception — there is no branch to narrow.
+    await expect(
+      requireApplicationAccess(tenantApplicationId, canReadApplication)
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await expect(
+      requireApplicationAccess(tenantApplicationId, canReadDocuments)
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("does not let a traveller carrying an org id inherit agency reach", async () => {
+    // The hole the old `sponsorsApplication` left: it matched on
+    // `orgIds` alone, so any actor holding the id passed. `isAgencyFor`
+    // checks the role too.
+    signIn(STRANGER, { orgIds: [ORG_ID] });
+
+    await expect(
+      requireApplicationAccess(tenantApplicationId, canReadApplication)
     ).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -152,7 +203,7 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
 
     await expect(requireActor()).rejects.toBeInstanceOf(UnauthenticatedError);
     await expect(
-      requireApplicationAccess(sponsoredApplicationId, canReadApplication)
+      requireApplicationAccess(tenantApplicationId, canReadApplication)
     ).rejects.toBeInstanceOf(UnauthenticatedError);
   });
 });

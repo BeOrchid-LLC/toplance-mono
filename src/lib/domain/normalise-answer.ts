@@ -2,7 +2,25 @@
 // under plain `node --experimental-strip-types`, which resolves no
 // tsconfig paths. `intake.ts` itself imports only a type across the
 // alias, and types are erased, so this is the one edge that had to move.
+import { DESTINATION_ISO, NATIONALITY_ISO } from "./corridors.ts";
 import { allChipsFor, INTAKE_QUESTIONS } from "./intake.ts";
+
+/**
+ * The questions whose real vocabulary is a lookup table rather than the
+ * chips they show.
+ *
+ * `DESTINATION_ISO` covers 49 countries and the destination question
+ * chips five of them; the chips are a shortcut for the common answers,
+ * not the answer set. Matching on chips alone meant a traveller who
+ * typed "Ireland" — a route the product serves — resolved to no
+ * corridor and met an empty checklist with no explanation, which is
+ * exactly the failure normalising was introduced to prevent.
+ */
+const COUNTRY_VOCABULARY: Record<string, Record<string, string>> = {
+  destination: DESTINATION_ISO,
+  nationality: NATIONALITY_ISO,
+  residence_country: NATIONALITY_ISO,
+};
 
 /**
  * One intake answer, reduced to the canonical value a rule can match —
@@ -44,9 +62,17 @@ export function normaliseAnswer(questionKey: string, value: string): string | nu
 
   if (!INTAKE_QUESTIONS.some((q) => q.key === questionKey)) return null;
 
+  // The lookup table first, where the question has one: it is the wider
+  // set and the chips are a subset of it.
+  for (const name of Object.keys(COUNTRY_VOCABULARY[questionKey] ?? {})) {
+    if (name.trim().toLowerCase() === answer) return name;
+  }
+
   // Every chip the question could offer, not the ones this traveller was
   // shown: the city list is narrowed by their country when they are
-  // asked, and there is no country in scope here.
+  // asked, and there is no country in scope here. This still matters
+  // after the table above — the chips carry the localised labels, so a
+  // Hausa speaker tapping "Najeriya" resolves here.
   for (const chip of allChipsFor(questionKey)) {
     if (chip.value.trim().toLowerCase() === answer) return chip.value;
 

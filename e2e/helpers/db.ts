@@ -255,6 +255,29 @@ export const SEEDED_TRIP = {
  * matters to the queue is that the row exists, carries a corridor and
  * sits in `submitted`.
  */
+
+/**
+ * An agency for a seeded case to belong to.
+ *
+ * Every case belongs to exactly one agency since the v1.3 tenancy —
+ * `applications.org_id` is `not null` — so a fixture cannot insert an
+ * application without one. A fixed id, reused across runs rather than
+ * created per test, so nothing accumulates and no run can delete the
+ * agency another run's case still points at.
+ */
+const E2E_AGENCY_ID = "00000000-0000-4000-8000-00000000e2e1";
+
+async function seedAgency(client: {
+  query: (sql: string, params: unknown[]) => Promise<unknown>;
+}): Promise<string> {
+  await client.query(
+    `insert into organisations (id, name) values ($1, 'E2E Seeded Agency')
+     on conflict (id) do nothing`,
+    [E2E_AGENCY_ID]
+  );
+  return E2E_AGENCY_ID;
+}
+
 export async function seedSubmittedCase(travellerName: string): Promise<SeededCase> {
   const corridorId = await skilledWorkerCorridorId();
 
@@ -267,11 +290,13 @@ export async function seedSubmittedCase(travellerName: string): Promise<SeededCa
       [travellerId, travellerName, `${travellerId}@example.com`]
     );
 
+    const orgId = await seedAgency(client);
+
     const { rows } = await client.query<{ id: string; case_ref: string }>(
-      `insert into applications (traveler_id, corridor_id, status, intake_complete, submitted_at)
-       values ($1, $2, 'submitted', true, now())
+      `insert into applications (traveler_id, org_id, corridor_id, status, intake_complete, submitted_at)
+       values ($1, $2, $3, 'submitted', true, now())
        returning id, case_ref`,
-      [travellerId, corridorId]
+      [travellerId, orgId, corridorId]
     );
 
     // The same checklist `adoptRuleSet` would have built, in the state an
@@ -432,9 +457,11 @@ export async function approveApplicationFor(email: string): Promise<string> {
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
 
+    const orgId = await seedAgency(client);
+
     const { rows } = await client.query<{ id: string }>(
-      `insert into applications (traveler_id, corridor_id, status, intake_complete, submitted_at, decided_at)
-       values ($1, $2, 'approved', true, now(), now())
+      `insert into applications (traveler_id, org_id, corridor_id, status, intake_complete, submitted_at, decided_at)
+       values ($1, $2, $3, 'approved', true, now(), now())
        on conflict (traveler_id) do update
          set corridor_id = excluded.corridor_id,
              status = 'approved',
@@ -442,7 +469,7 @@ export async function approveApplicationFor(email: string): Promise<string> {
              submitted_at = coalesce(applications.submitted_at, now()),
              decided_at = now()
        returning id`,
-      [travellerId, corridorId]
+      [travellerId, orgId, corridorId]
     );
 
     await client.query(

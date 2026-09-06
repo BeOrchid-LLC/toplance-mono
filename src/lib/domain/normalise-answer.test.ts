@@ -32,6 +32,26 @@ describe("normaliseAnswer", () => {
     expect(normaliseAnswer("nationality", "Nàìjíríà")).toBe("Nigeria");
   });
 
+  it("resolves a destination the chips do not show", () => {
+    // The regression this exists to stop. `DESTINATION_ISO` covers 49
+    // countries and the question chips five of them, so keying
+    // normalisation on chips alone meant a traveller who typed
+    // "Ireland" — a route we serve — resolved to no corridor and got an
+    // empty checklist with no explanation.
+    expect(normaliseAnswer("destination", "Ireland")).toBe("Ireland");
+    expect(normaliseAnswer("destination", "  portugal ")).toBe("Portugal");
+    expect(normaliseAnswer("destination", "United Kingdom")).toBe("United Kingdom");
+  });
+
+  it("resolves a nationality or residence country by name", () => {
+    expect(normaliseAnswer("nationality", "Cameroon")).toBe("Cameroon");
+    expect(normaliseAnswer("residence_country", "kenya")).toBe("Kenya");
+  });
+
+  it("still returns null for a country nothing maps", () => {
+    expect(normaliseAnswer("destination", "Atlantis")).toBeNull();
+  });
+
   it("returns null for free text that matches no chip", () => {
     // The whole point. Null is "we do not know", which the checklist
     // renders as a hedge — never as a confident no.

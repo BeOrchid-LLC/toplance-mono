@@ -85,14 +85,26 @@ test("a traveller signs up, finishes intake and uploads a document", async ({ pa
   await page.waitForURL("**/app/requirements");
 
   await expect(page.getByRole("heading", { name: "Skilled Worker visa" })).toBeVisible();
-  // Six required documents in the published ng→gb work rule set, and
-  // seven more that only apply to some applicants. The names are the
-  // mission's own wording, lowercase and all — the fifty-corridor data
-  // is transcribed from the published checklist, not retitled.
+  // Six required documents in the published ng→gb work rule set. The
+  // names are the mission's own wording, lowercase and all — the
+  // fifty-corridor data is transcribed from the published checklist,
+  // not retitled.
   await expect(page.getByText("Documents required")).toBeVisible();
   await expect(page.getByText("certificate of sponsorship reference number")).toBeVisible();
-  await expect(page.getByText("your tuberculosis test results")).toBeVisible();
-  await expect(page.getByText("7 more only if they apply to you")).toBeVisible();
+
+  // The seven conditional documents this screen used to list are gone,
+  // and that is 4.8 working. Not one of them has a rule written against
+  // it, and a requirement nobody has ruled on is BeOrchid's unfinished
+  // curation — putting "your tuberculosis test results, only if it
+  // applies to you" in front of a traveller asks them to decide the
+  // thing this product exists to decide. They surface on the agency
+  // side through `corridorCoverageGaps` instead.
+  await expect(page.getByText("your tuberculosis test results")).toHaveCount(0);
+  await expect(page.getByText("only if they apply to you")).toHaveCount(0);
+
+  // The guidance is one click away rather than printed under every row —
+  // fix 17. A checklist of fourteen was otherwise a wall of prose.
+  await expect(page.getByText("What this means").first()).toBeVisible();
 
   await page.getByRole("link", { name: /Start uploading/ }).click();
   await page.waitForURL("**/app/documents");
@@ -111,8 +123,16 @@ test("a traveller signs up, finishes intake and uploads a document", async ({ pa
   // documents impossible to reconcile with a list of outstanding ones.
   await expect(passport.getByText("Required", { exact: true })).toBeVisible();
 
-  const atas = documentRow(page, "a valid ATAS certificate");
-  await expect(atas.getByText("Optional", { exact: true })).toBeVisible();
+  // The ATAS certificate is a conditional requirement with no rule
+  // written against it, so since 4.8 it does not reach a traveller's
+  // checklist at all — not as an "Optional" row, not as a maybe. It is
+  // BeOrchid's unfinished curation and surfaces on the agency side.
+  //
+  // This assertion is worth keeping as the absence rather than deleting:
+  // the moment somebody writes the rule, this document reappears as
+  // required or vanishes for good, and either way this line should be
+  // the one that notices.
+  await expect(page.getByText("a valid ATAS certificate")).toHaveCount(0);
 
   // The pickers are `sr-only`, opened by the row's own buttons; the
   // second is the file picker (the first is the phone camera).

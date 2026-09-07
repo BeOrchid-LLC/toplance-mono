@@ -183,6 +183,13 @@
       "when": 1788769358364,
       "tag": "0025_smooth_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788775425897,
+      "tag": "0026_hard_mister_fear",
+      "breakpoints": true
     }
   ]
 }

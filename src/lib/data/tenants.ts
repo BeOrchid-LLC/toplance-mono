@@ -220,6 +220,32 @@ export async function getTenant(orgId: string): Promise<TenantDetail | null> {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Every way a tenant write can be refused, as a stable code rather than
+ * a sentence.
+ *
+ * This module ships ten distinct English sentences across its four write
+ * functions, and this repo puts every user-facing string in an
+ * `src/lib/i18n/*.ts` dictionary across all ten locales — a data-access
+ * module is not that dictionary. The action layer
+ * (`@/app/[locale]/ops/tenants/actions.ts`) maps each of these to an
+ * `OPS_ACTIONS` key resolved at the caller's locale, in one
+ * `Record<TenantError, …>`, so an eleventh code added here without a
+ * matching entry there is a compile error rather than English on a
+ * screen that ships in ten languages.
+ */
+export type TenantError =
+  | "agency_name_required"
+  | "agency_name_too_long"
+  | "owner_email_invalid"
+  | "seats_invalid"
+  | "billing_email_invalid"
+  | "demo_request_not_found"
+  | "demo_request_already_converted"
+  | "tenant_not_found"
+  | "not_a_member"
+  | "last_owner";
+
 export type ProvisionInput = {
   name: string;
   domain?: string;
@@ -233,7 +259,7 @@ export type ProvisionInput = {
 
 export type ProvisionResult =
   | { ok: true; orgId: string; inviteToken: string }
-  | { error: string };
+  | { error: TenantError };
 
 /**
  * Create an agency and invite the person who will run it, in one
@@ -281,17 +307,17 @@ export async function provisionTenantTx(
   actorId: string
 ): Promise<ProvisionResult> {
   const name = input.name.trim();
-  if (!name) return { error: "The agency needs a name." };
-  if (name.length > ORG_NAME_MAX) return { error: "That name is too long." };
+  if (!name) return { error: "agency_name_required" };
+  if (name.length > ORG_NAME_MAX) return { error: "agency_name_too_long" };
 
   const ownerEmail = input.ownerEmail.trim().toLowerCase();
   if (!EMAIL_RE.test(ownerEmail)) {
-    return { error: "Enter a valid email address for the first owner." };
+    return { error: "owner_email_invalid" };
   }
 
   const seats = input.seatsPurchased ?? 0;
   if (!Number.isInteger(seats) || seats < 0) {
-    return { error: "Seats must be a whole number, zero or more." };
+    return { error: "seats_invalid" };
   }
 
   return db.transaction(async (tx) => {
@@ -309,7 +335,7 @@ export async function provisionTenantTx(
       // provisioning "from" an enquiry that does not exist is not what
       // the operator asked for.
       if (!existing) {
-        return { error: "We could not find that demo request." };
+        return { error: "demo_request_not_found" };
       }
 
       // The lock stops two provisions of this enquiry from interleaving,
@@ -320,7 +346,7 @@ export async function provisionTenantTx(
       // at a row that already became something, so it is not this call's
       // to convert again.
       if (existing.status === "converted") {
-        return { error: "That demo request has already been converted." };
+        return { error: "demo_request_already_converted" };
       }
     }
 
@@ -369,14 +395,14 @@ export async function provisionTenantTx(
 export async function setTenantSuspension(
   orgId: string,
   suspend: boolean
-): Promise<{ ok: true } | { error: string }> {
+): Promise<{ ok: true } | { error: TenantError }> {
   const updated = await db
     .update(organisations)
     .set({ suspendedAt: suspend ? new Date() : null })
     .where(eq(organisations.id, orgId))
     .returning({ id: organisations.id });
 
-  if (!updated.length) return { error: "We could not find that agency." };
+  if (!updated.length) return { error: "tenant_not_found" };
 
   return { ok: true };
 }
@@ -386,16 +412,17 @@ export async function setTenantBilling(
   orgId: string,
   seatsPurchased: number,
   billingContact: string | null
-): Promise<{ ok: true } | { error: string }> {
+): Promise<{ ok: true } | { error: TenantError }> {
   // Checked here as well as by the `seats_not_negative` constraint, so
-  // an operator reads a sentence rather than a Postgres error.
+  // this returns `seats_invalid` rather than a Postgres error the caller
+  // has no sentence for.
   if (!Number.isInteger(seatsPurchased) || seatsPurchased < 0) {
-    return { error: "Seats must be a whole number, zero or more." };
+    return { error: "seats_invalid" };
   }
 
   const contact = billingContact?.trim() || null;
   if (contact && !EMAIL_RE.test(contact)) {
-    return { error: "Enter a valid email address for the billing contact." };
+    return { error: "billing_email_invalid" };
   }
 
   const updated = await db
@@ -404,7 +431,7 @@ export async function setTenantBilling(
     .where(eq(organisations.id, orgId))
     .returning({ id: organisations.id });
 
-  if (!updated.length) return { error: "We could not find that agency." };
+  if (!updated.length) return { error: "tenant_not_found" };
 
   return { ok: true };
 }
@@ -423,7 +450,7 @@ export async function setMemberRole(
   orgId: string,
   userId: string,
   role: "owner" | "reviewer"
-): Promise<{ ok: true } | { error: string }> {
+): Promise<{ ok: true } | { error: TenantError }> {
   return db.transaction(async (tx) => {
     const [member] = await tx
       .select({ role: orgMembers.role })
@@ -432,7 +459,7 @@ export async function setMemberRole(
       .for("update")
       .limit(1);
 
-    if (!member) return { error: "That person is not a member of this agency." };
+    if (!member) return { error: "not_a_member" };
     if (member.role === role) return { ok: true };
 
     if (role === "reviewer") {
@@ -448,7 +475,7 @@ export async function setMemberRole(
         );
 
       if (!others || others.total === 0) {
-        return { error: "An agency needs at least one owner." };
+        return { error: "last_owner" };
       }
     }
 

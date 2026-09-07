@@ -395,7 +395,8 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     expect(detail?.billingContact).toBe("ap@kite.invalid");
 
     // Refused here rather than left to the `seats_not_negative` check
-    // constraint, so ops reads a sentence instead of a Postgres error.
+    // constraint, so this returns `seats_invalid` instead of a Postgres
+    // error.
     expect("error" in (await setTenantBilling(result.orgId, -1, null))).toBe(true);
   });
 

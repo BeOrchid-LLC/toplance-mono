@@ -24,6 +24,7 @@ export const CASE_REVIEW: {
   decisionPanel: L;
   travelHistoryPanel: L;
   noTrips: L;
+  messagesUnheld: L;
 } = {
   metaTitle: {
     en: "Case review",
@@ -220,5 +221,25 @@ export const CASE_REVIEW: {
     ar: "لم يسجّل هذا المسافر أي رحلات سابقة.",
     tw: "Akwantufoɔ yi nkyerɛw akwantuo biara a watu dedaw.",
     zu: "Lesi sihambi asirekhodile uhambo lwangaphambilini.",
+  },
+  /**
+   * In place of the composer while nobody holds the case.
+   *
+   * `canWriteMessages` refuses the send until the case has a handler,
+   * so a composer here would be a box that takes what you type and
+   * then a toast that refuses it. It names the two ways out because
+   * both are one click away on this same screen.
+   */
+  messagesUnheld: {
+    en: "Nobody is handling this case yet. Take it, or hand it to a colleague, and the thread opens.",
+    ha: "Har yanzu babu wanda ke kula da wannan fayil. Karɓe shi, ko ka mika shi ga abokin aiki, sannan zancen zai buɗe.",
+    yo: "Kò tíì sí ẹni tí ó ń bójú tó fáìlì yìí. Gbà á, tàbí fi í lé alábàáṣiṣẹ́ lọ́wọ́, ọ̀rọ̀ náà yóò sì ṣí.",
+    ig: "Ọ dịghị onye na-elekọta faịlụ a ugbu a. Were ya, ma ọ bụ nyefee ya onye ọrụ ibe gị, mkparịta ụka ga-emeghe.",
+    fr: "Personne ne gère encore ce dossier. Prenez-le, ou confiez-le à un collègue, et la conversation s'ouvre.",
+    pt: "Ainda ninguém está a tratar deste processo. Assuma-o, ou entregue-o a um colega, e a conversa abre.",
+    sw: "Bado hakuna anayeshughulikia faili hili. Lichukue, au mkabidhi mwenzako, na mazungumzo yatafunguka.",
+    ar: "لا أحد يتولى هذا الملف بعد. تولَّه، أو سلّمه إلى زميل، وستُفتح المحادثة.",
+    tw: "Obiara nhwɛ fael yi so nnya. Gye, anaa fa ma wo yɔnko adwumayɛfoɔ, na nkɔmmɔ no bɛbue.",
+    zu: "Akekho osaphethe leli cala. Lithathe, noma unikeze ozakwenu, bese ingxoxo ivuleka.",
   },
 };

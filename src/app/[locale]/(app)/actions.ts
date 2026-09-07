@@ -248,17 +248,67 @@ export async function uploadDocument(formData: FormData) {
       // application should not become unbillable because a model call
       // timed out.
       await billIfComplete(applicationId, actorId);
+      await notifyHandlerOfUpload(applicationId, docKey);
       await notifyDeskIfComplete(applicationId, actorId);
     });
   } else {
     // No pre-check was scheduled, so no verdict is ever coming and there
     // is nothing to wait for.
     await billIfComplete(applicationId, actorId);
+    await notifyHandlerOfUpload(applicationId, docKey);
     await notifyDeskIfComplete(applicationId, actorId);
   }
 
   revalidatePath("/[locale]/app", "layout");
   return { ok: true };
+}
+
+/**
+ * Tell the colleague handling this case that a document has arrived.
+ *
+ * The assignee alone, and nobody when the case is unheld. Fanning this
+ * out to the agency would put nine notifications per traveller in front
+ * of people who are not working the case, and the two events that *are*
+ * everybody's business — the checklist filling up, and the submission —
+ * already fan out.
+ *
+ * In-app only: `notify` sends no email for a kind with no template, and
+ * `document_uploaded` deliberately has none.
+ *
+ * Best-effort like everything else on this path. `notify` never throws,
+ * and an upload must not fail because a notification could not be
+ * written.
+ */
+async function notifyHandlerOfUpload(applicationId: string, docKey: string) {
+  const [row] = await db
+    .select({
+      assigneeId: applications.assigneeId,
+      caseRef: applications.caseRef,
+      documentName: documents.name,
+    })
+    .from(applications)
+    .leftJoin(
+      documents,
+      and(
+        eq(documents.applicationId, applications.id),
+        eq(documents.docKey, docKey)
+      )
+    )
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  if (!row?.assigneeId) return;
+
+  await notify(
+    row.assigneeId,
+    "document_uploaded",
+    {
+      documentName: row.documentName ?? docKey,
+      caseRef: row.caseRef,
+      url: appUrl(`/agency/clients/${applicationId}`),
+    },
+    applicationId
+  );
 }
 
 /**

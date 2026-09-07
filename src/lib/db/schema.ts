@@ -196,6 +196,21 @@ export const notificationKind = pgEnum("notification_kind", [
    */
   "advisory_changed",
   /**
+   * → the colleague handling the case: one document has arrived and is
+   * waiting on a verdict.
+   *
+   * In-app only. `templateFor` has no branch for it and `notify` skips
+   * the email when there is none — a checklist is nine documents, and
+   * nine emails for one traveller's afternoon is how a reviewer learns
+   * to ignore the address the rest of these arrive at.
+   *
+   * Sent to the assignee alone, never fanned out: an unheld case is
+   * nobody's inbox, and `checklist_complete` still tells the whole
+   * agency when one fills up.
+   */
+  "document_uploaded",
+
+  /**
    * → staff: a traveller's required checklist reached 100% collected.
    * The brief asks for this separately from submission, and the two are
    * genuinely different moments — somebody can upload everything and

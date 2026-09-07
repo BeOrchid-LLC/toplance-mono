@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -229,12 +229,45 @@ export async function listOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
  * on the platform — so the empty case has to return here rather than
  * fall through to a query with no restriction.
  */
-export async function listOrgRoster(orgIds: readonly string[]) {
+/**
+ * Which slice of the agency's roster to read. Omitted means all of it —
+ * the clients page, which lists everyone the agency is responsible for.
+ */
+export type RosterFilter = { handledBy: string } | { unclaimed: true };
+
+export async function listOrgRoster(
+  orgIds: readonly string[],
+  filter?: RosterFilter
+) {
   if (!orgIds.length) return [];
 
+  const where = [inArray(orgApplicationProgress.orgId, [...orgIds])];
+  if (filter && "handledBy" in filter) {
+    where.push(eq(applications.assigneeId, filter.handledBy));
+  }
+  if (filter && "unclaimed" in filter) {
+    where.push(isNull(applications.assigneeId));
+  }
+
+  // Joined to `applications` for `assignee_id` alone: the progress view
+  // does not carry it, and adding a column to a view is a migration
+  // where a join is a line. The columns are named rather than spread,
+  // so the join cannot widen what this returns — the view's whole point
+  // is that it has no column a document could hide in.
   return db
-    .select()
+    .select({
+      id: orgApplicationProgress.id,
+      caseRef: orgApplicationProgress.caseRef,
+      fullName: orgApplicationProgress.fullName,
+      status: orgApplicationProgress.status,
+      destinationIso: orgApplicationProgress.destinationIso,
+      visaName: orgApplicationProgress.visaName,
+      documentsTotal: orgApplicationProgress.documentsTotal,
+      documentsVerified: orgApplicationProgress.documentsVerified,
+      completionPct: orgApplicationProgress.completionPct,
+    })
     .from(orgApplicationProgress)
-    .where(inArray(orgApplicationProgress.orgId, [...orgIds]))
+    .innerJoin(applications, eq(applications.id, orgApplicationProgress.id))
+    .where(and(...where))
     .orderBy(desc(orgApplicationProgress.completionPct));
 }

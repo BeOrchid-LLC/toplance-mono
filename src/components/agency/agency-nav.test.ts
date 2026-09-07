@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { agencyNav } from "@/components/agency/agency-nav";
 
-const withOrg = { locale: "en" as const, hasOrganisation: true };
+const withOrg = { locale: "en" as const, hasOrganisation: true, isDirector: true };
 
 describe("agencyNav", () => {
   it("keeps the dashboard first, since AppNav treats item 0 as the section root", () => {
@@ -28,9 +28,17 @@ describe("agencyNav", () => {
     expect(agencyNav({ locale: "en", hasOrganisation: false })).toHaveLength(1);
   });
 
+  it("keeps the team roster to the director", () => {
+    // A reviewer's console is their own desk. Who works here and what
+    // rank they hold is the agency's business, not a case's.
+    expect(
+      agencyNav({ locale: "en", hasOrganisation: true }).map((i) => i.href)
+    ).toEqual(["/agency", "/agency/clients"]);
+  });
+
   it("resolves its labels against the locale it is given", () => {
-    expect(agencyNav({ locale: "fr", hasOrganisation: true })[1].label).toBe(
-      "Clients"
-    );
+    expect(
+      agencyNav({ locale: "fr", hasOrganisation: true, isDirector: true })[1].label
+    ).toBe("Clients");
   });
 });

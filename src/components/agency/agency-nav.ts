@@ -24,9 +24,18 @@ import type { Locale } from "@/lib/i18n/locales";
 export function agencyNav({
   locale,
   hasOrganisation,
+  isDirector = false,
 }: {
   locale: Locale;
   hasOrganisation: boolean;
+  /**
+   * The team roster is the director's: who works here, what rank they
+   * hold and who may be invited are questions about running the agency,
+   * not about handling a case. A reviewer's console is their own desk,
+   * so the tab is not theirs — and `/agency/team` turns them away for
+   * the same reason, since a hidden link is not a guard.
+   */
+  isDirector?: boolean;
 }): NavItem[] {
   const dashboard = { href: "/agency", label: AGENCY.navDashboard[locale] };
   if (!hasOrganisation) return [dashboard];
@@ -34,6 +43,8 @@ export function agencyNav({
   return [
     dashboard,
     { href: "/agency/clients", label: AGENCY.navClients[locale] },
-    { href: "/agency/team", label: AGENCY.navTeam[locale] },
+    ...(isDirector
+      ? [{ href: "/agency/team", label: AGENCY.navTeam[locale] }]
+      : []),
   ];
 }

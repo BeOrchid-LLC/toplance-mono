@@ -5,13 +5,13 @@ import { currentUser } from "@clerk/nextjs/server";
 import { ArrowRight, Shield } from "lucide-react";
 import { eq } from "drizzle-orm";
 
-import { AppBar } from "@/components/app/app-bar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Shell } from "@/components/shared/shell";
 import { CreateOrganisation } from "@/components/agency/create-organisation";
-import { agencyNav } from "@/components/agency/agency-nav";
+import { AgencyBar } from "@/components/agency/agency-bar";
+import { ClientRoster } from "@/components/agency/client-roster";
 import { ConsoleBand } from "@/components/agency/console-band";
 import { InviteDialog } from "@/components/agency/invite-dialog";
 import { homeFor } from "@/lib/auth/routes";
@@ -34,17 +34,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   return { title: AGENCY.pageTitle[locale] };
 }
-
-/**
- * The `org_role` enum in words, in every locale — see `AGENCY.roleLabel`
- * in `src/lib/i18n/agency.ts`. This bar used to print a hard-coded "HR"
- * beside the organisation name — for everyone, including the director who
- * had just created the organisation and whom `createOrganisationTx`
- * writes as `owner`. So the one place the product named your role was the
- * one place it was reliably wrong, and it read as a title assigned behind
- * your back rather than a fact about the account.
- */
-const ROLE_LABEL = AGENCY.roleLabel;
 
 /**
  * Why the account carries that role, said where the role is shown — see
@@ -98,6 +87,42 @@ function RosterCard({
       </Panel>
     </Link>
   );
+}
+
+/** The agency in numbers: who is on the roster, who works here, what is outstanding. */
+async function directorSummary(orgIds: readonly string[], orgId: string | null) {
+  const [rows, members, invitations] = await Promise.all([
+    listOrgRoster(orgIds),
+    // Same "no org, no unfiltered read" reasoning as the roster: both of
+    // these take one org id and have nothing to filter by without it.
+    orgId ? listOrgMembers(orgId) : Promise.resolve([]),
+    orgId ? listInvitations(orgId) : Promise.resolve([]),
+  ]);
+
+  return {
+    rows,
+    members,
+    pendingInvitations: invitations.filter((i) => i.status === "pending"),
+  };
+}
+
+/**
+ * One reviewer's desk: the cases they hold, and the ones anybody at the
+ * agency may still take.
+ *
+ * Both lists are the same rows the clients page shows — this is not a
+ * second source of truth, it is the same query with `assignee_id` in the
+ * `where`. The pool is here rather than only on the clients page because
+ * an empty desk needs somewhere to go next, and `handlesCase` says an
+ * unheld case is open to any member.
+ */
+async function reviewerDesk(orgIds: readonly string[], handlerId: string) {
+  const [assigned, unclaimed] = await Promise.all([
+    listOrgRoster(orgIds, { handledBy: handlerId }),
+    listOrgRoster(orgIds, { unclaimed: true }),
+  ]);
+
+  return { assigned, unclaimed };
 }
 
 export default async function EmployerConsolePage() {
@@ -167,12 +192,7 @@ export default async function EmployerConsolePage() {
 
     return (
       <div className="min-h-dvh bg-bg">
-        <AppBar
-          nav={agencyNav({ locale, hasOrganisation: false })}
-          name={profile.fullName}
-          email={profile.email}
-          subtitle={AGENCY.pageTitle[locale]}
-        />
+        <AgencyBar profile={profile} membership={null} locale={locale} />
         <main>
           <Shell className="py-12">
             <Panel className="mx-auto max-w-[560px]">
@@ -209,65 +229,64 @@ export default async function EmployerConsolePage() {
     );
   }
 
-  // Counts, not contents. The rows themselves are rendered by
-  // `/agency/clients` and `/agency/team`; what this page needs from each
-  // list is its length, and one query per list is what it takes to know
-  // that honestly.
-  const [rows, members, invitations] = await Promise.all([
-    listOrgRoster(actor.orgIds),
-    // Same "no org, no unfiltered read" reasoning as the roster: both of
-    // these take one org id and have nothing to filter by without it.
-    orgId ? listOrgMembers(orgId) : Promise.resolve([]),
-    orgId ? listInvitations(orgId) : Promise.resolve([]),
-  ]);
-  const pendingInvitations = invitations.filter((i) => i.status === "pending");
-
   const org = membership;
-  const used = rows.length;
+  const isDirector = org.role === "owner";
+
+  // A director's dashboard answers "how is the agency doing"; a
+  // reviewer's answers "what is on my desk". Two different questions, so
+  // neither pays for the other's queries — and a reviewer never runs the
+  // agency-wide roster read at all.
+  const summary = isDirector ? await directorSummary(actor.orgIds, orgId) : null;
+  const desk = isDirector ? null : await reviewerDesk(actor.orgIds, profile.id);
+
+  const used = summary?.rows.length ?? 0;
   const seats = org.seatsPurchased ?? 0;
 
   return (
     <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={agencyNav({ locale, hasOrganisation: true })}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${org.name} · ${ROLE_LABEL[org.role][locale]}`}
-      />
+      <AgencyBar profile={profile} membership={org} locale={locale} />
 
       <ConsoleBand
         title={org.name || AGENCY.yourOrganisationFallback[locale]}
         action={<InviteDialog canInviteStaff={org.role === "owner"} />}
       >
         {/*
-          "0 of 0 seats in use" is a sentence made of two facts we
-          do not have. Seats are a placeholder until the client
-          sets them (§7), so with no seat count the line states the
-          number that is real and says the other is not set.
+          Seats and outstanding invitations are the agency's books, so
+          they are the director's line. A reviewer opening this page is
+          not managing the account — the two rosters below are their
+          screen — and a seat count over their own work would be a
+          number they can do nothing about.
+
+          "0 of 0 seats in use" is a sentence made of two facts we do not
+          have. Seats are a placeholder until the client sets them (§7),
+          so with no seat count the line states the number that is real
+          and says the other is not set.
         */}
-        <p className="t-muted mt-2">
-          {seats > 0
-            ? fill(AGENCY.seatsInUse[locale], { used, seats })
-            : fill(
-                (used === 1
-                  ? AGENCY.seatCountNotSetOne
-                  : AGENCY.seatCountNotSetOther)[locale],
-                { used }
+        {summary && (
+          <p className="t-muted mt-2">
+            {seats > 0
+              ? fill(AGENCY.seatsInUse[locale], { used, seats })
+              : fill(
+                  (used === 1
+                    ? AGENCY.seatCountNotSetOne
+                    : AGENCY.seatCountNotSetOther)[locale],
+                  { used }
+                )}
+            {summary.pendingInvitations.length > 0 &&
+              fill(
+                (summary.pendingInvitations.length === 1
+                  ? AGENCY.pendingSuffixOne
+                  : AGENCY.pendingSuffixOther)[locale],
+                { n: summary.pendingInvitations.length }
               )}
-          {pendingInvitations.length > 0 &&
-            fill(
-              (pendingInvitations.length === 1
-                ? AGENCY.pendingSuffixOne
-                : AGENCY.pendingSuffixOther)[locale],
-              { n: pendingInvitations.length }
-            )}
-        </p>
+          </p>
+        )}
         {/* The bar names your role; this says how you got it.
             Seeing "Owner" appended to your account without ever
             having chosen it is the kind of thing that reads as the
             product knowing something about you that you don't. */}
         <p className="t-muted mt-2 max-w-[68ch]">{ROLE_REASON[org.role][locale]}</p>
-        {seats > 0 && (
+        {summary && seats > 0 && (
           <Progress value={(used / seats) * 100} className="mt-4 max-w-[320px]" />
         )}
       </ConsoleBand>
@@ -304,28 +323,59 @@ export default async function EmployerConsolePage() {
             </div>
           </div>
 
-          {/* The two rosters, as the doors to their own pages. Equal
-              weight on purpose: an agency is its clients and the people
-              who serve them, and the console used to show only the
-              first. */}
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <RosterCard
-              href="/agency/clients"
-              label={AGENCY.navClients[locale]}
-              body={AGENCY.clientsCardBody[locale]}
-              count={used}
-              countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
-            />
-            <RosterCard
-              href="/agency/team"
-              label={AGENCY.navTeam[locale]}
-              body={AGENCY.teamCardBody[locale]}
-              count={members.length}
-              countWord={
-                (members.length === 1 ? AGENCY.memberWord : AGENCY.membersWord)[locale]
-              }
-            />
-          </div>
+          {summary ? (
+            /* The two rosters, as the doors to their own pages. Equal
+               weight on purpose: an agency is its clients and the people
+               who serve them, and the console used to show only the
+               first. */
+            <div className="mt-8 grid gap-6 md:grid-cols-2">
+              <RosterCard
+                href="/agency/clients"
+                label={AGENCY.navClients[locale]}
+                body={AGENCY.clientsCardBody[locale]}
+                count={used}
+                countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
+              />
+              <RosterCard
+                href="/agency/team"
+                label={AGENCY.navTeam[locale]}
+                body={AGENCY.teamCardBody[locale]}
+                count={summary.members.length}
+                countWord={
+                  (summary.members.length === 1
+                    ? AGENCY.memberWord
+                    : AGENCY.membersWord)[locale]
+                }
+              />
+            </div>
+          ) : (
+            /* A reviewer's desk, not a summary of somebody else's
+               agency. Their own cases first — the ones they can actually
+               open — then the pool, because an empty desk needs a next
+               step and taking a case is that step. Only the first list
+               links into the case screen: a client nobody has taken is
+               a name and a completion score here, and nothing more,
+               until somebody takes it. */
+            <div className="mt-8">
+              <ClientRoster
+                rows={desk?.assigned ?? []}
+                locale={locale}
+                label={AGENCY.assignedToYou[locale]}
+                empty={AGENCY.assignedEmpty[locale]}
+              />
+              <ClientRoster
+                className="mt-8"
+                rows={desk?.unclaimed ?? []}
+                locale={locale}
+                label={AGENCY.unclaimedLabel[locale]}
+                empty={AGENCY.unclaimedEmpty[locale]}
+                // Takeable, not openable: a reviewer may claim one of
+                // these but cannot read it until they have — see
+                // `handlesCase`.
+                takeableBy={profile.id}
+              />
+            </div>
+          )}
         </Shell>
       </main>
     </div>

@@ -27,6 +27,10 @@ export const AGENCY: {
   navDashboard: L;
   navClients: L;
   navTeam: L;
+  profileTitle: L;
+  profileBody: L;
+  profileDetailsLabel: L;
+  profileOrgLabel: L;
   roleLabel: { owner: L; reviewer: L };
   roleReason: { owner: L; reviewer: L };
   nameOrgLabel: L;
@@ -55,6 +59,11 @@ export const AGENCY: {
   timelineExpired: L;
   timelineInvited: L;
   clientsCardBody: L;
+  assignedToYou: L;
+  assignedEmpty: L;
+  noAssignedClients: L;
+  unclaimedLabel: L;
+  unclaimedEmpty: L;
   teamCardBody: L;
   yourTeamLabel: L;
   memberWord: L;
@@ -112,6 +121,54 @@ export const AGENCY: {
     tw: "Kuo",
     zu: "Ithimba",
   },
+  profileTitle: {
+    en: "Your profile",
+    ha: "Bayananka",
+    yo: "Àkọọ́lẹ̀ rẹ",
+    ig: "Profaịlụ gị",
+    fr: "Votre profil",
+    pt: "O seu perfil",
+    sw: "Wasifu wako",
+    ar: "ملفك الشخصي",
+    tw: "Wo ho nsɛm",
+    zu: "Iphrofayela yakho",
+  },
+  profileBody: {
+    en: "How your clients and colleagues see you, and where we reach you about a case.",
+    ha: "Yadda abokan cinikinka da abokan aikinka suke ganin ka, da inda za mu tuntuɓe ka game da shari'a.",
+    yo: "Bí àwọn oníbàárà àti alábàáṣiṣẹ́ rẹ ṣe rí ọ, àti ibi tí a ti lè kàn sí ọ nípa ẹjọ́ kan.",
+    ig: "Otú ndị ahịa na ndị ọrụ ibe gị si hụ gị, na ebe anyị ga-akpọtụrụ gị maka ikpe.",
+    fr: "Ce que vos clients et vos collègues voient de vous, et où nous vous joignons au sujet d'un dossier.",
+    pt: "Como os seus clientes e colegas o veem, e onde falamos consigo sobre um processo.",
+    sw: "Jinsi wateja na wenzako wanavyokuona, na mahali tunapokufikia kuhusu kesi.",
+    ar: "كيف يراك عملاؤك وزملاؤك، وأين نصل إليك بشأن حالة ما.",
+    tw: "Sɛdeɛ w'adetɔfoɔ ne w'adwumayɛfoɔ hunu wo, ne baabi a yɛbɛfa so aka asɛm bi ho asɛm akyerɛ wo.",
+    zu: "Indlela amakhasimende nozakwenu abakubona ngayo, nalapho sikuthola khona ngecala.",
+  },
+  profileDetailsLabel: {
+    en: "Your details",
+    ha: "Bayananka",
+    yo: "Àwọn àlàyé rẹ",
+    ig: "Nkọwa gị",
+    fr: "Vos coordonnées",
+    pt: "Os seus dados",
+    sw: "Maelezo yako",
+    ar: "بياناتك",
+    tw: "Wo ho nsɛm",
+    zu: "Imininingwane yakho",
+  },
+  profileOrgLabel: {
+    en: "Agency",
+    ha: "Kamfani",
+    yo: "Àjọ",
+    ig: "Ụlọ ọrụ",
+    fr: "Agence",
+    pt: "Agência",
+    sw: "Wakala",
+    ar: "الوكالة",
+    tw: "Adwumakuo",
+    zu: "I-ejensi",
+  },
   roleLabel: {
     owner: {
       en: "Owner",
@@ -126,16 +183,16 @@ export const AGENCY: {
       zu: "Umnikazi",
     },
     reviewer: {
-      en: "Reviewer",
-      ha: "Mai dubawa",
-      yo: "Aṣàyẹ̀wò",
-      ig: "Onye nyocha",
-      fr: "Réviseur",
-      pt: "Revisor",
-      sw: "Mkaguzi",
-      ar: "المراجع",
-      tw: "Ɔhwɛfoɔ",
-      zu: "Umhloli",
+      en: "Travel agent",
+      ha: "Wakilin balaguro",
+      yo: "Aṣojú ìrìn-àjò",
+      ig: "Onye ọrụ njem",
+      fr: "Agent de voyage",
+      pt: "Agente de viagens",
+      sw: "Wakala wa safari",
+      ar: "وكيل سفر",
+      tw: "Akwantuo ho dwumayɛni",
+      zu: "I-ejenti yohambo",
     },
   },
   roleReason: {
@@ -152,16 +209,16 @@ export const AGENCY: {
       zu: "Ungumnikazi ngoba nguwe owadala le nhlangano. Abanikazi bangamema abantu, baphathe i-akhawunti futhi babone inqubekelaphambili yawo wonke umuntu.",
     },
     reviewer: {
-      en: "You are a reviewer because an owner invited you into this organisation. Reviewers check clients' documents, decide their applications and message them directly.",
-      ha: "Kai mai dubawa ne domin wani mai kamfani ne ya gayyace ka zuwa cikin wannan kamfani. Masu dubawa suna duba takardun abokan ciniki, su yanke shawara kan buƙatunsu, kuma su tuntube su kai tsaye.",
-      yo: "Ìwọ ni aṣàyẹ̀wò nítorí onílé-iṣẹ́ kan ni ó pè ọ́ wọ àjọ yìí. Àwọn aṣàyẹ̀wò máa ń yẹ àwọn ìwé oníbàárà wò, wọ́n ń pinnu ìbéèrè wọn, wọ́n sì ń bá wọn sọ̀rọ̀ tààrà.",
-      ig: "Ị bụ onye nyocha n'ihi na onyenwe kpọrọ gị oku ka ị banye n'ụlọ ọrụ a. Ndị nyocha na-enyocha akwụkwọ ndị ahịa, kpebie arịrịọ ha, ma zigara ha ozi ozugbo.",
-      fr: "Vous êtes réviseur parce qu'un propriétaire vous a invité dans cette organisation. Les réviseurs vérifient les documents des clients, décident de leurs demandes et leur écrivent directement.",
-      pt: "É revisor porque um proprietário o convidou para esta organização. Os revisores verificam os documentos dos clientes, decidem os seus pedidos e falam com eles diretamente.",
-      sw: "Wewe ni mkaguzi kwa sababu mmiliki alikualika kwenye shirika hili. Wakaguzi hukagua nyaraka za wateja, huamua maombi yao na huwasiliana nao moja kwa moja.",
-      ar: "أنت مراجع لأن أحد المالكين دعاك إلى هذه المؤسسة. يقوم المراجعون بفحص مستندات العملاء والبت في طلباتهم ومراسلتهم مباشرة.",
-      tw: "Woyɛ ɔhwɛfoɔ ɛfiri sɛ ɔwura bi frɛɛ wo baa akuo yi mu. Ahwɛfoɔ hwɛ adetɔfoɔ nkrataa, wɔsi wɔn abisadeɛ ho gyinae, na wɔne wɔn di nkitaho tee.",
-      zu: "Ungumhloli ngoba umnikazi wakumema kule nhlangano. Abahloli bahlola amadokhumenti amakhasimende, banqume izicelo zawo futhi baxhumane nawo ngqo.",
+      en: "You are a travel agent because a director invited you into this organisation. Travel agents check the documents of the clients they are given, decide their applications and message them directly.",
+      ha: "Kai wakilin balaguro ne domin wani darakta ya gayyace ka cikin wannan kamfanin. Wakilan balaguro suna duba takardun abokan cinikin da aka ba su, suna yanke shawara kan nemansu, kuma suna aika musu saƙo kai tsaye.",
+      yo: "Ìwọ jẹ́ aṣojú ìrìn-àjò nítorí olùdarí kan pè ọ́ sínú àjọ yìí. Àwọn aṣojú ìrìn-àjò ń ṣàyẹ̀wò àwọn ìwé àwọn oníbàárà tí a fi lé wọn lọ́wọ́, wọ́n ń pinnu ìbéèrè wọn, wọ́n sì ń bá wọn sọ̀rọ̀ tààrà.",
+      ig: "Ị bụ onye ọrụ njem n'ihi na otu onye nduzi kpọrọ gị n'ime ụlọ ọrụ a. Ndị ọrụ njem na-enyocha akwụkwọ ndị ahịa e nyere ha, na-ekpebi arịrịọ ha ma na-ezigara ha ozi ozugbo.",
+      fr: "Vous êtes agent de voyage parce qu'un directeur vous a invité dans cette organisation. Les agents de voyage vérifient les documents des clients qui leur sont confiés, tranchent leurs dossiers et leur écrivent directement.",
+      pt: "É agente de viagens porque um diretor o convidou para esta organização. Os agentes de viagens verificam os documentos dos clientes que lhes são atribuídos, decidem os seus processos e falam com eles diretamente.",
+      sw: "Wewe ni wakala wa safari kwa sababu mkurugenzi alikualika katika shirika hili. Mawakala wa safari hukagua nyaraka za wateja waliopewa, huamua maombi yao na kuwasiliana nao moja kwa moja.",
+      ar: "أنت وكيل سفر لأن أحد المديرين دعاك إلى هذه المؤسسة. يفحص وكلاء السفر مستندات العملاء المسندين إليهم، ويبتّون في طلباتهم، ويراسلونهم مباشرة.",
+      tw: "Woyɛ akwantuo ho dwumayɛni ɛfiri sɛ ɔpanyin bi frɛɛ wo baa akuo yi mu. Akwantuo ho adwumayɛfoɔ hwɛ adetɔfoɔ a wɔde ama wɔn no nkrataa so, si wɔn abisadeɛ ho gyinae, na wɔne wɔn di nkitaho tee.",
+      zu: "Uyi-ejenti yohambo ngoba umqondisi wakumema kule nhlangano. Ama-ejenti ohambo ahlola amadokhumenti amakhasimende awanikwayo, anqume izicelo zawo futhi athumele imilayezo ngqo.",
     },
   },
   nameOrgLabel: {
@@ -301,16 +358,16 @@ export const AGENCY: {
     zu: "Amadokhumenti agcina enhlanganweni yakho",
   },
   privacyBody: {
-    en: "Passports, bank statements and police certificates are yours to review, and nobody at Toplance can open them. Inside your agency, an unclaimed case is open to your team; once someone claims it, only that handler and the director can see it.",
-    ha: "Fasfo, bayanan banki da takardun sheda daga ‘yan sanda naku ne ku duba, kuma babu wani a Toplance da zai iya buɗe su. A cikin ƙungiyarku, fayil ɗin da ba a karɓa ba yana buɗe ga tawagarku; da zarar wani ya karɓe shi, sai wanda yake kula da shi da darakta kaɗai ke ganin sa.",
-    yo: "Ìwé ìrìnnà, àkọsílẹ̀ báńkì àti ìwé ẹ̀rí ọlọ́pàá jẹ́ tiyín láti yẹ̀wò, kò sì sí ẹnìkan ní Toplance tí ó lè ṣí wọn. Nínú ilé-iṣẹ́ yín, fáìlì tí kò tí ì sí ẹni tí ó gbà á wà ní ṣíṣí fún ẹgbẹ́ yín; bí ẹnìkan bá gbà á, olùtọ́jú náà àti olórí nìkan ni ó lè rí i.",
-    ig: "Paspọtụ, nkọwa akaụntụ ụlọ akụ na asambodo ndị uwe ojii bụ nke gị inyocha, ọ dịghịkwa onye ọ bụla na Toplance nwere ike imepe ha. N'ime ụlọ ọrụ gị, faịlụ onye ọ bụla na-ejideghị na-emeghe nye ndị otu gị; ozugbo otu onye jidere ya, ọ bụ naanị onye ahụ na-elekọta ya na onye isi nwere ike ịhụ ya.",
-    fr: "Les passeports, relevés bancaires et certificats de police sont à vous d'examiner, et personne chez Toplance ne peut les ouvrir. Au sein de votre agence, un dossier non attribué est ouvert à toute l'équipe ; dès qu'il est pris en charge, seuls ce gestionnaire et le directeur peuvent le voir.",
-    pt: "Os passaportes, extratos bancários e certificados de registo criminal são seus para analisar, e ninguém na Toplance os pode abrir. Dentro da sua agência, um processo não atribuído está aberto à equipa; assim que alguém o assume, só esse gestor e o diretor o podem ver.",
-    sw: "Pasipoti, taarifa za benki na vyeti vya polisi ni zenu kukagua, na hakuna mtu yeyote Toplance anayeweza kuzifungua. Ndani ya wakala wako, faili ambalo halijachukuliwa liko wazi kwa timu yako; mtu akishalichukua, ni yeye anayelishughulikia na mkurugenzi pekee wanaoweza kuliona.",
-    ar: "جوازات السفر وكشوف الحسابات المصرفية وشهادات الشرطة لك أنت لمراجعتها، ولا يمكن لأحد في Toplance فتحها. داخل وكالتك، الملف غير المُسنَد مفتوح لفريقك؛ وبمجرد أن يتولاه أحدهم، لا يراه سوى ذلك المسؤول والمدير.",
-    tw: "Pasport, sikakorabea nkrataa, ne polisifoɔ adansedie krataa yɛ wo dea sɛ wohwɛ, na obiara nni Toplance a ɔbɛtumi abue mu. W'adwumakuw mu no, fael a obiara nnyee no da hɔ ma wo kuo no nyinaa; sɛ obi gye a, ɔno a ɔhwɛ so ne panin no nko ara na wɔtumi hu.",
-    zu: "Amaphasipoti, izitatimende zasebhange nezitifiketi zamaphoyisa angawakho ukuwabuyekeza, futhi akekho e-Toplance ongawavula. Ngaphakathi kwenhlangano yakho, icala elingakathathwa livulekele ithimba lakho; uma umuntu eselithathile, yilowo oliphethe kanye nomqondisi kuphela abangalibona.",
+    en: "Passports, bank statements and police certificates are yours to review, and nobody at Toplance can open them. Inside your agency, a client's file is open to the colleague handling them and to the director — nobody else, and not before the case is theirs.",
+    ha: "Fasfo, bayanan banki da takardar shaidar ɗan sanda naka ne ka duba, kuma babu wanda ke Toplance da zai iya buɗe su. A cikin kamfaninka, fayil ɗin abokin ciniki a buɗe yake ga wanda ke kula da shi da kuma darakta — ba wani ba, kuma ba kafin shari'ar ta zama tasa ba.",
+    yo: "Ìwé ìrìnà, ìsọfúnni báǹkì àti ìwé ẹ̀rí ọlọ́pàá jẹ́ tìrẹ láti ṣàyẹ̀wò, kò sì sí ẹnìkan ní Toplance tí ó lè ṣí wọn. Nínú àjọ rẹ, fáìlì oníbàárà ṣí sílẹ̀ fún alábàáṣiṣẹ́ tí ń bójú tó wọn àti fún olùdarí — kò sí ẹlòmíràn, kò sì ṣí kí ẹjọ́ náà tó di tiwọn.",
+    ig: "Paspọtụ, nkọwa akụ na akwụkwọ ndị uwe ojii bụ nke gị ịnyocha, ọ dịghịkwa onye nọ na Toplance nwere ike imepe ha. N'ime ụlọ ọrụ gị, faịlụ onye ahịa ghere oghe naanị nye onye na-ahụ maka ya na onye nduzi — ọ dịghị onye ọzọ, ọ bụghịkwa tupu ikpe ahụ abụrụ nke ya.",
+    fr: "Les passeports, relevés bancaires et casiers judiciaires sont à vous de vérifier, et personne chez Toplance ne peut les ouvrir. Au sein de votre agence, le dossier d'un client est ouvert au collègue qui le suit et au directeur — à personne d'autre, et pas avant que le dossier soit le sien.",
+    pt: "Os passaportes, extratos bancários e registos criminais são seus para verificar, e ninguém na Toplance os pode abrir. Dentro da sua agência, o processo de um cliente está aberto ao colega que o acompanha e ao diretor — a mais ninguém, e não antes de o caso ser dele.",
+    sw: "Pasipoti, taarifa za benki na vyeti vya polisi ni vyako kukagua, na hakuna mtu Toplance anayeweza kuvifungua. Ndani ya shirika lako, faili la mteja liko wazi kwa mwenzako anayemshughulikia na kwa mkurugenzi — si mtu mwingine, wala si kabla kesi haijawa yake.",
+    ar: "جوازات السفر وكشوف الحسابات وشهادات الشرطة لك أنت لمراجعتها، ولا أحد في Toplance يستطيع فتحها. وداخل مؤسستك، ملف العميل مفتوح للزميل الذي يتولاه وللمدير — لا لغيرهما، ولا قبل أن تصبح الحالة له.",
+    tw: "Akwantufa nkrataa, sikakorabea nkrataa ne polisi adanseɛ krataa yɛ wo dea sɛ wohwɛ, na obiara nni Toplance a ɔbɛtumi abue mu. Wɔ wo kuo mu no, adetɔni krataa bue ma nea ɔhwɛ ne so ne ɔpanyin no — obiara foforɔ bio, na ɛnyɛ ansa na asɛm no abɛyɛ ne dea.",
+    zu: "Amaphasipoti, izitatimende zasebhange nezitifiketi zamaphoyisa kungokwakho ukukubuyekeza, futhi akekho e-Toplance ongakuvula. Ngaphakathi enhlanganweni yakho, ifayela lekhasimende livulekele ozakwenu oliphethe kanye nomqondisi — akekho omunye, futhi hhayi ngaphambi kokuba icala libe elakhe.",
   },
   yourClientsLabel: {
     en: "Your clients",
@@ -479,6 +536,66 @@ export const AGENCY: {
     ar: "دُعي في {date}",
     tw: "Wɔfrɛɛ no {date}",
     zu: "Umenywe {date}",
+  },
+  assignedToYou: {
+    en: "Assigned to you",
+    ha: "An ba ka su",
+    yo: "Tí a fi lé ọ lọ́wọ́",
+    ig: "Enyere gị",
+    fr: "Qui vous sont confiés",
+    pt: "Atribuídos a si",
+    sw: "Uliyopewa",
+    ar: "المسندة إليك",
+    tw: "A wɔde ama wo",
+    zu: "Okwabelwe wena",
+  },
+  assignedEmpty: {
+    en: "Nothing is yours yet. Your director hands you a case, or you take one from the list below.",
+    ha: "Babu abin da yake naka tukuna. Daraktan zai ba ka shari'a, ko kuma ka ɗauki ɗaya daga jerin da ke ƙasa.",
+    yo: "Kò sí ohun tí í ṣe tìrẹ síbẹ̀. Olùdarí rẹ yóò fi ẹjọ́ lé ọ lọ́wọ́, tàbí kí o gba ọ̀kan nínú àtòjọ tí ó wà nísàlẹ̀.",
+    ig: "Ọ dịghị ihe bụ nke gị. Onye nduzi gị ga-enye gị ikpe, ma ọ bụ were otu site na ndepụta dị n'okpuru.",
+    fr: "Rien ne vous est encore confié. Votre directeur vous confie un dossier, ou vous en prenez un dans la liste ci-dessous.",
+    pt: "Ainda não tem nada. O seu diretor entrega-lhe um processo, ou assume um da lista abaixo.",
+    sw: "Bado huna chochote. Mkurugenzi wako atakupa kesi, au uchukue moja kwenye orodha iliyo hapa chini.",
+    ar: "لا شيء لك بعد. سيسند إليك المدير حالة، أو تأخذ واحدة من القائمة أدناه.",
+    tw: "Biribiara nyɛ wo dea ɛnnɛ. Wo panyin de asɛm bi bɛma wo, anaasɛ wo ara fa bi firi nhwɛso a ɛwɔ aseɛ no mu.",
+    zu: "Akukho okungokwakho okwamanje. Umqondisi wakho ukunika icala, noma uthathe elilodwa ohlwini olungezansi.",
+  },
+  noAssignedClients: {
+    en: "You have not been assigned a client yet. Your director hands you one, or you take an open case from your dashboard.",
+    ha: "Ba a ba ka wani abokin ciniki ba tukuna. Daraktan zai ba ka ɗaya, ko kuma ka ɗauki shari'a a buɗe daga dashbod ɗinka.",
+    yo: "A kò tíì fi oníbàárà kankan lé ọ lọ́wọ́. Olùdarí rẹ yóò fún ọ ní ọ̀kan, tàbí kí o gba ẹjọ́ tí ó ṣí sílẹ̀ láti pátákó rẹ.",
+    ig: "E nyebeghị gị onye ahịa. Onye nduzi gị ga-enye gị otu, ma ọ bụ were ikpe ghere oghe site na dashboard gị.",
+    fr: "Aucun client ne vous a encore été confié. Votre directeur vous en confie un, ou vous prenez un dossier ouvert depuis votre tableau de bord.",
+    pt: "Ainda não lhe foi atribuído nenhum cliente. O seu diretor entrega-lhe um, ou assume um caso aberto a partir do seu painel.",
+    sw: "Bado hujapewa mteja. Mkurugenzi wako atakupa mmoja, au uchukue kesi iliyo wazi kutoka kwenye dashibodi yako.",
+    ar: "لم يُسند إليك أي عميل بعد. سيسند إليك المدير عميلاً، أو تأخذ حالة مفتوحة من لوحتك.",
+    tw: "Wɔmfaa adetɔni biara mmaa wo. Wo panyin de baako bɛma wo, anaasɛ wofa asɛm a ɛda hɔ firi wo dashboard so.",
+    zu: "Awukanikwa ikhasimende. Umqondisi wakho ukunika elilodwa, noma uthathe icala elivulekile kudeshibhodi yakho.",
+  },
+  unclaimedLabel: {
+    en: "Open to your team",
+    ha: "A buɗe ga ƙungiyarka",
+    yo: "Ó ṣí sílẹ̀ fún ẹgbẹ́ rẹ",
+    ig: "Ọ ghere oghe nye ndị otu gị",
+    fr: "Ouverts à votre équipe",
+    pt: "Abertos à sua equipa",
+    sw: "Wazi kwa timu yako",
+    ar: "متاحة لفريقك",
+    tw: "Ɛbue ma wo kuo",
+    zu: "Kuvulekele ithimba lakho",
+  },
+  unclaimedEmpty: {
+    en: "Nobody is waiting. Every client here has a handler.",
+    ha: "Babu wanda ke jira. Kowane abokin ciniki a nan yana da mai kula da shi.",
+    yo: "Kò sí ẹni tí ń dúró. Gbogbo oníbàárà níbí ní ẹni tí ń bójú tó wọn.",
+    ig: "Ọ dịghị onye na-eche. Onye ahịa ọ bụla ebe a nwere onye na-ahụ maka ya.",
+    fr: "Personne n'attend. Chaque client ici a quelqu'un qui le suit.",
+    pt: "Ninguém está à espera. Cada cliente aqui tem quem o acompanhe.",
+    sw: "Hakuna anayesubiri. Kila mteja hapa ana anayemshughulikia.",
+    ar: "لا أحد ينتظر. كل عميل هنا لديه من يتولاه.",
+    tw: "Obiara nretwɛn. Adetɔni biara a ɔwɔ ha wɔ obi a ɔhwɛ ne so.",
+    zu: "Akekho olindile. Ikhasimende ngalinye lapha linaye omphathayo.",
   },
   clientsCardBody: {
     en: "Everyone whose visa you are handling, with a live completion score for each.",

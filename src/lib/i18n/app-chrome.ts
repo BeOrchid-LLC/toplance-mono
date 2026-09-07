@@ -28,6 +28,7 @@ export const APP_NAV: { menuLabel: L } = {
 type NotificationKindKey =
   | "application_submitted"
   | "checklist_complete"
+  | "document_uploaded"
   | "status_changed"
   | "document_flagged"
   | "message_received"
@@ -117,6 +118,18 @@ export const NOTIFICATIONS: {
       ar: "وصلت حالة إلى 100% وتم تقديمها",
       tw: "Asɛm bi aduru 100% na wɔde akɔma",
       zu: "Icala elithile lifinyelele ku-100% futhi lithunyelwe",
+    },
+    document_uploaded: {
+      en: "A document arrived and is waiting on you",
+      ha: "An sami takarda, tana jiran ka",
+      yo: "Ìwé kan dé, ó ń dúró de ọ",
+      ig: "Otu akwụkwọ abịala, ọ na-echere gị",
+      fr: "Un document est arrivé et vous attend",
+      pt: "Chegou um documento e está à sua espera",
+      sw: "Hati imefika na inakusubiri",
+      ar: "وصل مستند وهو في انتظارك",
+      tw: "Krataa bi aba na ɛretwɛn wo",
+      zu: "Kufike idokhumenti futhi ikulindele",
     },
     checklist_complete: {
       en: "A case reached 100% but has not been submitted",

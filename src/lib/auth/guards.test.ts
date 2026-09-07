@@ -161,10 +161,13 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
   });
 
   it("lets the agency that holds the case see the application", async () => {
+    // "Holds" literally, since 2026-09-07: the colleague the case was
+    // handed to. Working at the agency is no longer reaching its
+    // clients — see the narrowing tests below.
     signIn(AGENCY, { orgIds: [ORG_ID], role: "org_member" });
 
     const { application } = await requireApplicationAccess(
-      tenantApplicationId,
+      claimedApplicationId,
       canReadApplication
     );
 
@@ -178,7 +181,7 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     // reviewing its own traveller's documents is the job it was hired
     // for. This assertion used to say the exact opposite.
     const { application } = await requireApplicationAccess(
-      tenantApplicationId,
+      claimedApplicationId,
       canReadDocuments
     );
 
@@ -231,8 +234,23 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
    * why it is worth a database test.
    */
   describe("the assignment narrowing, through a real row", () => {
-    it("lets any colleague open a case nobody has taken", async () => {
+    it("refuses a colleague a case nobody has taken", async () => {
+      // The correction of 2026-09-07: working at the agency is not
+      // reaching a client. Taking the case is, and `canAssignCase` —
+      // not this policy — is what allows that.
       signIn(COLLEAGUE, { role: "org_member", orgIds: [ORG_ID] });
+
+      await expect(
+        requireApplicationAccess(tenantApplicationId, canReadDocuments)
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it("lets the director open the case nobody has taken", async () => {
+      signIn(DIRECTOR, {
+        role: "org_member",
+        orgIds: [ORG_ID],
+        orgs: [{ orgId: ORG_ID, role: "owner" }],
+      });
 
       const { application } = await requireApplicationAccess(
         tenantApplicationId,

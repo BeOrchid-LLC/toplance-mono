@@ -9,6 +9,7 @@ import { countryFromIso2 } from "@/lib/domain/corridors";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
+import { MESSAGES } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/locales";
 
 /**
@@ -135,10 +136,25 @@ export function ClientRoster({
                 <div className="flex items-center gap-3 lg:justify-self-end">
                   {r.status && <StatusBadge status={r.status} short />}
                   {takeableBy && (
-                    <TakeCaseButton
-                      applicationId={r.id}
-                      viewerId={takeableBy}
-                    />
+                    <>
+                      {/* The one door into an unheld case that is not
+                          claiming it. `reachesThread` opens the
+                          conversation to the whole agency, so a
+                          traveller's question is answerable without
+                          somebody taking a client to find out what it
+                          was. The case screen still refuses them, which
+                          is why this points at the thread route. */}
+                      <Link
+                        href={`/agency/clients/${r.id}/messages`}
+                        className="text-base font-semibold text-brand-text hover:underline"
+                      >
+                        {MESSAGES.panelLabel[locale]}
+                      </Link>
+                      <TakeCaseButton
+                        applicationId={r.id}
+                        viewerId={takeableBy}
+                      />
+                    </>
                   )}
                 </div>
               </>
@@ -150,8 +166,9 @@ export function ClientRoster({
             return (
               // The whole row opens the case — unless it is one nobody
               // has taken, which a reviewer may claim but not read. A
-              // link there would be a link to a refusal, so the row
-              // carries the one action that is theirs instead.
+              // row-wide link there would be a link to a refusal, so
+              // those rows carry the two things that are theirs: the
+              // thread, and the claim.
               <li key={r.id}>
                 {takeableBy ? (
                   <div className={layout}>{cells}</div>

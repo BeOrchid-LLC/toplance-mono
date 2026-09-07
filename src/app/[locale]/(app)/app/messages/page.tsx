@@ -52,19 +52,19 @@ export default async function MessagesPage() {
           <PanelHeader label={MESSAGES.panelLabel[locale]} />
           <PanelBody>
             <MessageThread messages={thread} />
-            {/* The composer waits for a handler, because the send does:
-                `canWriteMessages` refuses it until the case is somebody's.
-                The notice takes the composer's place rather than sitting
-                above it — a box you can type into and a sentence saying
-                nobody is listening is a worse screen than neither. */}
+            {/* The composer never waits. A traveller can write from the
+                moment intake is done — `canWriteMessages` stopped
+                requiring a handler — so an unclaimed case gets the
+                notice *above* the box rather than instead of it: it
+                sets the expectation about how fast a reply comes,
+                which is a different job from refusing the message. */}
             <div className="mt-5 border-t border-border pt-5">
-              {application.assigneeId ? (
-                <MessageComposer applicationId={application.id} />
-              ) : (
-                <p className="t-muted max-w-[74ch]">
+              {!application.assigneeId && (
+                <p className="t-muted mb-4 max-w-[74ch]">
                   {MESSAGES.unclaimedNotice[locale]}
                 </p>
               )}
+              <MessageComposer applicationId={application.id} />
             </div>
           </PanelBody>
         </Panel>

@@ -6,12 +6,14 @@ import {
   canManageInvitations,
   canReadApplication,
   canReadAuditLog,
+  canDecideCase,
   canReadCaseNotes,
   canReadCompanion,
   canReadDocuments,
   canReadIntakeAnswers,
   canReadItinerary,
   canReadMessages,
+  canReviewDocuments,
   canAssignCase,
   canReadStatusEvents,
   canWriteApplication,
@@ -208,9 +210,11 @@ describe("assignment as a permission", () => {
 
   it("refuses a colleague the case they have not been given", () => {
     // Taking is not reading: the same actor who may claim this case
-    // cannot open a document on it until the claim has landed.
+    // cannot open a document on it until the claim has landed. The
+    // thread is the one exception — see "opens the thread without
+    // opening the file" in the messages block.
     expect(canReadDocuments(agencyReviewer, unheldCase)).toBe(false);
-    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteDocuments(agencyReviewer, unheldCase)).toBe(false);
   });
 
   it("lets a colleague hand back their own case, and nobody else's", () => {
@@ -452,10 +456,11 @@ describe("visa expiry", () => {
 
 describe("messages", () => {
   /*
-   * The write assertions sit on `claimedCase` because writing grew a
-   * second condition. On an unheld case every one of them would now be
-   * false for the wrong reason, and a test that passes because of the
-   * gate cannot also be proving the identity check it was written for.
+   * The thread is the one thing on a case that does not wait to be
+   * claimed, and the only case-content policy that reaches past
+   * `handlesCase`. Everything else on an unheld case is still the
+   * director's alone — which is what "opens the thread without opening
+   * the file" below exists to hold.
    */
   it("lets the traveller read and write their own thread", () => {
     expect(canReadMessages(traveller, claimedCase)).toBe(true);
@@ -468,33 +473,85 @@ describe("messages", () => {
   });
 
   /**
-   * The thread waits for a handler. Both sides wait together: a
-   * traveller writing into a case nobody holds is the same silence as
-   * an agency writing into one, only from the other end of it.
+   * The traveller writes from the moment they finish intake, not from
+   * the moment somebody picks the case up. Waiting was the 2026-09-07
+   * rule, and it made the first screen a traveller reaches after
+   * onboarding a screen that refuses them: the one question they have
+   * is the one they cannot ask.
    */
-  it("lets nobody write while the case is unheld", () => {
-    expect(canWriteMessages(traveller, unheldCase)).toBe(false);
-    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
-    expect(canWriteMessages(agencyDirector, unheldCase)).toBe(false);
+  it("lets the traveller write before anyone has taken the case", () => {
+    expect(canReadMessages(traveller, unheldCase)).toBe(true);
+    expect(canWriteMessages(traveller, unheldCase)).toBe(true);
   });
 
   /**
-   * Reading is not gated on a handler — the thread is the record, and
-   * anything written before that rule stays readable. It is still gated
-   * on `participant`, which since 2026-09-07 no longer counts a reviewer
-   * standing next to an unclaimed case: the two rules compose, so the
-   * one person on the agency side who can read an unheld thread is the
-   * director.
+   * So that somebody is there to answer. An unheld thread is the
+   * agency's, whole — the shared-inbox model, deliberately, because the
+   * alternative is a traveller writing into a room with one person in
+   * it who may be on holiday.
    */
-  it("leaves an unheld thread readable by the traveller and the director", () => {
-    expect(canReadMessages(traveller, unheldCase)).toBe(true);
+  it("opens an unheld thread to every colleague at the owning agency", () => {
+    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(true);
+    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(true);
+    expect(canReadMessages(otherReviewer, unheldCase)).toBe(true);
+    expect(canWriteMessages(otherReviewer, unheldCase)).toBe(true);
     expect(canReadMessages(agencyDirector, unheldCase)).toBe(true);
-    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyDirector, unheldCase)).toBe(true);
+  });
+
+  /**
+   * The widening is the unheld pool's alone. Once a colleague takes the
+   * case it is theirs and the director's, exactly as before — a shared
+   * inbox is for work nobody owns yet, not for reading a client somebody
+   * else was given.
+   */
+  it("narrows the thread back to the handler once the case is taken", () => {
+    expect(canReadMessages(otherReviewer, claimedCase)).toBe(false);
+    expect(canWriteMessages(otherReviewer, claimedCase)).toBe(false);
+    expect(canReadMessages(agencyReviewer, claimedCase)).toBe(true);
+    expect(canReadMessages(agencyDirector, claimedCase)).toBe(true);
+  });
+
+  /**
+   * The guarantee that makes the widening safe: a colleague who can
+   * answer an unheld thread still cannot open one document on it, judge
+   * one, read a note about one, or move the case. Reaching a client's
+   * file is still something you do by being given the client.
+   */
+  it("opens the thread without opening the file", () => {
+    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(true);
+    expect(canReadDocuments(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteDocuments(agencyReviewer, unheldCase)).toBe(false);
+    expect(canReviewDocuments(agencyReviewer, unheldCase)).toBe(false);
+    expect(canReadCaseNotes(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteCaseNotes(agencyReviewer, unheldCase)).toBe(false);
+    expect(canDecideCase(agencyReviewer, unheldCase)).toBe(false);
+    expect(canReadApplication(agencyReviewer, unheldCase)).toBe(false);
+  });
+
+  it("keeps a different agency out of an unheld thread", () => {
+    expect(canReadMessages(otherAgency, unheldCase)).toBe(false);
+    expect(canWriteMessages(otherAgency, unheldCase)).toBe(false);
+  });
+
+  /**
+   * "Unheld" is not "unowned". A case with no `org_id` has no agency to
+   * open the thread to, so the widening finds nobody — the same safe
+   * direction `isAgencyFor` takes everywhere else. Its own traveller
+   * still writes, because that half never depended on the agency.
+   */
+  it("opens nothing on a case that belongs to no agency", () => {
+    expect(canReadMessages(agencyReviewer, unassignedCase)).toBe(false);
+    expect(canWriteMessages(agencyReviewer, unassignedCase)).toBe(false);
+    expect(canReadMessages(agencyDirector, unassignedCase)).toBe(false);
+    expect(canWriteMessages(traveller, unassignedCase)).toBe(true);
   });
 
   it("keeps platform staff out of the conversation entirely", () => {
     expect(canReadMessages(platformStaff, claimedCase)).toBe(false);
     expect(canWriteMessages(platformStaff, claimedCase)).toBe(false);
+    expect(canReadMessages(platformStaff, unheldCase)).toBe(false);
+    expect(canWriteMessages(platformStaff, unheldCase)).toBe(false);
   });
 
   it("keeps a different agency out of the conversation entirely", () => {
@@ -505,6 +562,8 @@ describe("messages", () => {
   it("denies an unrelated traveller both ways", () => {
     expect(canReadMessages(otherTraveller, claimedCase)).toBe(false);
     expect(canWriteMessages(otherTraveller, claimedCase)).toBe(false);
+    expect(canReadMessages(otherTraveller, unheldCase)).toBe(false);
+    expect(canWriteMessages(otherTraveller, unheldCase)).toBe(false);
   });
 
   it("does not let a forged staff role read or write someone else's thread", () => {
@@ -514,32 +573,22 @@ describe("messages", () => {
   });
 
   /**
-   * The thread waits for a handler. Both sides wait together: a
-   * traveller writing into a case nobody holds is the same silence as
-   * an agency writing into one, only from the other end.
+   * A traveller carrying an `orgIds` entry does not inherit the agency's
+   * side of somebody else's thread — the same forgery guard `isAgencyFor`
+   * applies everywhere, asserted here because the unheld branch is a new
+   * way to reach it.
    */
-  it("lets nobody write while the case is unheld", () => {
-    expect(canWriteMessages(traveller, unheldCase)).toBe(false);
-    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
-    expect(canWriteMessages(agencyDirector, unheldCase)).toBe(false);
+  it("does not let a forged agency membership open an unheld thread", () => {
+    const forged: Actor = {
+      ...otherTraveller,
+      orgIds: [ORG],
+      orgs: [{ orgId: ORG, role: "owner" }],
+    };
+    expect(canReadMessages(forged, unheldCase)).toBe(false);
+    expect(canWriteMessages(forged, unheldCase)).toBe(false);
   });
 
-  /**
-   * Reading is not gated on a handler: the thread is the record, and
-   * messages written before this rule existed stay readable.
-   *
-   * "Readable" is still `handlesCase`, though, which since 2026-09-07
-   * no longer opens an unclaimed case to the whole agency — so on an
-   * unheld case that means the traveller and the director, and not a
-   * reviewer who has not been given the client.
-   */
-  it("still lets the traveller and the director read an unheld thread", () => {
-    expect(canReadMessages(traveller, unheldCase)).toBe(true);
-    expect(canReadMessages(agencyDirector, unheldCase)).toBe(true);
-    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(false);
-  });
-
-  it("opens writing to both sides the moment somebody takes the case", () => {
+  it("keeps both sides writing once somebody takes the case", () => {
     expect(canWriteMessages(traveller, claimedCase)).toBe(true);
     expect(canWriteMessages(agencyReviewer, claimedCase)).toBe(true);
   });

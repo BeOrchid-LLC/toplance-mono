@@ -668,12 +668,19 @@ export async function sendMessage(formData: FormData) {
     } else {
       // "Assignee if set, else the agency" is what `notifyAgency` now
       // does for every caller — and it adds the director, who this
-      // hand-rolled version left out. The link can be the case itself
-      // because that fan-out is scoped to the people who can open it.
+      // hand-rolled version left out.
+      //
+      // The link is the thread route, not the case. On an unheld case
+      // that fan-out reaches every colleague, and `requireAgencyCase`
+      // would 404 most of them: `reachesThread` is what admitted them
+      // to this conversation, so the notification has to land on the
+      // screen guarded by the same rule. A handler following it from a
+      // claimed case gets the thread on its own, which is what they
+      // clicked on.
       await notifyAgency(applicationId, "message_received", {
         senderName: sender?.fullName || "Unnamed",
         preview,
-        url: appUrl(`/agency/clients/${applicationId}`),
+        url: appUrl(`/agency/clients/${applicationId}/messages`),
       });
     }
 

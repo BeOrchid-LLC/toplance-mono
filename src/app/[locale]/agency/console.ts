@@ -6,7 +6,12 @@ import { eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { homeFor } from "@/lib/auth/routes";
-import { canReadDocuments, type Actor } from "@/lib/auth/policy";
+import {
+  canReadDocuments,
+  canReadMessages,
+  type Actor,
+  type Permission,
+} from "@/lib/auth/policy";
 import { getActor, getProfile } from "@/lib/data/applications";
 import { provisionEmployerProfile } from "@/lib/data/organisations";
 import { db } from "@/lib/db/client";
@@ -184,6 +189,37 @@ export async function requireAgencyCase(applicationId: string): Promise<{
   console: AgencyConsole & { membership: AgencyMembership };
   case: AgencyCase;
 }> {
+  return requireAgencyCaseFor(applicationId, canReadDocuments);
+}
+
+/**
+ * The same gate for the thread-only screen, asked of `canReadMessages`.
+ *
+ * A separate door because the permissions are genuinely different sizes
+ * now: an unheld case is the whole agency's to answer and nobody's to
+ * read, so a colleague who may reach the conversation would be turned
+ * away by `requireAgencyCase` — correctly, since that screen is the
+ * documents.
+ *
+ * Two guards rather than one screen that renders differently per
+ * viewer: a page whose panels each decide whether to appear is a page
+ * where the next panel added decides nothing, and this is the boundary
+ * that must not leak.
+ */
+export async function requireAgencyThread(applicationId: string): Promise<{
+  console: AgencyConsole & { membership: AgencyMembership };
+  case: AgencyCase;
+}> {
+  return requireAgencyCaseFor(applicationId, canReadMessages);
+}
+
+async function requireAgencyCaseFor(
+  applicationId: string,
+  permission: Permission
+): Promise<{
+  console: AgencyConsole & { membership: AgencyMembership };
+  case: AgencyCase;
+}> {
   // A typed URL like /agency/clients/1 would make Postgres throw on the
   // uuid cast below — a 500 where a wrong-but-well-formed id is already
   // a 404. A malformed id is the same answer as a missing one.
@@ -214,7 +250,7 @@ export async function requireAgencyCase(applicationId: string): Promise<{
     .limit(1);
 
   if (!row) notFound();
-  if (!canReadDocuments(console_.actor, row)) notFound();
+  if (!permission(console_.actor, row)) notFound();
 
   return { console: console_, case: row };
 }

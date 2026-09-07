@@ -47,12 +47,34 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
   // outlives a single provision: Task 8 renders one `ProvisionTenant`
   // for walk-ins for the operator's whole session on `/ops/tenants`.
   const [formKey, setFormKey] = React.useState(0);
+  // Set the instant a provision succeeds, read only by `handleOpenChange`.
+  // A ref rather than state: flipping it must never itself cause a
+  // render, only be checked the next time the dialog closes.
+  const refreshOnCloseRef = React.useRef(false);
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (!next) {
       setInviteUrl(null);
       setFormKey((key) => key + 1);
+
+      // Deferred from `submit`, on purpose. When `demoRequest` is set,
+      // this component is rendered from a ternary in
+      // `DemoRequestQueue` keyed on `demoRequest.convertedOrgId` — a
+      // `router.refresh()` fired right after a successful provision
+      // lands the instant this row's server data comes back with that
+      // id populated, which flips the ternary to a `<Link>` and unmounts
+      // this whole dialog, taking `inviteUrl` — the operator's only
+      // other copy of the link — with it before it can be read. Holding
+      // the refresh until the operator has actually closed the dialog
+      // means the swap can only happen after they are done with it. The
+      // walk-in path (no `demoRequest`) is never conditionally rendered
+      // on anything this refresh changes, so deferring it here costs
+      // that path nothing.
+      if (refreshOnCloseRef.current) {
+        refreshOnCloseRef.current = false;
+        router.refresh();
+      }
     }
   }
 
@@ -72,7 +94,12 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
       // roster never selects `token`.
       setInviteUrl(result.inviteUrl);
       toast.success(t(OPS_TENANTS.toastProvisioned));
-      router.refresh();
+
+      // Not refreshed here — see `handleOpenChange`. Refreshing now
+      // would re-render this row's parent with the demo request already
+      // converted, which unmounts this dialog before the invite link
+      // above has been read.
+      refreshOnCloseRef.current = true;
     });
   }
 

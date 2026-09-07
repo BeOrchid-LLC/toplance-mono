@@ -837,7 +837,10 @@ export async function uploadAvatar(formData: FormData) {
       actor.userId
     );
 
+    // Both consoles: the same action serves a traveller's profile and an
+    // agent's, and the photo appears in the bar on every page of each.
     revalidatePath("/[locale]/app", "layout");
+    revalidatePath("/[locale]/agency", "layout");
     return {};
   } catch (error) {
     const message = toActionError(error);

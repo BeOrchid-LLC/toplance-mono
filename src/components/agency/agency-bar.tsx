@@ -3,6 +3,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { agencyNav } from "@/components/agency/agency-nav";
 import type { AgencyMembership } from "@/app/[locale]/agency/console";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
+import { signedDocumentUrl } from "@/lib/storage/documents";
 import { AGENCY } from "@/lib/i18n/agency";
 import type { Locale } from "@/lib/i18n/locales";
 import type { Profile } from "@/lib/db/schema";
@@ -39,9 +40,12 @@ export async function AgencyBar({
   membership: AgencyMembership | null;
   locale: Locale;
 }) {
-  const [notifications, unreadCount] = await Promise.all([
+  const [notifications, unreadCount, avatarUrl] = await Promise.all([
     getNotifications(profile.id),
     unreadNotificationCount(profile.id),
+    // Private bucket, so the photo is signed fresh per render — the same
+    // stance the traveller's layout and profile take.
+    profile.avatarPath ? signedDocumentUrl(profile.avatarPath) : null,
   ]);
 
   return (
@@ -53,6 +57,7 @@ export async function AgencyBar({
       })}
       name={profile.fullName}
       email={profile.email}
+      avatarUrl={avatarUrl}
       subtitle={
         membership
           ? `${membership.name} · ${AGENCY.roleLabel[membership.role][locale]}`

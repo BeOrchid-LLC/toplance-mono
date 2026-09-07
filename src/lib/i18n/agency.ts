@@ -30,7 +30,6 @@ export const AGENCY: {
   profileTitle: L;
   profileBody: L;
   profileDetailsLabel: L;
-  profileOrgLabel: L;
   roleLabel: { owner: L; reviewer: L };
   roleReason: { owner: L; reviewer: L };
   nameOrgLabel: L;
@@ -156,18 +155,6 @@ export const AGENCY: {
     ar: "بياناتك",
     tw: "Wo ho nsɛm",
     zu: "Imininingwane yakho",
-  },
-  profileOrgLabel: {
-    en: "Agency",
-    ha: "Kamfani",
-    yo: "Àjọ",
-    ig: "Ụlọ ọrụ",
-    fr: "Agence",
-    pt: "Agência",
-    sw: "Wakala",
-    ar: "الوكالة",
-    tw: "Adwumakuo",
-    zu: "I-ejensi",
   },
   roleLabel: {
     owner: {

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 
 import { AgencyBar } from "@/components/agency/agency-bar";
 import { ConsoleBand } from "@/components/agency/console-band";
+import { AvatarUpload } from "@/components/app/avatar-upload";
 import { EditableName, EditablePhone } from "@/components/app/profile-fields";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { signedDocumentUrl } from "@/lib/storage/documents";
 import { countryBy } from "@/lib/domain/countries";
 import { AGENCY } from "@/lib/i18n/agency";
 import { PROFILE } from "@/lib/i18n/profile";
@@ -46,9 +48,9 @@ function DetailField({ label, value }: { label: string; value: string }) {
  * would either lie to the person typing in it or silently disagree with
  * the address they actually sign in with.
  *
- * No avatar, no language row, no digest: those belong to surfaces this
- * console does not have. What is here is what a colleague and a client
- * see, plus the number a case can reach them on.
+ * No language row and no digest: those belong to surfaces this console
+ * does not have. What is here is what a colleague and a client see, plus
+ * the number a case can reach them on.
  */
 export default async function AgencyProfilePage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
@@ -65,12 +67,21 @@ export default async function AgencyProfilePage() {
     ? profile.phone.replace(/^\+/, "").replace(new RegExp(`^${dial}`), "")
     : "";
 
+  // Signed per render, ten minutes at a time: avatars live in the same
+  // private bucket as the documents, and a photo of a person is not
+  // public just because it is small.
+  const avatarUrl = profile.avatarPath
+    ? await signedDocumentUrl(profile.avatarPath)
+    : null;
+
   return (
     <div className="min-h-dvh bg-bg">
       <AgencyBar profile={profile} membership={membership} locale={locale} />
 
       <ConsoleBand title={AGENCY.profileTitle[locale]}>
-        <p className="t-muted mt-2 max-w-[68ch]">{AGENCY.profileBody[locale]}</p>
+        <p className="t-muted mt-2 max-w-[68ch]">
+          {AGENCY.profileBody[locale]}
+        </p>
       </ConsoleBand>
 
       <main>
@@ -80,28 +91,46 @@ export default async function AgencyProfilePage() {
                 agent has no trip, and borrowing that heading described
                 the wrong person on their own page. */}
             <PanelHeader label={AGENCY.profileDetailsLabel[locale]} />
-            <PanelBody className="pt-2">
-              {/* One grid rather than two fixed half-columns, so the
+            <PanelBody className="pt-6">
+              {/* The photo and the name it belongs to, above the fields
+                  that spell them out. An agent's face is the one thing on
+                  this page a client actually recognises them by — the bar
+                  showed initials until they upload one. */}
+              <div className="flex items-start gap-5 sm:gap-7">
+                <AvatarUpload
+                  fullName={profile.fullName}
+                  avatarUrl={avatarUrl}
+                />
+                {/* Where they work and what they are there, beside the
+                    photo rather than as a fourth labelled field: it is
+                    the one fact on this page they cannot change, and it
+                    identifies them the way a colleague would. */}
+                <div className="min-w-0 flex-1">
+                  <p className="d-sm truncate">
+                    {profile.fullName || profile.email}
+                  </p>
+                  {membership && (
+                    <p className="t-muted mt-1 truncate">
+                      {membership.name} ·{" "}
+                      {AGENCY.roleLabel[membership.role][locale]}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-7 border-t border-border pt-2">
+                {/* One grid rather than two fixed half-columns, so the
                   sheet reads in rows and collapses to a single column
                   without re-ordering — the traveller's profile again. */}
-              <dl className="grid gap-x-10 sm:grid-cols-2">
-                <EditableName fullName={profile.fullName} />
-                <DetailField
-                  label={PROFILE.emailLabel[locale]}
-                  value={profile.email}
-                />
-                <EditablePhone countryIso={countryIso} digits={phoneDigits} />
-                {/* Where they work and what they are there — the fact
-                    their clients and colleagues actually identify them
-                    by, and the only one on this page they cannot
-                    change. */}
-                {membership && (
+                <dl className="grid gap-x-10 sm:grid-cols-2">
+                  <EditableName fullName={profile.fullName} />
                   <DetailField
-                    label={AGENCY.profileOrgLabel[locale]}
-                    value={`${membership.name} · ${AGENCY.roleLabel[membership.role][locale]}`}
+                    label={PROFILE.emailLabel[locale]}
+                    value={profile.email}
                   />
-                )}
-              </dl>
+                  <EditablePhone countryIso={countryIso} digits={phoneDigits} />
+                </dl>
+              </div>
             </PanelBody>
           </Panel>
         </Shell>

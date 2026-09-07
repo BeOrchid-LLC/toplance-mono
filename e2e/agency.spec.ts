@@ -416,7 +416,13 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   await colleague.goto("/agency/profile");
   await expect(colleague.getByRole("heading", { name: "Your profile" })).toBeVisible();
   await expect(colleague.getByText(DESK_COLLEAGUE)).toBeVisible();
-  await expect(colleague.getByText("Grace Okon")).toBeVisible();
+  // Twice on the page now: the heading beside the photo, and the field
+  // that edits it — the same anatomy the traveller's profile has.
+  await expect(colleague.getByText("Grace Okon").first()).toBeVisible();
+  // The photo control, which is what the bar falls back to initials for
+  // until they use it. `toBeAttached` rather than `toBeVisible`: the
+  // input itself is `sr-only`, and the label around it is the target.
+  await expect(colleague.getByLabel("Add profile photo")).toBeAttached();
 
   await colleagueContext.close();
 });

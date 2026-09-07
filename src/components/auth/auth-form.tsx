@@ -91,13 +91,29 @@ type Audience = AuthAudience;
  */
 type AuthFormProps = { next?: string } & (
   | { mode: "sign-in" }
-  | { mode: "sign-up"; audience?: Audience; intent: SignUpIntent }
+  | {
+      mode: "sign-up";
+      audience?: Audience;
+      intent: SignUpIntent;
+      /**
+       * The address this invitation was sent to. Supplied only by the
+       * invite-only door, which resolved a token to get it; every other
+       * sign-up is someone choosing their own address.
+       *
+       * When present the email field is filled and read-only. The
+       * server still decides: completeProfile enforces the match, and
+       * checkInvitedEmail below still runs, because a read-only input
+       * is a courtesy to the visitor and not a control over the POST.
+       */
+      invitedEmail?: string;
+    }
 );
 
 export function AuthForm(props: AuthFormProps) {
   const mode = props.mode;
   const audience: Audience =
     props.mode === "sign-up" ? (props.audience ?? "traveller") : "traveller";
+  const invitedEmail = props.mode === "sign-up" ? props.invitedEmail : undefined;
   const [state, setState] = React.useState<AuthState>({});
   const [pending, startTransition] = React.useTransition();
   const [code, setCode] = React.useState("");
@@ -155,7 +171,7 @@ export function AuthForm(props: AuthFormProps) {
    */
   const [typed, setTyped] = React.useState({
     fullName: "",
-    email: "",
+    email: invitedEmail ?? "",
     orgName: "",
   });
 
@@ -705,6 +721,9 @@ export function AuthForm(props: AuthFormProps) {
             placeholder={isDirectorSignUp ? "you@youragency.com" : "you@email.com"}
             value={typed.email}
             onChange={(e) => setTyped((t) => ({ ...t, email: e.target.value }))}
+            readOnly={Boolean(invitedEmail)}
+            aria-readonly={Boolean(invitedEmail) || undefined}
+            className={invitedEmail ? "cursor-not-allowed opacity-70" : undefined}
             required
           />
           {isDirectorSignUp && (

@@ -38,6 +38,16 @@ export type ListedInvitation = Omit<Invitation, "token">;
 /** What the accept page shows a visitor before they have done anything. */
 export type InvitationPreview = {
   orgName: string;
+  /**
+   * The address the invitation was sent to, so the sign-up door can
+   * fix the email field rather than ask for it and refuse a miss.
+   *
+   * This is disclosed to whoever holds the token. The preview already
+   * discloses fullName on the same read, so a token names its person
+   * either way; what withholding the address bought was not privacy,
+   * it was a retyped answer the server then rejected.
+   */
+  email: string;
   fullName: string;
   kind: Invitation["kind"];
   destinationIso: string | null;
@@ -163,6 +173,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
   const [row] = await db
     .select({
       status: invitations.status,
+      email: invitations.email,
       fullName: invitations.fullName,
       kind: invitations.kind,
       destinationIso: invitations.destinationIso,
@@ -182,6 +193,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
 
   return {
     orgName: row.orgName,
+    email: row.email,
     fullName: row.fullName,
     kind: row.kind,
     destinationIso: row.destinationIso,

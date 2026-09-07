@@ -228,6 +228,10 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       const preview = await getInvitationPreview(created.invitation.token);
       expect(preview).toEqual({
         orgName: "Acme Logistics Ltd",
+        // The sign-up door fills its email field from this and makes it
+        // read-only, so the preview carrying the invited address is the
+        // behaviour, not an incidental extra column.
+        email: "preview@example.com",
         fullName: "Ada Lovelace",
         kind: "client",
         destinationIso: "gb",

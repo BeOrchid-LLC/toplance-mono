@@ -207,8 +207,6 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
   });
 
   it("refuses a nameless agency and writes nothing", async () => {
-    const before = await db.select({ id: organisations.id }).from(organisations);
-
     const result = await provisionTenantTx(
       { name: "   ", ownerEmail: "owner@kite.invalid" },
       STAFF
@@ -216,13 +214,24 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
 
     expect(result).toEqual({ error: "agency_name_required" });
 
-    const after = await db.select({ id: organisations.id }).from(organisations);
-    expect(after).toHaveLength(before.length);
+    // Scoped to what this call could have written, not a table-wide
+    // count — vitest runs test FILES in parallel, so a whole-table
+    // count can be changed by another file's insert between the two
+    // reads for a reason that has nothing to do with this code.
+    const orgs = await db
+      .select({ id: organisations.id })
+      .from(organisations)
+      .where(eq(organisations.name, "   "));
+    expect(orgs).toHaveLength(0);
+
+    const invites = await db
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(eq(invitations.email, "owner@kite.invalid"));
+    expect(invites).toHaveLength(0);
   });
 
   it("refuses an invalid owner address and rolls the agency back", async () => {
-    const before = await db.select({ id: organisations.id }).from(organisations);
-
     // The whole point of one transaction: the organisation insert has
     // already run when this is refused, and must not survive.
     const result = await provisionTenantTx(
@@ -232,8 +241,14 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
 
     expect(result).toEqual({ error: "owner_email_invalid" });
 
-    const after = await db.select({ id: organisations.id }).from(organisations);
-    expect(after).toHaveLength(before.length);
+    // Scoped by name rather than a table-wide count, for the same
+    // reason as above: this name is distinctive to this test, so
+    // another file's unrelated insert can't make this assertion flaky.
+    const orgs = await db
+      .select({ id: organisations.id })
+      .from(organisations)
+      .where(eq(organisations.name, "Rollback Agency"));
+    expect(orgs).toHaveLength(0);
   });
 
   it("stamps the demo request it was provisioned from", async () => {
@@ -269,12 +284,6 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
   });
 
   it("refuses a demo request that does not exist, and writes nothing", async () => {
-    const beforeOrgs = await db.select({ id: organisations.id }).from(organisations);
-    const beforeInvites = await db.select({ id: invitations.id }).from(invitations);
-    const beforeMembers = await db
-      .select({ orgId: orgMembers.orgId, userId: orgMembers.userId })
-      .from(orgMembers);
-
     const result = await provisionTenantTx(
       {
         name: "Ghost Agency",
@@ -288,17 +297,22 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     expect(result).toEqual({ error: "demo_request_not_found" });
 
     // The claim the early-return-under-lock rests on: nothing was
-    // inserted, so the row counts across all three tables are unchanged
-    // — not just "no agency named Ghost Agency exists".
-    const afterOrgs = await db.select({ id: organisations.id }).from(organisations);
-    const afterInvites = await db.select({ id: invitations.id }).from(invitations);
-    const afterMembers = await db
-      .select({ orgId: orgMembers.orgId, userId: orgMembers.userId })
-      .from(orgMembers);
+    // inserted. Scoped by this call's distinctive name and email rather
+    // than a table-wide count — vitest runs test FILES in parallel, so
+    // counting every row in `organisations` can be changed by another
+    // file's insert between the two reads, which fails this test for a
+    // reason that has nothing to do with the code under test.
+    const orgs = await db
+      .select({ id: organisations.id })
+      .from(organisations)
+      .where(eq(organisations.name, "Ghost Agency"));
+    expect(orgs).toHaveLength(0);
 
-    expect(afterOrgs).toHaveLength(beforeOrgs.length);
-    expect(afterInvites).toHaveLength(beforeInvites.length);
-    expect(afterMembers).toHaveLength(beforeMembers.length);
+    const invites = await db
+      .select({ id: invitations.id })
+      .from(invitations)
+      .where(eq(invitations.email, "ghost@kite.invalid"));
+    expect(invites).toHaveLength(0);
   });
 
   it("refuses to provision twice from the same demo request", async () => {
@@ -324,8 +338,6 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     if ("error" in first) return;
     orgIds.push(first.orgId);
 
-    const beforeOrgs = await db.select({ id: organisations.id }).from(organisations);
-
     // A double-submit or a retry after an ambiguous timeout: the row is
     // still there for the lock to find, but it is already converted.
     const second = await provisionTenantTx(
@@ -334,8 +346,13 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     );
     expect(second).toEqual({ error: "demo_request_already_converted" });
 
-    const afterOrgs = await db.select({ id: organisations.id }).from(organisations);
-    expect(afterOrgs).toHaveLength(beforeOrgs.length);
+    // Scoped by this call's distinctive name rather than a table-wide
+    // count, for the same reason as the "does not exist" test above.
+    const secondOrgs = await db
+      .select({ id: organisations.id })
+      .from(organisations)
+      .where(eq(organisations.name, "Second Agency"));
+    expect(secondOrgs).toHaveLength(0);
 
     const [row] = await db
       .select()

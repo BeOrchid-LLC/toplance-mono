@@ -20,7 +20,6 @@ export const SITE_FOOTER: {
   aboutToplance: L;
   securityAndPrivacy: L;
   termsOfService: L;
-  opsSignIn: L;
   copyright: L;
 } = {
   blurb: {
@@ -142,18 +141,6 @@ export const SITE_FOOTER: {
     ar: "شروط الخدمة",
     tw: "Ɔsom ho mmara",
     zu: "Imigomo yesevisi",
-  },
-  opsSignIn: {
-    en: "Toplance operations sign-in",
-    ha: "Shiga na sashen ayyuka na Toplance",
-    yo: "Wíwọlé ìmọ̀ iṣẹ́ Toplance",
-    ig: "Nbanye ọrụ Toplance",
-    fr: "Connexion opérations Toplance",
-    pt: "Entrada das operações Toplance",
-    sw: "Kuingia kwa uendeshaji wa Toplance",
-    ar: "تسجيل دخول عمليات Toplance",
-    tw: "Toplance nnwuma hyɛnmu",
-    zu: "Ukungena kwezinhlelo ze-Toplance",
   },
   copyright: {
     en: "© 2026 BeOrchid · Toplance. Prototype — not a live service.",

@@ -569,7 +569,7 @@ export default async function HomePage() {
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
-                <Link href="/agency/sign-in">
+                <Link href="/sign-in">
                   {SITE_CHROME.agencySignIn[locale]} <ArrowRight />
                 </Link>
               </Button>

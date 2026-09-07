@@ -52,33 +52,50 @@ test("a signed-out visitor sees the marketing nav, not a console bar", async ({
   const nav = page.getByRole("navigation");
   await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 });
 
 /**
- * The generic sign-in door names the other two.
+ * One door, and the two it replaced still answer.
  *
- * Travellers became invite-only, so `/sign-in` is where everyone who
- * already has an account arrives — including the two audiences whose
- * consoles it is not. Before this, crossing to either meant knowing the
- * URL: the ops door was a footer entry and the employer door was named
- * only from `/agency/sign-up`.
+ * `/sign-in` used to name an organisation door and an operations door
+ * beneath the form, which asked a visitor to classify themselves before
+ * they had typed anything and then handed them the same form. The
+ * classification never decided access — roles live in Postgres and `/go`
+ * reads them once the session exists — so all it could do was be wrong
+ * for anyone who guessed.
  *
- * Signed out and asserted on the hrefs, so it needs no account and
- * cannot be satisfied by a link that merely reads right.
+ * The redirects are not tidiness. Both paths are printed in the footer,
+ * on the landing page and in invitation emails already sent, and a live
+ * invitation lasts 30 days.
+ *
+ * Signed out throughout, so this needs no account.
  */
-test("the generic sign-in door names the organisation and operations doors", async ({
+test("the sign-in door names no others, and the retired ones still answer", async ({
   page,
 }) => {
   await page.goto("/sign-in");
 
   const main = page.getByRole("main");
-  await expect(
-    main.getByRole("link", { name: /Organisation sign-in/ })
-  ).toHaveAttribute("href", "/agency/sign-in");
+  await expect(main.getByRole("link", { name: /Organisation sign-in/ })).toHaveCount(0);
   await expect(
     main.getByRole("link", { name: /Toplance operations sign-in/ })
-  ).toHaveAttribute("href", "/ops/sign-in");
+  ).toHaveCount(0);
+  // The form itself is still here, and is now everyone's.
+  await expect(main.getByRole("heading", { name: "Sign in" })).toBeVisible();
+
+  const agency = await page.goto("/agency/sign-in");
+  await expect(page).toHaveURL(/\/sign-in$/);
+  expect(agency?.status()).toBe(200);
+
+  const ops = await page.goto("/ops/sign-in");
+  await expect(page).toHaveURL(/\/sign-in$/);
+  expect(ops?.status()).toBe(200);
+
+  // A lapsed session is bounced out with `?next=`, and the retired door
+  // has to carry it across or the person loses their place.
+  await page.goto("/ops/sign-in?next=/ops/cases/123");
+  await expect(page).toHaveURL(/\/sign-in\?next=%2Fops%2Fcases%2F123$/);
 });
 
 test("a traveller sees the unchanged marketing header and the generic door leads home", async ({
@@ -100,7 +117,7 @@ test("a traveller sees the unchanged marketing header and the generic door leads
   const nav = page.getByRole("navigation");
   await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
   // The old dead end: signed in, on /sign-in. Now it forwards through
   // /go to this persona's own console — which, for a traveller who has
@@ -132,7 +149,7 @@ test("a reviewer sees the unchanged marketing header and never the traveller sur
   // Neither console's bar leaks onto the marketing page — not this
   // reviewer's own, and certainly not the traveller's.
   await expect(page.getByRole("link", { name: "Case queue" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
   // The reported bug, replayed: sign-in used to send staff to /app. It
   // is also how a reviewer now leaves this page, the header having no
@@ -246,7 +263,7 @@ test("an employer sees the unchanged marketing header and the generic door leads
   await expect(nav.getByRole("link", { name: "How it works" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Sign in" })).toBeVisible();
   await expect(page.getByRole("link", { name: "People" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
   await page.goto("/sign-in");
   await expect(page).toHaveURL(/\/agency$/);

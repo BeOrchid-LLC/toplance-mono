@@ -225,7 +225,7 @@ export default async function RequirementsPage() {
   const locale = await getLocale();
   const t = REQUIREMENTS;
   const application = await getApplication();
-  if (!application) redirect("/sign-in?next=/app/requirements");
+  if (!application) redirect("/go");
   if (!application.intakeComplete) redirect("/app/agent");
 
   const [initialDocs, answers, codes] = await Promise.all([

@@ -26,7 +26,7 @@ export default async function AgentPage() {
 
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/sign-in?next=/app/agent");
+  if (!profile || !application) redirect("/go");
 
   const answers = await getIntakeAnswers(application.id);
 

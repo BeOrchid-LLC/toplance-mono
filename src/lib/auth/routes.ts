@@ -1,4 +1,16 @@
 /**
+ * The one sign-in door. Every role signs in here — the accounts are all
+ * rows in one `profiles` table, and which console a person gets is a
+ * question about that row, not about the URL they typed.
+ *
+ * A constant rather than a literal at each call site because the proxy,
+ * the form and the two retired doors all have to name it, and a door
+ * that three files spell independently is a door one of them eventually
+ * misspells.
+ */
+export const SIGN_IN_DOOR = "/sign-in";
+
+/**
  * The auth surfaces and where each one sends a visitor who is already
  * signed in. Clerk runs in single-session mode: a second sign-in attempt
  * from the same browser is rejected with `session_exists`, so the only
@@ -6,17 +18,21 @@
  * along. Both the proxy redirect and the form's error handling resolve
  * their destination here so the two can never disagree.
  *
+ * Every sign-in now resolves to `/go`, including the two retired doors
+ * that still answer as redirects. No auth surface can know who walked in
+ * — roles live in Postgres, where neither this module nor the proxy can
+ * read them — and `/go` is the one place that looks the role up and
+ * forwards to `homeFor` it. Sending `/ops/sign-in` to `/ops` on the
+ * strength of the URL was the guess this removes: it was right only for
+ * the person who typed it correctly about themselves.
+ *
  * Order matters: the more specific prefixes come first, since `/sign-in`
  * would otherwise shadow `/agency/sign-in` in a first-match search.
  */
 export const authRoutes = [
-  { prefix: "/agency/sign-in", home: "/agency" },
+  { prefix: "/agency/sign-in", home: "/go" },
   { prefix: "/agency/sign-up", home: "/agency" },
-  { prefix: "/ops/sign-in", home: "/ops" },
-  // The generic doors cannot know who walked in — staff and employers
-  // sign in here too, and roles live in Postgres where neither this
-  // module nor the proxy can read them. `/go` can: it looks the role up
-  // and forwards to `homeFor` it.
+  { prefix: "/ops/sign-in", home: "/go" },
   { prefix: "/sign-in", home: "/go" },
   { prefix: "/sign-up", home: "/go" },
 ] as const;
@@ -38,23 +54,33 @@ export function homeFor(role: "traveler" | "org_member" | "staff"): string {
 }
 
 /**
- * Which sign-in door a signed-out visitor at `pathname` should be sent
- * to. `/agency` and `/ops` are branded, audience-specific doors with
- * their own copy — a staff member whose 30-minute idle session lapses on
- * a case page should land back on "Staff access only", not the generic
- * traveller door with its invite-only "Create an account" link, which
- * does not apply to them and answers a question they did not ask.
- * Everything else (including `/app`, which has no console-specific door
- * of its own) falls back to the generic door.
+ * Where the `/go` dispatcher sends a signed-in visitor, or `null` when
+ * the chain has to stop and `/go` should explain itself instead.
+ *
+ * `homeFor` answers "which console does this role own"; this answers the
+ * question one step out — whether that console has anything to open. The
+ * two differ for exactly one person, and that person is why this exists.
+ *
+ * A traveller's console *is* their application. Only `acceptInvitation`
+ * creates one, so a traveller who never accepted an invitation holds a
+ * profile and nothing else, and every page under `/app` redirects away
+ * on a null application. Forwarding them to `homeFor("traveler")` puts
+ * the two halves in a loop the browser only leaves with
+ * ERR_TOO_MANY_REDIRECTS — the same trap `/sign-in` was, moved one door
+ * along. `null` is the terminal answer, and `/go` already has the copy
+ * for it: accounts are created from an invitation.
+ *
+ * Only the traveller console is an application. A reviewer's queue and a
+ * staff member's corridors stand on their own, so `hasApplication` is
+ * not consulted for them.
  */
-export function signInDoorFor(pathname: string): string {
-  if (pathname === "/agency" || pathname.startsWith("/agency/")) {
-    return "/agency/sign-in";
-  }
-  if (pathname === "/ops" || pathname.startsWith("/ops/")) {
-    return "/ops/sign-in";
-  }
-  return "/sign-in";
+export function goDestination(
+  actor: { role: "traveler" | "org_member" | "staff" } | null,
+  hasApplication: boolean
+): string | null {
+  if (!actor) return null;
+  if (actor.role === "traveler" && !hasApplication) return null;
+  return homeFor(actor.role);
 }
 
 /**

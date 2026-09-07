@@ -29,7 +29,7 @@ function columnsFor(locale: Locale) {
       heading: SITE_FOOTER.columnAgencies[locale],
       links: [
         { href: "/agency/sign-up", label: SITE_CHROME.runYourFirstCase[locale] },
-        { href: "/agency/sign-in", label: SITE_CHROME.agencySignIn[locale] },
+        { href: "/sign-in", label: SITE_CHROME.agencySignIn[locale] },
         { href: "/#pricing", label: SITE_FOOTER.talkToSales[locale] },
         { href: "/#where", label: SITE_FOOTER.requestARoute[locale] },
       ],
@@ -40,7 +40,6 @@ function columnsFor(locale: Locale) {
         { href: "/#how", label: SITE_FOOTER.aboutToplance[locale] },
         { href: "/#how", label: SITE_FOOTER.securityAndPrivacy[locale] },
         { href: "/#how", label: SITE_FOOTER.termsOfService[locale] },
-        { href: "/ops/sign-in", label: SITE_FOOTER.opsSignIn[locale] },
       ],
     },
   ];

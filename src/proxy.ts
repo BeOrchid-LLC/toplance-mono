@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { authRoutes, signedInDestination, signInDoorFor } from "@/lib/auth/routes";
+import { authRoutes, signedInDestination, SIGN_IN_DOOR } from "@/lib/auth/routes";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";
 
 /**
@@ -23,7 +23,7 @@ import { LOCALES, type Locale } from "@/lib/i18n/locales";
  * English lives unprefixed at today's exact paths; every other locale
  * is reachable at `/{code}/...`, which is a rewrite of the same route
  * — no route file moves. Every routing decision below (`isPublicRoute`,
- * `signInDoorFor`, `signedInDestination`) reads the *stripped* path, so
+ * `SIGN_IN_DOOR`, `signedInDestination`) reads the *stripped* path, so
  * a Yoruba visitor at `/yo/app/profile` gets exactly the same decision
  * as the English visitor at `/app/profile`; the prefix is only added
  * back at the edges — when this proxy issues its own redirect, or when
@@ -62,7 +62,7 @@ function splitLocale(pathname: string): { locale: Locale; rest: string } {
  * stays unprefixed, matching today's URLs exactly.
  *
  * `path` is assumed to already be unprefixed — every path value that
- * flows through this file (`signInDoorFor`'s result, `authRoutes`
+ * flows through this file (`SIGN_IN_DOOR`, `authRoutes`
  * homes, a stripped `next` param) is kept unprefixed until the moment
  * it is handed to this function, specifically so a value can never
  * pick up two prefixes.
@@ -159,7 +159,7 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   const url = request.nextUrl.clone();
-  url.pathname = withLocalePrefix(signInDoorFor(realPathname), locale);
+  url.pathname = withLocalePrefix(SIGN_IN_DOOR, locale);
   url.searchParams.set("next", withLocalePrefix(realPathname, locale));
   return NextResponse.redirect(url);
 });

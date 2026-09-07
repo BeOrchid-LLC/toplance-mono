@@ -1,48 +1,34 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { Check } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { AuthForm } from "@/components/auth/auth-form";
-import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasDatabaseEnv } from "@/lib/db/client";
-import { AUTH_PAGE_TITLES, OPS_DOOR_PANEL } from "@/lib/i18n/auth-pages";
-import { getLocale } from "@/lib/i18n/server";
-import { Skeleton } from "@/components/ui/skeleton";
+import { isInternalPath, SIGN_IN_DOOR } from "@/lib/auth/routes";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
-  return { title: AUTH_PAGE_TITLES.opsSignIn[locale] };
-}
+/**
+ * The operations door used to be its own, with its own copy beside the
+ * form.
+ * There is one sign-in now: every account is a row in the same
+ * `profiles` table, and which console a person opens is decided from
+ * that row by `/go`, not from the URL they arrived at. A door per
+ * audience only ever asked people to classify themselves, and got it
+ * wrong for anyone who guessed.
+ *
+ * It answers rather than 404s because the path is in the wild: it was a
+ * footer entry, and staff have had it bookmarked since before the
+ * consoles were split. A redirect costs nothing next to a dead link.
+ *
+ * `next` is carried across so a lapsed session still lands where it was
+ * interrupted; `isInternalPath` is what keeps that from becoming an open
+ * redirect, and the proxy sets the parameter in the first place.
+ */
+export default async function OpsSignInRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
 
-export default async function OpsSignInPage() {
-  if (!hasDatabaseEnv) return <SetupNotice />;
-
-  const locale = await getLocale();
-
-  return (
-    <div className="mx-auto grid max-w-[1000px] items-center gap-14 lg:grid-cols-[1fr_460px]">
-      {/* Stated as conditions of access rather than as features. This is
-          the one door where the reader is being told what is recorded
-          about them, not sold anything. */}
-      <div className="hidden lg:block">
-        <p className="tag">{OPS_DOOR_PANEL.tag[locale]}</p>
-        <h2 className="d-lg mt-3 max-w-[16ch]">{OPS_DOOR_PANEL.heading[locale]}</h2>
-        <p className="t-body-lg mt-5 max-w-[52ch] text-ink-2">
-          {OPS_DOOR_PANEL.body[locale]}
-        </p>
-        <ul className="mt-8 flex flex-col gap-3">
-          {OPS_DOOR_PANEL.bullets.map((x) => (
-            <li key={x.en} className="flex items-start gap-3">
-              <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
-              <span className="text-[15px] text-ink-2">{x[locale]}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <Suspense fallback={<Skeleton className="h-[340px] w-full rounded-lg" />}>
-        <AuthForm mode="sign-in" audience="operations" />
-      </Suspense>
-    </div>
+  redirect(
+    isInternalPath(next)
+      ? `${SIGN_IN_DOOR}?next=${encodeURIComponent(next)}`
+      : SIGN_IN_DOOR
   );
 }

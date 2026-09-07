@@ -40,8 +40,6 @@ export const AUTH_DOORS_HEADINGS: { hereForSomethingElse: L; notATraveler: L } =
 
 export const AUTH_DOORS: {
   employerSignUp: { title: L; body: L };
-  employerSignIn: { title: L; body: L };
-  opsSignIn: { title: L; body: L };
 } = {
   employerSignUp: {
     title: {
@@ -67,58 +65,6 @@ export const AUTH_DOORS: {
       ar: "أنشئ مؤسستك، وموّل المقاعد، وادعُ أفرادك",
       tw: "Yɛ mo kuo, gye nkongua ho boa na frɛ mo nkurɔfoɔ",
       zu: "Dala inhlangano yakho, xhasa izihlalo futhi umeme abantu bakho",
-    },
-  },
-  employerSignIn: {
-    title: {
-      en: "Organisation sign-in",
-      ha: "Shigar ƙungiya",
-      yo: "Ìwọlé àjọ",
-      ig: "Nbanye ụlọ ọrụ",
-      fr: "Connexion organisation",
-      pt: "Início de sessão da organização",
-      sw: "Kuingia kwa shirika",
-      ar: "تسجيل دخول المؤسسة",
-      tw: "Kuo mu hyɛn",
-      zu: "Ukungena kwenhlangano",
-    },
-    body: {
-      en: "For the person managing seats and invitations at your organisation",
-      ha: "Domin mutumin da ke gudanar da wurare da gayyatar mutane a ƙungiyarku",
-      yo: "Fún ẹni tí ń ṣàkóso àwọn àyè àti ìpè ní àjọ yín",
-      ig: "Maka onye na-elekọta oche na òkù n'ụlọ ọrụ gị",
-      fr: "Pour la personne qui gère les sièges et les invitations au sein de votre organisation",
-      pt: "Para a pessoa que gere os lugares e os convites na sua organização",
-      sw: "Kwa mtu anayesimamia viti na mialiko katika shirika lako",
-      ar: "لخصّ الشخص الذي يدير المقاعد والدعوات في مؤسستك",
-      tw: "Ma obi a ɔhwɛ nkongua ne nsakraeɛ so wɔ mo kuo mu",
-      zu: "Yomuntu ophethe izihlalo nezimemo enhlanganweni yakho",
-    },
-  },
-  opsSignIn: {
-    title: {
-      en: "Toplance operations sign-in",
-      ha: "Shigar ma'aikatan Toplance",
-      yo: "Ìwọlé iṣẹ́ Toplance",
-      ig: "Nbanye ọrụ Toplance",
-      fr: "Connexion opérations Toplance",
-      pt: "Início de sessão das operações Toplance",
-      sw: "Kuingia kwa uendeshaji wa Toplance",
-      ar: "تسجيل دخول عمليات Toplance",
-      tw: "Toplance nnwuma mu hyɛn",
-      zu: "Ukungena komsebenzi we-Toplance",
-    },
-    body: {
-      en: "Staff only — review cases, verify documents and set decisions",
-      ha: "Ma'aikata kaɗai — bincika lamura, tabbatar da takardu kuma ka yanke shawara",
-      yo: "Àwọn òṣìṣẹ́ nìkan — ṣàyẹ̀wò àwọn ẹjọ́, ṣe ìdánimọ̀ àwọn ìwé kí o sì ṣe ìpinnu",
-      ig: "Naanị ndị ọrụ — nyochaa okwu, kwenye akwụkwọ ma kpebie mkpebi",
-      fr: "Réservé au personnel — examinez les dossiers, vérifiez les documents et fixez les décisions",
-      pt: "Apenas para a equipa — analise processos, verifique documentos e defina decisões",
-      sw: "Wafanyakazi pekee — kagua kesi, thibitisha nyaraka na weka maamuzi",
-      ar: "للموظفين فقط — راجع الحالات، وتحقق من المستندات، وحدد القرارات",
-      tw: "Adwumayɛfoɔ nkutoo — hwɛ nsɛm mu, hwɛ nkrataa mu na si gyinaesi",
-      zu: "Abasebenzi kuphela — buyekeza amacala, qinisekisa amadokhumenti bese usetha izinqumo",
     },
   },
 };

@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { useSignIn, useSignUp } from "@clerk/nextjs";
@@ -17,13 +17,26 @@ import { PhoneField } from "@/components/auth/phone-field";
 import { useLocale } from "@/components/locale-provider";
 import {
   checkInvitedEmail,
+  checkSignInEmail,
   completeProfile,
+  type AuthAudience,
   type SignUpIntent,
 } from "@/app/(auth)/actions";
-import { isInternalPath } from "@/lib/auth/routes";
+import {
+  SIGN_IN_FALLBACK,
+  SIGN_UP_CREATE_FALLBACK,
+  SIGN_UP_SEND_FALLBACK,
+  messageForClerkError,
+  type ClerkRefusal,
+} from "@/lib/auth/clerk-messages";
+import { isInternalPath, SIGN_IN_DOOR } from "@/lib/auth/routes";
 import { splitFullName } from "@/lib/domain/name";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
-import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
+import {
+  isWorkEmail,
+  workEmailRefusal,
+  workEmailRuleEnforced,
+} from "@/lib/domain/work-email";
 
 /** Local to this component now that the server no longer returns it. */
 type AuthState = {
@@ -44,17 +57,22 @@ type AuthState = {
  * every call has to be checked. A try/catch around these looks like
  * error handling and silently swallows every failure.
  *
- * `longMessage` is the string Clerk intends for users; `message` is for
- * developers and is explicitly not stable. Where neither fits the
- * situation we say it in our own words instead.
+ * Turning one of these into a sentence is `@/lib/auth/clerk-messages`,
+ * which is where the reasoning about Clerk's own copy lives — and where
+ * it can be tested, which it could not be from inside a client component.
  */
-type ClerkResult = { error: { code: string; longMessage?: string } | null };
+type ClerkResult = { error: ClerkRefusal | null };
 
-function messageFor(error: NonNullable<ClerkResult["error"]>, fallback: string) {
-  return error.longMessage ?? fallback;
-}
+const messageFor = messageForClerkError;
 
-type Audience = "traveller" | "employer" | "operations";
+/**
+ * Defined by the server action that has to speak to each of them, so the
+ * form and its refusals cannot drift apart over what a door is called.
+ *
+ * A sign-up concept only. There is one sign-in door for every role now,
+ * so a sign-in has no audience to be — see `AuthFormProps`.
+ */
+type Audience = AuthAudience;
 
 /**
  * A sign-up must name its `SignUpIntent`; a sign-in has nothing to
@@ -62,14 +80,24 @@ type Audience = "traveller" | "employer" | "operations";
  * forgot to say why the account may exist" into a compile error —
  * `completeProfile` refuses to guess, and that refusal is worth catching
  * at the call site rather than in a toast after the code is spent.
+ *
+ * A sign-in cannot name an audience at all, and that is the type doing
+ * the same job a second time. Three doors used to ask people to classify
+ * themselves before they had typed anything, and the classification was
+ * never used for access — roles come from `profiles`, read by `/go`
+ * after the session exists. All it ever changed was the copy, which made
+ * it a way to show the wrong copy to anyone who guessed wrong. One door
+ * cannot guess.
  */
 type AuthFormProps = { next?: string } & (
-  | { mode: "sign-in"; audience?: Audience }
+  | { mode: "sign-in" }
   | { mode: "sign-up"; audience?: Audience; intent: SignUpIntent }
 );
 
 export function AuthForm(props: AuthFormProps) {
-  const { mode, audience = "traveller" } = props;
+  const mode = props.mode;
+  const audience: Audience =
+    props.mode === "sign-up" ? (props.audience ?? "traveller") : "traveller";
   const [state, setState] = React.useState<AuthState>({});
   const [pending, startTransition] = React.useTransition();
   const [code, setCode] = React.useState("");
@@ -80,8 +108,11 @@ export function AuthForm(props: AuthFormProps) {
   const router = useRouter();
   const params = useSearchParams();
   const requested = params.get("next");
-  // The audience doors name their destination; the generic door cannot
-  // know who signed in, so it resolves through the /go role dispatcher.
+  // A sign-in resolves through `/go`, always: it cannot know who signed
+  // in, and `/go` is the one place that reads the role and forwards. The
+  // employer sign-up is the one door that still names its own
+  // destination, because it created the organisation it is sending them
+  // to and does not need to look anything up to know that.
   //
   // `props.next` wins over the query string and is never validated,
   // because it is not user input: the invite-only sign-up door derives
@@ -92,7 +123,9 @@ export function AuthForm(props: AuthFormProps) {
     props.next ??
     (isInternalPath(requested)
       ? requested
-      : audience === "employer" ? "/agency" : audience === "operations" ? "/ops" : "/go");
+      : mode === "sign-up" && audience === "employer"
+        ? "/agency"
+        : "/go");
 
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
@@ -161,7 +194,7 @@ export function AuthForm(props: AuthFormProps) {
     }
     // Checked before Clerk is told anything, so a personal address costs
     // a corrected field rather than an account and a spent code.
-    if (isDirectorSignUp && !isWorkEmail(email)) {
+    if (isDirectorSignUp && workEmailRuleEnforced() && !isWorkEmail(email)) {
       setState({ error: workEmailRefusal(email) });
       return;
     }
@@ -169,13 +202,6 @@ export function AuthForm(props: AuthFormProps) {
     setProfileFields({ fullName, phone, countryIso });
 
     startTransition(async () => {
-      // Sign-in must not quietly create an account for a typo'd
-      // address, so the two modes fail differently on purpose.
-      const fallback =
-        mode === "sign-in"
-          ? "We could not find an account for that address. Create one instead."
-          : "We could not send a code to that address. Check it and try again.";
-
       const steps: ClerkResult[] = [];
 
       if (mode === "sign-up") {
@@ -191,7 +217,7 @@ export function AuthForm(props: AuthFormProps) {
         // correction. The server still enforces it; this only moves the
         // answer to where it can still be acted on.
         if (props.mode === "sign-up" && props.intent.intent === "invited") {
-          const invited = await checkInvitedEmail(props.intent.token, email);
+          const invited = await checkInvitedEmail(props.intent.token, email, locale);
           if (invited.error) {
             setState({ error: invited.error });
             toast.error(invited.error);
@@ -237,13 +263,42 @@ export function AuthForm(props: AuthFormProps) {
         }
       } else {
         if (!signIn) return;
+
+        // Asked before Clerk is told anything, and for the reason the
+        // invitation check above is asked there. Clerk holds the
+        // credential; `profiles` holds the account, and since
+        // `getProfile` stopped provisioning on first sight the two can
+        // disagree. When they do, Clerk signs the person in perfectly
+        // and every console then turns them away — they land on `/go`
+        // reading that this sign-in has no Toplance account, a spent
+        // code after the fact, with this form gone and nothing left to
+        // correct. Here it is a wrong field and a better sentence.
+        //
+        // No code is sent when this refuses, which is the point: the
+        // address never reaches Clerk.
+        const known = await checkSignInEmail(email, locale);
+        if (known.error) {
+          setState({ error: known.error });
+          toast.error(known.error);
+          return;
+        }
+
         steps.push(await signIn.create({ identifier: email }));
         if (!steps.at(-1)?.error) {
           steps.push(await signIn.emailCode.sendCode({ emailAddress: email }));
         }
       }
 
-      const failure = steps.find((s) => s.error)?.error;
+      // *Which* call failed decides how to describe it. Creating the
+      // account and sending the code are two steps that fail for
+      // different reasons, and a single sentence covering both reported
+      // every refused sign-up as a delivery problem — which is how "you
+      // already have an account" reached the screen as "check that
+      // address". Sign-in keeps one sentence: its own first step is
+      // pre-empted by `checkSignInEmail` above, so anything reaching here
+      // is the send.
+      const failedAt = steps.findIndex((s) => s.error);
+      const failure = failedAt < 0 ? null : steps[failedAt].error;
       if (failure) {
         // Single-session mode: Clerk refuses to start a second sign-in
         // (or sign-up) while one session is active. The proxy redirects
@@ -266,6 +321,12 @@ export function AuthForm(props: AuthFormProps) {
           window.location.assign(next);
           return;
         }
+        const fallback =
+          mode === "sign-in"
+            ? SIGN_IN_FALLBACK
+            : failedAt === 0
+              ? SIGN_UP_CREATE_FALLBACK
+              : SIGN_UP_SEND_FALLBACK;
         const message = messageFor(failure, fallback);
         setState({ error: message });
         toast.error(message);
@@ -566,10 +627,10 @@ export function AuthForm(props: AuthFormProps) {
   return (
     <AuthPanel
       eyebrow={
-        audience === "employer"
-          ? "Organisation"
-          : audience === "operations"
-            ? "Toplance operations"
+        mode === "sign-in"
+          ? "Account"
+          : audience === "employer"
+            ? "Organisation"
             : "Traveler"
       }
       className="mx-auto w-full max-w-[560px]"
@@ -577,11 +638,15 @@ export function AuthForm(props: AuthFormProps) {
       <h1 className="d-md">
         {mode === "sign-up" ? "Create your account" : "Sign in"}
       </h1>
-      {audience !== "traveller" && (
+      {/* The eyebrow names the door, and on a sign-in the door is
+          everyone's — "Traveler" over a form a reviewer and a director
+          also use was a label that could only ever be wrong for two of
+          the three. The line below stays a sign-up line for the same
+          reason: it says who a *new* account is for, which is a question
+          a sign-in is not asking. */}
+      {mode === "sign-up" && audience === "employer" && (
         <p className="t-muted mt-2">
-          {audience === "employer"
-            ? "For the person managing seats and invitations at your organisation."
-            : "Toplance operations staff only. Every document view is recorded against your account."}
+          For the person managing seats and invitations at your organisation.
         </p>
       )}
 
@@ -667,10 +732,33 @@ export function AuthForm(props: AuthFormProps) {
         <div id="clerk-captcha" />
 
 
+        {/*
+          * A tinted block rather than loose red text under the button.
+          * Two of the three refusals this renders are paragraph-length —
+          * "there is no account for that address, here is how accounts
+          * are made" — and at that length unbounded body copy in red
+          * reads as damage rather than as an answer.
+          *
+          * The tint is `badge`'s danger variant, mixed over `--mix`
+          * rather than `transparent` so the fill stays opaque against
+          * the panel's own laminate; `--mix` is the page ground in both
+          * themes, which is what keeps this legible in dark mode instead
+          * of glowing. The icon is `upload-outcome-dialog`'s: same
+          * lucide glyph, same `mt-0.5` optical nudge onto the first
+          * line, `aria-hidden` because `role="alert"` already announces
+          * the text and the glyph adds nothing to read aloud.
+          */}
         {state.error && (
-          <p role="alert" className="text-base text-danger-ink">
-            {state.error}
-          </p>
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-md border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[color-mix(in_srgb,var(--danger)_9%,var(--mix))] p-4"
+          >
+            <TriangleAlert
+              className="mt-0.5 size-5 shrink-0 text-danger"
+              aria-hidden
+            />
+            <p className="t-body text-danger-ink">{state.error}</p>
+          </div>
         )}
 
         <p className="t-muted flex items-center justify-center gap-2 text-center">
@@ -678,31 +766,29 @@ export function AuthForm(props: AuthFormProps) {
           Your documents are encrypted at rest and in transit.
         </p>
 
-        {(audience === "traveller" || audience === "employer") && (
-          <p className="t-muted text-center">
-            {mode === "sign-up" ? (
-              <>
-                Already have an account?{" "}
-                <Link
-                  href={audience === "employer" ? "/agency/sign-in" : "/sign-in"}
-                  className="font-semibold text-brand-text hover:underline"
-                >
-                  Sign in
-                </Link>
-              </>
-            ) : (
-              <>
-                New to Toplance?{" "}
-                <Link
-                  href={audience === "employer" ? "/agency/sign-up" : "/sign-up"}
-                  className="font-semibold text-brand-text hover:underline"
-                >
-                  Create an account
-                </Link>
-              </>
-            )}
-          </p>
-        )}
+        <p className="t-muted text-center">
+          {mode === "sign-up" ? (
+            <>
+              Already have an account?{" "}
+              <Link
+                href={SIGN_IN_DOOR}
+                className="font-semibold text-brand-text hover:underline"
+              >
+                Sign in
+              </Link>
+            </>
+          ) : (
+            <>
+              New to Toplance?{" "}
+              <Link
+                href="/sign-up"
+                className="font-semibold text-brand-text hover:underline"
+              >
+                Create an account
+              </Link>
+            </>
+          )}
+        </p>
       </form>
     </AuthPanel>
   );

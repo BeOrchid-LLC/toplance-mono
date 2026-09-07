@@ -5,8 +5,9 @@ type L = Record<Locale, string>;
 /**
  * Static copy on the auth pages themselves: `(auth)/layout.tsx`'s footer
  * link, `/sign-up`'s invitation-only dead end, and the marketing panel
- * each of the three branded doors (employer sign-up, employer sign-in,
- * ops sign-in) carries next to the form. These are Server Components, so
+ * the employer sign-up door carries next to the form. The employer and
+ * operations *sign-in* doors used to carry one each; there is one
+ * sign-in for every role now, and it carries none. These are Server Components, so
  * every field here is read with `getLocale()`, never `useT()`.
  *
  * `DEAD_END_MESSAGE`'s own titles (`src/components/invite/dead-end.tsx`)
@@ -25,9 +26,7 @@ type L = Record<Locale, string>;
 export const AUTH_PAGE_TITLES: {
   signIn: L;
   signUp: L;
-  employerSignIn: L;
   employerSignUp: L;
-  opsSignIn: L;
 } = {
   signIn: {
     en: "Sign in",
@@ -53,18 +52,6 @@ export const AUTH_PAGE_TITLES: {
     tw: "Yɛ wo akaunt",
     zu: "Dala i-akhawunti yakho",
   },
-  employerSignIn: {
-    en: "Employer sign-in",
-    ha: "Shigar ma'aikaci",
-    yo: "Ìwọlé agbanisíṣẹ́",
-    ig: "Nbanye onye ọrụ",
-    fr: "Connexion employeur",
-    pt: "Início de sessão de empregador",
-    sw: "Kuingia kwa mwajiri",
-    ar: "تسجيل دخول صاحب العمل",
-    tw: "Adwumawura hyɛn mu",
-    zu: "Ukungena komqashi",
-  },
   employerSignUp: {
     en: "Employer sign-up",
     ha: "Rijistar ma'aikaci",
@@ -76,18 +63,6 @@ export const AUTH_PAGE_TITLES: {
     ar: "تسجيل صاحب العمل",
     tw: "Adwumawura akwankyerɛ",
     zu: "Ukubhalisa umqashi",
-  },
-  opsSignIn: {
-    en: "Operations sign-in",
-    ha: "Shigar ma'aikata",
-    yo: "Ìwọlé iṣẹ́",
-    ig: "Nbanye ọrụ",
-    fr: "Connexion opérations",
-    pt: "Início de sessão das operações",
-    sw: "Kuingia kwa uendeshaji",
-    ar: "تسجيل دخول العمليات",
-    tw: "Nnwuma mu hyɛn",
-    zu: "Ukungena komsebenzi",
   },
 };
 
@@ -176,9 +151,15 @@ export const SIGN_UP_PAGE: {
 };
 
 /**
- * The claim shown next to the form on the employer sign-up and employer
- * sign-in pages — deliberately identical text in both places, in the
- * same words and order as the landing page's organisations section.
+ * The claim shown next to the form on the employer sign-up page, in the
+ * same words and order as the landing page's organisations section — a
+ * director arriving here clicked that section, and a different promise
+ * would read as a different product.
+ *
+ * It stood beside the employer *sign-in* too, until that door was folded
+ * into the one shared sign-in. A pitch belongs on the page that asks
+ * someone to start; the page that asks them to come back does not need
+ * selling to, and could not have picked which pitch to show anyway.
  */
 export const AGENCY_DOOR_PANEL: {
   tag: L;
@@ -258,100 +239,6 @@ export const AGENCY_DOOR_PANEL: {
       ar: "ذكّر شخصاً توقف عن المتابعة دون الاتصال به",
       tw: "Kae obi a watwɛn mu a wonnfrɛ no",
       zu: "Khumbuza umuntu ohlehlele emuva ngaphandle kokumshayela ucingo",
-    },
-  ],
-};
-
-export const OPS_DOOR_PANEL: {
-  tag: L;
-  heading: L;
-  body: L;
-  bullets: [L, L, L, L];
-} = {
-  tag: {
-    en: "Staff entrance",
-    ha: "Ƙofar ma'aikata",
-    yo: "Ẹnu ọ̀nà òṣìṣẹ́",
-    ig: "Ọnụ ụzọ ndị ọrụ",
-    fr: "Entrée du personnel",
-    pt: "Entrada da equipa",
-    sw: "Mlango wa wafanyakazi",
-    ar: "مدخل الموظفين",
-    tw: "Adwumayɛfoɔ ɛpono",
-    zu: "Umnyango wabasebenzi",
-  },
-  heading: {
-    en: "Staff access only",
-    ha: "Ma'aikata kaɗai ke da izinin shiga",
-    yo: "Àwọn òṣìṣẹ́ nìkan ni a fún láààyè",
-    ig: "Naanị ndị ọrụ nwere ohere",
-    fr: "Accès réservé au personnel",
-    pt: "Acesso apenas à equipa",
-    sw: "Ufikiaji kwa wafanyakazi pekee",
-    ar: "الدخول للموظفين فقط",
-    tw: "Adwumayɛfoɔ nkutoo na wɔma wɔn kwan",
-    zu: "Ukufinyelela kwabasebenzi kuphela",
-  },
-  body: {
-    en: "This console holds identity documents for every applicant. Sessions are logged and every document view is recorded against your account.",
-    ha: "Wannan dashbod yana riƙe da takardun shaida na kowane mai nema. Ana rikodin zaman aiki kuma ana rikodin kowane kallon takarda a kan asusunka.",
-    yo: "Pátákò yìí ń tọ́jú àwọn ìwé ìdánimọ̀ fún olùbéèrè kọ̀ọ̀kan. A máa ń ṣàkọsílẹ̀ ìgbà ìlò, gbogbo ìgbà tí a bá sì wo ìwé ni a máa ń ṣàkọsílẹ̀ rẹ̀ sí àkọọ́lẹ̀ rẹ.",
-    ig: "Ihuenyo a na-echekwa akwụkwọ njirimara maka onye ọ bụla na-arịọ. A na-edekọ oge nnọkọ, a na-edekwa oge ọ bụla e lere akwụkwọ anya na akaụntụ gị.",
-    fr: "Cette console conserve les documents d'identité de chaque candidat. Les sessions sont journalisées et chaque consultation de document est enregistrée sur votre compte.",
-    pt: "Esta consola guarda documentos de identidade de todos os candidatos. As sessões são registadas e cada visualização de documento é registada na sua conta.",
-    sw: "Dashibodi hii inashikilia hati za utambulisho za kila mwombaji. Vipindi vinarekodiwa na kila kutazamwa kwa hati kunarekodiwa kwenye akaunti yako.",
-    ar: "تحتفظ لوحة التحكم هذه بوثائق الهوية لكل مقدم طلب. تُسجَّل الجلسات ويُسجَّل كل عرض للمستند على حسابك.",
-    tw: "Saa dashboard yi kora akwadaho krataa ma obiara a ɔabɔ mpaeɛ. Wɔkyerɛw session ho nsɛm na wɔkyerɛw krataa biara a wɔbɛhwɛ mu gu wo akaunt so.",
-    zu: "Le deshibhodi igcina amadokhumenti obunikazi bawo wonke ofakayo. Iziseshini ziyarekhodwa futhi ukubukwa kwedokhumenti ngayinye kuyarekhodwa ku-akhawunti yakho.",
-  },
-  bullets: [
-    {
-      en: "A one-time code is emailed on every sign-in",
-      ha: "Ana aika lambar amfani sau ɗaya ta imel a duk lokacin shiga",
-      yo: "A máa fi àmì lílò-lẹ́ẹ̀kan ránṣẹ́ nípa ìmẹ́lì ní gbogbo ìgbà tí a bá wọlé",
-      ig: "A na-eziga koodu otu ugbo site na ozi-e mgbe ọ bụla ị banyere",
-      fr: "Un code à usage unique est envoyé par e-mail à chaque connexion",
-      pt: "É enviado por e-mail um código de utilização única em cada início de sessão",
-      sw: "Msimbo wa mara moja hutumwa kwa barua pepe kila unapoingia",
-      ar: "يُرسل رمز لمرة واحدة عبر البريد الإلكتروني في كل تسجيل دخول",
-      tw: "Wɔde one-time koodu somaa email berɛ biara a wobɛhyɛn mu",
-      zu: "Ikhodi yakanye ithunyelwa nge-imeyili kuwo wonke ukungena",
-    },
-    {
-      en: "An authenticator app is required as a second factor",
-      ha: "Ana buƙatar manhajar tantancewa a matsayin hanya ta biyu",
-      yo: "A nílò app ìdánimọ̀ gẹ́gẹ́ bí ọ̀nà kejì",
-      ig: "A chọrọ ngwa nyocha dịka ihe nkwenye nke abụọ",
-      fr: "Une application d'authentification est requise comme second facteur",
-      pt: "É necessária uma aplicação de autenticação como segundo fator",
-      sw: "Programu ya uthibitishaji inahitajika kama njia ya pili",
-      ar: "يلزم تطبيق مصادقة كعامل ثانٍ",
-      tw: "Wɔhwehwɛ authenticator app sɛ second factor",
-      zu: "Kudingeka uhlelo lokuqinisekisa njengesici sesibili",
-    },
-    {
-      en: "Sessions expire after 30 minutes idle",
-      ha: "Zaman aiki yana ƙarewa bayan minti 30 na rashin aiki",
-      yo: "Ìgbà ìlò máa parí lẹ́yìn ìṣẹ́jú 30 tí a kò bá lò ó",
-      ig: "Oge nnọkọ na-agwụ mgbe nkeji 30 gabigara na-arụghị ọrụ",
-      fr: "Les sessions expirent après 30 minutes d'inactivité",
-      pt: "As sessões expiram ao fim de 30 minutos de inatividade",
-      sw: "Vipindi huisha baada ya dakika 30 za kutofanya kazi",
-      ar: "تنتهي صلاحية الجلسات بعد 30 دقيقة من عدم النشاط",
-      tw: "Session tɔ sima bere a wonyɛ hwee sima 30 akyi",
-      zu: "Iziseshini ziphelelwa isikhathi ngemva kwemizuzu engu-30 zingasetshenziswa",
-    },
-    {
-      en: "Full audit trail on document access",
-      ha: "Cikakken rikodin bincike a kan samun damar takardu",
-      yo: "Àkọsílẹ̀ ìṣàyẹ̀wò kíkún lórí wíwọlé sí ìwé",
-      ig: "Ndekọ nyocha zuru ezu na ohere ịbanye akwụkwọ",
-      fr: "Traçabilité complète des accès aux documents",
-      pt: "Registo de auditoria completo sobre o acesso a documentos",
-      sw: "Kumbukumbu kamili ya ukaguzi kwenye ufikiaji wa hati",
-      ar: "سجل تدقيق كامل للوصول إلى المستندات",
-      tw: "Krataa mu kɔhwɛ nyinaa ho nsɛm a wɔakyerɛw",
-      zu: "Umlando ophelele wokuhlolwa ekufinyeleleni amadokhumenti",
     },
   ],
 };

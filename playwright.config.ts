@@ -75,6 +75,10 @@ export default defineConfig({
      *   rather than the R2 staging bucket `.env.local` is aimed at.
      * - `APP_URL` is what `appUrl()` builds invitation links from, so
      *   the link the employer copies opens on this server.
+     * - `NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL: ""` pins the work-address
+     *   rule back on. It is a local convenience a developer may well
+     *   have set in `.env.local`, and the suite must not quietly run
+     *   against a door that is open on one machine and shut in CI.
      */
     env: {
       // Its own build directory as well as its own port: Next 16 locks
@@ -87,6 +91,7 @@ export default defineConfig({
       RESEND_API_KEY: "",
       E2E_SKIP_STAFF_2FA: "1",
       APP_URL: baseURL,
+      NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL: "",
       S3_ENDPOINT: "http://127.0.0.1:54330",
       S3_REGION: "us-east-1",
       S3_BUCKET: "documents",

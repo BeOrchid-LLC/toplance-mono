@@ -29,17 +29,43 @@ const selectClass =
 /**
  * The visitor's own zone, and every zone they might pick instead.
  *
- * Read once, lazily, on the client: `Intl.supportedValuesOf` is a
- * browser API, and calling it during the static render would both fail
- * and bake one machine's answer into the HTML every visitor receives.
+ * Gated behind `useIsClient`, deliberately. This page is
+ * `force-static`, so a render-time `Intl.DateTimeFormat()` would run on
+ * the machine doing the build and bake *its* zone into the one HTML
+ * document every visitor is served. Being uncontrolled, the select
+ * would then keep that value through hydration, and an agency in Lagos
+ * would be offered whatever zone the deploy runner happened to be in —
+ * silently, and wrong by an hour or several.
  *
- * The fallback matters more than it looks. If a browser has neither
- * call, the list collapses to UTC and the field still works — where a
- * curated shortlist of African capitals would have silently offered the
- * wrong hour to everyone outside it.
+ * The read happens only once React is running in the browser, so the
+ * answer is always the visitor's own. The value until then is UTC,
+ * which is also the fallback
+ * for a browser that has neither call: the list collapses to one entry
+ * and the field still submits something true, where a curated shortlist
+ * of African capitals would have offered the wrong hour to everyone
+ * outside it.
  */
+const NO_SUBSCRIBE = () => () => {};
+
+/**
+ * `false` while the server renders and through hydration, `true`
+ * thereafter — the sanctioned way to gate a browser-only read without
+ * setting state from an effect.
+ */
+function useIsClient(): boolean {
+  return React.useSyncExternalStore(
+    NO_SUBSCRIBE,
+    () => true,
+    () => false
+  );
+}
+
 function useTimezones(): { zones: string[]; detected: string } {
+  const isClient = useIsClient();
+
   return React.useMemo(() => {
+    if (!isClient) return { zones: ["UTC"], detected: "UTC" };
+
     let detected = "UTC";
     try {
       detected = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -56,7 +82,7 @@ function useTimezones(): { zones: string[]; detected: string } {
 
     if (!zones.includes(detected)) zones = [detected, ...zones];
     return { zones, detected };
-  }, []);
+  }, [isClient]);
 }
 
 /**
@@ -85,7 +111,31 @@ export function DemoDialog() {
   const [pending, startTransition] = React.useTransition();
   const [sentTo, setSentTo] = React.useState<string | null>(null);
 
-  function onSubmit(formData: FormData) {
+  /**
+   * Submitted through `onSubmit`, not through the `action` prop, and
+   * that is not a style preference.
+   *
+   * React resets a form wired up with `action` as soon as the action
+   * returns — on every path, including the ones that return an error.
+   * A refusal the visitor could act on ("that email address does not
+   * look right") therefore arrived beside six fields that had just
+   * emptied themselves, so the price of one typo was retyping the lot.
+   * Worse for the `<select>`: the reset returns the DOM node to its
+   * first option, and a controlled `value` that has not changed since
+   * the last render gives React no diff to write back, so the zone
+   * silently became whichever one sorts first.
+   *
+   * The `action` prop's one real advantage is working before hydration,
+   * which a dialog that needs a click to open cannot have anyway. So:
+   * `preventDefault`, build the `FormData` by hand, and nothing resets
+   * unless this component says so.
+   */
+  const formRef = React.useRef<HTMLFormElement>(null);
+
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
     // Read before the await: the sent sheet names the address, and the
     // action returns nothing but a verdict.
     const submitted = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -96,6 +146,7 @@ export function DemoDialog() {
         toast.error(result.error);
         return;
       }
+      formRef.current?.reset();
       setSentTo(submitted);
     });
   }
@@ -128,7 +179,7 @@ export function DemoDialog() {
             </DialogFooter>
           </>
         ) : (
-          <form action={onSubmit} className="flex flex-col gap-5">
+          <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-5">
             <DialogHeader>
               <DialogTitle>{t(SITE_HOME.heroCtaBookDemo)}</DialogTitle>
               <DialogDescription>{t(DEMO_DIALOG.description)}</DialogDescription>

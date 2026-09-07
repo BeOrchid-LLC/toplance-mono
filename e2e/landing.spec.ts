@@ -215,6 +215,44 @@ test.describe("the demo request form", () => {
     await expect(dialog.getByLabel("Full name")).toHaveCount(0);
   });
 
+  /**
+   * The regression this exists for: the form was originally wired up
+   * with React's `action` prop, which resets the form as soon as the
+   * action returns — including when it returns an error. A visitor who
+   * mistyped their address got the refusal beside six emptied fields,
+   * and the timezone select silently fell back to whichever zone sorts
+   * first, because a controlled value that had not changed gave React
+   * nothing to write back.
+   *
+   * `bola@ng` is the address to test it with: browsers accept it as a
+   * valid `type="email"`, so it reaches the server, where
+   * `parseDemoRequest` refuses it for having no dot in the domain.
+   */
+  test("keeps what was typed when the server refuses the address", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Book a demo" }).click();
+
+    const dialog = page.getByRole("dialog");
+    const zone = dialog.getByLabel("Timezone");
+    const chosenZone = await zone.inputValue();
+
+    await dialog.getByLabel("Full name").fill("Bola Adeyemi");
+    await dialog.getByLabel("Work email").fill("bola@ng");
+    await dialog.getByLabel("Agency / Company name").fill("Sunway Travel");
+    await dialog.getByLabel("Job title / Role").fill("Operations Lead");
+    await dialog.getByLabel("Preferred demo date & time").fill("2027-03-03T16:45");
+
+    await dialog.getByRole("button", { name: "Request a demo" }).click();
+
+    await expect(page.getByText("That email address does not look right.")).toBeVisible();
+
+    await expect(dialog.getByLabel("Full name")).toHaveValue("Bola Adeyemi");
+    await expect(dialog.getByLabel("Agency / Company name")).toHaveValue("Sunway Travel");
+    await expect(dialog.getByLabel("Job title / Role")).toHaveValue("Operations Lead");
+    await expect(dialog.getByLabel("Preferred demo date & time")).toHaveValue("2027-03-03T16:45");
+    await expect(zone).toHaveValue(chosenZone);
+  });
+
   test("refuses to submit with a field left empty", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Book a demo" }).click();

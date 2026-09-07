@@ -9,6 +9,9 @@ import { inArray } from "drizzle-orm";
 describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
   const { db } = await import("@/lib/db/client");
   const { demoRequests } = await import("@/lib/db/schema");
+  const { listDemoRequests, setDemoRequestStatus } = await import(
+    "@/lib/data/demo-requests"
+  );
 
   const ids: string[] = [];
 
@@ -42,5 +45,45 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
 
     expect(row.status).toBe("new");
     expect(row.convertedOrgId).toBeNull();
+  });
+
+  it("lists newest first", async () => {
+    const older = await request("Older Agency");
+    // Explicit timestamps, so the assertion does not depend on two
+    // inserts landing in different microseconds.
+    await db
+      .update(demoRequests)
+      .set({ createdAt: new Date("2026-09-01T09:00:00Z") })
+      .where(inArray(demoRequests.id, [older]));
+
+    const newer = await request("Newer Agency");
+    await db
+      .update(demoRequests)
+      .set({ createdAt: new Date("2026-09-05T09:00:00Z") })
+      .where(inArray(demoRequests.id, [newer]));
+
+    const rows = await listDemoRequests();
+    const ours = rows.filter((r) => ids.includes(r.id));
+
+    expect(ours.map((r) => r.id)).toEqual([newer, older]);
+  });
+
+  it("persists a status change", async () => {
+    const id = await request("Kite Travel");
+
+    const result = await setDemoRequestStatus(id, "contacted");
+    expect(result).toEqual({ ok: true });
+
+    const rows = await listDemoRequests();
+    expect(rows.find((r) => r.id === id)?.status).toBe("contacted");
+  });
+
+  it("refuses a status change for an id that is not there", async () => {
+    const result = await setDemoRequestStatus(
+      "00000000-0000-4000-8000-00000000dead",
+      "declined"
+    );
+
+    expect("error" in result).toBe(true);
   });
 });

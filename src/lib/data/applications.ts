@@ -1,7 +1,7 @@
 import "server-only";
 
 import { auth } from "@clerk/nextjs/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -61,6 +61,29 @@ export async function getProfile(): Promise<Profile | null> {
 }
 
 /**
+ * The agencies this person works for, excluding any that are suspended.
+ *
+ * One join is the whole of suspension enforcement. Filtering here means
+ * a suspended agency's members carry no `orgIds`, so `isAgencyFor`
+ * returns false for every policy at once — rather than fifteen surfaces
+ * each remembering to check a flag, which is the arrangement that
+ * eventually forgets.
+ *
+ * Separate from `getActor` because that reads the Clerk session and this
+ * does not, which is what makes the rule testable against a real
+ * database.
+ */
+export async function liveOrgIdsFor(userId: string): Promise<string[]> {
+  const memberships = await db
+    .select({ orgId: orgMembers.orgId })
+    .from(orgMembers)
+    .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
+    .where(and(eq(orgMembers.userId, userId), isNull(organisations.suspendedAt)));
+
+  return memberships.map((m) => m.orgId);
+}
+
+/**
  * The profile plus everything an access decision needs, in the shape
  * `@/lib/auth/policy` expects. Roles live in Postgres, never in Clerk
  * metadata, so this is the only place they are read from.
@@ -69,27 +92,41 @@ export async function getActor(): Promise<Actor | null> {
   const profile = await getProfile();
   if (!profile) return null;
 
-  const memberships = await db
-    .select({ orgId: orgMembers.orgId })
-    .from(orgMembers)
-    .where(eq(orgMembers.userId, profile.id));
-
   return {
     userId: profile.id,
     role: profile.role,
     staffRole: profile.staffRole ?? null,
-    orgIds: memberships.map((m) => m.orgId),
+    orgIds: await liveOrgIdsFor(profile.id),
   };
 }
 
 /**
- * A traveller has one application in flight at a time. This returns it,
- * creating a draft on first visit so the intake agent always has
- * somewhere to write answers.
+ * A traveller's one application in flight, or null.
+ *
+ * This used to create a draft on first visit, which is where orphan
+ * cases came from: an application with no agency. Under the v1.3
+ * tenancy every case belongs to exactly one agency, and the only thing
+ * that knows which agency a traveller belongs to is the invitation they
+ * accepted — so `acceptInvitation` is now the sole creator, and it has
+ * always written `org_id` from the invitation.
+ *
+ * Nothing is lost by not creating here. Travellers have been invite-only
+ * since 2026-08-31, so a signed-in traveller with no application is
+ * someone who never accepted one; the nine callers all redirect on null,
+ * which is the right answer for a person the product cannot serve.
+ * `applications.org_id` is `not null`, so this is also no longer
+ * expressible: the insert this function used to make does not compile.
  */
-export async function getOrCreateApplication(): Promise<Application | null> {
+export async function getApplication(): Promise<Application | null> {
   const profile = await getProfile();
   if (!profile) return null;
+
+  // Only a traveller owns an application. The `(app)` layout already
+  // turns anyone else away, but a layout's `redirect()` does not stop
+  // the segments beneath it — Next renders them concurrently, and they
+  // call this too — so the invariant is kept here rather than at one of
+  // nine call sites.
+  if (profile.role !== "traveler") return null;
 
   const [existing] = await db
     .select()
@@ -98,35 +135,10 @@ export async function getOrCreateApplication(): Promise<Application | null> {
     .orderBy(desc(applications.createdAt))
     .limit(1);
 
-  if (existing) return existing;
-
-  // Only a traveller owns an application. The `(app)` layout already
-  // turns anyone else away, but a layout's `redirect()` does not stop
-  // the segments beneath it — Next renders them concurrently, and they
-  // call this too — so the invariant is kept here, at the write, rather
-  // than at one of nine call sites.
-  if (profile.role !== "traveler") return null;
-
-  // The layout and the page it wraps both resolve the application
-  // concurrently, so first visits race here. Same shape as the profile
-  // provisioning above: whoever loses the insert reads the winner's row.
-  const [created] = await db
-    .insert(applications)
-    .values({ travelerId: profile.id })
-    .onConflictDoNothing()
-    .returning();
-
-  if (created) return created;
-
-  const [raced] = await db
-    .select()
-    .from(applications)
-    .where(eq(applications.travelerId, profile.id))
-    .limit(1);
-
-  return raced ?? null;
+  return existing ?? null;
 }
 
+/** What the traveller said, for the screens a person reads. */
 export async function getIntakeAnswers(applicationId: string) {
   const rows = await db
     .select({
@@ -139,6 +151,30 @@ export async function getIntakeAnswers(applicationId: string) {
   return Object.fromEntries(rows.map((r) => [r.questionKey, r.value]));
 }
 
+/**
+ * The same answers as canonical codes, for the engine.
+ *
+ * Separate from `getIntakeAnswers` rather than a second field on it,
+ * because the two are read by different callers for different reasons
+ * and mixing them is how the raw answer ends up back in a rule match.
+ * A null code is a real value here: the answer matched no chip, so any
+ * rule naming that topic cannot be evaluated and the requirement stays
+ * hedged.
+ */
+export async function getIntakeCodes(
+  applicationId: string
+): Promise<Record<string, string | null>> {
+  const rows = await db
+    .select({
+      questionKey: intakeAnswers.questionKey,
+      code: intakeAnswers.code,
+    })
+    .from(intakeAnswers)
+    .where(eq(intakeAnswers.applicationId, applicationId));
+
+  return Object.fromEntries(rows.map((r) => [r.questionKey, r.code]));
+}
+
 export async function getDocuments(applicationId: string): Promise<DocumentRow[]> {
   return db
     .select()
@@ -149,22 +185,30 @@ export async function getDocuments(applicationId: string): Promise<DocumentRow[]
 
 /**
  * One definition of "percent complete", shared by the traveller's
- * dashboard, the reviewer's queue and the employer's roster. Optional
- * documents are excluded so an applicant is never held below 100% by a
- * document nobody requires.
+ * dashboard and the agency's roster. Optional documents are excluded so
+ * an applicant is never held below 100% by a document nobody requires.
  *
  * The percentage measures *collecting*: a document counts once it is
- * uploaded and either awaiting or past review. Keying it on `verified`
- * alone held the ring at 0% for the whole collecting phase, which reads
- * as "nothing happened" right after an upload. `verified` is still
- * reported on its own because submission gates on it — a file full of
- * `checking` documents is 100% collected and still not submittable.
+ * uploaded, whatever a reviewer has since said about it. Keying it on
+ * `verified` alone held the ring at 0% for the whole collecting phase,
+ * which reads as "nothing happened" right after an upload.
+ *
+ * `flagged` counts too, and that is the fix of 6 September. Taking a
+ * flagged document back out of the numerator dropped the ring the moment
+ * somebody was told their passport photo was blurry — it read as losing
+ * work they had already done, when what actually happened is that one
+ * file needs replacing. `failed` does not count, because that is an
+ * upload that never landed rather than a verdict on one.
+ *
+ * `verified` is still reported on its own because submission gates on
+ * it, and since 6 September billing does too — a file full of `checking`
+ * documents is 100% collected, not submittable, and not billable.
  */
 export function completionOf(docs: DocumentRow[]): Completion {
   const required = docs.filter((d) => d.isRequired);
   const verified = required.filter((d) => d.state === "verified").length;
   const collected = required.filter(
-    (d) => d.state === "checking" || d.state === "verified"
+    (d) => d.state === "checking" || d.state === "verified" || d.state === "flagged"
   ).length;
   const total = required.length;
   return {

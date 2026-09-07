@@ -19,15 +19,21 @@ import { and, eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, documents, profiles } = await import("@/lib/db/schema");
   const { applyPrecheckTx } = await import("@/lib/data/precheck");
 
   const TRAVELLER = "test_precheck_traveller";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0011";
+
   let applicationId = "";
   const STORAGE_PATH_A = "app/passport/a.jpg";
   const STORAGE_PATH_B = "app/passport/b.jpg";
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db.insert(profiles).values({
       id: TRAVELLER,
       email: "precheck@test.invalid",
@@ -36,7 +42,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, intakeComplete: true })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, intakeComplete: true })
       .returning({ id: applications.id });
     applicationId = app.id;
 
@@ -60,6 +66,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       .select({
         state: documents.state,
         reason: documents.reason,
+        reasonCode: documents.reasonCode,
         precheck: documents.precheck,
         storagePath: documents.storagePath,
       })
@@ -80,7 +87,13 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "flag",
       reason: "The photo page is too dark to read — retake it in better light.",
-      raw: { verdict: "flag", reason: "too dark", notes: ["low light"] },
+      reasonCode: "unreadable",
+      raw: {
+        verdict: "flag",
+        reasonCode: "unreadable",
+        reason: "too dark",
+        notes: ["low light"],
+      },
     });
 
     expect(result).toEqual({ applied: true, travelerId: TRAVELLER });
@@ -90,9 +103,13 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
     expect(row.reason).toBe(
       "The photo page is too dark to read — retake it in better light."
     );
+    // The class support debugs from, since nobody outside the agency can
+    // open the file itself.
+    expect(row.reasonCode).toBe("unreadable");
     expect(row.precheck).toEqual({
       verdict: "flag",
       reason: "too dark",
+      reasonCode: "unreadable",
       notes: ["low light"],
     });
   });
@@ -114,6 +131,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "flag",
       reason: "Should never land.",
+      reasonCode: "unreadable",
       raw: { verdict: "flag", reason: "Should never land.", notes: [] },
     });
 
@@ -145,6 +163,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "flag",
       reason: "Stale verdict for the old upload.",
+      reasonCode: "unreadable",
       raw: { verdict: "flag", reason: "Stale verdict for the old upload.", notes: [] },
     });
 
@@ -163,6 +182,7 @@ describe.skipIf(!process.env.DATABASE_URL)("applyPrecheckTx", async () => {
       storagePath: STORAGE_PATH_A,
       verdict: "pass",
       reason: "",
+      reasonCode: "other",
       raw: { verdict: "pass", reason: "", notes: [] },
     });
 

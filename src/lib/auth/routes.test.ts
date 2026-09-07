@@ -5,7 +5,7 @@ import { homeFor, signedInDestination, signInDoorFor } from "@/lib/auth/routes";
 describe("homeFor", () => {
   it("sends each role to its own console", () => {
     expect(homeFor("staff")).toBe("/ops");
-    expect(homeFor("org_member")).toBe("/employer");
+    expect(homeFor("org_member")).toBe("/agency");
     expect(homeFor("traveler")).toBe("/app");
   });
 });
@@ -49,25 +49,25 @@ describe("signedInDestination", () => {
 
   it("only reads a token on the door that issues one", () => {
     expect(signedInDestination("/sign-in", null, "abc123")).toBe("/go");
-    expect(signedInDestination("/employer/sign-up", null, "abc123")).toBe("/employer");
+    expect(signedInDestination("/agency/sign-up", null, "abc123")).toBe("/agency");
   });
 
   it("sends a signed-in visitor on an audience door to that audience's home", () => {
-    expect(signedInDestination("/employer/sign-in")).toBe("/employer");
-    expect(signedInDestination("/employer/sign-up")).toBe("/employer");
+    expect(signedInDestination("/agency/sign-in")).toBe("/agency");
+    expect(signedInDestination("/agency/sign-up")).toBe("/agency");
     expect(signedInDestination("/ops/sign-in")).toBe("/ops");
   });
 
   it("matches nested auth paths, as the middleware's (.*) patterns do", () => {
     expect(signedInDestination("/sign-in/factor-two")).toBe("/go");
-    expect(signedInDestination("/employer/sign-in/anything")).toBe("/employer");
-    expect(signedInDestination("/employer/sign-up/anything")).toBe("/employer");
+    expect(signedInDestination("/agency/sign-in/anything")).toBe("/agency");
+    expect(signedInDestination("/agency/sign-up/anything")).toBe("/agency");
   });
 
   it("returns null off the auth surface, where no redirect belongs", () => {
     expect(signedInDestination("/")).toBeNull();
     expect(signedInDestination("/app")).toBeNull();
-    expect(signedInDestination("/employer")).toBeNull();
+    expect(signedInDestination("/agency")).toBeNull();
     // The property that lets /go be a terminal surface rather than a
     // bounce: a signed-in visitor sent there by a console that could not
     // find their profile must be allowed to stay and read the reason. If
@@ -104,8 +104,8 @@ describe("signInDoorFor", () => {
   // that door's "Create an account" is invite-only copy that does not
   // apply to them.
   it("sends a lapsed employer session to the employer door", () => {
-    expect(signInDoorFor("/employer")).toBe("/employer/sign-in");
-    expect(signInDoorFor("/employer/people/123")).toBe("/employer/sign-in");
+    expect(signInDoorFor("/agency")).toBe("/agency/sign-in");
+    expect(signInDoorFor("/agency/people/123")).toBe("/agency/sign-in");
   });
 
   it("sends a lapsed staff session to the operations door", () => {

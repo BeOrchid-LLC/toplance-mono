@@ -4,7 +4,7 @@ import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents } from "@/lib/db/schema";
-import { appliesToTraveller } from "@/lib/domain/applies-when";
+import { appliesToTraveller, describeAppliesWhen } from "@/lib/domain/applies-when";
 import type { CorridorRuleSet } from "@/lib/visa/types";
 
 /**
@@ -27,30 +27,52 @@ export async function adoptRuleSet(
   applicationId: string,
   ruleSet: CorridorRuleSet,
   /**
-   * The traveller's intake answers, which decide which conditional
-   * documents are theirs. Optional, and an empty set behaves exactly as
-   * this function did before conditions existed: every conditional
-   * document is materialised with its hedge intact.
+   * The traveller's intake answers as canonical codes, which decide
+   * which conditional documents are theirs. Optional, and an empty set
+   * behaves exactly as this function did before conditions existed:
+   * every conditional document is materialised with its hedge intact.
+   *
+   * Codes, never the traveller's own words — a null code means the
+   * answer matched no chip, and `appliesToTraveller` reads that as "we
+   * cannot evaluate this rule" rather than as a no.
    */
-  answers: Record<string, string | undefined> = {}
+  answers: Record<string, string | null | undefined> = {}
 ): Promise<void> {
   /**
-   * The rule set, narrowed to this one traveller.
+   * The rule set, narrowed to this one traveller. Four outcomes, not
+   * three — 4.8 splits the hedge in two because the halves want opposite
+   * treatment.
    *
-   * A conditional document whose rule they match stops being
-   * conditional — it is stored as required, because for them it is. One
-   * whose rule they do not match is dropped here, and the stale-row
-   * sweep further down removes it from a checklist it had already been
-   * added to (unless they have uploaded it, which that sweep protects).
-   * One with no rule yet keeps `isRequired: false` and the hedge.
+   * Matched: stops being conditional and is stored as required, because
+   * for them it is.
+   *
+   * Not matched: dropped here, and the stale-row sweep further down
+   * removes it from a checklist it had already been added to (unless
+   * they have uploaded it, which that sweep protects).
+   *
+   * Rule exists, could not be evaluated: kept, not required, and
+   * carrying its condition in the words the traveller was asked. This is
+   * the only unresolved state they can act on, and showing them the
+   * condition is what turns "only if it applies" into a real question.
+   *
+   * No rule written: dropped from the traveller's checklist entirely.
+   * That is BeOrchid's unfinished curation, and putting it in front of a
+   * traveller asks them to decide the exact thing this product exists to
+   * decide for them. `corridorCoverageGaps` raises it on the agency side
+   * instead.
    */
   const requirements = ruleSet.requirements.flatMap((r) => {
-    if (r.isRequired) return [r];
+    if (r.isRequired) return [{ ...r, condition: null }];
 
     const verdict = appliesToTraveller(r.appliesWhen, answers);
     if (!verdict.applies) return [];
 
-    return [{ ...r, isRequired: verdict.certain }];
+    if (verdict.certain) return [{ ...r, isRequired: true, condition: null }];
+    if (verdict.reason === "unwritten") return [];
+
+    return [
+      { ...r, isRequired: false, condition: describeAppliesWhen(r.appliesWhen) },
+    ];
   });
 
   const existing = await db
@@ -75,6 +97,7 @@ export async function adoptRuleSet(
       // has no corridor row of ours behind it. See the column comment.
       description: r.description,
       isRequired: r.isRequired,
+      condition: r.condition,
       sortOrder: r.sortOrder,
     }));
 
@@ -142,11 +165,18 @@ export async function adoptRuleSet(
  * Until this existed that person was invisible to the desk, which is
  * the opposite of what a checklist at 100% should mean.
  *
- * "Collected" is the same definition `completionOf` draws the ring
- * from — uploaded and either awaiting or past review — not "verified".
- * Waiting for verification would make this fire when a reviewer
- * finished, which is news to nobody, since a reviewer is already
- * looking.
+ * "Collected" here means uploaded and awaiting or past review, and it
+ * deliberately parted company with `completionOf` on 6 September. The
+ * ring counts a flagged document, so a traveller told their passport
+ * photo is blurry does not watch their progress fall backwards. This
+ * does not: a flag is the reviewer saying that document is outstanding,
+ * and telling them "the checklist is complete" the moment after they
+ * flagged something is noise from a desk they are already sitting at.
+ *
+ * Not "verified" either. Waiting for verification would make this fire
+ * when a reviewer finished, which is news to nobody, since a reviewer is
+ * already looking. Billing does gate on verified — see
+ * `markBillableIfComplete` — because that answers a different question.
  *
  * Written the way `markBillableIfComplete` is, and for the same reason:
  * completion is not monotonic, so the column is what makes one

@@ -52,6 +52,11 @@ export const REQUIREMENTS: {
   whatYouMustProvide: L;
   documentsBadge: L;
   onlyIfItApplies: L;
+  onlyIfLabel: L;
+  applicationFormLabel: L;
+  applicationFormBody: L;
+  whatThisMeans: L;
+  hideDetail: L;
   conditionalBadge: L;
   startUploading: L;
 } = {
@@ -390,6 +395,66 @@ export const REQUIREMENTS: {
     ar: "مستندات",
     tw: "nkrataa",
     zu: "amadokhumenti",
+  },
+  applicationFormLabel: {
+    en: "The application form",
+    ha: "Fom ɗin neman",
+    yo: "Fọ́ọ̀mù ìbéèrè",
+    ig: "Fọm arịrịọ",
+    fr: "Le formulaire de demande",
+    pt: "O formulário de candidatura",
+    sw: "Fomu ya maombi",
+    ar: "استمارة الطلب",
+    tw: "Abisadeɛ krataa no",
+    zu: "Ifomu yesicelo",
+  },
+  applicationFormBody: {
+    en: "Download it from the authority that issues it, so you always get the current version.",
+    ha: "Sauke shi daga hukumar da ke bayar da shi, don ka samu sabon sigar koyaushe.",
+    yo: "Gbà á láti ọ̀dọ̀ àjọ tí ó ń fúnni, kí o lè rí ẹ̀dà tuntun nígbà gbogbo.",
+    ig: "Budata ya n'aka ụlọ ọrụ na-enye ya, ka ị nweta nsụgharị ọhụrụ mgbe niile.",
+    fr: "Téléchargez-le auprès de l'autorité qui le délivre, pour avoir toujours la version en vigueur.",
+    pt: "Descarregue-o na autoridade que o emite, para ter sempre a versão atual.",
+    sw: "Ipakue kutoka kwa mamlaka inayoitoa, ili upate toleo la sasa kila wakati.",
+    ar: "نزّلها من الجهة التي تصدرها، لتحصل دائماً على النسخة الحالية.",
+    tw: "Twe firi baabi a wɔyɛ no, sɛdeɛ wobɛnya deɛ ɛwɔ hɔ seesei berɛ biara.",
+    zu: "Yilande kwiziphathimandla eziyikhiphayo, ukuze uthole inguqulo yamanje njalo.",
+  },
+  whatThisMeans: {
+    en: "What this means",
+    ha: "Ma'anar wannan",
+    yo: "Ohun tí èyí túmọ̀ sí",
+    ig: "Ihe nke a pụtara",
+    fr: "Ce que cela signifie",
+    pt: "O que isto significa",
+    sw: "Maana yake",
+    ar: "ما معنى ذلك",
+    tw: "Deɛ yei kyerɛ",
+    zu: "Okushiwo yilokhu",
+  },
+  hideDetail: {
+    en: "Hide",
+    ha: "Ɓoye",
+    yo: "Fi pamọ́",
+    ig: "Zoo",
+    fr: "Masquer",
+    pt: "Ocultar",
+    sw: "Ficha",
+    ar: "إخفاء",
+    tw: "Fa sie",
+    zu: "Fihla",
+  },
+  onlyIfLabel: {
+    en: "Only if",
+    ha: "Sai idan",
+    yo: "Bí ó bá jẹ́ pé",
+    ig: "Naanị ma ọ bụrụ na",
+    fr: "Seulement si",
+    pt: "Apenas se",
+    sw: "Ikiwa tu",
+    ar: "فقط إذا",
+    tw: "Sɛ",
+    zu: "Kuphela uma",
   },
   onlyIfItApplies: {
     en: "Only if it applies",

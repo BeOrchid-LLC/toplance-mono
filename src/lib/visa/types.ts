@@ -96,6 +96,13 @@ export type CorridorRuleSet = {
   sourceName: string | null;
   sourceUrl: string | null;
   /**
+   * The official application form for this route, linked rather than
+   * mirrored — see the column comment in `@/lib/db/schema`. Both null
+   * where the route has no downloadable form.
+   */
+  formName: string | null;
+  formUrl: string | null;
+  /**
    * A credit the provider's licence obliges the product to display,
    * rendered verbatim on the requirements screen beside the source.
    *

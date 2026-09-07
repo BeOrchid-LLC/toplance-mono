@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 
@@ -19,12 +19,17 @@ import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
  */
 describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, documents, intakeAnswers, profiles } = await import(
     "@/lib/db/schema"
   );
   const { recordIntakeAnswer } = await import("@/lib/data/intake");
 
   const TRAVELLER = "test_intake_traveller";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0009";
+
   let applicationId = "";
 
   /** The one corridor shape the seeded `corridors` table can serve. */
@@ -35,13 +40,14 @@ describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
   };
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db
       .insert(profiles)
       .values({ id: TRAVELLER, email: "intake@test.invalid", fullName: "Ada" });
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER })
       .returning({ id: applications.id });
     applicationId = app.id;
   });
@@ -193,4 +199,44 @@ describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
     expect(result).toEqual({ error: "Unknown question." });
     expect(await storedAnswers()).toEqual({});
   });
+
+  it("flags a passport nothing covers yet, and still records the answer", async () => {
+    // At selection, not eleven questions later. Without this a Ghanaian
+    // traveller answers the whole intake and meets an empty checklist
+    // with no explanation — the product silently failing rather than
+    // honestly declining.
+    const result = await recordIntakeAnswer(
+      applicationId,
+      "nationality",
+      "Ghana",
+      TRAVELLER
+    );
+
+    expect(result).toEqual({ complete: false, unservedNationality: true });
+
+    // Recorded regardless: the answer is what the interest log counts,
+    // and which passport to curate next should come from who asked.
+    const stored = await db
+      .select({ value: intakeAnswers.value, code: intakeAnswers.code })
+      .from(intakeAnswers)
+      .where(
+        and(
+          eq(intakeAnswers.applicationId, applicationId),
+          eq(intakeAnswers.questionKey, "nationality")
+        )
+      );
+    expect(stored).toEqual([{ value: "Ghana", code: "Ghana" }]);
+  });
+
+  it("says nothing about a passport that is covered", async () => {
+    const result = await recordIntakeAnswer(
+      applicationId,
+      "nationality",
+      "Nigeria",
+      TRAVELLER
+    );
+
+    expect(result).toEqual({ complete: false });
+  });
+
 });

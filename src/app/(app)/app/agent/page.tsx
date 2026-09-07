@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { IntakeAgent } from "@/components/app/intake-agent";
 import {
   getIntakeAnswers,
-  getOrCreateApplication,
+  getApplication,
   getProfile,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -25,7 +25,7 @@ export default async function AgentPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const profile = await getProfile();
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/agent");
 
   const answers = await getIntakeAnswers(application.id);

@@ -37,6 +37,17 @@ export const EVENT_NAMES = [
    */
   "toplance.corridor_requested",
 
+  /**
+   * A traveller holds a passport the product does not cover yet.
+   *
+   * Emitted at the moment they answer, not eleven questions later when
+   * the checklist comes back empty. It is the interest log the coverage
+   * decision reads from: curation to full parity is deferred, so which
+   * passport to curate next should come from who actually asked rather
+   * than from a guess.
+   */
+  "toplance.nationality_unserved",
+
   "toplance.document_uploaded",
   /**
    * A business's application reached the point it is charged for — every
@@ -119,7 +130,7 @@ export const EVENT_NAMES = [
   /**
    * The invitation lifecycle: sent from `inviteTraveller`, resent from
    * `resendInvitation`, revoked from `revokeInvitation` (all three in
-   * `@/app/employer/actions.ts`), accepted from `acceptInvitation` in
+   * `@/app/agency/actions.ts`), accepted from `acceptInvitation` in
    * `@/app/invite/actions.ts`.
    *
    * A resend is counted apart from a send rather than folded into it.

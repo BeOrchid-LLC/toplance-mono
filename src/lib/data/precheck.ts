@@ -3,7 +3,7 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, documents } from "@/lib/db/schema";
+import { applications, documents, type FlagReason } from "@/lib/db/schema";
 
 export type PrecheckVerdict = "pass" | "flag";
 
@@ -44,6 +44,7 @@ export async function applyPrecheckTx({
   storagePath,
   verdict,
   reason,
+  reasonCode,
   raw,
 }: {
   applicationId: string;
@@ -51,13 +52,14 @@ export async function applyPrecheckTx({
   storagePath: string;
   verdict: PrecheckVerdict;
   reason: string;
+  reasonCode: FlagReason;
   raw: unknown;
 }): Promise<ApplyPrecheckResult> {
   const [row] = await db
     .update(documents)
     .set(
       verdict === "flag"
-        ? { state: "flagged", reason, precheck: raw }
+        ? { state: "flagged", reason, reasonCode, precheck: raw }
         : { precheck: raw }
     )
     .where(

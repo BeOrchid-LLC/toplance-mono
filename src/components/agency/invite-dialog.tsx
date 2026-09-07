@@ -16,13 +16,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { inviteTraveller } from "@/app/employer/actions";
+import { inviteTraveller } from "@/app/agency/actions";
 import { useT } from "@/components/locale-provider";
 import { INVITE_DIALOG } from "@/lib/i18n/invite-dialog";
 
 /**
  * Fills `{token}` placeholders in a translated template — the same
- * convention `src/app/employer/page.tsx` uses, needed here because the
+ * convention `src/app/agency/page.tsx` uses, needed here because the
  * recipient's own email address has to be spliced into an already
  * locale-picked sentence.
  */
@@ -48,6 +48,11 @@ type Recipient = {
  * the invitation form look like an onboarding questionnaire and gave the
  * agency a field to be wrong in.
  *
+ * The client-or-colleague choice appears only for an owner, because
+ * only an owner may send a staff invitation — `inviteTraveller` enforces
+ * that server-side, and hiding the control from a reviewer means they
+ * are never offered a click whose only outcome is a refusal.
+ *
  * On success the dialog does not close: it swaps the form for a small
  * document sheet — who the invitation is for and how long the link
  * lives — with copying the link as its one primary action.
@@ -55,7 +60,7 @@ type Recipient = {
  * the copyable link is not a fallback for that case — it is the primary
  * hand-off, the email a bonus when Resend is configured.
  */
-export function InviteDialog() {
+export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: boolean }) {
   const t = useT();
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
@@ -223,6 +228,37 @@ export function InviteDialog() {
                   {t(INVITE_DIALOG.emailHelp)}
                 </p>
               </div>
+
+              {canInviteStaff && (
+                <fieldset className="flex flex-col gap-3 border-t border-border pt-4">
+                  <legend className="tag mb-1">{t(INVITE_DIALOG.kindLegend)}</legend>
+                  {(
+                    [
+                      ["client", INVITE_DIALOG.kindClient, INVITE_DIALOG.kindClientHelp],
+                      ["staff", INVITE_DIALOG.kindStaff, INVITE_DIALOG.kindStaffHelp],
+                    ] as const
+                  ).map(([value, label, help], i) => (
+                    <label
+                      key={value}
+                      htmlFor={`invite_kind_${value}`}
+                      className="flex items-start gap-3"
+                    >
+                      <input
+                        id={`invite_kind_${value}`}
+                        type="radio"
+                        name="kind"
+                        value={value}
+                        defaultChecked={i === 0}
+                        className="mt-1 accent-[var(--brand)]"
+                      />
+                      <span className="flex flex-col gap-0.5">
+                        <span className="text-base font-medium">{t(label)}</span>
+                        <span className="t-muted text-[14px]">{t(help)}</span>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
 
               <fieldset className="flex flex-col gap-4 border-t border-border pt-4">
                 <legend className="sr-only">

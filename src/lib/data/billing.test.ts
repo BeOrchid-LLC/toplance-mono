@@ -87,9 +87,22 @@ describe.skipIf(!process.env.DATABASE_URL)("markBillableIfComplete", async () =>
     expect(await billableAt()).toBeNull();
   });
 
-  it("charges once every required document is in", async () => {
+  it("does not charge for documents that are only uploaded", async () => {
+    // Decision 4, 6 September: an application "finishes" when every
+    // document has passed its check — not when the traveller has
+    // finished uploading. Collected is not done.
     await setState("passport", "checking");
     await setState("cas", "checking");
+
+    const result = await markBillableIfComplete(db, applicationId);
+
+    expect(result.becameBillable).toBe(false);
+    expect(await billableAt()).toBeNull();
+  });
+
+  it("charges once every required document is verified", async () => {
+    await setState("passport", "verified");
+    await setState("cas", "verified");
 
     const result = await markBillableIfComplete(db, applicationId);
 
@@ -97,10 +110,21 @@ describe.skipIf(!process.env.DATABASE_URL)("markBillableIfComplete", async () =>
     expect(await billableAt()).toBeInstanceOf(Date);
   });
 
+  it("does not charge while a document is flagged", async () => {
+    // "One whose documents came back rejected is never charged", in the
+    // client's words. A flag is the reviewer saying this is not done.
+    await setState("passport", "verified");
+    await setState("cas", "flagged");
+
+    await markBillableIfComplete(db, applicationId);
+
+    expect(await billableAt()).toBeNull();
+  });
+
   it("does not wait on an optional document", async () => {
-    // `tb` stays `not_started`. Peace's rule is the required checklist,
-    // and the submit gate agrees — an optional row never blocks either.
-    await setState("passport", "checking");
+    // `tb` stays `not_started`. The rule is the required checklist, and
+    // the submit gate agrees — an optional row never blocks either.
+    await setState("passport", "verified");
     await setState("cas", "verified");
 
     await markBillableIfComplete(db, applicationId);
@@ -111,8 +135,8 @@ describe.skipIf(!process.env.DATABASE_URL)("markBillableIfComplete", async () =>
   it("bills the same application only once, however often it completes", async () => {
     // The case this column exists for: complete, a reviewer flags one,
     // the traveller re-uploads, it completes again.
-    await setState("passport", "checking");
-    await setState("cas", "checking");
+    await setState("passport", "verified");
+    await setState("cas", "verified");
     await markBillableIfComplete(db, applicationId);
     const first = await billableAt();
 
@@ -126,27 +150,14 @@ describe.skipIf(!process.env.DATABASE_URL)("markBillableIfComplete", async () =>
     expect((await billableAt())?.getTime()).toBe(first?.getTime());
   });
 
-  it("charges nobody for a traveller who came on their own", async () => {
-    // No `org_id` — there is no business to bill, and stamping the
-    // column anyway would put the application into a cycle count that
-    // belongs to no one.
-    await db
-      .update(applications)
-      .set({ orgId: null })
-      .where(eq(applications.id, applicationId));
-
-    await setState("passport", "checking");
-    await setState("cas", "checking");
-
-    const result = await markBillableIfComplete(db, applicationId);
-
-    expect(result.becameBillable).toBe(false);
-    expect(await billableAt()).toBeNull();
-  });
+  // "charges nobody for a traveller who came on their own" stood here.
+  // It set `org_id` to null to reach the no-business-to-bill branch, and
+  // neither the state nor the branch exists any more: every case belongs
+  // to an agency, and `schema.test.ts` proves the column refuses null.
 
   it("counts a completed application in the cycle it completed in", async () => {
-    await setState("passport", "checking");
-    await setState("cas", "checking");
+    await setState("passport", "verified");
+    await setState("cas", "verified");
     await markBillableIfComplete(db, applicationId);
 
     // Anchored a year back on the same day, so `now` sits inside a cycle

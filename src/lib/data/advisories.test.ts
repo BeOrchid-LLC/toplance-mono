@@ -14,6 +14,10 @@ import { and, eq, inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0001";
   const { applications, companionUpdates, corridors, profiles } = await import(
     "@/lib/db/schema"
   );
@@ -63,6 +67,7 @@ describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
   });
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     // Created on the first test rather than in `beforeAll`, and reused by
     // the rest — `is_live: false` so this fixture can never reach a
     // marketing surface or a traveller's checklist, and a version nobody
@@ -109,9 +114,9 @@ describe.skipIf(!process.env.DATABASE_URL)("advisory cache", async () => {
     const rows = await db
       .insert(applications)
       .values([
-        { travelerId: APPROVED, status: "approved", corridorId },
-        { travelerId: PENDING, status: "under_review", corridorId },
-        { travelerId: NO_CORRIDOR, status: "approved", corridorId: null },
+        { orgId: TEST_AGENCY, travelerId: APPROVED, status: "approved", corridorId },
+        { orgId: TEST_AGENCY, travelerId: PENDING, status: "under_review", corridorId },
+        { orgId: TEST_AGENCY, travelerId: NO_CORRIDOR, status: "approved", corridorId: null },
       ])
       .returning({ id: applications.id, travelerId: applications.travelerId });
 

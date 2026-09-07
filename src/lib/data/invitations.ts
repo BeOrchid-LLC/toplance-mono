@@ -1,11 +1,12 @@
 import "server-only";
 
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
   applications,
   invitations,
+  orgMembers,
   organisations,
   profiles,
   type Invitation,
@@ -38,6 +39,7 @@ export type ListedInvitation = Omit<Invitation, "token">;
 export type InvitationPreview = {
   orgName: string;
   fullName: string;
+  kind: Invitation["kind"];
   destinationIso: string | null;
   purpose: TravelPurpose | null;
   status: Invitation["status"];
@@ -57,6 +59,13 @@ export async function createInvitation(
   input: {
     email: string;
     fullName?: string;
+    /**
+     * `client` (the default) invites somebody whose visa the agency is
+     * handling; `staff` invites a colleague who will review those
+     * applications. See `invitationKind` in the schema for why both live
+     * on one table.
+     */
+    kind?: "client" | "staff";
     jobTitle?: string;
     destinationIso?: string;
     purpose?: TravelPurpose;
@@ -88,6 +97,7 @@ export async function createInvitation(
       invitedBy,
       email,
       fullName: input.fullName?.trim() || "",
+      kind: input.kind ?? "client",
       jobTitle: input.jobTitle?.trim() || null,
       destinationIso: input.destinationIso || null,
       purpose: input.purpose,
@@ -116,6 +126,7 @@ export async function listInvitations(orgId: string): Promise<ListedInvitation[]
       orgId: invitations.orgId,
       email: invitations.email,
       fullName: invitations.fullName,
+      kind: invitations.kind,
       jobTitle: invitations.jobTitle,
       destinationIso: invitations.destinationIso,
       purpose: invitations.purpose,
@@ -153,6 +164,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
     .select({
       status: invitations.status,
       fullName: invitations.fullName,
+      kind: invitations.kind,
       destinationIso: invitations.destinationIso,
       purpose: invitations.purpose,
       expiresAt: invitations.expiresAt,
@@ -171,6 +183,7 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
   return {
     orgName: row.orgName,
     fullName: row.fullName,
+    kind: row.kind,
     destinationIso: row.destinationIso,
     purpose: row.purpose,
     status,
@@ -412,14 +425,17 @@ export async function revokeInvitation(
  * than from an argument. A caller that could pass the email is a caller
  * that could pass the wrong one.
  *
- * Attaching the org handles both orders an application can arrive in:
- * an invitee with no account yet (the insert below wins, carrying the
- * org from the start) and a traveller who already began their intake
- * before the invitation landed (the insert loses to the unique
- * `travelerId` row `getOrCreateApplication` wrote, so the update
- * attaches the org to it instead). A traveller already sponsored by a
- * DIFFERENT org matches neither branch and is refused rather than
- * silently reassigned.
+ * Since the v1.3 tenancy this is the only thing that creates an
+ * application, because it is the only thing that knows which agency a
+ * traveller belongs to. `getApplication` used to open a draft on first
+ * visit and no longer does — an agency-less case is not expressible,
+ * `applications.org_id` being `not null`.
+ *
+ * The update branch below therefore handles exactly one case: the same
+ * agency inviting the same traveller twice, which is a no-op success. A
+ * traveller already held by a DIFFERENT agency matches neither branch
+ * and is refused rather than silently reassigned — one traveller
+ * belongs to one agency, and a move is a support operation.
  */
 export async function acceptInvitationTx(
   token: string,
@@ -472,29 +488,66 @@ export async function acceptInvitationTx(
       return { error: "This invitation was sent to a different email address." };
     }
 
-    const created = await tx
-      .insert(applications)
-      .values({ travelerId, orgId: invitation.orgId })
-      .onConflictDoNothing({ target: applications.travelerId })
-      .returning({ id: applications.id });
+    if (invitation.kind === "staff") {
+      // A colleague gets a seat, not a case. `reviewer` rather than
+      // `owner`: an invitation cannot mint someone with the authority to
+      // bill and to invite, which has to stay with the person who
+      // already has it.
+      //
+      // `onConflictDoNothing` on the composite key makes re-accepting a
+      // no-op rather than a demotion — an owner who accepts a second
+      // invitation stays an owner.
+      await tx
+        .insert(orgMembers)
+        .values({ orgId: invitation.orgId, userId: travelerId, role: "reviewer" })
+        .onConflictDoNothing();
 
-    if (!created.length) {
-      const updated = await tx
-        .update(applications)
-        .set({ orgId: invitation.orgId })
-        .where(
-          and(
-            eq(applications.travelerId, travelerId),
-            or(
-              isNull(applications.orgId),
+      // So they read as agency rather than as a traveller everywhere the
+      // persona is resolved. Narrowed to `traveler` for the same reason
+      // `createOrganisationTx` narrows it: this is an invitation, not a
+      // general role editor, and it must not quietly demote staff.
+      await tx
+        .update(profiles)
+        .set({ role: "org_member" })
+        .where(and(eq(profiles.id, travelerId), eq(profiles.role, "traveler")));
+    } else {
+      const created = await tx
+        .insert(applications)
+        .values({ travelerId, orgId: invitation.orgId })
+        .onConflictDoNothing({ target: applications.travelerId })
+        .returning({ id: applications.id });
+
+      if (!created.length) {
+        const updated = await tx
+          .update(applications)
+          .set({ orgId: invitation.orgId })
+          .where(
+            and(
+              eq(applications.travelerId, travelerId),
               eq(applications.orgId, invitation.orgId)
             )
           )
-        )
-        .returning({ id: applications.id });
+          .returning({ id: applications.id });
 
-      if (!updated.length) {
-        return { error: "This account is already sponsored by another organisation." };
+        if (!updated.length) {
+          // One traveller belongs to one agency, so a second agency
+          // inviting the same person is refused rather than silently
+          // reassigning them. A move is a support operation — it
+          // reassigns `org_id`, which is metadata, so it stays inside
+          // the boundary BeOrchid keeps to.
+          //
+          // Deliberately not vague. The person reading this is the
+          // traveller, who already knows which agency they are with, so
+          // naming the situation tells them nothing they did not know
+          // and tells them what to do about it. The inviting agency
+          // learns nothing either way: this returns before the status
+          // update, so their roster still shows `pending` and cannot be
+          // read as a signal that somebody else holds this client.
+          return {
+            error:
+              "You are already working with another agency. Ask them to contact us to move your case.",
+          };
+        }
       }
     }
 

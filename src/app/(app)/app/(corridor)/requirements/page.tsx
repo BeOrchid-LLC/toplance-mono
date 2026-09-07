@@ -11,10 +11,11 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   getDocuments,
   getIntakeAnswers,
-  getOrCreateApplication,
+  getIntakeCodes,
+  getApplication,
 } from "@/lib/data/applications";
 import { adoptRuleSet } from "@/lib/data/checklist";
-import { appliesToTraveller } from "@/lib/domain/applies-when";
+import { appliesToTraveller, describeAppliesWhen } from "@/lib/domain/applies-when";
 import { corridorGap } from "@/lib/domain/corridor-gap";
 import { currencyForCountryName } from "@/lib/domain/currencies";
 import { convertFee, formatApproximate } from "@/lib/domain/fx";
@@ -223,22 +224,25 @@ export default async function RequirementsPage() {
 
   const locale = await getLocale();
   const t = REQUIREMENTS;
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!application) redirect("/sign-in?next=/app/requirements");
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [initialDocs, answers] = await Promise.all([
+  const [initialDocs, answers, codes] = await Promise.all([
     getDocuments(application.id),
     getIntakeAnswers(application.id),
+    getIntakeCodes(application.id),
   ]);
   let docs = initialDocs;
 
   // Resolved from the answers rather than read from the corridors table,
   // so a provider with no row of ours behind it serves this screen the
   // same way the curated data does.
-  const nationality = NATIONALITY_ISO[answers.nationality];
-  const destination = DESTINATION_ISO[answers.destination];
-  const purpose = PURPOSE_ISO[answers.purpose];
+  // Codes, not answers: these maps are keyed on canonical values, so a
+  // chip tapped in Hausa resolves here exactly as the English one does.
+  const nationality = codes.nationality ? NATIONALITY_ISO[codes.nationality] : undefined;
+  const destination = codes.destination ? DESTINATION_ISO[codes.destination] : undefined;
+  const purpose = codes.purpose ? PURPOSE_ISO[codes.purpose] : undefined;
 
   // All three or nothing. Nationality used to fall back to `ng`, which
   // served a traveller holding some other passport the Nigerian rule set
@@ -295,27 +299,33 @@ export default async function RequirementsPage() {
   // takes. `adoptRuleSet` is idempotent, so re-running it over a
   // surviving checklist adds nothing and keeps uploads.
   if (docs.length === 0 || !application.corridorId) {
-    await adoptRuleSet(application.id, ruleSet, answers);
+    await adoptRuleSet(application.id, ruleSet, codes);
     docs = await getDocuments(application.id);
   }
 
   /**
    * The checklist, decided against this traveller's own answers.
    *
-   * Three outcomes per requirement, and the middle one is the point of
-   * the exercise: a conditional document whose rule this traveller
+   * Four outcomes per requirement since 4.8, and the split in the middle
+   * is the point. A conditional document whose rule this traveller
    * matches is simply theirs, and joins the list they must provide
    * rather than a list of maybes. One whose rule they do not match is
-   * not shown at all. One with no rule written yet keeps the hedge —
-   * which is how the "only if it applies" panel empties, corridor by
-   * corridor, as approvers write the rules rather than all at once by
-   * deleting the panel.
+   * not shown at all.
+   *
+   * The two unresolved ones are no longer the same thing. A rule that
+   * could not be evaluated for this traveller stays on the "only if it
+   * applies" panel, and now carries its condition in the words they were
+   * asked — which turns a shrug into a question they can answer. One
+   * with no rule written at all leaves this screen entirely: that is
+   * BeOrchid's unfinished curation, and asking a traveller to decide it
+   * is asking them to do the job this product exists to do. It surfaces
+   * on the agency side instead, through `corridorCoverageGaps`.
    */
   const decided = ruleSet.requirements.map((r) => ({
     requirement: r,
     verdict: r.isRequired
       ? ({ applies: true, certain: true } as const)
-      : appliesToTraveller(r.appliesWhen, answers),
+      : appliesToTraveller(r.appliesWhen, codes),
   }));
 
   const required = decided
@@ -323,7 +333,9 @@ export default async function RequirementsPage() {
     .map((d) => d.requirement);
 
   const conditional = decided
-    .filter((d) => d.verdict.applies && !d.verdict.certain)
+    .filter(
+      (d) => d.verdict.applies && !d.verdict.certain && d.verdict.reason === "unevaluable"
+    )
     .map((d) => d.requirement);
 
   const effective = new Date(ruleSet.effectiveFrom).toLocaleDateString("en-GB", {
@@ -584,6 +596,29 @@ export default async function RequirementsPage() {
           </div>
         </Panel>
 
+        {ruleSet.formUrl && (
+          <Panel className="mt-6">
+            <PanelHeader label={t.applicationFormLabel[locale]} />
+            <div className="px-5 py-5 sm:px-6">
+              <a
+                href={ruleSet.formUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="t-title text-brand-text hover:underline"
+              >
+                {ruleSet.formName ?? t.applicationFormLabel[locale]}
+              </a>
+              {/* Linked, never mirrored. A copy of ours is whichever
+                  version we last downloaded, and somebody submitting a
+                  superseded form is refused for a reason nobody can see
+                  from the paperwork. */}
+              <p className="t-muted mt-1.5 max-w-[74ch]">
+                {t.applicationFormBody[locale]}
+              </p>
+            </div>
+          </Panel>
+        )}
+
         <Panel className="mt-6">
           <PanelHeader
             label={t.whatYouMustProvide[locale]}
@@ -604,12 +639,30 @@ export default async function RequirementsPage() {
                 </span>
                 <div className="min-w-0">
                   <p className="t-title">{r.name}</p>
-                  {r.description && (
-                    <p className="t-muted mt-1.5 max-w-[74ch]">
-                      {r.description}
-                    </p>
+                  {/* The names carry the list; the guidance is what
+                      someone opens when they are about to photograph
+                      that one document. A native disclosure rather than
+                      a tooltip, the same idiom `document-row.tsx` uses
+                      and for the same reason: a tooltip has no resting
+                      place on a touch screen. A checklist of fourteen
+                      requirements was otherwise a wall of prose nobody
+                      could scan for the one they were looking for. */}
+                  {r.description ? (
+                    <details className="group mt-1.5 max-w-[74ch]">
+                      <summary className="t-muted cursor-pointer list-none underline decoration-dotted underline-offset-4">
+                        <span className="group-open:hidden">
+                          {t.whatThisMeans[locale]}
+                        </span>
+                        <span className="hidden group-open:inline">
+                          {t.hideDetail[locale]}
+                        </span>
+                      </summary>
+                      <p className="t-muted mt-1.5">{r.description}</p>
+                      <RequirementSource url={r.sourceUrl} locale={locale} />
+                    </details>
+                  ) : (
+                    <RequirementSource url={r.sourceUrl} locale={locale} />
                   )}
-                  <RequirementSource url={r.sourceUrl} locale={locale} />
                 </div>
               </li>
             ))}
@@ -634,6 +687,16 @@ export default async function RequirementsPage() {
                   className="border-b border-dashed border-border-strong px-5 py-5 last:border-0 sm:px-6"
                 >
                   <p className="t-title">{r.name}</p>
+                  {describeAppliesWhen(r.appliesWhen) && (
+                    <p className="t-muted mt-1.5 max-w-[74ch]">
+                      {/* The condition, in the words they were asked it.
+                          Without this the panel says "some of these
+                          might be yours" and leaves the reader to guess
+                          which — the hedge the client objected to. */}
+                      <span className="tag">{t.onlyIfLabel[locale]}</span>{" "}
+                      {describeAppliesWhen(r.appliesWhen)}
+                    </p>
+                  )}
                   {r.description && (
                     <p className="t-muted mt-1.5 max-w-[74ch]">
                       {r.description}

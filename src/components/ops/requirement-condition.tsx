@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { setRequirementCondition } from "@/app/ops/actions";
 import type { AppliesWhen } from "@/lib/domain/applies-when";
-import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
+import { allChipsFor, INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { useT } from "@/components/locale-provider";
 import { OPS_REQUIREMENT_CONDITION } from "@/lib/i18n/ops-corridor-review";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
@@ -148,7 +148,9 @@ export function RequirementCondition({
                 {t(OPS_REQUIREMENT_CONDITION.withAnyOfTheseAnswers)}
               </legend>
               <div className="mt-2 flex flex-col gap-2">
-                {question.chips.map((chip) => (
+                {/* Every city, not the ones one traveller was shown: a
+                    rule applies to everybody on the route. */}
+                {allChipsFor(question.key).map((chip) => (
                   <label
                     key={chip.value}
                     className="flex items-center gap-3 text-base"

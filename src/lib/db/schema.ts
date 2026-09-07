@@ -38,7 +38,17 @@ import {
 
 export const appRole = pgEnum("app_role", ["traveler", "org_member", "staff"]);
 export const staffRole = pgEnum("staff_role", ["reviewer", "owner"]);
-export const orgRoleEnum = pgEnum("org_role", ["hr_admin", "owner"]);
+/**
+ * The two roles inside an agency. `hr_admin` arrived with the employer
+ * console and described nobody in a travel agency; the v1.3 correction
+ * replaced it with `reviewer`, who is the person that actually reads a
+ * traveller's documents and decides their case.
+ *
+ * Same two words as `staff_role`, deliberately, but a different type and
+ * a different side of the boundary: an agency reviewer reviews cases, a
+ * platform reviewer reads corridor drafts and cannot publish them.
+ */
+export const orgRoleEnum = pgEnum("org_role", ["reviewer", "owner"]);
 
 /**
  * Locked status model. Colour mapping lives in the design system:
@@ -53,6 +63,34 @@ export const applicationStatus = pgEnum("application_status", [
   "additional_documents",
   "approved",
   "rejected",
+]);
+
+/**
+ * Why a document was sent back, as a class rather than a sentence.
+ *
+ * Decision 5 of 6 September removed BeOrchid's every path to a
+ * traveller's documents, which made the flag reason the whole of what
+ * support outside the agency can debug from — and that reason is free
+ * text, usually written by a model. Prose cannot be aggregated, compared
+ * across cases, or trusted to mean the same thing twice.
+ *
+ * The class is for whoever is debugging; the sentence beside it is for
+ * the traveller, and stays. `other` exists so nothing is forced into a
+ * wrong bucket, and a rising `other` count is itself the signal that
+ * this list needs another entry.
+ */
+export const flagReason = pgEnum("flag_reason", [
+  /** Blurry, dark, cropped, glare — the file is fine, the capture is not. */
+  "unreadable",
+  /** In date terms, not usable. */
+  "expired",
+  /** They uploaded something else. */
+  "wrong_document",
+  /** The right document, missing pages or fields. */
+  "incomplete",
+  /** Details do not match what they told us — usually the name. */
+  "mismatch",
+  "other",
 ]);
 
 export const documentState = pgEnum("document_state", [
@@ -105,6 +143,20 @@ export const travelPurpose = pgEnum("travel_purpose", [
    */
   "business",
 ]);
+
+/**
+ * What an invitation attaches when it is accepted.
+ *
+ * One table carries both invitations an agency sends. A `client` invite
+ * attaches an application — somebody whose visa the agency is handling.
+ * A `staff` invite attaches a membership — a colleague who will review
+ * those applications.
+ *
+ * A discriminator rather than a second table: one token format, one
+ * accept page, one expiry policy and one revoke button already exist,
+ * and a second table would duplicate all four to carry one column.
+ */
+export const invitationKind = pgEnum("invitation_kind", ["client", "staff"]);
 
 export const invitationStatus = pgEnum("invitation_status", [
   "pending",
@@ -182,7 +234,22 @@ export const profiles = pgTable(
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
-    check("locale_supported", sql`${t.locale} in ('en', 'ha', 'yo', 'ig')`),
+    /**
+     * Kept in step with `LOCALES` in `@/lib/i18n/locales`, by hand,
+     * because a check constraint cannot read TypeScript. It listed four
+     * codes while the menu offered ten, so a traveller selecting French,
+     * Portuguese, Swahili, Arabic, Twi or isiZulu failed the write —
+     * six of the ten languages could not be saved at all.
+     *
+     * Still a closed list rather than no constraint: a language nobody
+     * has translated must not reach this column, or a page renders blank
+     * where a string should be. Adding a language means adding it here
+     * too, and `schema.test.ts` fails if the two drift apart.
+     */
+    check(
+      "locale_supported",
+      sql`${t.locale} in ('en', 'ha', 'yo', 'ig', 'fr', 'pt', 'sw', 'ar', 'tw', 'zu')`
+    ),
     check(
       "staff_role_only_for_staff",
       sql`${t.staffRole} is null or ${t.role} = 'staff'`
@@ -198,6 +265,22 @@ export const organisations = pgTable(
     domain: text(),
     seatsPurchased: integer().notNull().default(0),
     billingContact: text(),
+    /**
+     * When BeOrchid suspended this agency, or null while it is live.
+     *
+     * Suspension is how an agency is removed — the row is never deleted,
+     * so every application, document and message stays intact and the
+     * decision is reversible on the day they pay. What it takes away is
+     * the agency's reach: `liveOrgIdsFor` drops a suspended membership
+     * before it ever reaches `Actor.orgIds`, so every policy that asks
+     * `isAgencyFor` answers no at once.
+     *
+     * The traveller keeps their own case throughout. `ownsApplication`
+     * never consults the agency, which is deliberate: a billing dispute
+     * must not lock somebody out of their own passport scan nine days
+     * before an interview.
+     */
+    suspendedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check("seats_not_negative", sql`${t.seatsPurchased} >= 0`)]
@@ -239,7 +322,7 @@ export const orgMembers = pgTable(
     userId: text()
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
-    role: orgRoleEnum().notNull().default("hr_admin"),
+    role: orgRoleEnum().notNull().default("reviewer"),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.orgId, t.userId] })]
@@ -254,6 +337,7 @@ export const invitations = pgTable(
       .references(() => organisations.id, { onDelete: "cascade" }),
     email: text().notNull(),
     fullName: text().notNull().default(""),
+    kind: invitationKind().notNull().default("client"),
     jobTitle: text(),
     destinationIso: text(),
     purpose: travelPurpose(),
@@ -290,6 +374,23 @@ export const corridors = pgTable(
     effectiveFrom: date().notNull().default(sql`current_date`),
     sourceName: text(),
     sourceUrl: text(),
+    /**
+     * The official application form for this route, and what it is
+     * called — "Form VAF1A", "DS-160", "IMM 1294".
+     *
+     * A link to the issuing authority's own copy, deliberately not a
+     * file of ours. Mirroring a government PDF means serving whichever
+     * version we last downloaded, and somebody submitting a superseded
+     * form is refused for a reason nobody can see from the paperwork.
+     * The freshness discipline is the same as `sourceUrl`'s: a person
+     * reads it against the source and stamps `lastVerifiedAt`.
+     *
+     * Null where the route has no downloadable form — plenty are filled
+     * in entirely online, and saying nothing is better than inventing a
+     * link.
+     */
+    formName: text(),
+    formUrl: text(),
     processingWeeksMin: integer(),
     processingWeeksMax: integer(),
     governmentFeeMinor: bigint({ mode: "number" }),
@@ -392,7 +493,19 @@ export const applications = pgTable(
     travelerId: text()
       .notNull()
       .references(() => profiles.id, { onDelete: "cascade" }),
-    orgId: uuid().references(() => organisations.id, { onDelete: "set null" }),
+    /**
+     * The agency the case belongs to. Mandatory: a traveller with no
+     * agency has no reviewer, so the record is unservable rather than
+     * merely unbilled.
+     *
+     * `restrict`, not `cascade` or `set null`. Removing an agency means
+     * suspending it — a cascade would let a billing decision destroy a
+     * live visa case, and a `set null` would recreate the orphan this
+     * column exists to forbid.
+     */
+    orgId: uuid()
+      .notNull()
+      .references(() => organisations.id, { onDelete: "restrict" }),
     corridorId: uuid().references(() => corridors.id, { onDelete: "set null" }),
     status: applicationStatus().notNull().default("draft"),
     assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),
@@ -505,7 +618,25 @@ export const intakeAnswers = pgTable(
       .notNull()
       .references(() => applications.id, { onDelete: "cascade" }),
     questionKey: text().notNull(),
+    /** What the traveller actually said. This is what a reviewer reads. */
     value: text().notNull(),
+    /**
+     * `value` reduced to a canonical chip value by `normaliseAnswer`, or
+     * null when it could not be.
+     *
+     * Conditional requirement rules match this, never `value`. Free text
+     * is allowed on every question, so matching the raw answer meant a
+     * traveller who wrote "my wife and our son" instead of tapping
+     * *Partner and children* matched no rule and was resolved as a
+     * certain no — the marriage certificate left their checklist and the
+     * engine recorded that as certain rather than unknown.
+     *
+     * Null is a real and useful state: the rule cannot be evaluated for
+     * this traveller, so the requirement stays hedged rather than being
+     * hidden. Both columns are kept because they answer different
+     * questions — what somebody said, and what the engine may act on.
+     */
+    code: text(),
     answeredAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique("intake_answers_question_key").on(t.applicationId, t.questionKey)]
@@ -538,7 +669,10 @@ export const documents = pgTable(
     description: text(),
     state: documentState().notNull().default("not_started"),
     storagePath: text(),
+    /** The sentence the traveller reads. */
     reason: text(),
+    /** The same refusal as a class, for whoever has to debug it later. */
+    reasonCode: flagReason(),
     /**
      * Structured result of the AI pre-check that runs after upload; the
      * traveller-facing sentence goes in `reason`, this column keeps the
@@ -547,6 +681,19 @@ export const documents = pgTable(
     precheck: jsonb(),
     attempts: integer().notNull().default(0),
     isRequired: boolean().notNull().default(true),
+    /**
+     * Why this requirement is still a maybe, in the words the traveller
+     * was asked — "Who is coming with you? — Partner or Partner and
+     * children".
+     *
+     * Set only on a requirement whose rule exists but could not be
+     * evaluated for this traveller, which is the one unresolved state
+     * they can actually do something about. A requirement nobody has
+     * written a rule for never reaches a checklist at all: that is
+     * BeOrchid's unfinished curation and is raised on the agency side
+     * instead. Null on everything decided.
+     */
+    condition: text(),
     sortOrder: integer().notNull().default(0),
     checkedAt: timestamp({ withTimezone: true }),
     verifiedBy: text().references(() => profiles.id, { onDelete: "set null" }),
@@ -807,3 +954,5 @@ export type CaseNote = typeof caseNotes.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type CompanionUpdate = typeof companionUpdates.$inferSelect;
 export type FxRate = typeof fxRates.$inferSelect;
+
+export type FlagReason = (typeof flagReason.enumValues)[number];

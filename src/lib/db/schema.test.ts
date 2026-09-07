@@ -40,7 +40,7 @@ describe.skipIf(!process.env.DATABASE_URL)("org_application_progress", async () 
  * One application per traveller, enforced by the database.
  *
  * The `(app)` layout and every page under it call
- * `getOrCreateApplication` concurrently in the same request, and on a
+ * `getApplication` concurrently in the same request, and on a
  * traveller's very first visit both used to find nothing and both
  * insert — leaving two applications, with the intake agent writing
  * answers to one while the requirements screen read the other. The
@@ -49,25 +49,99 @@ describe.skipIf(!process.env.DATABASE_URL)("org_application_progress", async () 
  * Skipped without a database. Run `npm run db:up` to include it.
  */
 describe.skipIf(!process.env.DATABASE_URL)("one application per traveller", async () => {
-  const { eq } = await import("drizzle-orm");
+  const { eq, inArray } = await import("drizzle-orm");
   const { db } = await import("@/lib/db/client");
-  const { applications, profiles } = await import("@/lib/db/schema");
+  const { applications, organisations, profiles } = await import("@/lib/db/schema");
 
   const TRAVELLER = "test_unique_app_traveller";
+  const ORG = "00000000-0000-4000-8000-0000000b0001";
 
   it("rejects a second application for the same traveller", async () => {
     await db
       .insert(profiles)
       .values({ id: TRAVELLER, email: "unique@test.invalid", fullName: "Ada" });
+    await db.insert(organisations).values({ id: ORG, name: "Unique Agency" });
 
     try {
-      await db.insert(applications).values({ travelerId: TRAVELLER });
+      await db.insert(applications).values({ travelerId: TRAVELLER, orgId: ORG });
       await expect(
-        db.insert(applications).values({ travelerId: TRAVELLER })
+        db.insert(applications).values({ travelerId: TRAVELLER, orgId: ORG })
+      ).rejects.toThrow();
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+      await db.delete(organisations).where(inArray(organisations.id, [ORG]));
+    }
+  });
+});
+
+/**
+ * The v1.3 tenancy, in the schema. An agency is a tenant and every case
+ * belongs to exactly one; a traveller with no agency has no reviewer, so
+ * the record is unservable rather than merely unbilled.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("every case belongs to an agency", async () => {
+  const { eq, inArray, sql } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { applications, organisations, profiles } = await import("@/lib/db/schema");
+
+  const TRAVELLER = "test_tenancy_traveller";
+  const ORG = "00000000-0000-4000-8000-0000000b1001";
+
+  it("refuses an application with no agency", async () => {
+    await db
+      .insert(profiles)
+      .values({ id: TRAVELLER, email: "tenancy@test.invalid", fullName: "Ada" });
+
+    try {
+      await expect(
+        db.execute(
+          sql`insert into applications (traveler_id) values (${TRAVELLER})`
+        )
       ).rejects.toThrow();
     } finally {
       await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
     }
+  });
+
+  it("refuses to delete an agency that still holds a case", async () => {
+    // Suspension is how an agency is removed. A cascade here would let a
+    // billing decision destroy a live visa case, and a `set null` would
+    // recreate the orphan this tenancy exists to forbid.
+    await db
+      .insert(profiles)
+      .values({ id: TRAVELLER, email: "tenancy@test.invalid", fullName: "Ada" });
+    await db.insert(organisations).values({ id: ORG, name: "Held Agency" });
+    await db.insert(applications).values({ travelerId: TRAVELLER, orgId: ORG });
+
+    try {
+      await expect(
+        db.delete(organisations).where(eq(organisations.id, ORG))
+      ).rejects.toThrow();
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+      await db.delete(organisations).where(inArray(organisations.id, [ORG]));
+    }
+  });
+});
+
+/**
+ * Agency roles are owner and reviewer. `hr_admin` arrived with the
+ * employer console and describes nobody in a travel agency.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("org_role", async () => {
+  const { sql } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+
+  it("offers exactly owner and reviewer", async () => {
+    const result = await db.execute<{ value: string }>(
+      sql`select unnest(enum_range(null::org_role))::text as value`
+    );
+
+    expect(result.rows.map((r) => r.value).sort()).toEqual(["owner", "reviewer"]);
   });
 });
 
@@ -115,9 +189,13 @@ describe.skipIf(!process.env.DATABASE_URL)("notifications", async () => {
 describe.skipIf(!process.env.DATABASE_URL)("companion_updates", async () => {
   const { eq } = await import("drizzle-orm");
   const { db } = await import("@/lib/db/client");
-  const { applications, companionUpdates, profiles } = await import("@/lib/db/schema");
+  const { applications, companionUpdates, organisations, profiles } = await import(
+    "@/lib/db/schema"
+  );
 
   const TRAVELLER = "test_companion_updates_traveller";
+  /** Every case belongs to an agency since v1.3. */
+  const COMPANION_ORG = "00000000-0000-4000-8000-0000000b2001";
 
   it("rejects a second row for the same application and kind", async () => {
     await db.insert(profiles).values({
@@ -125,11 +203,14 @@ describe.skipIf(!process.env.DATABASE_URL)("companion_updates", async () => {
       email: "companion@test.invalid",
       fullName: "Nkem",
     });
+    await db
+      .insert(organisations)
+      .values({ id: COMPANION_ORG, name: "Companion Agency" });
 
     try {
       const [app] = await db
         .insert(applications)
-        .values({ travelerId: TRAVELLER })
+        .values({ travelerId: TRAVELLER, orgId: COMPANION_ORG })
         .returning({ id: applications.id });
 
       await db.insert(companionUpdates).values({ applicationId: app.id });
@@ -138,6 +219,7 @@ describe.skipIf(!process.env.DATABASE_URL)("companion_updates", async () => {
       ).rejects.toThrow();
     } finally {
       await db.delete(profiles).where(eq(profiles.id, TRAVELLER));
+      await db.delete(organisations).where(eq(organisations.id, COMPANION_ORG));
     }
   });
 });
@@ -232,6 +314,60 @@ describe.skipIf(!process.env.DATABASE_URL)("applications indexes", async () => {
 
     for (const column of ["traveler_id", "org_id", "corridor_id", "assignee_id"]) {
       expect(definitions, `${column} needs an index`).toContain(`(${column}`);
+    }
+  });
+});
+
+/**
+ * The second defect the v1.3 correction found. `LOCALES` carries ten
+ * codes and the check constraint allowed four, so selecting French,
+ * Portuguese, Swahili, Arabic, Twi or isiZulu failed the write — six of
+ * the ten languages in the menu could not be saved.
+ *
+ * Skipped without a database. Run `npm run db:up` to include it.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("profiles.locale", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { profiles } = await import("@/lib/db/schema");
+  const { LOCALES } = await import("@/lib/i18n/locales");
+
+  const USER = "test_locale_constraint";
+
+  it("accepts every locale the interface offers", async () => {
+    await db
+      .insert(profiles)
+      .values({ id: USER, email: "locale@test.invalid", fullName: "Ada" });
+
+    try {
+      for (const { code } of LOCALES) {
+        await db.update(profiles).set({ locale: code }).where(eq(profiles.id, USER));
+
+        const [row] = await db
+          .select({ locale: profiles.locale })
+          .from(profiles)
+          .where(eq(profiles.id, USER));
+        expect(row.locale, code).toBe(code);
+      }
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, USER));
+    }
+  });
+
+  it("still refuses a code the interface does not offer", async () => {
+    // The constraint is not merely widened away — a language nobody
+    // translated must not reach the column, or a page renders blank
+    // where a string should be.
+    await db
+      .insert(profiles)
+      .values({ id: USER, email: "locale@test.invalid", fullName: "Ada" });
+
+    try {
+      await expect(
+        db.update(profiles).set({ locale: "de" }).where(eq(profiles.id, USER))
+      ).rejects.toThrow();
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, USER));
     }
   });
 });

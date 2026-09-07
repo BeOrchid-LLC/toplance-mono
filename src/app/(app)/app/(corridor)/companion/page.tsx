@@ -16,7 +16,7 @@ import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { VisaExpiryField } from "@/components/app/visa-expiry-field";
 import {
   getCorridorFor,
-  getOrCreateApplication,
+  getApplication,
   getProfile,
 } from "@/lib/data/applications";
 import { arrivalChecklist, renewalGuidance } from "@/lib/domain/companion";
@@ -43,7 +43,7 @@ export default async function CompanionPage() {
   const locale = await getLocale();
   const t = COMPANION;
   const profile = await getProfile();
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!profile || !application) redirect("/sign-in?next=/app/companion");
 
   // This page is what "approved" unlocks. Anyone who lands here before

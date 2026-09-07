@@ -135,7 +135,7 @@ export function CorridorBoard() {
 
       <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
         <Button asChild>
-          <Link href="/employer/sign-up">
+          <Link href="/agency/sign-up">
             {fillTemplate(t(CORRIDOR_PICKER.runRouteTemplate), {
               route: `${iso3(origin)} → ${iso3(destination)}`,
             })}

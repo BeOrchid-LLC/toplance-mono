@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type Actor,
   type ApplicationRef,
+  canManageInvitations,
   canReadApplication,
   canReadAuditLog,
   canReadCaseNotes,
@@ -19,12 +20,11 @@ import {
   canWriteIntakeAnswers,
   canWriteMessages,
   canWriteVisaExpiry,
-  canManageInvitations,
+  isAgencyFor,
   isOrgMemberOf,
   isOwner,
   isStaff,
   ownsApplication,
-  sponsorsApplication,
 } from "@/lib/auth/policy";
 
 const ORG = "org-1";
@@ -44,52 +44,60 @@ const otherTraveller: Actor = {
   orgIds: [],
 };
 
-const hrAdmin: Actor = {
-  userId: "user-hr",
+/** The tenant. Reviews documents, decides the case, talks to the traveller. */
+const agencyReviewer: Actor = {
+  userId: "user-agency",
   role: "org_member",
   staffRole: null,
   orgIds: [ORG],
 };
 
-const reviewer: Actor = {
-  userId: "user-reviewer",
+/** A different tenant. Sees nothing of ORG's travellers. */
+const otherAgency: Actor = { ...agencyReviewer, userId: "user-rival", orgIds: [OTHER_ORG] };
+
+/**
+ * BeOrchid. Provisions tenants, curates routes, reads the audit log —
+ * and reaches no traveller's case at all.
+ */
+const platformStaff: Actor = {
+  userId: "user-staff",
   role: "staff",
   staffRole: "reviewer",
   orgIds: [],
 };
 
-const owner: Actor = {
-  userId: "user-owner",
-  role: "staff",
-  staffRole: "owner",
-  orgIds: [],
-};
+const platformOwner: Actor = { ...platformStaff, userId: "user-owner", staffRole: "owner" };
 
-/** A sponsored application: belongs to `traveller`, paid for by ORG. */
-const sponsored: ApplicationRef = {
+/** A case belonging to ORG's traveller — the only shape that exists once
+ *  `applications.org_id` is `not null`. */
+const tenantCase: ApplicationRef = {
   id: "app-1",
   travelerId: "user-traveller",
   orgId: ORG,
 };
 
-/** The same traveller, applying privately. */
-const selfFunded: ApplicationRef = {
+/**
+ * A case with no agency. Unreachable in the new model and slated for
+ * deletion, but the type still admits one, so the policies must say what
+ * happens: nobody but its own traveller.
+ */
+const unassignedCase: ApplicationRef = {
   id: "app-2",
   travelerId: "user-traveller",
   orgId: null,
 };
 
 describe("role predicates", () => {
-  it("recognises staff", () => {
-    expect(isStaff(reviewer)).toBe(true);
-    expect(isStaff(owner)).toBe(true);
+  it("recognises platform staff", () => {
+    expect(isStaff(platformStaff)).toBe(true);
+    expect(isStaff(platformOwner)).toBe(true);
     expect(isStaff(traveller)).toBe(false);
-    expect(isStaff(hrAdmin)).toBe(false);
+    expect(isStaff(agencyReviewer)).toBe(false);
   });
 
-  it("recognises owners, who are a subset of staff", () => {
-    expect(isOwner(owner)).toBe(true);
-    expect(isOwner(reviewer)).toBe(false);
+  it("recognises platform owners, who are a subset of staff", () => {
+    expect(isOwner(platformOwner)).toBe(true);
+    expect(isOwner(platformStaff)).toBe(false);
     expect(isOwner(traveller)).toBe(false);
   });
 
@@ -100,234 +108,279 @@ describe("role predicates", () => {
   });
 });
 
-describe("ownership and sponsorship", () => {
+describe("tenancy", () => {
   it("matches the traveller who owns the application", () => {
-    expect(ownsApplication(traveller, sponsored)).toBe(true);
-    expect(ownsApplication(otherTraveller, sponsored)).toBe(false);
+    expect(ownsApplication(traveller, tenantCase)).toBe(true);
+    expect(ownsApplication(otherTraveller, tenantCase)).toBe(false);
   });
 
-  it("matches an org the application is sponsored by", () => {
-    expect(sponsorsApplication(hrAdmin, sponsored)).toBe(true);
+  it("matches the agency the application belongs to", () => {
+    expect(isAgencyFor(agencyReviewer, tenantCase)).toBe(true);
   });
 
-  it("does not match an org member from a different org", () => {
-    const otherOrg: Actor = { ...hrAdmin, orgIds: [OTHER_ORG] };
-    expect(sponsorsApplication(otherOrg, sponsored)).toBe(false);
+  it("does not match a different agency", () => {
+    expect(isAgencyFor(otherAgency, tenantCase)).toBe(false);
   });
 
-  it("never sponsors an application with no org", () => {
-    expect(sponsorsApplication(hrAdmin, selfFunded)).toBe(false);
+  it("does not match a case that has no agency", () => {
+    expect(isAgencyFor(agencyReviewer, unassignedCase)).toBe(false);
+  });
+
+  it("is never satisfied by platform staff", () => {
+    expect(isAgencyFor(platformStaff, tenantCase)).toBe(false);
+    expect(isAgencyFor(platformOwner, tenantCase)).toBe(false);
+  });
+
+  it("does not let a traveller forge an agency membership", () => {
+    const forged: Actor = { ...otherTraveller, orgIds: [ORG] };
+    expect(isAgencyFor(forged, tenantCase)).toBe(false);
   });
 });
 
 describe("application access", () => {
   it("lets the traveller read and write their own", () => {
-    expect(canReadApplication(traveller, sponsored)).toBe(true);
-    expect(canWriteApplication(traveller, sponsored)).toBe(true);
+    expect(canReadApplication(traveller, tenantCase)).toBe(true);
+    expect(canWriteApplication(traveller, tenantCase)).toBe(true);
+  });
+
+  it("lets the agency read and decide its own traveller's case", () => {
+    expect(canReadApplication(agencyReviewer, tenantCase)).toBe(true);
+    expect(canWriteApplication(agencyReviewer, tenantCase)).toBe(true);
   });
 
   it("denies another traveller entirely", () => {
-    expect(canReadApplication(otherTraveller, sponsored)).toBe(false);
-    expect(canWriteApplication(otherTraveller, sponsored)).toBe(false);
+    expect(canReadApplication(otherTraveller, tenantCase)).toBe(false);
+    expect(canWriteApplication(otherTraveller, tenantCase)).toBe(false);
   });
 
-  it("lets a sponsoring org read but never write", () => {
-    expect(canReadApplication(hrAdmin, sponsored)).toBe(true);
-    expect(canWriteApplication(hrAdmin, sponsored)).toBe(false);
+  it("denies a different agency entirely", () => {
+    expect(canReadApplication(otherAgency, tenantCase)).toBe(false);
+    expect(canWriteApplication(otherAgency, tenantCase)).toBe(false);
   });
 
-  it("lets staff read and write any application", () => {
-    expect(canReadApplication(reviewer, sponsored)).toBe(true);
-    expect(canWriteApplication(reviewer, sponsored)).toBe(true);
-    expect(canReadApplication(reviewer, selfFunded)).toBe(true);
+  it("denies platform staff — BeOrchid has no case surface", () => {
+    expect(canReadApplication(platformStaff, tenantCase)).toBe(false);
+    expect(canWriteApplication(platformStaff, tenantCase)).toBe(false);
+    expect(canReadApplication(platformOwner, tenantCase)).toBe(false);
   });
 });
 
+/**
+ * The privacy boundary, inverted from where it used to sit. The agency
+ * is the reviewer; BeOrchid is the landlord and reaches nothing.
+ */
 describe("the document privacy boundary", () => {
   it("lets the traveller read and write their own documents", () => {
-    expect(canReadDocuments(traveller, sponsored)).toBe(true);
-    expect(canWriteDocuments(traveller, sponsored)).toBe(true);
+    expect(canReadDocuments(traveller, tenantCase)).toBe(true);
+    expect(canWriteDocuments(traveller, tenantCase)).toBe(true);
   });
 
-  it("lets staff read and review documents", () => {
-    expect(canReadDocuments(reviewer, sponsored)).toBe(true);
-    expect(canWriteDocuments(reviewer, sponsored)).toBe(true);
+  it("lets the agency read and review its traveller's documents", () => {
+    expect(canReadDocuments(agencyReviewer, tenantCase)).toBe(true);
+    expect(canWriteDocuments(agencyReviewer, tenantCase)).toBe(true);
   });
 
-  // The promise made on the marketing site and in the employer console:
-  // an organisation sees progress, never a passport. Sponsoring the
-  // application does not soften it.
-  it("never lets a sponsoring org read documents", () => {
-    expect(canReadDocuments(hrAdmin, sponsored)).toBe(false);
+  // The product claim: no one at BeOrchid can open your clients'
+  // documents. Not narrowed to an audited exception — removed.
+  it("never lets platform staff read documents", () => {
+    expect(canReadDocuments(platformStaff, tenantCase)).toBe(false);
+    expect(canReadDocuments(platformOwner, tenantCase)).toBe(false);
   });
 
-  it("never lets a sponsoring org write documents", () => {
-    expect(canWriteDocuments(hrAdmin, sponsored)).toBe(false);
+  it("never lets platform staff write documents", () => {
+    expect(canWriteDocuments(platformStaff, tenantCase)).toBe(false);
+    expect(canWriteDocuments(platformOwner, tenantCase)).toBe(false);
+  });
+
+  it("never lets a different agency reach them", () => {
+    expect(canReadDocuments(otherAgency, tenantCase)).toBe(false);
+    expect(canWriteDocuments(otherAgency, tenantCase)).toBe(false);
   });
 
   it("denies documents to an unrelated traveller", () => {
-    expect(canReadDocuments(otherTraveller, sponsored)).toBe(false);
-    expect(canWriteDocuments(otherTraveller, sponsored)).toBe(false);
+    expect(canReadDocuments(otherTraveller, tenantCase)).toBe(false);
+    expect(canWriteDocuments(otherTraveller, tenantCase)).toBe(false);
+  });
+
+  it("leaves a case with no agency readable only by its traveller", () => {
+    expect(canReadDocuments(traveller, unassignedCase)).toBe(true);
+    expect(canReadDocuments(agencyReviewer, unassignedCase)).toBe(false);
+    expect(canReadDocuments(platformStaff, unassignedCase)).toBe(false);
   });
 });
 
 describe("intake answers", () => {
   it("lets the traveller manage their own answers", () => {
-    expect(canReadIntakeAnswers(traveller, sponsored)).toBe(true);
-    expect(canWriteIntakeAnswers(traveller, sponsored)).toBe(true);
+    expect(canReadIntakeAnswers(traveller, tenantCase)).toBe(true);
+    expect(canWriteIntakeAnswers(traveller, tenantCase)).toBe(true);
   });
 
-  it("lets staff read answers but not author them", () => {
-    expect(canReadIntakeAnswers(reviewer, sponsored)).toBe(true);
-    expect(canWriteIntakeAnswers(reviewer, sponsored)).toBe(false);
+  it("lets the agency read answers but never author them", () => {
+    expect(canReadIntakeAnswers(agencyReviewer, tenantCase)).toBe(true);
+    expect(canWriteIntakeAnswers(agencyReviewer, tenantCase)).toBe(false);
   });
 
-  it("hides answers from a sponsoring org", () => {
-    expect(canReadIntakeAnswers(hrAdmin, sponsored)).toBe(false);
-    expect(canWriteIntakeAnswers(hrAdmin, sponsored)).toBe(false);
+  it("hides answers from platform staff", () => {
+    expect(canReadIntakeAnswers(platformStaff, tenantCase)).toBe(false);
+    expect(canWriteIntakeAnswers(platformStaff, tenantCase)).toBe(false);
+  });
+
+  it("hides answers from a different agency", () => {
+    expect(canReadIntakeAnswers(otherAgency, tenantCase)).toBe(false);
   });
 });
 
 describe("status events", () => {
-  it("is readable by traveller, sponsoring org and staff", () => {
-    expect(canReadStatusEvents(traveller, sponsored)).toBe(true);
-    expect(canReadStatusEvents(hrAdmin, sponsored)).toBe(true);
-    expect(canReadStatusEvents(reviewer, sponsored)).toBe(true);
+  it("is readable by the traveller and their agency", () => {
+    expect(canReadStatusEvents(traveller, tenantCase)).toBe(true);
+    expect(canReadStatusEvents(agencyReviewer, tenantCase)).toBe(true);
   });
 
-  it("is hidden from an unrelated traveller", () => {
-    expect(canReadStatusEvents(otherTraveller, sponsored)).toBe(false);
+  it("is hidden from platform staff and unrelated parties", () => {
+    expect(canReadStatusEvents(platformStaff, tenantCase)).toBe(false);
+    expect(canReadStatusEvents(otherAgency, tenantCase)).toBe(false);
+    expect(canReadStatusEvents(otherTraveller, tenantCase)).toBe(false);
   });
 });
 
 describe("case notes", () => {
-  it("lets staff write notes and the traveller read them", () => {
-    expect(canWriteCaseNotes(reviewer, sponsored)).toBe(true);
-    expect(canReadCaseNotes(traveller, sponsored)).toBe(true);
-    expect(canReadCaseNotes(reviewer, sponsored)).toBe(true);
+  it("lets the agency write notes and the traveller read them", () => {
+    expect(canWriteCaseNotes(agencyReviewer, tenantCase)).toBe(true);
+    expect(canReadCaseNotes(agencyReviewer, tenantCase)).toBe(true);
+    expect(canReadCaseNotes(traveller, tenantCase)).toBe(true);
   });
 
   it("never lets the traveller author a note on their own case", () => {
-    expect(canWriteCaseNotes(traveller, sponsored)).toBe(false);
-    expect(canWriteCaseNotes(traveller, selfFunded)).toBe(false);
+    expect(canWriteCaseNotes(traveller, tenantCase)).toBe(false);
   });
 
-  // Notes discuss documents, so they sit behind the same privacy
-  // boundary: an organisation sees progress, never the review desk.
-  it("hides notes from a sponsoring org entirely", () => {
-    expect(canReadCaseNotes(hrAdmin, sponsored)).toBe(false);
-    expect(canWriteCaseNotes(hrAdmin, sponsored)).toBe(false);
+  it("hides notes from platform staff entirely", () => {
+    expect(canReadCaseNotes(platformStaff, tenantCase)).toBe(false);
+    expect(canWriteCaseNotes(platformStaff, tenantCase)).toBe(false);
+  });
+
+  it("hides notes from a different agency entirely", () => {
+    expect(canReadCaseNotes(otherAgency, tenantCase)).toBe(false);
+    expect(canWriteCaseNotes(otherAgency, tenantCase)).toBe(false);
   });
 
   it("denies notes to an unrelated traveller", () => {
-    expect(canReadCaseNotes(otherTraveller, sponsored)).toBe(false);
+    expect(canReadCaseNotes(otherTraveller, tenantCase)).toBe(false);
   });
 });
 
 describe("itineraries", () => {
-  it("is readable by the traveller who owns it and by staff", () => {
-    expect(canReadItinerary(traveller, sponsored)).toBe(true);
-    expect(canReadItinerary(reviewer, sponsored)).toBe(true);
+  it("is readable by the traveller who owns it and by their agency", () => {
+    expect(canReadItinerary(traveller, tenantCase)).toBe(true);
+    expect(canReadItinerary(agencyReviewer, tenantCase)).toBe(true);
   });
 
-  it("is hidden from a sponsoring org and unrelated travellers", () => {
-    expect(canReadItinerary(hrAdmin, sponsored)).toBe(false);
-    expect(canReadItinerary(otherTraveller, sponsored)).toBe(false);
+  it("is hidden from platform staff, other agencies and other travellers", () => {
+    expect(canReadItinerary(platformStaff, tenantCase)).toBe(false);
+    expect(canReadItinerary(otherAgency, tenantCase)).toBe(false);
+    expect(canReadItinerary(otherTraveller, tenantCase)).toBe(false);
   });
 });
 
 describe("companion", () => {
-  it("is readable by the traveller who owns it and by staff", () => {
-    expect(canReadCompanion(traveller, sponsored)).toBe(true);
-    expect(canReadCompanion(reviewer, sponsored)).toBe(true);
+  it("is readable by the traveller who owns it and by their agency", () => {
+    expect(canReadCompanion(traveller, tenantCase)).toBe(true);
+    expect(canReadCompanion(agencyReviewer, tenantCase)).toBe(true);
   });
 
-  it("is hidden from a sponsoring org and unrelated travellers", () => {
-    expect(canReadCompanion(hrAdmin, sponsored)).toBe(false);
-    expect(canReadCompanion(otherTraveller, sponsored)).toBe(false);
+  it("is hidden from platform staff, other agencies and other travellers", () => {
+    expect(canReadCompanion(platformStaff, tenantCase)).toBe(false);
+    expect(canReadCompanion(otherAgency, tenantCase)).toBe(false);
+    expect(canReadCompanion(otherTraveller, tenantCase)).toBe(false);
   });
 });
 
 describe("visa expiry", () => {
   it("is writable only by the traveller whose visa it is", () => {
-    expect(canWriteVisaExpiry(traveller, sponsored)).toBe(true);
+    expect(canWriteVisaExpiry(traveller, tenantCase)).toBe(true);
   });
 
-  it("is not writable by staff — the date is read off the traveller's own document", () => {
-    // Deliberately narrower than every other write on a case. Letting the
-    // desk type a date into someone's legal status is the invented-expiry
-    // problem `renewalGuidance` exists to refuse.
-    expect(canWriteVisaExpiry(reviewer, sponsored)).toBe(false);
+  // Deliberately narrower than every other write on a case. Letting
+  // somebody else type a date into a person's legal status is the
+  // invented-expiry problem `renewalGuidance` exists to refuse.
+  it("is not writable by the agency, however much of the case it runs", () => {
+    expect(canWriteVisaExpiry(agencyReviewer, tenantCase)).toBe(false);
   });
 
-  it("is not writable by a sponsoring org or an unrelated traveller", () => {
-    expect(canWriteVisaExpiry(hrAdmin, sponsored)).toBe(false);
-    expect(canWriteVisaExpiry(otherTraveller, sponsored)).toBe(false);
+  it("is not writable by platform staff or an unrelated traveller", () => {
+    expect(canWriteVisaExpiry(platformStaff, tenantCase)).toBe(false);
+    expect(canWriteVisaExpiry(otherTraveller, tenantCase)).toBe(false);
   });
 });
 
 describe("messages", () => {
   it("lets the traveller read and write their own thread", () => {
-    expect(canReadMessages(traveller, sponsored)).toBe(true);
-    expect(canWriteMessages(traveller, sponsored)).toBe(true);
+    expect(canReadMessages(traveller, tenantCase)).toBe(true);
+    expect(canWriteMessages(traveller, tenantCase)).toBe(true);
   });
 
-  it("lets staff read and write any thread", () => {
-    expect(canReadMessages(reviewer, sponsored)).toBe(true);
-    expect(canWriteMessages(reviewer, sponsored)).toBe(true);
-    expect(canReadMessages(reviewer, selfFunded)).toBe(true);
-    expect(canWriteMessages(reviewer, selfFunded)).toBe(true);
+  it("lets the agency read and write its traveller's thread", () => {
+    expect(canReadMessages(agencyReviewer, tenantCase)).toBe(true);
+    expect(canWriteMessages(agencyReviewer, tenantCase)).toBe(true);
   });
 
-  // Same privacy boundary as case notes: an organisation funds the
-  // application, it does not join the conversation.
-  it("hides the thread from a sponsoring org entirely", () => {
-    expect(canReadMessages(hrAdmin, sponsored)).toBe(false);
-    expect(canWriteMessages(hrAdmin, sponsored)).toBe(false);
+  it("keeps platform staff out of the conversation entirely", () => {
+    expect(canReadMessages(platformStaff, tenantCase)).toBe(false);
+    expect(canWriteMessages(platformStaff, tenantCase)).toBe(false);
+  });
+
+  it("keeps a different agency out of the conversation entirely", () => {
+    expect(canReadMessages(otherAgency, tenantCase)).toBe(false);
+    expect(canWriteMessages(otherAgency, tenantCase)).toBe(false);
   });
 
   it("denies an unrelated traveller both ways", () => {
-    expect(canReadMessages(otherTraveller, sponsored)).toBe(false);
-    expect(canWriteMessages(otherTraveller, sponsored)).toBe(false);
+    expect(canReadMessages(otherTraveller, tenantCase)).toBe(false);
+    expect(canWriteMessages(otherTraveller, tenantCase)).toBe(false);
   });
 
   it("does not let a forged staff role read or write someone else's thread", () => {
     const forged: Actor = { ...otherTraveller, staffRole: "owner" };
-    expect(canReadMessages(forged, sponsored)).toBe(false);
-    expect(canWriteMessages(forged, sponsored)).toBe(false);
+    expect(canReadMessages(forged, tenantCase)).toBe(false);
+    expect(canWriteMessages(forged, tenantCase)).toBe(false);
   });
 });
 
+/**
+ * What is left on the platform side: route curation and the audit log.
+ * These are the only policies where `isStaff` still appears.
+ */
 describe("reference data and audit", () => {
-  it("lets only owners write corridors", () => {
-    expect(canWriteCorridors(owner)).toBe(true);
-    expect(canWriteCorridors(reviewer)).toBe(false);
+  it("lets only platform owners write corridors", () => {
+    expect(canWriteCorridors(platformOwner)).toBe(true);
+    expect(canWriteCorridors(platformStaff)).toBe(false);
+    expect(canWriteCorridors(agencyReviewer)).toBe(false);
     expect(canWriteCorridors(traveller)).toBe(false);
   });
 
-  it("lets only staff read the audit log", () => {
-    expect(canReadAuditLog(reviewer)).toBe(true);
-    expect(canReadAuditLog(owner)).toBe(true);
-    expect(canReadAuditLog(hrAdmin)).toBe(false);
+  it("lets only platform staff read the audit log", () => {
+    expect(canReadAuditLog(platformStaff)).toBe(true);
+    expect(canReadAuditLog(platformOwner)).toBe(true);
+    expect(canReadAuditLog(agencyReviewer)).toBe(false);
     expect(canReadAuditLog(traveller)).toBe(false);
   });
 });
 
 describe("invitations", () => {
-  it("lets an org member manage invitations for their own org", () => {
-    expect(isOrgMemberOf(hrAdmin, ORG)).toBe(true);
-    expect(canManageInvitations(hrAdmin, ORG)).toBe(true);
+  it("lets an agency member manage invitations for their own agency", () => {
+    expect(isOrgMemberOf(agencyReviewer, ORG)).toBe(true);
+    expect(canManageInvitations(agencyReviewer, ORG)).toBe(true);
   });
 
-  it("denies an org member managing another org's invitations", () => {
-    expect(isOrgMemberOf(hrAdmin, OTHER_ORG)).toBe(false);
-    expect(canManageInvitations(hrAdmin, OTHER_ORG)).toBe(false);
+  it("denies an agency member managing another agency's invitations", () => {
+    expect(isOrgMemberOf(agencyReviewer, OTHER_ORG)).toBe(false);
+    expect(canManageInvitations(agencyReviewer, OTHER_ORG)).toBe(false);
   });
 
-  it("denies a traveller and staff, org-scoped or not", () => {
+  it("denies a traveller and platform staff, org-scoped or not", () => {
     expect(canManageInvitations(traveller, ORG)).toBe(false);
-    expect(canManageInvitations(reviewer, ORG)).toBe(false);
-    expect(canManageInvitations(owner, ORG)).toBe(false);
+    expect(canManageInvitations(platformStaff, ORG)).toBe(false);
+    expect(canManageInvitations(platformOwner, ORG)).toBe(false);
   });
 
   it("does not let a forged org_member role manage an org it does not belong to", () => {

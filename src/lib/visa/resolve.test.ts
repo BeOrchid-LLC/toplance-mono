@@ -24,6 +24,8 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   lastVerifiedAt: null,
   sourceName: "UK Visas and Immigration",
   sourceUrl: "https://www.gov.uk/skilled-worker-visa",
+  formName: null,
+  formUrl: null,
   attribution: null,
   contributions: [],
   allowedStay: "5 years",

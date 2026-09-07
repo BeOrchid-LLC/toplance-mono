@@ -20,6 +20,7 @@ import {
   type InvitationPreview,
 } from "@/lib/data/invitations";
 import { countryFromIso2, PURPOSE_ISO } from "@/lib/domain/corridors";
+import { invitationDoor } from "@/lib/domain/invitation-door";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { INVITE_PAGE } from "@/lib/i18n/invite";
 import { getLocale } from "@/lib/i18n/server";
@@ -261,7 +262,7 @@ export default async function InvitePage({
     );
   }
 
-  if (profile.role !== "traveler") {
+  if (invitationDoor(profile.role, preview.kind) === "wrong-persona") {
     return (
       <InviteChrome>
         <Panel>

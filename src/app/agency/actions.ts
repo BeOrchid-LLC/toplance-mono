@@ -12,10 +12,12 @@ import {
   resendableInvitation,
   revokeInvitation as revokeInvitationTx,
 } from "@/lib/data/invitations";
-import { createOrganisationTx } from "@/lib/data/organisations";
+import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
 import { sendEmail } from "@/lib/notifications/email";
 import { appUrl } from "@/lib/notifications/notify";
 import { invitationEmail } from "@/lib/notifications/templates";
+import { AGENCY_ACTIONS } from "@/lib/i18n/agency-actions";
+import { getLocale } from "@/lib/i18n/server";
 
 /**
  * A new employer's sign-up act: name an organisation and become its
@@ -33,7 +35,7 @@ export async function createOrganisation(formData: FormData) {
 
     await track("toplance.organisation_created", { orgId: result.orgId }, actor.userId);
 
-    revalidatePath("/employer");
+    revalidatePath("/agency");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -43,7 +45,17 @@ export async function createOrganisation(formData: FormData) {
 }
 
 /**
- * Invites someone by email into the caller's own organisation. `orgId`
+ * Invites someone by email into the caller's own organisation — a
+ * client whose visa the agency is handling, or a colleague who will
+ * review those. `kind` decides which, and `acceptInvitationTx` attaches
+ * a case or a seat accordingly.
+ *
+ * A staff invitation is owner-only. §1 gives an owner everything a
+ * reviewer can do plus staff invitations and billing; without the check
+ * any reviewer could hire, and the agency would grow people nobody
+ * senior approved.
+ *
+ * `orgId`
  * comes from the signed-in actor's own membership, never the form — a
  * form field here would let anyone type another org's id and invite
  * into it. `requireOrgAccess` re-checks membership from that same id
@@ -63,6 +75,11 @@ export async function inviteTraveller(formData: FormData) {
 
     const email = String(formData.get("email") ?? "");
     const fullName = String(formData.get("full_name") ?? "").trim();
+    const kind = formData.get("kind") === "staff" ? "staff" : "client";
+
+    if (kind === "staff" && !(await isAgencyOwner(actor.userId, orgId))) {
+      return { error: AGENCY_ACTIONS.onlyOwnerInvitesStaff[await getLocale()] };
+    }
 
     // Job title, destination and purpose are no longer asked for. The
     // form collected them from the agency about a traveller it had not
@@ -73,6 +90,7 @@ export async function inviteTraveller(formData: FormData) {
     const result = await createInvitation(orgId, actor.userId, {
       email,
       fullName: fullName || undefined,
+      kind,
     });
     if ("error" in result) return result;
 
@@ -94,7 +112,7 @@ export async function inviteTraveller(formData: FormData) {
 
     await track("toplance.invitation_sent", { orgId }, actor.userId);
 
-    revalidatePath("/employer");
+    revalidatePath("/agency");
     return { ok: true, inviteUrl };
   } catch (error) {
     const message = toActionError(error);
@@ -147,7 +165,7 @@ export async function resendInvitation(formData: FormData) {
 
     await track("toplance.invitation_resent", { orgId }, actor.userId);
 
-    revalidatePath("/employer");
+    revalidatePath("/agency");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -170,7 +188,7 @@ export async function revokeInvitation(formData: FormData) {
 
     await track("toplance.invitation_revoked", { orgId }, actor.userId);
 
-    revalidatePath("/employer");
+    revalidatePath("/agency");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

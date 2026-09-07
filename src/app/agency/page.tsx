@@ -10,10 +10,10 @@ import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { InvitationStatusBadge, StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
-import { CreateOrganisation } from "@/components/employer/create-organisation";
-import { InviteDialog } from "@/components/employer/invite-dialog";
-import { ResendInvitationButton } from "@/components/employer/resend-invitation-button";
-import { RevokeInvitationButton } from "@/components/employer/revoke-invitation-button";
+import { CreateOrganisation } from "@/components/agency/create-organisation";
+import { InviteDialog } from "@/components/agency/invite-dialog";
+import { ResendInvitationButton } from "@/components/agency/resend-invitation-button";
+import { RevokeInvitationButton } from "@/components/agency/revoke-invitation-button";
 import { homeFor } from "@/lib/auth/routes";
 import {
   createOrganisationTx,
@@ -32,7 +32,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { getActor, getProfile } from "@/lib/data/applications";
 import { listInvitations } from "@/lib/data/invitations";
 import { getLocale } from "@/lib/i18n/server";
-import { EMPLOYER } from "@/lib/i18n/employer";
+import { AGENCY } from "@/lib/i18n/agency";
 import type { Locale } from "@/lib/i18n/locales";
 
 // Reads a session, so it is never prerendered.
@@ -40,25 +40,25 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  return { title: EMPLOYER.pageTitle[locale] };
+  return { title: AGENCY.pageTitle[locale] };
 }
 
 /**
- * The `org_role` enum in words, in every locale — see `EMPLOYER.roleLabel`
- * in `src/lib/i18n/employer.ts`. This bar used to print a hard-coded "HR"
+ * The `org_role` enum in words, in every locale — see `AGENCY.roleLabel`
+ * in `src/lib/i18n/agency.ts`. This bar used to print a hard-coded "HR"
  * beside the organisation name — for everyone, including the director who
  * had just created the organisation and whom `createOrganisationTx`
  * writes as `owner`. So the one place the product named your role was the
  * one place it was reliably wrong, and it read as a title assigned behind
  * your back rather than a fact about the account.
  */
-const ROLE_LABEL = EMPLOYER.roleLabel;
+const ROLE_LABEL = AGENCY.roleLabel;
 
 /**
  * Why the account carries that role, said where the role is shown — see
- * `EMPLOYER.roleReason`.
+ * `AGENCY.roleReason`.
  */
-const ROLE_REASON = EMPLOYER.roleReason;
+const ROLE_REASON = AGENCY.roleReason;
 
 /**
  * Fills `{token}` placeholders in a translated template — the interpolated
@@ -89,20 +89,20 @@ function invitationTimeline(
 ): string {
   switch (invite.status) {
     case "pending":
-      return fill(EMPLOYER.timelineInvitedExpires[locale], {
+      return fill(AGENCY.timelineInvitedExpires[locale], {
         created: formatDay(invite.createdAt),
         expires: formatDay(invite.expiresAt),
       });
     case "accepted":
-      return fill(EMPLOYER.timelineAccepted[locale], {
+      return fill(AGENCY.timelineAccepted[locale], {
         date: formatDay(invite.acceptedAt ?? invite.createdAt),
       });
     case "expired":
-      return fill(EMPLOYER.timelineExpired[locale], {
+      return fill(AGENCY.timelineExpired[locale], {
         date: formatDay(invite.expiresAt),
       });
     default:
-      return fill(EMPLOYER.timelineInvited[locale], {
+      return fill(AGENCY.timelineInvited[locale], {
         date: formatDay(invite.createdAt),
       });
   }
@@ -204,7 +204,7 @@ export default async function EmployerConsolePage() {
       const created = await createOrganisationTx(profile.id, orgName);
       // Straight back through the front door, so the roster below reads
       // the membership this just wrote rather than a stale `undefined`.
-      if (!("error" in created)) redirect("/employer");
+      if (!("error" in created)) redirect("/agency");
       // Kept, not swallowed. This branch used to drop the refusal on the
       // floor: a director whose registered name ran past `NAME_MAX`
       // signed up successfully, landed here, and was shown a blank
@@ -236,10 +236,10 @@ export default async function EmployerConsolePage() {
     return (
       <div className="min-h-dvh bg-bg">
         <AppBar
-          nav={[{ href: "/employer", label: EMPLOYER.navDashboard[locale] }]}
+          nav={[{ href: "/agency", label: AGENCY.navDashboard[locale] }]}
           name={profile.fullName}
           email={profile.email}
-          subtitle={EMPLOYER.pageTitle[locale]}
+          subtitle={AGENCY.pageTitle[locale]}
         />
         <main>
           <Shell className="py-12">
@@ -248,10 +248,10 @@ export default async function EmployerConsolePage() {
                   registered name of a licensed travel agency, which is a
                   fact to be matched against a register — "name your
                   organisation" invites a label the director makes up. */}
-              <PanelHeader label={EMPLOYER.nameOrgLabel[locale]} />
+              <PanelHeader label={AGENCY.nameOrgLabel[locale]} />
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  {EMPLOYER.nameOrgBody[locale]}
+                  {AGENCY.nameOrgBody[locale]}
                 </p>
                 {/* Why the name they already gave did not take. Said
                     here rather than as a toast: this render is the first
@@ -310,13 +310,13 @@ export default async function EmployerConsolePage() {
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[{ href: "/employer", label: EMPLOYER.navDashboard[locale] }]}
+        nav={[{ href: "/agency", label: AGENCY.navDashboard[locale] }]}
         name={profile.fullName}
         email={profile.email}
         subtitle={
           org
             ? `${org.name} · ${ROLE_LABEL[org.role][locale]}`
-            : EMPLOYER.pageTitle[locale]
+            : AGENCY.pageTitle[locale]
         }
       />
 
@@ -333,7 +333,7 @@ export default async function EmployerConsolePage() {
           <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
             <div className="min-w-0">
               <h1 className="t-h2">
-                {org?.name ?? EMPLOYER.yourOrganisationFallback[locale]}
+                {org?.name ?? AGENCY.yourOrganisationFallback[locale]}
               </h1>
               {/*
                 "0 of 0 seats in use" is a sentence made of two facts we
@@ -343,18 +343,18 @@ export default async function EmployerConsolePage() {
               */}
               <p className="t-muted mt-2">
                 {seats > 0
-                  ? fill(EMPLOYER.seatsInUse[locale], { used, seats })
+                  ? fill(AGENCY.seatsInUse[locale], { used, seats })
                   : fill(
                       (used === 1
-                        ? EMPLOYER.seatCountNotSetOne
-                        : EMPLOYER.seatCountNotSetOther)[locale],
+                        ? AGENCY.seatCountNotSetOne
+                        : AGENCY.seatCountNotSetOther)[locale],
                       { used }
                     )}
                 {pendingInvitations.length > 0 &&
                   fill(
                     (pendingInvitations.length === 1
-                      ? EMPLOYER.pendingSuffixOne
-                      : EMPLOYER.pendingSuffixOther)[locale],
+                      ? AGENCY.pendingSuffixOne
+                      : AGENCY.pendingSuffixOther)[locale],
                     { n: pendingInvitations.length }
                   )}
               </p>
@@ -372,7 +372,7 @@ export default async function EmployerConsolePage() {
                 />
               )}
             </div>
-            <InviteDialog />
+            <InviteDialog canInviteStaff={org.role === "owner"} />
           </div>
 
           {/*
@@ -390,12 +390,12 @@ export default async function EmployerConsolePage() {
             <div className="relative z-[1] flex items-start gap-4 p-6">
               <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
               <div className="min-w-0">
-                <p className="tag">{EMPLOYER.privacyTag[locale]}</p>
+                <p className="tag">{AGENCY.privacyTag[locale]}</p>
                 <p className="d-sm mt-2 text-ink">
-                  {EMPLOYER.privacyHeading[locale]}
+                  {AGENCY.privacyHeading[locale]}
                 </p>
                 <p className="t-muted mt-2 max-w-[74ch]">
-                  {EMPLOYER.privacyBody[locale]}
+                  {AGENCY.privacyBody[locale]}
                 </p>
               </div>
             </div>
@@ -410,11 +410,11 @@ export default async function EmployerConsolePage() {
               one card with ruled rows inside, not a stack of boxes. */}
           <Panel>
             <PanelHeader
-              label={EMPLOYER.yourPeopleLabel[locale]}
+              label={AGENCY.yourPeopleLabel[locale]}
               aside={
                 <Badge variant="brand">
                   <span className="num">{used}</span>
-                  {(used === 1 ? EMPLOYER.personWord : EMPLOYER.peopleWord)[locale]}
+                  {(used === 1 ? AGENCY.personWord : AGENCY.peopleWord)[locale]}
                 </Badge>
               }
             />
@@ -422,7 +422,7 @@ export default async function EmployerConsolePage() {
           {rows.length === 0 ? (
             <PanelBody>
               <p className="t-muted max-w-[62ch]">
-                {EMPLOYER.rosterEmpty[locale]}
+                {AGENCY.rosterEmpty[locale]}
               </p>
             </PanelBody>
           ) : (
@@ -452,10 +452,10 @@ export default async function EmployerConsolePage() {
                       <p className="t-body truncate">
                         {destination?.name ??
                           r.destinationIso?.toUpperCase() ??
-                          EMPLOYER.routeNotSet[locale]}
+                          AGENCY.routeNotSet[locale]}
                       </p>
                       <p className="special mt-1 truncate" title={r.visaName ?? ""}>
-                        {r.visaName ?? EMPLOYER.routeNotSet[locale]}
+                        {r.visaName ?? AGENCY.routeNotSet[locale]}
                       </p>
                     </div>
 
@@ -467,7 +467,7 @@ export default async function EmployerConsolePage() {
                         </span>
                       </div>
                       <p className="special mt-1">
-                        {fill(EMPLOYER.documentsVerified[locale], {
+                        {fill(AGENCY.documentsVerified[locale], {
                           verified: r.documentsVerified ?? 0,
                           total: r.documentsTotal ?? 0,
                         })}
@@ -489,11 +489,11 @@ export default async function EmployerConsolePage() {
               exist, the other is emails nobody has answered yet. */}
           <Panel className="mt-8">
             <PanelHeader
-              label={EMPLOYER.invitationsLabel[locale]}
+              label={AGENCY.invitationsLabel[locale]}
               aside={
                 <Badge variant="neutral">
                   <span className="num">{pendingInvitations.length}</span>
-                  {EMPLOYER.pendingWord[locale]}
+                  {AGENCY.pendingWord[locale]}
                 </Badge>
               }
             />
@@ -501,7 +501,7 @@ export default async function EmployerConsolePage() {
             {invitations.length === 0 ? (
               <PanelBody>
                 <p className="t-muted max-w-[62ch]">
-                  {EMPLOYER.invitationsEmpty[locale]}
+                  {AGENCY.invitationsEmpty[locale]}
                 </p>
               </PanelBody>
             ) : (
@@ -526,7 +526,7 @@ export default async function EmployerConsolePage() {
                         <p className="t-body truncate">
                           {destination?.name ??
                             invite.destinationIso?.toUpperCase() ??
-                            EMPLOYER.destinationNotSet[locale]}
+                            AGENCY.destinationNotSet[locale]}
                         </p>
                         <p className="special mt-1 truncate">
                           {invitationTimeline(invite, locale)}

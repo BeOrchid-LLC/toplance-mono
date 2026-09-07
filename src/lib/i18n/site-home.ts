@@ -417,17 +417,23 @@ export const SITE_HOME: {
     tw: "/ bosome",
     zu: "/ inyanga",
   },
+  /**
+   * "No applications included" is doing real work. A reader asked
+   * whether the base fee bought a bundle of applications, which is the
+   * natural reading of a monthly fee sitting above a per-unit rate. It
+   * does not: the first completed application is charged in full on top.
+   */
   perBusinessAccountCycle: {
-    en: "per business account, every cycle",
-    ha: "kowace asusun kasuwanci, kowane zagaye",
-    yo: "fún àkọọ́lẹ̀ òwò kọ̀ọ̀kan, ní àyíká-ìgbà kọ̀ọ̀kan",
-    ig: "kwa akaụntụ azụmahịa, kwa okirikiri",
-    fr: "par compte professionnel, à chaque cycle",
-    pt: "por conta empresarial, a cada ciclo",
-    sw: "kwa kila akaunti ya biashara, kila mzunguko",
-    ar: "لكل حساب تجاري، في كل دورة",
-    tw: "wɔ adwuma akontaabu biara so, berɛ biara",
-    zu: "nge-akhawunti yebhizinisi ngayinye, kumjikelezo ngamunye",
+    en: "per business account, every cycle — no applications included",
+    ha: "kowace asusun kasuwanci, kowane zagaye — babu aikace-aikacen da aka haɗa",
+    yo: "fún àkọọ́lẹ̀ òwò kọ̀ọ̀kan, ní àyíká-ìgbà kọ̀ọ̀kan — kò sí ìwé ìbéèrè kankan nínú rẹ̀",
+    ig: "kwa akaụntụ azụmahịa, kwa okirikiri — ọ dịghị arịrịọ ọ bụla so na ya",
+    fr: "par compte professionnel, à chaque cycle — aucune demande incluse",
+    pt: "por conta empresarial, a cada ciclo — sem pedidos incluídos",
+    sw: "kwa kila akaunti ya biashara, kila mzunguko — hakuna maombi yaliyojumuishwa",
+    ar: "لكل حساب تجاري، في كل دورة — لا يشمل أي طلبات",
+    tw: "wɔ adwuma akontaabu biara so, berɛ biara — mpaeɛ biara nka ho",
+    zu: "nge-akhawunti yebhizinisi ngayinye, kumjikelezo ngamunye — azifakiwe izicelo",
   },
   thenPerCompletedApplication: {
     en: "Then, per completed application",

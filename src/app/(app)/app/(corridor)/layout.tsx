@@ -2,7 +2,7 @@ import { CorridorHeader } from "@/components/app/corridor-header";
 import { Shell } from "@/components/shared/shell";
 import {
   getCorridorFor,
-  getOrCreateApplication,
+  getApplication,
 } from "@/lib/data/applications";
 
 /**
@@ -16,7 +16,7 @@ import {
 export default async function CorridorLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
 
   // Only fetched once intake has resolved one — before that there is
   // nothing to head the screen with, and these pages redirect to the

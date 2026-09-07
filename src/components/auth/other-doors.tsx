@@ -38,7 +38,7 @@ export type Door = {
  */
 export const SIGN_UP_DOORS: Door[] = [
   {
-    href: "/employer/sign-up",
+    href: "/agency/sign-up",
     icon: Briefcase,
     title: AUTH_DOORS.employerSignUp.title,
     body: AUTH_DOORS.employerSignUp.body,
@@ -55,11 +55,11 @@ export const SIGN_UP_DOORS: Door[] = [
  * The doors named from `/sign-in` — both sign-ins, because everybody
  * arriving here already has an account. Before this the only way across
  * was knowing the URL: the ops door was a footer entry and the employer
- * door was named only from `/employer/sign-up`.
+ * door was named only from `/agency/sign-up`.
  */
 export const SIGN_IN_DOORS: Door[] = [
   {
-    href: "/employer/sign-in",
+    href: "/agency/sign-in",
     icon: Briefcase,
     title: AUTH_DOORS.employerSignIn.title,
     body: AUTH_DOORS.employerSignIn.body,

@@ -17,16 +17,16 @@ type L = Record<Locale, string>;
  * A handful of strings carry `{placeholder}` tokens rather than being
  * interpolated with template literals, because the value has to survive
  * being chosen by locale first — see `fill` in
- * `src/app/employer/page.tsx`.
+ * `src/app/agency/page.tsx`.
  *
  * NEEDS NATIVE REVIEW before launch, like every non-English string in
  * this codebase translated in-house rather than supplied by the client.
  */
-export const EMPLOYER: {
+export const AGENCY: {
   pageTitle: L;
   navDashboard: L;
-  roleLabel: { owner: L; hr_admin: L };
-  roleReason: { owner: L; hr_admin: L };
+  roleLabel: { owner: L; reviewer: L };
+  roleReason: { owner: L; reviewer: L };
   nameOrgLabel: L;
   nameOrgBody: L;
   yourOrganisationFallback: L;
@@ -90,17 +90,17 @@ export const EMPLOYER: {
       tw: "Ɔwura",
       zu: "Umnikazi",
     },
-    hr_admin: {
-      en: "Administrator",
-      ha: "Mai kula",
-      yo: "Alábòójútó",
-      ig: "Onye nchịkwa",
-      fr: "Administrateur",
-      pt: "Administrador",
-      sw: "Msimamizi",
-      ar: "المشرف",
-      tw: "Sohwɛfoɔ",
-      zu: "Umlawuli",
+    reviewer: {
+      en: "Reviewer",
+      ha: "Mai dubawa",
+      yo: "Aṣàyẹ̀wò",
+      ig: "Onye nyocha",
+      fr: "Réviseur",
+      pt: "Revisor",
+      sw: "Mkaguzi",
+      ar: "المراجع",
+      tw: "Ɔhwɛfoɔ",
+      zu: "Umhloli",
     },
   },
   roleReason: {
@@ -116,17 +116,17 @@ export const EMPLOYER: {
       tw: "Wone ɔwura no ɛfiri sɛ wo na wobɔɔ akuo yi. Awuranom bɛtumi afrɛ nnipa, ahwɛ akaunti no so, na wɔahu obiara nkɔso.",
       zu: "Ungumnikazi ngoba nguwe owadala le nhlangano. Abanikazi bangamema abantu, baphathe i-akhawunti futhi babone inqubekelaphambili yawo wonke umuntu.",
     },
-    hr_admin: {
-      en: "You are an administrator because an owner invited you into this organisation. Administrators can invite people and see everyone's progress.",
-      ha: "Kai mai kula ne domin wani mai kamfani ne ya gayyace ka zuwa cikin wannan kamfani. Masu kula suna iya gayyatar mutane kuma su ga ci gaban kowa da kowa.",
-      yo: "Ìwọ ni alábòójútó nítorí onílé-iṣẹ́ kan ni ó pè ọ́ wọ àjọ yìí. Àwọn alábòójútó lè pe àwọn ènìyàn kí wọ́n sì rí ìtẹ̀síwájú gbogbo ènìyàn.",
-      ig: "Ị bụ onye nchịkwa n'ihi na onyenwe kpọrọ gị oku ka ị banye n'ụlọ ọrụ a. Ndị nchịkwa nwere ike ịkpọ ndị mmadụ oku ma hụ ọganihu onye ọ bụla.",
-      fr: "Vous êtes administrateur parce qu'un propriétaire vous a invité dans cette organisation. Les administrateurs peuvent inviter des personnes et voir la progression de chacun.",
-      pt: "É administrador porque um proprietário o convidou para esta organização. Os administradores podem convidar pessoas e ver o progresso de todos.",
-      sw: "Wewe ni msimamizi kwa sababu mmiliki alikualika kwenye shirika hili. Wasimamizi wanaweza kualika watu na kuona maendeleo ya kila mtu.",
-      ar: "أنت مسؤول لأن أحد المالكين دعاك إلى هذه المؤسسة. يمكن للمسؤولين دعوة الأشخاص ورؤية تقدم الجميع.",
-      tw: "Woyɛ sohwɛfoɔ ɛfiri sɛ ɔwura bi frɛɛ wo baa akuo yi mu. Asohwɛfoɔ bɛtumi afrɛ nnipa na wɔahu obiara nkɔso.",
-      zu: "Ungumlawuli ngoba umnikazi wakumema kule nhlangano. Abalawuli bangamema abantu futhi babone inqubekelaphambili yawo wonke umuntu.",
+    reviewer: {
+      en: "You are a reviewer because an owner invited you into this organisation. Reviewers check clients' documents, decide their applications and message them directly.",
+      ha: "Kai mai dubawa ne domin wani mai kamfani ne ya gayyace ka zuwa cikin wannan kamfani. Masu dubawa suna duba takardun abokan ciniki, su yanke shawara kan buƙatunsu, kuma su tuntube su kai tsaye.",
+      yo: "Ìwọ ni aṣàyẹ̀wò nítorí onílé-iṣẹ́ kan ni ó pè ọ́ wọ àjọ yìí. Àwọn aṣàyẹ̀wò máa ń yẹ àwọn ìwé oníbàárà wò, wọ́n ń pinnu ìbéèrè wọn, wọ́n sì ń bá wọn sọ̀rọ̀ tààrà.",
+      ig: "Ị bụ onye nyocha n'ihi na onyenwe kpọrọ gị oku ka ị banye n'ụlọ ọrụ a. Ndị nyocha na-enyocha akwụkwọ ndị ahịa, kpebie arịrịọ ha, ma zigara ha ozi ozugbo.",
+      fr: "Vous êtes réviseur parce qu'un propriétaire vous a invité dans cette organisation. Les réviseurs vérifient les documents des clients, décident de leurs demandes et leur écrivent directement.",
+      pt: "É revisor porque um proprietário o convidou para esta organização. Os revisores verificam os documentos dos clientes, decidem os seus pedidos e falam com eles diretamente.",
+      sw: "Wewe ni mkaguzi kwa sababu mmiliki alikualika kwenye shirika hili. Wakaguzi hukagua nyaraka za wateja, huamua maombi yao na huwasiliana nao moja kwa moja.",
+      ar: "أنت مراجع لأن أحد المالكين دعاك إلى هذه المؤسسة. يقوم المراجعون بفحص مستندات العملاء والبت في طلباتهم ومراسلتهم مباشرة.",
+      tw: "Woyɛ ɔhwɛfoɔ ɛfiri sɛ ɔwura bi frɛɛ wo baa akuo yi mu. Ahwɛfoɔ hwɛ adetɔfoɔ nkrataa, wɔsi wɔn abisadeɛ ho gyinae, na wɔne wɔn di nkitaho tee.",
+      zu: "Ungumhloli ngoba umnikazi wakumema kule nhlangano. Abahloli bahlola amadokhumenti amakhasimende, banqume izicelo zawo futhi baxhumane nawo ngqo.",
     },
   },
   nameOrgLabel: {

@@ -14,7 +14,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   completionOf,
   getDocuments,
-  getOrCreateApplication,
+  getApplication,
   type DocumentRow as Doc,
 } from "@/lib/data/applications";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -35,7 +35,7 @@ export default async function DocumentsPage() {
 
   const locale = await getLocale();
   const t = DOCUMENTS;
-  const application = await getOrCreateApplication();
+  const application = await getApplication();
   if (!application) redirect("/sign-in?next=/app/documents");
   if (!application.intakeComplete) redirect("/app/agent");
 
@@ -104,6 +104,12 @@ export default async function DocumentsPage() {
                 the one thing entirely within the traveller's control at
                 the moment they take the picture. */}
             <p className="t-muted mt-3">{UPLOAD_GUIDANCE}</p>
+            {/* Mandatory, not a nicety. Decision 2 made the pre-check
+                unconditional — there is no setting under which a
+                traveller's file is not read by a machine — so saying so
+                is what makes it honest, and it is said where they upload
+                rather than buried in terms. */}
+            <p className="t-muted mt-3">{t.precheckDisclosure[locale]}</p>
           </div>
           <CompletionRing pct={completion.pct} size={120} />
         </div>

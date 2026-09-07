@@ -15,6 +15,13 @@ export const MESSAGES: {
   title: L;
   panelLabel: L;
   empty: L;
+  /**
+   * Shown while nobody at the agency has claimed the case. 4.10: an
+   * unassigned thread goes to the agency as a whole, and the traveller
+   * is told as much — a shared inbox is the honest model for a small
+   * agency, and silence from one reads as being ignored by a person.
+   */
+  unclaimedNotice: L;
   senderStaff: L;
   senderTraveler: L;
 } = {
@@ -53,6 +60,18 @@ export const MESSAGES: {
     ar: "لا شيء بعد. اكتب الرسالة الأولى أدناه.",
     tw: "Hwee nnya nsi. Twerɛ nkrasɛm a edi kan wɔ ase.",
     zu: "Akukho lutho okwamanje. Bhala umlayezo wokuqala ngezansi.",
+  },
+  unclaimedNotice: {
+    en: "Nobody has picked up your case yet, so your message goes to your agency's whole team. Someone will reply.",
+    ha: "Har yanzu babu wanda ya karɓi shari'arka, don haka saƙonka zai je ga dukan ƙungiyar hukumarka. Wani zai amsa.",
+    yo: "Kò tíì sí ẹnìkan tí ó gba ọ̀rọ̀ rẹ, nítorí náà ìránṣẹ́ rẹ yóò lọ sí gbogbo ẹgbẹ́ ilé-iṣẹ́ rẹ. Ẹnìkan yóò dáhùn.",
+    ig: "Ọ dịbeghị onye weere okwu gị, ya mere ozi gị na-aga na ndị otu ụlọ ọrụ gị niile. Otu onye ga-aza.",
+    fr: "Personne n'a encore pris votre dossier en charge, votre message va donc à toute l'équipe de votre agence. Quelqu'un vous répondra.",
+    pt: "Ainda ninguém assumiu o seu processo, por isso a sua mensagem vai para toda a equipa da sua agência. Alguém irá responder.",
+    sw: "Bado hakuna aliyechukua kesi yako, kwa hivyo ujumbe wako unaenda kwa timu nzima ya wakala wako. Mtu atajibu.",
+    ar: "لم يتسلّم أحد ملفك بعد، لذا تصل رسالتك إلى فريق وكالتك بالكامل. سيرد عليك أحدهم.",
+    tw: "Obiara nnyaa w'asɛm no nnya, enti wo nkrasɛm no kɔ w'ahyehyɛdeɛ no kuo no nyinaa hɔ. Obi bɛbua.",
+    zu: "Akekho osethathe icala lakho, ngakho umyalezo wakho uya kulo lonke iqembu lenkampani yakho. Kukhona ozophendula.",
   },
   senderStaff: {
     en: "Toplance team",

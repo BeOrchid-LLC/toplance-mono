@@ -18,10 +18,7 @@ import {
   canWriteIntakeAnswers,
   canWriteMessages,
   canWriteVisaExpiry,
-  isStaff,
 } from "@/lib/auth/policy";
-import { requireStaffAction } from "@/lib/auth/staff-gate";
-import { audit } from "@/lib/audit";
 import { aiEnabled } from "@/lib/ai/models";
 import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
 import { MAX_UPLOAD_LABEL, validateUpload } from "@/lib/domain/uploads";
@@ -51,7 +48,7 @@ import {
   appUrl,
   markNotificationsRead as markOwnNotificationsRead,
   notify,
-  notifyStaff,
+  notifyAgency,
 } from "@/lib/notifications/notify";
 
 /**
@@ -303,7 +300,7 @@ async function billIfComplete(applicationId: string, actorId: string) {
  * after the pre-check, so a set of documents that is about to be flagged
  * has already been flagged and the checklist is not, in fact, complete.
  *
- * Best-effort like everything else on this path. `notifyStaff` never
+ * Best-effort like everything else on this path. `notifyAgency` never
  * throws on its own, but `markChecklistCompleteIfDone` writes, and a
  * traveller watching an upload spinner must not be told their passport
  * failed because a notification could not be sent.
@@ -320,11 +317,10 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
       .limit(1);
 
     if (app) {
-      await notifyStaff(
-        "checklist_complete",
-        { caseRef: app.caseRef, url: appUrl(`/ops/cases/${applicationId}`) },
-        applicationId
-      );
+      await notifyAgency(applicationId, "checklist_complete", {
+        caseRef: app.caseRef,
+        url: appUrl("/agency"),
+      });
     }
 
     await track("toplance.checklist_completed", { applicationId }, actorId);
@@ -389,19 +385,14 @@ export async function documentVerdict(applicationId: string, docKey: string) {
 
 export async function documentUrl(applicationId: string, docKey: string) {
   try {
-    const { actor } = await requireApplicationAccess(applicationId, canReadDocuments);
-
-    // Staff read every traveller's documents, which is exactly what the
-    // ops console asks a second factor for. This is a POST endpoint with
-    // a public id — a staff session that never enrolled one could mint
-    // signed passport-scan URLs here without ever loading a gated page.
-    // A traveller reading their own file is untouched.
-    if (isStaff(actor)) {
-      const gate = await requireStaffAction(actor);
-      // Re-wrapped rather than returned as-is so this stays one union of
-      // object literals — the callers read `result.error` directly.
-      if ("error" in gate) return { error: gate.error };
-    }
+    // The second-factor gate that used to sit here guarded a staff
+    // branch: this is a POST endpoint with a public id, so a staff
+    // session that never enrolled one could mint signed passport-scan
+    // URLs without loading a gated page. Under the v1.3 tenancy
+    // `canReadDocuments` has no staff branch left to guard — the guard
+    // above refuses them outright, and only the traveller and their own
+    // agency reach this line.
+    await requireApplicationAccess(applicationId, canReadDocuments);
 
     const [doc] = await db
       .select({ storagePath: documents.storagePath })
@@ -416,13 +407,11 @@ export async function documentUrl(applicationId: string, docKey: string) {
 
     if (!doc?.storagePath) return { error: "Nothing has been uploaded yet." };
 
-    // Only a staff view is logged — the promise this makes true is
-    // "staff access to a traveller's document is on the record", not a
-    // log of the traveller looking at their own passport scan.
-    if (isStaff(actor)) {
-      await audit(actor.userId, "document.viewed", "document", applicationId, { docKey });
-    }
-
+    // Nothing is logged here any more. The entry this wrote existed to
+    // make "staff access to a traveller's document is on the record"
+    // true; staff no longer have access to record. Auditing an agency
+    // reviewer reading their own client's file is a different promise to
+    // a different audience, and is not made yet.
     return { url: await signedDocumentUrl(doc.storagePath) };
   } catch (error) {
     const message = toActionError(error);
@@ -513,11 +502,10 @@ export async function submitApplication(applicationId: string) {
         .limit(1);
 
       if (app) {
-        await notifyStaff(
-          "application_submitted",
-          { caseRef: app.caseRef, url: appUrl(`/ops/cases/${applicationId}`) },
-          applicationId
-        );
+        await notifyAgency(applicationId, "application_submitted", {
+          caseRef: app.caseRef,
+          url: appUrl("/agency"),
+        });
       }
 
       revalidatePath("/app", "layout");
@@ -540,7 +528,7 @@ export async function submitApplication(applicationId: string) {
  * The counterpart is notified, not the sender: staff sending means the
  * traveller hears about it; a traveller sending goes to whoever owns the
  * case (Task 6 gave `assigneeId` a writer), or every reviewer when nobody
- * has claimed it yet — the same "assignee if set, else notifyStaff"
+ * has claimed it yet — the same "assignee if set, else the agency"
  * routing `submitApplication` uses for the initial submission.
  */
 export async function sendMessage(formData: FormData) {
@@ -586,18 +574,18 @@ export async function sendMessage(formData: FormData) {
       const payload = {
         senderName: sender?.fullName || "Unnamed",
         preview,
-        url: appUrl(`/ops/cases/${applicationId}`),
+        url: appUrl("/agency"),
       } as const;
 
       if (row?.assigneeId) {
         await notify(row.assigneeId, "message_received", payload, applicationId);
       } else {
-        await notifyStaff("message_received", payload, applicationId);
+        await notifyAgency(applicationId, "message_received", payload);
       }
     }
 
-    // The traveller's messages page and the ops case screen both read
-    // this thread.
+    // The traveller's messages page reads this thread. The agency's own
+    // case screen will too, once it exists.
     revalidatePath("/app", "layout");
     revalidatePath("/ops", "layout");
     return { ok: true };

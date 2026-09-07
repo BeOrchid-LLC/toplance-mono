@@ -20,7 +20,7 @@ describe("UPLOAD_ACTIONS", () => {
   const entries = Object.entries(UPLOAD_ACTIONS);
 
   it("says something in every language", () => {
-    for (const [key] of entries) {
+    for (const [key, message] of entries) {
       for (const { code } of LOCALES) {
         const text = message[code];
         expect(text, `${key}.${code}`).toBeTypeOf("string");

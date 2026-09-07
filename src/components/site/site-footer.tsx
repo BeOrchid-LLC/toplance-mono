@@ -28,8 +28,8 @@ function columnsFor(locale: Locale) {
     {
       heading: SITE_FOOTER.columnAgencies[locale],
       links: [
-        { href: "/employer/sign-up", label: SITE_CHROME.runYourFirstCase[locale] },
-        { href: "/employer/sign-in", label: SITE_CHROME.agencySignIn[locale] },
+        { href: "/agency/sign-up", label: SITE_CHROME.runYourFirstCase[locale] },
+        { href: "/agency/sign-in", label: SITE_CHROME.agencySignIn[locale] },
         { href: "/#pricing", label: SITE_FOOTER.talkToSales[locale] },
         { href: "/#where", label: SITE_FOOTER.requestARoute[locale] },
       ],

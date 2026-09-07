@@ -92,7 +92,7 @@ export function AuthForm(props: AuthFormProps) {
     props.next ??
     (isInternalPath(requested)
       ? requested
-      : audience === "employer" ? "/employer" : audience === "operations" ? "/ops" : "/go");
+      : audience === "employer" ? "/agency" : audience === "operations" ? "/ops" : "/go");
 
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
@@ -684,7 +684,7 @@ export function AuthForm(props: AuthFormProps) {
               <>
                 Already have an account?{" "}
                 <Link
-                  href={audience === "employer" ? "/employer/sign-in" : "/sign-in"}
+                  href={audience === "employer" ? "/agency/sign-in" : "/sign-in"}
                   className="font-semibold text-brand-text hover:underline"
                 >
                   Sign in
@@ -694,7 +694,7 @@ export function AuthForm(props: AuthFormProps) {
               <>
                 New to Toplance?{" "}
                 <Link
-                  href={audience === "employer" ? "/employer/sign-up" : "/sign-up"}
+                  href={audience === "employer" ? "/agency/sign-up" : "/sign-up"}
                   className="font-semibold text-brand-text hover:underline"
                 >
                   Create an account

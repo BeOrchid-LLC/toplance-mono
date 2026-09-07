@@ -113,6 +113,62 @@
       "when": 1788600990623,
       "tag": "0015_woozy_luminals",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788696210216,
+      "tag": "0016_colossal_cargill",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788697245593,
+      "tag": "0017_cool_sentry",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788697894960,
+      "tag": "0018_fair_marvel_apes",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1788699352499,
+      "tag": "0019_open_madame_web",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788699856541,
+      "tag": "0020_many_the_anarchist",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788700965346,
+      "tag": "0021_outgoing_devos",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788701883133,
+      "tag": "0022_talented_pet_avengers",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788702217541,
+      "tag": "0023_black_angel",
+      "breakpoints": true
     }
   ]
 }

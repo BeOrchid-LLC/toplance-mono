@@ -77,7 +77,7 @@ const ROSTER = [
 ];
 
 /** PLACEHOLDER, per `SEAT_PLAN`'s note below — not copy, so not translated. */
-const SEAT_PLAN_HREF = "/employer/sign-up";
+const SEAT_PLAN_HREF = "/agency/sign-up";
 
 export default async function TravellersPage() {
   const locale = await getLocale();
@@ -247,12 +247,12 @@ export default async function TravellersPage() {
             </ul>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/employer/sign-in">
+                <Link href="/agency/sign-in">
                   <Briefcase /> {SITE_TRAVELERS.orgsSponsorSeatsCta[locale]}
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
-                <Link href="/employer/sign-in">
+                <Link href="/agency/sign-in">
                   {SITE_CHROME.employerSignIn[locale]} <ArrowRight />
                 </Link>
               </Button>

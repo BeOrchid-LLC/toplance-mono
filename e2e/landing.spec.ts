@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
  * The two landing pages, and the boundary between them.
  *
  * `/` used to address the traveller while its own call to action led to
- * `/employer/sign-up` — a door travellers cannot open, since they became
+ * `/agency/sign-up` — a door travellers cannot open, since they became
  * invite-only. The fix turned `/` over to the organisations who actually
  * buy, and moved the traveller copy, unchanged, to `/travelers` (the
  * client asked for the B2B to be expanded and the B2C kept).
@@ -84,6 +84,22 @@ test("the pre-rename traveller URL still lands on the page", async ({ page }) =>
 
   await expect(page).toHaveURL(/\/travelers$/);
   expect(response?.status()).toBe(200);
+});
+
+/**
+ * `/employer` was the agency console until the v1.3 correction made the
+ * agency the tenant. Both doors are printed in invitation emails already
+ * sent, and a live invitation lasts 30 days, so the old paths answer
+ * permanently rather than 404ing.
+ */
+test("the pre-rename console URLs still land on the console doors", async ({ page }) => {
+  const signIn = await page.goto("/employer/sign-in");
+  await expect(page).toHaveURL(/\/agency\/sign-in$/);
+  expect(signIn?.status()).toBe(200);
+
+  const signUp = await page.goto("/employer/sign-up");
+  await expect(page).toHaveURL(/\/agency\/sign-up$/);
+  expect(signUp?.status()).toBe(200);
 });
 
 test("the traveller page survives, and the chrome still reaches it", async ({

@@ -23,7 +23,7 @@ const NAME_MAX = ORG_NAME_MAX;
  * brand-new session navigates the page out from under it, cancelling the
  * write. That used to be invisible: `getProfile` provisioned a row for
  * anyone holding a session. Since travellers became invite-only it does
- * not, so the employer arrived at `/employer`, was found to have no
+ * not, so the employer arrived at `/agency`, was found to have no
  * profile, and was sent to `/go` to be told they had no account —
  * moments after creating one.
  *
@@ -35,7 +35,7 @@ const NAME_MAX = ORG_NAME_MAX;
  * cannot become a way around the invitation.
  *
  * `onConflictDoNothing`, so a traveller or a staff account that opens
- * `/employer` is left exactly as it was rather than quietly becoming an
+ * `/agency` is left exactly as it was rather than quietly becoming an
  * employer. `true` means a row exists now, not that this call wrote it.
  */
 export async function provisionEmployerProfile(
@@ -70,7 +70,7 @@ export async function provisionEmployerProfile(
  * just wrote and refuses.
  *
  * Decides nothing about who is signed in. Its caller, `createOrganisation`
- * in `@/app/employer/actions.ts`, resolves `userId` from the session.
+ * in `@/app/agency/actions.ts`, resolves `userId` from the session.
  */
 export async function createOrganisationTx(
   userId: string,
@@ -143,4 +143,31 @@ export async function createOrganisationTx(
 
     return { ok: true, orgId: org.id };
   });
+}
+
+/**
+ * Whether this person is an owner of this agency.
+ *
+ * §1 gives an agency owner everything a reviewer can do plus staff
+ * invitations and billing, so this is the check that separates the two.
+ * A reviewer able to invite colleagues is the quiet kind of privilege
+ * escalation: nothing looks broken, the agency simply grows people
+ * nobody senior approved.
+ *
+ * Scoped to one agency on purpose. Seniority does not travel between
+ * tenants — an owner of agency A is nothing at agency B.
+ *
+ * Not in `policy.ts` because that file is pure and `Actor` carries only
+ * the ids of the agencies somebody belongs to, not their rank inside
+ * each. Widening `Actor` for one caller would put a query on the path of
+ * every access decision in the product.
+ */
+export async function isAgencyOwner(userId: string, orgId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ role: orgMembers.role })
+    .from(orgMembers)
+    .where(and(eq(orgMembers.userId, userId), eq(orgMembers.orgId, orgId)))
+    .limit(1);
+
+  return row?.role === "owner";
 }

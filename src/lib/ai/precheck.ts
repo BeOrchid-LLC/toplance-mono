@@ -15,6 +15,20 @@ const SUPPORTED_PDF_TYPE = "application/pdf";
 
 const precheckSchema = z.object({
   verdict: z.enum(["pass", "flag"]),
+  /**
+   * The refusal as a class, from the same fixed list the schema's
+   * `flag_reason` enum holds. Required alongside the sentence because
+   * the sentence is the only thing anyone outside the agency can debug
+   * from since decision 5, and prose cannot be aggregated or compared.
+   */
+  reasonCode: z.enum([
+    "unreadable",
+    "expired",
+    "wrong_document",
+    "incomplete",
+    "mismatch",
+    "other",
+  ]),
   reason: z.string(),
   notes: z.array(z.string()),
 });
@@ -66,7 +80,9 @@ Check:
 (b) it is legible — not blurred, truncated, or too dark to read,
 (c) it is not an obviously wrong file (a selfie, a blank page, an unrelated screenshot).
 
-When unsure, PASS — a human reviews everything regardless of your verdict. Write \`reason\` as one plain sentence addressed to the traveler saying what to re-photograph; it is only shown to them when you flag. \`notes\` is for anything else worth a reviewer's attention.`;
+When unsure, PASS — a human reviews everything regardless of your verdict. Write \`reason\` as one plain sentence addressed to the traveler saying what to re-photograph; it is only shown to them when you flag. \`notes\` is for anything else worth a reviewer's attention.
+
+Set \`reasonCode\` to the class of problem, always, even when you pass — on a pass it is ignored. Use \`unreadable\` when the file is fine but the capture is not (blurry, dark, cropped, glare), \`expired\` when the document is out of date, \`wrong_document\` when they uploaded something else entirely, \`incomplete\` when it is the right document with pages or fields missing, \`mismatch\` when the details disagree with what they told us, and \`other\` only when none of those is honest. Nobody outside the agency can open the file, so this code is what a support conversation has to work from.`;
 }
 
 /**
@@ -131,7 +147,7 @@ export async function precheckDocument({
       output: Output.object({ schema: precheckSchema }),
     });
 
-    const { verdict, reason, notes } = result.output;
+    const { verdict, reasonCode, reason, notes } = result.output;
 
     const applied = await applyPrecheckTx({
       applicationId,
@@ -139,7 +155,8 @@ export async function precheckDocument({
       storagePath,
       verdict,
       reason,
-      raw: { verdict, reason, notes },
+      reasonCode,
+      raw: { verdict, reasonCode, reason, notes },
     });
 
     // Only a flag that actually landed is worth telling the traveller

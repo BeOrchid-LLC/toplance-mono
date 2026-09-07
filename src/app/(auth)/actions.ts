@@ -160,7 +160,7 @@ export async function checkInvitedEmail(
  * exists, which reads as a contradiction and is not one. It is the
  * difference between a role and a membership: `createOrganisationTx`
  * writes the membership when they name their organisation on
- * `/employer`, and until then an `org_member` with no row in
+ * `/agency`, and until then an `org_member` with no row in
  * `org_members` sees no roster and — the point — cannot reach `/app`.
  * Writing `traveler` here and flipping it there left a window in which
  * an employer who never finished was an org-less traveller with the

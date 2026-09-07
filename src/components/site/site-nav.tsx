@@ -220,7 +220,7 @@ export function SiteNav() {
               action at all. Both landing pages sell the same seat, so
               both send here. */}
           <Button asChild size="sm">
-            <Link href="/employer/sign-up">{t(HERO.ctaShort)}</Link>
+            <Link href="/agency/sign-up">{t(HERO.ctaShort)}</Link>
           </Button>
 
           {/* The menu, and the reason this file was reopened: below `lg`

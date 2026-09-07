@@ -12,6 +12,7 @@ import { and, eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, documents, organisations, profiles } = await import(
     "@/lib/db/schema"
   );
@@ -19,10 +20,15 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
 
   const TRAVELLER = "test_review_traveller";
   const REVIEWER = "test_review_reviewer";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0012";
+
   let applicationId = "";
   let orgId: string | null = null;
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db.insert(profiles).values({
       id: TRAVELLER,
       email: "review@test.invalid",
@@ -37,7 +43,7 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, intakeComplete: true })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, intakeComplete: true })
       .returning({ id: applications.id });
     applicationId = app.id;
 
@@ -107,6 +113,7 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
     const result = await reviewDocumentTx(applicationId, "passport", {
       verdict: "flagged",
       reason: "The photo page is cut off.",
+      reasonCode: "unreadable",
     }, REVIEWER);
 
     // The two fields `reviewDocument` needs to tell the traveller their
@@ -129,6 +136,7 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
     const result = await reviewDocumentTx(applicationId, "passport", {
       verdict: "flagged",
       reason: "   ",
+      reasonCode: "unreadable",
     }, REVIEWER);
 
     expect(result).toHaveProperty("error");
@@ -180,6 +188,7 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
     await reviewDocumentTx(applicationId, "passport", {
       verdict: "flagged",
       reason: "Blurry scan.",
+      reasonCode: "unreadable",
     }, REVIEWER);
     const result = await reviewDocumentTx(applicationId, "passport", {
       verdict: "verified",
@@ -249,6 +258,7 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
     const third = await reviewDocumentTx(applicationId, "funds", {
       verdict: "flagged",
       reason: "Second look — the statement is unreadable.",
+      reasonCode: "unreadable",
     }, REVIEWER);
     expect(third).toMatchObject({ ok: true, becameBillable: false });
 
@@ -257,4 +267,55 @@ describe.skipIf(!process.env.DATABASE_URL)("reviewDocumentTx", async () => {
     }, REVIEWER);
     expect(fourth).toMatchObject({ ok: true, becameBillable: false });
   });
+
+  it("records a coded class beside the sentence the traveller reads", async () => {
+    // Decision 5 of 6 September removed BeOrchid's every path to a
+    // document, so support debugs from audit metadata alone — and the
+    // flag reason is the whole of it. Free text from a model cannot be
+    // aggregated, compared, or trusted to mean the same thing twice, so
+    // the flag now also carries a class from a fixed list.
+    const result = await reviewDocumentTx(
+      applicationId,
+      "passport",
+      {
+        verdict: "flagged",
+        reason: "The photo page is too dark to read.",
+        reasonCode: "unreadable",
+      },
+      REVIEWER
+    );
+
+    expect("error" in result).toBe(false);
+
+    const [row] = await db
+      .select({ reason: documents.reason, reasonCode: documents.reasonCode })
+      .from(documents)
+      .where(
+        and(eq(documents.applicationId, applicationId), eq(documents.docKey, "passport"))
+      );
+
+    expect(row.reasonCode).toBe("unreadable");
+    expect(row.reason).toBe("The photo page is too dark to read.");
+  });
+
+  it("clears the class along with the reason when a flag is overturned", async () => {
+    await reviewDocumentTx(
+      applicationId,
+      "passport",
+      { verdict: "flagged", reason: "Too dark.", reasonCode: "unreadable" },
+      REVIEWER
+    );
+    await reviewDocumentTx(applicationId, "passport", { verdict: "verified" }, REVIEWER);
+
+    const [row] = await db
+      .select({ reason: documents.reason, reasonCode: documents.reasonCode })
+      .from(documents)
+      .where(
+        and(eq(documents.applicationId, applicationId), eq(documents.docKey, "passport"))
+      );
+
+    expect(row.reason).toBeNull();
+    expect(row.reasonCode).toBeNull();
+  });
+
 });

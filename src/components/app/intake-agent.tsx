@@ -429,7 +429,7 @@ function LiveIntake({
         !done && current ? (
           <>
             <Chips
-              chips={resolveChips(current, { fullName })}
+              chips={resolveChips(current, { fullName, answers })}
               locale={locale}
               // Typing and speaking are two separate conversations with
               // two separate models. Letting both run would put two
@@ -558,6 +558,13 @@ function ScriptedIntake({
         });
         return;
       }
+      // The gate, said at selection. Without it a traveller holding an
+      // uncovered passport answers every remaining question and meets an
+      // empty checklist with no explanation.
+      if ("unservedNationality" in result) {
+        toast.info(t(INTAKE_UI.toastUnservedNationality), { duration: 10_000 });
+      }
+
       setConfirmed(result.complete);
       // The corridor header lives in the layout above this screen and
       // is built by the same write, so the final answer refreshes it.
@@ -646,7 +653,7 @@ function ScriptedIntake({
         !done && current ? (
           <>
             <Chips
-              chips={resolveChips(current, { fullName })}
+              chips={resolveChips(current, { fullName, answers })}
               locale={locale}
               disabled={pending}
               // The canonical label, not the translated one: with no

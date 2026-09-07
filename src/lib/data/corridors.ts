@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, count, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -468,4 +468,35 @@ export async function checklistChangesFrom(
   }
 
   return changes;
+}
+
+/**
+ * The conditional requirements on a corridor that nobody has written a
+ * rule for.
+ *
+ * These never reach a traveller's checklist — 4.8 hides them, because
+ * showing a traveller "only if it applies to you" is asking them to do
+ * the job this product exists to do. Hiding something without saying so
+ * is worse than the hedge, though: an agency would hand a client a
+ * checklist quietly missing a document. So the gap surfaces here, on the
+ * agency side, where somebody can chase it.
+ *
+ * Since decision 1 the chasing goes to BeOrchid — route rules are
+ * curated centrally, so an agency reads this list and asks, rather than
+ * writing the rule itself.
+ */
+export async function corridorCoverageGaps(
+  corridorId: string
+): Promise<{ docKey: string; name: string }[]> {
+  return db
+    .select({ docKey: corridorRequirements.docKey, name: corridorRequirements.name })
+    .from(corridorRequirements)
+    .where(
+      and(
+        eq(corridorRequirements.corridorId, corridorId),
+        eq(corridorRequirements.isRequired, false),
+        isNull(corridorRequirements.appliesWhen)
+      )
+    )
+    .orderBy(corridorRequirements.sortOrder);
 }

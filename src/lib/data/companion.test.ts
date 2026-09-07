@@ -10,15 +10,21 @@ import { and, eq } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("companion data", async () => {
   const { db } = await import("@/lib/db/client");
+  const { seedTestAgency } = await import("@/lib/db/test-agency");
   const { applications, companionUpdates, profiles } = await import("@/lib/db/schema");
   const { getCompanionUpdate, upsertCompanionUpdate, isStale } = await import(
     "@/lib/data/companion"
   );
 
   const TRAVELLER = "test_companion_traveller";
+
+  /** Every case belongs to an agency since v1.3. */
+  const TEST_AGENCY = "00000000-0000-4000-8000-0000000c0005";
+
   let applicationId = "";
 
   beforeEach(async () => {
+    await seedTestAgency(TEST_AGENCY);
     await db.insert(profiles).values({
       id: TRAVELLER,
       email: "companion@test.invalid",
@@ -27,7 +33,7 @@ describe.skipIf(!process.env.DATABASE_URL)("companion data", async () => {
 
     const [app] = await db
       .insert(applications)
-      .values({ travelerId: TRAVELLER, intakeComplete: true, status: "approved" })
+      .values({ orgId: TEST_AGENCY, travelerId: TRAVELLER, intakeComplete: true, status: "approved" })
       .returning({ id: applications.id });
     applicationId = app.id;
   });

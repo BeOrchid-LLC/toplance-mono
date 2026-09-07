@@ -14,9 +14,8 @@ import { eq, inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
   const { db } = await import("@/lib/db/client");
-  const { applications, invitations, organisations, profiles } = await import(
-    "@/lib/db/schema"
-  );
+  const { applications, invitations, orgMembers, organisations, profiles } =
+    await import("@/lib/db/schema");
   const {
     acceptInvitationTx,
     checkInvitedAddress,
@@ -54,16 +53,21 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
   }
 
   afterEach(async () => {
-    if (createdOrgIds.length) {
-      await db.delete(organisations).where(inArray(organisations.id, createdOrgIds));
-      createdOrgIds.length = 0;
-    }
+    // Profiles first, and the order is load-bearing since v1.3:
+    // `applications.org_id` is `restrict`, so deleting an organisation
+    // while one of its cases still exists throws — and a throw here
+    // aborts the rest of the cleanup, leaving rows that break the next
+    // run's inserts.
     if (createdProfileIds.length) {
       // Cascades to org_members and applications for these profiles.
       // invitations.invitedBy / acceptedBy are `set null` on delete, not
       // cascaded — the invitation row itself is only removed with its org.
       await db.delete(profiles).where(inArray(profiles.id, createdProfileIds));
       createdProfileIds.length = 0;
+    }
+    if (createdOrgIds.length) {
+      await db.delete(organisations).where(inArray(organisations.id, createdOrgIds));
+      createdOrgIds.length = 0;
     }
   });
 
@@ -225,6 +229,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(preview).toEqual({
         orgName: "Acme Logistics Ltd",
         fullName: "Ada Lovelace",
+        kind: "client",
         destinationIso: "gb",
         purpose: "work",
         status: "pending",
@@ -573,7 +578,12 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(stored.acceptedAt).not.toBeNull();
     });
 
-    it("attaches the org when the traveller's application already exists", async () => {
+    // Re-accepting an invitation from the agency the traveller is
+    // already with. There is no longer an agency-less application to
+    // attach — `org_id` is `not null` — so what this proves is that a
+    // second acceptance from the same agency is idempotent rather than a
+    // refusal.
+    it("accepts again when the traveller is already with this agency", async () => {
       const orgId = await makeOrg("Acme Logistics Ltd");
       const inviterId = "test_accept_inviter_2";
       await makeProfile(inviterId, { role: "org_member" });
@@ -581,7 +591,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
 
       const travelerId = "test_accept_traveller_2";
       await makeProfile(travelerId, { email: "has-app-already@example.com" });
-      await db.insert(applications).values({ travelerId });
+      await db.insert(applications).values({ travelerId, orgId });
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({ ok: true, orgId });
@@ -676,7 +686,7 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(app.orgId).toBe(orgId);
     });
 
-    it("refuses when the traveller is already sponsored by a different organisation", async () => {
+    it("refuses when the traveller is already with a different agency", async () => {
       const orgId = await makeOrg("Acme Logistics Ltd");
       const otherOrgId = await makeOrg("Other Co");
       const inviterId = "test_accept_inviter_7";
@@ -689,7 +699,8 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
 
       const result = await acceptInvitationTx(invitation.token, travelerId);
       expect(result).toEqual({
-        error: "This account is already sponsored by another organisation.",
+        error:
+          "You are already working with another agency. Ask them to contact us to move your case.",
       });
 
       const app = await applicationOf(travelerId);
@@ -760,4 +771,117 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       expect(result).toEqual({ ok: true, orgId });
     });
   });
+
+  /**
+   * One table carries both invitations an agency sends: to a client, and
+   * to a colleague. One token format, one accept page, one expiry
+   * policy, one revoke button — a second table would duplicate all four
+   * for the sake of one column.
+   */
+  describe("acceptInvitationTx — staff invitations", () => {
+    async function staffInvite(orgId: string, inviterId: string, email: string) {
+      const created = await createInvitation(orgId, inviterId, {
+        email,
+        kind: "staff",
+      });
+      if (!("ok" in created)) throw new Error("unreachable");
+      return created.invitation;
+    }
+
+    it("makes the invitee a reviewer at the agency", async () => {
+      const orgId = await makeOrg("Staff Invite Agency");
+      const inviterId = "test_staff_inviter";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await staffInvite(orgId, inviterId, "colleague@test.invalid");
+
+      const userId = "test_staff_invitee";
+      await makeProfile(userId, { email: "colleague@test.invalid" });
+
+      expect(await acceptInvitationTx(invitation.token, userId)).toEqual({
+        ok: true,
+        orgId,
+      });
+
+      const memberships = await db
+        .select({ orgId: orgMembers.orgId, role: orgMembers.role })
+        .from(orgMembers)
+        .where(eq(orgMembers.userId, userId));
+      expect(memberships).toEqual([{ orgId, role: "reviewer" }]);
+    });
+
+    it("opens no application for a colleague", async () => {
+      // The difference that makes this worth a discriminator rather than
+      // a second table: a client invite attaches a case, a staff invite
+      // attaches a seat. A colleague is not somebody's visa applicant.
+      const orgId = await makeOrg("Staff Invite Agency");
+      const inviterId = "test_staff_inviter_2";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await staffInvite(orgId, inviterId, "colleague2@test.invalid");
+
+      const userId = "test_staff_invitee_2";
+      await makeProfile(userId, { email: "colleague2@test.invalid" });
+      await acceptInvitationTx(invitation.token, userId);
+
+      const rows = await db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(eq(applications.travelerId, userId));
+      expect(rows).toEqual([]);
+    });
+
+    it("flips the invitee to org_member so they read as agency, not traveller", async () => {
+      const orgId = await makeOrg("Staff Invite Agency");
+      const inviterId = "test_staff_inviter_3";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await staffInvite(orgId, inviterId, "colleague3@test.invalid");
+
+      const userId = "test_staff_invitee_3";
+      await makeProfile(userId, { email: "colleague3@test.invalid" });
+      await acceptInvitationTx(invitation.token, userId);
+
+      const [row] = await db
+        .select({ role: profiles.role })
+        .from(profiles)
+        .where(eq(profiles.id, userId));
+      expect(row.role).toBe("org_member");
+    });
+
+    it("is a no-op success when they already work there", async () => {
+      const orgId = await makeOrg("Staff Invite Agency");
+      const inviterId = "test_staff_inviter_4";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await staffInvite(orgId, inviterId, "colleague4@test.invalid");
+
+      const userId = "test_staff_invitee_4";
+      await makeProfile(userId, { email: "colleague4@test.invalid", role: "org_member" });
+      await db.insert(orgMembers).values({ orgId, userId, role: "owner" });
+
+      expect(await acceptInvitationTx(invitation.token, userId)).toEqual({
+        ok: true,
+        orgId,
+      });
+
+      // Their existing seniority is not demoted by re-accepting.
+      const memberships = await db
+        .select({ role: orgMembers.role })
+        .from(orgMembers)
+        .where(eq(orgMembers.userId, userId));
+      expect(memberships).toEqual([{ role: "owner" }]);
+    });
+
+    it("still refuses a colleague signed in as a different address", async () => {
+      const orgId = await makeOrg("Staff Invite Agency");
+      const inviterId = "test_staff_inviter_5";
+      await makeProfile(inviterId, { role: "org_member" });
+      const invitation = await staffInvite(orgId, inviterId, "colleague5@test.invalid");
+
+      const userId = "test_staff_invitee_5";
+      await makeProfile(userId, { email: "someone.else@test.invalid" });
+
+      expect(await acceptInvitationTx(invitation.token, userId)).toEqual({
+        error: "This invitation was sent to a different email address.",
+      });
+    });
+  });
+
 });

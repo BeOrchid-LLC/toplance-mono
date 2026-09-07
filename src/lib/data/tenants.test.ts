@@ -122,6 +122,49 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant reads", async () => {
     expect(rows.find((r) => r.id === BUSY)?.pendingInvitations).toBe(1);
   });
 
+  it("does not count a pending client invitation as a pending invitation", async () => {
+    await db.insert(invitations).values([
+      { orgId: BUSY, email: "staff@tenant.invalid", kind: "staff", status: "pending" },
+      {
+        orgId: BUSY,
+        email: "traveler@tenant.invalid",
+        fullName: "Traveler Name",
+        kind: "client",
+        status: "pending",
+      },
+    ]);
+
+    const rows = await listTenants();
+    // One staff invite is pending; the client invite is a traveller's
+    // own outstanding invite, not this agency's — the count must agree
+    // with what `getTenant`'s `pendingInvites` shows below, or the list
+    // page and the detail page contradict each other about the same
+    // agency.
+    expect(rows.find((r) => r.id === BUSY)?.pendingInvitations).toBe(1);
+  });
+
+  it("does not show a traveller's own pending invitation on the agency's panel", async () => {
+    await db.insert(invitations).values([
+      { orgId: BUSY, email: "staff@tenant.invalid", kind: "staff", status: "pending" },
+      {
+        orgId: BUSY,
+        email: "traveler@tenant.invalid",
+        fullName: "Traveler Name",
+        kind: "client",
+        status: "pending",
+      },
+    ]);
+
+    const detail = await getTenant(BUSY);
+
+    // The whole point of the fix: a named traveller tied to a named
+    // agency is exactly what this module's own header says ops must
+    // never learn. Only the staff invitation belongs on this panel.
+    expect(detail?.pendingInvites).toHaveLength(1);
+    expect(detail?.pendingInvites[0].email).toBe("staff@tenant.invalid");
+    expect(detail?.pendingInvites.some((i) => i.kind === "client")).toBe(false);
+  });
+
   it("returns the roster with roles, newest agency first in the list", async () => {
     const detail = await getTenant(BUSY);
 

@@ -149,10 +149,15 @@ export async function listTenants(): Promise<TenantRow[]> {
       .from(applications)
       .groupBy(applications.orgId, applications.status),
 
+    // Restricted to `kind: "staff"`, the same restriction `getTenant`'s
+    // `pendingInvites` now carries — a pending client invitation is a
+    // traveller's own outstanding invite, not this agency's, and this
+    // count has to agree with the panel or the two contradict each
+    // other on the same screen.
     db
       .select({ orgId: invitations.orgId, total: count() })
       .from(invitations)
-      .where(eq(invitations.status, "pending"))
+      .where(and(eq(invitations.status, "pending"), eq(invitations.kind, "staff")))
       .groupBy(invitations.orgId),
   ]);
 
@@ -201,6 +206,14 @@ export async function getTenant(orgId: string): Promise<TenantDetail | null> {
     // Never selects `token`. The console has no reason to hold an
     // agency's accept credential — the same stance `listInvitations`
     // takes for the agency's own roster.
+    //
+    // Restricted to `kind: "staff"`. A `client` invitation is a
+    // traveller's own name and email address, addressed by this agency
+    // — not this agency's business, and the one thing this module's own
+    // header says the console must never learn: whose case is whose.
+    // The only invitation this panel exists to show is the owner
+    // invitation `provisionTenantTx` mints (`kind: "staff"`), so this
+    // costs the panel nothing it uses.
     db
       .select({
         id: invitations.id,
@@ -211,7 +224,13 @@ export async function getTenant(orgId: string): Promise<TenantDetail | null> {
         expiresAt: invitations.expiresAt,
       })
       .from(invitations)
-      .where(and(eq(invitations.orgId, orgId), eq(invitations.status, "pending")))
+      .where(
+        and(
+          eq(invitations.orgId, orgId),
+          eq(invitations.status, "pending"),
+          eq(invitations.kind, "staff")
+        )
+      )
       .orderBy(desc(invitations.createdAt)),
   ]);
 

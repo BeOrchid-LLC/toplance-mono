@@ -91,4 +91,32 @@ describe("normaliseAnswer", () => {
     // `Nigeria` is a chip on `nationality`, not on `companions`.
     expect(normaliseAnswer("companions", "Nigeria")).toBeNull();
   });
+
+  /**
+   * The budget bands are the second question whose chips depend on an
+   * earlier answer, and the only one where the *label* varies while the
+   * value does not. There is no country in scope here, so every
+   * country's wording has to resolve — otherwise a Ghanaian who tapped
+   * "₵15,000" stores no code, and a rule keyed on that band silently
+   * becomes unevaluable for everybody who is not reading dollars.
+   */
+  it("resolves a local budget band to the canonical dollar value", () => {
+    expect(normaliseAnswer("budget", "Under ₵15,000")).toBe("Under US$1,250");
+    expect(normaliseAnswer("budget", "Under ₦2 million")).toBe("Under US$1,250");
+    expect(normaliseAnswer("budget", "R45,000–90,000")).toBe("US$2,500–5,000");
+    expect(normaliseAnswer("budget", "Over KSh 650,000")).toBe("Over US$5,000");
+  });
+
+  it("resolves a budget band tapped in any language", () => {
+    // A Zulu speaker taps the Zulu chip; an approver writes the rule in
+    // English. Both have to arrive at the same code.
+    expect(normaliseAnswer("budget", "Ngaphansi kuka-₦2m")).toBe(
+      "Under US$1,250"
+    );
+    expect(normaliseAnswer("budget", "Ju ₦8m lọ")).toBe("Over US$5,000");
+  });
+
+  it("still resolves the canonical dollar band itself", () => {
+    expect(normaliseAnswer("budget", "US$1,250–2,500")).toBe("US$1,250–2,500");
+  });
 });

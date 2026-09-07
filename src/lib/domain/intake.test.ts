@@ -417,3 +417,70 @@ describe("resolveChips — cities follow the country already answered", () => {
     }
   });
 });
+
+/**
+ * The budget bands were naira in all ten languages, for everyone — a
+ * traveller who had just said they live in Ghana was asked to place
+ * themselves in a naira band. The fix cannot be to localise the money
+ * the way the labels are localised: `applies_when` matches the code
+ * `normaliseAnswer` derives, so a band whose *value* differed by country
+ * would leave a rule keyed on one country unevaluable in the rest.
+ * Value stays canonical; only the label follows the traveller.
+ */
+describe("resolveChips — budget bands follow the country already answered", () => {
+  const budget = INTAKE_QUESTIONS.find((q) => q.key === "budget")!;
+  const resolve = (residence_country?: string) =>
+    resolveChips(budget, {
+      fullName: "Ada",
+      answers: residence_country ? { residence_country } : {},
+    });
+
+  const COUNTRIES = ["Nigeria", "Ghana", "Kenya", "South Africa", "Cameroon"];
+
+  it("stores the same value whatever country the traveller lives in", () => {
+    const canonical = resolve().map((c) => c.value);
+
+    for (const country of COUNTRIES) {
+      expect(resolve(country).map((c) => c.value), country).toEqual(canonical);
+    }
+  });
+
+  it("shows each traveller a band in their own money", () => {
+    expect(resolve("Nigeria")[0].label.en).toContain("₦");
+    expect(resolve("Ghana")[0].label.en).toContain("₵");
+    expect(resolve("Kenya")[0].label.en).toContain("KSh");
+    expect(resolve("South Africa")[0].label.en).toContain("R");
+    expect(resolve("Cameroon")[0].label.en).toContain("CFA");
+  });
+
+  it("keeps the naira bands a Nigerian traveller already saw", () => {
+    // Not new copy for Nigeria — the copy that was hardcoded for
+    // everybody, moved to where it belongs.
+    expect(resolve("Nigeria").map((c) => c.label.en)).toEqual([
+      "Under ₦2 million",
+      "₦2–4 million",
+      "₦4–8 million",
+      "Over ₦8 million",
+      "Not sure yet",
+    ]);
+  });
+
+  it("falls back to dollars for a country it has no bands for", () => {
+    // Not naira. Somebody in Dakar reading a naira band is being shown
+    // another country's money as though it were theirs.
+    for (const chip of resolve("Senegal")) {
+      expect(chip.label.en).not.toContain("₦");
+    }
+    expect(resolve("Senegal")[0].label.en).toContain("US$");
+  });
+
+  it("labels every band in every language, for every country", () => {
+    for (const country of [...COUNTRIES, undefined]) {
+      for (const chip of resolve(country)) {
+        for (const { code } of LOCALES) {
+          expect(chip.label[code], `${country}/${chip.value}/${code}`).toBeTruthy();
+        }
+      }
+    }
+  });
+});

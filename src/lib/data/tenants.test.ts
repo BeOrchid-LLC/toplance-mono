@@ -217,11 +217,15 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     // Scoped to what this call could have written, not a table-wide
     // count — vitest runs test FILES in parallel, so a whole-table
     // count can be changed by another file's insert between the two
-    // reads for a reason that has nothing to do with this code.
+    // reads for a reason that has nothing to do with this code. `""`
+    // rather than the raw `"   "`: provisionTenantTx trims before the
+    // guard and inserts the trimmed `name`, so a row this input could
+    // produce (if the guard were deleted) would be named `""`, never
+    // the padded string nobody writes anywhere.
     const orgs = await db
       .select({ id: organisations.id })
       .from(organisations)
-      .where(eq(organisations.name, "   "));
+      .where(eq(organisations.name, ""));
     expect(orgs).toHaveLength(0);
 
     const invites = await db

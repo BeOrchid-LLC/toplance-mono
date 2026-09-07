@@ -916,6 +916,39 @@ export const analyticsEvents = pgTable(
 );
 
 /**
+ * A "Book a demo" submission from the landing page.
+ *
+ * The only table written by someone with no session. It references
+ * nothing and nothing references it: a visitor here is a stranger, not
+ * yet a `profiles` row or an `organisations` row, and pretending
+ * otherwise would mean creating an account for someone who has only
+ * asked for a conversation.
+ *
+ * `preferred_at` and `preferred_tz` are one answer stored twice on
+ * purpose. The instant is what sorts and compares; the zone is what
+ * lets the notification say "14:00 WAT" instead of a UTC number the
+ * reader has to convert in their head. Keeping only the instant loses
+ * which hour the visitor actually meant.
+ *
+ * No status column. Nothing in the product reads this table yet — the
+ * notification email is the read path — so a status would hold `new`
+ * forever and describe a workflow that does not exist. Adding one with
+ * the ops surface that changes it is a migration.
+ */
+export const demoRequests = pgTable("demo_requests", {
+  id: uuid().primaryKey().defaultRandom(),
+  fullName: text().notNull(),
+  email: text().notNull(),
+  companyName: text().notNull(),
+  jobTitle: text().notNull(),
+  preferredAt: timestamp({ withTimezone: true }).notNull(),
+  preferredTz: text().notNull(),
+  /** Which language the form was read in — what to run the demo in. */
+  locale: text().notNull(),
+  createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * Everything an employer is allowed to see about a sponsored
  * application, and nothing more. Created in
  * `src/lib/db/sql-objects.sql`; declared here as `.existing()` so the
@@ -954,5 +987,6 @@ export type CaseNote = typeof caseNotes.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type CompanionUpdate = typeof companionUpdates.$inferSelect;
 export type FxRate = typeof fxRates.$inferSelect;
+export type DemoRequest = typeof demoRequests.$inferSelect;
 
 export type FlagReason = (typeof flagReason.enumValues)[number];

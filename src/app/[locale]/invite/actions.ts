@@ -7,7 +7,7 @@ import { track } from "@/lib/analytics/track";
 import { requireActor, toActionError } from "@/lib/auth/guards";
 import { acceptInvitationTx } from "@/lib/data/invitations";
 import { INVITE_ACTIONS } from "@/lib/i18n/invite";
-import { getLocale } from "@/lib/i18n/server";
+import { getActionLocale } from "@/lib/i18n/server";
 
 /**
  * The one write on this surface, called only from the accept page's own
@@ -29,7 +29,7 @@ export async function acceptInvitation(token: string) {
   try {
     const actor = await requireActor();
     if (actor.role !== "traveler") {
-      const locale = await getLocale();
+      const locale = await getActionLocale();
       return { error: INVITE_ACTIONS.travelerOnly[locale] };
     }
 
@@ -38,7 +38,7 @@ export async function acceptInvitation(token: string) {
 
     await track("toplance.invitation_accepted", { orgId: result.orgId }, actor.userId);
 
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { revokeInvitation } from "@/app/agency/actions";
+import { revokeInvitation } from "@/app/[locale]/agency/actions";
 
 /** One row's own revoke act — only ever rendered on a `pending` row. */
 export function RevokeInvitationButton({ invitationId }: { invitationId: string }) {

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { setRequirementCondition } from "@/app/ops/actions";
+import { setRequirementCondition } from "@/app/[locale]/ops/actions";
 import type { AppliesWhen } from "@/lib/domain/applies-when";
 import { allChipsFor, INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { useT } from "@/components/locale-provider";

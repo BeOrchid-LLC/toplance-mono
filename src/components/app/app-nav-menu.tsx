@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -12,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { isActive, type NavItem } from "@/components/app/app-nav";
-import { useT } from "@/components/locale-provider";
+import { usePathnameWithoutLocale, useT } from "@/components/locale-provider";
 import { APP_NAV } from "@/lib/i18n/app-chrome";
 
 /**
@@ -22,7 +21,7 @@ import { APP_NAV } from "@/lib/i18n/app-chrome";
  * there were. The menu names them all at once and gives the row back.
  */
 export function AppNavMenu({ nav }: { nav: NavItem[] }) {
-  const pathname = usePathname();
+  const pathname = usePathnameWithoutLocale();
   const root = nav[0]?.href ?? "/app";
   const t = useT();
 

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { addTravelRecord, removeTravelRecord } from "@/app/(app)/actions";
+import { addTravelRecord, removeTravelRecord } from "@/app/[locale]/(app)/actions";
 import { TripList, type Trip } from "@/components/shared/trip-list";
 import { useT } from "@/components/locale-provider";
 import { TRAVEL_HISTORY } from "@/lib/i18n/travel-history";

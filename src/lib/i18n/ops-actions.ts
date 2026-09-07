@@ -3,12 +3,13 @@ import type { Locale } from "@/lib/i18n/locales";
 type L = Record<Locale, string>;
 
 /**
- * The error strings `@/app/ops/actions.ts` returns as `{ error }`.
+ * The error strings `@/app/[locale]/ops/actions.ts` returns as `{ error }`.
  *
- * Resolved server-side, with `getLocale()` reading the same
- * `x-toplance-locale` header a Server Component would — a Server Action
- * runs as a POST to the page that rendered its button, so `proxy.ts`
- * has already set the header by the time the action body runs. The
+ * Resolved server-side, with `getActionLocale()` reading the
+ * `x-toplance-locale` header — a Server Action runs as a POST to the
+ * page that rendered its button, so `proxy.ts` has already set the
+ * header by the time the action body runs. Server Components read the
+ * `[locale]` route segment instead, which a Server Action cannot. The
  * client components that call these actions (`add-case-note.tsx`,
  * `review-row.tsx`, `status-control.tsx`, `corridor-decision.tsx`,
  * `requirement-condition.tsx`) just `toast.error(result.error)` whatever

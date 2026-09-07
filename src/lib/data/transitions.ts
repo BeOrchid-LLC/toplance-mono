@@ -41,7 +41,7 @@ export type ChangeStatusResult =
  * decides nothing about access.** Its only caller guards first.
  *
  * It also decides nothing about notifying anyone: `changeCaseStatus` in
- * `@/app/ops/actions.ts` calls `notify` once this returns `ok`, after
+ * `@/app/[locale]/ops/actions.ts` calls `notify` once this returns `ok`, after
  * the transaction has committed.
  */
 export async function changeStatusTx(

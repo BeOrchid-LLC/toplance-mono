@@ -102,7 +102,7 @@ export async function completeProfile(
     .values({ id: userId, email, ...fields })
     .onConflictDoUpdate({ target: profiles.id, set: fields });
 
-  revalidatePath("/", "layout");
+  revalidatePath("/[locale]", "layout");
   return {};
 }
 

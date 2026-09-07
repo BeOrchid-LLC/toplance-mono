@@ -8,7 +8,7 @@ import { eq, inArray } from "drizzle-orm";
  *
  * Like `submitApplicationTx`, the function decides nothing about who is
  * signed in; its caller (`createOrganisation` in
- * `@/app/agency/actions.ts`) resolves `userId` from the session.
+ * `@/app/[locale]/agency/actions.ts`) resolves `userId` from the session.
  *
  * Skipped without a database. Run `npm run db:up` to include them.
  */

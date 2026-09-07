@@ -4,10 +4,10 @@ import { ClerkProvider } from "@clerk/nextjs";
 
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
-import { dirOf } from "@/lib/i18n/locales";
+import { dirOf, LOCALES } from "@/lib/i18n/locales";
 import { getLocale } from "@/lib/i18n/server";
 
-import "./globals.css";
+import "../globals.css";
 
 /**
  * Fonts are self-hosted rather than pulled from Google.
@@ -35,8 +35,8 @@ import "./globals.css";
  */
 const inter = localFont({
   src: [
-    { path: "./fonts/inter-latin.woff2", weight: "100 900", style: "normal" },
-    { path: "./fonts/inter-latin-ext.woff2", weight: "100 900", style: "normal" },
+    { path: "../fonts/inter-latin.woff2", weight: "100 900", style: "normal" },
+    { path: "../fonts/inter-latin-ext.woff2", weight: "100 900", style: "normal" },
   ],
   variable: "--font-inter",
   display: "swap",
@@ -50,9 +50,9 @@ const inter = localFont({
  */
 const archivo = localFont({
   src: [
-    { path: "./fonts/archivo-latin.woff2", weight: "100 900", style: "normal" },
-    { path: "./fonts/archivo-latin-ext.woff2", weight: "100 900", style: "normal" },
-    { path: "./fonts/archivo-vietnamese.woff2", weight: "100 900", style: "normal" },
+    { path: "../fonts/archivo-latin.woff2", weight: "100 900", style: "normal" },
+    { path: "../fonts/archivo-latin-ext.woff2", weight: "100 900", style: "normal" },
+    { path: "../fonts/archivo-vietnamese.woff2", weight: "100 900", style: "normal" },
   ],
   declarations: [{ prop: "font-stretch", value: "62% 125%" }],
   variable: "--font-archivo",
@@ -61,7 +61,7 @@ const archivo = localFont({
 });
 
 const jetbrains = localFont({
-  src: [{ path: "./fonts/jetbrains-latin.woff2", weight: "100 800", style: "normal" }],
+  src: [{ path: "../fonts/jetbrains-latin.woff2", weight: "100 800", style: "normal" }],
   variable: "--font-jetbrains",
   display: "swap",
   fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
@@ -75,6 +75,22 @@ export const metadata: Metadata = {
   description:
     "Answer a few short questions in your own language. Toplance turns them into the exact document checklist for your destination, checks every file as you upload it, and stays with you through the decision.",
 };
+
+/**
+ * Ten prerendered copies of every statically renderable page, one per
+ * language, instead of one shared copy.
+ *
+ * This is the whole point of `[locale]` being a route segment rather
+ * than a request header. A header cannot be read while a page is being
+ * prerendered — `headers()` returns nothing there — so the marketing
+ * pages, which are `force-static` on purpose, used to render in English
+ * whatever URL a visitor arrived at. A route parameter is available at
+ * prerender time, so those pages can stay cached documents *and* be in
+ * the right language.
+ */
+export function generateStaticParams() {
+  return LOCALES.map((l) => ({ locale: l.code }));
+}
 
 export default async function RootLayout({
   children,

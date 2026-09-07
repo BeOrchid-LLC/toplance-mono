@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PhoneField } from "@/components/auth/phone-field";
-import { updateProfile } from "@/app/(app)/actions";
+import { updateProfile } from "@/app/[locale]/(app)/actions";
 import { formatPhone } from "@/lib/domain/countries";
 import { DIGEST_OPTIONS, type DigestFrequency } from "@/lib/domain/digest";
 import { LOCALES, type Locale } from "@/lib/i18n/locales";

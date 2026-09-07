@@ -6,7 +6,7 @@ type L = Record<Locale, string>;
  * The three client components on the case screen that post their own
  * server actions and toast their own outcome: `add-case-note.tsx`,
  * `review-row.tsx` and `status-control.tsx`. The server-side error
- * strings those actions can return (`@/app/ops/actions.ts`) already come
+ * strings those actions can return (`@/app/[locale]/ops/actions.ts`) already come
  * back pre-localised — see `OPS_ACTIONS` — so only the copy these
  * components author themselves (placeholders, buttons, success toasts)
  * lives here.

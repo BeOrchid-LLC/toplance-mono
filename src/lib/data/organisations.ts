@@ -70,7 +70,7 @@ export async function provisionEmployerProfile(
  * just wrote and refuses.
  *
  * Decides nothing about who is signed in. Its caller, `createOrganisation`
- * in `@/app/agency/actions.ts`, resolves `userId` from the session.
+ * in `@/app/[locale]/agency/actions.ts`, resolves `userId` from the session.
  */
 export async function createOrganisationTx(
   userId: string,

@@ -14,7 +14,7 @@ import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { AgentDock, Chips, Composer } from "@/components/app/intake-dock";
 import { EditButton, RecordDocument } from "@/components/app/intake-record";
 import { useVoiceIntake } from "@/components/app/use-voice-intake";
-import { answerQuestion } from "@/app/(app)/actions";
+import { answerQuestion } from "@/app/[locale]/(app)/actions";
 import {
   INTAKE_QUESTIONS,
   resolveChips,

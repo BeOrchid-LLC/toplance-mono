@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { inviteTraveller } from "@/app/agency/actions";
+import { inviteTraveller } from "@/app/[locale]/agency/actions";
 import { useT } from "@/components/locale-provider";
 import { INVITE_DIALOG } from "@/lib/i18n/invite-dialog";
 

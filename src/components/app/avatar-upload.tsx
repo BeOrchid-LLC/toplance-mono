@@ -4,7 +4,7 @@ import * as React from "react";
 import { Camera } from "lucide-react";
 import { toast } from "sonner";
 
-import { uploadAvatar } from "@/app/(app)/actions";
+import { uploadAvatar } from "@/app/[locale]/(app)/actions";
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);

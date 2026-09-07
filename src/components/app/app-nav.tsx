@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
+import { usePathnameWithoutLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
 export type NavItem = { href: string; label: string; locked?: boolean };
@@ -32,7 +32,7 @@ export function AppNav({
   className?: string;
   itemClassName?: string;
 }) {
-  const pathname = usePathname();
+  const pathname = usePathnameWithoutLocale();
   const root = nav[0]?.href ?? "/app";
 
   return (

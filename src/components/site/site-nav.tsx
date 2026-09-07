@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -19,7 +18,7 @@ import { LocaleMenu } from "@/components/shared/locale-menu";
 import { ThemeSwitch } from "@/components/shared/theme-switch";
 import { Shell } from "@/components/shared/shell";
 import { Wordmark } from "@/components/shared/wordmark";
-import { useT } from "@/components/locale-provider";
+import { usePathnameWithoutLocale, useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
 import { SITE_CHROME } from "@/lib/i18n/site-chrome";
 import type { Locale } from "@/lib/i18n/locales";
@@ -70,7 +69,7 @@ const SECTION_IDS = ["how", "where", "pricing"];
 
 export function SiteNav() {
   const t = useT();
-  const pathname = usePathname();
+  const pathname = usePathnameWithoutLocale();
   const { sections, cross } = chromeFor(pathname, t);
 
   /**

@@ -32,8 +32,9 @@ function relativeTime(date: Date, locale: Locale): string {
  *
  * Every body renders as plain text in `whitespace-pre-wrap`. AGENTS.md
  * is explicit that traveller-authored content is never Markdown- or
- * HTML-rendered, and staff replies here are just as human-authored — so
- * this never routes through `chat-markdown.tsx`, on either side.
+ * HTML-rendered, and the agency's replies here are just as
+ * human-authored — so this never routes through `chat-markdown.tsx`, on
+ * either side.
  */
 export async function MessageThread({ messages }: { messages: MessageView[] }) {
   const locale = await getLocale();
@@ -48,7 +49,7 @@ export async function MessageThread({ messages }: { messages: MessageView[] }) {
         <li key={m.id} className="border-b border-border py-3 last:border-b-0">
           <p className="special">
             {m.senderName ??
-              (m.senderRole === "staff"
+              (m.side === "agency"
                 ? MESSAGES.senderStaff[locale]
                 : MESSAGES.senderTraveler[locale])}{" "}
             · {relativeTime(m.createdAt, locale)}

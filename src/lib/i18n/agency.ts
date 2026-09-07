@@ -25,7 +25,7 @@ type L = Record<Locale, string>;
 export const AGENCY: {
   pageTitle: L;
   navDashboard: L;
-  navPeople: L;
+  navClients: L;
   navTeam: L;
   roleLabel: { owner: L; reviewer: L };
   roleReason: { owner: L; reviewer: L };
@@ -40,9 +40,9 @@ export const AGENCY: {
   privacyTag: L;
   privacyHeading: L;
   privacyBody: L;
-  yourPeopleLabel: L;
-  personWord: L;
-  peopleWord: L;
+  yourClientsLabel: L;
+  clientWord: L;
+  clientsWord: L;
   rosterEmpty: L;
   routeNotSet: L;
   documentsVerified: L;
@@ -54,7 +54,7 @@ export const AGENCY: {
   timelineAccepted: L;
   timelineExpired: L;
   timelineInvited: L;
-  peopleCardBody: L;
+  clientsCardBody: L;
   teamCardBody: L;
   yourTeamLabel: L;
   memberWord: L;
@@ -88,17 +88,17 @@ export const AGENCY: {
     tw: "Nhwɛso",
     zu: "Ideshibhodi",
   },
-  navPeople: {
-    en: "People",
-    ha: "Mutane",
-    yo: "Àwọn ènìyàn",
-    ig: "Ndị mmadụ",
-    fr: "Personnes",
-    pt: "Pessoas",
-    sw: "Watu",
-    ar: "الأشخاص",
-    tw: "Nnipa",
-    zu: "Abantu",
+  navClients: {
+    en: "Clients",
+    ha: "Abokan ciniki",
+    yo: "Àwọn oníbàárà",
+    ig: "Ndị ahịa",
+    fr: "Clients",
+    pt: "Clientes",
+    sw: "Wateja",
+    ar: "العملاء",
+    tw: "Adetɔfoɔ",
+    zu: "Amakhasimende",
   },
   navTeam: {
     en: "Team",
@@ -296,41 +296,41 @@ export const AGENCY: {
     tw: "Pasport, sikakorabea nkrataa, ne polisifoɔ adansedie krataa te ɔkwantuni ne Toplance ntam. Wohu ewiei akontaahyɛde, tebea, ne sɛ obi asisi anaa.",
     zu: "Amaphasipoti, izitatimende zasebhange nezitifiketi zamaphoyisa zihlala phakathi komhambi ne-Toplance. Ubona amaphuzu okuqedwa, isimo, nokuthi ngabe ukhona osesihibeni yini.",
   },
-  yourPeopleLabel: {
-    en: "Your people",
-    ha: "Mutanenka",
-    yo: "Àwọn ènìyàn rẹ",
-    ig: "Ndị gị",
-    fr: "Vos personnes",
-    pt: "As suas pessoas",
-    sw: "Watu wako",
-    ar: "أفرادك",
-    tw: "Wo nkurɔfoɔ",
-    zu: "Abantu bakho",
+  yourClientsLabel: {
+    en: "Your clients",
+    ha: "Abokan cinikinka",
+    yo: "Àwọn oníbàárà rẹ",
+    ig: "Ndị ahịa gị",
+    fr: "Vos clients",
+    pt: "Os seus clientes",
+    sw: "Wateja wako",
+    ar: "عملاؤك",
+    tw: "Wo adetɔfoɔ",
+    zu: "Amakhasimende akho",
   },
-  personWord: {
-    en: "person",
-    ha: "mutum",
-    yo: "ènìyàn",
-    ig: "mmadụ",
-    fr: "personne",
-    pt: "pessoa",
-    sw: "mtu",
-    ar: "شخص",
-    tw: "onipa",
-    zu: "umuntu",
+  clientWord: {
+    en: "client",
+    ha: "abokin ciniki",
+    yo: "oníbàárà",
+    ig: "onye ahịa",
+    fr: "client",
+    pt: "cliente",
+    sw: "mteja",
+    ar: "عميل",
+    tw: "adetɔni",
+    zu: "ikhasimende",
   },
-  peopleWord: {
-    en: "people",
-    ha: "mutane",
-    yo: "ènìyàn",
-    ig: "ndị mmadụ",
-    fr: "personnes",
-    pt: "pessoas",
-    sw: "watu",
-    ar: "أشخاص",
-    tw: "nnipa",
-    zu: "abantu",
+  clientsWord: {
+    en: "clients",
+    ha: "abokan ciniki",
+    yo: "àwọn oníbàárà",
+    ig: "ndị ahịa",
+    fr: "clients",
+    pt: "clientes",
+    sw: "wateja",
+    ar: "عملاء",
+    tw: "adetɔfoɔ",
+    zu: "amakhasimende",
   },
   rosterEmpty: {
     en: "Nobody yet. Once you invite someone and they finish intake, they appear here with a live completion score.",
@@ -464,7 +464,7 @@ export const AGENCY: {
     tw: "Wɔfrɛɛ no {date}",
     zu: "Umenywe {date}",
   },
-  peopleCardBody: {
+  clientsCardBody: {
     en: "Everyone whose visa you are handling, with a live completion score for each.",
     ha: "Duk wanda kake sarrafa bizarsa, tare da madogarar cikawa mai rai ga kowanne.",
     yo: "Gbogbo ẹni tí o ń ṣàkóso fisa rẹ̀, pẹ̀lú ìwọ̀n ìparí tí ń ṣiṣẹ́ lọ́wọ́lọ́wọ́ fún ẹnìkọ̀ọ̀kan.",

@@ -20,6 +20,8 @@ import {
   canWriteIntakeAnswers,
   canWriteMessages,
   canWriteVisaExpiry,
+  handlesCase,
+  isAgencyDirectorFor,
   isAgencyFor,
   isOrgMemberOf,
   isOwner,
@@ -35,6 +37,7 @@ const traveller: Actor = {
   role: "traveler",
   staffRole: null,
   orgIds: [],
+  orgs: [],
 };
 
 const otherTraveller: Actor = {
@@ -42,6 +45,7 @@ const otherTraveller: Actor = {
   role: "traveler",
   staffRole: null,
   orgIds: [],
+  orgs: [],
 };
 
 /** The tenant. Reviews documents, decides the case, talks to the traveller. */
@@ -50,10 +54,26 @@ const agencyReviewer: Actor = {
   role: "org_member",
   staffRole: null,
   orgIds: [ORG],
+  orgs: [{ orgId: ORG, role: "reviewer" }],
+};
+
+/** A second pair of hands at the same agency. */
+const otherReviewer: Actor = { ...agencyReviewer, userId: "user-colleague" };
+
+/** The person who created the agency. Not narrowed by who holds a case. */
+const agencyDirector: Actor = {
+  ...agencyReviewer,
+  userId: "user-director",
+  orgs: [{ orgId: ORG, role: "owner" }],
 };
 
 /** A different tenant. Sees nothing of ORG's travellers. */
-const otherAgency: Actor = { ...agencyReviewer, userId: "user-rival", orgIds: [OTHER_ORG] };
+const otherAgency: Actor = {
+  ...agencyReviewer,
+  userId: "user-rival",
+  orgIds: [OTHER_ORG],
+  orgs: [{ orgId: OTHER_ORG, role: "owner" }],
+};
 
 /**
  * BeOrchid. Provisions tenants, curates routes, reads the audit log —
@@ -64,6 +84,7 @@ const platformStaff: Actor = {
   role: "staff",
   staffRole: "reviewer",
   orgIds: [],
+  orgs: [],
 };
 
 const platformOwner: Actor = { ...platformStaff, userId: "user-owner", staffRole: "owner" };
@@ -74,6 +95,13 @@ const tenantCase: ApplicationRef = {
   id: "app-1",
   travelerId: "user-traveller",
   orgId: ORG,
+  assigneeId: null,
+};
+
+/** The same case, once a colleague has taken it. */
+const claimedCase: ApplicationRef = {
+  ...tenantCase,
+  assigneeId: agencyReviewer.userId,
 };
 
 /**
@@ -85,6 +113,7 @@ const unassignedCase: ApplicationRef = {
   id: "app-2",
   travelerId: "user-traveller",
   orgId: null,
+  assigneeId: null,
 };
 
 describe("role predicates", () => {
@@ -132,8 +161,75 @@ describe("tenancy", () => {
   });
 
   it("does not let a traveller forge an agency membership", () => {
-    const forged: Actor = { ...otherTraveller, orgIds: [ORG] };
+    const forged: Actor = {
+      ...otherTraveller,
+      orgIds: [ORG],
+      orgs: [{ orgId: ORG, role: "owner" }],
+    };
     expect(isAgencyFor(forged, tenantCase)).toBe(false);
+    expect(handlesCase(forged, tenantCase)).toBe(false);
+    expect(isAgencyDirectorFor(forged, tenantCase)).toBe(false);
+  });
+});
+
+/**
+ * Assignment is a permission, not a label.
+ *
+ * The rule the console is built on: an unclaimed case is the agency's,
+ * a claimed one is the assignee's and the director's. These tests are
+ * the reason the rule can be changed later with any confidence — the
+ * failure mode being guarded against is silent over-granting, which no
+ * screen would ever show you.
+ */
+describe("assignment as a permission", () => {
+  it("opens an unclaimed case to any member of its agency", () => {
+    expect(handlesCase(agencyReviewer, tenantCase)).toBe(true);
+    expect(handlesCase(otherReviewer, tenantCase)).toBe(true);
+    expect(handlesCase(agencyDirector, tenantCase)).toBe(true);
+  });
+
+  it("keeps a claimed case to the colleague holding it", () => {
+    expect(handlesCase(agencyReviewer, claimedCase)).toBe(true);
+    expect(handlesCase(otherReviewer, claimedCase)).toBe(false);
+  });
+
+  it("never narrows the director out of their own agency's case", () => {
+    expect(handlesCase(agencyDirector, claimedCase)).toBe(true);
+    expect(isAgencyDirectorFor(agencyDirector, claimedCase)).toBe(true);
+    expect(isAgencyDirectorFor(agencyReviewer, claimedCase)).toBe(false);
+  });
+
+  it("does not let a rival agency's director in on rank alone", () => {
+    // `otherAgency` is an owner — of somewhere else. Rank is read for
+    // the case's own agency or not at all.
+    expect(isAgencyDirectorFor(otherAgency, tenantCase)).toBe(false);
+    expect(handlesCase(otherAgency, tenantCase)).toBe(false);
+    expect(handlesCase(otherAgency, claimedCase)).toBe(false);
+  });
+
+  it("gives platform staff nothing either way", () => {
+    expect(handlesCase(platformStaff, tenantCase)).toBe(false);
+    expect(handlesCase(platformOwner, claimedCase)).toBe(false);
+  });
+
+  it("carries the narrowing into every case-content policy", () => {
+    // The point of the rule: a colleague who is not on this case cannot
+    // read the documents, the thread, or the notes about them.
+    expect(canReadDocuments(otherReviewer, claimedCase)).toBe(false);
+    expect(canWriteDocuments(otherReviewer, claimedCase)).toBe(false);
+    expect(canReadMessages(otherReviewer, claimedCase)).toBe(false);
+    expect(canWriteMessages(otherReviewer, claimedCase)).toBe(false);
+    expect(canReadCaseNotes(otherReviewer, claimedCase)).toBe(false);
+    expect(canWriteCaseNotes(otherReviewer, claimedCase)).toBe(false);
+    expect(canWriteApplication(otherReviewer, claimedCase)).toBe(false);
+  });
+
+  it("never narrows the traveller out of their own case", () => {
+    // Assignment moves between colleagues. It says nothing about the
+    // person whose passport it is.
+    expect(canReadDocuments(traveller, claimedCase)).toBe(true);
+    expect(canWriteDocuments(traveller, claimedCase)).toBe(true);
+    expect(canWriteMessages(traveller, claimedCase)).toBe(true);
   });
 });
 

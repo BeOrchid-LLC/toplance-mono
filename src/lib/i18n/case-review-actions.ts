@@ -18,7 +18,7 @@ type L = Record<Locale, string>;
  * NEEDS NATIVE REVIEW before launch. Translated in-house from the
  * English, the same way `hero.ts` and `intake.ts` were.
  */
-export const OPS_ADD_NOTE: {
+export const ADD_NOTE: {
   placeholder: L;
   button: L;
   toastSuccess: L;
@@ -61,7 +61,7 @@ export const OPS_ADD_NOTE: {
   },
 };
 
-export const OPS_REVIEW_ROW: {
+export const REVIEW_ROW: {
   view: L;
   verify: L;
   flag: L;
@@ -183,7 +183,7 @@ export const OPS_REVIEW_ROW: {
   },
 };
 
-export const OPS_STATUS_CONTROL: {
+export const STATUS_CONTROL: {
   messagePlaceholder: L;
   noAction: L;
   confirmApproval: L;
@@ -203,16 +203,16 @@ export const OPS_STATUS_CONTROL: {
     zu: "Umlayezo esihambini — konke ukuguqulwa kwesimo kuthumela owodwa.",
   },
   noAction: {
-    en: "No staff action from this state — it is either terminal, or waiting on the traveler.",
-    ha: "Babu wani mataki na ma'aikata daga wannan matsayi — ko dai ya ƙare, ko yana jiran matafiyi.",
-    yo: "Kò sí ìgbésẹ̀ òṣìṣẹ́ kankan láti ipò yìí — yálà ó ti parí pátápátá, tàbí ó ń dúró de arìnrìn-àjò.",
-    ig: "Enweghị ihe onye ọrụ ga-eme site n'ọnọdụ a — ma ọ bụ ọ kwụsịla, ma ọ bụ ọ na-eche onye njem.",
-    fr: "Aucune action du personnel n'est possible depuis cet état — soit il est final, soit on attend le voyageur.",
-    pt: "Nenhuma ação da equipa é possível a partir deste estado — ou é terminal, ou está à espera do viajante.",
-    sw: "Hakuna hatua ya wafanyakazi kutoka hali hii — ama ni ya mwisho, au inasubiri msafiri.",
-    ar: "لا يوجد إجراء للموظفين من هذه الحالة — فهي إما نهائية أو بانتظار المسافر.",
-    tw: "Adwumayɛfoɔ biribiara nni hɔ a wɔbɛtumi ayɛ afiri tebea yi mu — ɛyɛ deɛ awie, anaasɛ ɛretwɛn akwantufoɔ no.",
-    zu: "Asikho isenzo sabasebenzi kulesi simo — noma siphelile, noma silinde isihambi.",
+    en: "No action from this state — it is either decided, or waiting on the traveler.",
+    ha: "Babu abin da za a yi daga wannan matsayin — ko dai an yanke shawara, ko ana jiran matafiyin.",
+    yo: "Kò sí ìgbésẹ̀ láti ipò yìí — bóyá a ti pinnu rẹ̀, tàbí à ń dúró de arìnrìn-àjò náà.",
+    ig: "Enweghị ihe ị ga-eme site na ọnọdụ a — ma ọ bụ ekpebiela ya, ma ọ bụ na-eche onye njem.",
+    fr: "Aucune action possible depuis cet état — soit il est tranché, soit il attend le voyageur.",
+    pt: "Nenhuma ação a partir deste estado — ou já foi decidido, ou aguarda o viajante.",
+    sw: "Hakuna hatua kutoka hali hii — ama imeamuliwa, au inasubiri msafiri.",
+    ar: "لا إجراء من هذه الحالة — إما أنها حُسمت، أو أنها بانتظار المسافر.",
+    tw: "Biribiara nni hɔ a wobɛyɛ afiri tebea yi mu — anaasɛ wɔasi so gyinae, anaasɛ ɛretwɛn ɔkwantuni no.",
+    zu: "Asikho isenzo esisuka kulesi simo — noma sesinqunyiwe, noma silinde umhambi.",
   },
   confirmApproval: {
     en: "Confirm approval",
@@ -250,5 +250,191 @@ export const OPS_STATUS_CONTROL: {
     ar: 'انتقلت الحالة إلى "{status}" — تم إخبار المسافر',
     tw: 'Wɔde asɛm no akɔ "{status}" mu — wɔaka akyerɛ akwantufoɔ no',
     zu: 'Icala lidluliselwe ku-"{status}" — isihambi sitsheliwe',
+  },
+};
+
+/**
+ * The `flag_reason` enum in words.
+ *
+ * The class is for whoever is debugging later — it aggregates, the
+ * reviewer's sentence does not — and the sentence beside it is what the
+ * traveller reads. Both are collected in one step because a reviewer who
+ * has just looked at the file knows both answers at once; asking later
+ * would mean asking never. See the enum's own note in `schema.ts`.
+ */
+export const FLAG_REASONS: {
+  legend: L;
+  unreadable: L;
+  expired: L;
+  wrong_document: L;
+  incomplete: L;
+  mismatch: L;
+  other: L;
+} = {
+  legend: {
+    en: "What kind of problem?",
+    ha: "Wace irin matsala ce?",
+    yo: "Irú ìṣòro wo ni?",
+    ig: "Ụdị nsogbu dị aṅaa?",
+    fr: "Quel type de problème ?",
+    pt: "Que tipo de problema?",
+    sw: "Ni tatizo la aina gani?",
+    ar: "ما نوع المشكلة؟",
+    tw: "Ɔhaw bɛn?",
+    zu: "Yiluphi uhlobo lwenkinga?",
+  },
+  unreadable: {
+    en: "Cannot be read",
+    ha: "Ba a iya karantawa",
+    yo: "A kò lè kà á",
+    ig: "Enweghị ike ịgụ ya",
+    fr: "Illisible",
+    pt: "Não se consegue ler",
+    sw: "Haisomeki",
+    ar: "غير مقروء",
+    tw: "Wontumi nkenkan",
+    zu: "Ayikwazi ukufundeka",
+  },
+  expired: {
+    en: "Out of date",
+    ha: "Ya ƙare",
+    yo: "Ó ti parí",
+    ig: "Oge agwụla",
+    fr: "Périmé",
+    pt: "Fora de validade",
+    sw: "Muda umeisha",
+    ar: "منتهي الصلاحية",
+    tw: "Ano atɔ",
+    zu: "Iphelelwe yisikhathi",
+  },
+  wrong_document: {
+    en: "Wrong document",
+    ha: "Takardar da ba daidai ba",
+    yo: "Ìwé tí kò tọ́",
+    ig: "Akwụkwọ na-ezighị ezi",
+    fr: "Mauvais document",
+    pt: "Documento errado",
+    sw: "Hati isiyo sahihi",
+    ar: "مستند خاطئ",
+    tw: "Krataa a ɛnteɛ",
+    zu: "Idokhumenti engalungile",
+  },
+  incomplete: {
+    en: "Pages or details missing",
+    ha: "An rasa shafuka ko bayanai",
+    yo: "Àwọn ojú ìwé tàbí àwọn àlàyé kò pé",
+    ig: "Ibe ma ọ bụ nkọwa na-efu",
+    fr: "Pages ou informations manquantes",
+    pt: "Faltam páginas ou dados",
+    sw: "Kurasa au maelezo hayapo",
+    ar: "صفحات أو بيانات ناقصة",
+    tw: "Nkratafa anaa nsɛm bi ayera",
+    zu: "Kunamakhasi noma imininingwane engekho",
+  },
+  mismatch: {
+    en: "Details do not match",
+    ha: "Bayanan ba su yi daidai ba",
+    yo: "Àwọn àlàyé kò bára mu",
+    ig: "Nkọwa adabaghị",
+    fr: "Les informations ne concordent pas",
+    pt: "Os dados não coincidem",
+    sw: "Maelezo hayalingani",
+    ar: "البيانات غير متطابقة",
+    tw: "Nsɛm no nhyia",
+    zu: "Imininingwane ayifani",
+  },
+  other: {
+    en: "Something else",
+    ha: "Wani abu dabam",
+    yo: "Ohun mìíràn",
+    ig: "Ihe ọzọ",
+    fr: "Autre chose",
+    pt: "Outra coisa",
+    sw: "Jambo lingine",
+    ar: "شيء آخر",
+    tw: "Biribi foforɔ",
+    zu: "Okunye",
+  },
+};
+
+/**
+ * The words the case screen needs that are nobody's vocabulary in
+ * particular. Copied from `OPS_COMMON` rather than imported: the agency
+ * console should not have to reach into the platform console's strings
+ * to say "Cancel", and one shared word is not a dependency worth having
+ * between two consoles that are meant to drift apart.
+ */
+export const CASE_COMMON: { cancel: L; handledBy: L; unheld: L; takeCase: L; release: L; assignTo: L } = {
+  cancel: {
+    en: "Cancel",
+    ha: "Soke",
+    yo: "Fagilé",
+    ig: "Kagbuo",
+    fr: "Annuler",
+    pt: "Cancelar",
+    sw: "Ghairi",
+    ar: "إلغاء",
+    tw: "Twa mu",
+    zu: "Khansela",
+  },
+  handledBy: {
+    en: "Handled by",
+    ha: "Wanda ke kula da shi",
+    yo: "Ẹni tí ń bójú tó",
+    ig: "Onye na-ahụ maka ya",
+    fr: "Suivi par",
+    pt: "Tratado por",
+    sw: "Anashughulikiwa na",
+    ar: "يتولاه",
+    tw: "Nea ɔhwɛ so",
+    zu: "Kuphathwa ngu",
+  },
+  unheld: {
+    en: "Nobody yet",
+    ha: "Babu kowa tukuna",
+    yo: "Kò sí ẹnikẹ́ni síbẹ̀",
+    ig: "Ọ dịbeghị onye",
+    fr: "Personne pour l'instant",
+    pt: "Ainda ninguém",
+    sw: "Bado hakuna mtu",
+    ar: "لا أحد بعد",
+    tw: "Obiara nni hɔ",
+    zu: "Akekho okwamanje",
+  },
+  takeCase: {
+    en: "Take this case",
+    ha: "Ka ɗauki wannan shari'ar",
+    yo: "Gba ẹjọ́ yìí",
+    ig: "Were okwu a",
+    fr: "Prendre ce dossier",
+    pt: "Assumir este caso",
+    sw: "Chukua kesi hii",
+    ar: "تولَّ هذه الحالة",
+    tw: "Fa asɛm yi",
+    zu: "Thatha leli cala",
+  },
+  release: {
+    en: "Hand back",
+    ha: "Mayar da shi",
+    yo: "Dá a padà",
+    ig: "Nyeghachi ya",
+    fr: "Rendre",
+    pt: "Devolver",
+    sw: "Rudisha",
+    ar: "إعادته",
+    tw: "San fa ma",
+    zu: "Buyisela",
+  },
+  assignTo: {
+    en: "Hand to a colleague",
+    ha: "Ba abokin aiki",
+    yo: "Fi lé alábàáṣiṣẹ́ lọ́wọ́",
+    ig: "Nyefee onye ọrụ ibe gị",
+    fr: "Confier à un collègue",
+    pt: "Entregar a um colega",
+    sw: "Mpe mwenzako",
+    ar: "أسندها إلى زميل",
+    tw: "Fa ma wo yɔnko adwumayɛni",
+    zu: "Nikeza ozakwenu",
   },
 };

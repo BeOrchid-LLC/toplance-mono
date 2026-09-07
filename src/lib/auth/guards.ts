@@ -63,6 +63,9 @@ export async function requireApplicationAccess(
       id: applications.id,
       travelerId: applications.travelerId,
       orgId: applications.orgId,
+      // `handlesCase` narrows the agency's reach to whoever holds the
+      // case, so the column is a permission input now, not a label.
+      assigneeId: applications.assigneeId,
     })
     .from(applications)
     .where(eq(applications.id, applicationId))

@@ -1,16 +1,25 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import { homeFor } from "@/lib/auth/routes";
-import type { Actor } from "@/lib/auth/policy";
+import { canReadDocuments, type Actor } from "@/lib/auth/policy";
 import { getActor, getProfile } from "@/lib/data/applications";
 import { provisionEmployerProfile } from "@/lib/data/organisations";
 import { db } from "@/lib/db/client";
-import { orgMembers, organisations, type Profile } from "@/lib/db/schema";
+import {
+  applications,
+  corridors,
+  orgMembers,
+  organisations,
+  profiles,
+  type Profile,
+} from "@/lib/db/schema";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
+import { isUuid } from "@/lib/domain/uuid";
 
 /** The agency this console is showing, as its own bar and header need it. */
 export type AgencyMembership = {
@@ -125,7 +134,7 @@ export async function resolveAgencyConsole(): Promise<AgencyConsole> {
  *
  * `/agency` is the one door in: it is where the organisation gets named,
  * and where a session that turns out to belong to a traveller mid-case
- * is sent onward. So a membership-less visitor to `/agency/people` or
+ * is sent onward. So a membership-less visitor to `/agency/clients` or
  * `/agency/team` is walked back to it rather than shown an empty roster
  * for an agency that does not exist.
  */
@@ -136,4 +145,76 @@ export async function requireAgencyConsole(): Promise<
   if (!console_.membership) redirect("/agency");
 
   return { ...console_, membership: console_.membership };
+}
+
+/** The assignee joined by a second alias — `profiles` is already the traveller. */
+const handler = alias(profiles, "handler");
+
+/** One client's case, as the case screen's header and panels need it. */
+export type AgencyCase = {
+  id: string;
+  caseRef: string;
+  status: (typeof applications.$inferSelect)["status"];
+  orgId: string | null;
+  assigneeId: string | null;
+  assigneeName: string | null;
+  travelerId: string;
+  travelerName: string;
+  travelerEmail: string;
+  travelerCountryIso: string | null;
+  visaName: string | null;
+  destinationIso: string | null;
+};
+
+/**
+ * The case screen's gate: the console's own preamble, then the case,
+ * then the question of whether this member may open it.
+ *
+ * `notFound()` for both a case that does not exist and one this person
+ * may not read. The two must be indistinguishable — a 403 on a real id
+ * and a 404 on a made-up one is an oracle for "does this agency have a
+ * client with this case id", answerable by anyone with a session.
+ *
+ * The permission asked for is `canReadDocuments` rather than
+ * `canReadApplication`, because documents are what this screen is: it
+ * exists to show the files and take a verdict on them, so the narrowest
+ * thing it renders is the right thing to gate the whole of it on.
+ */
+export async function requireAgencyCase(applicationId: string): Promise<{
+  console: AgencyConsole & { membership: AgencyMembership };
+  case: AgencyCase;
+}> {
+  // A typed URL like /agency/clients/1 would make Postgres throw on the
+  // uuid cast below — a 500 where a wrong-but-well-formed id is already
+  // a 404. A malformed id is the same answer as a missing one.
+  if (!isUuid(applicationId)) notFound();
+
+  const console_ = await requireAgencyConsole();
+
+  const [row] = await db
+    .select({
+      id: applications.id,
+      caseRef: applications.caseRef,
+      status: applications.status,
+      orgId: applications.orgId,
+      assigneeId: applications.assigneeId,
+      assigneeName: handler.fullName,
+      travelerId: applications.travelerId,
+      travelerName: profiles.fullName,
+      travelerEmail: profiles.email,
+      travelerCountryIso: profiles.countryIso,
+      visaName: corridors.visaName,
+      destinationIso: corridors.destinationIso,
+    })
+    .from(applications)
+    .innerJoin(profiles, eq(profiles.id, applications.travelerId))
+    .leftJoin(corridors, eq(corridors.id, applications.corridorId))
+    .leftJoin(handler, eq(handler.id, applications.assigneeId))
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  if (!row) notFound();
+  if (!canReadDocuments(console_.actor, row)) notFound();
+
+  return { console: console_, case: row };
 }

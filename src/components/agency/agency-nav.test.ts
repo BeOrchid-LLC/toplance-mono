@@ -14,7 +14,7 @@ describe("agencyNav", () => {
   it("carries the two rosters as their own pages", () => {
     expect(agencyNav(withOrg).map((i) => i.href)).toEqual([
       "/agency",
-      "/agency/people",
+      "/agency/clients",
       "/agency/team",
     ]);
   });
@@ -30,7 +30,7 @@ describe("agencyNav", () => {
 
   it("resolves its labels against the locale it is given", () => {
     expect(agencyNav({ locale: "fr", hasOrganisation: true })[1].label).toBe(
-      "Personnes"
+      "Clients"
     );
   });
 });

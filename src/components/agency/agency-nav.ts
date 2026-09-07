@@ -13,7 +13,7 @@ import type { Locale } from "@/lib/i18n/locales";
  *
  * `AppNav.isActive` matches item 0 exactly as the section root and every
  * later item on its children too, so `/agency` stays unlit while
- * `/agency/people` is open, and `Dashboard` must stay first.
+ * `/agency/clients` is open, and `Dashboard` must stay first.
  *
  * `hasOrganisation` is the whole reason this takes an argument. A
  * director who has signed up but not yet named an organisation has no
@@ -33,7 +33,7 @@ export function agencyNav({
 
   return [
     dashboard,
-    { href: "/agency/people", label: AGENCY.navPeople[locale] },
+    { href: "/agency/clients", label: AGENCY.navClients[locale] },
     { href: "/agency/team", label: AGENCY.navTeam[locale] },
   ];
 }

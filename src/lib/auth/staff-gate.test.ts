@@ -56,6 +56,7 @@ describe("requireStaffAction", () => {
     role: "staff",
     staffRole: "reviewer",
     orgIds: [],
+    orgs: [],
   };
   const traveller: Actor = { ...staff, userId: "trav_1", role: "traveler", staffRole: null };
 

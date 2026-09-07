@@ -11,9 +11,9 @@ type L = Record<Locale, string>;
  * NEEDS NATIVE REVIEW before launch. Translated in-house from the
  * English, the same way `hero.ts` and `intake.ts` were.
  */
-export const OPS_CASE: {
+export const CASE_REVIEW: {
   metaTitle: L;
-  backToQueue: L;
+  backToClients: L;
   ownedByPrefix: L;
   unassignedNoOwner: L;
   completion: { of: L; verified: L; uploaded: L };
@@ -37,17 +37,17 @@ export const OPS_CASE: {
     tw: "Asɛm ho nhwehwɛmu",
     zu: "Ukubuyekezwa kwecala",
   },
-  backToQueue: {
-    en: "Back to the queue",
-    ha: "Koma zuwa layi",
-    yo: "Padà sí ẹsẹ̀ ìdúró",
-    ig: "Laghachi na ndozi",
-    fr: "Retour à la file",
-    pt: "Voltar à fila",
-    sw: "Rudi kwenye foleni",
-    ar: "العودة إلى قائمة الانتظار",
-    tw: "San kɔ hyehyɛɛ no mu",
-    zu: "Buyela emugqeni",
+  backToClients: {
+    en: "Back to clients",
+    ha: "Koma ga abokan ciniki",
+    yo: "Padà sí àwọn oníbàárà",
+    ig: "Laghachi na ndị ahịa",
+    fr: "Retour aux clients",
+    pt: "Voltar aos clientes",
+    sw: "Rudi kwa wateja",
+    ar: "العودة إلى العملاء",
+    tw: "San kɔ adetɔfoɔ hɔ",
+    zu: "Buyela kumakhasimende",
   },
   ownedByPrefix: {
     en: "Owned by",

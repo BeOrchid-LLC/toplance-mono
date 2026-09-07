@@ -46,6 +46,14 @@
     ".next-e2e-3200/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    // Playwright builds the app into its own dist dir (see
+    // `NEXT_DIST_DIR` in playwright.config.ts), and Next writes the same
+    // generated route validators there as it does in `.next`. Both are
+    // gitignored build output, but `**/*.ts` above swept them in, so a
+    // stale e2e build made `tsc` fail with dozens of errors about routes
+    // that had merely moved — `next build` type-checks with this config
+    // and stopped there.
+    ".next-e2e*"
   ]
 }

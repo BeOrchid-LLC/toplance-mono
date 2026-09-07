@@ -24,6 +24,16 @@ export type BadgeVariant =
  *   Not started → grey outline · In progress → grey fill · Submitted → blue
  *   Under review → amber · Approved → green · Rejected → red
  */
+/**
+ * Whether a string off a form is one of the statuses.
+ *
+ * Reads `STATUS`'s own keys rather than the enum, because this module
+ * takes the schema as types only — see the note at the top.
+ */
+export function isApplicationStatus(value: string): value is ApplicationStatus {
+  return value in STATUS;
+}
+
 export const STATUS: Record<
   ApplicationStatus,
   { label: string; short: string; variant: BadgeVariant; blurb: string }

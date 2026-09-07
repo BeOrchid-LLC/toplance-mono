@@ -210,7 +210,7 @@ export default async function EmployerConsolePage() {
   }
 
   // Counts, not contents. The rows themselves are rendered by
-  // `/agency/people` and `/agency/team`; what this page needs from each
+  // `/agency/clients` and `/agency/team`; what this page needs from each
   // list is its length, and one query per list is what it takes to know
   // that honestly.
   const [rows, members, invitations] = await Promise.all([
@@ -305,11 +305,11 @@ export default async function EmployerConsolePage() {
               first. */}
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <RosterCard
-              href="/agency/people"
-              label={AGENCY.navPeople[locale]}
-              body={AGENCY.peopleCardBody[locale]}
+              href="/agency/clients"
+              label={AGENCY.navClients[locale]}
+              body={AGENCY.clientsCardBody[locale]}
               count={used}
-              countWord={(used === 1 ? AGENCY.personWord : AGENCY.peopleWord)[locale]}
+              countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
             />
             <RosterCard
               href="/agency/team"

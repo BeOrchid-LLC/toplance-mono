@@ -19,38 +19,12 @@ type L = Record<Locale, string>;
  * English, the same way `hero.ts` and `intake.ts` were.
  */
 export const OPS_ACTIONS: {
-  chooseVerdict: L;
-  chooseStatus: L;
   onlyOwnerApprove: L;
   onlyOwnerReject: L;
   onlyOwnerCondition: L;
   chooseAtLeastOneAnswer: L;
   ruleNotRecognized: L;
 } = {
-  chooseVerdict: {
-    en: "Choose a verdict.",
-    ha: "Zaɓi hukunci.",
-    yo: "Yan ìdájọ́ kan.",
-    ig: "Họrọ mkpebi.",
-    fr: "Choisissez un verdict.",
-    pt: "Escolha um veredito.",
-    sw: "Chagua uamuzi.",
-    ar: "اختر حكمًا.",
-    tw: "Yi gyinaeɛ bi.",
-    zu: "Khetha isinqumo.",
-  },
-  chooseStatus: {
-    en: "Choose a status.",
-    ha: "Zaɓi matsayi.",
-    yo: "Yan ipò kan.",
-    ig: "Họrọ ọnọdụ.",
-    fr: "Choisissez un statut.",
-    pt: "Escolha um estado.",
-    sw: "Chagua hali.",
-    ar: "اختر حالة.",
-    tw: "Yi tebea bi.",
-    zu: "Khetha isimo.",
-  },
   onlyOwnerApprove: {
     en: "Only a super admin can approve a route.",
     ha: "Babban admin ne kawai zai iya amincewa da hanya.",

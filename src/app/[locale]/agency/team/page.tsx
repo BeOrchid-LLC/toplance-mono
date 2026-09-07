@@ -63,7 +63,12 @@ export default async function AgencyTeamPage() {
 
       <ConsoleBand
         title={AGENCY.navTeam[locale]}
-        action={<InviteDialog canInviteStaff={membership.role === "owner"} />}
+        action={
+          // Only the director may invite a colleague, and on a page whose
+          // one action is exactly that, a reviewer is better shown no
+          // button than one that refuses.
+          membership.role === "owner" ? <InviteDialog kind="staff" /> : undefined
+        }
       >
         <p className="t-muted mt-2 max-w-[68ch]">{AGENCY.teamCardBody[locale]}</p>
       </ConsoleBand>

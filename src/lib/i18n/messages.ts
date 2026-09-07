@@ -16,14 +16,22 @@ export const MESSAGES: {
   panelLabel: L;
   empty: L;
   /**
-   * Shown in place of the composer while nobody at the agency has
-   * claimed the case.
+   * Shown *above* the composer while nobody at the agency has claimed
+   * the case — never in place of it.
    *
-   * It used to say the opposite — that an unassigned thread goes to the
-   * agency as a whole — because it did. `canWriteMessages` now waits for
-   * a handler, so this says what is true and, as importantly, that the
-   * wait ends without the traveller having to do anything: silence they
-   * are expected to break themselves is worse than silence explained.
+   * It has been all three things this sentence can be. It began as "an
+   * unassigned thread goes to the agency as a whole", became "you will
+   * be able to write as soon as someone picks this up" when
+   * `canWriteMessages` grew a handler gate, and is now the first again,
+   * because the gate is gone: a traveller who has just finished
+   * onboarding is exactly the person with a question, and a Messages
+   * screen whose only content is a sentence about why they cannot send
+   * one is the worst screen in the product.
+   *
+   * So this sets an expectation rather than refusing an action. It says
+   * nobody is on the case yet — which is honest, and which the
+   * traveller would otherwise infer from silence — and then says the
+   * message still lands.
    */
   unclaimedNotice: L;
   senderAgency: L;
@@ -66,16 +74,16 @@ export const MESSAGES: {
     zu: "Akukho lutho okwamanje. Bhala umlayezo wokuqala ngezansi.",
   },
   unclaimedNotice: {
-    en: "Nobody at your agency has picked up your case yet. You will be able to write here as soon as someone does.",
-    ha: "Har yanzu babu wanda ya karɓi shari'arka a hukumarka. Za ka iya rubutu a nan da zarar wani ya karɓe ta.",
-    yo: "Kò tíì sí ẹnìkan ní ilé-iṣẹ́ rẹ tí ó gba ọ̀rọ̀ rẹ. Ìwọ yóò lè kọ̀wé níhìn-ín ní kété tí ẹnìkan bá gbà á.",
-    ig: "Ọ dịbeghị onye ọ bụla n'ụlọ ọrụ gị weere okwu gị. Ị ga-enwe ike ide ebe a ozugbo mmadụ weere ya.",
-    fr: "Personne dans votre agence n'a encore pris votre dossier en charge. Vous pourrez écrire ici dès que quelqu'un le fera.",
-    pt: "Ainda ninguém na sua agência assumiu o seu processo. Poderá escrever aqui assim que alguém o fizer.",
-    sw: "Bado hakuna mtu katika wakala wako aliyechukua kesi yako. Utaweza kuandika hapa mara tu mtu atakapoichukua.",
-    ar: "لم يتسلّم أحد في وكالتك ملفك بعد. سيمكنك الكتابة هنا فور أن يتسلّمه أحدهم.",
-    tw: "Obiara nni w'adwumakuw no mu a wagye w'asɛm no nnya. Wobɛtumi akyerɛw wɔ ha bere a obi gye no.",
-    zu: "Akekho enkampanini yakho osethathe icala lakho. Uzokwazi ukubhala lapha ngokushesha nje uma ekhona osithathayo.",
+    en: "Nobody at your agency has picked up your case yet — write anyway. Whoever takes it will see your message.",
+    ha: "Har yanzu babu wanda ya karɓi shari'arka a hukumarka — ka rubuta duk da haka. Duk wanda ya karɓe ta zai ga saƙonka.",
+    yo: "Kò tíì sí ẹnìkan ní ilé-iṣẹ́ rẹ tí ó gba ọ̀rọ̀ rẹ — kọ̀wé lọ́nàkọnà. Ẹnikẹ́ni tí ó bá gbà á yóò rí ìránṣẹ́ rẹ.",
+    ig: "Ọ dịbeghị onye ọ bụla n'ụlọ ọrụ gị weere okwu gị — deere ya n'agbanyeghị. Onye ọ bụla weere ya ga-ahụ ozi gị.",
+    fr: "Personne dans votre agence n'a encore pris votre dossier en charge — écrivez quand même. La personne qui le prendra verra votre message.",
+    pt: "Ainda ninguém na sua agência assumiu o seu processo — escreva à mesma. Quem o assumir verá a sua mensagem.",
+    sw: "Bado hakuna mtu katika wakala wako aliyechukua kesi yako — andika hata hivyo. Yeyote atakayeichukua ataona ujumbe wako.",
+    ar: "لم يتسلّم أحد في وكالتك ملفك بعد — اكتب على أي حال. سيرى رسالتك من يتسلّمه.",
+    tw: "Obiara nni w'adwumakuw no mu a wagye w'asɛm no nnya — twerɛ ara. Obiara a ɔbɛgye no bɛhu wo nkrasɛm.",
+    zu: "Akekho enkampanini yakho osethathe icala lakho — bhala noma kunjalo. Noma ngubani osithathayo uzowubona umlayezo wakho.",
   },
   /**
    * Only ever a fallback, for an agency colleague whose profile carries

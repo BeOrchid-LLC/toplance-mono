@@ -149,8 +149,12 @@ export function isAgencyDirectorFor(actor: Actor, app: ApplicationRef): boolean 
  * which is the distinction that was missing.
  *
  * Assignment is therefore a permission, not a label. `claimCase` and
- * `releaseCase` move it, and every document, message and note policy
- * below is decided by this function.
+ * `releaseCase` move it, and every document and note policy below is
+ * decided by this function.
+ *
+ * The thread is the one exception, and it goes through `reachesThread`
+ * instead — a shared inbox for the unheld pool, which does not reach a
+ * single document. See the note there.
  */
 export function handlesCase(actor: Actor, app: ApplicationRef): boolean {
   if (!isAgencyFor(actor, app)) return false;
@@ -265,33 +269,57 @@ export const canReadCompanion: Permission = participant;
 export const canWriteVisaExpiry: Permission = (actor, app) => ownsApplication(actor, app);
 
 /**
+ * The agency's reach into one *thread*, which is wider than its reach
+ * into the case around it — the only place in this file where anything
+ * is.
+ *
+ * `handlesCase`, plus every colleague at the owning agency while the
+ * case is still in the pool. An unheld thread is a shared inbox; a held
+ * one narrows back to the handler and the director, like everything
+ * else on a claimed case.
+ *
+ * The 2026-09-07 rule was the opposite of this and stricter in both
+ * directions: nobody wrote until a case was claimed, so a traveller who
+ * had just finished onboarding met a Messages screen whose only content
+ * was a sentence explaining that they could not use it. The one moment
+ * a traveller most reliably has a question is the moment they finish —
+ * and the case they are asking about is unclaimed precisely because
+ * nothing has happened on it yet.
+ *
+ * That rule's own reasoning was that a reply owed by everyone is owed
+ * by no one. It is a real cost and this accepts it: an unanswered
+ * question in a shared inbox is a better failure than a question that
+ * could not be asked, and `notifyAgency` already fans an unheld case
+ * out to every member, so the message arrives somewhere rather than
+ * waiting to be found.
+ *
+ * What does *not* widen is the file. This predicate is used by the two
+ * message policies and nothing else — documents, verdicts, notes and
+ * decisions all still run through `handlesCase`, so a colleague who
+ * answers an unheld thread cannot open a page of it. Reaching a
+ * client's documents is still something you do by being given the
+ * client.
+ */
+const reachesThread: Permission = (actor, app) =>
+  handlesCase(actor, app) || (isAgencyFor(actor, app) && app.assigneeId === null);
+
+/**
  * Traveller and agency, both directions. Nobody else joins the thread.
  *
  * Reading is not gated on a handler: the thread is the record of the
- * case, and messages written before this rule existed must stay
- * readable by both sides.
+ * case, and messages written before any of these rules existed must
+ * stay readable by both sides.
  */
-export const canReadMessages: Permission = participant;
+export const canReadMessages: Permission = (actor, app) =>
+  ownsApplication(actor, app) || reachesThread(actor, app);
 
 /**
- * Writing needs a handler — a participant *and* a case somebody holds.
- *
- * The thread used to open the moment a case existed, on the reasoning
- * that an unclaimed one belongs to the whole agency and a shared inbox
- * is the honest model for a small team. It reads well and behaves
- * badly: `handlesCase` let every colleague reach an unclaimed case, so
- * a traveller's question landed in a place where answering it was
- * nobody's job in particular, and the agency could open a conversation
- * that no name was attached to. A reply owed by everyone is owed by no
- * one.
- *
- * So the thread waits for `assigneeId`. Both sides wait together — a
- * traveller allowed to write into an unheld case is the same silence,
- * only from their end of it — and taking the case is one click away on
- * the screen that says so.
+ * Writing is exactly reading. Anyone who can see this thread can answer
+ * in it — a screen that renders a conversation you may not join is a
+ * screen that has to explain itself, and the explanation is the one
+ * this change exists to delete.
  */
-export const canWriteMessages: Permission = (actor, app) =>
-  app.assigneeId !== null && participant(actor, app);
+export const canWriteMessages: Permission = canReadMessages;
 
 /** Platform-side: route curation. */
 export function canWriteCorridors(actor: Actor): boolean {
@@ -406,7 +434,8 @@ export const canManageInvitations = isOrgMemberOf;
  * case_notes .................... canRead/canWriteCaseNotes — the agency
  *                                 writes, the traveller reads
  * messages ...................... canRead/canWriteMessages — traveller and
- *                                 agency both read; both write only once
- *                                 the case has a handler
+ *                                 agency, read and write alike. The only
+ *                                 policy wider than `handlesCase`: an
+ *                                 unheld thread is the whole agency's
  * companion_updates ............. canReadCompanion — traveller and agency
  * ============================================================ */

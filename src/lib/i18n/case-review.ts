@@ -25,6 +25,7 @@ export const CASE_REVIEW: {
   travelHistoryPanel: L;
   noTrips: L;
   messagesUnheld: L;
+  threadOnly: L;
 } = {
   metaTitle: {
     en: "Case review",
@@ -223,23 +224,42 @@ export const CASE_REVIEW: {
     zu: "Lesi sihambi asirekhodile uhambo lwangaphambilini.",
   },
   /**
-   * In place of the composer while nobody holds the case.
-   *
-   * `canWriteMessages` refuses the send until the case has a handler,
-   * so a composer here would be a box that takes what you type and then
-   * a toast that refuses it. It names the two ways out because both are
-   * one click away on this same screen.
+   * Above the composer while nobody holds the case — not in place of
+   * it. It used to be the refusal, back when `canWriteMessages` needed
+   * a handler; now the unheld thread is the agency's shared inbox, and
+   * what the reader needs to know is that answering here does not make
+   * the case theirs. Taking it is one click away on this same screen.
    */
   messagesUnheld: {
-    en: "Nobody is handling this case yet. Take it, or hand it to a colleague, and the thread opens.",
-    ha: "Har yanzu babu wanda ke kula da wannan fayil. Karɓe shi, ko ka mika shi ga abokin aiki, sannan zancen zai buɗe.",
-    yo: "Kò tíì sí ẹni tí ó ń bójú tó fáìlì yìí. Gbà á, tàbí fi í lé alábàáṣiṣẹ́ lọ́wọ́, ọ̀rọ̀ náà yóò sì ṣí.",
-    ig: "Ọ dịghị onye na-elekọta faịlụ a ugbu a. Were ya, ma ọ bụ nyefee ya onye ọrụ ibe gị, mkparịta ụka ga-emeghe.",
-    fr: "Personne ne gère encore ce dossier. Prenez-le, ou confiez-le à un collègue, et la conversation s'ouvre.",
-    pt: "Ainda ninguém está a tratar deste processo. Assuma-o, ou entregue-o a um colega, e a conversa abre.",
-    sw: "Bado hakuna anayeshughulikia faili hili. Lichukue, au mkabidhi mwenzako, na mazungumzo yatafunguka.",
-    ar: "لا أحد يتولى هذا الملف بعد. تولَّه، أو سلّمه إلى زميل، وستُفتح المحادثة.",
-    tw: "Obiara nhwɛ fael yi so nnya. Gye, anaa fa ma wo yɔnko adwumayɛfoɔ, na nkɔmmɔ no bɛbue.",
-    zu: "Akekho osaphethe leli cala. Lithathe, noma unikeze ozakwenu, bese ingxoxo ivuleka.",
+    en: "Nobody is handling this case yet, so the thread is the whole agency's. Take the case to make it yours.",
+    ha: "Har yanzu babu wanda ke kula da wannan fayil, don haka zancen na dukan hukumar ne. Karɓe shi domin ya zama naka.",
+    yo: "Kò tíì sí ẹni tí ó ń bójú tó fáìlì yìí, nítorí náà ọ̀rọ̀ náà jẹ́ ti gbogbo ilé-iṣẹ́. Gbà á kí ó lè jẹ́ tìrẹ.",
+    ig: "Ọ dịghị onye na-elekọta faịlụ a ugbu a, ya mere mkparịta ụka ahụ bụ nke ụlọ ọrụ dum. Were ya ka ọ bụrụ nke gị.",
+    fr: "Personne ne gère encore ce dossier : la conversation appartient donc à toute l'agence. Prenez le dossier pour qu'elle soit la vôtre.",
+    pt: "Ainda ninguém está a tratar deste processo, por isso a conversa é de toda a agência. Assuma o processo para que passe a ser sua.",
+    sw: "Bado hakuna anayeshughulikia faili hili, kwa hivyo mazungumzo ni ya wakala mzima. Lichukue ili yawe yako.",
+    ar: "لا أحد يتولى هذا الملف بعد، فالمحادثة ملك للوكالة كلها. تولَّ الملف لتصبح لك.",
+    tw: "Obiara nhwɛ fael yi so nnya, enti nkɔmmɔ no yɛ adwumakuw no nyinaa dea. Gye no na ayɛ wo dea.",
+    zu: "Akekho osaphethe leli cala, ngakho le ngxoxo ngeyenkampani yonke. Lithathe ukuze libe ngelakho.",
+  },
+  /**
+   * The thread-only screen a colleague reaches on an unheld case.
+   *
+   * `reachesThread` lets them answer the conversation; nothing lets
+   * them open the file. The sentence exists so that is a stated shape
+   * rather than a screen that looks like the case review with most of
+   * it mysteriously missing.
+   */
+  threadOnly: {
+    en: "This is the thread only. Take the case to open the documents and the checklist.",
+    ha: "Wannan zancen kaɗai ne. Karɓi shari'ar domin buɗe takardu da jerin abubuwan.",
+    yo: "Ọ̀rọ̀ nìkan ni èyí. Gba ẹjọ́ náà láti ṣí àwọn ìwé àti àkọsílẹ̀ ìdánwò.",
+    ig: "Naanị mkparịta ụka ka nke a bụ. Were ikpe ahụ iji mepee akwụkwọ na ndepụta ahụ.",
+    fr: "Vous ne voyez ici que la conversation. Prenez le dossier pour ouvrir les documents et la liste.",
+    pt: "Aqui vê apenas a conversa. Assuma o processo para abrir os documentos e a lista.",
+    sw: "Hapa unaona mazungumzo pekee. Chukua kesi ili kufungua nyaraka na orodha.",
+    ar: "هذه المحادثة فقط. تولَّ الملف لفتح المستندات وقائمة المتطلبات.",
+    tw: "Nkɔmmɔ no nkoaa na ɛwɔ ha. Gye asɛm no na woabue nkrataa ne nhwehwɛmu no.",
+    zu: "Lena yingxoxo kuphela. Thatha icala ukuze uvule amadokhumenti nohlu.",
   },
 };

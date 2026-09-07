@@ -268,6 +268,84 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     expect(row.convertedOrgId).toBe(result.orgId);
   });
 
+  it("refuses a demo request that does not exist, and writes nothing", async () => {
+    const beforeOrgs = await db.select({ id: organisations.id }).from(organisations);
+    const beforeInvites = await db.select({ id: invitations.id }).from(invitations);
+    const beforeMembers = await db
+      .select({ orgId: orgMembers.orgId, userId: orgMembers.userId })
+      .from(orgMembers);
+
+    const result = await provisionTenantTx(
+      {
+        name: "Ghost Agency",
+        ownerEmail: "ghost@kite.invalid",
+        // Syntactically valid, matches no row.
+        demoRequestId: "00000000-0000-4000-8000-00000000dead",
+      },
+      STAFF
+    );
+
+    expect("error" in result).toBe(true);
+
+    // The claim the early-return-under-lock rests on: nothing was
+    // inserted, so the row counts across all three tables are unchanged
+    // — not just "no agency named Ghost Agency exists".
+    const afterOrgs = await db.select({ id: organisations.id }).from(organisations);
+    const afterInvites = await db.select({ id: invitations.id }).from(invitations);
+    const afterMembers = await db
+      .select({ orgId: orgMembers.orgId, userId: orgMembers.userId })
+      .from(orgMembers);
+
+    expect(afterOrgs).toHaveLength(beforeOrgs.length);
+    expect(afterInvites).toHaveLength(beforeInvites.length);
+    expect(afterMembers).toHaveLength(beforeMembers.length);
+  });
+
+  it("refuses to provision twice from the same demo request", async () => {
+    const [req] = await db
+      .insert(demoRequests)
+      .values({
+        fullName: "Bo Visitor",
+        email: "bo@kite.invalid",
+        companyName: "Kite Travel",
+        jobTitle: "Director",
+        preferredAt: new Date("2026-10-02T14:00:00Z"),
+        preferredTz: "Africa/Lagos",
+        locale: "en",
+      })
+      .returning({ id: demoRequests.id });
+    requestIds.push(req.id);
+
+    const first = await provisionTenantTx(
+      { name: "First Agency", ownerEmail: "first@kite.invalid", demoRequestId: req.id },
+      STAFF
+    );
+    expect("error" in first).toBe(false);
+    if ("error" in first) return;
+    orgIds.push(first.orgId);
+
+    const beforeOrgs = await db.select({ id: organisations.id }).from(organisations);
+
+    // A double-submit or a retry after an ambiguous timeout: the row is
+    // still there for the lock to find, but it is already converted.
+    const second = await provisionTenantTx(
+      { name: "Second Agency", ownerEmail: "second@kite.invalid", demoRequestId: req.id },
+      STAFF
+    );
+    expect("error" in second).toBe(true);
+
+    const afterOrgs = await db.select({ id: organisations.id }).from(organisations);
+    expect(afterOrgs).toHaveLength(beforeOrgs.length);
+
+    const [row] = await db
+      .select()
+      .from(demoRequests)
+      .where(eq(demoRequests.id, req.id));
+
+    // Still pointing at the first agency, not silently re-pointed.
+    expect(row.convertedOrgId).toBe(first.orgId);
+  });
+
   it("leaves other demo requests alone when none was named", async () => {
     const result = await provisionTenantTx(
       { name: "Walk In Agency", ownerEmail: "walkin@kite.invalid" },

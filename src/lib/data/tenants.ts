@@ -261,11 +261,20 @@ export type ProvisionResult =
  *
  * When a demo request is named, it is locked with `select ... for
  * update` and checked BEFORE anything is inserted — not stamped after
- * the fact and rolled back if it turns out to be missing. Two reasons:
- * the row lock is what stops two concurrent provisions of the same
- * enquiry from interleaving, and checking first means a missing id is
- * an early `return` that commits an empty transaction rather than a
- * `tx.rollback()` throwing through the transaction wrapper.
+ * the fact and rolled back if it turns out to be missing. Checking
+ * first means a missing id is an early `return` that commits an empty
+ * transaction rather than a `tx.rollback()` throwing through the
+ * transaction wrapper.
+ *
+ * The lock only serializes two concurrent calls naming the same
+ * enquiry; it does not by itself make the second one correct, which is
+ * why the same lookup also reads `status`. Without that check, a
+ * double-submit or a retry after an ambiguous timeout would find the
+ * row still present, provision a second agency, and silently overwrite
+ * `convertedOrgId` onto the new one — orphaning the first agency from
+ * the enquiry it was made from with nobody told. So a request that is
+ * already `converted` is refused before anything is inserted, same as
+ * a missing one.
  */
 export async function provisionTenantTx(
   input: ProvisionInput,
@@ -288,7 +297,7 @@ export async function provisionTenantTx(
   return db.transaction(async (tx) => {
     if (input.demoRequestId) {
       const [existing] = await tx
-        .select({ id: demoRequests.id })
+        .select({ id: demoRequests.id, status: demoRequests.status })
         .from(demoRequests)
         .where(eq(demoRequests.id, input.demoRequestId))
         .for("update")
@@ -301,6 +310,17 @@ export async function provisionTenantTx(
       // the operator asked for.
       if (!existing) {
         return { error: "We could not find that demo request." };
+      }
+
+      // The lock stops two provisions of this enquiry from interleaving,
+      // but it does not stop a second one from happening — a
+      // double-submit or a retry would otherwise find the row still
+      // sitting there and quietly re-point it at a second agency. This
+      // is the check that actually refuses that: the operator is looking
+      // at a row that already became something, so it is not this call's
+      // to convert again.
+      if (existing.status === "converted") {
+        return { error: "That demo request has already been converted." };
       }
     }
 

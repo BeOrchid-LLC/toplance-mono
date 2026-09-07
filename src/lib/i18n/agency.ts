@@ -25,7 +25,7 @@ type L = Record<Locale, string>;
 export const AGENCY: {
   pageTitle: L;
   navDashboard: L;
-  navPeople: L;
+  navClients: L;
   navTeam: L;
   roleLabel: { owner: L; reviewer: L };
   roleReason: { owner: L; reviewer: L };
@@ -40,9 +40,9 @@ export const AGENCY: {
   privacyTag: L;
   privacyHeading: L;
   privacyBody: L;
-  yourPeopleLabel: L;
-  personWord: L;
-  peopleWord: L;
+  yourClientsLabel: L;
+  clientWord: L;
+  clientsWord: L;
   rosterEmpty: L;
   routeNotSet: L;
   documentsVerified: L;
@@ -54,7 +54,7 @@ export const AGENCY: {
   timelineAccepted: L;
   timelineExpired: L;
   timelineInvited: L;
-  peopleCardBody: L;
+  clientsCardBody: L;
   teamCardBody: L;
   yourTeamLabel: L;
   memberWord: L;
@@ -88,17 +88,17 @@ export const AGENCY: {
     tw: "Nhwɛso",
     zu: "Ideshibhodi",
   },
-  navPeople: {
-    en: "People",
-    ha: "Mutane",
-    yo: "Àwọn ènìyàn",
-    ig: "Ndị mmadụ",
-    fr: "Personnes",
-    pt: "Pessoas",
-    sw: "Watu",
-    ar: "الأشخاص",
-    tw: "Nnipa",
-    zu: "Abantu",
+  navClients: {
+    en: "Clients",
+    ha: "Abokan ciniki",
+    yo: "Àwọn oníbàárà",
+    ig: "Ndị ahịa",
+    fr: "Clients",
+    pt: "Clientes",
+    sw: "Wateja",
+    ar: "العملاء",
+    tw: "Adetɔfoɔ",
+    zu: "Amakhasimende",
   },
   navTeam: {
     en: "Team",
@@ -272,65 +272,81 @@ export const AGENCY: {
     tw: "Kokoamsɛm ahye",
     zu: "Umngcele wobumfihlo",
   },
+  /**
+   * Rewritten 2026-09-07, because it had become false.
+   *
+   * It was written when BeOrchid reviewed the documents and the
+   * organisation was a sponsor watching a bar fill up. v1.3 moved the
+   * review boundary to the agency — see `canReadDocuments` in
+   * `@/lib/auth/policy` — so the agency now opens the passport, and a
+   * card promising it would never see one was telling every director
+   * the opposite of what their own console does.
+   *
+   * A privacy laminate that contradicts the screen behind it is worse
+   * than none: it teaches the reader that the product's promises are
+   * decoration. So this states the boundary that does exist, in both
+   * directions — the platform is shut out, and inside the agency a
+   * claimed case narrows to its handler.
+   */
   privacyHeading: {
-    en: "You see progress, not documents",
-    ha: "Kana ganin ci gaba, ba takardu ba",
-    yo: "O rí ìtẹ̀síwájú, kì í ṣe àwọn ìwé",
-    ig: "Ị na-ahụ ọganihu, ọ bụghị akwụkwọ",
-    fr: "Vous voyez la progression, pas les documents",
-    pt: "Vê o progresso, não os documentos",
-    sw: "Unaona maendeleo, si nyaraka",
-    ar: "ترى التقدم، لا المستندات",
-    tw: "Wohu nkɔso, ɛnyɛ nkrataa",
-    zu: "Ubona inqubekelaphambili, hhayi amadokhumenti",
+    en: "The documents stop at your agency",
+    ha: "Takardun sun tsaya a ƙungiyarku",
+    yo: "Àwọn ìwé dúró sí ilé-iṣẹ́ yín",
+    ig: "Akwụkwọ ndị ahụ na-akwụsị n'ụlọ ọrụ gị",
+    fr: "Les documents s'arrêtent à votre agence",
+    pt: "Os documentos ficam na sua agência",
+    sw: "Nyaraka zinaishia kwenye wakala wako",
+    ar: "المستندات تتوقف عند وكالتك",
+    tw: "Nkrataa no gyina w'adwumakuw so",
+    zu: "Amadokhumenti agcina enhlanganweni yakho",
   },
   privacyBody: {
-    en: "Passports, bank statements and police certificates stay between the traveler and Toplance. You see the completion score, the status and whether someone is stuck.",
-    ha: "Fasfo, cikakken bayanin banki da takardun sheda daga ‘yan sanda suna tsakanin matafiyi da Toplance kawai. Kana ganin madogarar cikawa, matsayi, da ko wani ya makale.",
-    yo: "Ìwé ìrìnnà, àkọsílẹ̀ báńkì àti ìwé ẹ̀rí ọlọ́pàá wà láàrin arìnrìn àjò àti Toplance nìkan. O rí ìwọ̀n ìparí, ipò rẹ̀, àti bóyá ẹnìkan ti dúró jẹ́ẹ́.",
-    ig: "Paspọtụ, nkọwa akaụntụ ụlọ akụ na akwụkwọ akaebe uwe ojii na-anọ naanị n'etiti onye njem na Toplance. Ị na-ahụ akara mmecha, ọnọdụ ya, na ma onye ọ bụla ọ dịghị aga n'ihu.",
-    fr: "Les passeports, relevés bancaires et casiers judiciaires restent entre le voyageur et Toplance. Vous voyez le score d'achèvement, le statut et si quelqu'un est bloqué.",
-    pt: "Passaportes, extratos bancários e certificados de registo criminal ficam apenas entre o viajante e a Toplance. Vê a pontuação de conclusão, o estado e se alguém está bloqueado.",
-    sw: "Pasipoti, taarifa za benki na vyeti vya polisi hubaki kati ya msafiri na Toplance pekee. Unaona alama ya ukamilifu, hali, na kama kuna aliyekwama.",
-    ar: "تبقى جوازات السفر وكشوف الحسابات المصرفية وشهادات الشرطة بين المسافر وToplance فقط. ترى درجة الإنجاز والحالة وما إذا كان أحدهم عالقاً.",
-    tw: "Pasport, sikakorabea nkrataa, ne polisifoɔ adansedie krataa te ɔkwantuni ne Toplance ntam. Wohu ewiei akontaahyɛde, tebea, ne sɛ obi asisi anaa.",
-    zu: "Amaphasipoti, izitatimende zasebhange nezitifiketi zamaphoyisa zihlala phakathi komhambi ne-Toplance. Ubona amaphuzu okuqedwa, isimo, nokuthi ngabe ukhona osesihibeni yini.",
+    en: "Passports, bank statements and police certificates are yours to review, and nobody at Toplance can open them. Inside your agency, an unclaimed case is open to your team; once someone claims it, only that handler and the director can see it.",
+    ha: "Fasfo, bayanan banki da takardun sheda daga ‘yan sanda naku ne ku duba, kuma babu wani a Toplance da zai iya buɗe su. A cikin ƙungiyarku, fayil ɗin da ba a karɓa ba yana buɗe ga tawagarku; da zarar wani ya karɓe shi, sai wanda yake kula da shi da darakta kaɗai ke ganin sa.",
+    yo: "Ìwé ìrìnnà, àkọsílẹ̀ báńkì àti ìwé ẹ̀rí ọlọ́pàá jẹ́ tiyín láti yẹ̀wò, kò sì sí ẹnìkan ní Toplance tí ó lè ṣí wọn. Nínú ilé-iṣẹ́ yín, fáìlì tí kò tí ì sí ẹni tí ó gbà á wà ní ṣíṣí fún ẹgbẹ́ yín; bí ẹnìkan bá gbà á, olùtọ́jú náà àti olórí nìkan ni ó lè rí i.",
+    ig: "Paspọtụ, nkọwa akaụntụ ụlọ akụ na asambodo ndị uwe ojii bụ nke gị inyocha, ọ dịghịkwa onye ọ bụla na Toplance nwere ike imepe ha. N'ime ụlọ ọrụ gị, faịlụ onye ọ bụla na-ejideghị na-emeghe nye ndị otu gị; ozugbo otu onye jidere ya, ọ bụ naanị onye ahụ na-elekọta ya na onye isi nwere ike ịhụ ya.",
+    fr: "Les passeports, relevés bancaires et certificats de police sont à vous d'examiner, et personne chez Toplance ne peut les ouvrir. Au sein de votre agence, un dossier non attribué est ouvert à toute l'équipe ; dès qu'il est pris en charge, seuls ce gestionnaire et le directeur peuvent le voir.",
+    pt: "Os passaportes, extratos bancários e certificados de registo criminal são seus para analisar, e ninguém na Toplance os pode abrir. Dentro da sua agência, um processo não atribuído está aberto à equipa; assim que alguém o assume, só esse gestor e o diretor o podem ver.",
+    sw: "Pasipoti, taarifa za benki na vyeti vya polisi ni zenu kukagua, na hakuna mtu yeyote Toplance anayeweza kuzifungua. Ndani ya wakala wako, faili ambalo halijachukuliwa liko wazi kwa timu yako; mtu akishalichukua, ni yeye anayelishughulikia na mkurugenzi pekee wanaoweza kuliona.",
+    ar: "جوازات السفر وكشوف الحسابات المصرفية وشهادات الشرطة لك أنت لمراجعتها، ولا يمكن لأحد في Toplance فتحها. داخل وكالتك، الملف غير المُسنَد مفتوح لفريقك؛ وبمجرد أن يتولاه أحدهم، لا يراه سوى ذلك المسؤول والمدير.",
+    tw: "Pasport, sikakorabea nkrataa, ne polisifoɔ adansedie krataa yɛ wo dea sɛ wohwɛ, na obiara nni Toplance a ɔbɛtumi abue mu. W'adwumakuw mu no, fael a obiara nnyee no da hɔ ma wo kuo no nyinaa; sɛ obi gye a, ɔno a ɔhwɛ so ne panin no nko ara na wɔtumi hu.",
+    zu: "Amaphasipoti, izitatimende zasebhange nezitifiketi zamaphoyisa angawakho ukuwabuyekeza, futhi akekho e-Toplance ongawavula. Ngaphakathi kwenhlangano yakho, icala elingakathathwa livulekele ithimba lakho; uma umuntu eselithathile, yilowo oliphethe kanye nomqondisi kuphela abangalibona.",
   },
-  yourPeopleLabel: {
-    en: "Your people",
-    ha: "Mutanenka",
-    yo: "Àwọn ènìyàn rẹ",
-    ig: "Ndị gị",
-    fr: "Vos personnes",
-    pt: "As suas pessoas",
-    sw: "Watu wako",
-    ar: "أفرادك",
-    tw: "Wo nkurɔfoɔ",
-    zu: "Abantu bakho",
+  yourClientsLabel: {
+    en: "Your clients",
+    ha: "Abokan cinikinka",
+    yo: "Àwọn oníbàárà rẹ",
+    ig: "Ndị ahịa gị",
+    fr: "Vos clients",
+    pt: "Os seus clientes",
+    sw: "Wateja wako",
+    ar: "عملاؤك",
+    tw: "Wo adetɔfoɔ",
+    zu: "Amakhasimende akho",
   },
-  personWord: {
-    en: "person",
-    ha: "mutum",
-    yo: "ènìyàn",
-    ig: "mmadụ",
-    fr: "personne",
-    pt: "pessoa",
-    sw: "mtu",
-    ar: "شخص",
-    tw: "onipa",
-    zu: "umuntu",
+  clientWord: {
+    en: "client",
+    ha: "abokin ciniki",
+    yo: "oníbàárà",
+    ig: "onye ahịa",
+    fr: "client",
+    pt: "cliente",
+    sw: "mteja",
+    ar: "عميل",
+    tw: "adetɔni",
+    zu: "ikhasimende",
   },
-  peopleWord: {
-    en: "people",
-    ha: "mutane",
-    yo: "ènìyàn",
-    ig: "ndị mmadụ",
-    fr: "personnes",
-    pt: "pessoas",
-    sw: "watu",
-    ar: "أشخاص",
-    tw: "nnipa",
-    zu: "abantu",
+  clientsWord: {
+    en: "clients",
+    ha: "abokan ciniki",
+    yo: "àwọn oníbàárà",
+    ig: "ndị ahịa",
+    fr: "clients",
+    pt: "clientes",
+    sw: "wateja",
+    ar: "عملاء",
+    tw: "adetɔfoɔ",
+    zu: "amakhasimende",
   },
   rosterEmpty: {
     en: "Nobody yet. Once you invite someone and they finish intake, they appear here with a live completion score.",
@@ -464,7 +480,7 @@ export const AGENCY: {
     tw: "Wɔfrɛɛ no {date}",
     zu: "Umenywe {date}",
   },
-  peopleCardBody: {
+  clientsCardBody: {
     en: "Everyone whose visa you are handling, with a live completion score for each.",
     ha: "Duk wanda kake sarrafa bizarsa, tare da madogarar cikawa mai rai ga kowanne.",
     yo: "Gbogbo ẹni tí o ń ṣàkóso fisa rẹ̀, pẹ̀lú ìwọ̀n ìparí tí ń ṣiṣẹ́ lọ́wọ́lọ́wọ́ fún ẹnìkọ̀ọ̀kan.",

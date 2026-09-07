@@ -13,22 +13,26 @@ type L = Record<Locale, string>;
  * static copy either; it comes back from `inviteTraveller` and stays in
  * English until that action itself is translated.
  *
+ * The sent sheet's copy-link strings went with the button on 2026-09-07.
+ * The invitation now travels by email alone, so the sheet no longer
+ * offers to hand the link over — see `invite-dialog.tsx`.
+ *
  * NEEDS NATIVE REVIEW before launch, like every non-English string in
  * this codebase translated in-house rather than supplied by the client.
  */
 export const INVITE_DIALOG: {
+  inviteButton: L;
   inviteSomeone: L;
+  inviteClient: L;
+  inviteTeamMember: L;
   sentTitle: L;
   sentDescriptionEmailPrefix: L;
-  sentDescriptionCopy: L;
   sheetFor: L;
   emailWord: L;
   sheetValidFor: L;
   sheetThirtyDays: L;
   onlyAddressNotice: L;
   onlyAddressFallback: L;
-  copyLinkCopied: L;
-  copyLinkDefault: L;
   doneButton: L;
   inviteDescription: L;
   emailHelp: L;
@@ -43,8 +47,31 @@ export const INVITE_DIALOG: {
   fullNameHelp: L;
   sendingButton: L;
   sendButton: L;
-  toastCopyFailed: L;
 } = {
+  /**
+   * Every invite trigger in the agency console, in every locale: the
+   * bare verb.
+   *
+   * The three strings below name who is being invited, and they still
+   * do — as the dialog's heading. On the button they were saying it a
+   * second time, in a place that already knew: the Clients page's one
+   * action cannot invite a colleague, and the Team page's cannot invite
+   * a client. A console reads as one product when its primary action is
+   * spelled the same on every screen, and the noun that varied is the
+   * one part of the sentence the surrounding page had already supplied.
+   */
+  inviteButton: {
+    en: "Invite",
+    ha: "Gayyata",
+    yo: "Pè",
+    ig: "Kpọọ oku",
+    fr: "Inviter",
+    pt: "Convidar",
+    sw: "Alika",
+    ar: "دعوة",
+    tw: "Frɛ",
+    zu: "Mema",
+  },
   inviteSomeone: {
     en: "Invite someone",
     ha: "Gayyaci wani",
@@ -56,6 +83,30 @@ export const INVITE_DIALOG: {
     ar: "دعوة شخص",
     tw: "Frɛ obi",
     zu: "Mema umuntu",
+  },
+  inviteClient: {
+    en: "Invite a client",
+    ha: "Gayyaci abokin ciniki",
+    yo: "Pe oníbàárà",
+    ig: "Kpọọ onye ahịa",
+    fr: "Inviter un client",
+    pt: "Convidar um cliente",
+    sw: "Mwalike mteja",
+    ar: "دعوة عميل",
+    tw: "To nsa frɛ adetɔni",
+    zu: "Mema ikhasimende",
+  },
+  inviteTeamMember: {
+    en: "Invite a team member",
+    ha: "Gayyaci memban ƙungiya",
+    yo: "Pe ọmọ ẹgbẹ́",
+    ig: "Kpọọ onye otu",
+    fr: "Inviter un membre de l'équipe",
+    pt: "Convidar um membro da equipa",
+    sw: "Mwalike mwanachama wa timu",
+    ar: "دعوة عضو في الفريق",
+    tw: "To nsa frɛ kuo no memba",
+    zu: "Mema ilungu leqembu",
   },
   sentTitle: {
     en: "Invitation sent",
@@ -80,18 +131,6 @@ export const INVITE_DIALOG: {
     ar: "رسالة إلكترونية في طريقها إلى {email}. ",
     tw: "Wɔreto email akɔma {email}. ",
     zu: "I-imeyili isendleleni iya ku-{email}. ",
-  },
-  sentDescriptionCopy: {
-    en: "Copy the link if you would rather hand it over yourself.",
-    ha: "Kwafi hanyar haɗin idan ka fi son mika ta da kanka.",
-    yo: "Ṣe àdàkọ ọ̀nà ìjápọ̀ náà bí o bá fẹ́ fúnra rẹ fi ìjápọ̀ náà lé wọn lọ́wọ́.",
-    ig: "Detu njikọ ahụ ma ọ bụrụ na ị chọrọ inyefe ya n'aka gị.",
-    fr: "Copiez le lien si vous préférez le transmettre vous-même.",
-    pt: "Copie o link se preferir entregá-lo você mesmo.",
-    sw: "Nakili kiungo ikiwa ungependa kukikabidhi mwenyewe.",
-    ar: "انسخ الرابط إذا كنت تفضل تسليمه بنفسك.",
-    tw: "Twerɛ link no bio sɛ wopɛ sɛ wode ma wɔn wo ara a.",
-    zu: "Kopisha isixhumanisi uma ungathanda ukusinikeza ngokwakho.",
   },
   sheetFor: {
     en: "For",
@@ -164,30 +203,6 @@ export const INVITE_DIALOG: {
     ar: "العنوان المدعو",
     tw: "adireesi a wɔfrɛɛ no",
     zu: "ikheli elimenyiwe",
-  },
-  copyLinkCopied: {
-    en: "Copied",
-    ha: "An kwafa",
-    yo: "A ti dà á kọ",
-    ig: "Edetuola",
-    fr: "Copié",
-    pt: "Copiado",
-    sw: "Imenakiliwa",
-    ar: "تم النسخ",
-    tw: "Wɔatwerɛ",
-    zu: "Kukopishiwe",
-  },
-  copyLinkDefault: {
-    en: "Copy link",
-    ha: "Kwafi hanyar haɗi",
-    yo: "Dà ọ̀nà ìjápọ̀ kọ",
-    ig: "Detu njikọ",
-    fr: "Copier le lien",
-    pt: "Copiar link",
-    sw: "Nakili kiungo",
-    ar: "نسخ الرابط",
-    tw: "Twerɛ link no bio",
-    zu: "Kopisha isixhumanisi",
   },
   doneButton: {
     en: "Done",
@@ -356,17 +371,5 @@ export const INVITE_DIALOG: {
     ar: "إرسال الدعوة",
     tw: "Soma frɛ",
     zu: "Thumela isimemo",
-  },
-  toastCopyFailed: {
-    en: "Copy failed — select the link text instead.",
-    ha: "Kwafi ya kasa — maimakon haka, zaɓi rubutun hanyar haɗin.",
-    yo: "Àdàkọ kùnà — dípò rẹ̀, yan ọ̀rọ̀ ìjápọ̀ náà.",
-    ig: "Ndetu ya emeghị — kama ya, họrọ ederede njikọ ahụ.",
-    fr: "La copie a échoué — sélectionnez plutôt le texte du lien.",
-    pt: "A cópia falhou — selecione o texto do link em vez disso.",
-    sw: "Kunakili kumeshindwa — chagua maandishi ya kiungo badala yake.",
-    ar: "فشل النسخ — حدد نص الرابط بدلاً من ذلك.",
-    tw: "Twerɛ no anyɛ yie — yi link no nkyerɛwee mmom.",
-    zu: "Ukukopisha kwehlulekile — khetha umbhalo wesixhumanisi kunalokho.",
   },
 };

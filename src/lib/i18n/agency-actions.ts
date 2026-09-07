@@ -16,6 +16,9 @@ type L = Record<Locale, string>;
  */
 export const AGENCY_ACTIONS: {
   onlyOwnerInvitesStaff: L;
+  chooseVerdict: L;
+  chooseStatus: L;
+  chooseFlagReason: L;
 } = {
   onlyOwnerInvitesStaff: {
     en: "Only an owner can invite a colleague.",
@@ -28,5 +31,41 @@ export const AGENCY_ACTIONS: {
     ar: "المالك وحده يمكنه دعوة زميل.",
     tw: "Ɔwura nko ara na ɔbɛtumi afrɛ ne yɔnko adwumayɛfoɔ.",
     zu: "Umnikazi kuphela ongamema ozakwabo.",
+  },
+  chooseVerdict: {
+    en: "Choose a verdict.",
+    ha: "Zaɓi hukunci.",
+    yo: "Yan ìdájọ́ kan.",
+    ig: "Họrọ mkpebi.",
+    fr: "Choisissez un verdict.",
+    pt: "Escolha um veredito.",
+    sw: "Chagua uamuzi.",
+    ar: "اختر حكمًا.",
+    tw: "Yi gyinaeɛ bi.",
+    zu: "Khetha isinqumo.",
+  },
+  chooseStatus: {
+    en: "Choose a status.",
+    ha: "Zaɓi matsayi.",
+    yo: "Yan ipò kan.",
+    ig: "Họrọ ọnọdụ.",
+    fr: "Choisissez un statut.",
+    pt: "Escolha um estado.",
+    sw: "Chagua hali.",
+    ar: "اختر حالة.",
+    tw: "Yi tebea bi.",
+    zu: "Khetha isimo.",
+  },
+  chooseFlagReason: {
+    en: "Say what kind of problem it is.",
+    ha: "Faɗi wace irin matsala ce.",
+    yo: "Sọ irú ìṣòro tí ó jẹ́.",
+    ig: "Kwuo ụdị nsogbu ọ bụ.",
+    fr: "Indiquez de quel type de problème il s'agit.",
+    pt: "Diga que tipo de problema é.",
+    sw: "Sema ni tatizo la aina gani.",
+    ar: "حدد نوع المشكلة.",
+    tw: "Ka ɔhaw ko a ɛyɛ.",
+    zu: "Sho ukuthi yiluphi uhlobo lwenkinga.",
   },
 };

@@ -18,7 +18,7 @@ import {
   type DocumentRow,
   type Profile,
 } from "@/lib/db/schema";
-import type { Actor } from "@/lib/auth/policy";
+import type { Actor, OrgMembership } from "@/lib/auth/policy";
 
 export type { Application, DocumentRow, Profile };
 
@@ -73,14 +73,21 @@ export async function getProfile(): Promise<Profile | null> {
  * does not, which is what makes the rule testable against a real
  * database.
  */
-export async function liveOrgIdsFor(userId: string): Promise<string[]> {
-  const memberships = await db
-    .select({ orgId: orgMembers.orgId })
+export async function liveMembershipsFor(userId: string): Promise<OrgMembership[]> {
+  return db
+    .select({ orgId: orgMembers.orgId, role: orgMembers.role })
     .from(orgMembers)
     .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
     .where(and(eq(orgMembers.userId, userId), isNull(organisations.suspendedAt)));
+}
 
-  return memberships.map((m) => m.orgId);
+/**
+ * The ids alone. `handlesCase` needs the rank beside each one, but most
+ * callers — roster reads, the invitation guard — want only the ids, and
+ * this keeps them from mapping over memberships at every call site.
+ */
+export async function liveOrgIdsFor(userId: string): Promise<string[]> {
+  return (await liveMembershipsFor(userId)).map((m) => m.orgId);
 }
 
 /**
@@ -92,11 +99,16 @@ export async function getActor(): Promise<Actor | null> {
   const profile = await getProfile();
   if (!profile) return null;
 
+  // One query for both shapes, so `orgIds` and `orgs` cannot disagree —
+  // see the note on `Actor`.
+  const orgs = await liveMembershipsFor(profile.id);
+
   return {
     userId: profile.id,
     role: profile.role,
     staffRole: profile.staffRole ?? null,
-    orgIds: await liveOrgIdsFor(profile.id),
+    orgIds: orgs.map((o) => o.orgId),
+    orgs,
   };
 }
 

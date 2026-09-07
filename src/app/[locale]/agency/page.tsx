@@ -210,7 +210,7 @@ export default async function EmployerConsolePage() {
   }
 
   // Counts, not contents. The rows themselves are rendered by
-  // `/agency/people` and `/agency/team`; what this page needs from each
+  // `/agency/clients` and `/agency/team`; what this page needs from each
   // list is its length, and one query per list is what it takes to know
   // that honestly.
   const [rows, members, invitations] = await Promise.all([
@@ -275,12 +275,17 @@ export default async function EmployerConsolePage() {
       <main>
         <Shell className="py-12">
           {/*
-            The signature moment for this console, per guideline §4. It is
-            the right one: the single thing an HR administrator most needs
-            to believe about this screen is the thing it will not show
-            them, and that promise is what the whole roster is built
-            around. One laminate, on the page you land on, and none below
-            it — which is also why the two roster pages do not repeat it.
+            The signature moment for this console, per guideline §4, and
+            still the right one — though no longer for the reason it was
+            written. It used to promise the reader that this screen would
+            never show them a passport; v1.3 moved the review boundary to
+            the agency, so now it does. What a director most needs to
+            believe is therefore no longer "not me" but "not anyone
+            else": nobody at BeOrchid can open these documents, and
+            inside their own agency a claimed case narrows to its handler
+            and to them. One laminate, on the page you land on, and none
+            below it — which is also why the two roster pages do not
+            repeat it.
 
             No MRZ. The mark carries a corridor, and this screen is a
             roster of many — there is no one corridor here to encode.
@@ -305,11 +310,11 @@ export default async function EmployerConsolePage() {
               first. */}
           <div className="mt-8 grid gap-6 md:grid-cols-2">
             <RosterCard
-              href="/agency/people"
-              label={AGENCY.navPeople[locale]}
-              body={AGENCY.peopleCardBody[locale]}
+              href="/agency/clients"
+              label={AGENCY.navClients[locale]}
+              body={AGENCY.clientsCardBody[locale]}
               count={used}
-              countWord={(used === 1 ? AGENCY.personWord : AGENCY.peopleWord)[locale]}
+              countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
             />
             <RosterCard
               href="/agency/team"

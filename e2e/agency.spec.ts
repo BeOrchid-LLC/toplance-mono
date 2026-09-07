@@ -1,8 +1,8 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 import { completeSignUpForm, resetFixtures, signUp, testEmail } from "./helpers/auth";
-import { localeAndCountryFor } from "./helpers/db";
+import { invitationTokenFor, localeAndCountryFor } from "./helpers/db";
 
 /**
  * Journey three: an organisation sponsors somebody.
@@ -14,8 +14,10 @@ import { localeAndCountryFor } from "./helpers/db";
  * created it would not be an invitation.
  *
  * `RESEND_API_KEY` is blank on the e2e server, so `sendEmail` logs and
- * skips. That is the local reality the dialog was built for: the
- * copyable link is the hand-off, the email is the bonus.
+ * skips, and since the sent sheet's "Copy link" button was removed
+ * (2026-09-07) no screen hands the link over either. So the link is read
+ * from the invitation row — see `invitationTokenFor` — and everything
+ * after that is the invitee's real journey through a real token.
  */
 
 const EMPLOYER_EMAIL = testEmail("employer");
@@ -24,39 +26,6 @@ const INVITEE_EMAIL = testEmail("invitee");
 const FORWARDED_EMAIL = testEmail("invitee.forwarded");
 const ORG = "Kaduna Freight E2E";
 const INVITEE_NAME = "Ifeoma Nwosu";
-
-/**
- * The invitation link, taken the only way the product hands it over: the
- * sheet's "Copy link" button, onto the clipboard. The sheet deliberately
- * no longer prints the URL — it is a 30-day bearer token, and showing it
- * put it in every screenshot of this screen — so reading the dialog's
- * text for it, as this helper used to, now finds nothing.
- *
- * Polls the clipboard rather than asserting the button's "Copied" state,
- * which reverts after two seconds and would race a loaded CI machine.
- */
-async function readInviteUrl(dialog: Locator): Promise<string> {
-  const page = dialog.page();
-
-  // Chromium gates `readText()` behind a permission a test must grant.
-  // Writing needs none: it happens inside the click's user gesture.
-  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-
-  await dialog.getByRole("button", { name: "Copy link" }).click();
-
-  let link = "";
-  await expect
-    .poll(
-      async () => {
-        link = await page.evaluate(() => navigator.clipboard.readText());
-        return link;
-      },
-      { message: "waiting for Copy link to put an /invite/ URL on the clipboard" }
-    )
-    .toMatch(/^https?:\/\/\S+\/invite\/\S+$/);
-
-  return link;
-}
 
 test("an employer invites a traveller, who accepts and appears on the roster", async ({
   page,
@@ -99,29 +68,40 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   });
 
   // ---- the invitation ----
-  await page.getByRole("button", { name: "Invite someone" }).click();
+  await page.getByRole("button", { name: "Invite", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Email", { exact: true }).fill(INVITEE_EMAIL);
   await dialog.getByLabel("Full name", { exact: true }).fill(INVITEE_NAME);
   await dialog.getByRole("button", { name: "Send invitation" }).click();
 
-  const inviteUrl = await readInviteUrl(dialog);
-  expect(inviteUrl).toContain("/invite/");
+  // The sheet states who it went to and how long it lives, and stops
+  // there: the link is a 30-day bearer token and no screen prints it.
+  await expect(dialog.getByText(INVITEE_EMAIL)).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Copy link" })).toHaveCount(0);
+  await expect(dialog).not.toContainText("/invite/");
+
+  // Composed against the origin this browser is already on, because
+  // `APP_URL` belongs to the server rather than to this process.
+  const inviteUrl = new URL(
+    `/invite/${await invitationTokenFor(INVITEE_EMAIL)}`,
+    page.url()
+  ).toString();
 
   // ---- resending it, which is the only way back to a sent link ----
-  // The dialog's copy of the URL is the last time anyone sees it: the
-  // roster deliberately never selects the token. So an employer whose
-  // invitation email did not arrive has exactly one remedy, and this is
-  // it — the same invitation, sent again, rather than a second live one.
+  // Nothing in the console ever shows the link: the sheet does not print
+  // it and the roster deliberately never selects the token. So an
+  // employer whose invitation email did not arrive has exactly one
+  // remedy, and this is it — the same invitation, sent again, rather
+  // than a second live one.
   await page.keyboard.press("Escape");
 
   // The roster and its invitations have their own page now — the
-  // console's People tab. Everything below is a fact about a row, so
+  // console's Clients tab. Everything below is a fact about a row, so
   // this is where the rest of this journey is watched from. Scoped to
   // the bar because the dashboard also links to this page from a card,
   // and Playwright matches an accessible name by substring.
-  await page.getByRole("banner").getByRole("link", { name: "People" }).click();
-  await page.waitForURL("**/agency/people");
+  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await page.waitForURL("**/agency/clients");
 
   await page.getByRole("button", { name: "Resend" }).click();
   await expect(page.getByText(`Invitation sent again to ${INVITEE_EMAIL}`)).toBeVisible();
@@ -190,12 +170,19 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // route to it that survives. A second invitation, to a different
   // address, opened by the traveller who just accepted the first.
   await page.reload();
-  await page.getByRole("button", { name: "Invite someone" }).click();
+  // The same "Invite" as on the dashboard: every trigger in the console
+  // is spelled alike. What differs is the dialog it opens — this is the
+  // clients roster, so it is headed "Invite a client" and never asks
+  // which kind of invitation it is. The page has already answered.
+  await page.getByRole("button", { name: "Invite", exact: true }).click();
   const second = page.getByRole("dialog");
   await second.getByLabel("Email", { exact: true }).fill(FORWARDED_EMAIL);
   await second.getByLabel("Full name", { exact: true }).fill("Chidi Balogun");
   await second.getByRole("button", { name: "Send invitation" }).click();
-  const secondUrl = await readInviteUrl(second);
+  const secondUrl = new URL(
+    `/invite/${await invitationTokenFor(FORWARDED_EMAIL)}`,
+    page.url()
+  ).toString();
   await page.keyboard.press("Escape");
 
   await invitee.goto(secondUrl);
@@ -221,17 +208,41 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
 
   // ---- and on the roster, from the other side of the privacy boundary ----
   await page.reload();
-  // One person on the roster, and the invitation that put them there is
-  // settled. The seat line rather than the traveller's name, because the
-  // roster prints the name from their own profile and this journey has
-  // no business asserting what the sign-up form wrote.
-  await expect(page.getByText(/1 person/)).toBeVisible();
+  // One client on the roster, and the invitation that put them there is
+  // settled. The case reference rather than the traveller's name,
+  // because the roster prints the name from their own profile and this
+  // journey has no business asserting what the sign-up form wrote.
+  //
+  // Not the "1 client" badge: the count and the word are separate
+  // elements with a CSS gap between them, so the accessible text has no
+  // space in it and a `/1 client/` regex silently never matches.
+  await expect(page.getByRole("heading", { name: "Your clients" })).toBeVisible();
   await expect(page.getByText(INVITEE_EMAIL).first()).toBeVisible();
   await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
 
+  // ---- the case screen, which is what the roster is a way into ----
+  const caseLink = page.getByRole("link", { name: /TPL-/ });
+  await expect(caseLink).toBeVisible();
+  await caseLink.click();
+  await page.waitForURL("**/agency/clients/**");
+
+  // The traveller has not finished intake, so there is no checklist to
+  // judge yet — but the decision panel and the handler control are the
+  // screen, and both are reachable on a real case for the first time
+  // since #51 deleted the platform's.
+  await expect(page.getByRole("heading", { name: INVITEE_NAME })).toBeVisible();
+  await expect(page.getByText("Decision")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Take this case" })).toBeVisible();
+
+  // Nobody holds it yet, so the whole agency can see it. Taking it is
+  // what narrows that to this reviewer — `handlesCase` reads the column
+  // this button writes.
+  await page.getByRole("button", { name: "Take this case" }).click();
+  await expect(page.getByRole("button", { name: "Hand back" })).toBeVisible();
+
   // The privacy promise is the console's front page, and stays there:
-  // one laminate, on the screen you land on, none on the two rosters it
-  // opens.
+  // one laminate, on the screen you land on, none on the rosters or the
+  // case it opens.
   await page.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
   await page.waitForURL("**/agency");
   await expect(page.getByText("You see progress, not documents")).toBeVisible();

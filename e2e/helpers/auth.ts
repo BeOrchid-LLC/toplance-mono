@@ -95,8 +95,15 @@ export async function completeSignUpForm(
   // this proves. The chooser lives in the auth chrome, so it is there on
   // every sign-up door.
   if (locale) {
+    const before = new URL(page.url()).pathname;
     await page.getByRole("button", { name: "Language" }).click();
     await page.getByRole("menuitem", { name: locale }).click();
+    // Choosing a language is a client navigation now — `locale-provider`
+    // pushes the prefixed path — and that remounts `AuthForm`, clearing
+    // anything already typed into it. Nothing may be filled until it has
+    // landed, or the name and organisation are wiped and the form is
+    // refused by its own `required` fields with no visible error.
+    await page.waitForURL((url) => new URL(url).pathname !== before);
   }
 
   await page.getByLabel("Full name", { exact: true }).fill(fullName);

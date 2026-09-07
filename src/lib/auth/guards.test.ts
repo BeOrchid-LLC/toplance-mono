@@ -30,9 +30,11 @@ vi.mock("@/lib/data/applications", () => ({
 const OWNER = "test_guard_owner";
 const STRANGER = "test_guard_stranger";
 const AGENCY = "test_guard_agency";
+const COLLEAGUE = "test_guard_colleague";
+const DIRECTOR = "test_guard_director";
 const RIVAL = "test_guard_rival";
 const PLATFORM = "test_guard_platform";
-const USER_IDS = [OWNER, STRANGER, AGENCY, RIVAL, PLATFORM];
+const USER_IDS = [OWNER, STRANGER, AGENCY, COLLEAGUE, DIRECTOR, RIVAL, PLATFORM];
 
 const ORG_ID = "00000000-0000-4000-8000-00000000f001";
 const RIVAL_ORG_ID = "00000000-0000-4000-8000-00000000f002";
@@ -57,12 +59,16 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
   } = await import("@/lib/auth/policy");
 
   let tenantApplicationId = "";
+  /** The same agency's case, already taken by `AGENCY`. */
+  let claimedApplicationId = "";
 
   beforeAll(async () => {
     await db.insert(profiles).values([
       { id: OWNER, email: "owner@test.invalid", fullName: "Owner" },
       { id: STRANGER, email: "stranger@test.invalid", fullName: "Stranger" },
       { id: AGENCY, email: "agency@test.invalid", fullName: "Agency" },
+      { id: COLLEAGUE, email: "colleague@test.invalid", fullName: "Colleague" },
+      { id: DIRECTOR, email: "director@test.invalid", fullName: "Director" },
       { id: RIVAL, email: "rival@test.invalid", fullName: "Rival" },
       { id: PLATFORM, email: "platform@test.invalid", fullName: "Platform" },
     ]);
@@ -74,6 +80,8 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
 
     await db.insert(orgMembers).values([
       { orgId: ORG_ID, userId: AGENCY, role: "reviewer" },
+      { orgId: ORG_ID, userId: COLLEAGUE, role: "reviewer" },
+      { orgId: ORG_ID, userId: DIRECTOR, role: "owner" },
       { orgId: RIVAL_ORG_ID, userId: RIVAL, role: "reviewer" },
     ]);
 
@@ -81,6 +89,12 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
       .insert(applications)
       .values({ travelerId: OWNER, orgId: ORG_ID })
       .returning({ id: applications.id });
+
+    const [claimedCase] = await db
+      .insert(applications)
+      .values({ travelerId: STRANGER, orgId: ORG_ID, assigneeId: AGENCY })
+      .returning({ id: applications.id });
+    claimedApplicationId = claimedCase.id;
 
     tenantApplicationId = tenantCase.id;
   });
@@ -93,9 +107,18 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
 
   function signIn(
     userId: string,
-    { orgIds = [], role = "traveler", staffRole = null }: Partial<Actor> = {}
+    { orgIds = [], role = "traveler", staffRole = null, orgs }: Partial<Actor> = {}
   ) {
-    actor = { userId, role, staffRole, orgIds };
+    // Rank defaults to `reviewer`, the narrower of the two: these tests
+    // are about tenancy, and one that means "the director" says so by
+    // passing `orgs` itself.
+    actor = {
+      userId,
+      role,
+      staffRole,
+      orgIds,
+      orgs: orgs ?? orgIds.map((orgId) => ({ orgId, role: "reviewer" as const })),
+    };
   }
 
   it("lets the traveller write their own intake answers", async () => {
@@ -196,6 +219,70 @@ describe.skipIf(!hasDb)("requireApplicationAccess", async () => {
     await expect(
       requireApplicationAccess(tenantApplicationId, canReadApplication)
     ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  /**
+   * The half `policy.test.ts` cannot prove: that the guard hands the
+   * predicate a row carrying `assignee_id`.
+   *
+   * Drop that column from the select and every case looks unheld, so
+   * `handlesCase` says yes to the whole agency and the narrowing quietly
+   * stops existing. Nothing on screen would change — which is exactly
+   * why it is worth a database test.
+   */
+  describe("the assignment narrowing, through a real row", () => {
+    it("lets any colleague open a case nobody has taken", async () => {
+      signIn(COLLEAGUE, { role: "org_member", orgIds: [ORG_ID] });
+
+      const { application } = await requireApplicationAccess(
+        tenantApplicationId,
+        canReadDocuments
+      );
+
+      expect(application.assigneeId).toBeNull();
+    });
+
+    it("refuses a colleague who is not handling the case", async () => {
+      signIn(COLLEAGUE, { role: "org_member", orgIds: [ORG_ID] });
+
+      await expect(
+        requireApplicationAccess(claimedApplicationId, canReadDocuments)
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it("lets the colleague who holds it through", async () => {
+      signIn(AGENCY, { role: "org_member", orgIds: [ORG_ID] });
+
+      const { application } = await requireApplicationAccess(
+        claimedApplicationId,
+        canReadDocuments
+      );
+
+      expect(application.assigneeId).toBe(AGENCY);
+    });
+
+    it("lets the agency's director through whoever holds it", async () => {
+      signIn(DIRECTOR, {
+        role: "org_member",
+        orgIds: [ORG_ID],
+        orgs: [{ orgId: ORG_ID, role: "owner" }],
+      });
+
+      await expect(
+        requireApplicationAccess(claimedApplicationId, canReadDocuments)
+      ).resolves.toBeDefined();
+    });
+
+    it("still refuses a rival agency, held or not", async () => {
+      signIn(RIVAL, { role: "org_member", orgIds: [RIVAL_ORG_ID] });
+
+      await expect(
+        requireApplicationAccess(tenantApplicationId, canReadDocuments)
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        requireApplicationAccess(claimedApplicationId, canReadDocuments)
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
   });
 
   it("refuses a request with no session", async () => {

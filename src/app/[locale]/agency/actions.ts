@@ -4,7 +4,19 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 import { track } from "@/lib/analytics/track";
-import { requireActor, requireOrgAccess, toActionError } from "@/lib/auth/guards";
+import { audit } from "@/lib/audit";
+import {
+  requireActor,
+  requireApplicationAccess,
+  requireOrgAccess,
+  toActionError,
+} from "@/lib/auth/guards";
+import {
+  canAssignCase,
+  canDecideCase,
+  canReviewDocuments,
+  isAgencyDirectorFor,
+} from "@/lib/auth/policy";
 import { db } from "@/lib/db/client";
 import { organisations } from "@/lib/db/schema";
 import {
@@ -12,9 +24,14 @@ import {
   resendableInvitation,
   revokeInvitation as revokeInvitationTx,
 } from "@/lib/data/invitations";
+import { assignCaseTo, claimCase, releaseCase } from "@/lib/data/assignments";
 import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
+import { reviewDocumentTx, type ReviewVerdict } from "@/lib/data/review";
+import { changeStatusTx } from "@/lib/data/transitions";
+import { isApplicationStatus, STATUS } from "@/lib/domain/status";
+import { isFlagReason } from "@/lib/domain/flag-reason";
 import { sendEmail } from "@/lib/notifications/email";
-import { appUrl } from "@/lib/notifications/notify";
+import { appUrl, notify } from "@/lib/notifications/notify";
 import { invitationEmail } from "@/lib/notifications/templates";
 import { AGENCY_ACTIONS } from "@/lib/i18n/agency-actions";
 import { getActionLocale } from "@/lib/i18n/server";
@@ -113,7 +130,11 @@ export async function inviteTraveller(formData: FormData) {
     await track("toplance.invitation_sent", { orgId }, actor.userId);
 
     revalidatePath("/[locale]/agency", "layout");
-    return { ok: true, inviteUrl };
+    // The URL is built here and sent; it is deliberately not returned.
+    // It is a 30-day bearer credential, and the dialog that used to
+    // receive it no longer has anything to do with it — see the note on
+    // `InviteDialog`. `resendInvitation` is the way back to a link.
+    return { ok: true };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
@@ -189,6 +210,231 @@ export async function revokeInvitation(formData: FormData) {
     await track("toplance.invitation_revoked", { orgId }, actor.userId);
 
     revalidatePath("/[locale]/agency", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/* ============================================================
+ * The case actions.
+ *
+ * These are the five writes the console's case screen makes, and the
+ * reason `/agency/clients/[id]` exists: #51 moved review from BeOrchid
+ * to the agency, deleted the platform's case surface, and left the
+ * transactions below with no caller at all.
+ *
+ * Every one of them is guarded by `requireApplicationAccess` with a
+ * permission that means "the colleague handling this case" — never
+ * `canWriteDocuments` or `canWriteApplication`, which the traveller
+ * also holds. These are POST endpoints with public ids: the page's own
+ * gate is not their gate.
+ * ============================================================ */
+
+/**
+ * One verdict on one document: verified, or flagged with the sentence
+ * the traveller will read next to the red badge.
+ *
+ * The reason arrives in two halves. `reason_code` is a class from
+ * `flag_reason`, which aggregates across cases and is what support
+ * debugs from now that BeOrchid cannot open the file itself;
+ * `reason` is the prose the traveller reads. The enum note in
+ * `schema.ts` is why both are collected at once.
+ */
+export async function reviewDocument(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const docKey = String(formData.get("doc_key") ?? "");
+  const verdict = String(formData.get("verdict") ?? "");
+  const reason = String(formData.get("reason") ?? "");
+  const reasonCode = String(formData.get("reason_code") ?? "");
+
+  try {
+    const { actor } = await requireApplicationAccess(applicationId, canReviewDocuments);
+    const locale = await getActionLocale();
+
+    if (verdict !== "verified" && verdict !== "flagged") {
+      return { error: AGENCY_ACTIONS.chooseVerdict[locale] };
+    }
+
+    // Built as a value rather than inline, so the `isFlagReason`
+    // narrowing reaches the field that needs it — a cast here would be
+    // the one place the enum could take a string that is not in it.
+    let review: ReviewVerdict;
+    if (verdict === "verified") {
+      review = { verdict };
+    } else {
+      if (!isFlagReason(reasonCode)) {
+        return { error: AGENCY_ACTIONS.chooseFlagReason[locale] };
+      }
+      review = { verdict, reason, reasonCode };
+    }
+
+    const result = await reviewDocumentTx(applicationId, docKey, review, actor.userId);
+    if ("error" in result) return result;
+
+    await track(
+      verdict === "verified"
+        ? "toplance.document_verified"
+        : "toplance.document_flagged",
+      { applicationId, docKey },
+      actor.userId
+    );
+
+    // A reviewer's verdict can be what completes a checklist — a document
+    // uploaded before the pre-check was reachable, say, or one re-uploaded
+    // after a flag. The upload path emits this too; without it here, the
+    // event undercounts exactly the cases a person had to touch.
+    if (result.becameBillable) {
+      await track("toplance.application_became_billable", { applicationId }, actor.userId);
+    }
+
+    await audit(
+      actor.userId,
+      verdict === "verified" ? "document.verified" : "document.flagged",
+      "document",
+      applicationId,
+      { docKey, reasonCode: verdict === "flagged" ? reasonCode : null }
+    );
+
+    if (verdict === "flagged") {
+      // The same notification the AI pre-check sends when *it* flags a
+      // document. A traveller should not have to work out which pair of
+      // eyes found the problem to be told there is one.
+      await notify(
+        result.travelerId,
+        "document_flagged",
+        {
+          documentName: result.documentName,
+          // Trimmed the way `reviewDocumentTx` trims it before writing,
+          // so the email says exactly what the red badge says.
+          reason: reason.trim(),
+          url: appUrl("/app/documents"),
+        },
+        applicationId
+      );
+    }
+
+    // The traveller's ring, dashboard and documents page read this state;
+    // so does the case screen the verdict was made on.
+    revalidatePath("/app", "layout");
+    revalidatePath("/agency", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Move the case itself — start the review, ask for more documents,
+ * approve, refuse.
+ *
+ * `canDecideCase`, not `canWriteApplication`: the traveller holds that
+ * one and must never approve their own application. The message is not
+ * optional and `changeStatusTx` refuses without it — every status change
+ * carries a sentence to the traveller, which is the rule `statusEvents`
+ * was built around.
+ */
+export async function changeCaseStatus(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const to = String(formData.get("to") ?? "");
+  const message = String(formData.get("message") ?? "");
+
+  try {
+    const { actor } = await requireApplicationAccess(applicationId, canDecideCase);
+    const locale = await getActionLocale();
+
+    if (!isApplicationStatus(to)) {
+      return { error: AGENCY_ACTIONS.chooseStatus[locale] };
+    }
+
+    const result = await changeStatusTx(applicationId, to, message, actor.userId);
+    if ("error" in result) return result;
+
+    await track(
+      "toplance.application_status_changed",
+      { applicationId, from: result.from, to },
+      actor.userId
+    );
+    await audit(actor.userId, "application.status_changed", "application", applicationId, {
+      from: result.from,
+      to,
+    });
+
+    await notify(
+      result.travelerId,
+      "status_changed",
+      {
+        statusLabel: STATUS[to].label,
+        message: message.trim(),
+        url: appUrl("/app"),
+      },
+      applicationId
+    );
+
+    revalidatePath("/app", "layout");
+    revalidatePath("/agency", "layout");
+    return { ok: true };
+  } catch (error) {
+    const message_ = toActionError(error);
+    if (message_) return { error: message_ };
+    throw error;
+  }
+}
+
+/**
+ * Take an unheld case, hand one to a colleague, or put one back.
+ *
+ * One action for the three because they are one decision — who is
+ * handling this — and because assignment is a permission now, not a
+ * label: `handlesCase` reads `assignee_id`, so each of these grants or
+ * withdraws a colleague's reach into somebody's passport. That is also
+ * why `canAssignCase` is checked on the case *before* the change: an
+ * unheld case is any member's to take, a held one is the assignee's and
+ * the director's to move.
+ */
+export async function setCaseHandler(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const assigneeId = String(formData.get("assignee_id") ?? "");
+
+  try {
+    const { actor, application } = await requireApplicationAccess(
+      applicationId,
+      canAssignCase
+    );
+
+    const result = !assigneeId
+      ? await releaseCase(
+          applicationId,
+          actor.userId,
+          isAgencyDirectorFor(actor, application)
+        )
+      : assigneeId === actor.userId && application.assigneeId === null
+        ? // The reviewer's own "I'll take this", which refuses if
+          // somebody claimed it in the meantime rather than overwriting
+          // them — see `claimCase`.
+          await claimCase(applicationId, actor.userId)
+        : await assignCaseTo(applicationId, assigneeId);
+
+    if ("error" in result) return result;
+
+    await track(
+      assigneeId ? "toplance.case_claimed" : "toplance.case_released",
+      { applicationId },
+      actor.userId
+    );
+    await audit(
+      actor.userId,
+      assigneeId ? "application.assigned" : "application.released",
+      "application",
+      applicationId,
+      { assigneeId: assigneeId || null }
+    );
+
+    revalidatePath("/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

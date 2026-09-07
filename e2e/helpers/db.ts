@@ -132,6 +132,47 @@ export async function seedInvitation(
 }
 
 /**
+ * The token of the one pending invitation addressed to `email`.
+ *
+ * The console used to hand a spec the whole link through the sent
+ * sheet's "Copy link" button; that button is gone (2026-09-07) and the
+ * invitation now travels by email alone, which this suite cannot read —
+ * `RESEND_API_KEY` is blank on the e2e server, so `sendEmail` logs and
+ * skips. Read from the row instead, the same column `seedInvitation`
+ * returns, so the journey past this point is unchanged: a real token, in
+ * a real link, opened in a browser that has never seen this site.
+ *
+ * The token only, not a URL: `APP_URL` is set on the *server* by
+ * `playwright.config.ts` and is not in this process's environment, so a
+ * URL composed here would be composed from a guess. The spec builds it
+ * against the origin it is already on.
+ *
+ * Polls, because the row is written by a server action the spec has only
+ * just triggered.
+ */
+export async function invitationTokenFor(email: string): Promise<string> {
+  return withClient(async (client) => {
+    const deadline = Date.now() + 15_000;
+    for (;;) {
+      const { rows } = await client.query<{ token: string }>(
+        "select token from invitations where email = $1 and status = 'pending'",
+        [email.toLowerCase()]
+      );
+      if (rows.length > 1) {
+        throw new Error(
+          `Expected one pending invitation for ${email}, found ${rows.length}.`
+        );
+      }
+      if (rows[0]) return rows[0].token;
+      if (Date.now() > deadline) {
+        throw new Error(`No pending invitation for ${email}. Did the send finish?`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  });
+}
+
+/**
  * Staff, the way the README grants it — no UI, no action, no seam in the
  * app. Fails loudly if the account is not there yet: a spec that reaches
  * `/ops` believing it was promoted and quietly seeing the refusal screen

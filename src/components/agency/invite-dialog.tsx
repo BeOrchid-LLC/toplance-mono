@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, Copy, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -39,29 +39,51 @@ type Recipient = {
  * the invitation form look like an onboarding questionnaire and gave the
  * agency a field to be wrong in.
  *
- * The client-or-colleague choice appears only for an owner, because
- * only an owner may send a staff invitation — `inviteTraveller` enforces
- * that server-side, and hiding the control from a reviewer means they
- * are never offered a click whose only outcome is a refusal.
+ * `kind` is the page speaking, and it is the usual case: the clients
+ * roster invites clients, the team roster invites colleagues, and on
+ * either one the question "who are you inviting?" has already been
+ * answered by the screen the button is on. Asking again is a control
+ * whose only possible use is to contradict where you are standing.
+ *
+ * Without `kind` the choice comes back, because there is one caller that
+ * genuinely does not know: the console's front page, which is neither
+ * roster. There it appears only for an owner, since only an owner may
+ * send a staff invitation — `inviteTraveller` enforces that server-side,
+ * and hiding the control from a reviewer means they are never offered a
+ * click whose only outcome is a refusal.
  *
  * On success the dialog does not close: it swaps the form for a small
  * document sheet — who the invitation is for and how long the link
- * lives — with copying the link as its one primary action.
- * `sendEmail` no-ops without `RESEND_API_KEY` (true in local dev), so
- * the copyable link is not a fallback for that case — it is the primary
- * hand-off, the email a bonus when Resend is configured.
+ * lives. The link itself is never shown, copied or returned to the
+ * browser: the emailed invitation is the whole hand-off. `sendEmail`
+ * no-ops without `RESEND_API_KEY` (true in local dev), so on such a
+ * deployment nothing reaches the invitee until Resend is configured, and
+ * `resendInvitation` on the roster is the one way to try again.
  */
-export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: boolean }) {
+export function InviteDialog({
+  kind,
+  canInviteStaff = false,
+}: {
+  /** Fixed by the page. Omit only where the page cannot know. */
+  kind?: "client" | "staff";
+  canInviteStaff?: boolean;
+}) {
   const t = useT();
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
-  const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
+  /**
+   * Whether the form has been swapped for the sent sheet. A boolean, not
+   * the invitation URL it used to be: with no "Copy link" button there is
+   * nothing on this screen that needs the token, and holding a 30-day
+   * bearer credential in client state to render a sheet that never prints
+   * it is the same exposure the sheet was written to avoid.
+   */
+  const [sent, setSent] = React.useState(false);
   const [recipient, setRecipient] = React.useState<Recipient | null>(null);
-  const [copied, setCopied] = React.useState(false);
 
   function onSubmit(formData: FormData) {
     // Read before the await: the sent sheet names its recipient, and the
-    // action only returns the link.
+    // action reports nothing about who it was addressed to.
     const submitted: Recipient = {
       email: String(formData.get("email") ?? "").trim().toLowerCase(),
       fullName: String(formData.get("full_name") ?? "").trim(),
@@ -74,7 +96,7 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
         return;
       }
       setRecipient(submitted);
-      setInviteUrl(result.inviteUrl);
+      setSent(true);
       toast.success(t(INVITE_DIALOG.sentTitle));
     });
   }
@@ -83,37 +105,38 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
     setOpen(next);
     if (!next) {
       // Reset once the close animation has somewhere to land, so a
-      // reopen never flashes the previous invite's link for a frame.
-      setInviteUrl(null);
+      // reopen never flashes the previous invite's sheet for a frame.
+      setSent(false);
       setRecipient(null);
-      setCopied(false);
     }
   }
 
-  async function copyLink() {
-    if (!inviteUrl) return;
-    // `navigator.clipboard` throws (or is simply absent) outside a
-    // secure context — an http, non-localhost deploy, say. Uncaught,
-    // that is a dead button with no feedback; caught, the link is still
-    // right there in the dialog to select by hand.
-    try {
-      await navigator.clipboard.writeText(inviteUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error(t(INVITE_DIALOG.toastCopyFailed));
-    }
-  }
+  // The heading, not the button. The trigger says "Invite" on every
+  // agency screen — see `inviteButton` — and this is where the noun it
+  // dropped goes: once the dialog is open it is no longer standing on
+  // the page that answered "who?", so the title answers it again.
+  const heading =
+    kind === "client"
+      ? INVITE_DIALOG.inviteClient
+      : kind === "staff"
+        ? INVITE_DIALOG.inviteTeamMember
+        : INVITE_DIALOG.inviteSomeone;
+
+  // The colleague's line is the same sentence the radio used to carry —
+  // it says what a colleague *is*, which is exactly what the dialog owes
+  // someone who no longer chose it from a list.
+  const description =
+    kind === "staff" ? INVITE_DIALOG.kindStaffHelp : INVITE_DIALOG.inviteDescription;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <Mail /> {t(INVITE_DIALOG.inviteSomeone)}
+          <Mail /> {t(INVITE_DIALOG.inviteButton)}
         </Button>
       </DialogTrigger>
       <DialogContent>
-        {inviteUrl ? (
+        {sent ? (
           <>
             <DialogHeader>
               <DialogTitle>{t(INVITE_DIALOG.sentTitle)}</DialogTitle>
@@ -123,14 +146,13 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
                       email: recipient.email,
                     })
                   : ""}
-                {t(INVITE_DIALOG.sentDescriptionCopy)}
               </DialogDescription>
             </DialogHeader>
 
             {/* The invitation as a document sheet: the same ruled rows
-                as every case-file card, ending in the link itself. Every
-                child is min-w-0 so the token can never push the sheet
-                past the dialog's edge — the grid parent would let it. */}
+                as every case-file card. Every child is min-w-0 so a long
+                address can never push the sheet past the dialog's edge —
+                the grid parent would let it. */}
             <div className="min-w-0 overflow-hidden rounded-md border border-border">
               <dl>
                 <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
@@ -152,11 +174,10 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
                   </div>
                 )}
                 {/* Last row, so no bottom rule: the sheet's own border
-                    closes it. The link itself is not printed here — it is
+                    closes it. The link itself never appears here — it is
                     a 30-day bearer token, and a dialog that shows it puts
                     it into every screenshot and screen share of this
-                    screen. "Copy link" carries it to the clipboard
-                    instead, which is the only place it is needed. */}
+                    screen. It reaches its recipient by email alone. */}
                 <div className="flex items-baseline justify-between gap-6 px-4 py-3">
                   <dt className="t-body shrink-0 text-ink-2">
                     {t(INVITE_DIALOG.sheetValidFor)}
@@ -180,12 +201,6 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
               })}
             </p>
 
-            <Button type="button" size="block" onClick={copyLink}>
-              {copied ? <Check /> : <Copy />}
-              {copied
-                ? t(INVITE_DIALOG.copyLinkCopied)
-                : t(INVITE_DIALOG.copyLinkDefault)}
-            </Button>
             <DialogFooter>
               <Button
                 type="button"
@@ -199,10 +214,8 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>{t(INVITE_DIALOG.inviteSomeone)}</DialogTitle>
-              <DialogDescription>
-                {t(INVITE_DIALOG.inviteDescription)}
-              </DialogDescription>
+              <DialogTitle>{t(heading)}</DialogTitle>
+              <DialogDescription>{t(description)}</DialogDescription>
             </DialogHeader>
             <form action={onSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
@@ -220,7 +233,13 @@ export function InviteDialog({ canInviteStaff = false }: { canInviteStaff?: bool
                 </p>
               </div>
 
-              {canInviteStaff && (
+              {/* The page's answer, carried the same way the radio
+                  carried it: `inviteTraveller` reads one field either
+                  way, and only trusts it as far as `isAgencyOwner`
+                  allows for a staff invitation. */}
+              {kind && <input type="hidden" name="kind" value={kind} />}
+
+              {!kind && canInviteStaff && (
                 <fieldset className="flex flex-col gap-3 border-t border-border pt-4">
                   <legend className="tag mb-1">{t(INVITE_DIALOG.kindLegend)}</legend>
                   {(

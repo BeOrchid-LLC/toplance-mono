@@ -323,7 +323,7 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
     if (app) {
       await notifyAgency(applicationId, "checklist_complete", {
         caseRef: app.caseRef,
-        url: appUrl("/agency"),
+        url: appUrl(`/agency/clients/${applicationId}`),
       });
     }
 
@@ -508,7 +508,10 @@ export async function submitApplication(applicationId: string) {
       if (app) {
         await notifyAgency(applicationId, "application_submitted", {
           caseRef: app.caseRef,
-          url: appUrl("/agency"),
+          // The case itself, not the console's front page. The agency
+          // opens this notification to review a submission; landing them
+          // on the dashboard makes them find it again by hand.
+          url: appUrl(`/agency/clients/${applicationId}`),
         });
       }
 
@@ -524,16 +527,22 @@ export async function submitApplication(applicationId: string) {
 }
 
 /**
- * One message on a case thread — the traveller writes from `/app/messages`,
- * staff from the case screen, and both call this one action. `senderRole`
- * is never trusted from the form: it comes from the guarded actor, the
- * same reason `updateProfile` never takes an id.
+ * One message on a case thread — the traveller writes from
+ * `/app/messages`, the agency from `/agency/clients/[id]`, and both call
+ * this one action. The side is never trusted from the form: it comes
+ * from the guarded actor, the same reason `updateProfile` never takes an
+ * id.
  *
- * The counterpart is notified, not the sender: staff sending means the
- * traveller hears about it; a traveller sending goes to whoever owns the
- * case (Task 6 gave `assigneeId` a writer), or every reviewer when nobody
- * has claimed it yet — the same "assignee if set, else the agency"
- * routing `submitApplication` uses for the initial submission.
+ * It used to read `actor.role === "staff" ? "staff" : "traveler"`, which
+ * was written when the agency could not reach a thread at all. Once #51
+ * made them a participant, that expression filed every reviewer's reply
+ * under the traveller's own name — so the side is derived from who is
+ * *not* the traveller, which is the same rule `sideOf` applies on read.
+ *
+ * The counterpart is notified, not the sender: the agency sending means
+ * the traveller hears about it; a traveller sending goes to whoever
+ * holds the case, or the whole agency while nobody does — the same
+ * "assignee if set, else the agency" routing `submitApplication` uses.
  */
 export async function sendMessage(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
@@ -544,12 +553,12 @@ export async function sendMessage(formData: FormData) {
       applicationId,
       canWriteMessages
     );
-    const senderRole = actor.role === "staff" ? "staff" : "traveler";
+    const side = actor.role === "traveler" ? "traveler" : "agency";
 
-    const result = await sendMessageRow(applicationId, actor.userId, senderRole, body);
+    const result = await sendMessageRow(applicationId, actor.userId, side, body);
     if ("error" in result) return result;
 
-    await track("toplance.message_sent", { applicationId, senderRole }, actor.userId);
+    await track("toplance.message_sent", { applicationId, side }, actor.userId);
 
     const [sender] = await db
       .select({ fullName: profiles.fullName })
@@ -558,7 +567,7 @@ export async function sendMessage(formData: FormData) {
       .limit(1);
     const preview = body.trim().slice(0, 140);
 
-    if (senderRole === "staff") {
+    if (side === "agency") {
       await notify(
         application.travelerId,
         "message_received",

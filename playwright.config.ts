@@ -74,7 +74,8 @@ export default defineConfig({
      * - The `S3_*` block points uploads at the local MinIO container
      *   rather than the R2 staging bucket `.env.local` is aimed at.
      * - `APP_URL` is what `appUrl()` builds invitation links from, so
-     *   the link the employer copies opens on this server.
+     *   the token the suite reads out of the invitation row opens on
+     *   this server.
      * - `NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL: ""` pins the work-address
      *   rule back on. It is a local convenience a developer may well
      *   have set in `.env.local`, and the suite must not quietly run

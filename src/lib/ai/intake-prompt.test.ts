@@ -138,6 +138,60 @@ describe("buildIntakeSystemPrompt", () => {
     expect(text).toContain("Relocation");
   });
 
+  it("pairs every companions chip with the label the traveller taps", () => {
+    // The model-driven flow sends `chip.label[locale]` as though the
+    // traveller had typed it, so the model is the only thing that can
+    // turn what they saw back into the value `applies_when` reads. A
+    // chip missing from this list is a marriage certificate silently
+    // going unasked, which no test elsewhere would catch.
+    const companions = INTAKE_QUESTIONS.find((q) => q.key === "companions");
+    const text = prompt({ locale: "yo" });
+
+    for (const chip of companions?.chips ?? []) {
+      expect(text).toContain(`"${chip.value}"`);
+      expect(text).toContain(chip.label.yo);
+    }
+  });
+
+  it("pairs every budget chip with the label the traveller taps", () => {
+    // Same hazard as `companions`, arrived at differently. The budget
+    // chip a Ghanaian taps reads "₵15,000" and the value filed against
+    // it has to be the canonical US$ band, or the whole point of a
+    // canonical value is lost the moment the model-driven flow is the
+    // one collecting it.
+    const budget = INTAKE_QUESTIONS.find((q) => q.key === "budget");
+    const text = prompt({
+      locale: "yo",
+      answers: { residence_country: "Ghana" },
+    });
+
+    for (const chip of budget?.chips ?? []) {
+      expect(text).toContain(`"${chip.value}"`);
+    }
+    expect(text).toContain("₵");
+  });
+
+  it("shows the budget bands in the money the traveller was offered", () => {
+    // The label side of the pair is what the traveller saw, so it has
+    // to follow where they live, not where the product started.
+    expect(prompt({ answers: { residence_country: "Kenya" } })).toContain(
+      "KSh"
+    );
+    expect(prompt({ answers: { residence_country: "Nigeria" } })).toContain(
+      "₦"
+    );
+  });
+
+  it("refuses to guess between the married and unmarried values", () => {
+    // "Partner" covers both in several of these languages, and the
+    // guess decides which documents someone is asked for.
+    const text = prompt();
+
+    expect(text).toContain("Spouse");
+    expect(text).toContain("Unmarried partner");
+    expect(text).toMatch(/NEVER decide between the married and unmarried/);
+  });
+
   it("says to record the traveller's own words when nothing matches", () => {
     expect(prompt().toLowerCase()).toContain("verbatim");
   });

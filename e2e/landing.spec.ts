@@ -170,3 +170,62 @@ test.describe("the small-screen menu", () => {
     await expect(page).toHaveURL(/#pricing$/);
   });
 });
+
+/**
+ * The hero's secondary call to action, which used to be a `mailto:` to
+ * an address the code itself called a placeholder.
+ *
+ * Worth an e2e rather than a unit test: `requestDemo` has its own suite
+ * (`src/app/(site)/actions.test.ts`), but Vitest only collects
+ * `src/**` + `*.test.ts`, so nothing anywhere else exercises the dialog
+ * — and the two failure modes that would actually cost leads are both
+ * in the wiring. A field renamed on one side of the form/action pair,
+ * or a timezone select that never gets a value, both leave a form that
+ * looks perfect and records nothing.
+ */
+test.describe("the demo request form", () => {
+  test("collects the five fields and confirms in place", async ({ page }) => {
+    await page.goto("/");
+
+    await page.getByRole("button", { name: "Book a demo" }).click();
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("heading", { name: "Book a demo" })).toBeVisible();
+
+    // A distinct address per run: the action refuses a second request
+    // from the same one inside 24 hours, so a fixed address would pass
+    // once and then fail every day after.
+    const email = `demo-${Date.now()}@sunwaytravel.test`;
+
+    await dialog.getByLabel("Full name").fill("Bola Adeyemi");
+    await dialog.getByLabel("Work email").fill(email);
+    await dialog.getByLabel("Agency / Company name").fill("Sunway Travel");
+    await dialog.getByLabel("Job title / Role").fill("Operations Lead");
+    await dialog
+      .getByLabel("Preferred demo date & time")
+      .fill("2027-01-14T14:00");
+    await dialog.getByLabel("Timezone").selectOption("Africa/Lagos");
+
+    await dialog.getByRole("button", { name: "Request a demo" }).click();
+
+    // The form is replaced by its receipt, naming the address back — so
+    // a typo is visible while the visitor is still on the page.
+    await expect(dialog.getByText("Your request is in")).toBeVisible();
+    await expect(dialog.getByText(email)).toBeVisible();
+    await expect(dialog.getByLabel("Full name")).toHaveCount(0);
+  });
+
+  test("refuses to submit with a field left empty", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Book a demo" }).click();
+
+    const dialog = page.getByRole("dialog");
+    await dialog.getByLabel("Full name").fill("Bola Adeyemi");
+    await dialog.getByRole("button", { name: "Request a demo" }).click();
+
+    // Still the form, not the receipt: `required` stops it in the
+    // browser, and `parseDemoRequest` would stop it again on the server.
+    await expect(dialog.getByText("Your request is in")).toHaveCount(0);
+    await expect(dialog.getByLabel("Work email")).toBeVisible();
+  });
+});

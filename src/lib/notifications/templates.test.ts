@@ -9,6 +9,7 @@ import {
   statusChangedEmail,
   submissionEmail,
   advisoryChangedEmail,
+  demoRequestEmail,
   visaExpiringEmail,
 } from "@/lib/notifications/templates";
 
@@ -228,5 +229,54 @@ describe("email templates", () => {
     expect(email.subject).not.toHaveLength(0);
     expect(email.html).not.toContain("<script>");
     expect(email.html).toContain("Visit the market on Saturdays");
+  });
+
+  /**
+   * The only template built from a stranger's words. Every other one
+   * quotes somebody who got past Clerk first; this one quotes whoever
+   * found the landing page, which makes it the escaping case that
+   * matters most in this file.
+   */
+  it("demoRequestEmail escapes every field a stranger typed", () => {
+    const email = demoRequestEmail({
+      fullName: SCRIPT,
+      email: "bola@sunwaytravel.ng",
+      companyName: SCRIPT,
+      jobTitle: SCRIPT,
+      preferredAt: new Date("2026-09-15T13:00:00Z"),
+      preferredTz: "Africa/Lagos",
+      locale: "en",
+    });
+    expect(email.subject).not.toHaveLength(0);
+    expect(email.html).not.toContain("<script>");
+  });
+
+  it("demoRequestEmail states the preferred time in the zone it was chosen in", () => {
+    const email = demoRequestEmail({
+      fullName: "Bola Adeyemi",
+      email: "bola@sunwaytravel.ng",
+      companyName: "Sunway Travel",
+      jobTitle: "Operations Lead",
+      // 13:00 UTC is 14:00 in Lagos — the hour the visitor actually picked.
+      preferredAt: new Date("2026-09-15T13:00:00Z"),
+      preferredTz: "Africa/Lagos",
+      locale: "en",
+    });
+    expect(email.text).toContain("14:00");
+    expect(email.text).toContain("Africa/Lagos");
+    expect(email.text).not.toContain("13:00");
+  });
+
+  it("demoRequestEmail offers replying to the requester as its one action", () => {
+    const email = demoRequestEmail({
+      fullName: "Bola Adeyemi",
+      email: "bola@sunwaytravel.ng",
+      companyName: "Sunway Travel",
+      jobTitle: "Operations Lead",
+      preferredAt: new Date("2026-09-15T13:00:00Z"),
+      preferredTz: "Africa/Lagos",
+      locale: "en",
+    });
+    expect(email.html).toContain("mailto:bola@sunwaytravel.ng");
   });
 });

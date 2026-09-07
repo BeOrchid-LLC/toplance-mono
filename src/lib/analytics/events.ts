@@ -184,6 +184,18 @@ export const EVENT_NAMES = [
 
   /** The companion's cached local tips were generated (or refreshed) by AI. */
   "toplance.companion_generated",
+
+  /**
+   * An agency asked for a demo from the landing page. The only event
+   * emitted with no `userId` — the visitor has no account, which is the
+   * entire point of the form.
+   *
+   * `locale` rides along in the props because it is the one thing the
+   * landing page learns about a stranger for free, and it answers a
+   * question the funnel cannot otherwise: whether the nine translations
+   * bring anyone in, or whether every lead reads English anyway.
+   */
+  "toplance.demo_requested",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { resendInvitation } from "@/app/agency/actions";
+import { resendInvitation } from "@/app/[locale]/agency/actions";
 
 /**
  * One row's own resend act — only ever rendered on a `pending` row, the

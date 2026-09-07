@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DocStateBadge } from "@/components/shared/status-badge";
 import { RequirementBadge } from "@/components/shared/requirement-badge";
-import { documentUrl, removeDocument, uploadDocument } from "@/app/(app)/actions";
+import { documentUrl, removeDocument, uploadDocument } from "@/app/[locale]/(app)/actions";
 import { useUploadOutcome } from "@/components/app/upload-outcome";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { DocumentSpecimen } from "@/components/app/document-specimen";

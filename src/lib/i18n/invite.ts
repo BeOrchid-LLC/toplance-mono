@@ -4,10 +4,10 @@ type L = Record<Locale, string>;
 
 /**
  * Static copy on the invitation acceptance flow — `/invite/[token]` and
- * its one server action, `acceptInvitation`. Both are read with
- * `getLocale()`: the page is a Server Component, and the action reads
- * `x-toplance-locale` off the request the same way `completeProfile`
- * does (see `auth-actions.ts`).
+ * its one server action, `acceptInvitation`. The page is a Server
+ * Component and reads the `[locale]` route segment with `getLocale()`;
+ * the action cannot see root parameters, so it reads
+ * `x-toplance-locale` off the request with `getActionLocale()`.
  *
  * `{orgName}` and `{email}` are literal markers the call site splits or
  * replaces; neither is translated content — an organisation's name and a
@@ -208,7 +208,7 @@ export const INVITE_PAGE: {
   },
 };
 
-/** `acceptInvitation`'s one user-facing refusal, read with `getLocale()`. */
+/** `acceptInvitation`'s one refusal, read with `getActionLocale()`. */
 export const INVITE_ACTIONS: { travelerOnly: L } = {
   travelerOnly: {
     en: "Only a traveler account can accept an invitation.",

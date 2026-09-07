@@ -169,6 +169,13 @@
       "when": 1788702217541,
       "tag": "0023_black_angel",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1788757897016,
+      "tag": "0024_bright_maddog",
+      "breakpoints": true
     }
   ]
 }

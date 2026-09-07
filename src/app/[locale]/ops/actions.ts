@@ -14,7 +14,7 @@ import {
 } from "@/lib/data/corridors";
 import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import { appUrl, notify } from "@/lib/notifications/notify";
-import { getLocale } from "@/lib/i18n/server";
+import { getActionLocale } from "@/lib/i18n/server";
 import { OPS_ACTIONS } from "@/lib/i18n/ops-actions";
 
 /**
@@ -52,7 +52,7 @@ export async function approveCorridor(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: OPS_ACTIONS.onlyOwnerApprove[await getLocale()] };
+    return { error: OPS_ACTIONS.onlyOwnerApprove[await getActionLocale()] };
   }
 
   const result = await approveCorridorTx(corridorId, actor.userId);
@@ -88,8 +88,8 @@ export async function approveCorridor(formData: FormData) {
 
   // Travellers resolve their rule set on every requirements view, so the
   // app layout has to drop what it cached the moment this flips.
-  revalidatePath("/app", "layout");
-  revalidatePath("/ops", "layout");
+  revalidatePath("/[locale]/app", "layout");
+  revalidatePath("/[locale]/ops", "layout");
   return { ok: true };
 }
 
@@ -103,7 +103,7 @@ export async function rejectCorridor(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: OPS_ACTIONS.onlyOwnerReject[await getLocale()] };
+    return { error: OPS_ACTIONS.onlyOwnerReject[await getActionLocale()] };
   }
 
   const result = await rejectCorridorTx(corridorId, reason);
@@ -114,7 +114,7 @@ export async function rejectCorridor(formData: FormData) {
     reason: reason.trim(),
   });
 
-  revalidatePath("/ops", "layout");
+  revalidatePath("/[locale]/ops", "layout");
   return { ok: true };
 }
 
@@ -147,19 +147,19 @@ export async function setRequirementCondition(formData: FormData) {
   const { actor } = gate;
 
   if (!canWriteCorridors(actor)) {
-    return { error: OPS_ACTIONS.onlyOwnerCondition[await getLocale()] };
+    return { error: OPS_ACTIONS.onlyOwnerCondition[await getActionLocale()] };
   }
 
   let appliesWhen: unknown = null;
 
   if (answer) {
     if (!options.length) {
-      return { error: OPS_ACTIONS.chooseAtLeastOneAnswer[await getLocale()] };
+      return { error: OPS_ACTIONS.chooseAtLeastOneAnswer[await getActionLocale()] };
     }
 
     appliesWhen = parseAppliesWhen([{ answer, in: options }]);
     if (!appliesWhen) {
-      return { error: OPS_ACTIONS.ruleNotRecognized[await getLocale()] };
+      return { error: OPS_ACTIONS.ruleNotRecognized[await getActionLocale()] };
     }
   }
 
@@ -173,6 +173,6 @@ export async function setRequirementCondition(formData: FormData) {
   );
   await audit(actor.userId, "requirement.condition_set", "requirement", requirementId);
 
-  revalidatePath("/ops", "layout");
+  revalidatePath("/[locale]/ops", "layout");
   return { ok: true };
 }

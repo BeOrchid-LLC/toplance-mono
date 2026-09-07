@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { markNotificationsRead } from "@/app/(app)/actions";
+import { markNotificationsRead } from "@/app/[locale]/(app)/actions";
 import type { Notification } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/components/locale-provider";

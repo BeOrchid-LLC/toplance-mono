@@ -3,36 +3,10 @@
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { DEFAULT_LOCALE, dirOf, LOCALES, type Locale } from "@/lib/i18n/locales";
+import { DEFAULT_LOCALE, dirOf, type Locale } from "@/lib/i18n/locales";
+import { splitLocalePath, withLocalePrefix } from "@/lib/i18n/paths";
 
 const STORAGE_KEY = "toplance.locale";
-
-/** Every locale code except English, which is never URL-prefixed. */
-const PREFIXED_LOCALES = LOCALES.map((l) => l.code).filter(
-  (code) => code !== DEFAULT_LOCALE
-);
-
-/** Strips an existing `/{code}` locale prefix off `pathname`, if there is one. */
-function stripLocalePrefix(pathname: string): string {
-  for (const code of PREFIXED_LOCALES) {
-    if (pathname === `/${code}`) return "/";
-    if (pathname.startsWith(`/${code}/`)) return pathname.slice(code.length + 1);
-  }
-  return pathname;
-}
-
-/**
- * The URL for `pathname` under `locale` — English unprefixed at today's
- * exact paths, every other locale at `/{code}/...`, replacing any
- * prefix already there. This is `proxy.ts`'s rewrite, run in reverse,
- * so a switch here lands on the same route the server would resolve
- * the new locale to.
- */
-function pathWithLocale(pathname: string, locale: Locale): string {
-  const bare = stripLocalePrefix(pathname);
-  if (locale === DEFAULT_LOCALE) return bare;
-  return bare === "/" ? `/${locale}` : `/${locale}${bare}`;
-}
 
 /**
  * `lang` and `dir` live on `<html>`, which React does not own here.
@@ -55,10 +29,10 @@ const LocaleContext = React.createContext<LocaleContextValue>({
 
 /**
  * `initialLocale` is what the server already decided — `getLocale()`
- * reading the header `proxy.ts` set after stripping the URL's `/xx`
- * prefix. Seeding state with it, rather than always starting at
- * `DEFAULT_LOCALE`, is what keeps this component's first render in
- * agreement with the HTML the server already sent for `/fr/travelers`.
+ * reading the `[locale]` route segment. Seeding state with it, rather
+ * than always starting at `DEFAULT_LOCALE`, is what keeps this
+ * component's first render in agreement with the HTML the server
+ * already sent for `/fr/travelers`.
  *
  * The URL, not `localStorage`, is the source of truth for which locale
  * is active on a given page — that is the whole point of "as-needed"
@@ -98,7 +72,7 @@ export function LocaleProvider({
       }
       setLocaleState(next);
       applyToDocument(next);
-      router.push(pathWithLocale(pathname, next));
+      router.push(withLocalePrefix(splitLocalePath(pathname).rest, next));
     },
     [pathname, router]
   );
@@ -110,6 +84,23 @@ export function LocaleProvider({
 
 export function useLocale() {
   return React.useContext(LocaleContext);
+}
+
+/**
+ * `usePathname()` with any `/{code}` locale prefix taken back off.
+ *
+ * `usePathname()` reports the browser's URL, so on `/fr/travelers` it
+ * returns exactly that — while the nav components comparing against it
+ * are written in terms of the app's plain paths (`/travelers`, `/app`,
+ * `/ops`). Without this, a nav item is lit in English and dead in every
+ * other language, which is a bug that hides well: the page is correct,
+ * only the highlight is wrong.
+ *
+ * Route-matching logic stays written against unprefixed paths, the same
+ * way `proxy.ts` strips before it decides anything.
+ */
+export function usePathnameWithoutLocale() {
+  return splitLocalePath(usePathname()).rest;
 }
 
 /** Pick the active string out of a `Record<Locale, string>`. */

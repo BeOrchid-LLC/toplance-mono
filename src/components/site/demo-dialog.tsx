@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocale, useT } from "@/components/locale-provider";
-import { requestDemo } from "@/app/(site)/actions";
+import { requestDemo } from "@/app/[locale]/(site)/actions";
 import { DEMO_DIALOG } from "@/lib/i18n/demo-dialog";
 import { SITE_HOME } from "@/lib/i18n/site-home";
 import { fillTemplate } from "@/lib/i18n/corridor-picker";

@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { RealtimeSession } from "@openai/agents-realtime";
 
-import { answerQuestion } from "@/app/(app)/actions";
+import { answerQuestion } from "@/app/[locale]/(app)/actions";
 import { buildVoiceIntakeInstructions } from "@/lib/ai/intake-prompt";
 import {
   INTAKE_TOOL_DESCRIPTION,

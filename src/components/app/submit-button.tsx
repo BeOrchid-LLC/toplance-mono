@@ -6,7 +6,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { submitApplication } from "@/app/(app)/actions";
+import { submitApplication } from "@/app/[locale]/(app)/actions";
 
 export function SubmitButton({ applicationId }: { applicationId: string }) {
   const [pending, startTransition] = React.useTransition();

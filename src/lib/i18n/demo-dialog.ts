@@ -18,7 +18,7 @@ type L = Record<Locale, string>;
  * is not asked for something that sounds like a different thing.
  *
  * Errors the server returns are not here. Like `INVITE_DIALOG`, they
- * come back from the action — `requestDemo` in `@/app/(site)/actions` —
+ * come back from the action — `requestDemo` in `@/app/[locale]/(site)/actions` —
  * and stay in English until every action in the codebase is translated,
  * which is its own piece of work rather than something to start here.
  *

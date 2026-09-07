@@ -202,7 +202,7 @@ export async function notify<K extends keyof NotificationPayload>(
  *
  * Also never throws — the staff lookup is wrapped too, not just the
  * per-recipient `notify` calls it fans out to. `submitApplication` in
- * `@/app/(app)/actions.ts` calls this inside the same try block as
+ * `@/app/[locale]/(app)/actions.ts` calls this inside the same try block as
  * `submitApplicationTx` and `revalidatePath`, and `toActionError` does
  * not recognise a raw DB error, so an uncaught failure here would have
  * surfaced as a submission error to the traveller — after their

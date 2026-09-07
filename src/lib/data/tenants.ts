@@ -1,16 +1,18 @@
 import "server-only";
 
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ne } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
   applications,
+  demoRequests,
   invitations,
   orgMembers,
   organisations,
   profiles,
 } from "@/lib/db/schema";
 import type { ApplicationStatus } from "@/lib/domain/status";
+import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 
 /**
  * What BeOrchid is allowed to know about the agencies on the platform.
@@ -214,4 +216,227 @@ export async function getTenant(orgId: string): Promise<TenantDetail | null> {
   ]);
 
   return { ...row, members_, pendingInvites };
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export type ProvisionInput = {
+  name: string;
+  domain?: string;
+  seatsPurchased?: number;
+  billingContact?: string;
+  ownerEmail: string;
+  ownerName?: string;
+  /** The enquiry this agency came from, when it came from one. */
+  demoRequestId?: string;
+};
+
+export type ProvisionResult =
+  | { ok: true; orgId: string; inviteToken: string }
+  | { error: string };
+
+/**
+ * Create an agency and invite the person who will run it, in one
+ * transaction.
+ *
+ * The invitation is inserted here rather than through
+ * `createInvitation` for two reasons. That function runs against `db`
+ * and so cannot join this transaction — and a half-provisioned tenant
+ * (an agency nobody was invited to, or an enquiry marked converted
+ * pointing at nothing) must not be a reachable state. Its
+ * duplicate-pending-invitation guard is also vacuous against an
+ * organisation created three statements earlier.
+ *
+ * `token` and `expiresAt` are still left to the column defaults, so this
+ * decides nothing about either that `createInvitation` does not.
+ *
+ * `kind: "staff"` and **no membership row**. The invitee becomes a
+ * `reviewer` when they accept, through the untouched `acceptInvitationTx`
+ * — an invitation in this product cannot mint an owner. Ops promotes
+ * them afterwards with `setMemberRole`. Two acts, both audited.
+ *
+ * The email is NOT sent from here. Sending inside the transaction would
+ * put a live invitation link in somebody's inbox pointing at an agency a
+ * later rollback removed; the caller sends it once this has committed.
+ *
+ * When a demo request is named, it is locked with `select ... for
+ * update` and checked BEFORE anything is inserted — not stamped after
+ * the fact and rolled back if it turns out to be missing. Two reasons:
+ * the row lock is what stops two concurrent provisions of the same
+ * enquiry from interleaving, and checking first means a missing id is
+ * an early `return` that commits an empty transaction rather than a
+ * `tx.rollback()` throwing through the transaction wrapper.
+ */
+export async function provisionTenantTx(
+  input: ProvisionInput,
+  actorId: string
+): Promise<ProvisionResult> {
+  const name = input.name.trim();
+  if (!name) return { error: "The agency needs a name." };
+  if (name.length > ORG_NAME_MAX) return { error: "That name is too long." };
+
+  const ownerEmail = input.ownerEmail.trim().toLowerCase();
+  if (!EMAIL_RE.test(ownerEmail)) {
+    return { error: "Enter a valid email address for the first owner." };
+  }
+
+  const seats = input.seatsPurchased ?? 0;
+  if (!Number.isInteger(seats) || seats < 0) {
+    return { error: "Seats must be a whole number, zero or more." };
+  }
+
+  return db.transaction(async (tx) => {
+    if (input.demoRequestId) {
+      const [existing] = await tx
+        .select({ id: demoRequests.id })
+        .from(demoRequests)
+        .where(eq(demoRequests.id, input.demoRequestId))
+        .for("update")
+        .limit(1);
+
+      // A request id that matches nothing means the console showed a row
+      // that is no longer there. Nothing has been inserted yet, so this
+      // is simply an early return that commits an empty transaction —
+      // provisioning "from" an enquiry that does not exist is not what
+      // the operator asked for.
+      if (!existing) {
+        return { error: "We could not find that demo request." };
+      }
+    }
+
+    const [org] = await tx
+      .insert(organisations)
+      .values({
+        name,
+        domain: input.domain?.trim() || null,
+        seatsPurchased: seats,
+        billingContact: input.billingContact?.trim() || null,
+      })
+      .returning({ id: organisations.id });
+
+    const [invitation] = await tx
+      .insert(invitations)
+      .values({
+        orgId: org.id,
+        invitedBy: actorId,
+        email: ownerEmail,
+        fullName: input.ownerName?.trim() || "",
+        kind: "staff",
+      })
+      .returning({ token: invitations.token });
+
+    if (input.demoRequestId) {
+      await tx
+        .update(demoRequests)
+        .set({ status: "converted", convertedOrgId: org.id })
+        .where(eq(demoRequests.id, input.demoRequestId));
+    }
+
+    return { ok: true, orgId: org.id, inviteToken: invitation.token };
+  });
+}
+
+/**
+ * Take an agency's reach away, or give it back.
+ *
+ * `liveOrgIdsFor` drops a suspended membership before it reaches
+ * `Actor.orgIds`, so every `isAgencyFor` check answers no the moment
+ * this commits. The traveller keeps their own case throughout —
+ * `ownsApplication` never consults the agency, deliberately, because a
+ * billing dispute must not lock somebody out of their own passport scan
+ * nine days before an interview.
+ */
+export async function setTenantSuspension(
+  orgId: string,
+  suspend: boolean
+): Promise<{ ok: true } | { error: string }> {
+  const updated = await db
+    .update(organisations)
+    .set({ suspendedAt: suspend ? new Date() : null })
+    .where(eq(organisations.id, orgId))
+    .returning({ id: organisations.id });
+
+  if (!updated.length) return { error: "We could not find that agency." };
+
+  return { ok: true };
+}
+
+/** What the agency bought, and who to bill for it. */
+export async function setTenantBilling(
+  orgId: string,
+  seatsPurchased: number,
+  billingContact: string | null
+): Promise<{ ok: true } | { error: string }> {
+  // Checked here as well as by the `seats_not_negative` constraint, so
+  // an operator reads a sentence rather than a Postgres error.
+  if (!Number.isInteger(seatsPurchased) || seatsPurchased < 0) {
+    return { error: "Seats must be a whole number, zero or more." };
+  }
+
+  const contact = billingContact?.trim() || null;
+  if (contact && !EMAIL_RE.test(contact)) {
+    return { error: "Enter a valid email address for the billing contact." };
+  }
+
+  const updated = await db
+    .update(organisations)
+    .set({ seatsPurchased, billingContact: contact })
+    .where(eq(organisations.id, orgId))
+    .returning({ id: organisations.id });
+
+  if (!updated.length) return { error: "We could not find that agency." };
+
+  return { ok: true };
+}
+
+/**
+ * The second half of provisioning: seat the person who accepted as the
+ * agency's owner.
+ *
+ * Also the way back down — with one refusal. An agency whose last owner
+ * is demoted can invite nobody and change no billing, and nothing inside
+ * it can undo that; the only remedy is a staff member noticing. So the
+ * demotion is refused under a lock that holds for as long as the count
+ * it was decided on.
+ */
+export async function setMemberRole(
+  orgId: string,
+  userId: string,
+  role: "owner" | "reviewer"
+): Promise<{ ok: true } | { error: string }> {
+  return db.transaction(async (tx) => {
+    const [member] = await tx
+      .select({ role: orgMembers.role })
+      .from(orgMembers)
+      .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, userId)))
+      .for("update")
+      .limit(1);
+
+    if (!member) return { error: "That person is not a member of this agency." };
+    if (member.role === role) return { ok: true };
+
+    if (role === "reviewer") {
+      const [others] = await tx
+        .select({ total: count() })
+        .from(orgMembers)
+        .where(
+          and(
+            eq(orgMembers.orgId, orgId),
+            eq(orgMembers.role, "owner"),
+            ne(orgMembers.userId, userId)
+          )
+        );
+
+      if (!others || others.total === 0) {
+        return { error: "An agency needs at least one owner." };
+      }
+    }
+
+    await tx
+      .update(orgMembers)
+      .set({ role })
+      .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, userId)));
+
+    return { ok: true };
+  });
 }

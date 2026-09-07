@@ -10,7 +10,15 @@ export type Counter = {
    * caller should have to coerce the other's shape.
    */
   value: React.ReactNode;
-  sub: string;
+  /**
+   * Optional — a tile only needs a gloss when a bare number could be
+   * misread (the list page's platform-wide aggregates: "12" needs
+   * "across every agency" beside it). A tile already scoped to one
+   * thing, like this console's per-agency counters, needs none, and
+   * inventing one just to satisfy a required field is worse than
+   * having none.
+   */
+  sub?: string;
   tone: string;
 };
 
@@ -40,7 +48,7 @@ export function CounterRow({ counters }: { counters: Counter[] }) {
             <dd className={cn("num mt-2 text-[32px] font-semibold leading-none", c.tone)}>
               {c.value}
             </dd>
-            <dd className="t-muted mt-2">{c.sub}</dd>
+            {c.sub && <dd className="t-muted mt-2">{c.sub}</dd>}
           </div>
         ))}
       </dl>

@@ -124,29 +124,32 @@ export default async function OpsTenantPage({
 
   if (!tenant) notFound();
 
+  // No `sub` on any of these: every tile here is already scoped to this
+  // one agency, so a gloss written for the list page's platform-wide
+  // aggregates ("across every agency", "able to review a case", "not
+  // yet converted or declined") would be false here, and the dictionary
+  // has no per-agency wording to borrow instead. `CounterRow.sub` is
+  // optional for exactly this — a tile that needs no gloss renders
+  // without one rather than inventing or borrowing a wrong string.
   const counters = [
     {
       label: OPS_TENANTS.tableHead.members[locale],
       value: `${tenant.members} ${OPS_TENANTS.seatsOf[locale]} ${tenant.seatsPurchased}`,
-      sub: OPS_TENANTS.counters.seats.sub[locale],
       tone: "text-ink",
     },
     {
       label: OPS_TENANTS.tableHead.applications[locale],
       value: String(tenant.applicationsTotal),
-      sub: OPS_TENANTS.counters.liveTenants.sub[locale],
       tone: "text-ink",
     },
     {
       label: OPS_COMMON.awaitingReview[locale],
       value: String(tenant.withReviewer),
-      sub: OPS_TENANTS.counters.openEnquiries.sub[locale],
       tone: tenant.withReviewer ? "text-warning-ink" : "text-ink",
     },
     {
       label: OPS_COMMON.approved[locale],
       value: String(tenant.approved),
-      sub: OPS_TENANTS.counters.liveTenants.sub[locale],
       tone: "text-success-ink",
     },
   ];

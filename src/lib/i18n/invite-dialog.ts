@@ -22,7 +22,6 @@ type L = Record<Locale, string>;
  */
 export const INVITE_DIALOG: {
   inviteButton: L;
-  inviteSomeone: L;
   inviteClient: L;
   inviteTeamMember: L;
   sentTitle: L;
@@ -40,10 +39,6 @@ export const INVITE_DIALOG: {
   emailHelp: L;
   nameFieldsetLegend: L;
   nameFieldsetTag: L;
-  kindLegend: L;
-  kindClient: L;
-  kindClientHelp: L;
-  kindStaff: L;
   kindStaffHelp: L;
   fullNameLabel: L;
   fullNameHelp: L;
@@ -73,18 +68,6 @@ export const INVITE_DIALOG: {
     ar: "دعوة",
     tw: "Frɛ",
     zu: "Mema",
-  },
-  inviteSomeone: {
-    en: "Invite someone",
-    ha: "Gayyaci wani",
-    yo: "Pe ẹnìkan",
-    ig: "Kpọọ mmadụ oku",
-    fr: "Inviter quelqu'un",
-    pt: "Convidar alguém",
-    sw: "Alika mtu",
-    ar: "دعوة شخص",
-    tw: "Frɛ obi",
-    zu: "Mema umuntu",
   },
   inviteClient: {
     en: "Invite a client",
@@ -287,54 +270,6 @@ export const INVITE_DIALOG: {
     ar: "اسمهم، اختياري",
     tw: "Wɔn din, ɛnhia",
     zu: "Igama labo, akuphoqelekile",
-  },
-  kindLegend: {
-    en: "Who are you inviting?",
-    ha: "Wa kake gayyata?",
-    yo: "Ta ni o ń pè?",
-    ig: "Onye ka ị na-akpọ oku?",
-    fr: "Qui invitez-vous ?",
-    pt: "Quem está a convidar?",
-    sw: "Unamwalika nani?",
-    ar: "من تدعو؟",
-    tw: "Hwan na worefrɛ no?",
-    zu: "Umema bani?",
-  },
-  kindClient: {
-    en: "A client",
-    ha: "Abokin ciniki",
-    yo: "Oníbàárà",
-    ig: "Onye ahịa",
-    fr: "Un client",
-    pt: "Um cliente",
-    sw: "Mteja",
-    ar: "عميل",
-    tw: "Adetɔfoɔ",
-    zu: "Iklayenti",
-  },
-  kindClientHelp: {
-    en: "Someone whose visa you are handling. They get their own checklist.",
-    ha: "Wanda kake tafiyar da bizarsa. Zai samu nasa jerin takardu.",
-    yo: "Ẹnì tí o ń bójú tó fisa rẹ̀. Wọn yóò rí àkójọ ìwé tiwọn.",
-    ig: "Onye ị na-elekọta visa ya. Ọ ga-enweta ndepụta nke ya.",
-    fr: "Une personne dont vous gérez le visa. Elle reçoit sa propre liste.",
-    pt: "Alguém cujo visto está a tratar. Recebe a sua própria lista.",
-    sw: "Mtu ambaye unashughulikia viza yake. Atapata orodha yake mwenyewe.",
-    ar: "شخص تتولى تأشيرته. سيحصل على قائمته الخاصة.",
-    tw: "Obi a woredi ne visa ho dwuma. Ɔbɛnya n'ankasa nkrataa nhwɛso.",
-    zu: "Umuntu omphathela i-visa. Uthola uhlu lwakhe.",
-  },
-  kindStaff: {
-    en: "A colleague",
-    ha: "Abokin aiki",
-    yo: "Alábàáṣiṣẹ́",
-    ig: "Onye ọrụ ibe",
-    fr: "Un collègue",
-    pt: "Um colega",
-    sw: "Mfanyakazi mwenzako",
-    ar: "زميل",
-    tw: "Wo yɔnko adwumayɛfoɔ",
-    zu: "Ozakwenu",
   },
   kindStaffHelp: {
     en: "Someone who works with you. They review your clients' documents.",

@@ -45,12 +45,14 @@ type Recipient = {
  * answered by the screen the button is on. Asking again is a control
  * whose only possible use is to contradict where you are standing.
  *
- * Without `kind` the choice comes back, because there is one caller that
- * genuinely does not know: the console's front page, which is neither
- * roster. There it appears only for an owner, since only an owner may
- * send a staff invitation — `inviteTraveller` enforces that server-side,
- * and hiding the control from a reviewer means they are never offered a
- * click whose only outcome is a refusal.
+ * So `kind` is required. The console's front page used to carry a third
+ * copy of this button and could not answer "who?", which is the only
+ * reason the radio existed; that button is gone, and with it the one
+ * caller that had to ask. Every remaining caller is a roster that knows.
+ * Whether a staff invitation is allowed is still decided server-side by
+ * `inviteTraveller` via `isAgencyOwner` — the team roster only renders
+ * the trigger for an owner, so a reviewer is never offered a click whose
+ * only outcome is a refusal.
  *
  * On success the dialog does not close: it swaps the form for a small
  * document sheet — who the invitation is for and how long the link
@@ -65,11 +67,9 @@ type Recipient = {
  */
 export function InviteDialog({
   kind,
-  canInviteStaff = false,
 }: {
-  /** Fixed by the page. Omit only where the page cannot know. */
-  kind?: "client" | "staff";
-  canInviteStaff?: boolean;
+  /** Fixed by the page. Every caller is a roster that knows. */
+  kind: "client" | "staff";
 }) {
   const t = useT();
   const [open, setOpen] = React.useState(false);
@@ -129,11 +129,7 @@ export function InviteDialog({
   // dropped goes: once the dialog is open it is no longer standing on
   // the page that answered "who?", so the title answers it again.
   const heading =
-    kind === "client"
-      ? INVITE_DIALOG.inviteClient
-      : kind === "staff"
-        ? INVITE_DIALOG.inviteTeamMember
-        : INVITE_DIALOG.inviteSomeone;
+    kind === "client" ? INVITE_DIALOG.inviteClient : INVITE_DIALOG.inviteTeamMember;
 
   // The colleague's line is the same sentence the radio used to carry —
   // it says what a colleague *is*, which is exactly what the dialog owes
@@ -256,38 +252,8 @@ export function InviteDialog({
                   carried it: `inviteTraveller` reads one field either
                   way, and only trusts it as far as `isAgencyOwner`
                   allows for a staff invitation. */}
-              {kind && <input type="hidden" name="kind" value={kind} />}
+              <input type="hidden" name="kind" value={kind} />
 
-              {!kind && canInviteStaff && (
-                <fieldset className="flex flex-col gap-3 border-t border-border pt-4">
-                  <legend className="tag mb-1">{t(INVITE_DIALOG.kindLegend)}</legend>
-                  {(
-                    [
-                      ["client", INVITE_DIALOG.kindClient, INVITE_DIALOG.kindClientHelp],
-                      ["staff", INVITE_DIALOG.kindStaff, INVITE_DIALOG.kindStaffHelp],
-                    ] as const
-                  ).map(([value, label, help], i) => (
-                    <label
-                      key={value}
-                      htmlFor={`invite_kind_${value}`}
-                      className="flex items-start gap-3"
-                    >
-                      <input
-                        id={`invite_kind_${value}`}
-                        type="radio"
-                        name="kind"
-                        value={value}
-                        defaultChecked={i === 0}
-                        className="mt-1 accent-[var(--brand)]"
-                      />
-                      <span className="flex flex-col gap-0.5">
-                        <span className="text-base font-medium">{t(label)}</span>
-                        <span className="t-muted text-[14px]">{t(help)}</span>
-                      </span>
-                    </label>
-                  ))}
-                </fieldset>
-              )}
 
               <fieldset className="flex flex-col gap-4 border-t border-border pt-4">
                 <legend className="sr-only">

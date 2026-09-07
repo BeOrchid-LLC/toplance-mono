@@ -57,15 +57,25 @@ export async function listDemoRequests(): Promise<DemoRequestRow[]> {
 /**
  * Move one enquiry along the queue.
  *
- * Deliberately cannot write `converted`'s other half. Setting the status
- * to `converted` here would leave `converted_org_id` null — a row
- * claiming it became an agency it cannot name — so the honest conversion
- * path is the one that creates the agency.
+ * Cannot write `converted`: that value has a second half —
+ * `converted_org_id` — which only `provisionTenantTx` can write, in the
+ * same transaction that creates the agency it points at. A row claiming
+ * it became an agency it cannot name is worse than no status at all, so
+ * the type excludes `converted` and the body refuses it again at
+ * runtime, since a caller (a Server Action parsing a POST body) can hand
+ * this a value the type system never saw.
  */
 export async function setDemoRequestStatus(
   id: string,
-  status: DemoRequestStatus
+  status: Exclude<DemoRequestStatus, "converted">
 ): Promise<{ ok: true } | { error: string }> {
+  if ((status as DemoRequestStatus) === "converted") {
+    return {
+      error:
+        "Conversion is recorded when the agency is created, not set as a status.",
+    };
+  }
+
   const updated = await db
     .update(demoRequests)
     .set({ status })

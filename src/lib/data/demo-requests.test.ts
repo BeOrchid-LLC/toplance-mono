@@ -86,4 +86,22 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
 
     expect("error" in result).toBe(true);
   });
+
+  it("refuses to write 'converted' even if a caller gets past the type", async () => {
+    const id = await request("Kite Travel");
+
+    // A Server Action parses a raw POST string, so a value can reach
+    // here without ever passing through `Exclude<..., "converted">`.
+    // The cast stands in for that: the type system is bypassed on
+    // purpose to prove the runtime guard still holds.
+    const result = await setDemoRequestStatus(
+      id,
+      "converted" as unknown as Parameters<typeof setDemoRequestStatus>[1]
+    );
+
+    expect("error" in result).toBe(true);
+
+    const rows = await listDemoRequests();
+    expect(rows.find((r) => r.id === id)?.status).toBe("new");
+  });
 });

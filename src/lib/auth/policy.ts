@@ -307,7 +307,25 @@ export function canReadAuditLog(actor: Actor): boolean {
 export function isOrgMemberOf(actor: Actor, orgId: string): boolean {
   return actor.role === "org_member" && actor.orgIds.includes(orgId);
 }
-export const canManageInvitations = isOrgMemberOf; // platform staff deliberately excluded
+/**
+ * Every invitation surface an agency operates — invite, resend, revoke,
+ * the roster — is closed to platform staff. BeOrchid does not reach into
+ * a tenant's people.
+ *
+ * One exception, and it is not here: the *first* invitation, sent while
+ * the agency is being created. `provisionTenantTx`
+ * (`@/lib/data/tenants`) writes that row directly, under
+ * `requireStaffAction()`, because there is nobody inside the agency yet
+ * to send it. It seats no one — the invitee accepts as a `reviewer`
+ * through `acceptInvitationTx` like anyone else.
+ *
+ * There is deliberately no `canProvisionTenants` predicate beside this
+ * one. It could only be `isStaff(actor)`, and every caller already sits
+ * behind `requireStaffAction()`, which admits nobody else — a function
+ * that can only return `true` reads as a check while checking nothing,
+ * and this is the file people trust.
+ */
+export const canManageInvitations = isOrgMemberOf;
 
 /* ============================================================
  * AUDIT: every policy from supabase/migrations/20260821120000_init.sql

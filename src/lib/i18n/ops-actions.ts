@@ -24,6 +24,11 @@ export const OPS_ACTIONS: {
   onlyOwnerCondition: L;
   chooseAtLeastOneAnswer: L;
   ruleNotRecognized: L;
+  tenantNotFound: L;
+  demoRequestNotFound: L;
+  demoRequestAlreadyConverted: L;
+  provisionFailed: L;
+  chooseADemoStatus: L;
 } = {
   onlyOwnerApprove: {
     en: "Only a super admin can approve a route.",
@@ -84,5 +89,73 @@ export const OPS_ACTIONS: {
     ar: "هذه القاعدة لا تشير إلى أي سؤال استقبال نطرحه.",
     tw: "Saa mmara no nkyerɛ nsɛmmisa biara a yɛbisa.",
     zu: "Lowo mthetho awuqambi umbuzo wokubhaliswa esiwubuzayo.",
+  },
+  tenantNotFound: {
+    en: "We could not find that agency.",
+    ha: "Ba mu sami wannan hukumar ba.",
+    yo: "A kò rí ilé-iṣẹ́ yẹn.",
+    ig: "Anyị ahụghị ụlọ ọrụ ahụ.",
+    fr: "Nous n'avons pas trouvé cette agence.",
+    pt: "Não encontrámos essa agência.",
+    sw: "Hatukupata wakala huyo.",
+    ar: "لم نتمكن من العثور على تلك الوكالة.",
+    tw: "Yɛanhu saa adwumakuo no.",
+    zu: "Asiyitholanga leyo ejensi.",
+  },
+  demoRequestNotFound: {
+    en: "We could not find that demo request.",
+    ha: "Ba mu sami wannan buƙatar nunin ba.",
+    yo: "A kò rí ìbéèrè àfihàn yẹn.",
+    ig: "Anyị ahụghị arịrịọ ngosi ahụ.",
+    fr: "Nous n'avons pas trouvé cette demande de démonstration.",
+    pt: "Não encontrámos esse pedido de demonstração.",
+    sw: "Hatukupata ombi hilo la onyesho.",
+    ar: "لم نتمكن من العثور على طلب العرض التوضيحي.",
+    tw: "Yɛanhu saa yɛkyerɛ abisadeɛ no.",
+    zu: "Asisitholanga leso sicelo somboniso.",
+  },
+  /**
+   * `provisionTenantTx` refuses to re-provision a demo request that is
+   * already `converted` — the guard that stops a double-submit from
+   * orphaning the first agency (`@/lib/data/tenants`). Deliberately not
+   * `demoRequestNotFound`: the operator is looking at this row, so
+   * telling them it does not exist would be a worse lie than the bug it
+   * replaces.
+   */
+  demoRequestAlreadyConverted: {
+    en: "That demo request has already become an agency.",
+    ha: "Wannan buƙatar nunin ta riga ta zama hukuma.",
+    yo: "Ìbéèrè àfihàn yẹn ti di ilé-iṣẹ́ tẹ́lẹ̀.",
+    ig: "Arịrịọ ngosi ahụ abụrụlarị ụlọ ọrụ.",
+    fr: "Cette demande de démonstration est déjà devenue une agence.",
+    pt: "Esse pedido de demonstração já se tornou uma agência.",
+    sw: "Ombi hilo la onyesho tayari limekuwa wakala.",
+    ar: "لقد أصبح طلب العرض التوضيحي هذا وكالة بالفعل.",
+    tw: "Saa yɛkyerɛ abisadeɛ no adan adwumakuo dedaw.",
+    zu: "Leso sicelo somboniso sesibe yiejensi kakade.",
+  },
+  provisionFailed: {
+    en: "We could not set that agency up. Nothing was created.",
+    ha: "Ba mu iya kafa wannan hukumar ba. Ba a ƙirƙiri kome ba.",
+    yo: "A kò lè ṣètò ilé-iṣẹ́ yẹn. A kò dá ohunkóhun.",
+    ig: "Anyị enweghị ike ịtọlite ụlọ ọrụ ahụ. E kereghị ihe ọ bụla.",
+    fr: "Nous n'avons pas pu créer cette agence. Rien n'a été créé.",
+    pt: "Não conseguimos criar essa agência. Nada foi criado.",
+    sw: "Hatukuweza kusanidi wakala huyo. Hakuna kilichoundwa.",
+    ar: "لم نتمكن من إعداد تلك الوكالة. لم يتم إنشاء أي شيء.",
+    tw: "Yɛantumi ansiesie saa adwumakuo no. Wɔanyɛ biribiara.",
+    zu: "Asikwazanga ukusetha leyo ejensi. Akukho okudaliwe.",
+  },
+  chooseADemoStatus: {
+    en: "Choose a status for this request.",
+    ha: "Zaɓi matsayi don wannan buƙatar.",
+    yo: "Yan ipò kan fún ìbéèrè yìí.",
+    ig: "Họrọ ọnọdụ maka arịrịọ a.",
+    fr: "Choisissez un statut pour cette demande.",
+    pt: "Escolha um estado para este pedido.",
+    sw: "Chagua hali kwa ombi hili.",
+    ar: "اختر حالة لهذا الطلب.",
+    tw: "Yi gyinabea bi ma saa abisadeɛ yi.",
+    zu: "Khetha isimo salesi sicelo.",
   },
 };

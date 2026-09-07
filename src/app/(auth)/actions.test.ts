@@ -47,7 +47,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
 describe.skipIf(!hasDb)("completeProfile", async () => {
   const { db } = await import("@/lib/db/client");
   const { invitations, organisations, profiles } = await import("@/lib/db/schema");
-  const { checkInvitedEmail, completeProfile } = await import(
+  const { checkInvitedEmail, checkSignInEmail, completeProfile } = await import(
     "@/app/(auth)/actions"
   );
 
@@ -221,6 +221,54 @@ describe.skipIf(!hasDb)("completeProfile", async () => {
       expect(await checkInvitedEmail("not-a-real-token", EMAIL)).toEqual({
         error: "That invitation is no longer valid. Ask for a new one.",
       });
+    });
+  });
+
+  /**
+   * The sign-in half of the same idea.
+   *
+   * `getProfile` no longer provisions, so `profiles` — not Clerk — is
+   * what makes an address an account. Left unasked, a stranger's address
+   * signed in cleanly and every console then turned them away at `/go`,
+   * an emailed code after the fact. These prove the question is answered
+   * where it can still be acted on, and that it reads `profiles`.
+   */
+  describe("checkSignInEmail", () => {
+    it("refuses an address Clerk might know and `profiles` does not", async () => {
+      expect(await checkSignInEmail("nobody@test.invalid")).toEqual({
+        error:
+          "There is no Toplance account for that address. Check it for a typo — travellers are invited by the organisation sponsoring them, and organisations create their own account.",
+      });
+    });
+
+    it("passes an address that has a profile row, whatever its case", async () => {
+      // Written the way Clerk returned it at sign-up; typed the way the
+      // form lowercases it. Both sides are the same account.
+      await db
+        .insert(profiles)
+        .values({ id: USER_ID, email: "Complete-Profile@Test.invalid" });
+
+      expect(await checkSignInEmail(EMAIL)).toEqual({});
+    });
+
+    // There is one sign-in door, so there is one refusal, and it has to
+    // be true for whoever typed the address. It used to be three, chosen
+    // by the door — which meant a director who wandered onto the
+    // traveller door was told to go and find an invitation that was
+    // never going to be sent to them.
+    it("names both routes to an account, because it cannot know which applies", async () => {
+      const { error } = await checkSignInEmail("nobody@test.invalid");
+      expect(error).toContain("invited by the organisation");
+      expect(error).toContain("organisations create their own account");
+    });
+
+    it("answers before a session exists, because that is when it is asked", async () => {
+      // Same reason as `checkInvitedEmail` above: the form calls this
+      // ahead of `signIn.create()`, and a session guard here would move
+      // the answer back to after the code was spent.
+      userId = null;
+
+      expect(await checkSignInEmail("nobody@test.invalid")).not.toEqual({});
     });
   });
 });

@@ -121,7 +121,7 @@ export default async function ProfilePage() {
   const t = PROFILE;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/sign-in?next=/app/profile");
+  if (!profile || !application) redirect("/go");
 
   // The profile is the intake's output; before it there is nothing to show.
   if (!application.intakeComplete) redirect("/app/agent");

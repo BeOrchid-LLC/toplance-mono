@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   const t = DASHBOARD;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/sign-in?next=/app");
+  if (!profile || !application) redirect("/go");
 
   // Intake first — there is nothing meaningful to show before it.
   if (!application.intakeComplete) redirect("/app/agent");

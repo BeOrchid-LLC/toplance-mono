@@ -45,6 +45,39 @@ export function domainOf(email: string): string | null {
   return email.slice(at + 1).trim().toLowerCase();
 }
 
+/**
+ * Local-dev seam only: whether the work-address rule is actually
+ * enforced at the two doors that apply it. On by default, so nothing
+ * changes unless someone opts out on purpose.
+ *
+ * It exists because signing up as an organisation is the longest
+ * journey in the product — a code, a profile write, an organisation
+ * row — and a developer testing it has one mailbox they can receive
+ * that code at, which is usually a personal one. Refusing them at the
+ * first field means the rest of the journey cannot be tested at all.
+ *
+ * `NEXT_PUBLIC_` because half the enforcement is `auth-form.tsx`,
+ * which runs in the browser: an unprefixed variable is simply
+ * `undefined` there, and the rule would stand in the form while the
+ * server let it through. Not a secret — it is a boolean whose only
+ * effect is to relax a signal.
+ *
+ * Inert in a production build whatever the environment says, on the
+ * same terms as `staffTwoFactorSkipped` in `@/lib/auth/staff-gate`: a
+ * variable that leaks into a deployed environment must not be able to
+ * open organisation sign-up to consumer mailboxes. Being a build-time
+ * inline, it is also read at build time — changing it means restarting
+ * `next dev`.
+ *
+ * What it does not touch: the licence check after sign-up, which is
+ * what actually decides whether an agency is real. This seam relaxes
+ * the cheap signal, never the decision.
+ */
+export function workEmailRuleEnforced(): boolean {
+  if (process.env.NODE_ENV === "production") return true;
+  return process.env.NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL !== "1";
+}
+
 export function isWorkEmail(email: string): boolean {
   const domain = domainOf(email);
   if (!domain) return false;

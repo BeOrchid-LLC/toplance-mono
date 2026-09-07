@@ -33,7 +33,7 @@ export default async function MessagesPage() {
   const locale = await getLocale();
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/sign-in?next=/app/messages");
+  if (!profile || !application) redirect("/go");
 
   // Pre-intake there is no case to message anyone about yet.
   if (!application.intakeComplete) redirect("/app/agent");

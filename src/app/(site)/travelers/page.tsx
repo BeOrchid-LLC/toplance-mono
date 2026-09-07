@@ -247,12 +247,12 @@ export default async function TravellersPage() {
             </ul>
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/agency/sign-in">
+                <Link href="/sign-in">
                   <Briefcase /> {SITE_TRAVELERS.orgsSponsorSeatsCta[locale]}
                 </Link>
               </Button>
               <Button asChild variant="tertiary">
-                <Link href="/agency/sign-in">
+                <Link href="/sign-in">
                   {SITE_CHROME.employerSignIn[locale]} <ArrowRight />
                 </Link>
               </Button>

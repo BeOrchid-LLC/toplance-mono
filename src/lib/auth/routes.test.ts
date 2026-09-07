@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { homeFor, signedInDestination, signInDoorFor } from "@/lib/auth/routes";
+import {
+  goDestination,
+  homeFor,
+  signedInDestination,
+  SIGN_IN_DOOR,
+} from "@/lib/auth/routes";
 
 describe("homeFor", () => {
   it("sends each role to its own console", () => {
@@ -52,15 +57,23 @@ describe("signedInDestination", () => {
     expect(signedInDestination("/agency/sign-up", null, "abc123")).toBe("/agency");
   });
 
-  it("sends a signed-in visitor on an audience door to that audience's home", () => {
-    expect(signedInDestination("/agency/sign-in")).toBe("/agency");
+  // The two retired sign-in doors still answer — the paths are in the
+  // wild — and a signed-in visitor arriving at either resolves through
+  // `/go` like every other sign-in. Sending them to `/agency` or `/ops`
+  // on the strength of the URL was a guess about who they were, and it
+  // was right only for the person who guessed correctly about
+  // themselves. The employer *sign-up* keeps its own destination: it
+  // created the organisation it names.
+  it("resolves every sign-in through the dispatcher, retired doors included", () => {
+    expect(signedInDestination("/agency/sign-in")).toBe("/go");
+    expect(signedInDestination("/ops/sign-in")).toBe("/go");
+    expect(signedInDestination("/sign-in")).toBe("/go");
     expect(signedInDestination("/agency/sign-up")).toBe("/agency");
-    expect(signedInDestination("/ops/sign-in")).toBe("/ops");
   });
 
   it("matches nested auth paths, as the middleware's (.*) patterns do", () => {
     expect(signedInDestination("/sign-in/factor-two")).toBe("/go");
-    expect(signedInDestination("/agency/sign-in/anything")).toBe("/agency");
+    expect(signedInDestination("/agency/sign-in/anything")).toBe("/go");
     expect(signedInDestination("/agency/sign-up/anything")).toBe("/agency");
   });
 
@@ -98,24 +111,55 @@ describe("signedInDestination", () => {
   });
 });
 
-describe("signInDoorFor", () => {
-  // A staff or employer session that lapses on a protected page must
-  // bounce back to its own branded door, not the generic traveller one —
-  // that door's "Create an account" is invite-only copy that does not
-  // apply to them.
-  it("sends a lapsed employer session to the employer door", () => {
-    expect(signInDoorFor("/agency")).toBe("/agency/sign-in");
-    expect(signInDoorFor("/agency/people/123")).toBe("/agency/sign-in");
+/**
+ * There used to be a `signInDoorFor(pathname)` here, picking one of
+ * three doors from the console a lapsed session was standing in. Its
+ * whole job was to show branded copy to the audience the URL implied,
+ * and the implication was the only evidence it ever had — nothing about
+ * access was decided by it. One door serves every role now, so the
+ * question has one answer and the proxy names the constant directly.
+ */
+describe("SIGN_IN_DOOR", () => {
+  it("is where every signed-out visitor is sent, whatever console they were in", () => {
+    expect(SIGN_IN_DOOR).toBe("/sign-in");
   });
 
-  it("sends a lapsed staff session to the operations door", () => {
-    expect(signInDoorFor("/ops")).toBe("/ops/sign-in");
-    expect(signInDoorFor("/ops/cases/123")).toBe("/ops/sign-in");
+  // The round trip that has to hold for a lapsed session: bounced out to
+  // the one door, then — once signed in again — forwarded by role rather
+  // than back to wherever the URL suggested.
+  it("resolves back through the dispatcher once the session exists", () => {
+    expect(signedInDestination(SIGN_IN_DOOR)).toBe("/go");
+    expect(signedInDestination(SIGN_IN_DOOR, "/ops/cases/123")).toBe(
+      "/ops/cases/123"
+    );
+  });
+});
+
+describe("goDestination", () => {
+  it("forwards each role that has a console to open", () => {
+    expect(goDestination({ role: "staff" }, false)).toBe("/ops");
+    expect(goDestination({ role: "org_member" }, false)).toBe("/agency");
+    expect(goDestination({ role: "traveler" }, true)).toBe("/app");
   });
 
-  // The traveller console has no door of its own — /sign-in is it.
-  it("falls back to the generic door for everything else", () => {
-    expect(signInDoorFor("/app")).toBe("/sign-in");
-    expect(signInDoorFor("/app/documents")).toBe("/sign-in");
+  it("stops for a session with no profile row", () => {
+    expect(goDestination(null, false)).toBeNull();
+  });
+
+  // The bug this function exists to make impossible. A traveller's
+  // console *is* their application and only an accepted invitation
+  // creates one, so every page under `/app` redirects away on a null
+  // application. Forwarding that traveller to `/app` builds a bounce
+  // the browser only escapes with ERR_TOO_MANY_REDIRECTS.
+  it("stops for a traveller who holds no application", () => {
+    expect(goDestination({ role: "traveler" }, false)).toBeNull();
+  });
+
+  // Only the traveller console is an application. A reviewer's queue and
+  // a staff member's corridors exist whether or not one is in flight, so
+  // holding none must not strand them on the way to their own console.
+  it("forwards a reviewer and a staff member who hold no application", () => {
+    expect(goDestination({ role: "org_member" }, false)).toBe("/agency");
+    expect(goDestination({ role: "staff" }, false)).toBe("/ops");
   });
 });

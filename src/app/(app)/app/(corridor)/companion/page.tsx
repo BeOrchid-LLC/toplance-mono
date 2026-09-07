@@ -44,7 +44,7 @@ export default async function CompanionPage() {
   const t = COMPANION;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/sign-in?next=/app/companion");
+  if (!profile || !application) redirect("/go");
 
   // This page is what "approved" unlocks. Anyone who lands here before
   // that — a stale bookmark, a link shared too early — goes back to the

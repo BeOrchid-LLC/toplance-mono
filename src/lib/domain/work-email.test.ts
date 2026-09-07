@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { domainOf, isWorkEmail, workEmailRefusal } from "./work-email";
+import {
+  domainOf,
+  isWorkEmail,
+  workEmailRefusal,
+  workEmailRuleEnforced,
+} from "./work-email";
 
 describe("domainOf", () => {
   it("takes the part after the last @", () => {
@@ -56,5 +61,45 @@ describe("workEmailRefusal", () => {
 
   it("still reads as a sentence when there is no domain to name", () => {
     expect(workEmailRefusal("bola")).not.toContain("—");
+  });
+});
+
+describe("workEmailRuleEnforced", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("enforces the rule when nothing has been set", () => {
+    vi.stubEnv("NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL", "");
+    expect(workEmailRuleEnforced()).toBe(true);
+  });
+
+  it("stands the rule down for a developer who opted out", () => {
+    vi.stubEnv("NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL", "1");
+    expect(workEmailRuleEnforced()).toBe(false);
+  });
+
+  it("ignores any value other than the exact opt-out", () => {
+    // A half-set variable — `true`, `yes`, a leftover comment — must
+    // not be the thing that opens organisation sign-up.
+    for (const value of ["true", "yes", "0", "on"]) {
+      vi.stubEnv("NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL", value);
+      expect(workEmailRuleEnforced()).toBe(true);
+    }
+  });
+
+  it("keeps enforcing in production however the environment is set", () => {
+    // The seam is a local convenience. A variable that leaks into a
+    // deployed environment must not open the door there.
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL", "1");
+    expect(workEmailRuleEnforced()).toBe(true);
+  });
+
+  it("leaves isWorkEmail itself telling the truth either way", () => {
+    // The seam decides whether the answer is acted on, never what the
+    // answer is — the licence check still has a real signal to read.
+    vi.stubEnv("NEXT_PUBLIC_ALLOW_PERSONAL_ORG_EMAIL", "1");
+    expect(isWorkEmail("bola@gmail.com")).toBe(false);
   });
 });

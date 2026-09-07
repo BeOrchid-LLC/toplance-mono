@@ -93,8 +93,12 @@ test("the pre-rename traveller URL still lands on the page", async ({ page }) =>
  * permanently rather than 404ing.
  */
 test("the pre-rename console URLs still land on the console doors", async ({ page }) => {
+  // Two hops now: `/employer/sign-in` is still redirected to
+  // `/agency/sign-in` by `next.config.ts`, and that door is itself a
+  // redirect to the one shared sign-in. The old link still lands
+  // somewhere a person can use, which is all it was ever promising.
   const signIn = await page.goto("/employer/sign-in");
-  await expect(page).toHaveURL(/\/agency\/sign-in$/);
+  await expect(page).toHaveURL(/\/sign-in$/);
   expect(signIn?.status()).toBe(200);
 
   const signUp = await page.goto("/employer/sign-up");

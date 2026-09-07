@@ -1,53 +1,35 @@
-import { Suspense } from "react";
-import type { Metadata } from "next";
-import { Check } from "lucide-react";
+import { redirect } from "next/navigation";
 
-import { AuthForm } from "@/components/auth/auth-form";
-import { SetupNotice } from "@/components/shared/setup-notice";
-import { hasDatabaseEnv } from "@/lib/db/client";
-import { AUTH_PAGE_TITLES, AGENCY_DOOR_PANEL } from "@/lib/i18n/auth-pages";
-import { getLocale } from "@/lib/i18n/server";
-import { Skeleton } from "@/components/ui/skeleton";
+import { isInternalPath, SIGN_IN_DOOR } from "@/lib/auth/routes";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
-  return { title: AUTH_PAGE_TITLES.employerSignIn[locale] };
-}
+/**
+ * The organisation door used to be its own, with its own copy beside
+ * the form.
+ * There is one sign-in now: every account is a row in the same
+ * `profiles` table, and which console a person opens is decided from
+ * that row by `/go`, not from the URL they arrived at. A door per
+ * audience only ever asked people to classify themselves, and got it
+ * wrong for anyone who guessed.
+ *
+ * It answers rather than 404s because the path is in the wild: the
+ * landing page, the traveller page and the footer all pointed at it, and
+ * `/employer/sign-in` still redirects here from invitation emails
+ * already sent. A redirect costs nothing next to a dead link.
+ *
+ * `next` is carried across so a lapsed session still lands where it was
+ * interrupted; `isInternalPath` is what keeps that from becoming an open
+ * redirect, and the proxy sets the parameter in the first place.
+ */
+export default async function AgencySignInRedirect({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
 
-export default async function EmployerSignInPage() {
-  if (!hasDatabaseEnv) return <SetupNotice />;
-
-  const locale = await getLocale();
-
-  return (
-    <div className="mx-auto grid max-w-[1000px] items-center gap-14 lg:grid-cols-[1fr_460px]">
-      {/* The claim, in the same words and the same order as the landing
-          page's organisations section — someone arriving here clicked that
-          section, and finding a different promise would read as a
-          different product. */}
-      <div className="hidden lg:block">
-        <p className="tag">{AGENCY_DOOR_PANEL.tag[locale]}</p>
-        <h2 className="d-lg mt-3 max-w-[18ch]">
-          {AGENCY_DOOR_PANEL.heading[locale]}
-        </h2>
-        <p className="t-body-lg mt-5 max-w-[52ch] text-ink-2">
-          {AGENCY_DOOR_PANEL.body[locale]}
-        </p>
-        <ul className="mt-8 flex flex-col gap-3">
-          {AGENCY_DOOR_PANEL.bullets.map((x) => (
-            <li key={x.en} className="flex items-start gap-3">
-              <Check className="mt-1 size-4 shrink-0 text-brand-text" aria-hidden />
-              <span className="text-[15px] text-ink-2">{x[locale]}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* No card wrapper: `AuthForm` brings its own laminate panel, and
-          two nested surfaces would put a box inside a box. */}
-      <Suspense fallback={<Skeleton className="h-[340px] w-full rounded-lg" />}>
-        <AuthForm mode="sign-in" audience="employer" />
-      </Suspense>
-    </div>
+  redirect(
+    isInternalPath(next)
+      ? `${SIGN_IN_DOOR}?next=${encodeURIComponent(next)}`
+      : SIGN_IN_DOOR
   );
 }

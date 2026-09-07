@@ -36,7 +36,7 @@ export default async function DocumentsPage() {
   const locale = await getLocale();
   const t = DOCUMENTS;
   const application = await getApplication();
-  if (!application) redirect("/sign-in?next=/app/documents");
+  if (!application) redirect("/go");
   if (!application.intakeComplete) redirect("/app/agent");
 
   const docs = await getDocuments(application.id);

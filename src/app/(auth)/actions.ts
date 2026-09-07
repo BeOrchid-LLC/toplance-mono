@@ -2,12 +2,17 @@
 
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { profiles } from "@/lib/db/schema";
 import { checkInvitedAddress } from "@/lib/data/invitations";
 import { toE164 } from "@/lib/domain/countries";
-import { isWorkEmail, workEmailRefusal } from "@/lib/domain/work-email";
+import {
+  isWorkEmail,
+  workEmailRefusal,
+  workEmailRuleEnforced,
+} from "@/lib/domain/work-email";
 import { AUTH_ACTIONS } from "@/lib/i18n/auth-actions";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/lib/i18n/locales";
 
@@ -152,6 +157,70 @@ export async function checkInvitedEmail(
 }
 
 /**
+ * Which sign-up door is asking. A sign-up genuinely differs by audience
+ * — a director is asked for an organisation and a work address, a
+ * traveller for a passport name and an invitation — so this is the one
+ * place the distinction still earns its keep.
+ *
+ * There is no `"operations"` member, and its absence is the point: staff
+ * accounts are made by promoting an existing one, never by a form, so a
+ * door that offered to create one would be a promise this product does
+ * not keep. Sign-in has no audience at all — one door, and `/go` decides
+ * the console from `profiles` once the session exists.
+ */
+export type AuthAudience = "traveller" | "employer";
+
+/**
+ * Does this address have a Toplance account? Asked on the sign-in door
+ * before Clerk is told anything.
+ *
+ * The same move `checkInvitedEmail` makes for sign-up, for the same
+ * reason. Clerk holds the credential, but `profiles` holds the account:
+ * `getProfile` stopped provisioning on first sight (client decision,
+ * 2026-08-31), so a Clerk session with no row is a real, reachable state
+ * — anyone can obtain a Clerk account, and `completeProfile` then
+ * refuses to make it a traveller without a live invitation. Signing such
+ * a person in worked exactly as designed and left them at `/go` reading
+ * that they had no account, one emailed code later, with the form gone
+ * and nothing on the screen to correct.
+ *
+ * Asked here, a mistyped address is a wrong field. `profiles` rather
+ * than Clerk on purpose: an account Clerk knows and `profiles` does not
+ * is precisely the case that dead-ends, so asking Clerk would let the
+ * one person this exists for straight through.
+ *
+ * Compared case-insensitively because the two sides are written by
+ * different hands — the form lowercases what was typed, while the stored
+ * address is whatever Clerk returned at sign-up.
+ *
+ * It is an oracle for whether an address holds an account, and that is
+ * not new: `signIn.create` has always answered the same question with
+ * `form_identifier_not_found`, and this only moves the answer to before
+ * the send. Nothing about the account is returned, and no code is spent
+ * either way.
+ *
+ * `locale` is a plain, unvalidated `string` from the caller's own
+ * `useLocale()` rather than a request header this action reads for
+ * itself — see `completeProfile` for why.
+ */
+export async function checkSignInEmail(
+  email: string,
+  locale?: string
+): Promise<{ error?: string }> {
+  const address = email.trim().toLowerCase();
+
+  const [existing] = await db
+    .select({ id: profiles.id })
+    .from(profiles)
+    .where(sql`lower(${profiles.email}) = ${address}`)
+    .limit(1);
+
+  if (existing) return {};
+
+  return { error: AUTH_ACTIONS.noAccount[isLocale(locale) ? locale : DEFAULT_LOCALE] };
+}
+
+/**
  * The whole of the invariant, in one place: `traveler` is reachable
  * only by presenting a live invitation addressed to the email Clerk
  * just verified.
@@ -183,7 +252,9 @@ async function roleFor(
     // nothing, and the licence check after sign-up is what actually
     // decides whether an agency is real. What this closes is the gap
     // between what the form promised and what the server enforced.
-    if (!isWorkEmail(email)) return { error: workEmailRefusal(email) };
+    if (workEmailRuleEnforced() && !isWorkEmail(email)) {
+      return { error: workEmailRefusal(email) };
+    }
     return { role: "org_member" };
   }
 

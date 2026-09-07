@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Briefcase, Shield, type LucideIcon } from "lucide-react";
+import { ArrowRight, Briefcase, type LucideIcon } from "lucide-react";
 
 import { getLocale } from "@/lib/i18n/server";
 import { AUTH_DOORS, type AUTH_DOORS_HEADINGS } from "@/lib/i18n/auth-doors";
@@ -12,15 +12,15 @@ import type { Locale } from "@/lib/i18n/locales";
  * saying nothing; a rule separates these for free and keeps the panel
  * above as the only surface on the screen.
  *
- * Shared by both generic auth pages since travellers became invite-only.
- * `/sign-up` has needed it from the start — it is a door with no handle
- * on the outside, so it owes a visitor an alternative. `/sign-in` needs
- * it for the opposite reason: it is where *everyone* with an account
- * arrives, including the two audiences whose console it is not.
+ * `/sign-up` alone now. That page is a door with no handle on the
+ * outside — travellers are invite-only — so it owes a visitor an
+ * alternative. `/sign-in` used to list the other two sign-ins for the
+ * opposite reason, and no longer has any to list: there is one sign-in,
+ * and `/go` sorts out whose console it opens.
  *
  * `title`/`body` are dictionaries rather than resolved strings: `OtherDoors`
  * is a Server Component with no locale of its own to resolve them against
- * until it renders, and these two arrays are module-level constants shared
+ * until it renders, and the array below is a module-level constant shared
  * by every request.
  */
 export type Door = {
@@ -31,10 +31,12 @@ export type Door = {
 };
 
 /**
- * The doors named from `/sign-up`. Employers still have a sign-up to be
- * sent to; staff never do, so theirs points at a sign-in even here —
- * there is no self-serve route to the ops console and naming one would
- * be a promise this product does not keep.
+ * The doors named from `/sign-up`: the one other place an account can be
+ * *created*. Staff used to be named here too, pointing at their own
+ * sign-in — there is no self-serve route to the ops console and naming
+ * one would be a promise this product does not keep. That entry is gone
+ * because the door it named is gone: staff sign in at `/sign-in`, which
+ * this page's own form already links to.
  */
 export const SIGN_UP_DOORS: Door[] = [
   {
@@ -42,33 +44,6 @@ export const SIGN_UP_DOORS: Door[] = [
     icon: Briefcase,
     title: AUTH_DOORS.employerSignUp.title,
     body: AUTH_DOORS.employerSignUp.body,
-  },
-  {
-    href: "/ops/sign-in",
-    icon: Shield,
-    title: AUTH_DOORS.opsSignIn.title,
-    body: AUTH_DOORS.opsSignIn.body,
-  },
-];
-
-/**
- * The doors named from `/sign-in` — both sign-ins, because everybody
- * arriving here already has an account. Before this the only way across
- * was knowing the URL: the ops door was a footer entry and the employer
- * door was named only from `/agency/sign-up`.
- */
-export const SIGN_IN_DOORS: Door[] = [
-  {
-    href: "/agency/sign-in",
-    icon: Briefcase,
-    title: AUTH_DOORS.employerSignIn.title,
-    body: AUTH_DOORS.employerSignIn.body,
-  },
-  {
-    href: "/ops/sign-in",
-    icon: Shield,
-    title: AUTH_DOORS.opsSignIn.title,
-    body: AUTH_DOORS.opsSignIn.body,
   },
 ];
 

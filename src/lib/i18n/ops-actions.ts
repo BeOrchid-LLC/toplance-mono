@@ -29,6 +29,13 @@ export const OPS_ACTIONS: {
   demoRequestAlreadyConverted: L;
   provisionFailed: L;
   chooseADemoStatus: L;
+  agencyNameRequired: L;
+  agencyNameTooLong: L;
+  ownerEmailInvalid: L;
+  seatsInvalid: L;
+  billingEmailInvalid: L;
+  notAMember: L;
+  lastOwner: L;
 } = {
   onlyOwnerApprove: {
     en: "Only a super admin can approve a route.",
@@ -157,5 +164,96 @@ export const OPS_ACTIONS: {
     ar: "اختر حالة لهذا الطلب.",
     tw: "Yi gyinabea bi ma saa abisadeɛ yi.",
     zu: "Khetha isimo salesi sicelo.",
+  },
+  agencyNameRequired: {
+    en: "Enter a name for the agency.",
+    ha: "Shigar da sunan hukumar.",
+    yo: "Tẹ orúkọ ilé-iṣẹ́ náà sí i.",
+    ig: "Tinye aha ụlọ ọrụ ahụ.",
+    fr: "Saisissez un nom pour l'agence.",
+    pt: "Introduza um nome para a agência.",
+    sw: "Weka jina la wakala.",
+    ar: "أدخل اسمًا للوكالة.",
+    tw: "Kyerɛw adwumakuo no din.",
+    zu: "Faka igama le-ejensi.",
+  },
+  agencyNameTooLong: {
+    en: "That name is too long.",
+    ha: "Wannan sunan ya yi tsawo sosai.",
+    yo: "Orúkọ yẹn gùn jù.",
+    ig: "Aha ahụ dị ogologo nke ukwuu.",
+    fr: "Ce nom est trop long.",
+    pt: "Esse nome é demasiado longo.",
+    sw: "Jina hilo ni refu mno.",
+    ar: "هذا الاسم طويل جدًا.",
+    tw: "Saa din no ware dodo.",
+    zu: "Lelo gama lide kakhulu.",
+  },
+  ownerEmailInvalid: {
+    en: "Enter a valid email address for the first owner.",
+    ha: "Shigar da adireshin imel mai inganci don mai mallakar farko.",
+    yo: "Tẹ àdírẹ́sì ímeèlì tó tọ́ sí i fún onílé àkọ́kọ́.",
+    ig: "Tinye adreesị ozi-e ziri ezi maka onye nwe mbụ.",
+    fr: "Saisissez une adresse e-mail valide pour le premier propriétaire.",
+    pt: "Introduza um endereço de email válido para o primeiro proprietário.",
+    sw: "Weka anwani sahihi ya barua pepe kwa mmiliki wa kwanza.",
+    ar: "أدخل عنوان بريد إلكتروني صالحًا للمالك الأول.",
+    tw: "Kyerɛw email address a ɛfata ma owura a odi kan no.",
+    zu: "Faka ikheli le-imeyili elisebenzayo lomnikazi wokuqala.",
+  },
+  seatsInvalid: {
+    en: "Seats must be a whole number, zero or more.",
+    ha: "Wuraren zama dole su zama cikakken lamba, sifili ko fiye.",
+    yo: "Àwọn ìjókòó gbọ́dọ̀ jẹ́ nọ́mbà odindi, ó kéré tán ọ̀ọ́dún.",
+    ig: "Oche aghaghị ịbụ nọmba zuru oke, efu ma ọ bụ karịa.",
+    fr: "Le nombre de sièges doit être un nombre entier, zéro ou plus.",
+    pt: "Os lugares devem ser um número inteiro, zero ou mais.",
+    sw: "Viti lazima viwe nambari kamili, sifuri au zaidi.",
+    ar: "يجب أن يكون عدد المقاعد رقمًا صحيحًا، صفرًا أو أكثر.",
+    tw: "Nkonguabea dodow no ho hia sɛ ɛyɛ nɔma a ɛkyerɛ pɔtee, efi hwee anaa nea ɛboro so.",
+    zu: "Izihlalo kufanele zibe yinombolo ephelele, iqanda noma ngaphezulu.",
+  },
+  billingEmailInvalid: {
+    en: "Enter a valid email address for the billing contact.",
+    ha: "Shigar da adireshin imel mai inganci don mai lissafin kuɗi.",
+    yo: "Tẹ àdírẹ́sì ímeèlì tó tọ́ sí i fún alábàáṣiṣẹ́pọ̀ owó.",
+    ig: "Tinye adreesị ozi-e ziri ezi maka onye nkwụnye ụgwọ.",
+    fr: "Saisissez une adresse e-mail valide pour le contact de facturation.",
+    pt: "Introduza um endereço de email válido para o contacto de faturação.",
+    sw: "Weka anwani sahihi ya barua pepe kwa mawasiliano ya malipo.",
+    ar: "أدخل عنوان بريد إلكتروني صالحًا لجهة اتصال الفوترة.",
+    tw: "Kyerɛw email address a ɛfata ma sika tua ho nnipa a wɔne no di dwuma.",
+    zu: "Faka ikheli le-imeyili elisebenzayo lomuntu wokuxhumana ngezokukhokhwa.",
+  },
+  notAMember: {
+    en: "That person is not a member of this agency.",
+    ha: "Wannan mutumin ba memba na wannan hukumar ba ne.",
+    yo: "Ẹni náà kì í ṣe ọmọ ẹgbẹ́ ilé-iṣẹ́ yìí.",
+    ig: "Onye ahụ abụghị onye òtù nke ụlọ ọrụ a.",
+    fr: "Cette personne n'est pas membre de cette agence.",
+    pt: "Essa pessoa não é membro desta agência.",
+    sw: "Mtu huyo si mwanachama wa wakala huyu.",
+    ar: "هذا الشخص ليس عضوًا في هذه الوكالة.",
+    tw: "Saa onipa no nyɛ saa adwumakuo yi muni.",
+    zu: "Lowo muntu akayilungu lale ejensi.",
+  },
+  /**
+   * `setMemberRole` refuses to demote an agency's only owner rather than
+   * leaving it able to invite nobody and change no billing with no way
+   * back in (`@/lib/data/tenants`). The string says why, not just that
+   * the write failed — this is the refusal an operator will genuinely
+   * hit, by trying to demote the one owner an agency has.
+   */
+  lastOwner: {
+    en: "This agency has only one owner. Promote someone else before you remove this one.",
+    ha: "Wannan hukumar tana da mai mallaka ɗaya kacal. Ɗaga wani kafin ka cire wannan.",
+    yo: "Ilé-iṣẹ́ yìí ní onílé kan ṣoṣo. Gbé ẹlòmíràn ga kí o tó yọ ẹni yìí kúrò.",
+    ig: "Ụlọ ọrụ a nwere naanị otu onye nwe ya. Bulie onye ọzọ tupu ị wepụ onye a.",
+    fr: "Cette agence n'a qu'un seul propriétaire. Promouvez quelqu'un d'autre avant de retirer celui-ci.",
+    pt: "Esta agência tem apenas um proprietário. Promova outra pessoa antes de remover este.",
+    sw: "Wakala huyu ana mmiliki mmoja tu. Mpandishe mtu mwingine kabla ya kumwondoa huyu.",
+    ar: "هذه الوكالة لديها مالك واحد فقط. رقِّ شخصًا آخر قبل إزالة هذا المالك.",
+    tw: "Saa adwumakuo yi wɔ owura biako pɛ. Ma obi foforo so ansa na woayi oyi afiri hɔ.",
+    zu: "Le ejensi inomnikazi oyedwa kuphela. Khuphula omunye umuntu ngaphambi kokususa lo.",
   },
 };

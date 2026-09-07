@@ -16,10 +16,14 @@ export const MESSAGES: {
   panelLabel: L;
   empty: L;
   /**
-   * Shown while nobody at the agency has claimed the case. 4.10: an
-   * unassigned thread goes to the agency as a whole, and the traveller
-   * is told as much — a shared inbox is the honest model for a small
-   * agency, and silence from one reads as being ignored by a person.
+   * Shown in place of the composer while nobody at the agency has
+   * claimed the case.
+   *
+   * It used to say the opposite — that an unassigned thread goes to the
+   * agency as a whole — because it did. `canWriteMessages` now waits for
+   * a handler, so this says what is true and, as importantly, that the
+   * wait ends without the traveller having to do anything: silence they
+   * are expected to break themselves is worse than silence explained.
    */
   unclaimedNotice: L;
   senderAgency: L;
@@ -62,16 +66,16 @@ export const MESSAGES: {
     zu: "Akukho lutho okwamanje. Bhala umlayezo wokuqala ngezansi.",
   },
   unclaimedNotice: {
-    en: "Nobody has picked up your case yet, so your message goes to your agency's whole team. Someone will reply.",
-    ha: "Har yanzu babu wanda ya karɓi shari'arka, don haka saƙonka zai je ga dukan ƙungiyar hukumarka. Wani zai amsa.",
-    yo: "Kò tíì sí ẹnìkan tí ó gba ọ̀rọ̀ rẹ, nítorí náà ìránṣẹ́ rẹ yóò lọ sí gbogbo ẹgbẹ́ ilé-iṣẹ́ rẹ. Ẹnìkan yóò dáhùn.",
-    ig: "Ọ dịbeghị onye weere okwu gị, ya mere ozi gị na-aga na ndị otu ụlọ ọrụ gị niile. Otu onye ga-aza.",
-    fr: "Personne n'a encore pris votre dossier en charge, votre message va donc à toute l'équipe de votre agence. Quelqu'un vous répondra.",
-    pt: "Ainda ninguém assumiu o seu processo, por isso a sua mensagem vai para toda a equipa da sua agência. Alguém irá responder.",
-    sw: "Bado hakuna aliyechukua kesi yako, kwa hivyo ujumbe wako unaenda kwa timu nzima ya wakala wako. Mtu atajibu.",
-    ar: "لم يتسلّم أحد ملفك بعد، لذا تصل رسالتك إلى فريق وكالتك بالكامل. سيرد عليك أحدهم.",
-    tw: "Obiara nnyaa w'asɛm no nnya, enti wo nkrasɛm no kɔ w'ahyehyɛdeɛ no kuo no nyinaa hɔ. Obi bɛbua.",
-    zu: "Akekho osethathe icala lakho, ngakho umyalezo wakho uya kulo lonke iqembu lenkampani yakho. Kukhona ozophendula.",
+    en: "Nobody at your agency has picked up your case yet. You will be able to write here as soon as someone does.",
+    ha: "Har yanzu babu wanda ya karɓi shari'arka a hukumarka. Za ka iya rubutu a nan da zarar wani ya karɓe ta.",
+    yo: "Kò tíì sí ẹnìkan ní ilé-iṣẹ́ rẹ tí ó gba ọ̀rọ̀ rẹ. Ìwọ yóò lè kọ̀wé níhìn-ín ní kété tí ẹnìkan bá gbà á.",
+    ig: "Ọ dịbeghị onye ọ bụla n'ụlọ ọrụ gị weere okwu gị. Ị ga-enwe ike ide ebe a ozugbo mmadụ weere ya.",
+    fr: "Personne dans votre agence n'a encore pris votre dossier en charge. Vous pourrez écrire ici dès que quelqu'un le fera.",
+    pt: "Ainda ninguém na sua agência assumiu o seu processo. Poderá escrever aqui assim que alguém o fizer.",
+    sw: "Bado hakuna mtu katika wakala wako aliyechukua kesi yako. Utaweza kuandika hapa mara tu mtu atakapoichukua.",
+    ar: "لم يتسلّم أحد في وكالتك ملفك بعد. سيمكنك الكتابة هنا فور أن يتسلّمه أحدهم.",
+    tw: "Obiara nni w'adwumakuw no mu a wagye w'asɛm no nnya. Wobɛtumi akyerɛw wɔ ha bere a obi gye no.",
+    zu: "Akekho enkampanini yakho osethathe icala lakho. Uzokwazi ukubhala lapha ngokushesha nje uma ekhona osithathayo.",
   },
   /**
    * Only ever a fallback, for an agency colleague whose profile carries

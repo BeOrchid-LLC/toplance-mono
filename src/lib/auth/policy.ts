@@ -248,10 +248,33 @@ export const canReadCompanion: Permission = participant;
  */
 export const canWriteVisaExpiry: Permission = (actor, app) => ownsApplication(actor, app);
 
-/** Traveller and agency, both directions. Nobody else joins the thread. */
+/**
+ * Traveller and agency, both directions. Nobody else joins the thread.
+ *
+ * Reading is not gated on a handler: the thread is the record of the
+ * case, and messages written before `canWriteMessages` grew its second
+ * condition stay readable by both sides.
+ */
 export const canReadMessages: Permission = participant;
 
-export const canWriteMessages: Permission = participant;
+/**
+ * Writing needs a handler — a participant *and* a case somebody holds.
+ *
+ * The thread used to open the moment a case existed, on the reasoning
+ * that an unclaimed one belongs to the whole agency and a shared inbox
+ * is the honest model for a small team. It reads well and behaves
+ * badly: `handlesCase` lets every colleague reach an unclaimed case, so
+ * a traveller's question landed where answering it was nobody's job in
+ * particular, and the agency could open a conversation with no name
+ * attached to it. A reply owed by everyone is owed by no one.
+ *
+ * So the thread waits for `assigneeId`. Both sides wait together — a
+ * traveller writing into an unheld case is the same silence, only from
+ * their end of it — and taking the case is one click away on the screen
+ * that says so.
+ */
+export const canWriteMessages: Permission = (actor, app) =>
+  app.assigneeId !== null && participant(actor, app);
 
 /** Platform-side: route curation. */
 export function canWriteCorridors(actor: Actor): boolean {
@@ -348,6 +371,7 @@ export const canManageInvitations = isOrgMemberOf; // platform staff deliberatel
  * case_notes .................... canRead/canWriteCaseNotes — the agency
  *                                 writes, the traveller reads
  * messages ...................... canRead/canWriteMessages — traveller and
- *                                 agency both read and write
+ *                                 agency both read; both write only once
+ *                                 the case has a handler
  * companion_updates ............. canReadCompanion — traveller and agency
  * ============================================================ */

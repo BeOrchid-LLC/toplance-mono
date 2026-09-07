@@ -216,8 +216,17 @@ export default async function AgencyCasePage({
                 <PanelHeader label={MESSAGES.panelLabel[locale]} />
                 <PanelBody>
                   <MessageThread messages={thread} />
+                  {/* Same gate as the traveller's side, same reason —
+                      one `canWriteMessages`, so neither end can open a
+                      conversation the other has nobody to answer with. */}
                   <div className="mt-5 border-t border-border pt-5">
-                    <MessageComposer applicationId={row.id} />
+                    {row.assigneeId ? (
+                      <MessageComposer applicationId={row.id} />
+                    ) : (
+                      <p className="t-muted max-w-[74ch]">
+                        {CASE_REVIEW.messagesUnheld[locale]}
+                      </p>
+                    )}
                   </div>
                 </PanelBody>
               </Panel>

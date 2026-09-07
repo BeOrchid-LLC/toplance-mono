@@ -245,9 +245,14 @@ export async function updateDemoRequestStatus(formData: FormData) {
    * `converted` is refused. Its other half is `converted_org_id`, and
    * only `provisionTenantTx` can write both — a request marked converted
    * with nothing to point at is a lie the console would then display.
+   *
+   * Not `provisionFailed`: nobody here attempted a provision, so a
+   * string that reports one failing describes an operation the operator
+   * never asked for. `conversionNotAStatus` says why this button is the
+   * wrong one and points at the one that isn't.
    */
   if (status === "converted") {
-    return { error: OPS_ACTIONS.provisionFailed[locale] };
+    return { error: OPS_ACTIONS.conversionNotAStatus[locale] };
   }
 
   /**

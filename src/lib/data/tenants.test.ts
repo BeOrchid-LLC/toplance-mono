@@ -214,7 +214,7 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
       STAFF
     );
 
-    expect("error" in result).toBe(true);
+    expect(result).toEqual({ error: "agency_name_required" });
 
     const after = await db.select({ id: organisations.id }).from(organisations);
     expect(after).toHaveLength(before.length);
@@ -230,7 +230,7 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
       STAFF
     );
 
-    expect("error" in result).toBe(true);
+    expect(result).toEqual({ error: "owner_email_invalid" });
 
     const after = await db.select({ id: organisations.id }).from(organisations);
     expect(after).toHaveLength(before.length);
@@ -285,7 +285,7 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
       STAFF
     );
 
-    expect("error" in result).toBe(true);
+    expect(result).toEqual({ error: "demo_request_not_found" });
 
     // The claim the early-return-under-lock rests on: nothing was
     // inserted, so the row counts across all three tables are unchanged
@@ -332,7 +332,7 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
       { name: "Second Agency", ownerEmail: "second@kite.invalid", demoRequestId: req.id },
       STAFF
     );
-    expect("error" in second).toBe(true);
+    expect(second).toEqual({ error: "demo_request_already_converted" });
 
     const afterOrgs = await db.select({ id: organisations.id }).from(organisations);
     expect(afterOrgs).toHaveLength(beforeOrgs.length);
@@ -397,7 +397,9 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     // Refused here rather than left to the `seats_not_negative` check
     // constraint, so this returns `seats_invalid` instead of a Postgres
     // error.
-    expect("error" in (await setTenantBilling(result.orgId, -1, null))).toBe(true);
+    expect(await setTenantBilling(result.orgId, -1, null)).toEqual({
+      error: "seats_invalid",
+    });
   });
 
   it("promotes a reviewer to owner, and is idempotent", async () => {
@@ -439,7 +441,9 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
 
     // An agency of reviewers can invite nobody and change no billing.
     // The only way back is a staff member noticing.
-    expect("error" in (await setMemberRole(result.orgId, STAFF, "reviewer"))).toBe(true);
+    expect(await setMemberRole(result.orgId, STAFF, "reviewer")).toEqual({
+      error: "last_owner",
+    });
     const detail = await getTenant(result.orgId);
     expect(detail?.members_.find((m) => m.userId === STAFF)?.role).toBe("owner");
   });

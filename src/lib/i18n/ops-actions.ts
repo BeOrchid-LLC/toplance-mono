@@ -29,6 +29,7 @@ export const OPS_ACTIONS: {
   demoRequestAlreadyConverted: L;
   provisionFailed: L;
   chooseADemoStatus: L;
+  conversionNotAStatus: L;
   agencyNameRequired: L;
   agencyNameTooLong: L;
   ownerEmailInvalid: L;
@@ -164,6 +165,27 @@ export const OPS_ACTIONS: {
     ar: "اختر حالة لهذا الطلب.",
     tw: "Yi gyinabea bi ma saa abisadeɛ yi.",
     zu: "Khetha isimo salesi sicelo.",
+  },
+  /**
+   * `updateDemoRequestStatus` refuses `converted` as a status an
+   * operator sets — it is the other half of `provisionTenantTx`
+   * (`@/lib/data/tenants`), stamped only when the agency it names
+   * actually gets created. Deliberately not `provisionFailed`: nobody
+   * attempted a provision here, so a string that reports one failing
+   * describes the wrong operation and gives the operator nothing to do
+   * next. This one points at the actual next step.
+   */
+  conversionNotAStatus: {
+    en: "Conversion is recorded when you create the agency from this request — provision it instead.",
+    ha: "Ana yin rikodin canzawa ne lokacin da ka ƙirƙiri hukumar daga wannan buƙatar — maimakon haka, sai ka kafa ta.",
+    yo: "A máa ń kọ ìyípadà sílẹ̀ nígbà tí o bá dá ilé-iṣẹ́ sílẹ̀ láti inú ìbéèrè yìí — dípò bẹ́ẹ̀, ṣètò rẹ̀.",
+    ig: "A na-edekọ mgbanwe mgbe ị guzobere ụlọ ọrụ site na arịrịọ a — kama nke ahụ, tọlite ya.",
+    fr: "La conversion est enregistrée lorsque vous créez l'agence à partir de cette demande — créez-la plutôt.",
+    pt: "A conversão é registada quando cria a agência a partir deste pedido — crie-a antes.",
+    sw: "Ubadilishaji unarekodiwa unapounda wakala kutoka ombi hili — badala yake, mwanzishe.",
+    ar: "يُسجَّل التحويل عند إنشاء الوكالة من هذا الطلب — أنشئها بدلاً من ذلك.",
+    tw: "Wɔkyerɛw nsakrae no bere a wobɛbɔ adwumakuo no afiri saa abisadeɛ yi mu — sɛ wobɛyɛ saa a, hyɛ ase.",
+    zu: "Ukuguqulwa kurekhodwa lapho udala i-ejensi kusukela kulesi sicelo — kunalokho, iqale.",
   },
   agencyNameRequired: {
     en: "Enter a name for the agency.",

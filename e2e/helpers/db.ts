@@ -122,6 +122,21 @@ export async function seedInvitation(
       [organisationName]
     );
 
+    /**
+     * The agency pays for its console, or it cannot invite anybody:
+     * `inviteTraveller` refuses while the plan is unpaid, and every
+     * console page redirects to `/agency/billing`. Seeding the
+     * subscription here keeps that out of the specs that are about
+     * something else — the two that are about paying walk the real
+     * checkout instead.
+     */
+    await client.query(
+      `insert into payments
+         (kind, status, amount_minor, currency, org_id, provider, provider_ref, period_start, period_end, paid_at)
+       values ('agency_subscription', 'paid', 30000, 'USD', $1, 'mock', 'e2e-seed', now(), now() + interval '30 days', now())`,
+      [org.rows[0].id]
+    );
+
     const { rows } = await client.query<{ token: string }>(
       "insert into invitations (org_id, email) values ($1, $2) returning token",
       [org.rows[0].id, email.toLowerCase()]

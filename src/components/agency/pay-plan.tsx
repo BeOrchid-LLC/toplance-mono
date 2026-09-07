@@ -12,11 +12,12 @@ import { BILLING } from "@/lib/i18n/billing";
 /**
  * The one act on the billing screen.
  *
- * `router.refresh()` rather than a redirect: the paywall lives in
- * `resolveAgencyConsole`, so once the payment lands the console opens on
- * its own and this page stops being where an unpaid agency is sent. A
- * hardcoded destination here would be a second opinion about where
- * somebody belongs, and the dispatcher already has one.
+ * The button says "Pay and open the console", so it opens the console.
+ *
+ * A `router.refresh()` was not enough: the paywall lives in
+ * `resolveAgencyConsole`, so refreshing re-renders this page as a
+ * receipt and leaves the director standing on their own bill, one
+ * unexplained click from the thing they just paid for.
  */
 export function PayPlan() {
   const t = useT();
@@ -30,7 +31,7 @@ export function PayPlan() {
         toast.error(result.error);
         return;
       }
-      router.refresh();
+      router.push("/agency");
     });
   }
 

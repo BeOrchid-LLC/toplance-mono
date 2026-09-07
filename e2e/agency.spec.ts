@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
-import { completeSignUpForm, resetFixtures, signUp, testEmail } from "./helpers/auth";
+import {
+  completeSignUpForm,
+  payAgencyPlan,
+  resetFixtures,
+  signUp,
+  testEmail,
+} from "./helpers/auth";
 import { invitationTokenFor, localeAndCountryFor } from "./helpers/db";
 
 /**
@@ -51,7 +57,9 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
     orgName: ORG,
     locale: "Hausa",
   });
-  await page.waitForURL("**/agency");
+
+  // A new agency lands on its own bill, not its console.
+  await payAgencyPlan(page);
 
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
@@ -74,6 +82,15 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   });
 
   // ---- the invitation ----
+  /**
+   * From the clients roster, which is where the button lives. #64 took
+   * the invite dialog off the dashboard — "invite from the roster that
+   * knows" — and this spec kept clicking a button that had moved, which
+   * is a three-minute timeout rather than a failure that names itself.
+   */
+  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await page.waitForURL("**/agency/clients");
+
   await page.getByRole("button", { name: "Invite", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Email", { exact: true }).fill(INVITEE_EMAIL);
@@ -289,7 +306,7 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
     path: "/agency/sign-up",
     orgName: DESK_ORG,
   });
-  await page.waitForURL("**/agency");
+  await payAgencyPlan(page);
 
   // ---- a client, so the desk has something on it ----
   await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();

@@ -114,7 +114,24 @@ export async function completeSignUpForm(
     await page.getByLabel("Name of organisation", { exact: true }).fill(orgName);
     await page.getByLabel("Work email", { exact: true }).fill(email);
   } else {
-    await page.getByLabel("Email", { exact: true }).fill(email);
+    const emailField = page.getByLabel("Email", { exact: true });
+
+    /**
+     * The invited door fills the address itself and locks it: the token
+     * already named the person, so there is nothing to type and nothing
+     * to mistype. Filling it anyway is what every invited spec did until
+     * that landed, and Playwright waits out the full timeout on a
+     * readonly input rather than failing fast — so the symptom is a
+     * three-minute hang with no useful message.
+     *
+     * Asserted rather than skipped, because "the door filled it in" is
+     * exactly the claim worth keeping once we stop typing it ourselves.
+     */
+    if (await emailField.isEditable()) {
+      await emailField.fill(email);
+    } else {
+      await expect(emailField).toHaveValue(email);
+    }
   }
   await page.getByRole("button", { name: "Continue" }).click();
 
@@ -154,5 +171,31 @@ export async function signUpInvited(
 
   await page.waitForURL(`**/invite/${token}`);
   await page.getByRole("button", { name: "Accept invitation" }).click();
+
+  /**
+   * The paywall. A client pays for their own application before intake
+   * opens, so accepting lands on `/checkout` rather than in the console.
+   *
+   * Walked through the UI rather than seeded, on purpose: it is one
+   * click on a mock provider, and it means every traveller spec proves
+   * the gate opens rather than assuming it. The spec that is *about*
+   * paying asserts what is on this screen; the rest just pass through.
+   */
+  await page.waitForURL("**/checkout");
+  await page.getByRole("button", { name: "Pay and start" }).click();
+
   await page.waitForURL("**/app/agent");
+}
+
+/**
+ * Buy the agency's plan, which is where a fresh sign-up now lands.
+ *
+ * `resolveAgencyConsole` sends an unpaid agency to `/agency/billing`
+ * from every console page, so a spec that signs up a director and waits
+ * for `**\/agency` waits for a URL it will never reach.
+ */
+export async function payAgencyPlan(page: Page): Promise<void> {
+  await page.waitForURL("**/agency/billing");
+  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.waitForURL("**/agency");
 }

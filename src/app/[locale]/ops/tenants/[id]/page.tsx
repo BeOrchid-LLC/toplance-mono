@@ -46,6 +46,29 @@ export async function generateMetadata({
   // should be the section's own title, not an error.
   if (!isUuid(id) || !hasDatabaseEnv) return { title: OPS_TENANTS.heading[locale] };
 
+  /**
+   * `generateMetadata` runs independently of the page component below —
+   * Next does not skip it just because the component itself is about to
+   * refuse the visitor. Without its own gate, an unauthenticated or
+   * non-staff caller requesting this URL would get a page whose body is
+   * the refusal but whose `<title>` already carries the real agency
+   * name: an enumeration oracle over every organisation uuid, the exact
+   * leak this whole console exists to avoid.
+   *
+   * `requireStaffConsole` only ever throws via `redirect()`, and the
+   * Next.js docs for `generateMetadata` say `redirect()` and
+   * `notFound()` are both safe to call from inside it, so calling the
+   * same gate here is safe. It is request-scoped, so this costs no new
+   * round trip beyond the one the page component below makes on its own
+   * for the same request.
+   *
+   * Only a caller the page would actually render for ("ok") gets the
+   * tenant's name; "refuse" and "enroll" both fall back to the section
+   * heading, matching what the page component shows their bodies.
+   */
+  const gate = await requireStaffConsole();
+  if (gate.decision !== "ok") return { title: OPS_TENANTS.heading[locale] };
+
   const tenant = await getTenant(id.toLowerCase());
   return { title: tenant?.name ?? OPS_TENANTS.heading[locale] };
 }

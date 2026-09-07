@@ -13,7 +13,6 @@ import { CreateOrganisation } from "@/components/agency/create-organisation";
 import { AgencyBar } from "@/components/agency/agency-bar";
 import { ClientRoster } from "@/components/agency/client-roster";
 import { ConsoleBand } from "@/components/agency/console-band";
-import { InviteDialog } from "@/components/agency/invite-dialog";
 import type { Actor } from "@/lib/auth/policy";
 import { homeFor } from "@/lib/auth/routes";
 import { createOrganisationTx } from "@/lib/data/organisations";
@@ -267,7 +266,6 @@ export default async function EmployerConsolePage() {
 
       <ConsoleBand
         title={org.name || AGENCY.yourOrganisationFallback[locale]}
-        action={<InviteDialog canInviteStaff={org.role === "owner"} />}
       >
         {/*
           Seats and outstanding invitations are the agency's books, so

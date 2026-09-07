@@ -98,6 +98,7 @@ export default async function SignUpPage({
         <AuthForm
           mode="sign-up"
           intent={{ intent: "invited", token }}
+          invitedEmail={preview.email}
           next={`/invite/${token}`}
         />
       </Suspense>

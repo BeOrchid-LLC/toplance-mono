@@ -13,8 +13,10 @@ import { eq } from "drizzle-orm";
 describe.skipIf(!process.env.DATABASE_URL)("assignments", async () => {
   const { db } = await import("@/lib/db/client");
   const { seedTestAgency } = await import("@/lib/db/test-agency");
-  const { applications, profiles } = await import("@/lib/db/schema");
-  const { claimCase, releaseCase } = await import("@/lib/data/assignments");
+  const { applications, orgMembers, profiles } = await import("@/lib/db/schema");
+  const { assignCaseTo, claimCase, releaseCase } = await import(
+    "@/lib/data/assignments"
+  );
 
   const TRAVELLER = "test_assign_traveller";
   const REVIEWER_A = "test_assign_reviewer_a";
@@ -52,6 +54,14 @@ describe.skipIf(!process.env.DATABASE_URL)("assignments", async () => {
       role: "staff",
       staffRole: "owner",
     });
+
+    // `assignCaseTo` will only name a colleague who actually works at the
+    // agency holding the case, so the fixture has to say that they do.
+    await db.insert(orgMembers).values([
+      { orgId: TEST_AGENCY, userId: REVIEWER_A, role: "reviewer" },
+      { orgId: TEST_AGENCY, userId: REVIEWER_B, role: "reviewer" },
+      { orgId: TEST_AGENCY, userId: OWNER, role: "owner" },
+    ]);
 
     const [app] = await db
       .insert(applications)
@@ -133,6 +143,65 @@ describe.skipIf(!process.env.DATABASE_URL)("assignments", async () => {
   it("refuses to release a case that has no owner", async () => {
     await expect(releaseCase(applicationId, REVIEWER_A, false)).resolves.toEqual({
       error: "This case is not yours to release.",
+    });
+  });
+
+  /**
+   * Handing a case to a named colleague.
+   *
+   * `assignee_id` stopped being a label when `handlesCase` started
+   * reading it, so each of these writes grants or withdraws somebody's
+   * reach into a traveller's passport — which is why the target's
+   * membership and the case's current holder are both conditions on the
+   * write rather than checks beside it.
+   */
+  describe("assignCaseTo", () => {
+    it("hands an unheld case to a colleague", async () => {
+      await expect(assignCaseTo(applicationId, REVIEWER_B, null)).resolves.toEqual({
+        ok: true,
+      });
+      expect(await assigneeOf()).toBe(REVIEWER_B);
+    });
+
+    it("lets a director move a held case to someone else", async () => {
+      await claimCase(applicationId, REVIEWER_A);
+
+      await expect(
+        assignCaseTo(applicationId, REVIEWER_B, REVIEWER_A)
+      ).resolves.toEqual({ ok: true });
+      expect(await assigneeOf()).toBe(REVIEWER_B);
+    });
+
+    it("refuses a target who does not work at this agency", async () => {
+      await expect(assignCaseTo(applicationId, TRAVELLER, null)).resolves.toEqual({
+        error: "That colleague is not at this agency.",
+      });
+      expect(await assigneeOf()).toBeNull();
+    });
+
+    /**
+     * The race `claimCase` is careful about, on the other branch of the
+     * same action. The guard reads `assignee_id` to decide the caller may
+     * reassign; if a colleague claims the case between that read and this
+     * write, an unconditional update silently takes the case off them.
+     */
+    it("refuses when someone else claimed the case since it was read", async () => {
+      await claimCase(applicationId, REVIEWER_A);
+
+      // The caller believed it was unheld — that is the stale read.
+      await expect(assignCaseTo(applicationId, REVIEWER_B, null)).resolves.toEqual({
+        error: "Someone else picked this case up. Reload and try again.",
+      });
+      expect(await assigneeOf()).toBe(REVIEWER_A);
+    });
+
+    it("refuses when the case was released since it was read", async () => {
+      await expect(
+        assignCaseTo(applicationId, REVIEWER_B, REVIEWER_A)
+      ).resolves.toEqual({
+        error: "Someone else picked this case up. Reload and try again.",
+      });
+      expect(await assigneeOf()).toBeNull();
     });
   });
 });

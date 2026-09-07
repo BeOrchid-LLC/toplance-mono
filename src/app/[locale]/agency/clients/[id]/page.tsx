@@ -63,12 +63,17 @@ export default async function AgencyCasePage({
   const { id } = await params;
 
   const { console: agency, case: row } = await requireAgencyCase(id);
-  const { profile, actor, membership, orgId } = agency;
+  const { profile, actor, membership } = agency;
 
   const [docs, thread, colleagues] = await Promise.all([
     getDocuments(row.id),
     listMessages(row.id),
-    orgId ? listOrgMembers(orgId) : Promise.resolve([]),
+    // The *case's* agency, not the console's. They are the same for
+    // almost everyone, but a member of two agencies has one console org
+    // (`actor.orgIds[0]`) and can be standing on a case belonging to the
+    // other — in which case this list named the wrong agency's people
+    // and `assignCaseTo` refused every pick as "not at this agency".
+    row.orgId ? listOrgMembers(row.orgId) : Promise.resolve([]),
   ]);
 
   const completion = completionOf(docs);

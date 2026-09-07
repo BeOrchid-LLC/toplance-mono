@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { and, eq } from "drizzle-orm";
 
+import { revalidateCase } from "@/lib/cache/consoles";
 import { db } from "@/lib/db/client";
-import { applications, documents, profiles } from "@/lib/db/schema";
+import { applications, documents, organisations, profiles } from "@/lib/db/schema";
 import {
   requireActor,
   requireApplicationAccess,
@@ -568,39 +569,43 @@ export async function sendMessage(formData: FormData) {
     const preview = body.trim().slice(0, 140);
 
     if (side === "agency") {
+      // The agency's own name when the colleague has none on their
+      // profile. It used to say "Toplance team", which tells the
+      // traveller the one thing this product promises is not happening —
+      // that somebody at Toplance is reading their case.
+      const [agency] = application.orgId
+        ? await db
+            .select({ name: organisations.name })
+            .from(organisations)
+            .where(eq(organisations.id, application.orgId))
+            .limit(1)
+        : [];
+
       await notify(
         application.travelerId,
         "message_received",
         {
-          senderName: sender?.fullName || "Toplance team",
+          senderName: sender?.fullName || agency?.name || "Your agency",
           preview,
           url: appUrl("/app/messages"),
         },
         applicationId
       );
     } else {
-      const [row] = await db
-        .select({ assigneeId: applications.assigneeId })
-        .from(applications)
-        .where(eq(applications.id, applicationId))
-        .limit(1);
-      const payload = {
+      // "Assignee if set, else the agency" is what `notifyAgency` now
+      // does for every caller — and it adds the director, who this
+      // hand-rolled version left out. The link can be the case itself
+      // because that fan-out is scoped to the people who can open it.
+      await notifyAgency(applicationId, "message_received", {
         senderName: sender?.fullName || "Unnamed",
         preview,
-        url: appUrl("/agency"),
-      } as const;
-
-      if (row?.assigneeId) {
-        await notify(row.assigneeId, "message_received", payload, applicationId);
-      } else {
-        await notifyAgency(applicationId, "message_received", payload);
-      }
+        url: appUrl(`/agency/clients/${applicationId}`),
+      });
     }
 
-    // The traveller's messages page reads this thread. The agency's own
-    // case screen will too, once it exists.
-    revalidatePath("/[locale]/app", "layout");
-    revalidatePath("/[locale]/ops", "layout");
+    // Both sides read this thread: the traveller's messages page and the
+    // agency's case screen, which exists as of #58.
+    revalidateCase();
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

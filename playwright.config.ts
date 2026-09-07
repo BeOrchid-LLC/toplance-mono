@@ -68,6 +68,9 @@ export default defineConfig({
      *   No test may ever reach the real API.
      * - `RESEND_API_KEY: ""` makes `sendEmail` log and skip, so the
      *   invitation and every `notify()` stay inside the database.
+     *   `sendEmail` reports that skip rather than swallowing it, so the
+     *   invite and resend surfaces say plainly that nothing was sent —
+     *   which is what the agency spec asserts on.
      * - `E2E_SKIP_STAFF_2FA` is the seam Task 13 left in
      *   `requireStaffConsole`: e2e cannot walk a real authenticator-app
      *   enrollment, and this widens nothing else the gate checks.

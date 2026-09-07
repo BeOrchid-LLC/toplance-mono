@@ -8,6 +8,14 @@ import "server-only";
  * Modelled on `track()` in `@/lib/analytics/track`: never throws. No
  * email is worth failing the user action that triggered it — a
  * traveller must not lose a status update because Resend is down.
+ *
+ * Returns whether it actually went, which is not the same promise. Not
+ * throwing used to mean not saying anything at all: a blank
+ * `RESEND_API_KEY` and a 403 from Resend both returned quietly, so the
+ * invitation sheet — whose email is now the entire hand-off — reported
+ * "sent" for letters that were never sent. Callers that have something
+ * useful to say about a failure can now say it; callers that do not can
+ * still ignore the result, and nothing throws either way.
  */
 export async function sendEmail({
   to,
@@ -19,11 +27,11 @@ export async function sendEmail({
   subject: string;
   html: string;
   text: string;
-}): Promise<void> {
+}): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.log(`[email] RESEND_API_KEY not set — skipped "${subject}"`);
-    return;
+    return false;
   }
 
   try {
@@ -47,8 +55,12 @@ export async function sendEmail({
       console.error(
         `[email] Resend returned ${response.status} for "${subject}": ${body.slice(0, 300)}`
       );
+      return false;
     }
+
+    return true;
   } catch (error) {
     console.error(`[email] could not send "${subject}"`, error);
+    return false;
   }
 }

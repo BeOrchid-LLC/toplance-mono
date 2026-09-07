@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isApplicationStatus,
   RESUBMITTABLE,
   STAFF_TRANSITIONS,
+  STATUS,
   TERMINAL_STATUSES,
 } from "@/lib/domain/status";
 
@@ -48,5 +50,30 @@ describe("RESUBMITTABLE", () => {
       .filter((s) => !RESUBMITTABLE.includes(s));
 
     expect(stuck).toEqual([]);
+  });
+});
+
+describe("isApplicationStatus", () => {
+  it("accepts every status the machine has", () => {
+    for (const key of Object.keys(STATUS)) {
+      expect(isApplicationStatus(key)).toBe(true);
+    }
+  });
+
+  it("refuses a status that is not one", () => {
+    expect(isApplicationStatus("nearly_done")).toBe(false);
+  });
+
+  /**
+   * Same defect as `isFlagReason`: `value in STATUS` walks the prototype
+   * chain, so `to=toString` on the `changeCaseStatus` POST passed the
+   * guard. It got as far as `STATUS[to].label` in the notification,
+   * which reads a function off the prototype and sends the traveller a
+   * garbled status name.
+   */
+  it("refuses inherited object keys", () => {
+    expect(isApplicationStatus("toString")).toBe(false);
+    expect(isApplicationStatus("constructor")).toBe(false);
+    expect(isApplicationStatus("__proto__")).toBe(false);
   });
 });

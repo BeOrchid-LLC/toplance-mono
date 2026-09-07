@@ -21,7 +21,7 @@ import { applications } from "@/lib/db/schema";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { listInvitations } from "@/lib/data/invitations";
-import { listOrgMembers, listOrgRoster } from "@/lib/data/organisations";
+import { countOrgClients, listOrgMembers } from "@/lib/data/organisations";
 import { getLocale } from "@/lib/i18n/server";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
@@ -213,8 +213,13 @@ export default async function EmployerConsolePage() {
   // `/agency/clients` and `/agency/team`; what this page needs from each
   // list is its length, and one query per list is what it takes to know
   // that honestly.
-  const [rows, members, invitations] = await Promise.all([
-    listOrgRoster(actor.orgIds),
+  //
+  // The client count is the agency's, not the viewer's: it is divided by
+  // `seats_purchased` below, and `listOrgRoster` is scoped to the cases
+  // this member may open — which would make seat usage read differently
+  // for a reviewer than for their director.
+  const [used, members, invitations] = await Promise.all([
+    countOrgClients(actor.orgIds),
     // Same "no org, no unfiltered read" reasoning as the roster: both of
     // these take one org id and have nothing to filter by without it.
     orgId ? listOrgMembers(orgId) : Promise.resolve([]),
@@ -223,7 +228,6 @@ export default async function EmployerConsolePage() {
   const pendingInvitations = invitations.filter((i) => i.status === "pending");
 
   const org = membership;
-  const used = rows.length;
   const seats = org.seatsPurchased ?? 0;
 
   return (

@@ -24,6 +24,12 @@ const ALL: Record<FlagReason, true> = {
 
 export const FLAG_REASON_KEYS = Object.keys(ALL) as FlagReason[];
 
+/**
+ * `Object.hasOwn`, not `in`: `in` walks the prototype chain, so
+ * `isFlagReason("toString")` was true and a crafted `reason_code` rode
+ * that all the way to the `flag_reason` enum column, where Postgres
+ * rejected it as a 500 rather than a field error.
+ */
 export function isFlagReason(value: string): value is FlagReason {
-  return value in ALL;
+  return Object.hasOwn(ALL, value);
 }

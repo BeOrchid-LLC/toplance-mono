@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, exists, isNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, orgMembers } from "@/lib/db/schema";
@@ -61,23 +61,65 @@ export async function releaseCase(
 /**
  * Hand a case to a named colleague.
  *
- * The join is the whole of the safety here. `assignee_id` stopped being
- * a label the moment `handlesCase` started reading it — assigning is
- * now a grant of access to somebody's passport — so a target who does
- * not work at the agency holding this case must not be writable, however
- * the id reached this function. A typo cannot hand a client's file to a
- * stranger; it matches no row and is refused.
+ * Both conditions live in the `where`, so the whole thing is one
+ * statement under one row lock — the same argument `claimCase` makes,
+ * for the same reason.
  *
- * Unlike `claimCase` this overwrites an existing holder, because its
- * caller is guarded on `canAssignCase`: for an assigned case that is the
- * director alone, and reassigning is the thing a director does.
+ * `exists` on `org_members` is the safety. `assignee_id` stopped being a
+ * label the moment `handlesCase` started reading it — assigning is now a
+ * grant of access to somebody's passport — so a target who does not work
+ * at the agency holding this case must not be writable, however the id
+ * reached this function. Checking that in a separate `select` first
+ * would leave a window in which the colleague is removed from the agency
+ * between the check and the write; as a condition on the update there is
+ * no window.
+ *
+ * `expectedAssigneeId` closes the other window. The caller's guard read
+ * `assignee_id` to decide it was allowed to reassign at all, and an
+ * unconditional update would quietly take the case off a colleague who
+ * claimed it in between. Passing what the guard saw makes the write
+ * refuse instead — `claimCase`'s race, on the other branch of the same
+ * action.
  */
 export async function assignCaseTo(
   applicationId: string,
-  assigneeId: string
+  assigneeId: string,
+  expectedAssigneeId: string | null
 ): Promise<AssignmentResult> {
-  const [target] = await db
-    .select({ id: applications.id })
+  /** The target works at the agency that holds this case. */
+  const worksHere = exists(
+    db
+      .select({ one: sql`1` })
+      .from(orgMembers)
+      .where(
+        and(
+          eq(orgMembers.orgId, applications.orgId),
+          eq(orgMembers.userId, assigneeId)
+        )
+      )
+  );
+
+  const [row] = await db
+    .update(applications)
+    .set({ assigneeId })
+    .where(
+      and(
+        eq(applications.id, applicationId),
+        expectedAssigneeId === null
+          ? isNull(applications.assigneeId)
+          : eq(applications.assigneeId, expectedAssigneeId),
+        worksHere
+      )
+    )
+    .returning({ id: applications.id });
+
+  if (row) return { ok: true };
+
+  // Nothing matched. Which of the two conditions failed only matters for
+  // the sentence the reviewer reads, so it is worked out here on the
+  // error path rather than costing a query on the path that succeeds.
+  const [member] = await db
+    .select({ userId: orgMembers.userId })
     .from(applications)
     .innerJoin(
       orgMembers,
@@ -89,12 +131,6 @@ export async function assignCaseTo(
     .where(eq(applications.id, applicationId))
     .limit(1);
 
-  if (!target) return { error: "That colleague is not at this agency." };
-
-  await db
-    .update(applications)
-    .set({ assigneeId })
-    .where(eq(applications.id, applicationId));
-
-  return { ok: true };
+  if (!member) return { error: "That colleague is not at this agency." };
+  return { error: "Someone else picked this case up. Reload and try again." };
 }

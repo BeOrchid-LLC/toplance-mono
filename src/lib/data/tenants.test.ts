@@ -464,6 +464,20 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     expect(await setTenantBilling(result.orgId, -1, null)).toEqual({
       error: "seats_invalid",
     });
+
+    // `updateTenantBilling` (`@/app/[locale]/ops/tenants/actions.ts`)
+    // leans on this guard to catch a non-numeric seats value once it
+    // has ruled out an empty one — `Number.isInteger(NaN)` is false, so
+    // this refuses the same way a negative number does, and the
+    // agency's real seat count from above is untouched.
+    expect(await setTenantBilling(result.orgId, NaN, null)).toEqual({
+      error: "seats_invalid",
+    });
+
+    // A deliberate zero — typed, not merely absent — is a legitimate
+    // value and must still be accepted.
+    expect(await setTenantBilling(result.orgId, 0, null)).toEqual({ ok: true });
+    expect((await getTenant(result.orgId))?.seatsPurchased).toBe(0);
   });
 
   it("promotes a reviewer to owner, and is idempotent", async () => {

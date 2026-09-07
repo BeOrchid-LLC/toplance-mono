@@ -180,12 +180,27 @@ export async function restoreTenant(formData: FormData) {
 
 export async function updateTenantBilling(formData: FormData) {
   const orgId = String(formData.get("org_id") ?? "");
-  const seats = Number(String(formData.get("seats") ?? "").trim());
+  const seatsRaw = String(formData.get("seats") ?? "").trim();
   const billingContact = String(formData.get("billing_contact") ?? "").trim() || null;
 
   const gate = await requireStaffAction();
   if ("error" in gate) return gate;
   const { actor } = gate;
+
+  /**
+   * `Number("")` is `0`, not `NaN` — the seats input has no `required`,
+   * so an operator who clears the box would otherwise post a value that
+   * reads as a deliberately-typed zero and sails straight through
+   * `setTenantBilling`'s `Number.isInteger(seats) && seats >= 0` guard,
+   * silently setting a paying agency's seats to zero while the caller
+   * is told it saved. Checked for emptiness before `Number()` ever
+   * runs, so a `0` the operator actually typed (a non-empty `"0"`)
+   * still reaches the data layer unchanged. A non-numeric value
+   * ("abc") still becomes `NaN` here exactly as before, which
+   * `setTenantBilling`'s existing guard already refuses.
+   */
+  if (seatsRaw === "") return tenantError("seats_invalid");
+  const seats = Number(seatsRaw);
 
   const result = await setTenantBilling(orgId, seats, billingContact);
   if ("error" in result) return tenantError(result.error);

@@ -55,10 +55,13 @@ type Recipient = {
  * On success the dialog does not close: it swaps the form for a small
  * document sheet — who the invitation is for and how long the link
  * lives. The link itself is never shown, copied or returned to the
- * browser: the emailed invitation is the whole hand-off. `sendEmail`
- * no-ops without `RESEND_API_KEY` (true in local dev), so on such a
- * deployment nothing reaches the invitee until Resend is configured, and
- * `resendInvitation` on the roster is the one way to try again.
+ * browser: the emailed invitation is the whole hand-off.
+ *
+ * Which is why the sheet reports whether that hand-off happened.
+ * `sendEmail` no-ops without `RESEND_API_KEY` (true in local dev) and
+ * swallows a refusal from Resend; it now returns whether it sent, and a
+ * sheet that said "Invitation sent" over a letter that never left was
+ * claiming the one thing this screen exists to do.
  */
 export function InviteDialog({
   kind,
@@ -79,6 +82,13 @@ export function InviteDialog({
    * it is the same exposure the sheet was written to avoid.
    */
   const [sent, setSent] = React.useState(false);
+  /**
+   * Whether the invitation email actually went. `null` while no
+   * invitation has been sent from this dialog; the sheet reads it to
+   * choose between reporting a delivery and reporting an invitation that
+   * exists but has not reached anyone.
+   */
+  const [delivered, setDelivered] = React.useState<boolean | null>(null);
   const [recipient, setRecipient] = React.useState<Recipient | null>(null);
 
   function onSubmit(formData: FormData) {
@@ -96,8 +106,10 @@ export function InviteDialog({
         return;
       }
       setRecipient(submitted);
+      setDelivered(result.delivered);
       setSent(true);
-      toast.success(t(INVITE_DIALOG.sentTitle));
+      if (result.delivered) toast.success(t(INVITE_DIALOG.sentTitle));
+      else toast.warning(t(INVITE_DIALOG.notSentTitle));
     });
   }
 
@@ -108,6 +120,7 @@ export function InviteDialog({
       // reopen never flashes the previous invite's sheet for a frame.
       setSent(false);
       setRecipient(null);
+      setDelivered(null);
     }
   }
 
@@ -139,13 +152,19 @@ export function InviteDialog({
         {sent ? (
           <>
             <DialogHeader>
-              <DialogTitle>{t(INVITE_DIALOG.sentTitle)}</DialogTitle>
+              <DialogTitle>
+                {delivered === false
+                  ? t(INVITE_DIALOG.notSentTitle)
+                  : t(INVITE_DIALOG.sentTitle)}
+              </DialogTitle>
               <DialogDescription>
-                {recipient?.email
-                  ? fill(t(INVITE_DIALOG.sentDescriptionEmailPrefix), {
-                      email: recipient.email,
-                    })
-                  : ""}
+                {delivered === false
+                  ? t(INVITE_DIALOG.notSentNotice)
+                  : recipient?.email
+                    ? fill(t(INVITE_DIALOG.sentDescriptionEmailPrefix), {
+                        email: recipient.email,
+                      })
+                    : ""}
               </DialogDescription>
             </DialogHeader>
 

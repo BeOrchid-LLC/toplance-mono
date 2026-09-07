@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { track } from "@/lib/analytics/track";
 import { audit } from "@/lib/audit";
+import { revalidateCase } from "@/lib/cache/consoles";
 import {
   requireActor,
   requireApplicationAccess,
@@ -79,9 +80,11 @@ export async function createOrganisation(formData: FormData) {
  * before anything is written, the same defence-in-depth shape as
  * `requireApplicationAccess`.
  *
- * The invite link is returned alongside `{ ok: true }` so the dialog can
- * offer a copy button even when `sendEmail` silently no-ops (no
- * `RESEND_API_KEY` locally) — the link is the demo/e2e path either way.
+ * The invite link is *not* returned. It is a 30-day bearer credential
+ * and the dialog that used to receive it lost its copy button on
+ * 2026-09-07, so the email is the whole hand-off — which is why what
+ * comes back instead is `delivered`, whether that email actually went.
+ * `resendInvitation` is the way back to a link that did not arrive.
  */
 export async function inviteTraveller(formData: FormData) {
   try {
@@ -118,7 +121,10 @@ export async function inviteTraveller(formData: FormData) {
       .limit(1);
 
     const inviteUrl = appUrl(`/invite/${result.invitation.token}`);
-    await sendEmail({
+    // The email is the entire hand-off now that the dialog no longer
+    // offers the link, so whether it went is the one thing the sheet
+    // cannot afford to guess at.
+    const delivered = await sendEmail({
       to: result.invitation.email,
       ...invitationEmail({
         orgName: org?.name ?? "Your organisation",
@@ -134,7 +140,10 @@ export async function inviteTraveller(formData: FormData) {
     // It is a 30-day bearer credential, and the dialog that used to
     // receive it no longer has anything to do with it — see the note on
     // `InviteDialog`. `resendInvitation` is the way back to a link.
-    return { ok: true };
+    // `delivered` is not the link and is not sensitive: it is the
+    // difference between "we told them" and "we did not", which the
+    // sender is entitled to know.
+    return { ok: true, delivered };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
@@ -175,7 +184,7 @@ export async function resendInvitation(formData: FormData) {
       .where(eq(organisations.id, orgId))
       .limit(1);
 
-    await sendEmail({
+    const delivered = await sendEmail({
       to: invitation.email,
       ...invitationEmail({
         orgName: org?.name ?? "Your organisation",
@@ -187,7 +196,10 @@ export async function resendInvitation(formData: FormData) {
     await track("toplance.invitation_resent", { orgId }, actor.userId);
 
     revalidatePath("/[locale]/agency", "layout");
-    return { ok: true };
+    // Resending is the documented remedy for an invitation that did not
+    // arrive, so a resend that also did not arrive has to say so rather
+    // than report the same silent success twice.
+    return { ok: true, delivered };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
@@ -318,8 +330,7 @@ export async function reviewDocument(formData: FormData) {
 
     // The traveller's ring, dashboard and documents page read this state;
     // so does the case screen the verdict was made on.
-    revalidatePath("/app", "layout");
-    revalidatePath("/agency", "layout");
+    revalidateCase();
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -375,8 +386,7 @@ export async function changeCaseStatus(formData: FormData) {
       applicationId
     );
 
-    revalidatePath("/app", "layout");
-    revalidatePath("/agency", "layout");
+    revalidateCase();
     return { ok: true };
   } catch (error) {
     const message_ = toActionError(error);
@@ -406,35 +416,50 @@ export async function setCaseHandler(formData: FormData) {
       canAssignCase
     );
 
-    const result = !assigneeId
-      ? await releaseCase(
-          applicationId,
-          actor.userId,
-          isAgencyDirectorFor(actor, application)
-        )
+    /** Which of the three this is, decided once and then reported. */
+    const move = !assigneeId
+      ? "released"
       : assigneeId === actor.userId && application.assigneeId === null
-        ? // The reviewer's own "I'll take this", which refuses if
-          // somebody claimed it in the meantime rather than overwriting
-          // them — see `claimCase`.
-          await claimCase(applicationId, actor.userId)
-        : await assignCaseTo(applicationId, assigneeId);
+        ? "claimed"
+        : "assigned";
+
+    const result =
+      move === "released"
+        ? await releaseCase(
+            applicationId,
+            actor.userId,
+            isAgencyDirectorFor(actor, application)
+          )
+        : move === "claimed"
+          ? // The reviewer's own "I'll take this", which refuses if
+            // somebody claimed it in the meantime rather than overwriting
+            // them — see `claimCase`.
+            await claimCase(applicationId, actor.userId)
+          : // `application.assigneeId` is what the guard above read, and
+            // passing it makes the write refuse if the case has moved on
+            // since — the same race `claimCase` refuses.
+            await assignCaseTo(applicationId, assigneeId, application.assigneeId);
 
     if ("error" in result) return result;
 
     await track(
-      assigneeId ? "toplance.case_claimed" : "toplance.case_released",
+      move === "released"
+        ? "toplance.case_released"
+        : move === "claimed"
+          ? "toplance.case_claimed"
+          : "toplance.case_assigned",
       { applicationId },
       actor.userId
     );
     await audit(
       actor.userId,
-      assigneeId ? "application.assigned" : "application.released",
+      move === "released" ? "application.released" : "application.assigned",
       "application",
       applicationId,
       { assigneeId: assigneeId || null }
     );
 
-    revalidatePath("/agency", "layout");
+    revalidateCase();
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

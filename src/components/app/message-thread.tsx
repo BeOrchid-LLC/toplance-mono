@@ -50,7 +50,7 @@ export async function MessageThread({ messages }: { messages: MessageView[] }) {
           <p className="special">
             {m.senderName ??
               (m.side === "agency"
-                ? MESSAGES.senderStaff[locale]
+                ? MESSAGES.senderAgency[locale]
                 : MESSAGES.senderTraveler[locale])}{" "}
             · {relativeTime(m.createdAt, locale)}
           </p>

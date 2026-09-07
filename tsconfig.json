@@ -39,11 +39,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts",
-    ".next-e2e/types/**/*.ts",
-    ".next-e2e/dev/types/**/*.ts",
-    ".next-e2e-3200/types/**/*.ts",
-    ".next-e2e-3200/dev/types/**/*.ts"
+    "**/*.mts"
   ],
   "exclude": [
     "node_modules",
@@ -54,6 +50,12 @@
     // stale e2e build made `tsc` fail with dozens of errors about routes
     // that had merely moved — `next build` type-checks with this config
     // and stopped there.
+    //
+    // `exclude` wins over `include`, so the four `.next-e2e*` entries
+    // that used to sit above were dead the moment this was added. They
+    // are gone rather than left to read as if they still did something.
+    // Nothing is lost: those validators are generated from the same
+    // routes as `.next/types`, which is still checked.
     ".next-e2e*"
   ]
 }

@@ -104,7 +104,14 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await page.waitForURL("**/agency/clients");
 
   await page.getByRole("button", { name: "Resend" }).click();
-  await expect(page.getByText(`Invitation sent again to ${INVITEE_EMAIL}`)).toBeVisible();
+  // `RESEND_API_KEY` is "" on this server (see `playwright.config.ts`),
+  // so nothing is actually emailed — and the console now says so rather
+  // than reporting a success it cannot vouch for. That is the assertion:
+  // an employer pressing Resend on a deployment with no email configured
+  // must not be told the invitation went.
+  await expect(
+    page.getByText(`Could not email ${INVITEE_EMAIL}. The invitation is still valid.`)
+  ).toBeVisible();
 
   // Still one invitation, still pending — a resend must not mint a row.
   await expect(page.getByRole("button", { name: "Resend" })).toHaveCount(1);

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -10,6 +10,7 @@ import {
   organisations,
   profiles,
 } from "@/lib/db/schema";
+import type { Actor } from "@/lib/auth/policy";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import {
   EMPTY_PENDING_PROFILE,
@@ -217,24 +218,85 @@ export async function listOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
 }
 
 /**
- * The people one agency sponsors, furthest along first.
+ * The clients this member may actually open, furthest along first.
  *
  * Read through the progress view, never the applications table
  * directly. The view carries no column that could reveal a document, so
  * the organisation console cannot leak one even by accident.
  *
- * Taking the ids and returning `[]` for an empty list is not a
+ * Scoped to the actor rather than to their org ids, because since #58
+ * "at this agency" stopped being the whole answer. `handlesCase` gives
+ * a reviewer the unheld pool plus the cases they hold, and a director
+ * the whole book; a roster that listed more than that offered rows
+ * linking to a case screen which answers `notFound()` — a dead end that
+ * also named a colleague's client on the way to it. The list and the
+ * permission are the same rule, so they are written to the same shape.
+ *
+ * Taking the actor and returning `[]` for a membership-less one is not a
  * convenience. RLS used to scope this view to the caller's own agency;
  * with RLS gone, an unfiltered select returns every sponsored traveller
  * on the platform — so the empty case has to return here rather than
  * fall through to a query with no restriction.
  */
-export async function listOrgRoster(orgIds: readonly string[]) {
-  if (!orgIds.length) return [];
+export async function listOrgRoster(actor: Actor) {
+  if (!actor.orgIds.length) return [];
+
+  /** The agencies this actor runs, where nothing narrows their reach. */
+  const directs = actor.orgs.filter((o) => o.role === "owner").map((o) => o.orgId);
 
   return db
-    .select()
+    .select({
+      id: orgApplicationProgress.id,
+      caseRef: orgApplicationProgress.caseRef,
+      orgId: orgApplicationProgress.orgId,
+      fullName: orgApplicationProgress.fullName,
+      email: orgApplicationProgress.email,
+      status: orgApplicationProgress.status,
+      destinationIso: orgApplicationProgress.destinationIso,
+      visaName: orgApplicationProgress.visaName,
+      submittedAt: orgApplicationProgress.submittedAt,
+      updatedAt: orgApplicationProgress.updatedAt,
+      documentsTotal: orgApplicationProgress.documentsTotal,
+      documentsVerified: orgApplicationProgress.documentsVerified,
+      completionPct: orgApplicationProgress.completionPct,
+    })
     .from(orgApplicationProgress)
-    .where(inArray(orgApplicationProgress.orgId, [...orgIds]))
+    // The view carries no `assignee_id` — deliberately, it carries
+    // nothing a document could be inferred from — so who holds a case is
+    // read from the table beside it rather than by widening the view.
+    .innerJoin(applications, eq(applications.id, orgApplicationProgress.id))
+    .where(
+      and(
+        inArray(orgApplicationProgress.orgId, [...actor.orgIds]),
+        or(
+          isNull(applications.assigneeId),
+          eq(applications.assigneeId, actor.userId),
+          directs.length ? inArray(applications.orgId, directs) : undefined
+        )
+      )
+    )
     .orderBy(desc(orgApplicationProgress.completionPct));
+}
+
+/**
+ * How many cases the agency holds, whoever is asking.
+ *
+ * Deliberately not `listOrgRoster(...).length`. That list is scoped to
+ * what the viewer may open, and this number is divided by
+ * `seats_purchased` on the console's front page — a billing figure that
+ * must not change depending on which colleague is looking at it.
+ *
+ * Scoping it would also protect nothing. A count names no client and
+ * carries no document; what `handlesCase` guards is the contents of a
+ * case, and there are no contents in an integer.
+ */
+export async function countOrgClients(orgIds: readonly string[]): Promise<number> {
+  if (!orgIds.length) return 0;
+
+  const [row] = await db
+    .select({ total: count() })
+    .from(applications)
+    .where(inArray(applications.orgId, [...orgIds]));
+
+  return row?.total ?? 0;
 }

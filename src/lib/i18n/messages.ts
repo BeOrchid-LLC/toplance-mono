@@ -22,7 +22,7 @@ export const MESSAGES: {
    * agency, and silence from one reads as being ignored by a person.
    */
   unclaimedNotice: L;
-  senderStaff: L;
+  senderAgency: L;
   senderTraveler: L;
 } = {
   title: {
@@ -73,17 +73,24 @@ export const MESSAGES: {
     tw: "Obiara nnyaa w'asɛm no nnya, enti wo nkrasɛm no kɔ w'ahyehyɛdeɛ no kuo no nyinaa hɔ. Obi bɛbua.",
     zu: "Akekho osethathe icala lakho, ngakho umyalezo wakho uya kulo lonke iqembu lenkampani yakho. Kukhona ozophendula.",
   },
-  senderStaff: {
-    en: "Toplance team",
-    ha: "Ƙungiyar Toplance",
-    yo: "Ẹgbẹ́ Toplance",
-    ig: "Ndị otu Toplance",
-    fr: "L'équipe Toplance",
-    pt: "Equipa Toplance",
-    sw: "Timu ya Toplance",
-    ar: "فريق Toplance",
-    tw: "Toplance kuw",
-    zu: "Ithimba le-Toplance",
+  /**
+   * Only ever a fallback, for an agency colleague whose profile carries
+   * no name. It used to read "Toplance team", which since #58 is a
+   * statement the product spends the rest of its copy denying: nobody at
+   * Toplance reads these threads. The wording matches `unclaimedNotice`
+   * above, which already says "your agency" in each locale.
+   */
+  senderAgency: {
+    en: "Your agency",
+    ha: "Hukumarka",
+    yo: "Ilé-iṣẹ́ rẹ",
+    ig: "Ụlọ ọrụ gị",
+    fr: "Votre agence",
+    pt: "A sua agência",
+    sw: "Wakala wako",
+    ar: "وكالتك",
+    tw: "W'ahyehyɛdeɛ",
+    zu: "Inkampani yakho",
   },
   senderTraveler: {
     en: "Traveler",

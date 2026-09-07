@@ -35,7 +35,12 @@ export function ResendInvitationButton({
         toast.error(result.error);
         return;
       }
-      toast.success(`Invitation sent again to ${email}`);
+      // Resending is the documented remedy for an invitation that did
+      // not arrive. Reporting a second silent failure as success is how
+      // someone presses this four times and still wonders why nobody
+      // has joined.
+      if (result.delivered) toast.success(`Invitation sent again to ${email}`);
+      else toast.warning(`Could not email ${email}. The invitation is still valid.`);
     });
   }
 

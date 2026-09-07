@@ -360,3 +360,133 @@ describe.skipIf(!process.env.DATABASE_URL)("isAgencyOwner", async () => {
     expect(await isAgencyOwner("test_owner_check_nobody", ORG)).toBe(false);
   });
 });
+
+/**
+ * Who appears on the agency's client roster.
+ *
+ * `handlesCase` narrowed a case to its holder and the director in #58,
+ * but the roster kept listing every case in the agency and linking each
+ * row to a screen that answers 404 for most of them. The list and the
+ * permission have to agree, and this is the list agreeing: a reviewer
+ * sees the pool plus their own work, a director sees the whole book.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("listOrgRoster", async () => {
+  const { inArray } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { applications, orgMembers, organisations, profiles } = await import(
+    "@/lib/db/schema"
+  );
+  const { countOrgClients, listOrgRoster } = await import(
+    "@/lib/data/organisations"
+  );
+  type Actor = import("@/lib/auth/policy").Actor;
+
+  const REVIEWER = "test_roster_reviewer";
+  const COLLEAGUE = "test_roster_colleague";
+  const DIRECTOR = "test_roster_director";
+  const T_UNHELD = "test_roster_t_unheld";
+  const T_MINE = "test_roster_t_mine";
+  const T_THEIRS = "test_roster_t_theirs";
+  const IDS = [REVIEWER, COLLEAGUE, DIRECTOR, T_UNHELD, T_MINE, T_THEIRS];
+
+  const ORG = "00000000-0000-4000-8000-0000000f0001";
+
+  /** An agency member, shaped as `getActor` builds one. */
+  const member = (userId: string, role: "reviewer" | "owner"): Actor => ({
+    userId,
+    role: "org_member",
+    staffRole: null,
+    orgIds: [ORG],
+    orgs: [{ orgId: ORG, role }],
+  });
+
+  const refs = async (actor: Actor) =>
+    (await listOrgRoster(actor)).map((r) => r.caseRef).sort();
+
+  let unheldRef = "";
+  let mineRef = "";
+  let theirsRef = "";
+
+  beforeEach(async () => {
+    await db.insert(organisations).values({ id: ORG, name: "Roster agency" });
+    await db.insert(profiles).values([
+      { id: REVIEWER, email: "rr-reviewer@test.invalid", fullName: "Chidi" },
+      { id: COLLEAGUE, email: "rr-colleague@test.invalid", fullName: "Ngozi" },
+      { id: DIRECTOR, email: "rr-director@test.invalid", fullName: "Emeka" },
+      { id: T_UNHELD, email: "rr-t-unheld@test.invalid", fullName: "Ada" },
+      { id: T_MINE, email: "rr-t-mine@test.invalid", fullName: "Bola" },
+      { id: T_THEIRS, email: "rr-t-theirs@test.invalid", fullName: "Sade" },
+    ]);
+    await db.insert(orgMembers).values([
+      { orgId: ORG, userId: REVIEWER, role: "reviewer" },
+      { orgId: ORG, userId: COLLEAGUE, role: "reviewer" },
+      { orgId: ORG, userId: DIRECTOR, role: "owner" },
+    ]);
+
+    const rows = await db
+      .insert(applications)
+      .values([
+        { orgId: ORG, travelerId: T_UNHELD, status: "submitted" },
+        { orgId: ORG, travelerId: T_MINE, status: "submitted", assigneeId: REVIEWER },
+        { orgId: ORG, travelerId: T_THEIRS, status: "submitted", assigneeId: COLLEAGUE },
+      ])
+      .returning({ id: applications.id, caseRef: applications.caseRef });
+
+    [unheldRef, mineRef, theirsRef] = rows.map((r) => r.caseRef);
+  });
+
+  afterEach(async () => {
+    await db.delete(profiles).where(inArray(profiles.id, IDS));
+    await db.delete(organisations).where(inArray(organisations.id, [ORG]));
+  });
+
+  it("shows a reviewer the pool and their own cases", async () => {
+    expect(await refs(member(REVIEWER, "reviewer"))).toEqual(
+      [unheldRef, mineRef].sort()
+    );
+  });
+
+  /**
+   * The whole point. This row links to a case screen that calls
+   * `notFound()` for this reviewer, so listing it offered a dead end and
+   * named a colleague's client while doing it.
+   */
+  it("hides a case a colleague is holding", async () => {
+    expect(await refs(member(REVIEWER, "reviewer"))).not.toContain(theirsRef);
+  });
+
+  it("shows the director the whole book", async () => {
+    expect(await refs(member(DIRECTOR, "owner"))).toEqual(
+      [unheldRef, mineRef, theirsRef].sort()
+    );
+  });
+
+  /**
+   * Seat usage is the agency's number, not the viewer's.
+   *
+   * The dashboard divides this by `seats_purchased`, so scoping it the
+   * way the roster is scoped would show a reviewer "1 of 10 used" for an
+   * agency running three cases — a billing figure that changes depending
+   * on who is looking at it. A count reveals no client, so there is
+   * nothing here for `handlesCase` to protect.
+   */
+  it("counts every case the agency holds, whoever is asking", async () => {
+    expect(await countOrgClients([ORG])).toBe(3);
+  });
+
+  it("counts nothing for no agency", async () => {
+    expect(await countOrgClients([])).toBe(0);
+  });
+
+  it("shows nothing to someone with no agency", async () => {
+    const stranger: Actor = {
+      userId: "test_roster_stranger",
+      role: "org_member",
+      staffRole: null,
+      orgIds: [],
+      orgs: [],
+    };
+
+    expect(await listOrgRoster(stranger)).toEqual([]);
+  });
+});

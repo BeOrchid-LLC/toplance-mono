@@ -28,10 +28,13 @@ export type BadgeVariant =
  * Whether a string off a form is one of the statuses.
  *
  * Reads `STATUS`'s own keys rather than the enum, because this module
- * takes the schema as types only — see the note at the top.
+ * takes the schema as types only — see the note at the top. Own keys
+ * literally: `in` would also answer for everything on
+ * `Object.prototype`, which let `to=toString` past this guard and into
+ * `STATUS[to].label`.
  */
 export function isApplicationStatus(value: string): value is ApplicationStatus {
-  return value in STATUS;
+  return Object.hasOwn(STATUS, value);
 }
 
 export const STATUS: Record<

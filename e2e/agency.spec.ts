@@ -25,6 +25,12 @@ const INVITEE_EMAIL = testEmail("invitee");
 /** Somebody the invitation was not sent to, who opens the link anyway. */
 const FORWARDED_EMAIL = testEmail("invitee.forwarded");
 const ORG = "Kaduna Freight E2E";
+
+/** The second journey's own fixtures — a director, a colleague, a client. */
+const DESK_DIRECTOR = testEmail("desk.director");
+const DESK_COLLEAGUE = testEmail("desk.colleague");
+const DESK_CLIENT = testEmail("desk.client");
+const DESK_ORG = "Jos Travel Desk E2E";
 const INVITEE_NAME = "Ifeoma Nwosu";
 
 test("an employer invites a traveller, who accepts and appears on the roster", async ({
@@ -76,7 +82,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
 
   // The sheet states who it went to and how long it lives, and stops
   // there: the link is a 30-day bearer token and no screen prints it.
-  await expect(dialog.getByText(INVITEE_EMAIL)).toBeVisible();
+  await expect(dialog.getByText(INVITEE_EMAIL).first()).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Copy link" })).toHaveCount(0);
   await expect(dialog).not.toContainText("/invite/");
 
@@ -252,5 +258,178 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // case it opens.
   await page.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
   await page.waitForURL("**/agency");
-  await expect(page.getByText("You see progress, not documents")).toBeVisible();
+  await expect(page.getByText("The documents stop at your agency")).toBeVisible();
+});
+
+
+/**
+ * Journey four: a colleague joins the agency and works a case.
+ *
+ * The reviewer's half of the v1.3 tenancy. A director invites somebody
+ * to review, that person accepts and lands in the console — not the
+ * traveller's product, though the accept redirect passes through it —
+ * and their dashboard is their own desk rather than a summary of an
+ * agency they do not run.
+ *
+ * The assertion that matters is the last pair: taking a case moves it
+ * from the pool into "Assigned to you", which is the same column
+ * `handlesCase` reads to decide who may open the documents. The screen
+ * and the permission are the same fact.
+ */
+test("a colleague joins the agency, takes a case and sees it on their desk", async ({
+  page,
+  browser,
+}) => {
+  await resetFixtures([DESK_DIRECTOR, DESK_COLLEAGUE, DESK_CLIENT], [DESK_ORG]);
+
+  // ---- the agency ----
+  await signUp(page, {
+    email: DESK_DIRECTOR,
+    fullName: "Amina Sule",
+    path: "/agency/sign-up",
+    orgName: DESK_ORG,
+  });
+  await page.waitForURL("**/agency");
+
+  // ---- a client, so the desk has something on it ----
+  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await page.waitForURL("**/agency/clients");
+  await page.getByRole("button", { name: "Invite" }).click();
+  const clientDialog = page.getByRole("dialog");
+  // The button is spelled the same on every screen; the heading is what
+  // names the kind, because the page has already supplied the noun.
+  await expect(
+    clientDialog.getByRole("heading", { name: "Invite a client" })
+  ).toBeVisible();
+  await clientDialog.getByLabel("Email", { exact: true }).fill(DESK_CLIENT);
+  await clientDialog.getByLabel("Full name", { exact: true }).fill("Musa Danjuma");
+  await clientDialog.getByRole("button", { name: "Send invitation" }).click();
+  await expect(clientDialog.getByText(DESK_CLIENT).first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  const clientUrl = new URL(
+    `/invite/${await invitationTokenFor(DESK_CLIENT)}`,
+    page.url()
+  ).toString();
+
+  const clientContext = await browser.newContext();
+  const client = await clientContext.newPage();
+  await setupClerkTestingToken({ page: client });
+  await client.goto(clientUrl);
+  await client.getByRole("link", { name: "Set up your account" }).click();
+  await completeSignUpForm(client, { email: DESK_CLIENT, fullName: "Musa Danjuma" });
+  await client.waitForURL("**/invite/**");
+  await client.getByRole("button", { name: "Accept invitation" }).click();
+  await client.waitForURL("**/app/agent");
+  await clientContext.close();
+
+  // ---- the colleague ----
+  // Only a director sees this button: `inviteTraveller` refuses a staff
+  // invitation from anyone else, so the team page shows a reviewer no
+  // control whose one outcome is a refusal.
+  await page.getByRole("banner").getByRole("link", { name: "Team" }).click();
+  await page.waitForURL("**/agency/team");
+  await page.getByRole("button", { name: "Invite" }).click();
+  const teamDialog = page.getByRole("dialog");
+  await expect(
+    teamDialog.getByRole("heading", { name: "Invite a team member" })
+  ).toBeVisible();
+  // The page has already answered "who are you inviting?", so the dialog
+  // does not ask again.
+  await expect(teamDialog.getByText("A colleague")).toHaveCount(0);
+  await teamDialog.getByLabel("Email", { exact: true }).fill(DESK_COLLEAGUE);
+  await teamDialog.getByLabel("Full name", { exact: true }).fill("Grace Okon");
+  await teamDialog.getByRole("button", { name: "Send invitation" }).click();
+  await expect(teamDialog.getByText(DESK_COLLEAGUE).first()).toBeVisible();
+  await page.keyboard.press("Escape");
+  const colleagueUrl = new URL(
+    `/invite/${await invitationTokenFor(DESK_COLLEAGUE)}`,
+    page.url()
+  ).toString();
+
+  const colleagueContext = await browser.newContext();
+  const colleague = await colleagueContext.newPage();
+  await setupClerkTestingToken({ page: colleague });
+  await colleague.goto(colleagueUrl);
+  await colleague.getByRole("link", { name: "Set up your account" }).click();
+  await completeSignUpForm(colleague, {
+    email: DESK_COLLEAGUE,
+    fullName: "Grace Okon",
+  });
+  await colleague.waitForURL("**/invite/**");
+  await colleague.getByRole("button", { name: "Accept invitation" }).click();
+
+  // Accepting redirects to the traveller's intake, which the `(app)`
+  // layout bounces off the moment it reads the role `acceptInvitationTx`
+  // just wrote. The colleague ends up in the console, never in the
+  // traveller product.
+  await colleague.waitForURL("**/agency");
+
+  // ---- their desk ----
+  await expect(
+    colleague.getByRole("heading", { name: "Assigned to you" })
+  ).toBeVisible();
+  await expect(
+    colleague.getByRole("heading", { name: "Open to your team" })
+  ).toBeVisible();
+  // Nothing of theirs yet, and the pool is where the work is.
+  await expect(colleague.getByText(/Nothing is yours yet/)).toBeVisible();
+
+  // The traveller pages are not theirs and never were — the layout sends
+  // any non-traveller back to their own console.
+  await colleague.goto("/app/documents");
+  await colleague.waitForURL("**/agency");
+
+  // The team roster is the director's screen, and a hidden tab is not a
+  // guard — the path turns them away too.
+  await expect(
+    colleague.getByRole("banner").getByRole("link", { name: "Team" })
+  ).toHaveCount(0);
+  await colleague.goto("/agency/team");
+  await colleague.waitForURL("**/agency");
+
+  // Their clients page is their own book of work, and it is empty.
+  await colleague.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await colleague.waitForURL("**/agency/clients");
+  await expect(
+    colleague.getByText(/You have not been assigned a client yet/)
+  ).toBeVisible();
+
+  // ---- taking a case, which is also taking the permission ----
+  await colleague.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
+  await colleague.waitForURL("**/agency");
+
+  // The pool row is not a link: a reviewer may take an unheld case but
+  // not read it, so the row carries the one action that is theirs.
+  await expect(colleague.getByRole("link", { name: /TPL-/ })).toHaveCount(0);
+  await colleague.getByRole("button", { name: "Take this case" }).click();
+
+  // Once it is theirs it moves onto the desk, the pool empties, and the
+  // case opens — the same column decided all three.
+  await expect(colleague.getByText(/Nothing is yours yet/)).toHaveCount(0);
+  await expect(colleague.getByText(/Nobody is waiting/)).toBeVisible();
+
+  const mine = colleague.getByRole("link", { name: /TPL-/ });
+  await expect(mine).toBeVisible();
+  await mine.click();
+  await colleague.waitForURL("**/agency/clients/**");
+  await expect(
+    colleague.getByRole("button", { name: "Hand back" })
+  ).toBeVisible();
+
+  await colleague.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
+  await colleague.waitForURL("**/agency");
+
+  // ---- and their own profile ----
+  await colleague.goto("/agency/profile");
+  await expect(colleague.getByRole("heading", { name: "Your profile" })).toBeVisible();
+  await expect(colleague.getByText(DESK_COLLEAGUE)).toBeVisible();
+  // Twice on the page now: the heading beside the photo, and the field
+  // that edits it — the same anatomy the traveller's profile has.
+  await expect(colleague.getByText("Grace Okon").first()).toBeVisible();
+  // The photo control, which is what the bar falls back to initials for
+  // until they use it. `toBeAttached` rather than `toBeVisible`: the
+  // input itself is `sr-only`, and the label around it is the target.
+  await expect(colleague.getByLabel("Add profile photo")).toBeAttached();
+
+  await colleagueContext.close();
 });

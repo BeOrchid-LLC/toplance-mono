@@ -98,6 +98,7 @@ export type NotificationPayload = {
     url: string;
   };
   companion_digest: { url: string; highlights: string[] };
+  document_uploaded: { documentName: string; caseRef: string; url: string };
   checklist_changed: {
     visaName: string;
     added: string[];
@@ -137,6 +138,11 @@ function templateFor<K extends keyof NotificationPayload>(
       return checklistChangedEmail(
         payload as NotificationPayload["checklist_changed"]
       );
+    // In-app only, deliberately — see the enum note in `schema.ts`. A
+    // kind with no template sends no email; it does not send a blank
+    // one, and it is not an oversight to be filled in later.
+    case "document_uploaded":
+      return null;
   }
 }
 
@@ -187,7 +193,7 @@ export async function notify<K extends keyof NotificationPayload>(
     if (!recipient) return true;
 
     const template = templateFor(kind, payload);
-    await sendEmail({ to: recipient.email, ...template });
+    if (template) await sendEmail({ to: recipient.email, ...template });
     return true;
   } catch (error) {
     console.error(`[notifications] could not notify "${kind}"`, error);

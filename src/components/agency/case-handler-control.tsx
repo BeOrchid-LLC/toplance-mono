@@ -64,7 +64,20 @@ export function CaseHandlerControl({
     });
   }
 
-  const others = colleagues.filter((c) => c.userId !== assigneeId);
+  /**
+   * Who this case can be handed to: everyone but its current holder and
+   * the director doing the handing.
+   *
+   * Dropping yourself is not cosmetic. Handing a case to yourself is
+   * taking it, and taking it is the button standing next to this menu —
+   * so your own name here is a second route to a thing you can already
+   * do, in a control whose whole subject is somebody else. In practice
+   * the only director is the owner, which is why the owner stopped
+   * appearing in their own hand-off list.
+   */
+  const others = colleagues.filter(
+    (c) => c.userId !== assigneeId && c.userId !== viewerId
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -99,19 +112,25 @@ export function CaseHandlerControl({
       {isDirector && others.length > 0 && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="tertiary" size="sm" disabled={pending}>
+            {/* `secondary`, not `tertiary`: this opens a menu that
+                reassigns a client's documents, and a bare line of brand
+                text reads as a link to somewhere rather than as a
+                control that does something. Bordered keeps it plainly
+                subordinate to the filled "Take this case" beside it. */}
+            <Button variant="secondary" size="sm" disabled={pending}>
               {t(CASE_COMMON.assignTo)} <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[280px]">
             {others.map((c) => (
               <DropdownMenuItem key={c.userId} onSelect={() => set(c.userId)}>
-                <span className="min-w-0">
-                  <span className="block truncate">{c.fullName || c.email}</span>
-                  {c.fullName && (
-                    <span className="special block truncate">{c.email}</span>
-                  )}
-                </span>
+                {/* The name, and only the name. The address under it
+                    was disambiguating colleagues who do not need it —
+                    this is one agency's own team, read by the person who
+                    invited every one of them. It stays as the fallback
+                    for a colleague who accepted without giving a name,
+                    where the alternative is a blank row. */}
+                <span className="min-w-0 truncate">{c.fullName || c.email}</span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

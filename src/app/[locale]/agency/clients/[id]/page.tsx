@@ -3,8 +3,7 @@ import Link from "next/link";
 import { after } from "next/server";
 import { ArrowLeft } from "lucide-react";
 
-import { AppBar } from "@/components/app/app-bar";
-import { agencyNav } from "@/components/agency/agency-nav";
+import { AgencyBar } from "@/components/agency/agency-bar";
 import { CaseHandlerControl } from "@/components/agency/case-handler-control";
 import { ReviewRow } from "@/components/agency/review-row";
 import { StatusControl } from "@/components/agency/status-control";
@@ -106,12 +105,7 @@ export default async function AgencyCasePage({
 
   return (
     <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={agencyNav({ locale, hasOrganisation: true })}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${membership.name} · ${AGENCY.roleLabel[membership.role][locale]}`}
-      />
+      <AgencyBar profile={profile} membership={membership} locale={locale} />
 
       <main>
         <Shell className="py-10 md:py-12">

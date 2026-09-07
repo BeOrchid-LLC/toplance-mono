@@ -12,6 +12,7 @@ import {
   canReadIntakeAnswers,
   canReadItinerary,
   canReadMessages,
+  canAssignCase,
   canReadStatusEvents,
   canWriteApplication,
   canWriteCaseNotes,
@@ -91,18 +92,26 @@ const platformOwner: Actor = { ...platformStaff, userId: "user-owner", staffRole
 
 /** A case belonging to ORG's traveller — the only shape that exists once
  *  `applications.org_id` is `not null`. */
+/**
+ * A case belonging to ORG's traveller, handed to `agencyReviewer`.
+ *
+ * Assigned rather than unheld, because since 2026-09-07 an unheld case
+ * is nobody's but the director's — so "the agency" in the boundary
+ * tests below has to be the colleague who was actually given the
+ * client, which is what the product means by it.
+ */
 const tenantCase: ApplicationRef = {
   id: "app-1",
   travelerId: "user-traveller",
   orgId: ORG,
-  assigneeId: null,
-};
-
-/** The same case, once a colleague has taken it. */
-const claimedCase: ApplicationRef = {
-  ...tenantCase,
   assigneeId: agencyReviewer.userId,
 };
+
+/** The same case, named for what the assignment tests are about. */
+const claimedCase: ApplicationRef = tenantCase;
+
+/** One nobody has taken yet. */
+const unheldCase: ApplicationRef = { ...tenantCase, id: "app-3", assigneeId: null };
 
 /**
  * A case with no agency. Unreachable in the new model and slated for
@@ -182,10 +191,37 @@ describe("tenancy", () => {
  * screen would ever show you.
  */
 describe("assignment as a permission", () => {
-  it("opens an unclaimed case to any member of its agency", () => {
-    expect(handlesCase(agencyReviewer, tenantCase)).toBe(true);
-    expect(handlesCase(otherReviewer, tenantCase)).toBe(true);
-    expect(handlesCase(agencyDirector, tenantCase)).toBe(true);
+  it("keeps an unheld case shut to everyone but the director", () => {
+    // The 2026-09-07 correction. A reviewer reaches a client by being
+    // given the client — working at the agency is not enough.
+    expect(handlesCase(agencyReviewer, unheldCase)).toBe(false);
+    expect(handlesCase(otherReviewer, unheldCase)).toBe(false);
+    expect(handlesCase(agencyDirector, unheldCase)).toBe(true);
+  });
+
+  it("still lets any colleague take an unheld case", () => {
+    // Taking is a write to `assignee_id`, not a read of the file. This
+    // is the whole of how a reviewer gets work without the director.
+    expect(canAssignCase(agencyReviewer, unheldCase)).toBe(true);
+    expect(canAssignCase(otherReviewer, unheldCase)).toBe(true);
+  });
+
+  it("refuses a colleague the case they have not been given", () => {
+    // Taking is not reading: the same actor who may claim this case
+    // cannot open a document on it until the claim has landed.
+    expect(canReadDocuments(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
+  });
+
+  it("lets a colleague hand back their own case, and nobody else's", () => {
+    expect(canAssignCase(agencyReviewer, claimedCase)).toBe(true);
+    expect(canAssignCase(otherReviewer, claimedCase)).toBe(false);
+    expect(canAssignCase(agencyDirector, claimedCase)).toBe(true);
+  });
+
+  it("never lets a rival agency take a case", () => {
+    expect(canAssignCase(otherAgency, unheldCase)).toBe(false);
+    expect(canAssignCase(platformStaff, unheldCase)).toBe(false);
   });
 
   it("keeps a claimed case to the colleague holding it", () => {
@@ -202,9 +238,14 @@ describe("assignment as a permission", () => {
   it("does not let a rival agency's director in on rank alone", () => {
     // `otherAgency` is an owner — of somewhere else. Rank is read for
     // the case's own agency or not at all.
-    expect(isAgencyDirectorFor(otherAgency, tenantCase)).toBe(false);
-    expect(handlesCase(otherAgency, tenantCase)).toBe(false);
+    expect(isAgencyDirectorFor(otherAgency, unheldCase)).toBe(false);
+    expect(handlesCase(otherAgency, unheldCase)).toBe(false);
     expect(handlesCase(otherAgency, claimedCase)).toBe(false);
+  });
+
+  it("gives the director the unheld case the reviewer cannot open", () => {
+    expect(canReadDocuments(agencyDirector, unheldCase)).toBe(true);
+    expect(canReadDocuments(agencyReviewer, unheldCase)).toBe(false);
   });
 
   it("gives platform staff nothing either way", () => {
@@ -411,11 +452,10 @@ describe("visa expiry", () => {
 
 describe("messages", () => {
   /*
-   * The write assertions moved to `claimedCase` when writing grew its
-   * second condition. On `tenantCase` — which is unheld — every one of
-   * them would now be false for the wrong reason, and a test that
-   * passes because of the gate cannot also be proving the identity
-   * check it was written for.
+   * The write assertions sit on `claimedCase` because writing grew a
+   * second condition. On an unheld case every one of them would now be
+   * false for the wrong reason, and a test that passes because of the
+   * gate cannot also be proving the identity check it was written for.
    */
   it("lets the traveller read and write their own thread", () => {
     expect(canReadMessages(traveller, claimedCase)).toBe(true);
@@ -433,16 +473,23 @@ describe("messages", () => {
    * an agency writing into one, only from the other end of it.
    */
   it("lets nobody write while the case is unheld", () => {
-    expect(canWriteMessages(traveller, tenantCase)).toBe(false);
-    expect(canWriteMessages(agencyReviewer, tenantCase)).toBe(false);
-    expect(canWriteMessages(agencyDirector, tenantCase)).toBe(false);
+    expect(canWriteMessages(traveller, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyDirector, unheldCase)).toBe(false);
   });
 
-  // Reading is not gated: the thread is the record, and anything
-  // written before this rule stays readable by both sides.
-  it("still lets both sides read an unheld thread", () => {
-    expect(canReadMessages(traveller, tenantCase)).toBe(true);
-    expect(canReadMessages(agencyReviewer, tenantCase)).toBe(true);
+  /**
+   * Reading is not gated on a handler — the thread is the record, and
+   * anything written before that rule stays readable. It is still gated
+   * on `participant`, which since 2026-09-07 no longer counts a reviewer
+   * standing next to an unclaimed case: the two rules compose, so the
+   * one person on the agency side who can read an unheld thread is the
+   * director.
+   */
+  it("leaves an unheld thread readable by the traveller and the director", () => {
+    expect(canReadMessages(traveller, unheldCase)).toBe(true);
+    expect(canReadMessages(agencyDirector, unheldCase)).toBe(true);
+    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(false);
   });
 
   it("keeps platform staff out of the conversation entirely", () => {
@@ -464,6 +511,37 @@ describe("messages", () => {
     const forged: Actor = { ...otherTraveller, staffRole: "owner" };
     expect(canReadMessages(forged, claimedCase)).toBe(false);
     expect(canWriteMessages(forged, claimedCase)).toBe(false);
+  });
+
+  /**
+   * The thread waits for a handler. Both sides wait together: a
+   * traveller writing into a case nobody holds is the same silence as
+   * an agency writing into one, only from the other end.
+   */
+  it("lets nobody write while the case is unheld", () => {
+    expect(canWriteMessages(traveller, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyDirector, unheldCase)).toBe(false);
+  });
+
+  /**
+   * Reading is not gated on a handler: the thread is the record, and
+   * messages written before this rule existed stay readable.
+   *
+   * "Readable" is still `handlesCase`, though, which since 2026-09-07
+   * no longer opens an unclaimed case to the whole agency — so on an
+   * unheld case that means the traveller and the director, and not a
+   * reviewer who has not been given the client.
+   */
+  it("still lets the traveller and the director read an unheld thread", () => {
+    expect(canReadMessages(traveller, unheldCase)).toBe(true);
+    expect(canReadMessages(agencyDirector, unheldCase)).toBe(true);
+    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(false);
+  });
+
+  it("opens writing to both sides the moment somebody takes the case", () => {
+    expect(canWriteMessages(traveller, claimedCase)).toBe(true);
+    expect(canWriteMessages(agencyReviewer, claimedCase)).toBe(true);
   });
 });
 

@@ -176,6 +176,13 @@
       "when": 1788757897016,
       "tag": "0024_bright_maddog",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788769358364,
+      "tag": "0025_smooth_mandarin",
+      "breakpoints": true
     }
   ]
 }

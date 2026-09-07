@@ -218,19 +218,36 @@ export async function listOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
 }
 
 /**
- * The clients this member may actually open, furthest along first.
+ * Which slice of the reader's own reach to return. Omitted means all of
+ * it, which for a director is the agency's whole book and for a reviewer
+ * is their cases plus the unheld pool.
+ *
+ * A narrowing on top of the scope `listOrgRoster` already applies, never
+ * a widening: the console uses it to ask the two questions its dashboard
+ * asks separately — "what is on my desk" and "what could I take" — and
+ * neither reaches a row the unfiltered call would have withheld.
+ */
+export type RosterFilter = { handledBy: string } | { unclaimed: true };
+
+/**
+ * The clients this member may see listed, furthest along first.
  *
  * Read through the progress view, never the applications table
  * directly. The view carries no column that could reveal a document, so
  * the organisation console cannot leak one even by accident.
  *
  * Scoped to the actor rather than to their org ids, because since #58
- * "at this agency" stopped being the whole answer. `handlesCase` gives
- * a reviewer the unheld pool plus the cases they hold, and a director
- * the whole book; a roster that listed more than that offered rows
- * linking to a case screen which answers `notFound()` — a dead end that
- * also named a colleague's client on the way to it. The list and the
- * permission are the same rule, so they are written to the same shape.
+ * "at this agency" stopped being the whole answer: a director sees the
+ * whole book, and a reviewer sees the cases they hold plus the ones
+ * nobody has taken.
+ *
+ * "Listed" is wider than "may open" by exactly the unheld pool, and
+ * deliberately so. Since 2026-09-07 `handlesCase` refuses a reviewer an
+ * unclaimed case — a row here is a name, a route and a completion score,
+ * which is the whole of what the view holds, and the dashboard renders
+ * that slice with a claim button instead of a link so it never offers a
+ * door the case screen would shut. Every other row does link, so the
+ * list and the permission still agree wherever they can be confused.
  *
  * Taking the actor and returning `[]` for a membership-less one is not a
  * convenience. RLS used to scope this view to the caller's own agency;
@@ -238,12 +255,32 @@ export async function listOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
  * on the platform — so the empty case has to return here rather than
  * fall through to a query with no restriction.
  */
-export async function listOrgRoster(actor: Actor) {
+export async function listOrgRoster(actor: Actor, filter?: RosterFilter) {
   if (!actor.orgIds.length) return [];
 
   /** The agencies this actor runs, where nothing narrows their reach. */
   const directs = actor.orgs.filter((o) => o.role === "owner").map((o) => o.orgId);
 
+  const where = [
+    inArray(orgApplicationProgress.orgId, [...actor.orgIds]),
+    or(
+      isNull(applications.assigneeId),
+      eq(applications.assigneeId, actor.userId),
+      directs.length ? inArray(applications.orgId, directs) : undefined
+    ),
+  ];
+  if (filter && "handledBy" in filter) {
+    where.push(eq(applications.assigneeId, filter.handledBy));
+  }
+  if (filter && "unclaimed" in filter) {
+    where.push(isNull(applications.assigneeId));
+  }
+
+  // Joined to `applications` for `assignee_id` alone: the progress view
+  // does not carry it, and adding a column to a view is a migration
+  // where a join is a line. The columns are named rather than spread,
+  // so the join cannot widen what this returns — the view's whole point
+  // is that it has no column a document could hide in.
   return db
     .select({
       id: orgApplicationProgress.id,
@@ -265,16 +302,7 @@ export async function listOrgRoster(actor: Actor) {
     // nothing a document could be inferred from — so who holds a case is
     // read from the table beside it rather than by widening the view.
     .innerJoin(applications, eq(applications.id, orgApplicationProgress.id))
-    .where(
-      and(
-        inArray(orgApplicationProgress.orgId, [...actor.orgIds]),
-        or(
-          isNull(applications.assigneeId),
-          eq(applications.assigneeId, actor.userId),
-          directs.length ? inArray(applications.orgId, directs) : undefined
-        )
-      )
-    )
+    .where(and(...where))
     .orderBy(desc(orgApplicationProgress.completionPct));
 }
 

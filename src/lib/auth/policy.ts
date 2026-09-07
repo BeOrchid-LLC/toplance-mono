@@ -135,12 +135,18 @@ export function isAgencyDirectorFor(actor: Actor, app: ApplicationRef): boolean 
 /**
  * The agency's reach into one case, which is the *handler's* reach.
  *
- * An unclaimed case is open to the whole agency — somebody has to be
- * able to look before they can pick it up, and a queue nobody may read
- * is not a queue. The moment it is assigned it narrows to the assignee
- * and the director: a reviewer holds no standing claim on a colleague's
- * client, and "everyone in the agency, forever" is the arrangement that
- * makes a data-protection answer impossible to write down.
+ * The director, and the colleague the case was handed to. Nobody else,
+ * and — since 2026-09-07 — that includes an unclaimed case: a reviewer
+ * reaches a client's documents by being given the client, not by
+ * working somewhere.
+ *
+ * This used to open an unclaimed case to the whole agency, on the
+ * reasoning that somebody has to look before they can pick it up. They
+ * do not: `canAssignCase` below lets any member *take* an unheld case,
+ * and the roster row they take it from carries a name and a completion
+ * score — no document, because the progress view has no column one
+ * could hide in. So the queue stays workable while the file stays shut,
+ * which is the distinction that was missing.
  *
  * Assignment is therefore a permission, not a label. `claimCase` and
  * `releaseCase` move it, and every document, message and note policy
@@ -149,7 +155,7 @@ export function isAgencyDirectorFor(actor: Actor, app: ApplicationRef): boolean 
 export function handlesCase(actor: Actor, app: ApplicationRef): boolean {
   if (!isAgencyFor(actor, app)) return false;
   if (isAgencyDirectorFor(actor, app)) return true;
-  return app.assigneeId === null || app.assigneeId === actor.userId;
+  return app.assigneeId === actor.userId;
 }
 
 /** The traveller whose case it is, or the colleague at their agency handling it. */
@@ -201,12 +207,22 @@ export const canDecideCase: Permission = (actor, app) => handlesCase(actor, app)
 /**
  * Handing a case to a colleague, taking it, or putting it back.
  *
- * `handlesCase` is already the right shape: an unclaimed case is any
- * member's to take, a claimed one is the assignee's and the director's
- * to move. Nobody else in the agency can quietly reassign a colleague's
- * client away from them.
+ * Deliberately wider than `handlesCase`, and the only policy here that
+ * is: an unheld case may be *taken* by any member of the agency that
+ * owns it, which is how a reviewer gets a client at all without waiting
+ * on the director. What they cannot do is read one — taking is a write
+ * to `assignee_id`, and the reading it unlocks happens on the next
+ * request, through `handlesCase`, as themselves.
+ *
+ * Beyond that it narrows the same way: your own case is yours to hand
+ * back, and only the director can move a colleague's client away from
+ * them.
  */
-export const canAssignCase: Permission = (actor, app) => handlesCase(actor, app);
+export const canAssignCase: Permission = (actor, app) =>
+  isAgencyFor(actor, app) &&
+  (isAgencyDirectorFor(actor, app) ||
+    app.assigneeId === null ||
+    app.assigneeId === actor.userId);
 
 export const canReadIntakeAnswers: Permission = participant;
 
@@ -252,8 +268,8 @@ export const canWriteVisaExpiry: Permission = (actor, app) => ownsApplication(ac
  * Traveller and agency, both directions. Nobody else joins the thread.
  *
  * Reading is not gated on a handler: the thread is the record of the
- * case, and messages written before `canWriteMessages` grew its second
- * condition stay readable by both sides.
+ * case, and messages written before this rule existed must stay
+ * readable by both sides.
  */
 export const canReadMessages: Permission = participant;
 
@@ -263,15 +279,16 @@ export const canReadMessages: Permission = participant;
  * The thread used to open the moment a case existed, on the reasoning
  * that an unclaimed one belongs to the whole agency and a shared inbox
  * is the honest model for a small team. It reads well and behaves
- * badly: `handlesCase` lets every colleague reach an unclaimed case, so
- * a traveller's question landed where answering it was nobody's job in
- * particular, and the agency could open a conversation with no name
- * attached to it. A reply owed by everyone is owed by no one.
+ * badly: `handlesCase` let every colleague reach an unclaimed case, so
+ * a traveller's question landed in a place where answering it was
+ * nobody's job in particular, and the agency could open a conversation
+ * that no name was attached to. A reply owed by everyone is owed by no
+ * one.
  *
  * So the thread waits for `assigneeId`. Both sides wait together — a
- * traveller writing into an unheld case is the same silence, only from
- * their end of it — and taking the case is one click away on the screen
- * that says so.
+ * traveller allowed to write into an unheld case is the same silence,
+ * only from their end of it — and taking the case is one click away on
+ * the screen that says so.
  */
 export const canWriteMessages: Permission = (actor, app) =>
   app.assigneeId !== null && participant(actor, app);

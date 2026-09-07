@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { AppBar } from "@/components/app/app-bar";
-import { agencyNav } from "@/components/agency/agency-nav";
+import { AgencyBar } from "@/components/agency/agency-bar";
 import { ConsoleBand } from "@/components/agency/console-band";
 import { InvitationRoster } from "@/components/agency/invitation-roster";
 import { InviteDialog } from "@/components/agency/invite-dialog";
@@ -43,6 +43,12 @@ export default async function AgencyTeamPage() {
   const locale = await getLocale();
   const { profile, membership, orgId } = await requireAgencyConsole();
 
+  // The roster of colleagues is the director's screen. A reviewer has no
+  // tab for it, and typing the path is not a way around that — who works
+  // here, and at what rank, is a fact about running the agency rather
+  // than about handling a case.
+  if (membership.role !== "owner") redirect("/agency");
+
   // `orgId` comes from `actor.orgIds`, which excludes suspended
   // agencies — so a suspended agency's console shows no colleagues
   // rather than reading a roster it is no longer entitled to.
@@ -54,12 +60,7 @@ export default async function AgencyTeamPage() {
 
   return (
     <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={agencyNav({ locale, hasOrganisation: true })}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${membership.name} · ${AGENCY.roleLabel[membership.role][locale]}`}
-      />
+      <AgencyBar profile={profile} membership={membership} locale={locale} />
 
       <ConsoleBand
         title={AGENCY.navTeam[locale]}

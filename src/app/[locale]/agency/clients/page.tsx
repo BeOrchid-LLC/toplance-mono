@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 
-import { AppBar } from "@/components/app/app-bar";
-import { agencyNav } from "@/components/agency/agency-nav";
+import { AgencyBar } from "@/components/agency/agency-bar";
 import { ConsoleBand } from "@/components/agency/console-band";
 import { InvitationRoster } from "@/components/agency/invitation-roster";
 import { InviteDialog } from "@/components/agency/invite-dialog";
@@ -43,23 +42,25 @@ export default async function AgencyClientsPage() {
   const locale = await getLocale();
   const { profile, actor, membership, orgId } = await requireAgencyConsole();
 
-  // Same "no org, no unfiltered read" reasoning in both: `listOrgRoster`
-  // returns early on an empty list, and `listInvitations` has nothing to
-  // filter by without one id.
+  const isDirector = membership.role === "owner";
+
+  // A reviewer's clients are the ones they were given. The agency's
+  // whole book is the director's screen — a colleague reaching a client
+  // they do not handle is exactly what `handlesCase` refuses, and a
+  // roster that lists them anyway is an invitation to try.
+  //
+  // Same "no org, no unfiltered read" reasoning in both reads:
+  // `listOrgRoster` returns early on an empty list, and
+  // `listInvitations` has nothing to filter by without one id.
   const [rows, invitations] = await Promise.all([
-    listOrgRoster(actor),
-    orgId ? listInvitations(orgId) : Promise.resolve([]),
+    listOrgRoster(actor, isDirector ? undefined : { handledBy: actor.userId }),
+    orgId && isDirector ? listInvitations(orgId) : Promise.resolve([]),
   ]);
   const clientInvitations = invitations.filter((i) => i.kind === "client");
 
   return (
     <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={agencyNav({ locale, hasOrganisation: true })}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${membership.name} · ${AGENCY.roleLabel[membership.role][locale]}`}
-      />
+      <AgencyBar profile={profile} membership={membership} locale={locale} />
 
       <ConsoleBand
         title={AGENCY.navClients[locale]}
@@ -72,13 +73,22 @@ export default async function AgencyClientsPage() {
 
       <main>
         <Shell className="py-12">
-          <ClientRoster rows={rows} locale={locale} />
-          <InvitationRoster
-            className="mt-8"
-            invitations={clientInvitations}
+          <ClientRoster
+            rows={rows}
             locale={locale}
-            empty={AGENCY.invitationsEmpty[locale]}
+            empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
           />
+          {/* Invitations are the agency's outstanding business, so they
+              are the director's panel: an address nobody has accepted is
+              not yet a client, and certainly not this reviewer's. */}
+          {isDirector && (
+            <InvitationRoster
+              className="mt-8"
+              invitations={clientInvitations}
+              locale={locale}
+              empty={AGENCY.invitationsEmpty[locale]}
+            />
+          )}
         </Shell>
       </main>
     </div>

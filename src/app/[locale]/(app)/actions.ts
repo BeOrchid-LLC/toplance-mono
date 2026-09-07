@@ -249,17 +249,67 @@ export async function uploadDocument(formData: FormData) {
       // application should not become unbillable because a model call
       // timed out.
       await billIfComplete(applicationId, actorId);
+      await notifyHandlerOfUpload(applicationId, docKey);
       await notifyDeskIfComplete(applicationId, actorId);
     });
   } else {
     // No pre-check was scheduled, so no verdict is ever coming and there
     // is nothing to wait for.
     await billIfComplete(applicationId, actorId);
+    await notifyHandlerOfUpload(applicationId, docKey);
     await notifyDeskIfComplete(applicationId, actorId);
   }
 
   revalidatePath("/[locale]/app", "layout");
   return { ok: true };
+}
+
+/**
+ * Tell the colleague handling this case that a document has arrived.
+ *
+ * The assignee alone, and nobody when the case is unheld. Fanning this
+ * out to the agency would put nine notifications per traveller in front
+ * of people who are not working the case, and the two events that *are*
+ * everybody's business — the checklist filling up, and the submission —
+ * already fan out.
+ *
+ * In-app only: `notify` sends no email for a kind with no template, and
+ * `document_uploaded` deliberately has none.
+ *
+ * Best-effort like everything else on this path. `notify` never throws,
+ * and an upload must not fail because a notification could not be
+ * written.
+ */
+async function notifyHandlerOfUpload(applicationId: string, docKey: string) {
+  const [row] = await db
+    .select({
+      assigneeId: applications.assigneeId,
+      caseRef: applications.caseRef,
+      documentName: documents.name,
+    })
+    .from(applications)
+    .leftJoin(
+      documents,
+      and(
+        eq(documents.applicationId, applications.id),
+        eq(documents.docKey, docKey)
+      )
+    )
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  if (!row?.assigneeId) return;
+
+  await notify(
+    row.assigneeId,
+    "document_uploaded",
+    {
+      documentName: row.documentName ?? docKey,
+      caseRef: row.caseRef,
+      url: appUrl(`/agency/clients/${applicationId}`),
+    },
+    applicationId
+  );
 }
 
 /**
@@ -291,6 +341,26 @@ async function billIfComplete(applicationId: string, actorId: string) {
 }
 
 /**
+ * Where a whole-agency case notification should land the reader.
+ *
+ * The case screen, once somebody holds it: `notifyAgency` is scoped to
+ * the assignee and the director by then, and both can open it.
+ *
+ * The dashboard while nobody does. `handlesCase` stopped opening an
+ * unheld case to the agency at large on 2026-09-07, so a link to the
+ * case screen now answers 404 for every reviewer this fan-out still
+ * reaches — the dead link #59 removed, back by way of the policy rather
+ * than the recipient list. The dashboard is where an unheld case is
+ * actually actionable: it carries the unclaimed pool, with the button
+ * that takes one. One link for everybody rather than one per recipient,
+ * because a notification row stores a single url, and the director
+ * losing a click is the cheaper half of that trade.
+ */
+function agencyCaseUrl(applicationId: string, assigneeId: string | null) {
+  return appUrl(assigneeId ? `/agency/clients/${applicationId}` : "/agency");
+}
+
+/**
  * Tell the review desk when this upload was the one that finished the
  * checklist.
  *
@@ -316,7 +386,7 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
     if (!becameComplete) return;
 
     const [app] = await db
-      .select({ caseRef: applications.caseRef })
+      .select({ caseRef: applications.caseRef, assigneeId: applications.assigneeId })
       .from(applications)
       .where(eq(applications.id, applicationId))
       .limit(1);
@@ -324,7 +394,7 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
     if (app) {
       await notifyAgency(applicationId, "checklist_complete", {
         caseRef: app.caseRef,
-        url: appUrl(`/agency/clients/${applicationId}`),
+        url: agencyCaseUrl(applicationId, app.assigneeId),
       });
     }
 
@@ -501,7 +571,10 @@ export async function submitApplication(applicationId: string) {
       // `toEqual({ ok: true })`, and this is the only caller that needs
       // the case reference.
       const [app] = await db
-        .select({ caseRef: applications.caseRef })
+        .select({
+          caseRef: applications.caseRef,
+          assigneeId: applications.assigneeId,
+        })
         .from(applications)
         .where(eq(applications.id, applicationId))
         .limit(1);
@@ -509,10 +582,11 @@ export async function submitApplication(applicationId: string) {
       if (app) {
         await notifyAgency(applicationId, "application_submitted", {
           caseRef: app.caseRef,
-          // The case itself, not the console's front page. The agency
-          // opens this notification to review a submission; landing them
-          // on the dashboard makes them find it again by hand.
-          url: appUrl(`/agency/clients/${applicationId}`),
+          // The case itself once it is held — the agency opens this to
+          // review a submission, and landing them on the dashboard makes
+          // them find it again by hand. Only an unheld one goes to the
+          // dashboard, and only because the case screen refuses them.
+          url: agencyCaseUrl(applicationId, app.assigneeId),
         });
       }
 
@@ -792,7 +866,10 @@ export async function uploadAvatar(formData: FormData) {
       actor.userId
     );
 
+    // Both consoles: the same action serves a traveller's profile and an
+    // agent's, and the photo appears in the bar on every page of each.
     revalidatePath("/[locale]/app", "layout");
+    revalidatePath("/[locale]/agency", "layout");
     return {};
   } catch (error) {
     const message = toActionError(error);

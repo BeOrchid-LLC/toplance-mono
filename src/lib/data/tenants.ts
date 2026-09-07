@@ -1,6 +1,7 @@
 import "server-only";
 
-import { and, count, desc, eq } from "drizzle-orm";
+import { cache } from "react";
+import { and, count, desc, eq, gt } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/lib/db/schema";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
+import { isUuid } from "@/lib/domain/uuid";
 
 /**
  * What BeOrchid is allowed to know about the agencies on the platform.
@@ -39,6 +41,15 @@ export type TenantCounts = {
   withReviewer: number;
   approved: number;
   rejected: number;
+  /**
+   * Invitations still worth waiting on: `pending` AND not past
+   * `expiresAt`. The stored `status` column only flips off `pending`
+   * when somebody opens the link (`acceptInvitationTx`), so counting the
+   * column alone reports a dead invitation as live forever — beside
+   * `awaitingFirstOwner` copy telling the operator to keep waiting,
+   * while the agency's own roster (`listInvitations`) already calls the
+   * same row `expired`. Two screens, one row, two answers.
+   */
   pendingInvitations: number;
 };
 
@@ -67,6 +78,15 @@ export type TenantPendingInvite = {
   kind: "client" | "staff";
   createdAt: Date;
   expiresAt: Date;
+  /**
+   * Derived, never stored — the same thing `listInvitations` derives for
+   * the agency's own roster, and for the same reason: the column is
+   * flipped lazily, so `status = 'pending'` outlives the link it names.
+   * The panel still shows an expired invitation (the operator needs to
+   * know one was sent and died, since nothing here can resend it), but
+   * it is labelled rather than counted.
+   */
+  expired: boolean;
 };
 
 /**
@@ -121,6 +141,8 @@ const ZERO_COUNTS: TenantCounts = {
  * follow-up query here.
  */
 export async function listTenants(): Promise<TenantRow[]> {
+  const now = new Date();
+
   const [orgs, memberCounts, statusCounts, inviteCounts] = await Promise.all([
     db
       .select({
@@ -154,10 +176,21 @@ export async function listTenants(): Promise<TenantRow[]> {
     // traveller's own outstanding invite, not this agency's, and this
     // count has to agree with the panel or the two contradict each
     // other on the same screen.
+    //
+    // `expiresAt > now` for the reason on `TenantCounts.pendingInvitations`:
+    // `status` is flipped lazily, so without it a thirty-one-day-old
+    // invitation nobody ever opened still reads as one the agency is
+    // about to accept.
     db
       .select({ orgId: invitations.orgId, total: count() })
       .from(invitations)
-      .where(and(eq(invitations.status, "pending"), eq(invitations.kind, "staff")))
+      .where(
+        and(
+          eq(invitations.status, "pending"),
+          eq(invitations.kind, "staff"),
+          gt(invitations.expiresAt, now)
+        )
+      )
       .groupBy(invitations.orgId),
   ]);
 
@@ -183,59 +216,126 @@ export async function listTenants(): Promise<TenantRow[]> {
   }));
 }
 
-/** One agency with its roster and its live invitations, or null. */
-export async function getTenant(orgId: string): Promise<TenantDetail | null> {
-  const rows = await listTenants();
-  const row = rows.find((r) => r.id === orgId);
-  if (!row) return null;
+/**
+ * One agency with its roster and its live invitations, or null.
+ *
+ * A `where` clause rather than `listTenants().find(...)`. Scanning every
+ * organisation's platform-wide aggregates to keep one row made the cost
+ * of a single-agency page grow with the number of tenants on the
+ * platform — and the `find` was a JS `===` standing in for a Postgres
+ * `uuid` comparison, which is case-insensitive where `===` is not, so
+ * correctness depended on every caller lower-casing the id first. This
+ * normalises here instead, which no caller can forget, and returns
+ * `null` for a malformed id rather than letting Postgres throw a syntax
+ * error at whatever called this.
+ *
+ * Wrapped in React `cache()` because `generateMetadata` and the page
+ * component are two independent invocations Next makes for the same
+ * request, and both need this agency. Without it they each run the five
+ * queries below. React's `cache` is a no-op with no request dispatcher
+ * bound, so the test suite still gets a fresh read per call — which is
+ * what its suspend/restore assertions depend on.
+ */
+export const getTenant = cache(async function getTenant(
+  orgId: string
+): Promise<TenantDetail | null> {
+  if (!isUuid(orgId)) return null;
+  const id = orgId.toLowerCase();
+  const now = new Date();
 
-  const [members_, pendingInvites] = await Promise.all([
-    db
-      .select({
-        userId: orgMembers.userId,
-        fullName: profiles.fullName,
-        email: profiles.email,
-        role: orgMembers.role,
-        joinedAt: orgMembers.createdAt,
-      })
-      .from(orgMembers)
-      .innerJoin(profiles, eq(profiles.id, orgMembers.userId))
-      .where(eq(orgMembers.orgId, orgId))
-      .orderBy(orgMembers.createdAt),
+  const [orgRows, memberCounts, statusCounts, members_, inviteRows] =
+    await Promise.all([
+      db
+        .select({
+          id: organisations.id,
+          name: organisations.name,
+          domain: organisations.domain,
+          seatsPurchased: organisations.seatsPurchased,
+          billingContact: organisations.billingContact,
+          suspendedAt: organisations.suspendedAt,
+          createdAt: organisations.createdAt,
+        })
+        .from(organisations)
+        .where(eq(organisations.id, id))
+        .limit(1),
 
-    // Never selects `token`. The console has no reason to hold an
-    // agency's accept credential — the same stance `listInvitations`
-    // takes for the agency's own roster.
-    //
-    // Restricted to `kind: "staff"`. A `client` invitation is a
-    // traveller's own name and email address, addressed by this agency
-    // — not this agency's business, and the one thing this module's own
-    // header says the console must never learn: whose case is whose.
-    // The only invitation this panel exists to show is the owner
-    // invitation `provisionTenantTx` mints (`kind: "staff"`), so this
-    // costs the panel nothing it uses.
-    db
-      .select({
-        id: invitations.id,
-        email: invitations.email,
-        fullName: invitations.fullName,
-        kind: invitations.kind,
-        createdAt: invitations.createdAt,
-        expiresAt: invitations.expiresAt,
-      })
-      .from(invitations)
-      .where(
-        and(
-          eq(invitations.orgId, orgId),
-          eq(invitations.status, "pending"),
-          eq(invitations.kind, "staff")
+      db.select({ total: count() }).from(orgMembers).where(eq(orgMembers.orgId, id)),
+
+      // Still `count(*)` grouped by status, still never a row. Scoping
+      // it to one agency changes what it costs, not what it may know.
+      db
+        .select({ status: applications.status, total: count() })
+        .from(applications)
+        .where(eq(applications.orgId, id))
+        .groupBy(applications.status),
+
+      db
+        .select({
+          userId: orgMembers.userId,
+          fullName: profiles.fullName,
+          email: profiles.email,
+          role: orgMembers.role,
+          joinedAt: orgMembers.createdAt,
+        })
+        .from(orgMembers)
+        .innerJoin(profiles, eq(profiles.id, orgMembers.userId))
+        .where(eq(orgMembers.orgId, id))
+        .orderBy(orgMembers.createdAt),
+
+      // Never selects `token`. The console has no reason to hold an
+      // agency's accept credential — the same stance `listInvitations`
+      // takes for the agency's own roster.
+      //
+      // Restricted to `kind: "staff"`. A `client` invitation is a
+      // traveller's own name and email address, addressed by this agency
+      // — not this agency's business, and the one thing this module's own
+      // header says the console must never learn: whose case is whose.
+      // The only invitation this panel exists to show is the owner
+      // invitation `provisionTenantTx` mints (`kind: "staff"`), so this
+      // costs the panel nothing it uses.
+      //
+      // Expired rows are fetched and then labelled rather than filtered
+      // out in SQL: nothing in the product can resend or revoke an
+      // invitation, so an operator looking at an agency with no owner
+      // needs to see that a link was sent and has died. Only the count
+      // beside them treats them as gone.
+      db
+        .select({
+          id: invitations.id,
+          email: invitations.email,
+          fullName: invitations.fullName,
+          kind: invitations.kind,
+          createdAt: invitations.createdAt,
+          expiresAt: invitations.expiresAt,
+        })
+        .from(invitations)
+        .where(
+          and(
+            eq(invitations.orgId, id),
+            eq(invitations.status, "pending"),
+            eq(invitations.kind, "staff")
+          )
         )
-      )
-      .orderBy(desc(invitations.createdAt)),
-  ]);
+        .orderBy(desc(invitations.createdAt)),
+    ]);
 
-  return { ...row, members_, pendingInvites };
-}
+  const [org] = orgRows;
+  if (!org) return null;
+
+  const counts: TenantCounts = { ...ZERO_COUNTS };
+  for (const row of statusCounts) {
+    counts.applicationsTotal += row.total;
+    counts[BUCKET[row.status]] += row.total;
+  }
+  counts.members = memberCounts[0]?.total ?? 0;
+
+  const pendingInvites = inviteRows.map((i) => ({ ...i, expired: i.expiresAt < now }));
+  // The same rule `listTenants` counts by, so the list page and this
+  // page cannot report different numbers for the same agency.
+  counts.pendingInvitations = pendingInvites.filter((i) => !i.expired).length;
+
+  return { ...org, ...counts, members_, pendingInvites };
+});
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -339,6 +439,19 @@ export async function provisionTenantTx(
     return { error: "seats_invalid" };
   }
 
+  /**
+   * The same `EMAIL_RE` `setTenantBilling` applies, at the same moment
+   * the value is first stored. Without it the provision form (whose
+   * `type="email"` any direct POST bypasses) could write a billing
+   * contact that every later `setTenantBilling` then refuses with
+   * `billing_email_invalid` — locking the operator out of the billing
+   * panel over a field they never typed and cannot see is wrong.
+   */
+  const billingContact = input.billingContact?.trim() || null;
+  if (billingContact && !EMAIL_RE.test(billingContact)) {
+    return { error: "billing_email_invalid" };
+  }
+
   return db.transaction(async (tx) => {
     if (input.demoRequestId) {
       const [existing] = await tx
@@ -375,7 +488,7 @@ export async function provisionTenantTx(
         name,
         domain: input.domain?.trim() || null,
         seatsPurchased: seats,
-        billingContact: input.billingContact?.trim() || null,
+        billingContact,
       })
       .returning({ id: organisations.id });
 

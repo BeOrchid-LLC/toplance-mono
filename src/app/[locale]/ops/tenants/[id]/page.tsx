@@ -58,9 +58,12 @@ export async function generateMetadata({
    * `requireStaffConsole` only ever throws via `redirect()`, and the
    * Next.js docs for `generateMetadata` say `redirect()` and
    * `notFound()` are both safe to call from inside it, so calling the
-   * same gate here is safe. It is request-scoped, so this costs no new
-   * round trip beyond the one the page component below makes on its own
-   * for the same request.
+   * same gate here is safe. Both it and `getTenant` are wrapped in React
+   * `cache()`, so the page component below shares this request's answers
+   * rather than repeating the gate's Clerk round trip and the agency's
+   * queries — which is what "request-scoped" has to mean in code, not
+   * just in a comment. Nothing in Next dedupes a plain async function on
+   * its own; only `fetch` is deduped by default.
    *
    * Only a caller the page would actually render for ("ok") gets the
    * tenant's name; "refuse" and "enroll" both fall back to the section
@@ -69,7 +72,7 @@ export async function generateMetadata({
   const gate = await requireStaffConsole();
   if (gate.decision !== "ok") return { title: OPS_TENANTS.heading[locale] };
 
-  const tenant = await getTenant(id.toLowerCase());
+  const tenant = await getTenant(id);
   return { title: tenant?.name ?? OPS_TENANTS.heading[locale] };
 }
 
@@ -100,24 +103,15 @@ export default async function OpsTenantPage({
   if (!isUuid(id)) notFound();
 
   /**
-   * `getTenant` finds its row with a JS `===` over `listTenants()`'s
-   * output (a plan-sanctioned shortcut — see its own doc comment), not a
-   * `where` clause Postgres evaluates. Postgres's `uuid` comparison is
-   * case-insensitive; `===` is not. Every existing caller passes an id
-   * that came out of `listTenants` itself, so the case always matches.
-   * This page is the first caller to pass an id straight off the URL,
-   * where a visitor (or a bookmarked/typed link) may use different
-   * letter case than the lowercase Postgres stores and returns. Without
-   * lower-casing here, such a URL would 404 a tenant that exists.
-   * Lower-casing is the correct normal form: `isUuid` already accepted
-   * only hex digits and hyphens in the fixed positions, so this cannot
-   * change which value it names — it only matches the case Postgres
-   * itself returns.
+   * `id` goes to `getTenant` exactly as it came off the URL. Normalising
+   * case is `getTenant`'s own job now — it lower-cases before it queries,
+   * so a bookmarked link in different letter case cannot 404 a tenant
+   * that exists, and no future caller has to remember to do it. Passing
+   * the same string `generateMetadata` passed also means both share one
+   * `cache()` entry rather than each running the agency's queries.
    */
-  const normalizedId = id.toLowerCase();
-
   const [tenant, notifications, unreadCount] = await Promise.all([
-    getTenant(normalizedId),
+    getTenant(id),
     getNotifications(actor.userId),
     unreadNotificationCount(actor.userId),
   ]);
@@ -201,7 +195,13 @@ export default async function OpsTenantPage({
               label={OPS_TENANTS.invitesPanel[locale]}
               aside={
                 <Badge variant="outline">
-                  <span className="num">{tenant.pendingInvites.length}</span>
+                  {/* The live count, not the row count: the panel is
+                      titled "Pending invitations", and an expired row is
+                      listed below (nothing here can resend one, so the
+                      operator needs to see it) but labelled rather than
+                      counted. This is the same number the agencies list
+                      shows for this agency. */}
+                  <span className="num">{tenant.pendingInvitations}</span>
                 </Badge>
               }
             />
@@ -235,12 +235,17 @@ export default async function OpsTenantPage({
                         {i.createdAt.toISOString().slice(0, 10)}
                       </TableCell>
                       <TableCell
-                        className={cn(
-                          "t-muted",
-                          i.expiresAt < new Date() && "text-danger-ink"
-                        )}
+                        className={cn("t-muted", i.expired && "text-danger-ink")}
                       >
                         {i.expiresAt.toISOString().slice(0, 10)}
+                        {/* Colour alone said this to sighted readers
+                            only, and said it in a language nobody
+                            translated. */}
+                        {i.expired && (
+                          <span className="block">
+                            {OPS_TENANTS.inviteExpired[locale]}
+                          </span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

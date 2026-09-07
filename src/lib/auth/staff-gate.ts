@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -73,8 +74,18 @@ export type StaffGateResult =
  * decision below — both ops pages sent that case to the same place
  * (`/ops/sign-in?next=/ops`) before this existed, so folding it in here
  * loses nothing.
+ *
+ * Wrapped in React `cache()`. A page and its `generateMetadata` are two
+ * separate invocations Next makes for one request, and a gated
+ * `generateMetadata` (`/ops/tenants/[id]`) therefore paid for a second
+ * profile read, a second membership read and a second Clerk
+ * `currentUser()` round trip on every request. Nothing here writes, and
+ * the answer cannot change inside one request, so memoising it is only
+ * a cost fix — the gate still runs, in full, once. React's `cache` is a
+ * no-op with no request dispatcher bound, so nothing outside a request
+ * (tests included) sees a memo at all.
  */
-export async function requireStaffConsole(): Promise<StaffGateResult> {
+export const requireStaffConsole = cache(async function requireStaffConsole(): Promise<StaffGateResult> {
   const [profile, actor] = await Promise.all([getProfile(), getActor()]);
   // `/go` rather than the ops door, for the reason on `GoPage`: the
   // proxy bounces a signed-in visitor off every auth page, so a session
@@ -95,7 +106,7 @@ export async function requireStaffConsole(): Promise<StaffGateResult> {
 
   if (decision === "enroll") return { decision: "enroll", accountsUrl: accountsBaseUrl() };
   return { decision: "ok", profile, actor };
-}
+});
 
 export type StaffActionResult = { actor: Actor } | { error: string };
 

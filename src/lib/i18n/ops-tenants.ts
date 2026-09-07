@@ -60,6 +60,7 @@ export const OPS_TENANTS: {
   cancelButton: L;
   toastProvisioned: L;
   inviteLinkLabel: L;
+  provisionEmailFailed: L;
   detailBackToList: L;
   rosterPanel: L;
   emptyRoster: L;
@@ -74,6 +75,7 @@ export const OPS_TENANTS: {
   invitesHead: { email: L; kind: L; sent: L; expires: L };
   kindStaff: L;
   kindClient: L;
+  inviteExpired: L;
   billingPanel: L;
   saveBillingButton: L;
   toastBillingSaved: L;
@@ -666,6 +668,18 @@ export const OPS_TENANTS: {
     tw: "Frɛ link",
     zu: "Isixhumanisi sesimemo",
   },
+  provisionEmailFailed: {
+    en: "The invitation email could not be sent. Copy the link below and send it yourself — it is the only copy.",
+    ha: "Ba a iya aika imel ɗin gayyata ba. Kwafi hanyar da ke ƙasa ka aika da kanka — ita ce kwafi ɗaya tilo.",
+    yo: "A kò lè fi ìmèèlì ìpè náà ránṣẹ́. Ṣe àdàkọ ọ̀nà ìsopọ̀ tó wà nísàlẹ̀ kí o sì fi ránṣẹ́ fúnra rẹ — òun nìkan ni àdàkọ tó wà.",
+    ig: "Enweghị ike izipu ozi-e òkù ahụ. Detuo njikọ dị n'okpuru ma zipụ ya n'onwe gị — ọ bụ naanị otu ahụ dị.",
+    fr: "L'e-mail d'invitation n'a pas pu être envoyé. Copiez le lien ci-dessous et envoyez-le vous-même — c'est la seule copie.",
+    pt: "Não foi possível enviar o e-mail de convite. Copie a ligação abaixo e envie-a você mesmo — é a única cópia.",
+    sw: "Barua pepe ya mwaliko haikutumwa. Nakili kiungo kilicho hapa chini na ukitume mwenyewe — ndicho nakala pekee.",
+    ar: "تعذّر إرسال بريد الدعوة. انسخ الرابط أدناه وأرسله بنفسك — فهو النسخة الوحيدة.",
+    tw: "Yɛantumi amfa nsato email no ankɔ. Kopi link a ɛwɔ ase hɔ no na fa kɔma no wo ara — ɛno nko ara na ɛwɔ hɔ.",
+    zu: "I-imeyili yesimemo ayikwazanga ukuthunyelwa. Kopisha isixhumanisi esingezansi bese uyithumela ngokwakho — yiyona kuphela ikhophi.",
+  },
   detailBackToList: {
     en: "All agencies",
     ha: "Duk hukumomi",
@@ -909,6 +923,18 @@ export const OPS_TENANTS: {
     ar: "المسافر",
     tw: "Ɔkwantuni",
     zu: "Umhambi",
+  },
+  inviteExpired: {
+    en: "Expired",
+    ha: "Ya ƙare",
+    yo: "Ó ti pé",
+    ig: "Agwụla",
+    fr: "Expirée",
+    pt: "Expirada",
+    sw: "Imeisha",
+    ar: "منتهية",
+    tw: "Atwam",
+    zu: "Iphelelwe yisikhathi",
   },
   billingPanel: {
     en: "Seats and billing",

@@ -35,7 +35,7 @@ export const OPS_COMMON: {
   caseWord: { one: L; other: L };
   documentWord: { one: L; other: L };
   tripWord: { one: L; other: L };
-  nav: { caseQueue: L; routes: L };
+  nav: { caseQueue: L; routes: L; tenants: L };
   purpose: {
     tourism: L;
     work: L;
@@ -330,6 +330,18 @@ export const OPS_COMMON: {
       ar: "المسارات",
       tw: "Akwan",
       zu: "Izindlela",
+    },
+    tenants: {
+      en: "Agencies",
+      ha: "Hukumomi",
+      yo: "Àwọn ilé-iṣẹ́",
+      ig: "Ụlọ ọrụ",
+      fr: "Agences",
+      pt: "Agências",
+      sw: "Mawakala",
+      ar: "الوكالات",
+      tw: "Adwumakuo",
+      zu: "Ama-ejensi",
     },
   },
   purpose: {

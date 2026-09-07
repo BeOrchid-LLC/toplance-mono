@@ -185,6 +185,19 @@ export const EVENT_NAMES = [
    */
   "toplance.corridor_drift_detected",
 
+  /**
+   * The platform console's tenant surface. `provisioned` is one event
+   * for one transaction — an agency and its first invitation — so the
+   * funnel from `demo_requested` to a working tenant is two rows, not
+   * five.
+   */
+  "toplance.tenant_provisioned",
+  "toplance.tenant_suspended",
+  "toplance.tenant_restored",
+  "toplance.tenant_seats_changed",
+  "toplance.tenant_member_role_changed",
+  "toplance.demo_request_status_changed",
+
   /** A traveller put a photo on their own profile, or replaced it. */
   "toplance.avatar_uploaded",
 

@@ -9,13 +9,17 @@ import type { Locale } from "@/lib/i18n/locales";
  * the list was pasted per page and drifted. One answer here means the
  * screens cannot disagree.
  *
- * One entry, because route curation is what the platform console is now.
- * The v1.3 tenancy moved review into the agency and deleted the case
- * queue and case detail screens with it: they read documents directly,
- * without passing through `requireApplicationAccess`, so they were the
- * enforcement gap rather than merely a surface nobody should visit.
- * Tenant provisioning and an audit-log reader belong here when they are
- * built; nothing that reaches a traveller's case ever does.
+ * Two entries. Route curation is one half of the console; tenant
+ * management is the other, and it arrived with `/ops/tenants`. An
+ * audit-log reader still belongs here when it is built.
+ *
+ * Nothing that reaches a traveller's case ever does. The v1.3 tenancy
+ * moved review into the agency and deleted the case queue and case
+ * detail screens with it: they read documents directly, without passing
+ * through `requireApplicationAccess`, so they were the enforcement gap
+ * rather than merely a surface nobody should visit. `/ops/tenants` is
+ * built to the same rule — it counts an agency's applications and can
+ * open none of them.
  *
  * `AppNav.isActive` matches item 0 exactly as the section root, so the
  * first entry is the console's landing page — `/ops` redirects to it.
@@ -23,9 +27,15 @@ import type { Locale } from "@/lib/i18n/locales";
  * Kept in English here — `ops-nav.test.ts` asserts against this shape —
  * and localised for actual rendering by `localizedOpsNav` below.
  */
-export const opsNav: NavItem[] = [{ href: "/ops/corridors", label: "Routes" }];
+export const opsNav: NavItem[] = [
+  { href: "/ops/corridors", label: "Routes" },
+  { href: "/ops/tenants", label: "Agencies" },
+];
 
 /** `opsNav`, with each label resolved to `locale` — what every ops page actually renders. */
 export function localizedOpsNav(locale: Locale): NavItem[] {
-  return [{ ...opsNav[0], label: OPS_COMMON.nav.routes[locale] }];
+  return [
+    { ...opsNav[0], label: OPS_COMMON.nav.routes[locale] },
+    { ...opsNav[1], label: OPS_COMMON.nav.tenants[locale] },
+  ];
 }

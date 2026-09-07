@@ -26,4 +26,12 @@ describe("opsNav", () => {
     }
     expect(opsNav.map((i) => i.href)).not.toContain("/ops");
   });
+
+  it("carries the tenants entry, second", () => {
+    // Not first: `AppNav.isActive` matches item 0 exactly as the section
+    // root, and `/ops` redirects to `/ops/corridors`. Reordering this
+    // list lights the wrong pill.
+    expect(opsNav.map((i) => i.href)).toContain("/ops/tenants");
+    expect(opsNav[1].href).toBe("/ops/tenants");
+  });
 });

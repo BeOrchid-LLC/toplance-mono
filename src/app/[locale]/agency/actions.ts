@@ -27,6 +27,7 @@ import {
 } from "@/lib/data/invitations";
 import { assignCaseTo, claimCase, releaseCase } from "@/lib/data/assignments";
 import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
+import { hasActiveSubscription } from "@/lib/data/payments";
 import { reviewDocumentTx, type ReviewVerdict } from "@/lib/data/review";
 import { changeStatusTx } from "@/lib/data/transitions";
 import { isApplicationStatus, STATUS } from "@/lib/domain/status";
@@ -92,6 +93,23 @@ export async function inviteTraveller(formData: FormData) {
     const orgId = actor.orgIds[0];
     if (!orgId) return { error: "You do not have access to that." };
     await requireOrgAccess(orgId);
+
+    /**
+     * An unpaid agency invites nobody.
+     *
+     * The console is already behind the paywall, so nothing renders this
+     * button while the plan is unpaid — but this is a POST endpoint
+     * reachable without ever rendering that page, and the page gate is
+     * not its gate.
+     *
+     * It matters most for a client: they would arrive, pay their own fee
+     * and land in a case no colleague can open, because the agency's
+     * console is shut. Refusing the invitation is cheaper than refunding
+     * the person who accepted it.
+     */
+    if (!(await hasActiveSubscription(orgId))) {
+      return { error: AGENCY_ACTIONS.planNotPaid[await getActionLocale()] };
+    }
 
     const email = String(formData.get("email") ?? "");
     const fullName = String(formData.get("full_name") ?? "").trim();

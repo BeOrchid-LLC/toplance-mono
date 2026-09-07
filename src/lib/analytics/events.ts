@@ -154,6 +154,21 @@ export const EVENT_NAMES = [
   "toplance.invitation_accepted",
 
   /**
+   * The paywall. `checkout_started` is emitted before the provider is
+   * asked for anything, so the gap between it and a purchase is the
+   * abandonment rate — which is the only way to see somebody who reached
+   * a payment screen and did not pay, since nothing else records them.
+   *
+   * Two purchases rather than one event with a `kind`, because they are
+   * two different questions: how many agencies are paying to be here,
+   * and how many travellers are paying for a case. Folding them together
+   * would need every consumer to split them again.
+   */
+  "toplance.checkout_started",
+  "toplance.subscription_purchased",
+  "toplance.application_purchased",
+
+  /**
    * The corridor review lifecycle. `corridor_drafted` is emitted by the
    * drafting script, the other two by the ops console.
    *

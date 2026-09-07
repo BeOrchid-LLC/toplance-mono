@@ -37,6 +37,9 @@ export const OPS_TENANTS: {
   live: L;
   suspendedBadge: L;
   seatsOf: L;
+  planLabel: L;
+  planUnpaid: L;
+  planPaidUntil: L;
   demoPanel: L;
   emptyDemoRequests: L;
   demoHead: { who: L; company: L; preferred: L; status: L; action: L };
@@ -351,6 +354,42 @@ export const OPS_TENANTS: {
     ar: "موقوفة",
     tw: "Wɔagyae",
     zu: "Kumisiwe",
+  },
+  planLabel: {
+    en: "Plan",
+    ha: "Shiri",
+    yo: "Ètò",
+    ig: "Atụmatụ",
+    fr: "Formule",
+    pt: "Plano",
+    sw: "Mpango",
+    ar: "الخطة",
+    tw: "Nhyehyɛe",
+    zu: "Uhlelo",
+  },
+  planUnpaid: {
+    en: "Unpaid",
+    ha: "Ba a biya ba",
+    yo: "Kò tíì san",
+    ig: "A kwụghị ụgwọ",
+    fr: "Impayée",
+    pt: "Por pagar",
+    sw: "Haijalipwa",
+    ar: "غير مدفوعة",
+    tw: "Wontuaa ka",
+    zu: "Ayikhokhelwe",
+  },
+  planPaidUntil: {
+    en: "Until {date}",
+    ha: "Har zuwa {date}",
+    yo: "Títí di {date}",
+    ig: "Ruo {date}",
+    fr: "Jusqu'au {date}",
+    pt: "Até {date}",
+    sw: "Hadi {date}",
+    ar: "حتى {date}",
+    tw: "Kosi {date}",
+    zu: "Kuze kube ngu-{date}",
   },
   seatsOf: {
     en: "of",

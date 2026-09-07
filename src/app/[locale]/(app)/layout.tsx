@@ -15,6 +15,8 @@ import {
   unreadMessageCount,
   unreadNotificationCount,
 } from "@/lib/notifications/notify";
+import { isApplicationPaid } from "@/lib/data/payments";
+import { decideClientPaywall } from "@/lib/payments/gates";
 import { signedDocumentUrl } from "@/lib/storage/documents";
 
 export default async function AppLayout({
@@ -50,6 +52,27 @@ export default async function AppLayout({
       // same stance the profile page takes.
       profile.avatarPath ? signedDocumentUrl(profile.avatarPath) : null,
     ]);
+
+  /**
+   * The paywall, and it is the whole console rather than one screen: a
+   * client pays for their application before anything in it opens.
+   *
+   * `/checkout` deliberately sits outside this route group, so it is not
+   * behind the layout that would send it here — a redirect a page also
+   * receives is a loop, not a gate.
+   *
+   * Everything already loaded above is loaded anyway on the way past;
+   * this adds one indexed read. Existing applications were settled at
+   * zero by the 0028 backfill, so nobody mid-case meets this.
+   */
+  if (
+    decideClientPaywall({
+      hasApplication: !!application,
+      applicationPaid: application ? await isApplicationPaid(application.id) : false,
+    }) === "checkout"
+  ) {
+    redirect("/checkout");
+  }
 
   // Profile is reachable from the account menu (`profileHref` below),
   // not the navbar — the nav carries the application journey only.

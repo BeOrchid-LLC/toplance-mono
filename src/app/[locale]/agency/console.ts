@@ -13,6 +13,8 @@ import {
   type Permission,
 } from "@/lib/auth/policy";
 import { getActor, getProfile } from "@/lib/data/applications";
+import { hasActiveSubscription } from "@/lib/data/payments";
+import { decideAgencyBilling } from "@/lib/payments/gates";
 import { provisionEmployerProfile } from "@/lib/data/organisations";
 import { db } from "@/lib/db/client";
 import {
@@ -49,6 +51,15 @@ export type AgencyConsole = {
    * on the page must return early rather than run unfiltered.
    */
   orgId: string | null;
+  /**
+   * Whether this agency has paid for the period it is in.
+   *
+   * Resolved on every console page because every console page is behind
+   * it — see the redirect in `resolveAgencyConsole`. `false` for a
+   * director who has not named an organisation yet, since there is
+   * nothing to have paid for.
+   */
+  subscriptionActive: boolean;
 };
 
 /**
@@ -87,7 +98,14 @@ async function recoverEmployer(): Promise<
  * to agree on, and a guard pasted three times is a guard that is
  * eventually only enforced twice.
  */
-export async function resolveAgencyConsole(): Promise<AgencyConsole> {
+export async function resolveAgencyConsole(
+  /**
+   * `allowUnpaid` exists for exactly one caller: `/agency/billing`, the
+   * screen an unpaid agency is sent to. Without it that page would
+   * redirect to itself, which is a loop rather than a paywall.
+   */
+  { allowUnpaid = false }: { allowUnpaid?: boolean } = {}
+): Promise<AgencyConsole> {
   let [profile, actor] = await Promise.all([getProfile(), getActor()]);
 
   // A sign-up whose profile write was cancelled lands here moments after
@@ -126,11 +144,30 @@ export async function resolveAgencyConsole(): Promise<AgencyConsole> {
     .where(eq(orgMembers.userId, profile.id))
     .limit(1);
 
+  const orgId = actor.orgIds[0] ?? null;
+  const subscriptionActive = orgId ? await hasActiveSubscription(orgId) : false;
+
+  // The paywall, and it is here rather than in `requireAgencyConsole`
+  // because the dashboard resolves the console directly. An unpaid
+  // agency that could still read its own client roster would be a
+  // paywall in name only.
+  //
+  // `name-organisation` is not redirected: that state is the dashboard's
+  // to render, and it is the one page a director with no agency has.
+  if (!allowUnpaid) {
+    const decision = decideAgencyBilling({
+      hasOrganisation: !!membership,
+      subscriptionActive,
+    });
+    if (decision === "checkout") redirect("/agency/billing");
+  }
+
   return {
     profile,
     actor,
     membership: membership ?? null,
-    orgId: actor.orgIds[0] ?? null,
+    orgId,
+    subscriptionActive,
   };
 }
 

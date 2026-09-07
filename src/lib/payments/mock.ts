@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { PaymentIntent, PaymentProvider } from "@/lib/payments/provider";
+import type { PaymentProvider } from "@/lib/payments/provider";
 
 /**
  * Whether the fake payment path is allowed to run.
@@ -33,7 +33,12 @@ export function mockProvider(): PaymentProvider {
   return {
     name: "mock",
 
-    async createCheckout(intent: PaymentIntent) {
+    // Takes no argument at all, though the interface passes one: a mock
+    // that priced anything off the intent would be a second pricing
+    // implementation to keep in step with the real one. The caller has
+    // already re-derived the amount from the rate card, and this only
+    // has to say "settled".
+    async createCheckout() {
       if (!mockAllowed()) {
         throw new Error(
           "The mock payment provider will not run in a production build. " +

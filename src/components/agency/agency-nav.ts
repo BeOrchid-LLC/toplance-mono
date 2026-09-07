@@ -1,5 +1,6 @@
 import type { NavItem } from "@/components/app/app-nav";
 import { AGENCY } from "@/lib/i18n/agency";
+import { BILLING } from "@/lib/i18n/billing";
 import type { Locale } from "@/lib/i18n/locales";
 
 /**
@@ -44,7 +45,15 @@ export function agencyNav({
     dashboard,
     { href: "/agency/clients", label: AGENCY.navClients[locale] },
     ...(isDirector
-      ? [{ href: "/agency/team", label: AGENCY.navTeam[locale] }]
+      ? [
+          { href: "/agency/team", label: AGENCY.navTeam[locale] },
+          // The plan is the director's too, and for the same reason the
+          // roster is: what the agency pays and until when is a fact
+          // about running it, not about handling a case. A reviewer
+          // reaching `/agency/billing` sees their own console's paywall
+          // decision, never a Pay button on somebody else's money.
+          { href: "/agency/billing", label: BILLING.navBilling[locale] },
+        ]
       : []),
   ];
 }

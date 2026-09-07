@@ -699,6 +699,23 @@ export default async function HomePage() {
           <PricingEstimator card={rateCard} />
         </div>
 
+        {/* The traveller's own fee, beside the agency's bands rather
+            than on the traveller page alone: the two charges are the
+            whole price of the product, and an agency reading this is
+            entitled to know what its clients will be asked for. */}
+        <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
+          <div className="flex flex-col p-7 lg:p-9">
+            <span className="tag block">{SITE_HOME.clientFeeTag[locale]}</span>
+            <p className="d-sm mt-3">
+              {compactMoney(rateCard.clientFeeMinor, rateCard.currency)}{" "}
+              <span className="t-muted text-[15px]">
+                {SITE_HOME.perApplicationSuffix[locale]}
+              </span>
+            </p>
+            <p className="t-muted mt-3 max-w-[60ch]">{SITE_HOME.clientFeeBody[locale]}</p>
+          </div>
+        </div>
+
         <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface">
           <div className="flex flex-col p-7 lg:p-9">
             <span className="tag block">{SITE_HOME.agenciesTag[locale]}</span>

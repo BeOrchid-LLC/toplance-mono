@@ -165,6 +165,62 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant reads", async () => {
     expect(detail?.pendingInvites.some((i) => i.kind === "client")).toBe(false);
   });
 
+  it("stops counting a pending invitation once it has expired", async () => {
+    await db.insert(invitations).values([
+      {
+        orgId: BUSY,
+        email: "live@tenant.invalid",
+        kind: "staff",
+        status: "pending",
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+      {
+        orgId: BUSY,
+        email: "dead@tenant.invalid",
+        kind: "staff",
+        status: "pending",
+        // `status` is only flipped off `pending` when somebody opens the
+        // link, so this row stays `pending` in the column forever. The
+        // agency's own roster already reads it as expired; the console
+        // has to agree, or one screen tells the operator to keep waiting
+        // for a link that died a month ago.
+        expiresAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      },
+    ]);
+
+    const rows = await listTenants();
+    expect(rows.find((r) => r.id === BUSY)?.pendingInvitations).toBe(1);
+
+    const detail = await getTenant(BUSY);
+    // Still listed — nothing in the product can resend an invitation, so
+    // an operator looking at an agency with no owner needs to see that a
+    // link was sent and has died. It is labelled, not counted.
+    expect(detail?.pendingInvites).toHaveLength(2);
+    expect(detail?.pendingInvitations).toBe(1);
+
+    const byEmail = Object.fromEntries(
+      detail!.pendingInvites.map((i) => [i.email, i.expired])
+    );
+    expect(byEmail["live@tenant.invalid"]).toBe(false);
+    expect(byEmail["dead@tenant.invalid"]).toBe(true);
+  });
+
+  it("finds an agency whose id arrives in a different letter case", async () => {
+    // Postgres compares `uuid` case-insensitively and this used to be a
+    // JS `===` against `listTenants()`'s output, so an id typed or
+    // bookmarked in upper case 404'd an agency that exists.
+    const detail = await getTenant(BUSY.toUpperCase());
+    expect(detail?.name).toBe("Busy Agency");
+  });
+
+  it("returns null for an id that is not a uuid at all", async () => {
+    // Postgres throws on a malformed uuid before any row logic runs, so
+    // without the shape check this is a 500 where a wrong-but-well-formed
+    // id is a 404.
+    expect(await getTenant("1")).toBeNull();
+    expect(await getTenant("")).toBeNull();
+  });
+
   it("returns the roster with roles, newest agency first in the list", async () => {
     const detail = await getTenant(BUSY);
 
@@ -295,6 +351,29 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
       .select({ id: organisations.id })
       .from(organisations)
       .where(eq(organisations.name, "Rollback Agency"));
+    expect(orgs).toHaveLength(0);
+  });
+
+  it("refuses an invalid billing contact and rolls the agency back", async () => {
+    // `setTenantBilling` has always refused this; provisioning did not,
+    // so a value that got past the form's `type="email"` was stored and
+    // then blocked every later billing save with `billing_email_invalid`
+    // on a field the operator never typed.
+    const result = await provisionTenantTx(
+      {
+        name: "Bad Billing Agency",
+        ownerEmail: "owner@kite.invalid",
+        billingContact: "not-an-address",
+      },
+      STAFF
+    );
+
+    expect(result).toEqual({ error: "billing_email_invalid" });
+
+    const orgs = await db
+      .select({ id: organisations.id })
+      .from(organisations)
+      .where(eq(organisations.name, "Bad Billing Agency"));
     expect(orgs).toHaveLength(0);
   });
 

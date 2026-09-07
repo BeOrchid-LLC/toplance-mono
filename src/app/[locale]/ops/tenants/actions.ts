@@ -14,6 +14,7 @@ import {
 } from "@/lib/data/tenants";
 import { setDemoRequestStatus } from "@/lib/data/demo-requests";
 import { demoRequestStatus } from "@/lib/db/schema";
+import { isUuid } from "@/lib/domain/uuid";
 import { appUrl } from "@/lib/notifications/notify";
 import { sendEmail } from "@/lib/notifications/email";
 import { invitationEmail } from "@/lib/notifications/templates";
@@ -38,6 +39,18 @@ import { OPS_ACTIONS } from "@/lib/i18n/ops-actions";
  *
  * Nothing here reaches a traveller's case. The data module these call
  * into selects `count(*)` from `applications` and never a row.
+ *
+ * Every id these read arrives as a raw form string and reaches a `uuid`
+ * column, so each is checked with `isUuid` before it gets near Postgres.
+ * Postgres rejects a malformed uuid before any row logic runs, so
+ * without that check a blank or hand-edited field throws out of the
+ * action rather than returning a code — and the client's `run()`
+ * (`tenant-controls.tsx`) rejects inside `startTransition` with no
+ * toast, which is a button that silently does nothing. The detail page
+ * guards its URL segment with the same helper for the same reason. A
+ * malformed id is answered as a missing one: the two are the same
+ * sentence to an operator, and telling them apart would say which uuids
+ * exist to someone guessing.
  */
 
 /**
@@ -81,6 +94,11 @@ export async function provisionTenant(formData: FormData) {
   if ("error" in gate) return gate;
   const { actor } = gate;
 
+  const demoRequestId = field("demo_request_id").trim();
+  if (demoRequestId && !isUuid(demoRequestId)) {
+    return tenantError("demo_request_not_found");
+  }
+
   const seatsRaw = field("seats").trim();
   const result = await provisionTenantTx(
     {
@@ -90,7 +108,7 @@ export async function provisionTenant(formData: FormData) {
       billingContact: field("billing_contact") || undefined,
       ownerEmail: field("owner_email"),
       ownerName: field("owner_name") || undefined,
-      demoRequestId: field("demo_request_id") || undefined,
+      demoRequestId: demoRequestId || undefined,
     },
     actor.userId
   );
@@ -102,12 +120,17 @@ export async function provisionTenant(formData: FormData) {
    * within the transaction would put a live link in somebody's inbox
    * pointing at an agency a rollback then removed.
    *
-   * Not awaited into the result: `sendEmail` failing does not un-create
-   * the agency, and the token is on screen for the operator to copy —
-   * the same stance `notify` takes after a corridor approval.
+   * A failure here does not un-create the agency — `sendEmail` returns
+   * `false` rather than throwing, exactly so a dead provider cannot cost
+   * somebody the account they just paid for. But it is reported. With no
+   * `RESEND_API_KEY`, or a 403 from Resend, the invitation never left and
+   * the link below is the only copy that will ever exist; telling the
+   * operator "Agency provisioned" and nothing else is how `email.ts`'s
+   * own header records the invitation sheet coming to report "sent" for
+   * letters that were never sent.
    */
   const inviteUrl = appUrl(`/invite/${result.inviteToken}`);
-  await sendEmail({
+  const emailSent = await sendEmail({
     to: field("owner_email").trim().toLowerCase(),
     ...invitationEmail({
       orgName: field("name").trim(),
@@ -118,15 +141,37 @@ export async function provisionTenant(formData: FormData) {
 
   await track(
     "toplance.tenant_provisioned",
-    { orgId: result.orgId, fromDemoRequest: Boolean(field("demo_request_id")) },
+    { orgId: result.orgId, fromDemoRequest: Boolean(demoRequestId) },
     actor.userId
   );
   await audit(actor.userId, "tenant.provisioned", "organisation", result.orgId, {
     name: field("name").trim(),
+    emailSent,
   });
 
-  revalidateTenants();
-  return { ok: true as const, orgId: result.orgId, inviteUrl };
+  /**
+   * The one write here that does NOT revalidate, and that is the whole
+   * fix rather than an oversight.
+   *
+   * A revalidating Server Action does not merely mark a cache stale — it
+   * ships a fresh RSC payload in its own response, and the client
+   * commits that payload in the same transition as the `setInviteUrl`
+   * below it. When this was called from a demo-request row,
+   * `DemoRequestQueue` renders `<ProvisionTenant>` from a ternary on
+   * `convertedOrgId`, which this transaction has just populated: the row
+   * re-rendered as a `<Link>`, the dialog unmounted, and the invitation
+   * URL — the only copy, since the roster never selects `token` and
+   * nothing in the product can resend or revoke — was destroyed before
+   * it ever painted. `provision-tenant.tsx` already defers its own
+   * `router.refresh()` to dialog close for this reason; deferring the
+   * client half while the server half re-rendered anyway is what made
+   * two earlier attempts look like they had missed.
+   *
+   * Nothing is lost by leaving it out. Both tenant screens are
+   * `dynamic = "force-dynamic"`, so they hold no route cache to
+   * invalidate, and the refresh on dialog close re-reads them.
+   */
+  return { ok: true as const, orgId: result.orgId, inviteUrl, emailSent };
 }
 
 /**
@@ -143,6 +188,8 @@ async function changeSuspension(formData: FormData, suspend: boolean) {
   const gate = await requireStaffAction();
   if ("error" in gate) return gate;
   const { actor } = gate;
+
+  if (!isUuid(orgId)) return tenantError("tenant_not_found");
 
   const result = await setTenantSuspension(orgId, suspend);
   if ("error" in result) return tenantError(result.error);
@@ -187,6 +234,8 @@ export async function updateTenantBilling(formData: FormData) {
   if ("error" in gate) return gate;
   const { actor } = gate;
 
+  if (!isUuid(orgId)) return tenantError("tenant_not_found");
+
   /**
    * `Number("")` is `0`, not `NaN` — the seats input has no `required`,
    * so an operator who clears the box would otherwise post a value that
@@ -215,11 +264,26 @@ export async function updateTenantBilling(formData: FormData) {
 export async function updateMemberRole(formData: FormData) {
   const orgId = String(formData.get("org_id") ?? "");
   const userId = String(formData.get("user_id") ?? "");
-  const role = formData.get("role") === "owner" ? "owner" : "reviewer";
+  const rawRole = String(formData.get("role") ?? "");
 
   const gate = await requireStaffAction();
   if ("error" in gate) return gate;
   const { actor } = gate;
+
+  if (!isUuid(orgId)) return tenantError("tenant_not_found");
+
+  /**
+   * Narrowed against the two roles rather than `=== "owner" ? … :
+   * "reviewer"`, which turned every value that is not exactly `"owner"`
+   * — a missing field, a typo, a future caller sending `"Owner"` — into
+   * a demotion. The one case where guessing wrong is destructive was the
+   * one the fallback picked, and only `setMemberRole`'s `last_owner`
+   * guard kept it from emptying an agency of owners. An unrecognised
+   * value is now refused the same way `updateDemoRequestStatus` refuses
+   * an unrecognised status.
+   */
+  const role = rawRole === "owner" || rawRole === "reviewer" ? rawRole : null;
+  if (!role) return { error: OPS_ACTIONS.chooseARole[await getActionLocale()] };
 
   const result = await setMemberRole(orgId, userId, role);
   if ("error" in result) return tenantError(result.error);
@@ -249,6 +313,8 @@ export async function updateDemoRequestStatus(formData: FormData) {
   const { actor } = gate;
 
   const locale = await getActionLocale();
+
+  if (!isUuid(requestId)) return { error: OPS_ACTIONS.demoRequestNotFound[locale] };
 
   // Narrowed against the enum's own values rather than cast. The status
   // arrives from a POST body, and a value Postgres has never heard of

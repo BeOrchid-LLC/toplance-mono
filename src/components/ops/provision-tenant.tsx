@@ -38,6 +38,12 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
+  // Whether the invitation actually left. `sendEmail` returns false
+  // rather than throwing (no `RESEND_API_KEY`, a 403 from Resend), and an
+  // operator who is not told that will close this dialog believing the
+  // owner has a link — when the copy on screen is the only one that will
+  // ever exist.
+  const [emailSent, setEmailSent] = React.useState(true);
   // Remounts the form on every close, so its uncontrolled inputs forget
   // whatever was typed (or the invite-link screen that replaced them)
   // and come back holding only `defaultValue` again. `open`/`pending`
@@ -56,6 +62,7 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
     setOpen(next);
     if (!next) {
       setInviteUrl(null);
+      setEmailSent(true);
       setFormKey((key) => key + 1);
 
       // Deferred from `submit`, on purpose. When `demoRequest` is set,
@@ -90,9 +97,13 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
       }
 
       // The link stays on screen after the dialog's work is done: the
-      // email can fail silently and this is the only other copy — the
-      // roster never selects `token`.
+      // email can fail and this is the only other copy — the roster
+      // never selects `token`, and nothing in the product can resend or
+      // revoke an invitation.
       setInviteUrl(result.inviteUrl);
+      setEmailSent(result.emailSent);
+      // The agency exists either way, so this stays a success — the
+      // hand-off is what failed, and the notice beside the link says so.
       toast.success(t(OPS_TENANTS.toastProvisioned));
 
       // Not refreshed here — see `handleOpenChange`. Refreshing now
@@ -119,6 +130,11 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
 
         {inviteUrl ? (
           <div className="flex flex-col gap-2">
+            {!emailSent && (
+              <p role="alert" className="max-w-[52ch] text-danger-ink">
+                {t(OPS_TENANTS.provisionEmailFailed)}
+              </p>
+            )}
             <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
             <Input
               id="invite-url"

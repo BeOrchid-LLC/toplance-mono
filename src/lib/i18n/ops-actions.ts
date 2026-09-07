@@ -29,6 +29,7 @@ export const OPS_ACTIONS: {
   demoRequestAlreadyConverted: L;
   provisionFailed: L;
   chooseADemoStatus: L;
+  chooseARole: L;
   conversionNotAStatus: L;
   agencyNameRequired: L;
   agencyNameTooLong: L;
@@ -175,6 +176,18 @@ export const OPS_ACTIONS: {
    * describes the wrong operation and gives the operator nothing to do
    * next. This one points at the actual next step.
    */
+  chooseARole: {
+    en: "Choose whether this person is an owner or a reviewer.",
+    ha: "Zaɓi ko wannan mutumin mai shi ne ko mai dubawa.",
+    yo: "Yàn bóyá ẹni yìí jẹ́ olóhun tàbí olùyẹ̀wò.",
+    ig: "Họrọ ma onye a ọ̀ bụ onyenwe ya ma ọ bụ onye nyocha.",
+    fr: "Choisissez si cette personne est propriétaire ou réviseur.",
+    pt: "Escolha se esta pessoa é proprietária ou revisora.",
+    sw: "Chagua kama mtu huyu ni mmiliki au mkaguzi.",
+    ar: "اختر ما إذا كان هذا الشخص مالكًا أو مراجعًا.",
+    tw: "Paw sɛ saa onipa yi yɛ owura anaa ɔhwɛfoɔ.",
+    zu: "Khetha ukuthi lo muntu ungumnikazi noma umbuyekezi.",
+  },
   conversionNotAStatus: {
     en: "Conversion is recorded when you create the agency from this request — provision it instead.",
     ha: "Ana yin rikodin canzawa ne lokacin da ka ƙirƙiri hukumar daga wannan buƙatar — maimakon haka, sai ka kafa ta.",

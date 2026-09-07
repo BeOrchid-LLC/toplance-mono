@@ -53,7 +53,7 @@ export default async function AgencyClientsPage() {
   // `listOrgRoster` returns early on an empty list, and
   // `listInvitations` has nothing to filter by without one id.
   const [rows, invitations] = await Promise.all([
-    listOrgRoster(actor.orgIds, isDirector ? undefined : { handledBy: profile.id }),
+    listOrgRoster(actor, isDirector ? undefined : { handledBy: actor.userId }),
     orgId && isDirector ? listInvitations(orgId) : Promise.resolve([]),
   ]);
   const clientInvitations = invitations.filter((i) => i.kind === "client");

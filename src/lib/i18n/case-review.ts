@@ -226,9 +226,9 @@ export const CASE_REVIEW: {
    * In place of the composer while nobody holds the case.
    *
    * `canWriteMessages` refuses the send until the case has a handler,
-   * so a composer here would be a box that takes what you type and
-   * then a toast that refuses it. It names the two ways out because
-   * both are one click away on this same screen.
+   * so a composer here would be a box that takes what you type and then
+   * a toast that refuses it. It names the two ways out because both are
+   * one click away on this same screen.
    */
   messagesUnheld: {
     en: "Nobody is handling this case yet. Take it, or hand it to a colleague, and the thread opens.",

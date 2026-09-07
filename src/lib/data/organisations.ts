@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -10,6 +10,7 @@ import {
   organisations,
   profiles,
 } from "@/lib/db/schema";
+import type { Actor } from "@/lib/auth/policy";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import {
   EMPTY_PENDING_PROFILE,
@@ -217,31 +218,57 @@ export async function listOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
 }
 
 /**
- * The people one agency sponsors, furthest along first.
+ * Which slice of the reader's own reach to return. Omitted means all of
+ * it, which for a director is the agency's whole book and for a reviewer
+ * is their cases plus the unheld pool.
+ *
+ * A narrowing on top of the scope `listOrgRoster` already applies, never
+ * a widening: the console uses it to ask the two questions its dashboard
+ * asks separately — "what is on my desk" and "what could I take" — and
+ * neither reaches a row the unfiltered call would have withheld.
+ */
+export type RosterFilter = { handledBy: string } | { unclaimed: true };
+
+/**
+ * The clients this member may see listed, furthest along first.
  *
  * Read through the progress view, never the applications table
  * directly. The view carries no column that could reveal a document, so
  * the organisation console cannot leak one even by accident.
  *
- * Taking the ids and returning `[]` for an empty list is not a
+ * Scoped to the actor rather than to their org ids, because since #58
+ * "at this agency" stopped being the whole answer: a director sees the
+ * whole book, and a reviewer sees the cases they hold plus the ones
+ * nobody has taken.
+ *
+ * "Listed" is wider than "may open" by exactly the unheld pool, and
+ * deliberately so. Since 2026-09-07 `handlesCase` refuses a reviewer an
+ * unclaimed case — a row here is a name, a route and a completion score,
+ * which is the whole of what the view holds, and the dashboard renders
+ * that slice with a claim button instead of a link so it never offers a
+ * door the case screen would shut. Every other row does link, so the
+ * list and the permission still agree wherever they can be confused.
+ *
+ * Taking the actor and returning `[]` for a membership-less one is not a
  * convenience. RLS used to scope this view to the caller's own agency;
  * with RLS gone, an unfiltered select returns every sponsored traveller
  * on the platform — so the empty case has to return here rather than
  * fall through to a query with no restriction.
  */
-/**
- * Which slice of the agency's roster to read. Omitted means all of it —
- * the clients page, which lists everyone the agency is responsible for.
- */
-export type RosterFilter = { handledBy: string } | { unclaimed: true };
+export async function listOrgRoster(actor: Actor, filter?: RosterFilter) {
+  if (!actor.orgIds.length) return [];
 
-export async function listOrgRoster(
-  orgIds: readonly string[],
-  filter?: RosterFilter
-) {
-  if (!orgIds.length) return [];
+  /** The agencies this actor runs, where nothing narrows their reach. */
+  const directs = actor.orgs.filter((o) => o.role === "owner").map((o) => o.orgId);
 
-  const where = [inArray(orgApplicationProgress.orgId, [...orgIds])];
+  const where = [
+    inArray(orgApplicationProgress.orgId, [...actor.orgIds]),
+    or(
+      isNull(applications.assigneeId),
+      eq(applications.assigneeId, actor.userId),
+      directs.length ? inArray(applications.orgId, directs) : undefined
+    ),
+  ];
   if (filter && "handledBy" in filter) {
     where.push(eq(applications.assigneeId, filter.handledBy));
   }
@@ -258,16 +285,46 @@ export async function listOrgRoster(
     .select({
       id: orgApplicationProgress.id,
       caseRef: orgApplicationProgress.caseRef,
+      orgId: orgApplicationProgress.orgId,
       fullName: orgApplicationProgress.fullName,
+      email: orgApplicationProgress.email,
       status: orgApplicationProgress.status,
       destinationIso: orgApplicationProgress.destinationIso,
       visaName: orgApplicationProgress.visaName,
+      submittedAt: orgApplicationProgress.submittedAt,
+      updatedAt: orgApplicationProgress.updatedAt,
       documentsTotal: orgApplicationProgress.documentsTotal,
       documentsVerified: orgApplicationProgress.documentsVerified,
       completionPct: orgApplicationProgress.completionPct,
     })
     .from(orgApplicationProgress)
+    // The view carries no `assignee_id` — deliberately, it carries
+    // nothing a document could be inferred from — so who holds a case is
+    // read from the table beside it rather than by widening the view.
     .innerJoin(applications, eq(applications.id, orgApplicationProgress.id))
     .where(and(...where))
     .orderBy(desc(orgApplicationProgress.completionPct));
+}
+
+/**
+ * How many cases the agency holds, whoever is asking.
+ *
+ * Deliberately not `listOrgRoster(...).length`. That list is scoped to
+ * what the viewer may open, and this number is divided by
+ * `seats_purchased` on the console's front page — a billing figure that
+ * must not change depending on which colleague is looking at it.
+ *
+ * Scoping it would also protect nothing. A count names no client and
+ * carries no document; what `handlesCase` guards is the contents of a
+ * case, and there are no contents in an integer.
+ */
+export async function countOrgClients(orgIds: readonly string[]): Promise<number> {
+  if (!orgIds.length) return 0;
+
+  const [row] = await db
+    .select({ total: count() })
+    .from(applications)
+    .where(inArray(applications.orgId, [...orgIds]));
+
+  return row?.total ?? 0;
 }

@@ -245,10 +245,12 @@ describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
   const TRAVELLER = "test_agencynotify_traveller";
   const REVIEWER = "test_agencynotify_reviewer";
   const RIVAL = "test_agencynotify_rival";
+  const COLLEAGUE = "test_agencynotify_colleague";
+  const DIRECTOR = "test_agencynotify_director";
   const STAFF = "test_agencynotify_staff";
   /** `applications_traveler_key` is unique, so an orphan case needs its own. */
   const LONE = "test_agencynotify_lone";
-  const IDS = [TRAVELLER, REVIEWER, RIVAL, STAFF, LONE];
+  const IDS = [TRAVELLER, REVIEWER, RIVAL, STAFF, LONE, COLLEAGUE, DIRECTOR];
 
   const ORG = "00000000-0000-4000-8000-0000000a9001";
   const RIVAL_ORG = "00000000-0000-4000-8000-0000000a9002";
@@ -262,6 +264,8 @@ describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
       { id: RIVAL, email: "an-rival@test.invalid", fullName: "Sade" },
       { id: STAFF, email: "an-staff@test.invalid", fullName: "Grace", role: "staff" },
       { id: LONE, email: "an-lone@test.invalid", fullName: "Tunde" },
+      { id: COLLEAGUE, email: "an-colleague@test.invalid", fullName: "Ngozi" },
+      { id: DIRECTOR, email: "an-director@test.invalid", fullName: "Emeka" },
     ]);
 
     await db.insert(organisations).values([
@@ -271,6 +275,8 @@ describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
 
     await db.insert(orgMembers).values([
       { orgId: ORG, userId: REVIEWER, role: "reviewer" },
+      { orgId: ORG, userId: COLLEAGUE, role: "reviewer" },
+      { orgId: ORG, userId: DIRECTOR, role: "owner" },
       { orgId: RIVAL_ORG, userId: RIVAL, role: "reviewer" },
     ]);
 
@@ -320,6 +326,58 @@ describe.skipIf(!process.env.DATABASE_URL)("notifyAgency", async () => {
   // expressible: `applications.org_id` is `not null`, which
   // `schema.test.ts` proves directly. What is left of that path is the
   // missing-application case below.
+
+  /**
+   * Who at the agency a case notification is actually for.
+   *
+   * These carry a deep link to the case, and since #58 `handlesCase`
+   * decides who may open one: an unheld case is the whole agency's, a
+   * held one is the assignee's and the director's. Notifying past that
+   * line sends colleagues a link that answers 404 — which is both a dead
+   * end and a statement about a client they are not on.
+   */
+  describe("once a case is held", () => {
+    const claim = (userId: string) =>
+      db
+        .update(applications)
+        .set({ assigneeId: userId })
+        .where(eq(applications.id, applicationId));
+
+    const send = () =>
+      notifyAgency(applicationId, "checklist_complete", {
+        caseRef: "TPL-000042",
+        url: "https://x.test/agency/clients/1",
+      });
+
+    it("reaches the colleague holding it", async () => {
+      await claim(REVIEWER);
+      await send();
+
+      expect(await getNotifications(REVIEWER)).toHaveLength(1);
+    });
+
+    it("reaches the director, who can open any of the agency's cases", async () => {
+      await claim(REVIEWER);
+      await send();
+
+      expect(await getNotifications(DIRECTOR)).toHaveLength(1);
+    });
+
+    it("reaches no other reviewer, whose link would 404", async () => {
+      await claim(REVIEWER);
+      await send();
+
+      expect(await getNotifications(COLLEAGUE)).toHaveLength(0);
+    });
+
+    it("still reaches everyone while it is unheld", async () => {
+      await send();
+
+      expect(await getNotifications(REVIEWER)).toHaveLength(1);
+      expect(await getNotifications(COLLEAGUE)).toHaveLength(1);
+      expect(await getNotifications(DIRECTOR)).toHaveLength(1);
+    });
+  });
 
   it("never throws on an application that does not exist", async () => {
     await expect(

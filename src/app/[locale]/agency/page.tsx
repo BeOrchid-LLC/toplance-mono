@@ -14,6 +14,7 @@ import { AgencyBar } from "@/components/agency/agency-bar";
 import { ClientRoster } from "@/components/agency/client-roster";
 import { ConsoleBand } from "@/components/agency/console-band";
 import { InviteDialog } from "@/components/agency/invite-dialog";
+import type { Actor } from "@/lib/auth/policy";
 import { homeFor } from "@/lib/auth/routes";
 import { createOrganisationTx } from "@/lib/data/organisations";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
@@ -21,7 +22,11 @@ import { applications } from "@/lib/db/schema";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { listInvitations } from "@/lib/data/invitations";
-import { listOrgMembers, listOrgRoster } from "@/lib/data/organisations";
+import {
+  countOrgClients,
+  listOrgMembers,
+  listOrgRoster,
+} from "@/lib/data/organisations";
 import { getLocale } from "@/lib/i18n/server";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
@@ -89,10 +94,22 @@ function RosterCard({
   );
 }
 
-/** The agency in numbers: who is on the roster, who works here, what is outstanding. */
+/**
+ * The agency in numbers: how many clients it holds, who works here, what
+ * is outstanding.
+ *
+ * Counts, not contents. The rows themselves are rendered by
+ * `/agency/clients` and `/agency/team`; what this page needs from each
+ * list is its length, and `countOrgClients` is that question asked as a
+ * `count(*)` rather than by reading a roster in order to measure it.
+ *
+ * The client count is also the agency's rather than the viewer's — it is
+ * divided by `seats_purchased` below, and a billing figure must not read
+ * differently depending on which colleague is logged in.
+ */
 async function directorSummary(orgIds: readonly string[], orgId: string | null) {
-  const [rows, members, invitations] = await Promise.all([
-    listOrgRoster(orgIds),
+  const [used, members, invitations] = await Promise.all([
+    countOrgClients(orgIds),
     // Same "no org, no unfiltered read" reasoning as the roster: both of
     // these take one org id and have nothing to filter by without it.
     orgId ? listOrgMembers(orgId) : Promise.resolve([]),
@@ -100,7 +117,7 @@ async function directorSummary(orgIds: readonly string[], orgId: string | null) 
   ]);
 
   return {
-    rows,
+    used,
     members,
     pendingInvitations: invitations.filter((i) => i.status === "pending"),
   };
@@ -113,13 +130,15 @@ async function directorSummary(orgIds: readonly string[], orgId: string | null) 
  * Both lists are the same rows the clients page shows — this is not a
  * second source of truth, it is the same query with `assignee_id` in the
  * `where`. The pool is here rather than only on the clients page because
- * an empty desk needs somewhere to go next, and `handlesCase` says an
- * unheld case is open to any member.
+ * an empty desk needs somewhere to go next, and taking a case is that
+ * step: `handlesCase` refuses an unheld case to everyone but the
+ * director, and `canAssignCase` is what lets a reviewer claim one
+ * anyway.
  */
-async function reviewerDesk(orgIds: readonly string[], handlerId: string) {
+async function reviewerDesk(actor: Actor) {
   const [assigned, unclaimed] = await Promise.all([
-    listOrgRoster(orgIds, { handledBy: handlerId }),
-    listOrgRoster(orgIds, { unclaimed: true }),
+    listOrgRoster(actor, { handledBy: actor.userId }),
+    listOrgRoster(actor, { unclaimed: true }),
   ]);
 
   return { assigned, unclaimed };
@@ -237,9 +256,9 @@ export default async function EmployerConsolePage() {
   // neither pays for the other's queries — and a reviewer never runs the
   // agency-wide roster read at all.
   const summary = isDirector ? await directorSummary(actor.orgIds, orgId) : null;
-  const desk = isDirector ? null : await reviewerDesk(actor.orgIds, profile.id);
+  const desk = isDirector ? null : await reviewerDesk(actor);
 
-  const used = summary?.rows.length ?? 0;
+  const used = summary?.used ?? 0;
   const seats = org.seatsPurchased ?? 0;
 
   return (

@@ -111,10 +111,19 @@ export const EVENT_NAMES = [
   /** A staff decision that moves a case through review — see `changeStatusTx`. */
   "toplance.application_status_changed",
 
-  /** A reviewer takes a case as theirs. */
+  /** A reviewer takes an unheld case as their own. */
   "toplance.case_claimed",
 
-  /** A reviewer hands a case back to the queue. */
+  /**
+   * A case is handed to a named colleague — someone other than the
+   * person doing the handing, which is what separates it from
+   * `case_claimed`. Distinct because it is the director's move, and one
+   * event for both made "who is picking up their own work" and "who is
+   * being given work" the same number.
+   */
+  "toplance.case_assigned",
+
+  /** A case is put back into the agency's pool. */
   "toplance.case_released",
 
   /**

@@ -33,6 +33,8 @@ export const INVITE_DIALOG: {
   sheetThirtyDays: L;
   onlyAddressNotice: L;
   onlyAddressFallback: L;
+  notSentTitle: L;
+  notSentNotice: L;
   doneButton: L;
   inviteDescription: L;
   emailHelp: L;
@@ -191,6 +193,40 @@ export const INVITE_DIALOG: {
     ar: "يمكن فقط لـ {email} قبول هذه الدعوة. إذا فُتحت من أي عنوان آخر، سيتم رفضها.",
     tw: "{email} nko ara na ɔbɛtumi agye frɛ yi atom. Sɛ wobue firi adireesi foforɔ biara so a, wɔmpene so.",
     zu: "Ku-{email} kuphela okungamukela lesi simemo. Uma sivulwa kusuka kunoma iyiphi enye ikheli, siyenqatshelwa.",
+  },
+  /**
+   * The sheet when the email did not go.
+   *
+   * `sendEmail` reports delivery rather than swallowing the answer, and
+   * this is what the sheet says when it reports false — a blank
+   * `RESEND_API_KEY`, or Resend refusing the domain. The invitation row
+   * exists either way, which is why this is a caveat on the sheet and
+   * not an error: the remedy is Resend on the roster, not inviting
+   * again.
+   */
+  notSentTitle: {
+    en: "Invitation created, but not emailed",
+    ha: "An ƙirƙiri gayyata, amma ba a aika ta imel ba",
+    yo: "A ti ṣẹ̀dá ìpè, ṣùgbọ́n a kò fi ránṣẹ́ nípasẹ̀ ímeèlì",
+    ig: "E mepụtara ọkpụkpọ, mana e zigaghị ya na email",
+    fr: "Invitation créée, mais non envoyée par e-mail",
+    pt: "Convite criado, mas não enviado por e-mail",
+    sw: "Mwaliko umeundwa, lakini haujatumwa kwa barua pepe",
+    ar: "تم إنشاء الدعوة، لكن لم تُرسل بالبريد الإلكتروني",
+    tw: "Wɔayɛ frɛ no, nanso wɔamfa email ansoma",
+    zu: "Isimemo sidaliwe, kodwa asithunyelwanga nge-imeyili",
+  },
+  notSentNotice: {
+    en: "The invitation exists and the link is live, but the email did not go out. Use Resend on the roster once email is working.",
+    ha: "Gayyatar tana nan kuma hanyar haɗin tana aiki, amma imel ɗin bai fita ba. Yi amfani da Sake aikawa a jerin da zarar imel yana aiki.",
+    yo: "Ìpè náà wà, ọ̀nà ìjápọ̀ sì ń ṣiṣẹ́, ṣùgbọ́n ímeèlì kò jáde. Lo Ránṣẹ́ Lẹ́ẹ̀kansí lórí àkọsílẹ̀ nígbà tí ímeèlì bá ń ṣiṣẹ́.",
+    ig: "Ọkpụkpọ ahụ dị ma njikọ ya na-arụ ọrụ, mana email ahụ apụghị. Jiri Zigharia na ndepụta ahụ ozugbo email na-arụ ọrụ.",
+    fr: "L'invitation existe et le lien est actif, mais l'e-mail n'est pas parti. Utilisez Renvoyer sur la liste une fois l'e-mail configuré.",
+    pt: "O convite existe e a ligação está ativa, mas o e-mail não saiu. Use Reenviar na lista assim que o e-mail estiver a funcionar.",
+    sw: "Mwaliko upo na kiungo kinafanya kazi, lakini barua pepe haikutoka. Tumia Tuma tena kwenye orodha mara barua pepe itakapofanya kazi.",
+    ar: "الدعوة موجودة والرابط فعّال، لكن البريد لم يُرسل. استخدم إعادة الإرسال في القائمة بمجرد أن يعمل البريد.",
+    tw: "Frɛ no wɔ hɔ na link no yɛ adwuma, nanso email no ankɔ. Fa Sane Soma a ɛwɔ nkyerɛwee no so di dwuma sɛ email no yɛ adwuma a.",
+    zu: "Isimemo sikhona futhi isixhumanisi siyasebenza, kodwa i-imeyili ayiphumanga. Sebenzisa u-Thumela futhi ohlwini uma i-imeyili isisebenza.",
   },
   onlyAddressFallback: {
     en: "the invited address",

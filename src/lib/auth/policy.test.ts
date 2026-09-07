@@ -451,35 +451,66 @@ describe("visa expiry", () => {
 });
 
 describe("messages", () => {
+  /*
+   * The write assertions sit on `claimedCase` because writing grew a
+   * second condition. On an unheld case every one of them would now be
+   * false for the wrong reason, and a test that passes because of the
+   * gate cannot also be proving the identity check it was written for.
+   */
   it("lets the traveller read and write their own thread", () => {
-    expect(canReadMessages(traveller, tenantCase)).toBe(true);
-    expect(canWriteMessages(traveller, tenantCase)).toBe(true);
+    expect(canReadMessages(traveller, claimedCase)).toBe(true);
+    expect(canWriteMessages(traveller, claimedCase)).toBe(true);
   });
 
   it("lets the agency read and write its traveller's thread", () => {
-    expect(canReadMessages(agencyReviewer, tenantCase)).toBe(true);
-    expect(canWriteMessages(agencyReviewer, tenantCase)).toBe(true);
+    expect(canReadMessages(agencyReviewer, claimedCase)).toBe(true);
+    expect(canWriteMessages(agencyReviewer, claimedCase)).toBe(true);
+  });
+
+  /**
+   * The thread waits for a handler. Both sides wait together: a
+   * traveller writing into a case nobody holds is the same silence as
+   * an agency writing into one, only from the other end of it.
+   */
+  it("lets nobody write while the case is unheld", () => {
+    expect(canWriteMessages(traveller, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyReviewer, unheldCase)).toBe(false);
+    expect(canWriteMessages(agencyDirector, unheldCase)).toBe(false);
+  });
+
+  /**
+   * Reading is not gated on a handler — the thread is the record, and
+   * anything written before that rule stays readable. It is still gated
+   * on `participant`, which since 2026-09-07 no longer counts a reviewer
+   * standing next to an unclaimed case: the two rules compose, so the
+   * one person on the agency side who can read an unheld thread is the
+   * director.
+   */
+  it("leaves an unheld thread readable by the traveller and the director", () => {
+    expect(canReadMessages(traveller, unheldCase)).toBe(true);
+    expect(canReadMessages(agencyDirector, unheldCase)).toBe(true);
+    expect(canReadMessages(agencyReviewer, unheldCase)).toBe(false);
   });
 
   it("keeps platform staff out of the conversation entirely", () => {
-    expect(canReadMessages(platformStaff, tenantCase)).toBe(false);
-    expect(canWriteMessages(platformStaff, tenantCase)).toBe(false);
+    expect(canReadMessages(platformStaff, claimedCase)).toBe(false);
+    expect(canWriteMessages(platformStaff, claimedCase)).toBe(false);
   });
 
   it("keeps a different agency out of the conversation entirely", () => {
-    expect(canReadMessages(otherAgency, tenantCase)).toBe(false);
-    expect(canWriteMessages(otherAgency, tenantCase)).toBe(false);
+    expect(canReadMessages(otherAgency, claimedCase)).toBe(false);
+    expect(canWriteMessages(otherAgency, claimedCase)).toBe(false);
   });
 
   it("denies an unrelated traveller both ways", () => {
-    expect(canReadMessages(otherTraveller, tenantCase)).toBe(false);
-    expect(canWriteMessages(otherTraveller, tenantCase)).toBe(false);
+    expect(canReadMessages(otherTraveller, claimedCase)).toBe(false);
+    expect(canWriteMessages(otherTraveller, claimedCase)).toBe(false);
   });
 
   it("does not let a forged staff role read or write someone else's thread", () => {
     const forged: Actor = { ...otherTraveller, staffRole: "owner" };
-    expect(canReadMessages(forged, tenantCase)).toBe(false);
-    expect(canWriteMessages(forged, tenantCase)).toBe(false);
+    expect(canReadMessages(forged, claimedCase)).toBe(false);
+    expect(canWriteMessages(forged, claimedCase)).toBe(false);
   });
 
   /**

@@ -26,7 +26,7 @@ export const MESSAGES: {
    * are expected to break themselves is worse than silence explained.
    */
   unclaimedNotice: L;
-  senderStaff: L;
+  senderAgency: L;
   senderTraveler: L;
 } = {
   title: {
@@ -77,17 +77,24 @@ export const MESSAGES: {
     tw: "Obiara nni w'adwumakuw no mu a wagye w'asɛm no nnya. Wobɛtumi akyerɛw wɔ ha bere a obi gye no.",
     zu: "Akekho enkampanini yakho osethathe icala lakho. Uzokwazi ukubhala lapha ngokushesha nje uma ekhona osithathayo.",
   },
-  senderStaff: {
-    en: "Toplance team",
-    ha: "Ƙungiyar Toplance",
-    yo: "Ẹgbẹ́ Toplance",
-    ig: "Ndị otu Toplance",
-    fr: "L'équipe Toplance",
-    pt: "Equipa Toplance",
-    sw: "Timu ya Toplance",
-    ar: "فريق Toplance",
-    tw: "Toplance kuw",
-    zu: "Ithimba le-Toplance",
+  /**
+   * Only ever a fallback, for an agency colleague whose profile carries
+   * no name. It used to read "Toplance team", which since #58 is a
+   * statement the product spends the rest of its copy denying: nobody at
+   * Toplance reads these threads. The wording matches `unclaimedNotice`
+   * above, which already says "your agency" in each locale.
+   */
+  senderAgency: {
+    en: "Your agency",
+    ha: "Hukumarka",
+    yo: "Ilé-iṣẹ́ rẹ",
+    ig: "Ụlọ ọrụ gị",
+    fr: "Votre agence",
+    pt: "A sua agência",
+    sw: "Wakala wako",
+    ar: "وكالتك",
+    tw: "W'ahyehyɛdeɛ",
+    zu: "Inkampani yakho",
   },
   senderTraveler: {
     en: "Traveler",

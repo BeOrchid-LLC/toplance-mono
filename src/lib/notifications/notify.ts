@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull, or } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -244,6 +244,14 @@ export async function notifyStaff<K extends keyof NotificationPayload>(
  * see `isAgencyFor` in `@/lib/auth/policy` for why that state is
  * unservable rather than merely unbilled.
  *
+ * Not the whole agency once the case is held. These notifications carry
+ * a link to the case, and `handlesCase` decides who may open one: an
+ * unheld case is anyone's at the agency, a held one is the assignee's
+ * and the director's. Telling the rest would send them a link that
+ * answers 404, and say which of a colleague's clients are active while
+ * doing it — the reach this fan-out is scoped to is the reach the policy
+ * grants, which is what keeps the two from drifting apart.
+ *
  * Never throws, for the same reason `notifyStaff` did not: callers run
  * this beside a committed write, and `toActionError` does not recognise
  * a raw database error, so an uncaught failure here would surface to a
@@ -259,7 +267,18 @@ export async function notifyAgency<K extends keyof NotificationPayload>(
       .select({ id: orgMembers.userId })
       .from(applications)
       .innerJoin(orgMembers, eq(orgMembers.orgId, applications.orgId))
-      .where(eq(applications.id, applicationId));
+      .where(
+        and(
+          eq(applications.id, applicationId),
+          or(
+            // Unheld: the whole agency, because somebody has to be able
+            // to look before they can pick it up.
+            isNull(applications.assigneeId),
+            eq(orgMembers.userId, applications.assigneeId),
+            eq(orgMembers.role, "owner")
+          )
+        )
+      );
 
     await Promise.all(members.map((m) => notify(m.id, kind, payload, applicationId)));
   } catch (error) {

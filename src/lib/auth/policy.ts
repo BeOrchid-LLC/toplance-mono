@@ -279,7 +279,7 @@ export const canReadMessages: Permission = participant;
  * The thread used to open the moment a case existed, on the reasoning
  * that an unclaimed one belongs to the whole agency and a shared inbox
  * is the honest model for a small team. It reads well and behaves
- * badly: `handlesCase` lets every colleague reach an unclaimed case, so
+ * badly: `handlesCase` let every colleague reach an unclaimed case, so
  * a traveller's question landed in a place where answering it was
  * nobody's job in particular, and the agency could open a conversation
  * that no name was attached to. A reply owed by everyone is owed by no

@@ -125,6 +125,112 @@ const CITIES: Record<string, IntakeQuestion["chips"]> = {
 };
 
 /**
+ * One budget figure, in the forms the ten languages need it.
+ *
+ * `short` is the abbreviated amount six of them use unchanged; English,
+ * Portuguese and Arabic spell the unit out and each spell it their own
+ * way. Same economy as `city` above — the amount is written four times,
+ * not ten.
+ */
+type Amount = { en: string; short: string; pt: string; ar: string };
+
+/** The four money bands, in the phrasing each language wraps them in. */
+const budgetBands = (
+  under: Amount,
+  low: Amount,
+  high: Amount,
+  over: Amount
+): Record<string, Record<Locale, string>> => {
+  const range = (a: Amount): Record<Locale, string> => ({
+    en: a.en, ha: a.short, yo: a.short, ig: a.short, fr: a.short,
+    pt: a.pt, sw: a.short, ar: a.ar, tw: a.short, zu: a.short,
+  });
+
+  return {
+    "Under US$1,250": {
+      en: `Under ${under.en}`,
+      ha: `Ƙasa da ${under.short}`,
+      yo: `Kéré sí ${under.short}`,
+      ig: `N'okpuru ${under.short}`,
+      fr: `Moins de ${under.short}`,
+      pt: `Menos de ${under.pt}`,
+      sw: `Chini ya ${under.short}`,
+      ar: `أقل من ${under.ar}`,
+      tw: `Ase ${under.short}`,
+      zu: `Ngaphansi kuka-${under.short}`,
+    },
+    "US$1,250–2,500": range(low),
+    "US$2,500–5,000": range(high),
+    "Over US$5,000": {
+      en: `Over ${over.en}`,
+      ha: `Sama da ${over.short}`,
+      yo: `Ju ${over.short} lọ`,
+      ig: `Karịa ${over.short}`,
+      fr: `Plus de ${over.short}`,
+      pt: `Mais de ${over.pt}`,
+      sw: `Zaidi ya ${over.short}`,
+      ar: `أكثر من ${over.ar}`,
+      tw: `Boro ${over.short}`,
+      zu: `Ngaphezu kuka-${over.short}`,
+    },
+  };
+};
+
+/** The dollar wording, shown to anyone whose country has no entry below. */
+const BUDGET_USD = budgetBands(
+  { en: "US$1,250", short: "US$1,250", pt: "US$1250", ar: "US$1,250" },
+  { en: "US$1,250–2,500", short: "US$1,250–2,500", pt: "US$1250–2500", ar: "US$1,250–2,500" },
+  { en: "US$2,500–5,000", short: "US$2,500–5,000", pt: "US$2500–5000", ar: "US$2,500–5,000" },
+  { en: "US$5,000", short: "US$5,000", pt: "US$5000", ar: "US$5,000" }
+);
+
+/**
+ * What the four bands are worth where the traveller lives, keyed on the
+ * country name the intake records — the same keys as `CITIES`.
+ *
+ * Rounded to what a person would say out loud, not converted: these are
+ * the walls of a band, and a chip reading "Under ₵15,000" answers
+ * "roughly how much have you got", it does not quote a rate. A country
+ * absent here falls back to `BUDGET_USD`, which is the honest outcome
+ * for somewhere this product does not yet price.
+ */
+const BUDGET_LABELS_BY_COUNTRY: Record<
+  string,
+  Record<string, Record<Locale, string>>
+> = {
+  Nigeria: budgetBands(
+    { en: "₦2 million", short: "₦2m", pt: "₦2 milhões", ar: "₦2 مليون" },
+    { en: "₦2–4 million", short: "₦2–4m", pt: "₦2–4 milhões", ar: "₦2–4 مليون" },
+    { en: "₦4–8 million", short: "₦4–8m", pt: "₦4–8 milhões", ar: "₦4–8 مليون" },
+    { en: "₦8 million", short: "₦8m", pt: "₦8 milhões", ar: "₦8 مليون" }
+  ),
+  Ghana: budgetBands(
+    { en: "₵15,000", short: "₵15,000", pt: "₵15 000", ar: "₵15,000" },
+    { en: "₵15,000–30,000", short: "₵15,000–30,000", pt: "₵15 000–30 000", ar: "₵15,000–30,000" },
+    { en: "₵30,000–60,000", short: "₵30,000–60,000", pt: "₵30 000–60 000", ar: "₵30,000–60,000" },
+    { en: "₵60,000", short: "₵60,000", pt: "₵60 000", ar: "₵60,000" }
+  ),
+  Kenya: budgetBands(
+    { en: "KSh 160,000", short: "KSh 160,000", pt: "KSh 160 000", ar: "KSh 160,000" },
+    { en: "KSh 160,000–320,000", short: "KSh 160,000–320,000", pt: "KSh 160 000–320 000", ar: "KSh 160,000–320,000" },
+    { en: "KSh 320,000–650,000", short: "KSh 320,000–650,000", pt: "KSh 320 000–650 000", ar: "KSh 320,000–650,000" },
+    { en: "KSh 650,000", short: "KSh 650,000", pt: "KSh 650 000", ar: "KSh 650,000" }
+  ),
+  "South Africa": budgetBands(
+    { en: "R22,000", short: "R22,000", pt: "R22 000", ar: "R22,000" },
+    { en: "R22,000–45,000", short: "R22,000–45,000", pt: "R22 000–45 000", ar: "R22,000–45,000" },
+    { en: "R45,000–90,000", short: "R45,000–90,000", pt: "R45 000–90 000", ar: "R45,000–90,000" },
+    { en: "R90,000", short: "R90,000", pt: "R90 000", ar: "R90,000" }
+  ),
+  Cameroon: budgetBands(
+    { en: "750,000 CFA", short: "750,000 CFA", pt: "750 000 CFA", ar: "750,000 CFA" },
+    { en: "750,000–1.5m CFA", short: "750,000–1.5m CFA", pt: "750 000–1,5M CFA", ar: "750,000–1.5m CFA" },
+    { en: "1.5m–3m CFA", short: "1.5m–3m CFA", pt: "1,5M–3M CFA", ar: "1.5m–3m CFA" },
+    { en: "3m CFA", short: "3m CFA", pt: "3M CFA", ar: "3m CFA" }
+  ),
+};
+
+/**
  * Eleven topics, asked one at a time. Every answer stays editable:
  * reopening one truncates the conversation at that point, clears what
  * followed, and rebuilds the checklist — so a mis-tapped chip never
@@ -306,11 +412,32 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       tw: "Sika dodow bɛn na wode bɛyɛ atutena no ho ade — wimhyɛn akwantuo, sika a wobɛtua, bosome a edi kan?",
       zu: "Yimalini oyisebenzisayo yokufuduka uqobo — izindiza, izimali okumele zikhokhwe, inyanga yokuqala?",
     },
+    /**
+     * The values are US dollars and identical for every traveller; the
+     * money they actually read is swapped in by `resolveChips` from
+     * `BUDGET_LABELS_BY_COUNTRY`, the way the city list is narrowed by
+     * `CITIES`.
+     *
+     * Value and label are split here because `applies_when` is a
+     * membership test on the stored value and the rule editor in `/ops`
+     * will build a rule on any topic. Were the value itself local, a
+     * rule written as `budget in ["₦2–4 million"]` would match Nigerians
+     * and fall to the outside-the-vocabulary hedge for everybody else —
+     * a document shown with "we are not certain" for a question we did
+     * have the answer to. `allChipsFor` returns these canonical values,
+     * so the editor offers one vocabulary rather than five.
+     *
+     * The ladder is 1,250 / 2,500 / 5,000 rather than a rounder
+     * 1,000 / 2,500 / 5,000 so the naira bands come out as the
+     * ₦2m / ₦4m / ₦8m this question has always shown; no existing copy
+     * changes meaning. Each country's wording is a rounded equivalent,
+     * not a conversion, and none of it is a quote.
+     */
     chips: [
-      c("Under ₦2 million", { en: "Under ₦2 million", ha: "Ƙasa da ₦2m", yo: "Kéré sí ₦2m", ig: "N'okpuru ₦2m", fr: "Moins de ₦2 M", pt: "Menos de ₦2 milhões", sw: "Chini ya ₦2m", ar: "أقل من ₦2 مليون", tw: "Ase ₦2m", zu: "Ngaphansi kuka-₦2m" }),
-      c("₦2–4 million", { en: "₦2–4 million", ha: "₦2–4m", yo: "₦2–4m", ig: "₦2–4m", fr: "₦2–4 M", pt: "₦2–4 milhões", sw: "₦2–4m", ar: "₦2–4 مليون", tw: "₦2–4m", zu: "₦2–4m" }),
-      c("₦4–8 million", { en: "₦4–8 million", ha: "₦4–8m", yo: "₦4–8m", ig: "₦4–8m", fr: "₦4–8 M", pt: "₦4–8 milhões", sw: "₦4–8m", ar: "₦4–8 مليون", tw: "₦4–8m", zu: "₦4–8m" }),
-      c("Over ₦8 million", { en: "Over ₦8 million", ha: "Sama da ₦8m", yo: "Ju ₦8m lọ", ig: "Karịa ₦8m", fr: "Plus de ₦8 M", pt: "Mais de ₦8 milhões", sw: "Zaidi ya ₦8m", ar: "أكثر من ₦8 مليون", tw: "Boro ₦8m", zu: "Ngaphezu kuka-₦8m" }),
+      c("Under US$1,250", BUDGET_USD["Under US$1,250"]),
+      c("US$1,250–2,500", BUDGET_USD["US$1,250–2,500"]),
+      c("US$2,500–5,000", BUDGET_USD["US$2,500–5,000"]),
+      c("Over US$5,000", BUDGET_USD["Over US$5,000"]),
       c("Not sure yet", { en: "Not sure yet", ha: "Ban tabbata ba", yo: "Kò dá mi lójú", ig: "Amabeghị m", fr: "Je ne sais pas encore", pt: "Ainda não sei", sw: "Sijui bado", ar: "لست متأكداً بعد", tw: "Minsii gyinaeɛ biara", zu: "Angikaqiniseki" }),
     ],
   },
@@ -433,15 +560,28 @@ export function resolveChips(
 ): IntakeQuestion["chips"] {
   const name = fullName.trim();
 
+  const country = answers.residence_country ?? "";
+  const bands = BUDGET_LABELS_BY_COUNTRY[country];
+
   // The city question is narrowed by the country asked immediately
   // before it. A country with no list offers no chips rather than a
   // guess: free text answers the question either way, and this answer
   // decides which mission the traveller applies at, so putting a city in
   // their mouth is not a small error.
+  //
+  // The budget question follows the same answer by a different route.
+  // Narrowing would be wrong there — every traveller is offered all four
+  // bands — so only the label changes, and the value each band stores
+  // stays the canonical dollar one. A country with no wording of its own
+  // keeps the dollar labels rather than being shown naira.
   const chips =
     question.key === "residence"
-      ? (CITIES[answers.residence_country ?? ""] ?? [])
-      : question.chips;
+      ? (CITIES[country] ?? [])
+      : question.key === "budget" && bands
+        ? question.chips.map((chip) =>
+            bands[chip.value] ? { ...chip, label: bands[chip.value] } : chip
+          )
+        : question.chips;
 
   return chips.flatMap((chip) => {
     if (!chip.value.includes(FULL_NAME_TOKEN)) return [chip];
@@ -473,7 +613,25 @@ export function resolveChips(
  */
 export function allChipsFor(questionKey: string): IntakeQuestion["chips"] {
   if (questionKey === "residence") return Object.values(CITIES).flat();
-  return INTAKE_QUESTIONS.find((q) => q.key === questionKey)?.chips ?? [];
+
+  const chips = INTAKE_QUESTIONS.find((q) => q.key === questionKey)?.chips ?? [];
+  if (questionKey !== "budget") return chips;
+
+  // The same four bands again, once per country, carrying that country's
+  // wording. The value never varies, so the duplicates are harmless and
+  // `normaliseAnswer` needs them: a Ghanaian taps "₵15,000" and the
+  // model-driven flow submits that label as though they had typed it.
+  // Without this it matches no chip, resolves to no code, and a rule
+  // keyed on a band becomes unevaluable for everybody outside the
+  // dollar labels — the hedge, for a question we did have an answer to.
+  return [
+    ...chips,
+    ...Object.values(BUDGET_LABELS_BY_COUNTRY).flatMap((bands) =>
+      chips.flatMap((chip) =>
+        bands[chip.value] ? [{ value: chip.value, label: bands[chip.value] }] : []
+      )
+    ),
+  ];
 }
 
 /**

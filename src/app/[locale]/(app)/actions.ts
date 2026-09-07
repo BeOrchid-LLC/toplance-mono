@@ -341,6 +341,26 @@ async function billIfComplete(applicationId: string, actorId: string) {
 }
 
 /**
+ * Where a whole-agency case notification should land the reader.
+ *
+ * The case screen, once somebody holds it: `notifyAgency` is scoped to
+ * the assignee and the director by then, and both can open it.
+ *
+ * The dashboard while nobody does. `handlesCase` stopped opening an
+ * unheld case to the agency at large on 2026-09-07, so a link to the
+ * case screen now answers 404 for every reviewer this fan-out still
+ * reaches — the dead link #59 removed, back by way of the policy rather
+ * than the recipient list. The dashboard is where an unheld case is
+ * actually actionable: it carries the unclaimed pool, with the button
+ * that takes one. One link for everybody rather than one per recipient,
+ * because a notification row stores a single url, and the director
+ * losing a click is the cheaper half of that trade.
+ */
+function agencyCaseUrl(applicationId: string, assigneeId: string | null) {
+  return appUrl(assigneeId ? `/agency/clients/${applicationId}` : "/agency");
+}
+
+/**
  * Tell the review desk when this upload was the one that finished the
  * checklist.
  *
@@ -366,7 +386,7 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
     if (!becameComplete) return;
 
     const [app] = await db
-      .select({ caseRef: applications.caseRef })
+      .select({ caseRef: applications.caseRef, assigneeId: applications.assigneeId })
       .from(applications)
       .where(eq(applications.id, applicationId))
       .limit(1);
@@ -374,7 +394,7 @@ async function notifyDeskIfComplete(applicationId: string, actorId: string) {
     if (app) {
       await notifyAgency(applicationId, "checklist_complete", {
         caseRef: app.caseRef,
-        url: appUrl(`/agency/clients/${applicationId}`),
+        url: agencyCaseUrl(applicationId, app.assigneeId),
       });
     }
 
@@ -551,7 +571,10 @@ export async function submitApplication(applicationId: string) {
       // `toEqual({ ok: true })`, and this is the only caller that needs
       // the case reference.
       const [app] = await db
-        .select({ caseRef: applications.caseRef })
+        .select({
+          caseRef: applications.caseRef,
+          assigneeId: applications.assigneeId,
+        })
         .from(applications)
         .where(eq(applications.id, applicationId))
         .limit(1);
@@ -559,10 +582,11 @@ export async function submitApplication(applicationId: string) {
       if (app) {
         await notifyAgency(applicationId, "application_submitted", {
           caseRef: app.caseRef,
-          // The case itself, not the console's front page. The agency
-          // opens this notification to review a submission; landing them
-          // on the dashboard makes them find it again by hand.
-          url: appUrl(`/agency/clients/${applicationId}`),
+          // The case itself once it is held — the agency opens this to
+          // review a submission, and landing them on the dashboard makes
+          // them find it again by hand. Only an unheld one goes to the
+          // dashboard, and only because the case screen refuses them.
+          url: agencyCaseUrl(applicationId, app.assigneeId),
         });
       }
 

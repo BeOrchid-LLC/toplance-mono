@@ -4,7 +4,9 @@ import {
   DEFAULT_RATE_CARD,
   cycleFor,
   parseRateCard,
+  clientCharge,
   quote,
+  subscriptionCharge,
   type RateCard,
 } from "@/lib/domain/pricing";
 
@@ -84,6 +86,7 @@ describe("quote", () => {
         { upTo: 10, rateMinor: 5_00 },
         { upTo: null, rateMinor: 1_00 },
       ],
+      clientFeeMinor: 0,
     };
 
     expect(quote(12, cheaper).totalMinor).toBe(100_00 + 10 * 5_00 + 2 * 1_00);
@@ -115,6 +118,10 @@ describe("parseRateCard", () => {
     baseFeeMinor: 300_00,
     currency: "USD",
     bands,
+    // The shipped card's own client fee, so this stays a round-trip of
+    // `DEFAULT_RATE_CARD` rather than a comparison against a card that
+    // happens to charge clients nothing.
+    clientFeeMinor: DEFAULT_RATE_CARD.clientFeeMinor,
   });
 
   it("accepts the shipped card unchanged", () => {
@@ -136,7 +143,12 @@ describe("parseRateCard", () => {
     // What the cast used to allow, priced out: 1,000 applications bill as
     // 500, and the invoice is $6,000 short with nothing in any log.
     expect(
-      quote(1_000, { baseFeeMinor: 300_00, currency: "USD", bands: truncated }).totalMinor
+      quote(1_000, {
+        baseFeeMinor: 300_00,
+        currency: "USD",
+        bands: truncated,
+        clientFeeMinor: 0,
+      }).totalMinor
     ).toBe(quote(500).totalMinor);
 
     expect(() => parseRateCard(card(truncated))).toThrow(/open-ended/);
@@ -263,5 +275,49 @@ describe("cycleFor", () => {
       expect(next.start.getTime()).toBe(cursor.end.getTime());
       cursor = next;
     }
+  });
+});
+
+/**
+ * The client's own fee, which arrived with the paywall.
+ *
+ * A flat amount per application, deliberately not derived from the
+ * bands: the bands price an agency's volume, and a client who pays more
+ * because their agency is busy is a price nobody can explain to them.
+ */
+describe("the client fee", () => {
+  const card = {
+    baseFeeMinor: 300_00,
+    currency: "USD",
+    bands: [{ upTo: null, rateMinor: 18_00 }],
+  };
+
+  it("parses the fee off the card", () => {
+    expect(parseRateCard({ ...card, clientFeeMinor: 25_00 }).clientFeeMinor).toBe(25_00);
+  });
+
+  it("treats a card with no client fee as charging nothing", () => {
+    // The column defaults to 0, and every card written before the
+    // paywall existed has no value at all. Both mean the same thing.
+    expect(parseRateCard(card).clientFeeMinor).toBe(0);
+  });
+
+  it("refuses a negative client fee", () => {
+    expect(() => parseRateCard({ ...card, clientFeeMinor: -1 })).toThrow(/client fee/);
+  });
+
+  it("refuses a client fee in fractional minor units", () => {
+    expect(() => parseRateCard({ ...card, clientFeeMinor: 12.5 })).toThrow(/client fee/);
+  });
+
+  it("charges the base fee for a subscription and the flat fee for a client", () => {
+    expect(subscriptionCharge(DEFAULT_RATE_CARD)).toBe(DEFAULT_RATE_CARD.baseFeeMinor);
+    expect(clientCharge(DEFAULT_RATE_CARD)).toBe(DEFAULT_RATE_CARD.clientFeeMinor);
+  });
+
+  it("leaves the agency's own quote untouched", () => {
+    // `quote` prices the agency's volume and knows nothing about the
+    // client fee — the two are separate charges to separate payers.
+    expect(quote(350, DEFAULT_RATE_CARD).totalMinor).toBe(6_150_00);
   });
 });

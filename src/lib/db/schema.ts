@@ -179,6 +179,30 @@ export const demoRequestStatus = pgEnum("demo_request_status", [
   "declined",
 ]);
 
+/**
+ * The two things anybody buys.
+ *
+ * `agency_subscription` opens an agency's console for a period;
+ * `client_application` pays for one traveller's application. They are
+ * separate charges to separate payers and never substitute for each
+ * other — an agency's subscription does not sponsor its clients, and a
+ * client's fee does not keep the console open.
+ */
+export const paymentKind = pgEnum("payment_kind", [
+  "agency_subscription",
+  "client_application",
+]);
+
+/**
+ * Where one payment got to.
+ *
+ * `pending` is the window between asking the provider for a checkout and
+ * hearing back. The mock provider closes it immediately; a real one
+ * closes it on a webhook, which is why the state exists at all rather
+ * than rows only ever being written `paid`.
+ */
+export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed"]);
+
 export const notificationKind = pgEnum("notification_kind", [
   "application_submitted", // → staff: a file reached 100% and was submitted
   "status_changed", // → traveller
@@ -335,12 +359,91 @@ export const organisations = pgTable(
 export const billingRateCards = pgTable("billing_rate_cards", {
   id: uuid().primaryKey().defaultRandom(),
   baseFeeMinor: integer().notNull(),
+  /**
+   * What one client pays for one application, flat.
+   *
+   * Here rather than in code for the same reason as every other figure
+   * on this table: the rates are provisional, and a row is edited
+   * without a deploy. Defaults to 0, which is what every card written
+   * before the paywall means — the client paid nothing, the agency
+   * sponsored them.
+   */
+  clientFeeMinor: integer().notNull().default(0),
   currency: text().notNull().default("USD"),
   bands: jsonb().notNull(),
   effectiveFrom: timestamp({ withTimezone: true }).notNull().defaultNow(),
   note: text(),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Every transaction, and the only record that anybody paid for anything.
+ *
+ * Entitlement is *derived* from this table — `hasActiveSubscription` and
+ * `isApplicationPaid` both read it — rather than denormalised onto
+ * `organisations` or `applications`. A status column in two places is a
+ * status column that disagrees with itself the first time a payment
+ * lands and the second write does not.
+ *
+ * `provider` and `provider_ref` are populated from the first commit,
+ * while the only provider is the mock. That is the point: adopting
+ * Stripe is a second implementation behind `PaymentProvider` and a
+ * different string in this column, not a migration.
+ *
+ * Nothing here is ever deleted or edited after it settles. A payment is
+ * a fact somebody may later dispute, and `rate_card_id` records which
+ * rates priced it so a charge can be re-derived rather than merely
+ * asserted.
+ */
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    kind: paymentKind().notNull(),
+    status: paymentStatus().notNull().default("pending"),
+    amountMinor: integer().notNull(),
+    currency: text().notNull().default("USD"),
+    /** Set on a subscription, null on a client payment. */
+    orgId: uuid().references(() => organisations.id, { onDelete: "cascade" }),
+    /** Set on a client payment, null on a subscription. */
+    applicationId: uuid().references(() => applications.id, { onDelete: "cascade" }),
+    /**
+     * Whoever pressed the button. `set null` rather than a cascade: the
+     * payment outlives the account, because the money did.
+     */
+    payerId: text().references(() => profiles.id, { onDelete: "set null" }),
+    /** Which rates priced this — see the note above on re-deriving. */
+    rateCardId: uuid().references(() => billingRateCards.id, { onDelete: "set null" }),
+    provider: text().notNull().default("mock"),
+    providerRef: text(),
+    /** A half-open period, set on subscriptions only. */
+    periodStart: timestamp({ withTimezone: true }),
+    periodEnd: timestamp({ withTimezone: true }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [
+    /**
+     * The nullable `org_id` and `application_id` cost the invariant that
+     * a payment names something; this restores it. A subscription names
+     * an agency and no application, a client payment names an
+     * application and no agency, and there is no third shape.
+     */
+    check(
+      "payment_shape_matches_kind",
+      sql`(${t.kind} = 'agency_subscription' and ${t.orgId} is not null and ${t.applicationId} is null)
+       or (${t.kind} = 'client_application' and ${t.applicationId} is not null and ${t.orgId} is null)`
+    ),
+    /**
+     * Both of these are read on every gated request — the agency's on
+     * every console page, the client's on every `/app` page. A missing
+     * index on a read this hot has already cost this suite 450 seconds
+     * once, on `applications.corridor_id`.
+     */
+    index("payments_org_idx").on(t.orgId, t.status),
+    index("payments_application_idx").on(t.applicationId, t.status),
+  ]
+);
 
 export const orgMembers = pgTable(
   "org_members",

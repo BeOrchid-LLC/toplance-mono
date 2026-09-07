@@ -30,6 +30,18 @@ export type RateCard = {
   baseFeeMinor: number;
   currency: string;
   bands: readonly RateBand[];
+  /**
+   * What one client pays for one application, flat.
+   *
+   * Deliberately not derived from `bands`. Those price an agency's
+   * volume, and a client charged more because their agency had a busy
+   * month is a price nobody can explain to the person paying it.
+   *
+   * Zero is a real value and means the client pays nothing — which is
+   * what every card written before the paywall says, since the column
+   * defaults to 0.
+   */
+  clientFeeMinor: number;
 };
 
 /**
@@ -50,6 +62,14 @@ export const DEFAULT_RATE_CARD: RateCard = {
     { upTo: 500, rateMinor: 15_00 },
     { upTo: null, rateMinor: 12_00 },
   ],
+  /**
+   * Provisional, like every other number here — Peace's pricing document
+   * predates the client paywall and names no client fee, so this is a
+   * placeholder for a figure the client still has to give us. It is a
+   * default rather than a constant for exactly that reason: changing it
+   * is a row, not a deploy.
+   */
+  clientFeeMinor: 25_00,
 };
 
 /**
@@ -67,6 +87,12 @@ export function parseRateCard(input: {
   baseFeeMinor: unknown;
   currency: unknown;
   bands: unknown;
+  /**
+   * Absent on every card written before the paywall, and the column
+   * defaults to 0 — so "missing" and "charges nothing" are the same
+   * answer here, and neither is an error.
+   */
+  clientFeeMinor?: unknown;
 }): RateCard {
   if (!isMinorUnit(input.baseFeeMinor)) {
     badCard("base fee is not a whole number of minor units");
@@ -76,6 +102,11 @@ export function parseRateCard(input: {
   }
   if (!Array.isArray(input.bands) || input.bands.length === 0) {
     badCard("bands is not a non-empty array");
+  }
+
+  const clientFeeMinor = input.clientFeeMinor ?? 0;
+  if (!isMinorUnit(clientFeeMinor)) {
+    badCard("client fee is not a whole number of minor units");
   }
 
   const bands: RateBand[] = (input.bands as unknown[]).map((raw, i) => {
@@ -112,7 +143,31 @@ export function parseRateCard(input: {
     }
   }
 
-  return { baseFeeMinor: input.baseFeeMinor, currency: input.currency, bands };
+  return {
+    baseFeeMinor: input.baseFeeMinor,
+    currency: input.currency,
+    bands,
+    clientFeeMinor,
+  };
+}
+
+/**
+ * What an agency pays to open its console for one cycle.
+ *
+ * The base fee alone. The per-application bands still accrue on top and
+ * are still shown to the agency, but nothing collects them — see the
+ * "out of scope" note in the design. A function rather than a property
+ * read so the checkout screens and the payment writer cannot disagree
+ * about which figure is being charged, and so the day a plan means
+ * something more than the base fee, they all change together.
+ */
+export function subscriptionCharge(card: RateCard = DEFAULT_RATE_CARD): number {
+  return card.baseFeeMinor;
+}
+
+/** What one client pays for one application. Same reasoning as above. */
+export function clientCharge(card: RateCard = DEFAULT_RATE_CARD): number {
+  return card.clientFeeMinor;
 }
 
 /** A declaration, not an arrow: only this form narrows the code after a call. */

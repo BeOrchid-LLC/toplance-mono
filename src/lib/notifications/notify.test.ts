@@ -21,9 +21,13 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     notifyStaff,
     getNotifications,
     unreadNotificationCount,
+    unreadMessageCount,
     markNotificationsRead,
+    dueNotificationEmails,
+    BELL_KINDS,
     appUrl,
   } = await import("@/lib/notifications/notify");
+  const { EMAIL_BUFFER_MS } = await import("@/lib/notifications/email-buffer");
 
   const TRAVELLER = "test_notify_traveller";
   const OTHER = "test_notify_other";
@@ -127,6 +131,131 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].kind).toBe("document_flagged");
     expect(rows[1].kind).toBe("itinerary_ready");
+  });
+
+  /**
+   * The buffer. A flag lands while the traveller is plausibly still on
+   * the documents page watching it arrive, so `notify` writes the row
+   * owing an email rather than sending one — and reading the row
+   * cancels that email in the same statement that marks it read.
+   */
+  describe("buffered emails", () => {
+    const flag = () =>
+      notify(TRAVELLER, "document_flagged", {
+        documentName: "Passport photographs \u00d72",
+        reason: "Too dark to read.",
+        url: appUrl("/app/documents"),
+      });
+
+    it("writes a flag owing an email fifteen minutes out", async () => {
+      const before = Date.now();
+      await flag();
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, TRAVELLER));
+
+      expect(row.emailDueAt).not.toBeNull();
+      expect(row.emailDueAt!.getTime()).toBeGreaterThanOrEqual(
+        before + EMAIL_BUFFER_MS
+      );
+    });
+
+    it("leaves an unbuffered kind owing nothing, because it emailed already", async () => {
+      await notify(TRAVELLER, "itinerary_ready", { url: appUrl("/app") });
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, TRAVELLER));
+
+      expect(row.emailDueAt).toBeNull();
+    });
+
+    it("cancels the email when the notification is read", async () => {
+      await flag();
+      await markNotificationsRead(TRAVELLER);
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, TRAVELLER));
+
+      expect(row.readAt).not.toBeNull();
+      expect(row.emailDueAt).toBeNull();
+    });
+
+    it("does not hand a not-yet-due email to the sweep", async () => {
+      await flag();
+      const due = await dueNotificationEmails(new Date());
+      expect(due.map((n) => n.recipientId)).not.toContain(TRAVELLER);
+    });
+
+    it("hands it over once it falls due", async () => {
+      await flag();
+      const due = await dueNotificationEmails(
+        new Date(Date.now() + EMAIL_BUFFER_MS + 1000)
+      );
+      expect(due.map((n) => n.recipientId)).toContain(TRAVELLER);
+    });
+  });
+
+  /**
+   * Messages left the bell so the Messages nav badge could own them.
+   * Between `notInTheBell` and `unreadMessageCount`, every unread row is
+   * counted exactly once, on exactly one surface.
+   */
+  describe("messages are counted on Messages, not on the bell", () => {
+    const message = () =>
+      notify(TRAVELLER, "message_received", {
+        senderName: "Grace",
+        preview: "We have your passport.",
+        url: appUrl("/app/messages"),
+      });
+
+    it("keeps message notifications out of the bell's list and count", async () => {
+      await message();
+      await notify(TRAVELLER, "itinerary_ready", { url: appUrl("/app") });
+
+      const rows = await getNotifications(TRAVELLER);
+      expect(rows.map((r) => r.kind)).toEqual(["itinerary_ready"]);
+      await expect(unreadNotificationCount(TRAVELLER)).resolves.toBe(1);
+    });
+
+    it("counts them on the badge instead", async () => {
+      await message();
+      await message();
+      await notify(TRAVELLER, "itinerary_ready", { url: appUrl("/app") });
+
+      await expect(unreadMessageCount(TRAVELLER)).resolves.toBe(2);
+    });
+
+    it("opening the bell does not clear the badge, or its email", async () => {
+      await message();
+      await markNotificationsRead(TRAVELLER, BELL_KINDS);
+
+      await expect(unreadMessageCount(TRAVELLER)).resolves.toBe(1);
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, TRAVELLER));
+      expect(row.emailDueAt).not.toBeNull();
+    });
+
+    it("opening the thread clears both", async () => {
+      await message();
+      await markNotificationsRead(TRAVELLER, ["message_received"]);
+
+      await expect(unreadMessageCount(TRAVELLER)).resolves.toBe(0);
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, TRAVELLER));
+      expect(row.emailDueAt).toBeNull();
+    });
   });
 
   it("notifyStaff never throws when the staff lookup itself fails", async () => {

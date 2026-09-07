@@ -83,6 +83,9 @@ const isPublicRoute = createRouteMatcher([
   "/api/cron/visa-warm",
   "/api/cron/corridor-recheck",
   "/api/cron/fx-rates",
+  // The buffered-email sweep. Listed individually like the rest — the
+  // wildcard is deliberately not used here; see the note above.
+  "/api/cron/notification-emails",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

@@ -7,6 +7,7 @@ import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MessageThread } from "@/components/app/message-thread";
 import { getApplication, getProfile } from "@/lib/data/applications";
+import { markNotificationsRead } from "@/lib/notifications/notify";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -44,6 +45,15 @@ export default async function MessagesPage() {
   // response should wait on — moved off the render path, same idiom as
   // the notifications bell.
   after(() => markThreadRead(application.id, "traveler"));
+
+  // And the notifications that announced those messages. This page is
+  // the only thing that marks them now: they left the bell so the
+  // Messages badge could own them, which means opening the bell no
+  // longer clears them and opening the thread must. It is also what
+  // cancels the buffered email — `markNotificationsRead` nulls
+  // `emailDueAt` in the same statement — so a traveller who reads the
+  // thread inside the buffer is never emailed about it.
+  after(() => markNotificationsRead(profile.id, ["message_received"]));
 
   return (
     <main>

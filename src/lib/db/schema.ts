@@ -841,10 +841,30 @@ export const notifications = pgTable(
     applicationId: uuid().references(() => applications.id, { onDelete: "cascade" }),
     payload: jsonb().notNull().default({}),
     readAt: timestamp({ withTimezone: true }),
+    /**
+     * When this notification's email becomes owed, or null for nothing
+     * pending — which covers both "already sent" and "never needed one".
+     *
+     * Most kinds email the moment `notify` runs and are written with
+     * null here. Two do not: `document_flagged` and `message_received`
+     * both fire while the traveller is plausibly still on the page that
+     * caused them, so they are written due in fifteen minutes and the
+     * email is sent only if nobody has looked by then. See
+     * `emailDueFor`.
+     *
+     * Marking a notification read nulls this in the same UPDATE, which
+     * is what cancels the email — there is no window between "they saw
+     * it" and "so do not send", because it is one write. The sweep in
+     * `api/cron/notification-emails` nulls it again after sending, so a
+     * settled row is never reconsidered and the index below stays small
+     * however many notifications accumulate.
+     */
+    emailDueAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index("notifications_recipient_idx").on(t.recipientId, t.readAt, t.createdAt),
+    index("notifications_email_due_idx").on(t.emailDueAt),
   ]
 );
 

@@ -5,52 +5,52 @@ import { agencyNav } from "@/components/agency/agency-nav";
 import { ConsoleBand } from "@/components/agency/console-band";
 import { InvitationRoster } from "@/components/agency/invitation-roster";
 import { InviteDialog } from "@/components/agency/invite-dialog";
-import { PeopleRoster } from "@/components/agency/people-roster";
+import { TeamRoster } from "@/components/agency/team-roster";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listInvitations } from "@/lib/data/invitations";
-import { listOrgRoster } from "@/lib/data/organisations";
+import { listOrgMembers } from "@/lib/data/organisations";
 import { AGENCY } from "@/lib/i18n/agency";
 import { getLocale } from "@/lib/i18n/server";
-import { requireAgencyConsole } from "@/app/agency/console";
+import { requireAgencyConsole } from "@/app/[locale]/agency/console";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  return { title: AGENCY.navPeople[locale] };
+  return { title: AGENCY.navTeam[locale] };
 }
 
 /**
- * The clients: everyone whose visa this agency is handling, and the
- * addresses invited to become one.
+ * The colleagues: who works at this agency, and who has been asked to.
  *
- * Both on one page because they are two states of the same thing — a
- * pending invitation is a person who is not on the roster *yet* — and
- * an agency chasing an unaccepted invitation should not have to
- * remember which of two screens it lives on.
+ * Nothing rendered here existed before — an agency could invite a
+ * colleague from the first day of the v1.3 tenancy, and then had
+ * nowhere to see who had accepted. The membership rows were only ever
+ * read one at a time, to answer "may this person do that", so a
+ * reviewer who joined last month was invisible to the owner who
+ * invited them.
  *
- * Staff invitations are filtered out here and shown on `/agency/team`
- * instead. They used to share one list with these, which meant the
- * count under the organisation name mixed colleagues into a number the
- * page called people.
+ * The invite dialog is here too, and offers the colleague option only
+ * to an owner — `inviteTraveller` enforces that server-side, and the
+ * dialog hides what it would refuse.
  */
-export default async function AgencyPeoplePage() {
+export default async function AgencyTeamPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
-  const { profile, actor, membership, orgId } = await requireAgencyConsole();
+  const { profile, membership, orgId } = await requireAgencyConsole();
 
-  // Same "no org, no unfiltered read" reasoning in both: `listOrgRoster`
-  // returns early on an empty list, and `listInvitations` has nothing to
-  // filter by without one id.
-  const [rows, invitations] = await Promise.all([
-    listOrgRoster(actor.orgIds),
+  // `orgId` comes from `actor.orgIds`, which excludes suspended
+  // agencies — so a suspended agency's console shows no colleagues
+  // rather than reading a roster it is no longer entitled to.
+  const [members, invitations] = await Promise.all([
+    orgId ? listOrgMembers(orgId) : Promise.resolve([]),
     orgId ? listInvitations(orgId) : Promise.resolve([]),
   ]);
-  const clientInvitations = invitations.filter((i) => i.kind === "client");
+  const staffInvitations = invitations.filter((i) => i.kind === "staff");
 
   return (
     <div className="min-h-dvh bg-bg">
@@ -62,22 +62,20 @@ export default async function AgencyPeoplePage() {
       />
 
       <ConsoleBand
-        title={AGENCY.navPeople[locale]}
+        title={AGENCY.navTeam[locale]}
         action={<InviteDialog canInviteStaff={membership.role === "owner"} />}
       >
-        <p className="t-muted mt-2 max-w-[68ch]">
-          {AGENCY.peopleCardBody[locale]}
-        </p>
+        <p className="t-muted mt-2 max-w-[68ch]">{AGENCY.teamCardBody[locale]}</p>
       </ConsoleBand>
 
       <main>
         <Shell className="py-12">
-          <PeopleRoster rows={rows} locale={locale} />
+          <TeamRoster members={members} locale={locale} />
           <InvitationRoster
             className="mt-8"
-            invitations={clientInvitations}
+            invitations={staffInvitations}
             locale={locale}
-            empty={AGENCY.invitationsEmpty[locale]}
+            empty={AGENCY.teamInvitationsEmpty[locale]}
           />
         </Shell>
       </main>

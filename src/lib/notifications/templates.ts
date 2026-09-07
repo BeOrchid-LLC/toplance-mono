@@ -354,3 +354,62 @@ export function checklistChangedEmail({
     }),
   };
 }
+
+/**
+ * → sales: somebody asked for a demo from the landing page.
+ *
+ * The only template built from the words of a stranger. Everyone quoted
+ * by the templates above got past Clerk first; this one quotes whoever
+ * found the marketing page, so the escaping `renderEmail` does at the
+ * boundary is load-bearing rather than belt-and-braces.
+ *
+ * The time is formatted in the requester's own zone, which is the
+ * reason `preferredTz` is stored beside the instant at all — "14:00
+ * (Africa/Lagos)" is a time the reader can agree to, and the UTC
+ * equivalent is a subtraction they would have to do first.
+ *
+ * Its call to action is a `mailto:` back to the requester rather than a
+ * link into the product, because replying *is* the next step: nothing
+ * in the app displays this request, by design.
+ */
+export function demoRequestEmail({
+  fullName,
+  email,
+  companyName,
+  jobTitle,
+  preferredAt,
+  preferredTz,
+  locale,
+}: {
+  fullName: string;
+  email: string;
+  companyName: string;
+  jobTitle: string;
+  preferredAt: Date;
+  preferredTz: string;
+  locale: string;
+}): EmailContent {
+  const when = new Intl.DateTimeFormat("en-GB", {
+    timeZone: preferredTz,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(preferredAt);
+
+  return {
+    subject: `Demo request — ${companyName}`,
+    ...renderEmail({
+      heading: `${fullName} wants a demo`,
+      paragraphs: [
+        `${fullName}, ${jobTitle} at ${companyName}, asked for a demo.`,
+        `Preferred time: ${when} (${preferredTz}).`,
+        `They read the site in "${locale}".`,
+      ],
+      cta: { href: `mailto:${email}`, label: `Reply to ${fullName}` },
+    }),
+  };
+}

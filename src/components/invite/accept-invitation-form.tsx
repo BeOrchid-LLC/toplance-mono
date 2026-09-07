@@ -4,7 +4,7 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import { acceptInvitation } from "@/app/invite/actions";
+import { acceptInvitation } from "@/app/[locale]/invite/actions";
 
 /**
  * The only write on the accept surface, and the only place this button

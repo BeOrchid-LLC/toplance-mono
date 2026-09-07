@@ -21,7 +21,7 @@ import {
   completeProfile,
   type AuthAudience,
   type SignUpIntent,
-} from "@/app/(auth)/actions";
+} from "@/app/[locale]/(auth)/actions";
 import {
   SIGN_IN_FALLBACK,
   SIGN_UP_CREATE_FALLBACK,

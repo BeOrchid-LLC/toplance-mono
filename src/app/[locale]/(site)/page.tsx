@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { CorridorBar } from "@/components/site/corridor-bar";
 import { CorridorBoard } from "@/components/site/corridor-board";
 import { CorridorProvider } from "@/components/site/corridor-state";
+import { DemoDialog } from "@/components/site/demo-dialog";
 import { PricingEstimator } from "@/components/site/pricing-estimator";
 import { Shell } from "@/components/shared/shell";
 import { Head, Section } from "@/components/site/section";
@@ -60,8 +61,10 @@ import {
  * keep their names and moved their copy.
  *
  * Statically rendered and cached at the edge — the sticky nav, the
- * corridor state, the FAQ accordion and the theme switch are the only
- * client-side JavaScript on it.
+ * corridor state, the FAQ accordion, the theme switch and the demo
+ * dialog are the only client-side JavaScript on it. The dialog is the
+ * one of those that talks to the server, and it does so only once
+ * somebody opens it.
  */
 export const dynamic = "force-static";
 
@@ -84,16 +87,6 @@ export const metadata: Metadata = {
   description:
     "Toplance takes the paperwork off your hands. Every traveler gets the exact documents for their trip, the wrong ones are caught early, and your team only picks up files that are ready to work.",
 };
-
-/**
- * The hero's secondary call to action.
- *
- * PLACEHOLDER — there is no demo booking route, no contact form and no
- * address anywhere in this repo, so this domain is a guess and the client
- * has to confirm it before the page is public. It is a constant rather
- * than an inline `href` so that confirming it is one edit in one place.
- */
-const DEMO_EMAIL = "hello@toplance.com";
 
 /**
  * The ledger, the steps, the six "what you get" cards, the seat
@@ -343,11 +336,7 @@ export default async function HomePage() {
                     {SITE_HOME.heroCtaGetStarted[locale]} <ArrowRight />
                   </Link>
                 </Button>
-                <Button asChild variant="secondary">
-                  <a href={`mailto:${DEMO_EMAIL}?subject=Toplance%20demo`}>
-                    {SITE_HOME.heroCtaBookDemo[locale]}
-                  </a>
-                </Button>
+                <DemoDialog />
               </div>
             </div>
 

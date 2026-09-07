@@ -120,7 +120,7 @@ export const EVENT_NAMES = [
   /**
    * A message sent on a case thread, from either side — `senderRole` is
    * "traveler" or "staff". Emitted by `sendMessage` in
-   * `@/app/(app)/actions.ts`, the one action both ends post to.
+   * `@/app/[locale]/(app)/actions.ts`, the one action both ends post to.
    */
   "toplance.message_sent",
 
@@ -130,8 +130,8 @@ export const EVENT_NAMES = [
   /**
    * The invitation lifecycle: sent from `inviteTraveller`, resent from
    * `resendInvitation`, revoked from `revokeInvitation` (all three in
-   * `@/app/agency/actions.ts`), accepted from `acceptInvitation` in
-   * `@/app/invite/actions.ts`.
+   * `@/app/[locale]/agency/actions.ts`), accepted from `acceptInvitation` in
+   * `@/app/[locale]/invite/actions.ts`.
    *
    * A resend is counted apart from a send rather than folded into it.
    * The two mean different things: one is an employer adding a person,
@@ -184,6 +184,18 @@ export const EVENT_NAMES = [
 
   /** The companion's cached local tips were generated (or refreshed) by AI. */
   "toplance.companion_generated",
+
+  /**
+   * An agency asked for a demo from the landing page. The only event
+   * emitted with no `userId` — the visitor has no account, which is the
+   * entire point of the form.
+   *
+   * `locale` rides along in the props because it is the one thing the
+   * landing page learns about a stranger for free, and it answers a
+   * question the funnel cannot otherwise: whether the nine translations
+   * bring anyone in, or whether every lead reads English anyway.
+   */
+  "toplance.demo_requested",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

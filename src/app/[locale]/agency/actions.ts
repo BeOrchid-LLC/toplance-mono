@@ -17,7 +17,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import { appUrl } from "@/lib/notifications/notify";
 import { invitationEmail } from "@/lib/notifications/templates";
 import { AGENCY_ACTIONS } from "@/lib/i18n/agency-actions";
-import { getLocale } from "@/lib/i18n/server";
+import { getActionLocale } from "@/lib/i18n/server";
 
 /**
  * A new employer's sign-up act: name an organisation and become its
@@ -35,7 +35,7 @@ export async function createOrganisation(formData: FormData) {
 
     await track("toplance.organisation_created", { orgId: result.orgId }, actor.userId);
 
-    revalidatePath("/agency", "layout");
+    revalidatePath("/[locale]/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -78,7 +78,7 @@ export async function inviteTraveller(formData: FormData) {
     const kind = formData.get("kind") === "staff" ? "staff" : "client";
 
     if (kind === "staff" && !(await isAgencyOwner(actor.userId, orgId))) {
-      return { error: AGENCY_ACTIONS.onlyOwnerInvitesStaff[await getLocale()] };
+      return { error: AGENCY_ACTIONS.onlyOwnerInvitesStaff[await getActionLocale()] };
     }
 
     // Job title, destination and purpose are no longer asked for. The
@@ -112,7 +112,7 @@ export async function inviteTraveller(formData: FormData) {
 
     await track("toplance.invitation_sent", { orgId }, actor.userId);
 
-    revalidatePath("/agency", "layout");
+    revalidatePath("/[locale]/agency", "layout");
     return { ok: true, inviteUrl };
   } catch (error) {
     const message = toActionError(error);
@@ -165,7 +165,7 @@ export async function resendInvitation(formData: FormData) {
 
     await track("toplance.invitation_resent", { orgId }, actor.userId);
 
-    revalidatePath("/agency", "layout");
+    revalidatePath("/[locale]/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -188,7 +188,7 @@ export async function revokeInvitation(formData: FormData) {
 
     await track("toplance.invitation_revoked", { orgId }, actor.userId);
 
-    revalidatePath("/agency", "layout");
+    revalidatePath("/[locale]/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

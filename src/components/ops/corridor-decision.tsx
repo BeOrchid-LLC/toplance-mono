@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { approveCorridor, rejectCorridor } from "@/app/ops/actions";
+import { approveCorridor, rejectCorridor } from "@/app/[locale]/ops/actions";
 import { useT } from "@/components/locale-provider";
 import { OPS_CORRIDOR_DECISION } from "@/lib/i18n/ops-corridor-review";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";

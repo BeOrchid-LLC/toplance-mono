@@ -2,7 +2,12 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { authRoutes, signedInDestination, SIGN_IN_DOOR } from "@/lib/auth/routes";
-import { LOCALES, type Locale } from "@/lib/i18n/locales";
+import type { Locale } from "@/lib/i18n/locales";
+import {
+  isNonPagePath,
+  splitLocalePath,
+  withLocalePrefix,
+} from "@/lib/i18n/paths";
 
 /**
  * Next 16 renamed Middleware to Proxy. Clerk's own guide still says
@@ -20,57 +25,31 @@ import { LOCALES, type Locale } from "@/lib/i18n/locales";
  * sign-in attempt with `session_exists` and the form becomes a dead end.
  *
  * This is also the only place that knows about locale URL prefixes.
- * English lives unprefixed at today's exact paths; every other locale
- * is reachable at `/{code}/...`, which is a rewrite of the same route
- * — no route file moves. Every routing decision below (`isPublicRoute`,
- * `SIGN_IN_DOOR`, `signedInDestination`) reads the *stripped* path, so
- * a Yoruba visitor at `/yo/app/profile` gets exactly the same decision
- * as the English visitor at `/app/profile`; the prefix is only added
- * back at the edges — when this proxy issues its own redirect, or when
- * it rewrites through to the real route and needs to tell the Server
- * Components which locale that was.
- */
-
-const LOCALE_HEADER = "x-toplance-locale";
-
-/** Every locale code except English, which is never URL-prefixed. */
-const PREFIXED_LOCALES = LOCALES.map((l) => l.code).filter(
-  (code): code is Exclude<Locale, "en"> => code !== "en"
-);
-
-/**
- * Splits a raw request pathname into the locale it names (defaulting to
- * English when no `/xx` segment is present) and the "real" pathname —
- * the one the rest of this file, and the route tree itself, understand.
- * `/fr/travelers` -> `{ locale: "fr", rest: "/travelers" }`; `/fr` alone
- * -> `{ locale: "fr", rest: "/" }`; anything with no recognised prefix
- * is treated as plain English.
- */
-function splitLocale(pathname: string): { locale: Locale; rest: string } {
-  for (const code of PREFIXED_LOCALES) {
-    if (pathname === `/${code}`) return { locale: code, rest: "/" };
-    if (pathname.startsWith(`/${code}/`)) {
-      return { locale: code, rest: pathname.slice(code.length + 1) };
-    }
-  }
-  return { locale: "en", rest: pathname };
-}
-
-/**
- * The inverse of `splitLocale`'s `rest`: re-applies `/{code}` to an
- * internal, unprefixed path. English is the untranslated fallback and
- * stays unprefixed, matching today's URLs exactly.
+ * English lives unprefixed at the app's plain paths; every other locale
+ * is reachable at `/{code}/...`. The route tree itself lives under
+ * `src/app/[locale]`, so a prefixed URL is already a real route and is
+ * served as it stands; an unprefixed one is rewritten under `/en`.
  *
- * `path` is assumed to already be unprefixed — every path value that
- * flows through this file (`SIGN_IN_DOOR`, `authRoutes`
- * homes, a stripped `next` param) is kept unprefixed until the moment
- * it is handed to this function, specifically so a value can never
- * pick up two prefixes.
+ * It used to work the other way round — the prefix was stripped here and
+ * the locale handed onward as a request header. That cannot work on a
+ * prerendered page, where `headers()` returns nothing, so `/` and
+ * `/travelers` rendered in English in every language. A route segment is
+ * readable at prerender time, which is why the locale is one now.
+ *
+ * Every routing decision below (`isPublicRoute`, `SIGN_IN_DOOR`,
+ * `signedInDestination`) still reads the *stripped* path, so a Yoruba
+ * visitor at `/yo/app/profile` gets exactly the same decision as the
+ * English visitor at `/app/profile`; the prefix is added back only at
+ * the edges, when this proxy issues a redirect of its own.
  */
-function withLocalePrefix(path: string, locale: Locale): string {
-  if (locale === "en") return path;
-  return path === "/" ? `/${locale}` : `/${locale}${path}`;
-}
+
+/**
+ * Still set on every request this proxy serves, and now read only by
+ * `getActionLocale()` (`@/lib/i18n/server`). Server Components read the
+ * route segment; a Server Action cannot see root parameters, so the
+ * header remains its only way to know what language to answer in.
+ */
+const LOCALE_HEADER = "x-toplance-locale";
 
 /** Prefixes a signed-out visitor may reach. Everything else redirects. */
 const isPublicRoute = createRouteMatcher([
@@ -109,7 +88,7 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, request) => {
   const { userId } = await auth();
   const { pathname, searchParams } = request.nextUrl;
-  const { locale, rest: realPathname } = splitLocale(pathname);
+  const { locale, rest: realPathname } = splitLocalePath(pathname);
 
   // `/travellers` (old spelling) has no page of its own to rewrite to —
   // `next.config.ts` permanently redirects it to `/travelers`, but that
@@ -132,7 +111,7 @@ export default clerkMiddleware(async (auth, request) => {
   // stale or hand-edited `?next=/fr/app` would end up double-prefixed
   // once `withLocalePrefix` runs on the way back out.
   const nextParam = searchParams.get("next");
-  const realNext = nextParam ? splitLocale(nextParam).rest : nextParam;
+  const realNext = nextParam ? splitLocalePath(nextParam).rest : nextParam;
 
   if (userId) {
     const destination = signedInDestination(
@@ -165,13 +144,19 @@ export default clerkMiddleware(async (auth, request) => {
 });
 
 /**
- * Actually serves the page at `realPathname`. When a locale prefix was
- * present, that means rewriting through to the unprefixed route and
- * telling it which locale this was via `LOCALE_HEADER`, since the
- * Server Component on the other end has no other way to see a prefix
- * this proxy just rewrote away. When there was no prefix (English, the
- * common case), it is a plain pass-through — no rewrite, no header,
- * `getLocale()` defaults to English on its own.
+ * Actually serves the request, on the URL the route tree expects.
+ *
+ * Every page lives under `src/app/[locale]`, so the segment is not
+ * optional there: a prefixed request already names it and passes
+ * straight through, while an unprefixed one — English, the common case
+ * and the URLs that are actually linked to — is rewritten under `/en`.
+ * The browser's URL is untouched either way, which is what keeps
+ * English unprefixed in public while still resolving to a real route.
+ *
+ * `LOCALE_HEADER` rides along on both paths. Nothing renders from it any
+ * more, but a Server Action posting back to this URL cannot read the
+ * route segment, and it is the only thing that tells the action which
+ * language to answer in.
  */
 function serve(
   request: NextRequest,
@@ -179,12 +164,23 @@ function serve(
   realPathname: string,
   rawPathname: string
 ) {
-  if (realPathname === rawPathname) return NextResponse.next();
-
-  const url = request.nextUrl.clone();
-  url.pathname = realPathname;
   const headers = new Headers(request.headers);
   headers.set(LOCALE_HEADER, locale);
+
+  // Route handlers and Clerk's callback are not pages and have no
+  // `[locale]` segment to name. They fall inside the matcher below, so
+  // without this they would be rewritten to `/en/api/...`, which does
+  // not exist — and for `/api/cron/*` that is every scheduled job
+  // 404ing with nobody watching.
+  if (isNonPagePath(realPathname)) {
+    return NextResponse.next({ request: { headers } });
+  }
+
+  const target = `/${locale}${realPathname === "/" ? "" : realPathname}`;
+  if (target === rawPathname) return NextResponse.next({ request: { headers } });
+
+  const url = request.nextUrl.clone();
+  url.pathname = target;
   return NextResponse.rewrite(url, { request: { headers } });
 }
 

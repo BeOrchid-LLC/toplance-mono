@@ -25,7 +25,7 @@ import { listOrgMembers, listOrgRoster } from "@/lib/data/organisations";
 import { getLocale } from "@/lib/i18n/server";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
-import { resolveAgencyConsole } from "@/app/agency/console";
+import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";

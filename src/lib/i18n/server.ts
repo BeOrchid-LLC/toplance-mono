@@ -1,28 +1,55 @@
 import { headers } from "next/headers";
+import { locale as localeRootParam } from "next/root-params";
 
 import { DEFAULT_LOCALE, isLocale, type Locale } from "./locales";
 
 /**
- * Kept in one place because two files have to agree on it: `proxy.ts`
- * sets it after stripping a request's `/xx` locale prefix, and this is
- * the only reader. Server Components never see the prefix themselves —
- * by the time a request reaches one, `proxy.ts` has already rewritten
- * it away — so this header is the entire handoff.
+ * Set by `proxy.ts` on every request it serves, and read only by
+ * `getActionLocale` below.
+ *
+ * It used to be the entire locale handoff, for Server Components too.
+ * That is what broke the marketing pages: `/` and `/travelers` are
+ * `force-static`, and `force-static` makes `headers()` return an empty
+ * set rather than opting the route into dynamic rendering, so the header
+ * was invisible exactly where it was needed and every locale rendered in
+ * English. Server Components read the URL segment now (see `getLocale`);
+ * the header survives for the one context a route parameter cannot
+ * reach.
  */
 const LOCALE_HEADER = "x-toplance-locale";
 
 /**
- * The locale `proxy.ts` resolved for this request, for use in Server
- * Components and layouts. `headers()` is async in this Next.js version
- * (the header-object return value moved behind a promise in 15, and
- * Next 16 dropped the synchronous escape hatch), so this is too.
+ * The locale for the route being rendered, for Server Components,
+ * layouts, pages and `generateMetadata`.
  *
- * Falls back to `DEFAULT_LOCALE` whenever the header is missing or
- * holds something `isLocale` does not recognise — an unprefixed
- * request (English) never gets the header set at all, and that is the
- * common case, not an error.
+ * Reads the `[locale]` segment through `next/root-params`, which works
+ * during prerendering — that is the whole reason the locale is a route
+ * parameter. `proxy.ts` guarantees the segment is present and is a code
+ * this app actually speaks: an unprefixed request is rewritten under
+ * `/en`, and an unrecognised prefix never resolves to a route at all.
+ * The `isLocale` guard is belt and braces for that, not the common path.
  */
 export async function getLocale(): Promise<Locale> {
+  const value = await localeRootParam();
+  return isLocale(value) ? value : DEFAULT_LOCALE;
+}
+
+/**
+ * The same locale, for Server Actions.
+ *
+ * Root parameters are unavailable here by design — an action is not tied
+ * to a route, since the same action can be submitted from pages under
+ * different roots, so Next refuses to guess which one — and
+ * `next/root-params` throws rather than returning something plausible.
+ * An action always runs on a real request, though, so the header the
+ * proxy set is both available and correct.
+ *
+ * `(auth)/actions.ts` is the exception that does not use this: it reads
+ * the locale off its own form submission, because the visitor may have
+ * changed the language after the page was rendered and the account it is
+ * about to create should record the language they actually chose.
+ */
+export async function getActionLocale(): Promise<Locale> {
   const value = (await headers()).get(LOCALE_HEADER);
   return isLocale(value) ? value : DEFAULT_LOCALE;
 }

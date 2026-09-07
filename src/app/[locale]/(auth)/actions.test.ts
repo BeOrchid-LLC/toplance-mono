@@ -48,7 +48,7 @@ describe.skipIf(!hasDb)("completeProfile", async () => {
   const { db } = await import("@/lib/db/client");
   const { invitations, organisations, profiles } = await import("@/lib/db/schema");
   const { checkInvitedEmail, checkSignInEmail, completeProfile } = await import(
-    "@/app/(auth)/actions"
+    "@/app/[locale]/(auth)/actions"
   );
 
   const FIELDS = {

@@ -23,7 +23,7 @@ import { aiEnabled } from "@/lib/ai/models";
 import { precheckDocument, precheckSupports } from "@/lib/ai/precheck";
 import { MAX_UPLOAD_LABEL, validateUpload } from "@/lib/domain/uploads";
 import { UPLOAD_ACTIONS } from "@/lib/i18n/upload-actions";
-import { getLocale } from "@/lib/i18n/server";
+import { getActionLocale } from "@/lib/i18n/server";
 import {
   deleteDocument,
   putDocument,
@@ -78,7 +78,11 @@ export async function answerQuestion(
     );
     if ("error" in result) return result;
 
-    revalidatePath("/app", "layout");
+    // `/[locale]/app`, not `/app`: the segment is literal here, and
+    // naming it is what invalidates the page in all ten languages
+    // rather than in whichever one this request happened to arrive in.
+    // Every `revalidatePath` in the app is written this way.
+    revalidatePath("/[locale]/app", "layout");
     return result;
   } catch (error) {
     const message = toActionError(error);
@@ -120,7 +124,7 @@ export async function uploadDocument(formData: FormData) {
    * product has to be in their own language, and the one place it was
    * hard-coded English until 05/09.
    */
-  const locale = await getLocale();
+  const locale = await getActionLocale();
 
   if (!(file instanceof File)) {
     return { error: UPLOAD_ACTIONS.empty[locale] };
@@ -200,7 +204,7 @@ export async function uploadDocument(formData: FormData) {
   // The AI pre-check runs after the response — a traveller's upload
   // latency must never wait on a model call. `precheckDocument` never
   // throws on its own, but the guard stays for the same reason it does
-  // on the itinerary's `after()` in `@/app/ops/actions.ts`: a background
+  // on the itinerary's `after()` in `@/app/[locale]/ops/actions.ts`: a background
   // failure here has nothing to do with the upload that already
   // succeeded. Skipped entirely (no hook scheduled at all) when there is
   // no model to run it or the MIME type is one `precheckDocument` would
@@ -220,7 +224,7 @@ export async function uploadDocument(formData: FormData) {
         // Best effort: the traveller sees a flag on their next nav
         // either way, this just saves them a refresh when the check
         // lands quickly.
-        if (flagged) revalidatePath("/app", "layout");
+        if (flagged) revalidatePath("/[locale]/app", "layout");
       } catch (error) {
         console.error(
           `[actions] pre-check failed for document ${docKey} on application ${applicationId}`,
@@ -253,7 +257,7 @@ export async function uploadDocument(formData: FormData) {
     await notifyDeskIfComplete(applicationId, actorId);
   }
 
-  revalidatePath("/app", "layout");
+  revalidatePath("/[locale]/app", "layout");
   return { ok: true };
 }
 
@@ -458,7 +462,7 @@ export async function removeDocument(applicationId: string, docKey: string) {
       actor.userId
     );
 
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -508,7 +512,7 @@ export async function submitApplication(applicationId: string) {
         });
       }
 
-      revalidatePath("/app", "layout");
+      revalidatePath("/[locale]/app", "layout");
     }
 
     return result;
@@ -586,8 +590,8 @@ export async function sendMessage(formData: FormData) {
 
     // The traveller's messages page reads this thread. The agency's own
     // case screen will too, once it exists.
-    revalidatePath("/app", "layout");
-    revalidatePath("/ops", "layout");
+    revalidatePath("/[locale]/app", "layout");
+    revalidatePath("/[locale]/ops", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -614,7 +618,7 @@ export async function addTravelRecord(formData: FormData) {
     if ("error" in result) return result;
 
     await track("toplance.travel_record_added", {}, actor.userId);
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -631,7 +635,7 @@ export async function removeTravelRecord(recordId: string) {
     if ("error" in result) return result;
 
     await track("toplance.travel_record_removed", {}, actor.userId);
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -715,7 +719,7 @@ export async function updateProfile(formData: FormData) {
       .set({ ...set, updatedAt: new Date() })
       .where(eq(profiles.id, actor.userId));
 
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
     return {};
   } catch (error) {
     const message = toActionError(error);
@@ -774,7 +778,7 @@ export async function uploadAvatar(formData: FormData) {
       actor.userId
     );
 
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
     return {};
   } catch (error) {
     const message = toActionError(error);
@@ -838,7 +842,7 @@ export async function setVisaExpiry(formData: FormData) {
       actor.userId
     );
 
-    revalidatePath("/app", "layout");
+    revalidatePath("/[locale]/app", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

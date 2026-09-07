@@ -4,10 +4,11 @@ type L = Record<Locale, string>;
 
 /**
  * The user-facing refusals `completeProfile`, `checkInvitedEmail` and
- * `checkSignInEmail` return — the only copy in `(auth)/actions.ts`. Read with `getLocale()`:
- * a Server Action runs within the request that invoked it, so the same
- * `x-toplance-locale` header `proxy.ts` sets for the page is still there
- * when the action itself runs.
+ * `checkSignInEmail` return — the only copy in `(auth)/actions.ts`. Read
+ * off the form's own `locale` field rather than the request: see the
+ * note at that call site. The other action dictionaries use
+ * `getActionLocale()`, which reads the `x-toplance-locale` header
+ * `proxy.ts` sets.
  *
  * `workEmailRefusal()` (`@/lib/domain/work-email`) is deliberately not
  * covered here — that module is not owned by this pass. See the handoff

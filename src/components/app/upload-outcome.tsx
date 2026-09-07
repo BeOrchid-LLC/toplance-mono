@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { documentVerdict } from "@/app/(app)/actions";
+import { documentVerdict } from "@/app/[locale]/(app)/actions";
 
 import {
   UploadOutcomeDialog,

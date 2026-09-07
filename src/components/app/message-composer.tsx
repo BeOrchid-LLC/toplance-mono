@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { sendMessage } from "@/app/(app)/actions";
+import { sendMessage } from "@/app/[locale]/(app)/actions";
 
 /**
  * The thread's composer. Cloned from `AddCaseNote` — same shape, same

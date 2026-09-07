@@ -1,0 +1,148 @@
+import { Badge } from "@/components/ui/badge";
+import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { InvitationStatusBadge } from "@/components/shared/status-badge";
+import { ResendInvitationButton } from "@/components/agency/resend-invitation-button";
+import { RevokeInvitationButton } from "@/components/agency/revoke-invitation-button";
+import type { ListedInvitation } from "@/lib/data/invitations";
+import { countryFromIso2 } from "@/lib/domain/corridors";
+import { AGENCY } from "@/lib/i18n/agency";
+import { fill } from "@/lib/i18n/fill";
+import type { Locale } from "@/lib/i18n/locales";
+
+function formatDay(value: Date) {
+  return value.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** One line of lifecycle per invitation — the dates its status makes true. */
+function invitationTimeline(
+  invite: {
+    status: string;
+    createdAt: Date;
+    expiresAt: Date;
+    acceptedAt: Date | null;
+  },
+  locale: Locale
+): string {
+  switch (invite.status) {
+    case "pending":
+      return fill(AGENCY.timelineInvitedExpires[locale], {
+        created: formatDay(invite.createdAt),
+        expires: formatDay(invite.expiresAt),
+      });
+    case "accepted":
+      return fill(AGENCY.timelineAccepted[locale], {
+        date: formatDay(invite.acceptedAt ?? invite.createdAt),
+      });
+    case "expired":
+      return fill(AGENCY.timelineExpired[locale], {
+        date: formatDay(invite.expiresAt),
+      });
+    default:
+      return fill(AGENCY.timelineInvited[locale], {
+        date: formatDay(invite.createdAt),
+      });
+  }
+}
+
+/**
+ * Emails nobody has answered yet.
+ *
+ * A sheet of its own wherever it appears, never a section inside the
+ * roster above it: an invitation and a member are different objects —
+ * one is a person who exists here, the other is an address that might
+ * become one.
+ *
+ * Both kinds of invitation render through this, and the middle column is
+ * the only thing that differs, because the two kinds differ in exactly
+ * one fact worth showing before acceptance: where a client is going, and
+ * what a colleague will be called. Splitting this into two components
+ * would duplicate the lifecycle line, the two buttons and the status
+ * pill to vary one cell.
+ */
+export function InvitationRoster({
+  invitations,
+  locale,
+  empty,
+  className,
+}: {
+  invitations: ListedInvitation[];
+  locale: Locale;
+  /** What to say when there are none — a client roster and a team say it differently. */
+  empty: string;
+  className?: string;
+}) {
+  const pending = invitations.filter((i) => i.status === "pending");
+
+  return (
+    <Panel className={className}>
+      <PanelHeader
+        label={AGENCY.invitationsLabel[locale]}
+        aside={
+          <Badge variant="neutral">
+            <span className="num">{pending.length}</span>
+            {AGENCY.pendingWord[locale]}
+          </Badge>
+        }
+      />
+
+      {invitations.length === 0 ? (
+        <PanelBody>
+          <p className="t-muted max-w-[62ch]">{empty}</p>
+        </PanelBody>
+      ) : (
+        <ul>
+          {invitations.map((invite) => {
+            const destination = countryFromIso2(invite.destinationIso);
+            return (
+              <li
+                key={invite.id}
+                className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto_auto] lg:items-center"
+              >
+                <div className="min-w-0">
+                  <p className="t-title truncate" title={invite.email}>
+                    {invite.fullName || invite.email}
+                  </p>
+                  {invite.fullName && (
+                    <p className="special mt-1 truncate">{invite.email}</p>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <p className="t-body truncate">
+                    {invite.kind === "staff"
+                      ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
+                      : (destination?.name ??
+                        invite.destinationIso?.toUpperCase() ??
+                        AGENCY.destinationNotSet[locale])}
+                  </p>
+                  <p className="special mt-1 truncate">
+                    {invitationTimeline(invite, locale)}
+                  </p>
+                </div>
+
+                <div className="lg:justify-self-end">
+                  <InvitationStatusBadge status={invite.status} />
+                </div>
+
+                <div className="lg:justify-self-end">
+                  {invite.status === "pending" && (
+                    <div className="flex items-center gap-1">
+                      <ResendInvitationButton
+                        invitationId={invite.id}
+                        email={invite.email}
+                      />
+                      <RevokeInvitationButton invitationId={invite.id} />
+                    </div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Panel>
+  );
+}

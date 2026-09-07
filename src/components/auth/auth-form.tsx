@@ -779,13 +779,22 @@ export function AuthForm(props: AuthFormProps) {
             </>
           ) : (
             <>
+              {/* The agency door, not `/sign-up`. Travellers are
+                  invite-only since 2026-08-31, so `/sign-up` without a
+                  token is a dead end — "create an account" pointed at a
+                  page whose only answer is that you cannot. The one
+                  account anyone can still make from the outside is an
+                  organisation's, so the question names that audience
+                  rather than sending everyone to a refusal. */}
               New to Toplance?{" "}
               <Link
-                href="/sign-up"
+                href="/agency/sign-up"
                 className="font-semibold text-brand-text hover:underline"
               >
-                Create an account
+                Create an organisation account
               </Link>
+              . Travelers are invited by the organisation handling their
+              case.
             </>
           )}
         </p>

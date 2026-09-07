@@ -1,39 +1,31 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth, currentUser } from "@clerk/nextjs/server";
-import { Shield } from "lucide-react";
-import { desc, eq, inArray } from "drizzle-orm";
+import { currentUser } from "@clerk/nextjs/server";
+import { ArrowRight, Shield } from "lucide-react";
+import { eq } from "drizzle-orm";
 
 import { AppBar } from "@/components/app/app-bar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import { InvitationStatusBadge, StatusBadge } from "@/components/shared/status-badge";
 import { Shell } from "@/components/shared/shell";
 import { CreateOrganisation } from "@/components/agency/create-organisation";
+import { agencyNav } from "@/components/agency/agency-nav";
+import { ConsoleBand } from "@/components/agency/console-band";
 import { InviteDialog } from "@/components/agency/invite-dialog";
-import { ResendInvitationButton } from "@/components/agency/resend-invitation-button";
-import { RevokeInvitationButton } from "@/components/agency/revoke-invitation-button";
 import { homeFor } from "@/lib/auth/routes";
-import {
-  createOrganisationTx,
-  provisionEmployerProfile,
-} from "@/lib/data/organisations";
+import { createOrganisationTx } from "@/lib/data/organisations";
 import { db, hasDatabaseEnv } from "@/lib/db/client";
-import {
-  applications,
-  orgApplicationProgress,
-  orgMembers,
-  organisations,
-} from "@/lib/db/schema";
-import { countryFromIso2 } from "@/lib/domain/corridors";
+import { applications } from "@/lib/db/schema";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { getActor, getProfile } from "@/lib/data/applications";
 import { listInvitations } from "@/lib/data/invitations";
+import { listOrgMembers, listOrgRoster } from "@/lib/data/organisations";
 import { getLocale } from "@/lib/i18n/server";
 import { AGENCY } from "@/lib/i18n/agency";
-import type { Locale } from "@/lib/i18n/locales";
+import { fill } from "@/lib/i18n/fill";
+import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -61,77 +53,51 @@ const ROLE_LABEL = AGENCY.roleLabel;
 const ROLE_REASON = AGENCY.roleReason;
 
 /**
- * Fills `{token}` placeholders in a translated template — the interpolated
- * value (a name, a count, a formatted date) has to survive being chosen
- * by locale first, so dictionary strings carry tokens rather than being
- * built from template literals.
+ * One of the two rosters, as a card that says how big it is and opens
+ * it. The console's front page is a summary now that the roster and the
+ * team each have a route of their own — the counts here are the only
+ * thing this page can honestly say about two lists it no longer holds.
  */
-function fill(template: string, vars: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(vars[key] ?? ""));
-}
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-  });
-}
-
-/** One line of lifecycle per invitation — the dates its status makes true. */
-function invitationTimeline(
-  invite: {
-    status: string;
-    createdAt: Date;
-    expiresAt: Date;
-    acceptedAt: Date | null;
-  },
-  locale: Locale
-): string {
-  switch (invite.status) {
-    case "pending":
-      return fill(AGENCY.timelineInvitedExpires[locale], {
-        created: formatDay(invite.createdAt),
-        expires: formatDay(invite.expiresAt),
-      });
-    case "accepted":
-      return fill(AGENCY.timelineAccepted[locale], {
-        date: formatDay(invite.acceptedAt ?? invite.createdAt),
-      });
-    case "expired":
-      return fill(AGENCY.timelineExpired[locale], {
-        date: formatDay(invite.expiresAt),
-      });
-    default:
-      return fill(AGENCY.timelineInvited[locale], {
-        date: formatDay(invite.createdAt),
-      });
-  }
-}
-
-/**
- * Finish the profile write the sign-up form started, for a session that
- * arrived here holding credentials and nothing else. Returns whatever
- * exists afterwards, so the caller's own `/go` fallback still catches a
- * session Clerk cannot even name.
- */
-async function recoverEmployer(): Promise<
-  [Awaited<ReturnType<typeof getProfile>>, Awaited<ReturnType<typeof getActor>>]
-> {
-  const { userId } = await auth();
-  if (!userId) return [null, null];
-
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress;
-  if (!email) return [null, null];
-
-  await provisionEmployerProfile(
-    userId,
-    email,
-    [user?.firstName, user?.lastName].filter(Boolean).join(" "),
-    readPendingProfile(user?.unsafeMetadata)
+function RosterCard({
+  href,
+  label,
+  body,
+  count,
+  countWord,
+}: {
+  href: string;
+  label: string;
+  body: string;
+  count: number;
+  countWord: string;
+}) {
+  return (
+    <Link href={href} className="group block rounded-lg">
+      <Panel className="h-full transition-colors group-hover:border-border-strong">
+        <PanelHeader
+          label={label}
+          // The arrow rather than a second "People" under the body: the
+          // card is one link, and naming the destination twice inside it
+          // reads as two.
+          aside={
+            <span className="flex items-center gap-3">
+              <Badge variant="brand">
+                <span className="num">{count}</span>
+                {countWord}
+              </Badge>
+              <ArrowRight
+                className="size-5 shrink-0 text-brand-text transition-transform group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </span>
+          }
+        />
+        <PanelBody>
+          <p className="t-muted max-w-[62ch]">{body}</p>
+        </PanelBody>
+      </Panel>
+    </Link>
   );
-
-  return Promise.all([getProfile(), getActor()]);
 }
 
 export default async function EmployerConsolePage() {
@@ -139,43 +105,9 @@ export default async function EmployerConsolePage() {
 
   const locale = await getLocale();
 
-  let [profile, actor] = await Promise.all([getProfile(), getActor()]);
-
-  // A sign-up whose profile write was cancelled lands here moments after
-  // creating an account, so try to finish that write before giving up on
-  // it — see `provisionEmployerProfile`. Only then is `/go` the honest
-  // answer, and `/go` rather than the employer door because the proxy
-  // walks a signed-in visitor off every auth page and the two would
-  // bounce at each other forever.
-  if (!profile || !actor) {
-    [profile, actor] = await recoverEmployer();
-  }
-  if (!profile || !actor) redirect("/go");
-
-  // Staff belong in `/ops`, whatever else is true of their account.
-  //
-  // This used to sit inside the `!membership` branch below, which meant
-  // it only fired for a staff account that owned no organisation — and
-  // an account can hold both. A director who signs up, names an
-  // organisation and is later promoted to reviewer has an `org_members`
-  // row and the `staff` role at once, and walked straight into the
-  // employer console: the one persona whose whole job is reading
-  // documents, on the one screen built to promise that nobody here
-  // reads them. Nothing was leaked (the console selects from the
-  // progress view, which carries no document column) but the routing
-  // said the opposite of what the product does.
-  if (actor.role === "staff") redirect(homeFor(actor.role));
-
-  const [membership] = await db
-    .select({
-      role: orgMembers.role,
-      name: organisations.name,
-      seatsPurchased: organisations.seatsPurchased,
-    })
-    .from(orgMembers)
-    .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
-    .where(eq(orgMembers.userId, profile.id))
-    .limit(1);
+  // Identity, role and membership — the preamble every page under
+  // `/agency` shares, and the redirects that go with it.
+  const { profile, actor, membership, orgId } = await resolveAgencyConsole();
 
   // No org row for this person yet — sign-up created the account but
   // not the organisation, or seed data never ran. The roster, seat
@@ -191,7 +123,7 @@ export default async function EmployerConsolePage() {
     // proxy is already walking the newly signed-in visitor off, so it
     // gets cancelled in flight often enough to be the normal case, not
     // the edge one — which is why `completeProfile` is retried and why
-    // `recoverEmployer` above exists at all. A client call to
+    // `recoverEmployer` in `console.ts` exists at all. A client call to
     // `createOrganisation` sat in exactly that gap and lost the name.
     //
     // So the name crosses inside Clerk's own record, and the first
@@ -236,7 +168,7 @@ export default async function EmployerConsolePage() {
     return (
       <div className="min-h-dvh bg-bg">
         <AppBar
-          nav={[{ href: "/agency", label: AGENCY.navDashboard[locale] }]}
+          nav={agencyNav({ locale, hasOrganisation: false })}
           name={profile.fullName}
           email={profile.email}
           subtitle={AGENCY.pageTitle[locale]}
@@ -277,283 +209,118 @@ export default async function EmployerConsolePage() {
     );
   }
 
-  /**
-   * Read through the progress view, never the applications table
-   * directly. The view carries no column that could reveal a document,
-   * so this console cannot leak one even by accident.
-   *
-   * The `where` is not a convenience. RLS used to scope this view to the
-   * caller's own organisation; with RLS gone, an unfiltered select
-   * returns every sponsored traveller on the platform. An empty
-   * `orgIds` therefore has to return early rather than fall through to a
-   * query with no restriction.
-   */
-  const rows = actor.orgIds.length
-    ? await db
-        .select()
-        .from(orgApplicationProgress)
-        .where(inArray(orgApplicationProgress.orgId, [...actor.orgIds]))
-        .orderBy(desc(orgApplicationProgress.completionPct))
-    : [];
-
-  // Same "no org, no unfiltered read" reasoning as the roster above:
-  // `listInvitations` takes one org id and has nothing to filter by
-  // without it.
-  const orgId = actor.orgIds[0];
-  const invitations = orgId ? await listInvitations(orgId) : [];
+  // Counts, not contents. The rows themselves are rendered by
+  // `/agency/people` and `/agency/team`; what this page needs from each
+  // list is its length, and one query per list is what it takes to know
+  // that honestly.
+  const [rows, members, invitations] = await Promise.all([
+    listOrgRoster(actor.orgIds),
+    // Same "no org, no unfiltered read" reasoning as the roster: both of
+    // these take one org id and have nothing to filter by without it.
+    orgId ? listOrgMembers(orgId) : Promise.resolve([]),
+    orgId ? listInvitations(orgId) : Promise.resolve([]),
+  ]);
   const pendingInvitations = invitations.filter((i) => i.status === "pending");
 
-  const org = membership ?? undefined;
+  const org = membership;
   const used = rows.length;
-  const seats = org?.seatsPurchased ?? 0;
+  const seats = org.seatsPurchased ?? 0;
 
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={[{ href: "/agency", label: AGENCY.navDashboard[locale] }]}
+        nav={agencyNav({ locale, hasOrganisation: true })}
         name={profile.fullName}
         email={profile.email}
-        subtitle={
-          org
-            ? `${org.name} · ${ROLE_LABEL[org.role][locale]}`
-            : AGENCY.pageTitle[locale]
-        }
+        subtitle={`${org.name} · ${ROLE_LABEL[org.role][locale]}`}
       />
 
-      {/* The ruled ground the laminate below refracts. Without it the
-          backdrop-filter has nothing to bend and costs a frame to draw
-          nothing. */}
-      <div className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px]"
-        />
-
-        <Shell className="pt-10">
-          <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
-            <div className="min-w-0">
-              <h1 className="t-h2">
-                {org?.name ?? AGENCY.yourOrganisationFallback[locale]}
-              </h1>
-              {/*
-                "0 of 0 seats in use" is a sentence made of two facts we
-                do not have. Seats are a placeholder until the client
-                sets them (§7), so with no seat count the line states the
-                number that is real and says the other is not set.
-              */}
-              <p className="t-muted mt-2">
-                {seats > 0
-                  ? fill(AGENCY.seatsInUse[locale], { used, seats })
-                  : fill(
-                      (used === 1
-                        ? AGENCY.seatCountNotSetOne
-                        : AGENCY.seatCountNotSetOther)[locale],
-                      { used }
-                    )}
-                {pendingInvitations.length > 0 &&
-                  fill(
-                    (pendingInvitations.length === 1
-                      ? AGENCY.pendingSuffixOne
-                      : AGENCY.pendingSuffixOther)[locale],
-                    { n: pendingInvitations.length }
-                  )}
-              </p>
-              {/* The bar names your role; this says how you got it.
-                  Seeing "Owner" appended to your account without ever
-                  having chosen it is the kind of thing that reads as the
-                  product knowing something about you that you don't. */}
-              <p className="t-muted mt-2 max-w-[68ch]">
-                {ROLE_REASON[org.role][locale]}
-              </p>
-              {seats > 0 && (
-                <Progress
-                  value={(used / seats) * 100}
-                  className="mt-4 max-w-[320px]"
-                />
+      <ConsoleBand
+        title={org.name || AGENCY.yourOrganisationFallback[locale]}
+        action={<InviteDialog canInviteStaff={org.role === "owner"} />}
+      >
+        {/*
+          "0 of 0 seats in use" is a sentence made of two facts we
+          do not have. Seats are a placeholder until the client
+          sets them (§7), so with no seat count the line states the
+          number that is real and says the other is not set.
+        */}
+        <p className="t-muted mt-2">
+          {seats > 0
+            ? fill(AGENCY.seatsInUse[locale], { used, seats })
+            : fill(
+                (used === 1
+                  ? AGENCY.seatCountNotSetOne
+                  : AGENCY.seatCountNotSetOther)[locale],
+                { used }
               )}
-            </div>
-            <InviteDialog canInviteStaff={org.role === "owner"} />
-          </div>
+          {pendingInvitations.length > 0 &&
+            fill(
+              (pendingInvitations.length === 1
+                ? AGENCY.pendingSuffixOne
+                : AGENCY.pendingSuffixOther)[locale],
+              { n: pendingInvitations.length }
+            )}
+        </p>
+        {/* The bar names your role; this says how you got it.
+            Seeing "Owner" appended to your account without ever
+            having chosen it is the kind of thing that reads as the
+            product knowing something about you that you don't. */}
+        <p className="t-muted mt-2 max-w-[68ch]">{ROLE_REASON[org.role][locale]}</p>
+        {seats > 0 && (
+          <Progress value={(used / seats) * 100} className="mt-4 max-w-[320px]" />
+        )}
+      </ConsoleBand>
 
+      <main>
+        <Shell className="py-12">
           {/*
             The signature moment for this console, per guideline §4. It is
             the right one: the single thing an HR administrator most needs
             to believe about this screen is the thing it will not show
             them, and that promise is what the whole roster is built
-            around. One laminate, at the top, and none below it.
+            around. One laminate, on the page you land on, and none below
+            it — which is also why the two roster pages do not repeat it.
 
             No MRZ. The mark carries a corridor, and this screen is a
             roster of many — there is no one corridor here to encode.
           */}
-          <div className="laminate mt-10 overflow-hidden rounded-lg">
+          <div className="laminate overflow-hidden rounded-lg">
             <span aria-hidden className="laminate-sheen" />
             <div className="relative z-[1] flex items-start gap-4 p-6">
               <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
               <div className="min-w-0">
                 <p className="tag">{AGENCY.privacyTag[locale]}</p>
-                <p className="d-sm mt-2 text-ink">
-                  {AGENCY.privacyHeading[locale]}
-                </p>
+                <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
                 <p className="t-muted mt-2 max-w-[74ch]">
                   {AGENCY.privacyBody[locale]}
                 </p>
               </div>
             </div>
           </div>
-        </Shell>
-      </div>
 
-      <main>
-        <Shell className="py-12">
-          {/* One sheet in the case file: the roster is a single object —
-              the people this organisation is responsible for — so it is
-              one card with ruled rows inside, not a stack of boxes. */}
-          <Panel>
-            <PanelHeader
-              label={AGENCY.yourPeopleLabel[locale]}
-              aside={
-                <Badge variant="brand">
-                  <span className="num">{used}</span>
-                  {(used === 1 ? AGENCY.personWord : AGENCY.peopleWord)[locale]}
-                </Badge>
+          {/* The two rosters, as the doors to their own pages. Equal
+              weight on purpose: an agency is its clients and the people
+              who serve them, and the console used to show only the
+              first. */}
+          <div className="mt-8 grid gap-6 md:grid-cols-2">
+            <RosterCard
+              href="/agency/people"
+              label={AGENCY.navPeople[locale]}
+              body={AGENCY.peopleCardBody[locale]}
+              count={used}
+              countWord={(used === 1 ? AGENCY.personWord : AGENCY.peopleWord)[locale]}
+            />
+            <RosterCard
+              href="/agency/team"
+              label={AGENCY.navTeam[locale]}
+              body={AGENCY.teamCardBody[locale]}
+              count={members.length}
+              countWord={
+                (members.length === 1 ? AGENCY.memberWord : AGENCY.membersWord)[locale]
               }
             />
-
-          {rows.length === 0 ? (
-            <PanelBody>
-              <p className="t-muted max-w-[62ch]">
-                {AGENCY.rosterEmpty[locale]}
-              </p>
-            </PanelBody>
-          ) : (
-            /*
-              Ruled rows, not a table. Four columns with a progress bar in
-              one of them has no honest 390px form — it either scrolls
-              sideways or collapses into unlabelled fragments — and §6
-              prefers rules anyway. Each person is one row that reflows.
-            */
-            <ul>
-              {rows.map((r) => {
-                const destination = countryFromIso2(r.destinationIso);
-                const pct = r.completionPct ?? 0;
-                return (
-                  <li
-                    key={r.id}
-                    className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center"
-                  >
-                    <div className="min-w-0">
-                      <p className="t-title truncate" title={r.fullName ?? ""}>
-                        {r.fullName}
-                      </p>
-                      <p className="special mt-1">{r.caseRef}</p>
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="t-body truncate">
-                        {destination?.name ??
-                          r.destinationIso?.toUpperCase() ??
-                          AGENCY.routeNotSet[locale]}
-                      </p>
-                      <p className="special mt-1 truncate" title={r.visaName ?? ""}>
-                        {r.visaName ?? AGENCY.routeNotSet[locale]}
-                      </p>
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <Progress value={pct} className="flex-1" />
-                        <span className="w-12 shrink-0 text-end text-base font-semibold">
-                          {pct}%
-                        </span>
-                      </div>
-                      <p className="special mt-1">
-                        {fill(AGENCY.documentsVerified[locale], {
-                          verified: r.documentsVerified ?? 0,
-                          total: r.documentsTotal ?? 0,
-                        })}
-                      </p>
-                    </div>
-
-                    <div className="lg:justify-self-end">
-                      {r.status && <StatusBadge status={r.status} short />}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-          </Panel>
-
-          {/* A second sheet, not a section inside the first: invitations
-              and the roster are different objects — one is people who
-              exist, the other is emails nobody has answered yet. */}
-          <Panel className="mt-8">
-            <PanelHeader
-              label={AGENCY.invitationsLabel[locale]}
-              aside={
-                <Badge variant="neutral">
-                  <span className="num">{pendingInvitations.length}</span>
-                  {AGENCY.pendingWord[locale]}
-                </Badge>
-              }
-            />
-
-            {invitations.length === 0 ? (
-              <PanelBody>
-                <p className="t-muted max-w-[62ch]">
-                  {AGENCY.invitationsEmpty[locale]}
-                </p>
-              </PanelBody>
-            ) : (
-              <ul>
-                {invitations.map((invite) => {
-                  const destination = countryFromIso2(invite.destinationIso);
-                  return (
-                    <li
-                      key={invite.id}
-                      className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto_auto] lg:items-center"
-                    >
-                      <div className="min-w-0">
-                        <p className="t-title truncate" title={invite.email}>
-                          {invite.fullName || invite.email}
-                        </p>
-                        {invite.fullName && (
-                          <p className="special mt-1 truncate">{invite.email}</p>
-                        )}
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="t-body truncate">
-                          {destination?.name ??
-                            invite.destinationIso?.toUpperCase() ??
-                            AGENCY.destinationNotSet[locale]}
-                        </p>
-                        <p className="special mt-1 truncate">
-                          {invitationTimeline(invite, locale)}
-                        </p>
-                      </div>
-
-                      <div className="lg:justify-self-end">
-                        <InvitationStatusBadge status={invite.status} />
-                      </div>
-
-                      <div className="lg:justify-self-end">
-                        {invite.status === "pending" && (
-                          <div className="flex items-center gap-1">
-                            <ResendInvitationButton
-                              invitationId={invite.id}
-                              email={invite.email}
-                            />
-                            <RevokeInvitationButton invitationId={invite.id} />
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Panel>
+          </div>
         </Shell>
       </main>
     </div>

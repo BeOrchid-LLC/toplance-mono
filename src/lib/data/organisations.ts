@@ -1,9 +1,15 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { applications, orgMembers, organisations, profiles } from "@/lib/db/schema";
+import {
+  applications,
+  orgApplicationProgress,
+  orgMembers,
+  organisations,
+  profiles,
+} from "@/lib/db/schema";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import {
   EMPTY_PENDING_PROFILE,
@@ -170,4 +176,65 @@ export async function isAgencyOwner(userId: string, orgId: string): Promise<bool
     .limit(1);
 
   return row?.role === "owner";
+}
+
+/** One colleague on the team page: who they are, their rank, and since when. */
+export type OrgMemberRow = {
+  userId: string;
+  fullName: string;
+  email: string;
+  role: (typeof orgMembers.$inferSelect)["role"];
+  joinedAt: Date;
+};
+
+/**
+ * The colleagues inside one agency, oldest first — which puts the owner
+ * who created it at the top for free, since `createOrganisationTx`
+ * writes that row before any invitation can exist.
+ *
+ * Columns are named rather than `select()`-ed from `profiles`, for the
+ * same reason `listInvitations` names its own: this feeds a rendered
+ * roster, and a whole profile row carries a passport number and a date
+ * of birth that the team page has no business holding — one future
+ * `{...member}` spread away from being on the wire.
+ *
+ * Takes an org id and filters on it. There is no unfiltered form of this
+ * query, because an unfiltered form returns every agency's staff.
+ */
+export async function listOrgMembers(orgId: string): Promise<OrgMemberRow[]> {
+  return db
+    .select({
+      userId: orgMembers.userId,
+      fullName: profiles.fullName,
+      email: profiles.email,
+      role: orgMembers.role,
+      joinedAt: orgMembers.createdAt,
+    })
+    .from(orgMembers)
+    .innerJoin(profiles, eq(profiles.id, orgMembers.userId))
+    .where(eq(orgMembers.orgId, orgId))
+    .orderBy(orgMembers.createdAt);
+}
+
+/**
+ * The people one agency sponsors, furthest along first.
+ *
+ * Read through the progress view, never the applications table
+ * directly. The view carries no column that could reveal a document, so
+ * the organisation console cannot leak one even by accident.
+ *
+ * Taking the ids and returning `[]` for an empty list is not a
+ * convenience. RLS used to scope this view to the caller's own agency;
+ * with RLS gone, an unfiltered select returns every sponsored traveller
+ * on the platform — so the empty case has to return here rather than
+ * fall through to a query with no restriction.
+ */
+export async function listOrgRoster(orgIds: readonly string[]) {
+  if (!orgIds.length) return [];
+
+  return db
+    .select()
+    .from(orgApplicationProgress)
+    .where(inArray(orgApplicationProgress.orgId, [...orgIds]))
+    .orderBy(desc(orgApplicationProgress.completionPct));
 }

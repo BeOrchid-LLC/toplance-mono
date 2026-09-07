@@ -114,6 +114,15 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // invitation email did not arrive has exactly one remedy, and this is
   // it — the same invitation, sent again, rather than a second live one.
   await page.keyboard.press("Escape");
+
+  // The roster and its invitations have their own page now — the
+  // console's People tab. Everything below is a fact about a row, so
+  // this is where the rest of this journey is watched from. Scoped to
+  // the bar because the dashboard also links to this page from a card,
+  // and Playwright matches an accessible name by substring.
+  await page.getByRole("banner").getByRole("link", { name: "People" }).click();
+  await page.waitForURL("**/agency/people");
+
   await page.getByRole("button", { name: "Resend" }).click();
   await expect(page.getByText(`Invitation sent again to ${INVITEE_EMAIL}`)).toBeVisible();
 
@@ -219,5 +228,11 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await expect(page.getByText(/1 person/)).toBeVisible();
   await expect(page.getByText(INVITEE_EMAIL).first()).toBeVisible();
   await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
+
+  // The privacy promise is the console's front page, and stays there:
+  // one laminate, on the screen you land on, none on the two rosters it
+  // opens.
+  await page.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
+  await page.waitForURL("**/agency");
   await expect(page.getByText("You see progress, not documents")).toBeVisible();
 });

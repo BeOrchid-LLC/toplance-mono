@@ -25,6 +25,8 @@ type L = Record<Locale, string>;
 export const AGENCY: {
   pageTitle: L;
   navDashboard: L;
+  navPeople: L;
+  navTeam: L;
   roleLabel: { owner: L; reviewer: L };
   roleReason: { owner: L; reviewer: L };
   nameOrgLabel: L;
@@ -52,6 +54,15 @@ export const AGENCY: {
   timelineAccepted: L;
   timelineExpired: L;
   timelineInvited: L;
+  peopleCardBody: L;
+  teamCardBody: L;
+  yourTeamLabel: L;
+  memberWord: L;
+  membersWord: L;
+  teamEmpty: L;
+  teamInvitationsEmpty: L;
+  jobTitleNotSet: L;
+  joinedOn: L;
 } = {
   pageTitle: {
     en: "Organisation console",
@@ -76,6 +87,30 @@ export const AGENCY: {
     ar: "لوحة التحكم",
     tw: "Nhwɛso",
     zu: "Ideshibhodi",
+  },
+  navPeople: {
+    en: "People",
+    ha: "Mutane",
+    yo: "Àwọn ènìyàn",
+    ig: "Ndị mmadụ",
+    fr: "Personnes",
+    pt: "Pessoas",
+    sw: "Watu",
+    ar: "الأشخاص",
+    tw: "Nnipa",
+    zu: "Abantu",
+  },
+  navTeam: {
+    en: "Team",
+    ha: "Ƙungiya",
+    yo: "Ẹgbẹ́",
+    ig: "Ndị otu",
+    fr: "Équipe",
+    pt: "Equipa",
+    sw: "Timu",
+    ar: "الفريق",
+    tw: "Kuo",
+    zu: "Ithimba",
   },
   roleLabel: {
     owner: {
@@ -428,5 +463,113 @@ export const AGENCY: {
     ar: "دُعي في {date}",
     tw: "Wɔfrɛɛ no {date}",
     zu: "Umenywe {date}",
+  },
+  peopleCardBody: {
+    en: "Everyone whose visa you are handling, with a live completion score for each.",
+    ha: "Duk wanda kake sarrafa bizarsa, tare da madogarar cikawa mai rai ga kowanne.",
+    yo: "Gbogbo ẹni tí o ń ṣàkóso fisa rẹ̀, pẹ̀lú ìwọ̀n ìparí tí ń ṣiṣẹ́ lọ́wọ́lọ́wọ́ fún ẹnìkọ̀ọ̀kan.",
+    ig: "Onye ọ bụla ị na-elekọta visa ya, ya na akara mmecha dị ndụ maka onye ọ bụla.",
+    fr: "Toutes les personnes dont vous gérez le visa, avec un score d'achèvement en direct pour chacune.",
+    pt: "Todas as pessoas cujo visto está a tratar, com uma pontuação de conclusão em tempo real para cada uma.",
+    sw: "Kila mtu ambaye unashughulikia visa yake, na alama ya ukamilifu inayosasishwa kwa kila mmoja.",
+    ar: "كل شخص تتولى تأشيرته، مع درجة إنجاز مباشرة لكل واحد منهم.",
+    tw: "Obiara a woredi ne visa ho dwuma, a ewiei akontaahyɛde a ɛda hɔ ka obiara ho.",
+    zu: "Wonke umuntu omphathela i-visa yakhe, enamaphuzu okuqedwa asebenzayo ngamunye.",
+  },
+  teamCardBody: {
+    en: "The colleagues who review your clients' documents.",
+    ha: "Abokan aikin da suke duba takardun abokan cinikinka.",
+    yo: "Àwọn alábàáṣiṣẹ́ tí wọ́n ń ṣàyẹ̀wò àwọn ìwé àwọn oníbàárà rẹ.",
+    ig: "Ndị ọrụ ibe gị na-enyocha akwụkwọ ndị ahịa gị.",
+    fr: "Les collègues qui vérifient les documents de vos clients.",
+    pt: "Os colegas que verificam os documentos dos seus clientes.",
+    sw: "Wenzako wanaokagua nyaraka za wateja wako.",
+    ar: "الزملاء الذين يراجعون مستندات عملائك.",
+    tw: "Wo nnwumayɛfoɔ a wɔhwɛ wo adetɔfoɔ nkrataa so.",
+    zu: "Ozakwenu abahlola amadokhumenti amakhasimende akho.",
+  },
+  yourTeamLabel: {
+    en: "Your team",
+    ha: "Ƙungiyarka",
+    yo: "Ẹgbẹ́ rẹ",
+    ig: "Ndị otu gị",
+    fr: "Votre équipe",
+    pt: "A sua equipa",
+    sw: "Timu yako",
+    ar: "فريقك",
+    tw: "Wo kuo",
+    zu: "Ithimba lakho",
+  },
+  memberWord: {
+    en: "member",
+    ha: "memba",
+    yo: "ọmọ ẹgbẹ́",
+    ig: "onye otu",
+    fr: "membre",
+    pt: "membro",
+    sw: "mwanachama",
+    ar: "عضو",
+    tw: "memba",
+    zu: "ilungu",
+  },
+  membersWord: {
+    en: "members",
+    ha: "membobi",
+    yo: "àwọn ọmọ ẹgbẹ́",
+    ig: "ndị otu",
+    fr: "membres",
+    pt: "membros",
+    sw: "wanachama",
+    ar: "أعضاء",
+    tw: "memfoɔ",
+    zu: "amalungu",
+  },
+  teamEmpty: {
+    en: "Only you so far. Invite a colleague and they appear here once they accept.",
+    ha: "Kai kaɗai ne har yanzu. Gayyaci abokin aiki, zai bayyana a nan da zarar ya amince.",
+    yo: "Ìwọ nìkan ni fún ìsinsìnyí. Pe alábàáṣiṣẹ́ kan, yóò sì farahàn níhìn-ín bí ó bá ti tẹ́wọ́gbà.",
+    ig: "Naanị gị ruo ugbu a. Kpọọ onye ọrụ ibe gị oku, ọ ga-apụta ebe a ozugbo ọ nabatara.",
+    fr: "Vous seul pour l'instant. Invitez un collègue et il apparaîtra ici dès qu'il aura accepté.",
+    pt: "Só você por enquanto. Convide um colega e ele aparece aqui assim que aceitar.",
+    sw: "Wewe pekee kwa sasa. Mwalike mwenzako naye ataonekana hapa mara atakapokubali.",
+    ar: "أنت وحدك حتى الآن. ادعُ زميلاً وسيظهر هنا بمجرد قبوله.",
+    tw: "Wo nko ara na ɛwɔ hɔ seesei. Frɛ wo yɔnko adwumayɛni na ɔbɛpue wɔ ha sɛ ɔgye tom a.",
+    zu: "Nguwe wedwa okwamanje. Mema ozakwenu bese evela lapha uma esamukela.",
+  },
+  teamInvitationsEmpty: {
+    en: "No colleague has been invited yet. Send an invitation and it appears here until it is accepted, revoked or expires.",
+    ha: "Ba a gayyaci wani abokin aiki ba tukuna. Aika gayyata kuma za ta bayyana a nan har sai an amince da ita, an soke ta, ko ta ƙare.",
+    yo: "A kò tíì pe alábàáṣiṣẹ́ kankan. Fi ìpè ránṣẹ́, yóò sì farahàn níhìn-ín títí a óo fi tẹ́wọ́gbà á, yọkúrò tàbí kí ó parí.",
+    ig: "Akpọbeghị onye ọrụ ibe ọ bụla oku. Zipu ọkpụkpọ ma ọ ga-apụta ebe a ruo mgbe a nabatara ya, kagburu ya ma ọ bụ ọ kwụsịrị.",
+    fr: "Aucun collègue n'a encore été invité. Envoyez une invitation et elle apparaît ici jusqu'à ce qu'elle soit acceptée, révoquée ou expirée.",
+    pt: "Ainda não foi convidado nenhum colega. Envie um convite e ele aparece aqui até ser aceite, revogado ou expirar.",
+    sw: "Bado hakuna mwenzako aliyealikwa. Tuma mwaliko nao utaonekana hapa hadi ukubaliwe, ubatilishwe au umalizike muda wake.",
+    ar: "لم تتم دعوة أي زميل بعد. أرسل دعوة وستظهر هنا حتى يتم قبولها أو إلغاؤها أو انتهاء صلاحيتها.",
+    tw: "Wɔnnfrɛɛ adwumayɛni foforɔ biara ɛnora. Soma frɛ na ɛbɛda ha akɔsi sɛ wɔbɛgye atom, wɔatwa mu, anaasɛ ano bɛtɔ.",
+    zu: "Akekho ozakwenu osemenywa. Thumela isimemo bese sivela lapha kuze kube siyamukelwa, sihoxiswe noma siphelelwe yisikhathi.",
+  },
+  joinedOn: {
+    en: "Joined {date}",
+    ha: "Ya shiga {date}",
+    yo: "Ó dara pọ̀ ní {date}",
+    ig: "Ọ sonyere {date}",
+    fr: "A rejoint le {date}",
+    pt: "Entrou a {date}",
+    sw: "Alijiunga {date}",
+    ar: "انضم في {date}",
+    tw: "Ɔbaa mu {date}",
+    zu: "Ujoyine {date}",
+  },
+  jobTitleNotSet: {
+    en: "Colleague",
+    ha: "Abokin aiki",
+    yo: "Alábàáṣiṣẹ́",
+    ig: "Onye ọrụ ibe",
+    fr: "Collègue",
+    pt: "Colega",
+    sw: "Mwenzako",
+    ar: "زميل",
+    tw: "Adwumayɛni",
+    zu: "Ozakwenu",
   },
 };

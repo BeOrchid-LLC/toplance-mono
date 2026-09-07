@@ -18,17 +18,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteTraveller } from "@/app/agency/actions";
 import { useT } from "@/components/locale-provider";
+import { fill } from "@/lib/i18n/fill";
 import { INVITE_DIALOG } from "@/lib/i18n/invite-dialog";
-
-/**
- * Fills `{token}` placeholders in a translated template — the same
- * convention `src/app/agency/page.tsx` uses, needed here because the
- * recipient's own email address has to be spliced into an already
- * locale-picked sentence.
- */
-function fill(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{(\w+)\}/g, (_, key: string) => vars[key] ?? "");
-}
 
 /** What the sent sheet states about the invitation it hands over. */
 type Recipient = {

@@ -35,7 +35,7 @@ export async function createOrganisation(formData: FormData) {
 
     await track("toplance.organisation_created", { orgId: result.orgId }, actor.userId);
 
-    revalidatePath("/agency");
+    revalidatePath("/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -112,7 +112,7 @@ export async function inviteTraveller(formData: FormData) {
 
     await track("toplance.invitation_sent", { orgId }, actor.userId);
 
-    revalidatePath("/agency");
+    revalidatePath("/agency", "layout");
     return { ok: true, inviteUrl };
   } catch (error) {
     const message = toActionError(error);
@@ -165,7 +165,7 @@ export async function resendInvitation(formData: FormData) {
 
     await track("toplance.invitation_resent", { orgId }, actor.userId);
 
-    revalidatePath("/agency");
+    revalidatePath("/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);
@@ -188,7 +188,7 @@ export async function revokeInvitation(formData: FormData) {
 
     await track("toplance.invitation_revoked", { orgId }, actor.userId);
 
-    revalidatePath("/agency");
+    revalidatePath("/agency", "layout");
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

@@ -35,7 +35,7 @@ export const OPS_COMMON: {
   caseWord: { one: L; other: L };
   documentWord: { one: L; other: L };
   tripWord: { one: L; other: L };
-  nav: { caseQueue: L; routes: L; tenants: L };
+  nav: { caseQueue: L; routes: L; tenants: L; staff: L };
   purpose: {
     tourism: L;
     work: L;
@@ -307,6 +307,18 @@ export const OPS_COMMON: {
     },
   },
   nav: {
+    staff: {
+      en: "Colleagues",
+      ha: "Abokan aiki",
+      yo: "Àwọn ẹlẹgbẹ́",
+      ig: "Ndị ọrụ ibe",
+      fr: "Collègues",
+      pt: "Colegas",
+      sw: "Wenzetu",
+      ar: "الزملاء",
+      tw: "Nnwumayɛfo",
+      zu: "Ozakwethu",
+    },
     caseQueue: {
       en: "Case queue",
       ha: "Layin shari'o'i",

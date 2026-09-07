@@ -147,16 +147,26 @@ export const travelPurpose = pgEnum("travel_purpose", [
 /**
  * What an invitation attaches when it is accepted.
  *
- * One table carries both invitations an agency sends. A `client` invite
- * attaches an application — somebody whose visa the agency is handling.
- * A `staff` invite attaches a membership — a colleague who will review
- * those applications.
+ * Two of these are an agency's to send. A `client` invite attaches an
+ * application — somebody whose visa the agency is handling. A `staff`
+ * invite attaches a membership — a colleague who will review those
+ * applications.
+ *
+ * The third is BeOrchid's own, and attaches neither: `platform_staff`
+ * makes the accepting account platform staff, at the rank the sender
+ * chose. It is the only invitation in the product with no organisation
+ * behind it, which is why `org_id` is nullable and why
+ * `platform_invite_has_no_org` exists to say what the FK no longer can.
  *
  * A discriminator rather than a second table: one token format, one
  * accept page, one expiry policy and one revoke button already exist,
  * and a second table would duplicate all four to carry one column.
  */
-export const invitationKind = pgEnum("invitation_kind", ["client", "staff"]);
+export const invitationKind = pgEnum("invitation_kind", [
+  "client",
+  "staff",
+  "platform_staff",
+]);
 
 export const invitationStatus = pgEnum("invitation_status", [
   "pending",
@@ -464,12 +474,25 @@ export const invitations = pgTable(
   "invitations",
   {
     id: uuid().primaryKey().defaultRandom(),
-    orgId: uuid()
-      .notNull()
-      .references(() => organisations.id, { onDelete: "cascade" }),
+    /**
+     * The agency this invitation belongs to, and `null` on a
+     * `platform_staff` invitation — BeOrchid is not a tenant and has no
+     * row here. See `platform_invite_has_no_org` below.
+     */
+    orgId: uuid().references(() => organisations.id, { onDelete: "cascade" }),
     email: text().notNull(),
     fullName: text().notNull().default(""),
     kind: invitationKind().notNull().default("client"),
+    /**
+     * The BeOrchid rank this invitation grants, on a `platform_staff`
+     * invitation and null on every other kind.
+     *
+     * Written by the owner who sends it, never chosen by the person
+     * accepting. That is the whole containment on an invitation that can
+     * mint an owner: the decision stays with somebody who already is
+     * one, and the accepting account only ever gets what the row says.
+     */
+    staffRank: staffRole(),
     jobTitle: text(),
     destinationIso: text(),
     purpose: travelPurpose(),
@@ -486,7 +509,26 @@ export const invitations = pgTable(
       .notNull()
       .default(sql`now() + interval '30 days'`),
   },
-  (t) => [index("invitations_org_idx").on(t.orgId, t.status)]
+  (t) => [
+    index("invitations_org_idx").on(t.orgId, t.status),
+    /**
+     * The nullable `org_id` costs the invariant that an invitation
+     * belongs to a tenant. This restores it as a statement about the
+     * three columns together: a platform invitation has no agency and a
+     * rank, every other kind has an agency and no rank.
+     */
+    check(
+      "platform_invite_has_no_org",
+      sql`(${t.kind} = 'platform_staff' and ${t.orgId} is null and ${t.staffRank} is not null)
+       or (${t.kind} <> 'platform_staff' and ${t.orgId} is not null and ${t.staffRank} is null)`
+    ),
+    /**
+     * The ops roster's read. `invitations_org_idx` cannot serve it —
+     * every platform row has a null `org_id`, and that index is led by
+     * the column they are all null in.
+     */
+    index("invitations_platform_idx").on(t.status).where(sql`${t.orgId} is null`),
+  ]
 );
 
 /**

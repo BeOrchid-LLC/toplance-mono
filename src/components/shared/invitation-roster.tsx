@@ -1,11 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { InvitationStatusBadge } from "@/components/shared/status-badge";
-import { ResendInvitationButton } from "@/components/agency/resend-invitation-button";
-import { RevokeInvitationButton } from "@/components/agency/revoke-invitation-button";
+import {
+  ResendInvitationButton,
+  RevokeInvitationButton,
+  type ResendResult,
+  type RevokeResult,
+} from "@/components/shared/invitation-actions";
 import type { ListedInvitation } from "@/lib/data/invitations";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { AGENCY } from "@/lib/i18n/agency";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
 
@@ -55,24 +60,33 @@ function invitationTimeline(
  * one is a person who exists here, the other is an address that might
  * become one.
  *
- * Both kinds of invitation render through this, and the middle column is
- * the only thing that differs, because the two kinds differ in exactly
- * one fact worth showing before acceptance: where a client is going, and
- * what a colleague will be called. Splitting this into two components
- * would duplicate the lifecycle line, the two buttons and the status
- * pill to vary one cell.
+ * All three kinds of invitation render through this, and the middle
+ * column is the only thing that differs, because they differ in exactly
+ * one fact worth showing before acceptance: where a client is going,
+ * what an agency colleague will be called, and what rank a BeOrchid
+ * colleague is being given. Splitting this into three components would
+ * duplicate the lifecycle line, the two buttons and the status pill to
+ * vary one cell.
+ *
+ * The two actions arrive as props. This lived under
+ * `components/agency/` and imported that console's actions directly,
+ * which is what made it unusable from `/ops`.
  */
 export function InvitationRoster({
   invitations,
   locale,
   empty,
   className,
+  resendAction,
+  revokeAction,
 }: {
   invitations: ListedInvitation[];
   locale: Locale;
   /** What to say when there are none — a client roster and a team say it differently. */
   empty: string;
   className?: string;
+  resendAction: (formData: FormData) => Promise<ResendResult>;
+  revokeAction: (formData: FormData) => Promise<RevokeResult>;
 }) {
   const pending = invitations.filter((i) => i.status === "pending");
 
@@ -112,11 +126,13 @@ export function InvitationRoster({
 
                 <div className="min-w-0">
                   <p className="t-body truncate">
-                    {invite.kind === "staff"
-                      ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
-                      : (destination?.name ??
-                        invite.destinationIso?.toUpperCase() ??
-                        AGENCY.destinationNotSet[locale])}
+                    {invite.kind === "platform_staff"
+                      ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]
+                      : invite.kind === "staff"
+                        ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
+                        : (destination?.name ??
+                          invite.destinationIso?.toUpperCase() ??
+                          AGENCY.destinationNotSet[locale])}
                   </p>
                   <p className="special mt-1 truncate">
                     {invitationTimeline(invite, locale)}
@@ -133,8 +149,12 @@ export function InvitationRoster({
                       <ResendInvitationButton
                         invitationId={invite.id}
                         email={invite.email}
+                        action={resendAction}
                       />
-                      <RevokeInvitationButton invitationId={invite.id} />
+                      <RevokeInvitationButton
+                        invitationId={invite.id}
+                        action={revokeAction}
+                      />
                     </div>
                   )}
                 </div>

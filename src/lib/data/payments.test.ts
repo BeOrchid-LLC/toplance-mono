@@ -13,7 +13,7 @@ import { eq, inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
   const { db } = await import("@/lib/db/client");
-  const { applications, corridors, organisations, payments, profiles } = await import(
+  const { applications, organisations, payments, profiles } = await import(
     "@/lib/db/schema"
   );
   const {

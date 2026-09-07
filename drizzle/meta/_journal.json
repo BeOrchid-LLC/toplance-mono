@@ -204,6 +204,20 @@
       "when": 1788788046984,
       "tag": "0028_rich_sandman",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788789022485,
+      "tag": "0029_absurd_deadpool",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1788789069294,
+      "tag": "0030_groovy_sabretooth",
+      "breakpoints": true
     }
   ]
 }

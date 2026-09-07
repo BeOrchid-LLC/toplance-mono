@@ -1,0 +1,1 @@
+ALTER TYPE "public"."invitation_kind" ADD VALUE 'platform_staff';

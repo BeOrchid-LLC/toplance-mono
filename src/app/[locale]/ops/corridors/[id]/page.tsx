@@ -113,7 +113,7 @@ export default async function ReviewCorridorPage({
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={localizedOpsNav(locale)}
+        nav={localizedOpsNav(locale, actor.staffRole === "owner")}
         name={profile.fullName}
         email={profile.email}
         subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}

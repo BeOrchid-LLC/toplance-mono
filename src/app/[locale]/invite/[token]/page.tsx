@@ -76,11 +76,33 @@ function InvitationSummary({
   const parts = [destinationLabel, preview.purpose && purposeLabel(preview.purpose)].filter(
     (part): part is string => Boolean(part)
   );
+  /**
+   * A platform staff invitation has no organisation behind it, so every
+   * sentence built around an agency's name is the wrong sentence. It
+   * gets its own heading, and a warning the agency copy has no reason to
+   * carry: the second factor is not optional, and finding that out at
+   * the wall is worse than being told here.
+   */
+  if (!preview.orgName) {
+    return (
+      <>
+        <p className="tag">{INVITE_PAGE.tag[locale]}</p>
+        <h1 className="t-h2 mt-3 max-w-[22ch]">{INVITE_PAGE.platformHeading[locale]}</h1>
+        <div className="mt-6 flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
+          <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
+          <p className="t-muted">{INVITE_PAGE.platformNotice[locale]}</p>
+        </div>
+      </>
+    );
+  }
+
+  const orgName = preview.orgName;
+
   return (
     <>
       <p className="tag">{INVITE_PAGE.tag[locale]}</p>
       <h1 className="t-h2 mt-3 max-w-[22ch]">
-        {INVITE_PAGE.summaryHeadingTemplate[locale].replace("{orgName}", preview.orgName)}
+        {INVITE_PAGE.summaryHeadingTemplate[locale].replace("{orgName}", orgName)}
       </h1>
       {parts.length > 0 && (
         <p className="t-body-lg mt-3 text-ink-2">{parts.join(" · ")}</p>
@@ -88,7 +110,7 @@ function InvitationSummary({
       <div className="mt-6 flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
         <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
         <p className="t-muted">
-          {INVITE_PAGE.summaryNoticeTemplate[locale].replace("{orgName}", preview.orgName)}
+          {INVITE_PAGE.summaryNoticeTemplate[locale].replace("{orgName}", orgName)}
         </p>
       </div>
     </>

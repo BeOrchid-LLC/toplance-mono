@@ -293,6 +293,41 @@ export function invitationEmail({
   };
 }
 
+/**
+ * → an invited BeOrchid colleague.
+ *
+ * Separate from `invitationEmail` rather than parameterised. That one
+ * says "start a visa application sponsored by {org}", which is the wrong
+ * sentence in every clause for this reader: there is no organisation, no
+ * application and no sponsorship. The second factor is named here
+ * because it is a thing to go and have ready, not a surprise to meet at
+ * the door.
+ */
+export function platformInvitationEmail({
+  inviteUrl,
+  fullName,
+  rank,
+}: {
+  inviteUrl: string;
+  fullName?: string;
+  rank: "reviewer" | "owner";
+}): EmailContent {
+  const greeting = fullName ? `${fullName}, y` : "Y";
+  const role = rank === "owner" ? "an owner" : "a reviewer";
+
+  return {
+    subject: "You have been invited to the BeOrchid platform console",
+    ...renderEmail({
+      heading: "You have been invited to the BeOrchid platform console",
+      paragraphs: [
+        `${greeting}ou have been invited to join BeOrchid as ${role} on the Toplance platform console.`,
+        "You will be asked to set up a second factor before the console opens. It is not optional, so have an authenticator app to hand.",
+      ],
+      cta: { href: inviteUrl, label: "Accept your invitation" },
+    }),
+  };
+}
+
 /** → traveller: weekly post-arrival digest. */
 export function companionDigestEmail({
   url,

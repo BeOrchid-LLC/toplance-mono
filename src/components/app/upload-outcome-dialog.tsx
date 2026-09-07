@@ -141,11 +141,16 @@ export function UploadOutcomeDialog({
                     {/* The checker's own reason, verbatim. A generic
                         "please upload a clearer copy" would send someone
                         back to re-photograph a document that was refused
-                        for being the wrong document entirely. */}
+                        for being the wrong document entirely — which is
+                        exactly what the sentence after it used to do,
+                        appended to every flag whatever its reason. The
+                        follow-up now says what to do without claiming to
+                        know why, so it is true of a wrong document and an
+                        unreadable one alike. */}
                     {reason?.trim()
                       ? reason
                       : `We could not read your ${documentName}.`}{" "}
-                    Upload a clearer copy and we will check it again.
+                    Replace the file and we will check it again.
                   </>
                 ) : processing ? (
                   <>Adding your {documentName} to the file.</>

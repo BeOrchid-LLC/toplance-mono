@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelHeader } from "@/components/shared/panel";
+import { DocStateBadge } from "@/components/shared/status-badge";
+import type { DocumentState } from "@/lib/domain/status";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   getDocuments,
@@ -338,6 +340,19 @@ export default async function RequirementsPage() {
     )
     .map((d) => d.requirement);
 
+  /**
+   * Where each requirement has actually got to, for the list below.
+   *
+   * The rule set and the checklist are two different things and can
+   * legitimately disagree: `adoptRuleSet` drops a conditional the
+   * traveller does not match, and keeps an uploaded row the corridor no
+   * longer asks for. A requirement with no row of its own is one nobody
+   * has uploaded against, which is exactly `not_started`.
+   */
+  const docStates = new Map(docs.map((d) => [d.docKey, d.state]));
+  const stateOf = (docKey: string): DocumentState =>
+    docStates.get(docKey) ?? "not_started";
+
   const effective = new Date(ruleSet.effectiveFrom).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
@@ -638,7 +653,21 @@ export default async function RequirementsPage() {
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0">
-                  <p className="t-title">{r.name}</p>
+                  {/* The name, and where that document has actually got
+                      to. This page is the published rule set and stays
+                      that way — the order, the wording and the count all
+                      come from the mission, not from progress — but
+                      printing it as a bare numbered 01–10 list made a
+                      finished checklist indistinguishable from an
+                      untouched one, and a traveller with every file
+                      uploaded read ten outstanding tasks. The badge is
+                      the checklist's own `DocStateBadge`, not a second
+                      vocabulary invented here, so the two screens cannot
+                      come to disagree about one document. */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <p className="t-title">{r.name}</p>
+                    <DocStateBadge state={stateOf(r.docKey)} />
+                  </div>
                   {/* The names carry the list; the guidance is what
                       someone opens when they are about to photograph
                       that one document. A native disclosure rather than

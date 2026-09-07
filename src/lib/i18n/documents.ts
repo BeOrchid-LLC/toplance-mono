@@ -36,6 +36,16 @@ export const DOCUMENTS: {
   documentPlural: L;
   everythingVerifiedHeading: L;
   everythingVerifiedBody: L;
+  /**
+   * Everything uploaded, nothing reviewed yet — which is where a
+   * traveller lands the moment they finish, and stays for as long as a
+   * human queue takes. It had no copy at all: the ring counts
+   * `collected` and read 100%, the panel beneath it was gated on
+   * `verified` and rendered nothing, so finishing the checklist looked
+   * exactly like doing nothing. `{count}` is the required total.
+   */
+  everythingCollectedHeading: L;
+  everythingCollectedBody: L;
   noChecklistYet: L;
 } = {
   title: {
@@ -169,6 +179,30 @@ export const DOCUMENTS: {
     ar: "يؤدي الإرسال إلى نقل ملفك إلى فريق المراجعة وإخطاره فوراً.",
     tw: "Sɛ wode kɔ a, ɛde wo faele no kɔma nhwehwɛmufoɔ kuo no na ɛbɔ wɔn kɔkɔ ntɛm ara.",
     zu: "Ukuthumela kuthumela ifayela lakho kwithimba lokubuyekeza futhi likwazise ngokushesha.",
+  },
+  everythingCollectedHeading: {
+    en: "Everything is in",
+    ha: "An samu komai",
+    yo: "Ohun gbogbo ti dé",
+    ig: "Ihe niile abatala",
+    fr: "Tout est arrivé",
+    pt: "Está tudo entregue",
+    sw: "Kila kitu kimefika",
+    ar: "وصل كل شيء",
+    tw: "Biribiara aba",
+    zu: "Konke sekufikile",
+  },
+  everythingCollectedBody: {
+    en: "All {count} documents are with your reviewers. We will tell you here and by email as each one is checked — there is nothing for you to do right now.",
+    ha: "Duk takardun {count} suna hannun masu dubawa. Za mu sanar da kai a nan da kuma ta imel yayin da aka duba kowanne — babu abin da ya rage a gare ka a yanzu.",
+    yo: "Gbogbo ìwé {count} wà lọ́wọ́ àwọn olùyẹ̀wò rẹ. A ó sọ fún ọ níbí àti nípasẹ̀ ìmẹ́lì bí a ṣe ń yẹ ọ̀kọ̀ọ̀kan wò — kò sí ohun tí o ní láti ṣe ní báyìí.",
+    ig: "Akwụkwọ {count} niile nọ n'aka ndị na-enyocha gị. Anyị ga-agwa gị ebe a na site na ozi-e ka a na-enyocha nke ọ bụla — o nweghị ihe ị ga-eme ugbu a.",
+    fr: "Vos {count} documents sont entre les mains de vos examinateurs. Nous vous le dirons ici et par e-mail à mesure que chacun est vérifié — vous n'avez rien à faire pour l'instant.",
+    pt: "Os seus {count} documentos estão com os revisores. Iremos avisá-lo aqui e por e-mail à medida que cada um for verificado — não há nada a fazer de momento.",
+    sw: "Hati zako zote {count} ziko kwa wakaguzi wako. Tutakujulisha hapa na kwa barua pepe kila moja inapokaguliwa — hakuna cha kufanya kwa sasa.",
+    ar: "جميع مستنداتك الـ {count} لدى المراجعين. سنخبرك هنا وبالبريد الإلكتروني عند التحقق من كل واحد — لا شيء عليك فعله الآن.",
+    tw: "Wo nkrataa {count} nyinaa wɔ wo nhwehwɛmufoɔ nsam. Yɛbɛka akyerɛ wo wɔ ha ne email so bere a wɔhwɛ biara mu — biribiara nni hɔ a ɛsɛ sɛ woyɛ seesei.",
+    zu: "Onke amadokhumenti akho angu-{count} asebahloli. Sizokwazisa lapha nangeposi-e njengoba ngalinye lihlolwa — akukho okumele ukwenze njengamanje.",
   },
   noChecklistYet: {
     en: "No checklist yet. Finish the intake conversation and it appears here.",

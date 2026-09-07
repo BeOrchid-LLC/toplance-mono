@@ -23,10 +23,22 @@ import type { ApplicationStatus } from "@/lib/domain/status";
 export function travellerNav({
   intakeComplete,
   status,
+  unreadMessages = 0,
 }: {
   intakeComplete: boolean;
   /** `null` when no application exists yet — a first visit to the site. */
   status: ApplicationStatus | null;
+  /**
+   * Unread `message_received` notifications, for the Messages badge.
+   *
+   * The bell no longer lists them (see `notInTheBell` in
+   * `@/lib/notifications/notify`), so this is now the only place a
+   * traveller learns a message arrived — which is the point: one event,
+   * reported once, on the surface that clears it. Defaulted so the
+   * landing page and any other caller with no count to hand still get
+   * the same list.
+   */
+  unreadMessages?: number;
 }): NavItem[] {
   // Visible but unwalkable until intake resolves a corridor: the journey
   // should be legible before it is available.
@@ -36,7 +48,17 @@ export function travellerNav({
     { href: "/app", label: "Dashboard" },
     { href: "/app/requirements", label: "Requirements", locked },
     { href: "/app/documents", label: "Documents", locked },
-    { href: "/app/messages", label: "Messages", locked },
+    {
+      href: "/app/messages",
+      label: "Messages",
+      locked,
+      // Undefined rather than 0: a badge reading "0" states the absence
+      // of news as though it were news, and that is the common case. No
+      // badge on a locked item either — pre-intake there is no thread
+      // for anything to have arrived in, and a count on a door that
+      // does not open is a dead end.
+      badge: !locked && unreadMessages > 0 ? unreadMessages : undefined,
+    },
     // Only once there is somewhere to have landed — this item does not
     // even exist (never mind lock) before approval, the same way the
     // corridor route group's own layout has nothing to head the screen

@@ -47,6 +47,7 @@ import { isLocale } from "@/lib/i18n/locales";
 import { track } from "@/lib/analytics/track";
 import {
   appUrl,
+  BELL_KINDS,
   markNotificationsRead as markOwnNotificationsRead,
   notify,
   notifyAgency,
@@ -886,15 +887,20 @@ export async function uploadAvatar(formData: FormData) {
 }
 
 /**
- * Opening the bell marks everything in it read. Always the signed-in
+ * Opening the bell marks everything *in it* read. Always the signed-in
  * user's own rows — there is no id to check, the same shape as
  * `updateProfile`. The menu calls this and then `router.refresh()`
  * itself, so there is nothing to revalidate here.
+ *
+ * Scoped to `BELL_KINDS` since messages left the bell. Unscoped, a
+ * glance at the bell would clear the Messages badge for messages the
+ * traveller never opened — and, worse, cancel their buffered email at
+ * the same time, so a message nobody read would be reported nowhere.
  */
 export async function markNotificationsRead() {
   try {
     const actor = await requireActor();
-    await markOwnNotificationsRead(actor.userId);
+    await markOwnNotificationsRead(actor.userId, BELL_KINDS);
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

@@ -1,16 +1,18 @@
 import "server-only";
 
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lte, ne, or } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
   applications,
+  notificationKind,
   notifications,
   orgMembers,
   profiles,
   type Notification,
 } from "@/lib/db/schema";
 import { sendEmail } from "@/lib/notifications/email";
+import { emailDueFor } from "@/lib/notifications/email-buffer";
 import {
   advisoryChangedEmail,
   checklistChangedEmail,
@@ -167,12 +169,28 @@ export async function notify<K extends keyof NotificationPayload>(
   applicationId?: string
 ): Promise<boolean> {
   try {
+    /**
+     * Two kinds do not email here at all — they are written owing an
+     * email, and `api/cron/notification-emails` sends it only if nobody
+     * has read the row by the time it falls due. See `emailDueFor` for
+     * which and why. Every other kind is unchanged: due `null`, emailed
+     * below, in this call.
+     */
+    const emailDueAt = emailDueFor(kind, new Date());
+
     await db.insert(notifications).values({
       recipientId,
       kind,
       applicationId: applicationId ?? null,
       payload,
+      emailDueAt,
     });
+
+    // Reported as sent, because it is scheduled: the in-app row is
+    // written and the bell shows it now, which is the whole point of
+    // holding the email back. A caller counting deliveries is counting
+    // notifications, not messages that have left the building.
+    if (emailDueAt) return true;
 
     const [recipient] = await db
       .select({ email: profiles.email })
@@ -289,7 +307,124 @@ export async function notifyAgency<K extends keyof NotificationPayload>(
   }
 }
 
-/** The bell's list: newest first, capped. */
+/**
+ * The buffered emails that have now fallen due, oldest first.
+ *
+ * `readAt is null` is belt-and-braces rather than the mechanism:
+ * `markNotificationsRead` nulls `emailDueAt` in the same statement that
+ * sets `readAt`, so a read row is already invisible to this query. The
+ * predicate stays because a row read by any future path that forgets to
+ * null the column would otherwise be emailed about after the traveller
+ * had read it, which is the one outcome this whole feature exists to
+ * prevent.
+ *
+ * Capped, like every other sweep in this codebase: this is a loop of
+ * serial email sends inside one HTTP handler with a function timeout.
+ * What a capped run leaves behind is picked up by the next one, and the
+ * ordering means the longest-overdue go first.
+ */
+export async function dueNotificationEmails(
+  now: Date,
+  limit = 100
+): Promise<Notification[]> {
+  return db
+    .select()
+    .from(notifications)
+    .where(
+      and(lte(notifications.emailDueAt, now), isNull(notifications.readAt))
+    )
+    .orderBy(notifications.emailDueAt)
+    .limit(limit);
+}
+
+/**
+ * Send one due notification's email and settle it.
+ *
+ * `emailDueAt` is nulled whatever happens, including on a send that
+ * threw: a mail provider that is refusing this address will refuse it on
+ * the next run too, and a row that retries forever is a row that emails
+ * forever the moment the provider recovers — an hour of backlog arriving
+ * at once, about documents the traveller has long since replaced. One
+ * attempt, then settled, and the in-app notification is still there.
+ *
+ * Returns whether an email actually went out, so the route can report a
+ * count that means something rather than the size of the batch.
+ */
+export async function sendDueNotificationEmail(
+  notification: Notification
+): Promise<boolean> {
+  const settle = () =>
+    db
+      .update(notifications)
+      .set({ emailDueAt: null })
+      .where(eq(notifications.id, notification.id));
+
+  try {
+    const [recipient] = await db
+      .select({ email: profiles.email })
+      .from(profiles)
+      .where(eq(profiles.id, notification.recipientId))
+      .limit(1);
+
+    if (!recipient) {
+      await settle();
+      return false;
+    }
+
+    const template = templateFor(
+      notification.kind,
+      notification.payload as NotificationPayload[keyof NotificationPayload]
+    );
+
+    if (!template) {
+      await settle();
+      return false;
+    }
+
+    await sendEmail({ to: recipient.email, ...template });
+    await settle();
+    return true;
+  } catch (error) {
+    console.error(
+      `[notifications] could not send the buffered email for ${notification.id}`,
+      error
+    );
+    await settle().catch(() => {});
+    return false;
+  }
+}
+
+/**
+ * Messages have their own place now, so they are not also in the bell.
+ *
+ * `message_received` is counted on the Messages nav item and cleared by
+ * visiting the thread. Leaving the rows in the bell as well reported one
+ * event in two places and kept the bell's count inflated — a traveller
+ * with nine unread messages saw "9+" on a bell whose list was nine
+ * copies of "you have a new message", and the flag they actually needed
+ * to act on was underneath them.
+ *
+ * A predicate rather than two hand-written `ne(...)` clauses, so the
+ * bell's list and the bell's count cannot come to disagree about what
+ * the bell is for.
+ */
+const notInTheBell = ne(notifications.kind, "message_received");
+
+/**
+ * The kinds the bell actually shows, so opening it marks those and only
+ * those read.
+ *
+ * Derived from the enum by subtraction rather than listed by hand: a
+ * kind added to `notification_kind` later appears in the bell without
+ * anyone remembering to add it here, which is the same direction
+ * `notInTheBell` decides in. A hand-written allowlist would silently
+ * leave new kinds unreadable-forever, unread count stuck at one.
+ */
+export const BELL_KINDS = notificationKind.enumValues.filter(
+  (k) => k !== "message_received"
+);
+
+/** The bell's list: newest first, capped. Messages excluded — see above. */
 export async function getNotifications(
   recipientId: string,
   limit = 15
@@ -297,28 +432,72 @@ export async function getNotifications(
   return db
     .select()
     .from(notifications)
-    .where(eq(notifications.recipientId, recipientId))
+    .where(and(eq(notifications.recipientId, recipientId), notInTheBell))
     .orderBy(desc(notifications.createdAt))
     .limit(limit);
 }
 
-/** The bell's badge. */
+/** The bell's badge. Messages excluded — see `notInTheBell`. */
 export async function unreadNotificationCount(recipientId: string): Promise<number> {
   const rows = await db
     .select({ id: notifications.id })
     .from(notifications)
     .where(
-      and(eq(notifications.recipientId, recipientId), isNull(notifications.readAt))
+      and(
+        eq(notifications.recipientId, recipientId),
+        isNull(notifications.readAt),
+        notInTheBell
+      )
     );
   return rows.length;
 }
 
-/** Marks the caller's own unread rows read. Never anyone else's. */
-export async function markNotificationsRead(recipientId: string): Promise<void> {
+/**
+ * The Messages nav badge: unread message notifications, and only those.
+ *
+ * The counterpart to `notInTheBell` — between them every unread
+ * notification is counted exactly once, on exactly one surface.
+ */
+export async function unreadMessageCount(recipientId: string): Promise<number> {
+  const rows = await db
+    .select({ id: notifications.id })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.recipientId, recipientId),
+        isNull(notifications.readAt),
+        eq(notifications.kind, "message_received")
+      )
+    );
+  return rows.length;
+}
+
+/**
+ * Marks the caller's own unread rows read. Never anyone else's.
+ *
+ * `emailDueAt: null` in the same statement is what cancels a buffered
+ * email, and it has to be the same statement: two writes would leave a
+ * window in which the sweep sees a row that has just been read and
+ * emails about it anyway. Harmless on a row that owed nothing, which is
+ * most of them.
+ *
+ * `kinds` narrows it to one surface's own notifications — the bell
+ * passes everything but `message_received`, the messages page passes
+ * only that. Omitted, it marks the lot, which is what a "read
+ * everything" affordance would want.
+ */
+export async function markNotificationsRead(
+  recipientId: string,
+  kinds?: readonly Notification["kind"][]
+): Promise<void> {
   await db
     .update(notifications)
-    .set({ readAt: new Date() })
+    .set({ readAt: new Date(), emailDueAt: null })
     .where(
-      and(eq(notifications.recipientId, recipientId), isNull(notifications.readAt))
+      and(
+        eq(notifications.recipientId, recipientId),
+        isNull(notifications.readAt),
+        kinds ? inArray(notifications.kind, [...kinds]) : undefined
+      )
     );
 }

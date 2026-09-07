@@ -5,7 +5,18 @@ import Link from "next/link";
 import { usePathnameWithoutLocale } from "@/components/locale-provider";
 import { cn } from "@/lib/utils";
 
-export type NavItem = { href: string; label: string; locked?: boolean };
+export type NavItem = {
+  href: string;
+  label: string;
+  locked?: boolean;
+  /**
+   * An unread count to show against the label, or undefined for none.
+   *
+   * Only Messages carries one today. Never 0 — see `travellerNav`: a
+   * badge reading zero reports the absence of news as news.
+   */
+  badge?: number;
+};
 
 /**
  * `active` used to be a prop, and every caller passed the empty string —
@@ -83,6 +94,21 @@ export function AppNav({
             )}
           >
             {item.label}
+            {item.badge !== undefined && (
+              /* Beside the label rather than floating over it. The bar
+                 items are full-bar-height text, not icons, so an
+                 overlapping dot would land on the laminate edge the
+                 active mark owns; a pill in the flow keeps both
+                 legible and keeps the row from reflowing when a
+                 message arrives. `aria-label` because "3" on its own
+                 is not what a screen reader should read out. */
+              <span
+                className="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold leading-none text-on-brand num"
+                aria-label={`${item.badge} unread`}
+              >
+                {item.badge > 9 ? "9+" : item.badge}
+              </span>
+            )}
           </Link>
         );
       })}

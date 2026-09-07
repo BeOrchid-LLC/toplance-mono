@@ -63,6 +63,52 @@ describe("travellerNav", () => {
     }
   });
 
+  /**
+   * The badge belongs to Messages and to nothing else. It is the whole
+   * reason `message_received` left the bell — one event, reported once,
+   * on the surface that can clear it.
+   */
+  it("puts the unread count on Messages and nowhere else", () => {
+    const nav = travellerNav({
+      intakeComplete: true,
+      status: "approved",
+      unreadMessages: 3,
+    });
+
+    expect(nav.find((i) => i.href === "/app/messages")?.badge).toBe(3);
+    for (const item of nav.filter((i) => i.href !== "/app/messages")) {
+      expect(item.badge).toBeUndefined();
+    }
+  });
+
+  /**
+   * Zero is not a badge. Rendering "0" on a nav item states the absence
+   * of news as though it were news, and the count is genuinely zero for
+   * most travellers most of the time.
+   */
+  it("carries no badge at all when nothing is unread", () => {
+    const nav = travellerNav({
+      intakeComplete: true,
+      status: "approved",
+      unreadMessages: 0,
+    });
+    expect(nav.find((i) => i.href === "/app/messages")?.badge).toBeUndefined();
+  });
+
+  /**
+   * Locked Messages is pre-intake: there is no thread and no case, so
+   * there is nothing that could have arrived. A badge on an item that
+   * cannot be opened would be a dead end.
+   */
+  it("carries no badge while Messages is locked", () => {
+    const nav = travellerNav({
+      intakeComplete: false,
+      status: "draft",
+      unreadMessages: 5,
+    });
+    expect(nav.find((i) => i.href === "/app/messages")?.badge).toBeUndefined();
+  });
+
   it("keeps the dashboard first, since AppNav treats item 0 as the section root", () => {
     // `isActive` matches the first item exactly and every other item on
     // its children — reordering this list would light the wrong pill.

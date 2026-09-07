@@ -10,7 +10,11 @@ import {
   getApplication,
   getProfile,
 } from "@/lib/data/applications";
-import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
+import {
+  getNotifications,
+  unreadMessageCount,
+  unreadNotificationCount,
+} from "@/lib/notifications/notify";
 import { signedDocumentUrl } from "@/lib/storage/documents";
 
 export default async function AppLayout({
@@ -32,11 +36,16 @@ export default async function AppLayout({
   // opens a draft on sight and a reviewer must never come to own one.
   if (profile.role !== "traveler") redirect(homeFor(profile.role));
 
-  const [application, notifications, unreadCount, avatarUrl] =
+  const [application, notifications, unreadCount, unreadMessages, avatarUrl] =
     await Promise.all([
       getApplication(),
       getNotifications(profile.id),
       unreadNotificationCount(profile.id),
+      // The Messages badge. Counted separately from the bell's because
+      // the two are now disjoint: `message_received` left the bell so
+      // that one arriving message is reported once, on the item that
+      // clears it. See `notInTheBell`.
+      unreadMessageCount(profile.id),
       // Private bucket, so the photo is signed fresh per render — the
       // same stance the profile page takes.
       profile.avatarPath ? signedDocumentUrl(profile.avatarPath) : null,
@@ -47,6 +56,7 @@ export default async function AppLayout({
   const nav = travellerNav({
     intakeComplete: !!application?.intakeComplete,
     status: application?.status ?? null,
+    unreadMessages,
   });
 
   return (

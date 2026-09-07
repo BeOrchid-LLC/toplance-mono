@@ -128,6 +128,35 @@ export default async function DocumentsPage() {
             the screen invited an action and then told the traveller off
             for taking it. Drawn from the same list the transaction
             enforces, the two cannot disagree. */}
+        {/* Everything uploaded, nothing signed off yet. The gap this
+            fills is the state a traveller is in for most of the time
+            they spend on this page: the ring beside the heading counts
+            `collected` and reads 100%, the panel below was gated on
+            `verified` and rendered nothing at all, so finishing the
+            checklist looked identical to having done nothing. The
+            dialog that fires on the last upload is not a substitute —
+            it is dismissed once and cannot be returned to, and it does
+            not fire at all when the last action was replacing a row
+            already in `checking`.
+
+            It offers no action on purpose. There is genuinely nothing
+            to do: `SubmitButton` needs every document past a human, and
+            an invented next step here would be the one place in the
+            product that overstates where a file has got to. */}
+        {completion.total > 0 &&
+          completion.verified < completion.total &&
+          completion.collected === completion.total && (
+            <section className="mt-8 rounded-lg border border-border-strong px-5 py-5 sm:px-6">
+              <h2 className="t-h3">{t.everythingCollectedHeading[locale]}</h2>
+              <p className="t-muted mt-2 max-w-[74ch]">
+                {t.everythingCollectedBody[locale].replace(
+                  "{count}",
+                  String(completion.total)
+                )}
+              </p>
+            </section>
+          )}
+
         {completion.total > 0 &&
           completion.verified === completion.total &&
           (canSubmitFrom(application.status) ? (

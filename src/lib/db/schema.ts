@@ -947,11 +947,11 @@ export const analyticsEvents = pgTable(
 /**
  * A "Book a demo" submission from the landing page.
  *
- * The only table written by someone with no session. It references
- * nothing and nothing references it: a visitor here is a stranger, not
- * yet a `profiles` row or an `organisations` row, and pretending
- * otherwise would mean creating an account for someone who has only
- * asked for a conversation.
+ * The only table written by someone with no session. It referenced
+ * nothing and nothing referenced it, and it still creates nobody: a
+ * visitor here is a stranger, not yet a `profiles` row or an
+ * `organisations` row, and pretending otherwise would mean creating an
+ * account for someone who has only asked for a conversation.
  *
  * `preferred_at` and `preferred_tz` are one answer stored twice on
  * purpose. The instant is what sorts and compares; the zone is what

@@ -413,7 +413,7 @@ function LiveIntake({
         !done && current ? (
           <>
             <Chips
-              chips={resolveChips(current, { fullName })}
+              chips={resolveChips(current, { fullName, answers })}
               locale={locale}
               // Typing and speaking are two separate conversations with
               // two separate models. Letting both run would put two
@@ -630,7 +630,7 @@ function ScriptedIntake({
         !done && current ? (
           <>
             <Chips
-              chips={resolveChips(current, { fullName })}
+              chips={resolveChips(current, { fullName, answers })}
               locale={locale}
               disabled={pending}
               // The canonical label, not the translated one: with no

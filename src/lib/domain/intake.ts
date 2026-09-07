@@ -1,3 +1,5 @@
+import { citiesForCountryName } from "@/lib/domain/cities";
+import { NATIONALITY_ISO } from "@/lib/domain/corridors";
 import type { Locale } from "@/lib/i18n/locales";
 
 export type IntakeQuestion = {
@@ -44,6 +46,114 @@ const NATIONS = {
   kenya: c("Kenya", { en: "Kenya", ha: "Kenya", yo: "Kẹ́nyà", ig: "Kenya", fr: "Kenya", pt: "Quénia", sw: "Kenya", ar: "كينيا" }),
   southAfrica: c("South Africa", { en: "South Africa", ha: "Afirka ta Kudu", yo: "Gúúsù Áfríkà", ig: "South Africa", fr: "Afrique du Sud", pt: "África do Sul", sw: "Afrika Kusini", ar: "جنوب أفريقيا" }),
   cameroon: c("Cameroon", { en: "Cameroon", ha: "Kamaru", yo: "Kamerúùnù", ig: "Cameroon", fr: "Cameroun", pt: "Camarões", sw: "Kameruni", ar: "الكاميرون" }),
+};
+
+/**
+ * One budget figure, in the forms the eight languages need it.
+ *
+ * `short` covers Hausa, Yoruba, Igbo, Swahili and French, which all take
+ * the abbreviated amount; English, Portuguese and Arabic spell the unit
+ * out and each spell it differently.
+ */
+type Amount = { en: string; short: string; pt: string; ar: string };
+
+/**
+ * The four money bands, wrapped in the phrasing each language uses.
+ *
+ * A helper rather than four written-out records per country: the bands
+ * differ only in the amount, and five hand-copied sets of thirty-two
+ * strings is where a transposed label would hide. Keyed by the canonical
+ * value so a band without a local wording keeps the dollar one, and so
+ * neither table can silently fall out of order with the other.
+ */
+const budgetBands = (
+  under: Amount,
+  low: Amount,
+  high: Amount,
+  over: Amount
+): Record<string, Record<Locale, string>> => ({
+  "Under US$1,250": {
+    en: `Under ${under.en}`,
+    ha: `Ƙasa da ${under.short}`,
+    yo: `Kéré sí ${under.short}`,
+    ig: `N'okpuru ${under.short}`,
+    fr: `Moins de ${under.short}`,
+    pt: `Menos de ${under.pt}`,
+    sw: `Chini ya ${under.short}`,
+    ar: `أقل من ${under.ar}`,
+  },
+  "US$1,250–2,500": {
+    en: low.en, ha: low.short, yo: low.short, ig: low.short,
+    fr: low.short, pt: low.pt, sw: low.short, ar: low.ar,
+  },
+  "US$2,500–5,000": {
+    en: high.en, ha: high.short, yo: high.short, ig: high.short,
+    fr: high.short, pt: high.pt, sw: high.short, ar: high.ar,
+  },
+  "Over US$5,000": {
+    en: `Over ${over.en}`,
+    ha: `Sama da ${over.short}`,
+    yo: `Ju ${over.short} lọ`,
+    ig: `Karịa ${over.short}`,
+    fr: `Plus de ${over.short}`,
+    pt: `Mais de ${over.pt}`,
+    sw: `Zaidi ya ${over.short}`,
+    ar: `أكثر من ${over.ar}`,
+  },
+});
+
+/** The dollar wording, shown to anyone whose country has no entry below. */
+const BUDGET_USD = budgetBands(
+  { en: "US$1,250", short: "US$1,250", pt: "US$1250", ar: "US$1,250" },
+  { en: "US$1,250–2,500", short: "US$1,250–2,500", pt: "US$1250–2500", ar: "US$1,250–2,500" },
+  { en: "US$2,500–5,000", short: "US$2,500–5,000", pt: "US$2500–5000", ar: "US$2,500–5,000" },
+  { en: "US$5,000", short: "US$5,000", pt: "US$5000", ar: "US$5,000" }
+);
+
+/**
+ * What the four bands are worth where the traveller lives, keyed on the
+ * same lowercase ISO-3166 alpha-2 codes as `CURRENCY_BY_COUNTRY`.
+ *
+ * Rounded to what a person would say out loud, not converted: these are
+ * the walls of a band, and a chip reading "Under ₵15,000" is answering
+ * "roughly how much have you got", not quoting a rate. A country absent
+ * here falls back to `BUDGET_USD`, which is the honest outcome for a
+ * traveller in a country this product does not yet price.
+ */
+const BUDGET_LABELS_BY_COUNTRY: Record<
+  string,
+  Record<string, Record<Locale, string>>
+> = {
+  ng: budgetBands(
+    { en: "₦2 million", short: "₦2m", pt: "₦2 milhões", ar: "₦2 مليون" },
+    { en: "₦2–4 million", short: "₦2–4m", pt: "₦2–4 milhões", ar: "₦2–4 مليون" },
+    { en: "₦4–8 million", short: "₦4–8m", pt: "₦4–8 milhões", ar: "₦4–8 مليون" },
+    { en: "₦8 million", short: "₦8m", pt: "₦8 milhões", ar: "₦8 مليون" }
+  ),
+  gh: budgetBands(
+    { en: "₵15,000", short: "₵15,000", pt: "₵15 000", ar: "₵15,000" },
+    { en: "₵15,000–30,000", short: "₵15,000–30,000", pt: "₵15 000–30 000", ar: "₵15,000–30,000" },
+    { en: "₵30,000–60,000", short: "₵30,000–60,000", pt: "₵30 000–60 000", ar: "₵30,000–60,000" },
+    { en: "₵60,000", short: "₵60,000", pt: "₵60 000", ar: "₵60,000" }
+  ),
+  ke: budgetBands(
+    { en: "KSh 160,000", short: "KSh 160,000", pt: "KSh 160 000", ar: "KSh 160,000" },
+    { en: "KSh 160,000–320,000", short: "KSh 160,000–320,000", pt: "KSh 160 000–320 000", ar: "KSh 160,000–320,000" },
+    { en: "KSh 320,000–650,000", short: "KSh 320,000–650,000", pt: "KSh 320 000–650 000", ar: "KSh 320,000–650,000" },
+    { en: "KSh 650,000", short: "KSh 650,000", pt: "KSh 650 000", ar: "KSh 650,000" }
+  ),
+  za: budgetBands(
+    { en: "R22,000", short: "R22,000", pt: "R22 000", ar: "R22,000" },
+    { en: "R22,000–45,000", short: "R22,000–45,000", pt: "R22 000–45 000", ar: "R22,000–45,000" },
+    { en: "R45,000–90,000", short: "R45,000–90,000", pt: "R45 000–90 000", ar: "R45,000–90,000" },
+    { en: "R90,000", short: "R90,000", pt: "R90 000", ar: "R90,000" }
+  ),
+  cm: budgetBands(
+    { en: "750,000 CFA", short: "750,000 CFA", pt: "750 000 CFA", ar: "750,000 CFA" },
+    { en: "750,000–1.5m CFA", short: "750,000–1.5m CFA", pt: "750 000–1,5M CFA", ar: "750,000–1.5m CFA" },
+    { en: "1.5m–3m CFA", short: "1.5m–3m CFA", pt: "1,5M–3M CFA", ar: "1.5m–3m CFA" },
+    { en: "3m CFA", short: "3m CFA", pt: "3M CFA", ar: "3m CFA" }
+  ),
 };
 
 /**
@@ -121,6 +231,16 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
     chips: [NATIONS.nigeria, NATIONS.ghana, NATIONS.kenya, NATIONS.southAfrica, NATIONS.cameroon],
   },
   {
+    /**
+     * The chips are empty here and filled by `resolveChips` from
+     * `residence_country`, which is answered immediately above. A static
+     * list cannot be right for this question: it was five Nigerian
+     * cities for everyone, so a traveller who had just said they live in
+     * Ghana was offered Lagos, Abuja and Kano.
+     *
+     * Reopening `residence_country` truncates every later answer, so a
+     * city from the old country can never survive a change of country.
+     */
     key: "residence",
     prompt: {
       en: "And which city or town are you in?",
@@ -132,13 +252,7 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       sw: "Na uko katika mji gani?",
       ar: "وفي أي مدينة تقيم؟",
     },
-    chips: [
-      c("Lagos", { en: "Lagos", ha: "Legas", yo: "Èkó", ig: "Lagos", fr: "Lagos", pt: "Lagos", sw: "Lagos", ar: "لاغوس" }),
-      c("Abuja", { en: "Abuja", ha: "Abuja", yo: "Àbùjá", ig: "Abuja", fr: "Abuja", pt: "Abuja", sw: "Abuja", ar: "أبوجا" }),
-      c("Port Harcourt", { en: "Port Harcourt", ha: "Fatakwal", yo: "Pọ́ọ̀tì Hákọ́tì", ig: "Pọtakọt", fr: "Port Harcourt", pt: "Port Harcourt", sw: "Port Harcourt", ar: "بورت هاركورت" }),
-      c("Kano", { en: "Kano", ha: "Kano", yo: "Kánò", ig: "Kano", fr: "Kano", pt: "Kano", sw: "Kano", ar: "كانو" }),
-      c("Ibadan", { en: "Ibadan", ha: "Ibadan", yo: "Ìbàdàn", ig: "Ibadan", fr: "Ibadan", pt: "Ibadan", sw: "Ibadan", ar: "إيبادان" }),
-    ],
+    chips: [],
   },
   {
     key: "destination",
@@ -211,11 +325,30 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
       sw: "Una bajeti gani kwa safari yenyewe — tiketi, ada, mwezi wa kwanza?",
       ar: "ما الميزانية المتاحة للانتقال نفسه — تذاكر الطيران والرسوم والشهر الأول؟",
     },
+    /**
+     * The values are US dollars and the same for everyone; the money the
+     * traveller actually reads is swapped in by `resolveChips` from
+     * `BUDGET_LABELS_BY_COUNTRY`.
+     *
+     * The split matters because `applies_when` is a membership test on
+     * the stored value (`applies-when.ts`), and the ops console will
+     * build a rule on any intake question. Were the value itself local,
+     * a rule written as `budget in ["₦2–4 million"]` would match
+     * Nigerians and silently fall to the outside-the-vocabulary hedge
+     * for everybody else — a document shown with "we are not certain"
+     * for a question we did have the answer to.
+     *
+     * The ladder is 1,250 / 2,500 / 5,000 rather than a rounder
+     * 1,000 / 2,500 / 5,000 so that the naira bands come out as the
+     * ₦2m / ₦4m / ₦8m the intake has always shown. The bands are bands:
+     * each country's wording is a rounded equivalent, not a conversion,
+     * and none of it is a quote.
+     */
     chips: [
-      c("Under ₦2 million", { en: "Under ₦2 million", ha: "Ƙasa da ₦2m", yo: "Kéré sí ₦2m", ig: "N'okpuru ₦2m", fr: "Moins de ₦2 M", pt: "Menos de ₦2 milhões", sw: "Chini ya ₦2m", ar: "أقل من ₦2 مليون" }),
-      c("₦2–4 million", { en: "₦2–4 million", ha: "₦2–4m", yo: "₦2–4m", ig: "₦2–4m", fr: "₦2–4 M", pt: "₦2–4 milhões", sw: "₦2–4m", ar: "₦2–4 مليون" }),
-      c("₦4–8 million", { en: "₦4–8 million", ha: "₦4–8m", yo: "₦4–8m", ig: "₦4–8m", fr: "₦4–8 M", pt: "₦4–8 milhões", sw: "₦4–8m", ar: "₦4–8 مليون" }),
-      c("Over ₦8 million", { en: "Over ₦8 million", ha: "Sama da ₦8m", yo: "Ju ₦8m lọ", ig: "Karịa ₦8m", fr: "Plus de ₦8 M", pt: "Mais de ₦8 milhões", sw: "Zaidi ya ₦8m", ar: "أكثر من ₦8 مليون" }),
+      c("Under US$1,250", BUDGET_USD["Under US$1,250"]),
+      c("US$1,250–2,500", BUDGET_USD["US$1,250–2,500"]),
+      c("US$2,500–5,000", BUDGET_USD["US$2,500–5,000"]),
+      c("Over US$5,000", BUDGET_USD["Over US$5,000"]),
       c("Not sure yet", { en: "Not sure yet", ha: "Ban tabbata ba", yo: "Kò dá mi lójú", ig: "Amabeghị m", fr: "Je ne sais pas encore", pt: "Ainda não sei", sw: "Sijui bado", ar: "لست متأكداً بعد" }),
     ],
   },
@@ -240,6 +373,26 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
     ],
   },
   {
+    /**
+     * A spouse and an unmarried partner are separate chips because they
+     * are separate document packs, not a nicety of wording. A marriage
+     * certificate is asked for when someone's status *derives* from
+     * their spouse's — a dependant on a work, study or relocation route
+     * — and an unmarried couple has no such certificate to give; the
+     * routes that admit them ask for evidence of cohabitation instead,
+     * which is a heavier pack rather than a lighter one.
+     *
+     * The old single `Partner` chip could not tell the two apart, so
+     * every couple landed in the same hedge. `applies-when` can now
+     * name the case exactly — see the rule on `marriage_certificate` in
+     * `corridors.sql`.
+     *
+     * The distinction is asked here, in the traveller's own language,
+     * rather than as a twelfth question about marital status: the
+     * intake has no conditional questions — `intakeFrontier` walks this
+     * list in order — so a new topic would be put to every solo tourist
+     * as well, and the client's brief names eleven.
+     */
     key: "companions",
     prompt: {
       en: "Who is coming with you?",
@@ -253,8 +406,10 @@ export const INTAKE_QUESTIONS: IntakeQuestion[] = [
     },
     chips: [
       c("Just me", { en: "Just me", ha: "Ni kaɗai", yo: "Èmi nìkan", ig: "Naanị m", fr: "Moi seulement", pt: "Só eu", sw: "Mimi peke yangu", ar: "أنا فقط" }),
-      c("Partner", { en: "My partner", ha: "Abokin zama", yo: "Alábàáṣepọ̀ mi", ig: "Onye ibe m", fr: "Mon conjoint", pt: "O meu companheiro", sw: "Mwenzi wangu", ar: "شريكي" }),
-      c("Partner and children", { en: "Partner and children", ha: "Abokin zama da yara", yo: "Alábàáṣepọ̀ àti ọmọ", ig: "Onye ibe m na ụmụ", fr: "Mon conjoint et mes enfants", pt: "Companheiro e filhos", sw: "Mwenzi na watoto", ar: "شريكي وأطفالي" }),
+      c("Spouse", { en: "My spouse", ha: "Abokin aurena", yo: "Ọkọ tàbí aya mi", ig: "Di ma ọ bụ nwunye m", fr: "Mon conjoint", pt: "O meu cônjuge", sw: "Mwenzi wangu wa ndoa", ar: "زوجي/زوجتي" }),
+      c("Spouse and children", { en: "Spouse and children", ha: "Abokin aurena da yara", yo: "Ọkọ tàbí aya mi àti àwọn ọmọ", ig: "Di ma ọ bụ nwunye m na ụmụ", fr: "Mon conjoint et mes enfants", pt: "Cônjuge e filhos", sw: "Mwenzi wa ndoa na watoto", ar: "زوجي/زوجتي وأطفالي" }),
+      c("Unmarried partner", { en: "My partner (we are not married)", ha: "Abokin zamana (ba mu yi aure ba)", yo: "Alábàáṣepọ̀ mi (a kò tíì gbéyàwó)", ig: "Onye ibe m (anyị alụbeghị di na nwunye)", fr: "Mon partenaire (non mariés)", pt: "O meu companheiro (não somos casados)", sw: "Mpenzi wangu (hatujaoana)", ar: "شريكي (غير متزوجين)" }),
+      c("Unmarried partner and children", { en: "Partner and children (we are not married)", ha: "Abokin zamana da yara (ba mu yi aure ba)", yo: "Alábàáṣepọ̀ mi àti àwọn ọmọ (a kò tíì gbéyàwó)", ig: "Onye ibe m na ụmụ (anyị alụbeghị di na nwunye)", fr: "Mon partenaire et mes enfants (non mariés)", pt: "Companheiro e filhos (não somos casados)", sw: "Mpenzi na watoto (hatujaoana)", ar: "شريكي وأطفالي (غير متزوجين)" }),
       c("Children", { en: "My children", ha: "Yara", yo: "Àwọn ọmọ mi", ig: "Ụmụ m", fr: "Mes enfants", pt: "Os meus filhos", sw: "Watoto wangu", ar: "أطفالي" }),
     ],
   },
@@ -308,24 +463,50 @@ export const HISTORY_NOTE =
   "A previous refusal must be declared. Hiding one is the single fastest way to lose the next application.";
 
 /**
- * A question's chips with the traveller's own name filled in.
+ * A question's chips, resolved against what this traveller has already
+ * told us: their name, and the country they live in.
  *
- * Only the passport question carries a placeholder, and it carries it in
- * the value as well as the labels because the two agents read different
- * halves of a chip: the scripted flow stores `chip.value` as the answer
- * of record, while the model-driven one sends the translated label as
- * though the traveller had typed it. A literal `{fullName}` reaching
- * either is a name nobody has.
+ * Three questions cannot know their own chips when the module loads.
+ * The passport question carries a `{fullName}` placeholder, in the value
+ * as well as the labels, because the two agents read different halves of
+ * a chip: the scripted flow stores `chip.value` as the answer of record,
+ * while the model-driven one sends the translated label as though the
+ * traveller had typed it. A literal `{fullName}` reaching either is a
+ * name nobody has.
+ *
+ * The other two follow `residence_country`, answered a question or two
+ * earlier. `residence` takes its cities from there — the list was five
+ * Nigerian cities for every traveller on earth. `budget` keeps its
+ * canonical dollar value and takes only its *label* from there, so the
+ * traveller reads their own money while `applies_when` keeps matching on
+ * a value that means the same thing in every country.
  *
  * A blank name yields no chip at all rather than one reading "Yes — ",
- * which confirms nothing. Free text answers the question in that case,
- * as it does for every question here.
+ * which confirms nothing; an unlisted country yields no city chips
+ * rather than somebody else's cities. Free text answers the question in
+ * both cases, as it does for every question here.
  */
 export function resolveChips(
   question: IntakeQuestion,
-  { fullName }: { fullName: string }
+  {
+    fullName,
+    answers,
+  }: { fullName: string; answers: Record<string, string> }
 ): IntakeQuestion["chips"] {
   const name = fullName.trim();
+  const country = answers.residence_country;
+
+  if (question.key === "residence") return citiesForCountryName(country);
+
+  if (question.key === "budget") {
+    const iso = country ? NATIONALITY_ISO[country] : undefined;
+    const local = iso ? BUDGET_LABELS_BY_COUNTRY[iso] : undefined;
+    if (!local) return question.chips;
+
+    return question.chips.map((chip) =>
+      local[chip.value] ? { ...chip, label: local[chip.value] } : chip
+    );
+  }
 
   return question.chips.flatMap((chip) => {
     if (!chip.value.includes(FULL_NAME_TOKEN)) return [chip];

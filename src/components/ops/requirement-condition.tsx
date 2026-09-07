@@ -118,7 +118,13 @@ export function RequirementCondition({
             className="mt-2 min-h-[var(--row-h)] w-full rounded-sm border border-border-strong bg-surface px-3 text-base"
           >
             <option value="">Choose a question…</option>
-            {INTAKE_QUESTIONS.map((q) => (
+            {/* Only the topics with a fixed vocabulary. A rule is a
+                membership test against a question's chips, so a question
+                that carries none — `residence`, whose cities depend on
+                the country the traveller answered — can only ever
+                produce a rule that matches nobody. Offering it would be
+                offering an empty checkbox list. */}
+            {INTAKE_QUESTIONS.filter((q) => q.chips.length > 0).map((q) => (
               <option key={q.key} value={q.key}>
                 {q.prompt.en}
               </option>

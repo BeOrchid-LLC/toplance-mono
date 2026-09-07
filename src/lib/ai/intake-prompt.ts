@@ -3,7 +3,11 @@ import {
   NATIONALITY_ISO,
   PURPOSE_ISO,
 } from "@/lib/domain/corridors";
-import { INTAKE_QUESTIONS, HISTORY_NOTE } from "@/lib/domain/intake";
+import {
+  INTAKE_QUESTIONS,
+  HISTORY_NOTE,
+  resolveChips,
+} from "@/lib/domain/intake";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n/locales";
 
 /**
@@ -88,6 +92,51 @@ export function buildIntakeSystemPrompt({
       .map((label) => `"${label}"`)
       .join(", ");
 
+  /**
+   * The `companions` chips as value-and-label pairs, in the language
+   * this traveller is reading.
+   *
+   * Needed because the two intake flows submit a tapped chip
+   * differently. The scripted one sends `chip.value`, so the answer of
+   * record is already canonical. The model-driven one sends
+   * `chip.label[locale]` — the words the traveller actually saw — as
+   * though they had typed them, which leaves the model to map "Ọkọ tàbí
+   * aya mi" back onto "Spouse". That mapping decides whether a marriage
+   * certificate is asked for, so it is given rather than inferred.
+   *
+   * Only `companions` is spelled out. It is the one topic whose value a
+   * document rule reads directly (`applies_when` on
+   * `marriage_certificate`), and where the chips are the complete
+   * vocabulary rather than a shortcut into a longer list.
+   */
+  const chipPairs = (key: string) => {
+    const question = INTAKE_QUESTIONS.find((q) => q.key === key);
+    if (!question) return "";
+
+    // Through `resolveChips`, not `question.chips`: the budget labels
+    // are the ones this traveller's country puts in front of them, and
+    // a pair listing a band the traveller never saw is worse than no
+    // pair at all.
+    return resolveChips(question, { fullName, answers })
+      .map(
+        (chip) =>
+          `- "${chip.value}" — shown to them as "${chip.label[locale] ?? chip.label.en}"`
+      )
+      .join("\n");
+  };
+
+  const companionChips = chipPairs("companions");
+
+  /**
+   * The budget bands, for the same reason as `companions` and by a
+   * different route. The value is a canonical US dollar band and the
+   * label is local money — "₵15,000" to someone in Accra — so a model
+   * that files the label has thrown away the only form `applies_when`
+   * can adjudicate, and has filed cedis against a traveller whose next
+   * band was quoted in naira.
+   */
+  const budgetChips = chipPairs("budget");
+
   return `You are the Toplance intake agent. You are talking to a traveler who is planning to move or travel abroad and has come here to have their file started.
 
 Your only job is to collect every answer on the list below, one at a time, and record each one with the \`record_answer\` tool. Nothing else.
@@ -136,6 +185,18 @@ For \`nationality\`, \`destination\` and \`purpose\`, the checklist is keyed on 
 For \`passport_name\`, record the name itself and never "Yes" or any other acknowledgement. The traveler is confirming or correcting \`fullName\` in the JSON above: if they confirm it, record that value exactly as it appears there; if they correct it, record their spelling.
 
 "UK", "Britain" and "England" are the "United Kingdom". "Dubai" and "Abu Dhabi" are the "United Arab Emirates". A job offer, a work permit or "going to work" is "Work".
+
+\`companions\` is keyed on exact values too, and a tapped chip reaches you as the label the traveler saw in their own language. Record the value, never the label:
+
+${companionChips}
+
+\`budget\` works the same way, and the gap between value and label is wider: the value is a US dollar band, the label is the money where they live. Record the value, never the label:
+
+${budgetChips}
+
+If they answer with an amount in their own words, put it in the band it falls into and record that band's value. If it falls on a boundary or you cannot tell, record their words verbatim.
+
+When they answer in their own words instead of tapping, record "Spouse" or "Spouse and children" ONLY for an unambiguous word for someone they are married to — "wife", "husband", "spouse", or that word in the language you are speaking. NEVER decide between the married and unmarried values yourself from "partner", "boyfriend", "girlfriend", "fiancé" or "fiancée": in several of these languages those words cover married and unmarried couples alike, and the difference decides which documents we ask them for. Record those words verbatim instead, and a handler will settle it.
 
 If it does not clearly match, record their words verbatim. Do not steer them towards a label to make one fit — a route we do not serve is answered honestly further down the line, and a wrong label is not.
 

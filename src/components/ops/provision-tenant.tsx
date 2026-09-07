@@ -38,6 +38,23 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
+  // Remounts the form on every close, so its uncontrolled inputs forget
+  // whatever was typed (or the invite-link screen that replaced them)
+  // and come back holding only `defaultValue` again. `open`/`pending`
+  // reset on their own — `open` is driven by the dialog, `pending`
+  // resolves the moment the transition it tracks finishes — but nothing
+  // else clears `inviteUrl` or a half-typed field, and this component
+  // outlives a single provision: Task 8 renders one `ProvisionTenant`
+  // for walk-ins for the operator's whole session on `/ops/tenants`.
+  const [formKey, setFormKey] = React.useState(0);
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setInviteUrl(null);
+      setFormKey((key) => key + 1);
+    }
+  }
 
   function submit(formData: FormData) {
     if (demoRequest) formData.set("demo_request_id", demoRequest.id);
@@ -60,7 +77,7 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Building2 /> {t(OPS_TENANTS.provisionButton)}
@@ -84,7 +101,7 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
             />
           </div>
         ) : (
-          <form action={submit} className="flex flex-col gap-4">
+          <form key={formKey} action={submit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="name">{t(OPS_TENANTS.fieldAgencyName)}</Label>
               <Input
@@ -133,7 +150,7 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
               <Button
                 type="button"
                 variant="tertiary"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={pending}
               >
                 {t(OPS_TENANTS.cancelButton)}

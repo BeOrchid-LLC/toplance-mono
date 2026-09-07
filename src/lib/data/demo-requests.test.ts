@@ -8,7 +8,7 @@ import { inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
   const { db } = await import("@/lib/db/client");
-  const { demoRequests } = await import("@/lib/db/schema");
+  const { demoRequests, organisations } = await import("@/lib/db/schema");
   const { listDemoRequests, setDemoRequestStatus } = await import(
     "@/lib/data/demo-requests"
   );
@@ -103,5 +103,41 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
 
     const rows = await listDemoRequests();
     expect(rows.find((r) => r.id === id)?.status).toBe("new");
+  });
+
+  it("refuses to change a converted request's status, and touches nothing", async () => {
+    const id = await request("Kite Travel");
+
+    // Stand in for what `provisionTenantTx` does in the same
+    // transaction that creates the agency: stamp both halves of
+    // "converted" together.
+    const orgId = "00000000-0000-4000-8000-0000000d00f1";
+    await db
+      .insert(organisations)
+      .values({ id: orgId, name: "Kite Travel Agency" })
+      .onConflictDoNothing();
+
+    try {
+      await db
+        .update(demoRequests)
+        .set({ status: "converted", convertedOrgId: orgId })
+        .where(inArray(demoRequests.id, [id]));
+
+      // Un-converting this row would re-arm provisionTenantTx's guard
+      // against provisioning the same enquiry a second time — the whole
+      // point of the fix.
+      const result = await setDemoRequestStatus(id, "contacted");
+      expect(result).toEqual({ error: "already_converted" });
+
+      const [row] = await db
+        .select()
+        .from(demoRequests)
+        .where(inArray(demoRequests.id, [id]));
+
+      expect(row.status).toBe("converted");
+      expect(row.convertedOrgId).toBe(orgId);
+    } finally {
+      await db.delete(organisations).where(inArray(organisations.id, [orgId]));
+    }
   });
 });

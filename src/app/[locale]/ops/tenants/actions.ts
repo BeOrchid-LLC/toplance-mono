@@ -256,16 +256,25 @@ export async function updateDemoRequestStatus(formData: FormData) {
   }
 
   /**
-   * `setDemoRequestStatus`'s own error ("we could not find that demo
-   * request") is discarded rather than forwarded — this module already
-   * maps every failure it surfaces through `OPS_ACTIONS` at the caller's
-   * locale, and `demo-requests.ts` returns bare English prose. It never
-   * reaches a user: the same `demoRequestNotFound` key this reads is the
-   * one Task 5 wrote.
+   * `setDemoRequestStatus` returns a code, not a sentence, resolved here
+   * at the caller's locale the same way `tenantError` resolves a
+   * `TenantError`. `already_converted` gets its own sentence — the
+   * operator is looking at a row that already became an agency, so
+   * telling them it does not exist would be a worse lie than the
+   * un-conversion this refusal exists to stop (it would re-arm
+   * `provisionTenantTx`'s guard against provisioning the same enquiry
+   * twice). Every other code (`not_found`, and `invalid_status`, which
+   * `status === "converted"` above already keeps this from ever seeing)
+   * reads as "we could not find that demo request".
    */
   const result = await setDemoRequestStatus(requestId, status);
   if ("error" in result) {
-    return { error: OPS_ACTIONS.demoRequestNotFound[locale] };
+    return {
+      error:
+        result.error === "already_converted"
+          ? OPS_ACTIONS.demoRequestAlreadyConverted[locale]
+          : OPS_ACTIONS.demoRequestNotFound[locale],
+    };
   }
 
   await track("toplance.demo_request_status_changed", { status }, actor.userId);

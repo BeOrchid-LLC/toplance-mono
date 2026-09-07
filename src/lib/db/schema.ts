@@ -165,6 +165,20 @@ export const invitationStatus = pgEnum("invitation_status", [
   "expired",
 ]);
 
+/**
+ * How far a demo enquiry has been carried. `converted` is the only value
+ * that means something happened in the product rather than in somebody's
+ * calendar — it is written by `provisionTenantTx`, in the same
+ * transaction as the agency it names.
+ */
+export const demoRequestStatus = pgEnum("demo_request_status", [
+  "new",
+  "contacted",
+  "scheduled",
+  "converted",
+  "declined",
+]);
+
 export const notificationKind = pgEnum("notification_kind", [
   "application_submitted", // → staff: a file reached 100% and was submitted
   "status_changed", // → traveller
@@ -945,10 +959,12 @@ export const analyticsEvents = pgTable(
  * reader has to convert in their head. Keeping only the instant loses
  * which hour the visitor actually meant.
  *
- * No status column. Nothing in the product reads this table yet — the
- * notification email is the read path — so a status would hold `new`
- * forever and describe a workflow that does not exist. Adding one with
- * the ops surface that changes it is a migration.
+ * `status` and `converted_org_id` arrived with the ops surface that
+ * changes them (`/ops/tenants`), which is the condition this comment
+ * used to set for adding them. `converted_org_id` is the only reference
+ * this table has ever held, and it points forward — at what an enquiry
+ * became — rather than claiming the stranger who sent it was already
+ * somebody here.
  */
 export const demoRequests = pgTable("demo_requests", {
   id: uuid().primaryKey().defaultRandom(),
@@ -960,6 +976,15 @@ export const demoRequests = pgTable("demo_requests", {
   preferredTz: text().notNull(),
   /** Which language the form was read in — what to run the demo in. */
   locale: text().notNull(),
+  status: demoRequestStatus().notNull().default("new"),
+  /**
+   * The agency this enquiry became, when it became one.
+   *
+   * `set null` rather than `cascade`: an organisation is never deleted
+   * in this product, and if one ever were, losing the record that the
+   * demo happened is worse than a dangling null.
+   */
+  convertedOrgId: uuid().references(() => organisations.id, { onDelete: "set null" }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -1003,5 +1028,6 @@ export type Message = typeof messages.$inferSelect;
 export type CompanionUpdate = typeof companionUpdates.$inferSelect;
 export type FxRate = typeof fxRates.$inferSelect;
 export type DemoRequest = typeof demoRequests.$inferSelect;
+export type DemoRequestStatus = (typeof demoRequestStatus.enumValues)[number];
 
 export type FlagReason = (typeof flagReason.enumValues)[number];

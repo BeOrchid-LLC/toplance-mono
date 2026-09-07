@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, count, desc, eq, ne } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -464,6 +464,28 @@ export async function setTenantBilling(
  * it can undo that; the only remedy is a staff member noticing. So the
  * demotion is refused under a lock that holds for as long as the count
  * it was decided on.
+ *
+ * That lock has to cover every row the decision reads, not only the row
+ * being changed. A demotion's "is there another owner left" is a
+ * question about the *whole* owner set — locking just the member being
+ * demoted and then counting the others with an ordinary `SELECT` leaves
+ * those other rows unlocked, so two transactions demoting two
+ * *different* owners of the same agency can each lock only their own
+ * target, each read the other's target as the surviving owner, and both
+ * commit: zero owners, exactly what this guard exists to prevent.
+ *
+ * The fix locks every membership row of the org being written to,
+ * `WHERE org_id = orgId` with nothing narrower, in the one query that
+ * decides everything below — whether the target is a member, whether
+ * the change is a no-op, and (for a demotion) the owner count. Every
+ * call that might demote someone in this org takes that same lock over
+ * that same row set, so two such calls always attempt it in the same
+ * order and the second one queues behind the first rather than each
+ * proceeding on a count the other has already invalidated. A promotion
+ * never reduces the owner count, so it locks only the one row it
+ * writes — and because it only ever holds that single lock, it cannot
+ * be one half of a deadlock with a demotion's org-wide lock either: the
+ * two can only block each other, never form a cycle.
  */
 export async function setMemberRole(
   orgId: string,
@@ -471,31 +493,26 @@ export async function setMemberRole(
   role: "owner" | "reviewer"
 ): Promise<{ ok: true } | { error: TenantError }> {
   return db.transaction(async (tx) => {
-    const [member] = await tx
-      .select({ role: orgMembers.role })
-      .from(orgMembers)
-      .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, userId)))
-      .for("update")
-      .limit(1);
+    const rows =
+      role === "reviewer"
+        ? await tx
+            .select({ userId: orgMembers.userId, role: orgMembers.role })
+            .from(orgMembers)
+            .where(eq(orgMembers.orgId, orgId))
+            .for("update")
+        : await tx
+            .select({ userId: orgMembers.userId, role: orgMembers.role })
+            .from(orgMembers)
+            .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.userId, userId)))
+            .for("update");
 
+    const member = rows.find((r) => r.userId === userId);
     if (!member) return { error: "not_a_member" };
     if (member.role === role) return { ok: true };
 
     if (role === "reviewer") {
-      const [others] = await tx
-        .select({ total: count() })
-        .from(orgMembers)
-        .where(
-          and(
-            eq(orgMembers.orgId, orgId),
-            eq(orgMembers.role, "owner"),
-            ne(orgMembers.userId, userId)
-          )
-        );
-
-      if (!others || others.total === 0) {
-        return { error: "last_owner" };
-      }
+      const owners = rows.filter((r) => r.role === "owner");
+      if (owners.length <= 1) return { error: "last_owner" };
     }
 
     await tx

@@ -525,4 +525,134 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
     const detail = await getTenant(result.orgId);
     expect(detail?.members_.find((m) => m.userId === STAFF)?.role).toBe("owner");
   });
+
+  it("refuses one of two concurrent demotions of two different owners, leaving an owner behind", async () => {
+    const result = await provisionTenantTx(
+      { name: "Two Owners", ownerEmail: "two@kite.invalid" },
+      STAFF
+    );
+    if ("error" in result) throw new Error(result.error);
+    orgIds.push(result.orgId);
+
+    const SECOND_OWNER = "test_tenant_second_owner";
+    await db
+      .insert(profiles)
+      .values({
+        id: SECOND_OWNER,
+        email: "second@tenant.invalid",
+        fullName: "Fi Second",
+        role: "org_member",
+      })
+      .onConflictDoNothing();
+
+    try {
+      await db.insert(orgMembers).values([
+        { orgId: result.orgId, userId: STAFF, role: "owner" },
+        { orgId: result.orgId, userId: SECOND_OWNER, role: "owner" },
+      ]);
+
+      // Two owners, each demoted by a transaction that starts at the
+      // same time. The fix locks the whole org's membership in one
+      // statement per call, so the second call always waits for the
+      // first to commit (or roll back) and then decides against a
+      // count that already reflects it — this outcome holds no matter
+      // how the two calls happen to interleave, which the next test
+      // proves directly by forcing that interleaving rather than
+      // hoping `Promise.all` happens to produce it.
+      const [first, second] = await Promise.all([
+        setMemberRole(result.orgId, STAFF, "reviewer"),
+        setMemberRole(result.orgId, SECOND_OWNER, "reviewer"),
+      ]);
+
+      const outcomes = [first, second];
+      const succeeded = outcomes.filter((r) => "ok" in r);
+      const refused = outcomes.filter((r) => "error" in r && r.error === "last_owner");
+
+      // Exactly one demotion goes through; the other is refused as the
+      // one that would have zeroed the agency out.
+      expect(succeeded).toHaveLength(1);
+      expect(refused).toHaveLength(1);
+
+      const detail = await getTenant(result.orgId);
+      const owners = detail!.members_.filter((m) => m.role === "owner");
+      expect(owners).toHaveLength(1);
+    } finally {
+      await db.delete(profiles).where(eq(profiles.id, SECOND_OWNER));
+    }
+  });
+
+  it("a demotion waits on a lock held on the OTHER owner's row, not just its own", async () => {
+    // `Promise.all` above proves the *outcome* is always safe, but on a
+    // local database the two calls often don't truly overlap — one can
+    // finish before the other's first query even lands, which would
+    // pass that test for the wrong reason even against the old code.
+    // This test proves the actual mechanism instead: it holds a raw
+    // lock on SECOND_OWNER's row — deliberately not STAFF's, the row
+    // `setMemberRole(orgId, STAFF, "reviewer")` is about to write — and
+    // shows the call still cannot proceed. The old implementation only
+    // ever locked the row being changed and read every other owner
+    // with a plain `SELECT`, so it would have sailed straight through
+    // a lock on a row it never touches; the fix locks every membership
+    // row of the org before it decides, this one included.
+    const result = await provisionTenantTx(
+      { name: "Lock Coverage", ownerEmail: "lockcov@kite.invalid" },
+      STAFF
+    );
+    if ("error" in result) throw new Error(result.error);
+    orgIds.push(result.orgId);
+
+    const SECOND_OWNER = "test_tenant_lock_second_owner";
+    await db
+      .insert(profiles)
+      .values({
+        id: SECOND_OWNER,
+        email: "lockcov2@tenant.invalid",
+        fullName: "Lo Second",
+        role: "org_member",
+      })
+      .onConflictDoNothing();
+
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const client = await pool.connect();
+    // Declared here, not inside `try`, so `finally` can still await it
+    // if an assertion throws while `demote` is still in flight.
+    let demote: ReturnType<typeof setMemberRole> | undefined;
+
+    try {
+      await db.insert(orgMembers).values([
+        { orgId: result.orgId, userId: STAFF, role: "owner" },
+        { orgId: result.orgId, userId: SECOND_OWNER, role: "owner" },
+      ]);
+
+      await client.query("BEGIN");
+      await client.query(
+        "SELECT user_id FROM org_members WHERE org_id = $1 AND user_id = $2 FOR UPDATE",
+        [result.orgId, SECOND_OWNER]
+      );
+
+      demote = setMemberRole(result.orgId, STAFF, "reviewer");
+
+      const outcome = await Promise.race([
+        demote.then(() => "resolved" as const),
+        new Promise<"timeout">((resolve) => setTimeout(() => resolve("timeout"), 300)),
+      ]);
+
+      // Still waiting 300ms later, even though nothing here has locked
+      // (or is about to write) STAFF's own row.
+      expect(outcome).toBe("timeout");
+
+      // Releasing the lock on the other owner's row is what lets the
+      // demotion proceed — and it succeeds, because with the lock
+      // gone the org genuinely still has two owners.
+      await client.query("COMMIT");
+      expect(await demote).toEqual({ ok: true });
+    } finally {
+      await client.query("ROLLBACK").catch(() => {});
+      await (demote ?? Promise.resolve()).catch(() => {});
+      client.release();
+      await pool.end();
+      await db.delete(profiles).where(eq(profiles.id, SECOND_OWNER));
+    }
+  });
 });

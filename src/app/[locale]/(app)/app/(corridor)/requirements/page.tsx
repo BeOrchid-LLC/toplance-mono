@@ -450,7 +450,25 @@ export default async function RequirementsPage() {
                         month: "long",
                       })
                     )}`
-                  : null,
+                  : /* No conversion to show, but there is one to want:
+                       the mission charges in a currency this traveller
+                       does not hold. Saying we cannot convert it today
+                       is a smaller failure than showing only the
+                       mission's figure and letting them assume that is
+                       all there is — which reads as a missing feature
+                       rather than a missing rate, and is how it read in
+                       the review. Absent entirely when the currencies
+                       match, because then there is genuinely nothing to
+                       approximate. */
+                    localCurrency &&
+                      ruleSet.governmentFeeCurrency &&
+                      localCurrency.toUpperCase() !==
+                        ruleSet.governmentFeeCurrency.toUpperCase()
+                    ? t.approxUnavailable[locale].replace(
+                        "{currency}",
+                        localCurrency.toUpperCase()
+                      )
+                    : null,
               },
               // The entry rules the brief's item 6 names. Curated
               // corridors carry none of them, so in practice these are

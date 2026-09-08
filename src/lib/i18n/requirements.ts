@@ -42,6 +42,13 @@ export const REQUIREMENTS: {
   perEntrySub: L;
   refusalReasonSub: L;
   approxAtRatesDate: L;
+  /**
+   * Said when the mission charges in a currency this traveller does not
+   * hold and we have no rate to convert with. Silence there reads as a
+   * missing feature rather than a missing rate — which is exactly how it
+   * read in the 7 September review.
+   */
+  approxUnavailable: L;
   officialEvisaPortal: L;
   registrationSuffix: L;
   embassyContact: L;
@@ -275,6 +282,18 @@ export const REQUIREMENTS: {
     ar: "سبب شائع لرفض الملف",
     tw: "ade a ɛtaa ma wɔpo faele bi",
     zu: "isizathu esivamile sokwenqatshwa kwefayela",
+  },
+  approxUnavailable: {
+    en: "We could not convert this into {currency} today.",
+    ha: "Ba mu iya canza wannan zuwa {currency} yau ba.",
+    yo: "A kò lè yí èyí padà sí {currency} lónìí.",
+    ig: "Anyị enweghị ike ịtụgharị nke a n'ime {currency} taa.",
+    fr: "Nous n'avons pas pu convertir ce montant en {currency} aujourd'hui.",
+    pt: "Não conseguimos converter este valor para {currency} hoje.",
+    sw: "Hatukuweza kubadilisha hii kuwa {currency} leo.",
+    ar: "لم نتمكن من تحويل هذا المبلغ إلى {currency} اليوم.",
+    tw: "Yɛantumi ansesa yei ankɔ {currency} mu ɛnnɛ.",
+    zu: "Asikwazanga ukuguqula lokhu kube yi-{currency} namuhla.",
   },
   approxAtRatesDate: {
     en: "at {date} rates",

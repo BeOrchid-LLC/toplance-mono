@@ -30,6 +30,17 @@ export const OPS_SUPPORT: {
   resolve: L;
   unassigned: L;
   notFound: L;
+  agencyHeading: L;
+  agencyLead: L;
+  subjectLabel: L;
+  bodyLabel: L;
+  bodyPlaceholder: L;
+  send: L;
+  sent: L;
+  yourRequests: L;
+  noneYet: L;
+  needsSubject: L;
+  needsBody: L;
 } = {
   heading: {
     en: "Support",
@@ -168,5 +179,98 @@ export const OPS_SUPPORT: {
     ar: "لم نتمكن من العثور على طلب الدعم هذا.",
     tw: "Yɛanhu saa mmoa abisadeɛ no.",
     zu: "Asisitholanga leso sicelo sosekelo.",
+  },
+  agencyHeading: {
+    en: "Contact support", ha: "Tuntuɓi tallafi", yo: "Kàn sí ìrànlọ́wọ́",
+    ig: "Kpọtụrụ nkwado", fr: "Contacter l'assistance", pt: "Contactar o apoio",
+    sw: "Wasiliana na msaada", ar: "الاتصال بالدعم", tw: "Frɛ mmoa",
+    zu: "Xhumana nosekelo",
+  },
+  agencyLead: {
+    en: "Tell BeOrchid what has gone wrong. Somebody on the platform team picks it up and you can see here when they do.",
+    ha: "Ka gaya wa BeOrchid abin da ya faru. Wani a ƙungiyar dandalin zai ɗauka kuma za ka gani a nan lokacin da suka yi.",
+    yo: "Sọ fún BeOrchid ohun tí ó ṣàṣìṣe. Ẹnìkan nínú ẹgbẹ́ pátákò yóò gbà á, wàá sì rí i níbí nígbà tí wọ́n bá ṣe.",
+    ig: "Gwa BeOrchid ihe mere. Otu onye nʼotu ikpo okwu ga-ewere ya, ị ga-ahụkwa ya ebe a mgbe ha mere.",
+    fr: "Dites à BeOrchid ce qui ne va pas. Quelqu'un de l'équipe s'en charge et vous le voyez ici.",
+    pt: "Diga à BeOrchid o que correu mal. Alguém da equipa trata disso e verá aqui quando o fizer.",
+    sw: "Mwambie BeOrchid nini kimeenda vibaya. Mtu wa timu atalishughulikia na utaona hapa atakapofanya hivyo.",
+    ar: "أخبر BeOrchid بما حدث. سيتولى الأمر أحد أفراد الفريق وسترى ذلك هنا.",
+    tw: "Ka kyerɛ BeOrchid deɛ ɛkɔɔ bɔne. Obi a ɔwɔ kuo no mu bɛfa na wobɛhu wɔ ha.",
+    zu: "Tshela i-BeOrchid ukuthi kwenzekeni. Othile eqenjini uzokuthatha futhi uzobona lapha.",
+  },
+  subjectLabel: {
+    en: "What is this about", ha: "Wannan game da me ne", yo: "Nípa kín ni èyí",
+    ig: "Gbasara gịnị", fr: "De quoi s'agit-il", pt: "Do que se trata",
+    sw: "Hii inahusu nini", ar: "ما موضوع هذا", tw: "Ɛfa deɛn ho",
+    zu: "Lokhu kumayelana nani",
+  },
+  bodyLabel: {
+    en: "What happened", ha: "Me ya faru", yo: "Kín ló ṣẹlẹ̀", ig: "Gịnị mere",
+    fr: "Que s'est-il passé", pt: "O que aconteceu", sw: "Nini kilitokea",
+    ar: "ماذا حدث", tw: "Ɛdeɛn na ɛsiiɛ", zu: "Kwenzekeni",
+  },
+  bodyPlaceholder: {
+    en: "The more you can tell us, the fewer questions come back.",
+    ha: "Duk yawan abin da ka gaya mana, ƙarancin tambayoyi za su dawo.",
+    yo: "Bí o bá ṣe sọ púpọ̀ sí i, bẹ́ẹ̀ ni ìbéèrè yóò dín kù.",
+    ig: "Ka i na-agwa anyị karịa, ka ajụjụ na-alọghachi belata.",
+    fr: "Plus vous nous en dites, moins il y aura de questions en retour.",
+    pt: "Quanto mais nos disser, menos perguntas voltarão.",
+    sw: "Kadiri unavyotueleza zaidi, ndivyo maswali yatakavyopungua.",
+    ar: "كلما أخبرتنا أكثر، قلّت الأسئلة العائدة إليك.",
+    tw: "Sɛ woka kyerɛ yɛn pii a, nsɛmmisa a ɛbɛsan aba dɔɔso.",
+    zu: "Uma usitshela okwengeziwe, yimibuzo embalwa ebuyayo.",
+  },
+  send: {
+    en: "Send", ha: "Aika", yo: "Fi ránṣẹ́", ig: "Ziga", fr: "Envoyer",
+    pt: "Enviar", sw: "Tuma", ar: "إرسال", tw: "Fa kɔ", zu: "Thumela",
+  },
+  sent: {
+    en: "Sent", ha: "An aika", yo: "A fi ránṣẹ́", ig: "Ezigara ya",
+    fr: "Envoyé", pt: "Enviado", sw: "Imetumwa", ar: "أُرسل",
+    tw: "Wɔde kɔeɛ", zu: "Kuthunyelwe",
+  },
+  yourRequests: {
+    en: "What you have asked us", ha: "Abin da ka tambaye mu",
+    yo: "Ohun tí o ti béèrè lọ́wọ́ wa", ig: "Ihe ị jụrụ anyị",
+    fr: "Ce que vous nous avez demandé", pt: "O que já nos pediu",
+    sw: "Uliyotuuliza", ar: "ما سألتنا عنه", tw: "Deɛ woabisa yɛn",
+    zu: "Okusibuzile",
+  },
+  noneYet: {
+    en: "You have not asked us anything yet.",
+    ha: "Ba ka tambaye mu kome ba tukuna.",
+    yo: "O kò tíì béèrè ohunkóhun lọ́wọ́ wa.",
+    ig: "Ị jụbeghị anyị ihe ọ bụla.",
+    fr: "Vous ne nous avez encore rien demandé.",
+    pt: "Ainda não nos pediu nada.",
+    sw: "Bado hujatuuliza chochote.",
+    ar: "لم تسألنا شيئًا بعد.",
+    tw: "Wummisaa yɛn hwee ɛ.",
+    zu: "Awukasibuzi lutho okwamanje.",
+  },
+  needsSubject: {
+    en: "Say in a few words what this is about.",
+    ha: "Ka faɗi a taƙaice abin da wannan ya shafa.",
+    yo: "Sọ ní ọ̀rọ̀ díẹ̀ ohun tí èyí jẹ́ nípa rẹ̀.",
+    ig: "Kwuo n'okwu ole na ole ihe nke a gbasara.",
+    fr: "Dites en quelques mots de quoi il s'agit.",
+    pt: "Diga em poucas palavras do que se trata.",
+    sw: "Sema kwa maneno machache hii inahusu nini.",
+    ar: "قل بكلمات قليلة ما موضوع هذا.",
+    tw: "Fa nsɛmfua kakra ka deɛ ɛfa ho.",
+    zu: "Sho ngamagama ambalwa ukuthi lokhu kumayelana nani.",
+  },
+  needsBody: {
+    en: "Tell us what happened, so somebody can act on it.",
+    ha: "Ka gaya mana abin da ya faru, don wani ya iya yin aiki a kai.",
+    yo: "Sọ fún wa ohun tí ó ṣẹlẹ̀, kí ẹnìkan lè ṣiṣẹ́ lórí rẹ̀.",
+    ig: "Gwa anyị ihe mere, ka mmadụ wee mee ihe gbasara ya.",
+    fr: "Dites-nous ce qui s'est passé, pour que quelqu'un puisse agir.",
+    pt: "Diga-nos o que aconteceu, para alguém poder agir.",
+    sw: "Tueleze kilichotokea, ili mtu aweze kuchukua hatua.",
+    ar: "أخبرنا بما حدث كي يتمكن أحدهم من التصرف.",
+    tw: "Ka deɛ ɛsiiɛ kyerɛ yɛn, na obi atumi ayɛ ho biribi.",
+    zu: "Sitshele ukuthi kwenzekeni, ukuze othile athathe isinyathelo.",
   },
 };

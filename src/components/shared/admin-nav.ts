@@ -269,5 +269,21 @@ export function agencyAdminNav({
           },
         ]
       : []),
+    {
+      /* Every rank, unlike the team and billing rows above it. A
+         handler whose case was claimed by the wrong colleague is the
+         person with the problem, and making the only channel out a
+         director's row would make a dispute wait on somebody else's
+         calendar. Unlabelled group, like the ops console's route row:
+         one entry that already names itself. */
+      items: [
+        {
+          id: "support",
+          href: "/agency/support",
+          label: OPS_SUPPORT.agencyHeading[locale],
+          icon: "enquiries" as const,
+        },
+      ],
+    },
   ];
 }

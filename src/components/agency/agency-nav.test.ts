@@ -13,13 +13,14 @@ describe("agencyNav", () => {
     expect(agencyNav(withOrg)[0].href).toBe("/agency");
   });
 
-  it("carries the rosters, the invitations and the plan as their own pages", () => {
+  it("carries the rosters, the invitations, the plan and support as their own pages", () => {
     expect(agencyNav(withOrg).map((i) => i.href)).toEqual([
       "/agency",
       "/agency/clients",
       "/agency/clients/invitations",
       "/agency/team",
       "/agency/billing",
+      "/agency/support",
     ]);
   });
 
@@ -44,7 +45,26 @@ describe("agencyNav", () => {
       agencyNav({ locale: "en", hasOrganisation: true, isDirector: false }).map(
         (i) => i.href
       )
-    ).toEqual(["/agency", "/agency/clients"]);
+    ).toEqual(["/agency", "/agency/clients", "/agency/support"]);
+  });
+
+  /**
+   * Support is the exception to the rule the two tests around it prove.
+   *
+   * Everything else kept from a reviewer is a question about running
+   * the agency. Support is a question about a case going wrong, and the
+   * reviewer is the person it went wrong for — routing the only channel
+   * out through their director would make a dispute wait on somebody
+   * else's calendar.
+   */
+  it("offers support to every rank", () => {
+    const reviewer = agencyNav({
+      locale: "en",
+      hasOrganisation: true,
+      isDirector: false,
+    }).map((i) => i.href);
+    expect(reviewer).toContain("/agency/support");
+    expect(agencyNav(withOrg).map((i) => i.href)).toContain("/agency/support");
   });
 
   /**
@@ -61,7 +81,7 @@ describe("agencyNav", () => {
     // rank they hold is the agency's business, not a case's.
     expect(
       agencyNav({ locale: "en", hasOrganisation: true }).map((i) => i.href)
-    ).toEqual(["/agency", "/agency/clients"]);
+    ).toEqual(["/agency", "/agency/clients", "/agency/support"]);
   });
 
   it("keeps the client invitations to the director", () => {

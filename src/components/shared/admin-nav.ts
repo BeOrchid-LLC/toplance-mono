@@ -1,6 +1,7 @@
 import type { AdminIconName } from "@/components/shared/admin-icons";
 import { AGENCY } from "@/lib/i18n/agency";
 import { BILLING } from "@/lib/i18n/billing";
+import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import type { Locale } from "@/lib/i18n/locales";
 
@@ -75,6 +76,7 @@ export function opsAdminNav({
   locale,
   pendingRoutes,
   openDemoRequests,
+  openSupport,
   isOwner = false,
 }: {
   locale: Locale;
@@ -92,6 +94,8 @@ export function opsAdminNav({
    * guard — both pages turn them away themselves, because a hidden link
    * is a courtesy and a typed URL is not an exception.
    */
+  /** Support requests nobody has claimed — see `OpsCounts`. */
+  openSupport: number;
   isOwner?: boolean;
 }): AdminNavGroup[] {
   return [
@@ -113,6 +117,17 @@ export function opsAdminNav({
           label: OPS_COMMON.nav.enquiries[locale],
           icon: "enquiries",
           badge: openDemoRequests,
+        },
+        {
+          /* Badged, and beside the demo queue rather than under Routes:
+             both rows are work that arrives from outside and shortens
+             when somebody acts on it, which is the test the enquiries
+             badge set. */
+          id: "support",
+          href: "/ops/support",
+          label: OPS_SUPPORT.heading[locale],
+          icon: "enquiries",
+          badge: openSupport,
         },
         ...(isOwner
           ? [

@@ -265,6 +265,22 @@ export const EVENT_NAMES = [
    * answer is to change what it shows rather than to add more to it.
    */
   "toplance.dashboard_viewed",
+
+  /**
+   * An agency asked BeOrchid for help.
+   *
+   * The first event a tenant can emit that is not about a traveller.
+   * Worth counting on its own: this channel was built because an agency
+   * in dispute had nowhere to go, and the number that tells us whether
+   * it was needed is how often it is used.
+   */
+  "toplance.support_requested",
+
+  /** A member of staff put their name on a support request. */
+  "toplance.support_claimed",
+
+  /** A support request was closed. */
+  "toplance.support_resolved",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

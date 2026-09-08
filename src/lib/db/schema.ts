@@ -202,6 +202,20 @@ export const invitationStatus = pgEnum("invitation_status", [
  * calendar — it is written by `provisionTenantTx`, in the same
  * transaction as the agency it names.
  */
+/**
+ * How far along a support request from an agency is.
+ *
+ * Three states, not five. The demo queue earns its five because an
+ * enquiry is a sales process with real stages; a support request is
+ * open, somebody has it, or it is done. Anything finer would be a
+ * status nobody remembers to set.
+ */
+export const supportRequestState = pgEnum("support_request_state", [
+  "open",
+  "claimed",
+  "resolved",
+]);
+
 export const demoRequestStatus = pgEnum("demo_request_status", [
   "new",
   "contacted",
@@ -1267,6 +1281,61 @@ export const demoRequests = pgTable("demo_requests", {
 ]);
 
 /**
+ * An agency asking BeOrchid for help.
+ *
+ * The first channel of any kind from a tenant to the operator: until
+ * this existed an agency in dispute had no way to reach anybody, which
+ * the client raised on 8 September. Deliberately not the `messages`
+ * table — that one threads a traveller and their handler about one
+ * application, and a support request belongs to an agency rather than
+ * to a case and is worked by staff who cannot see cases at all.
+ *
+ * Nothing here is deleted. A resolved request is the record that the
+ * dispute happened and how it ended, which is most of its value.
+ */
+export const supportRequests = pgTable(
+  "support_requests",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    /**
+     * The agency that asked. `cascade`: a support thread has no meaning
+     * once the tenant it is about is gone, and unlike a demo request
+     * there is no pre-organisation life for the row to fall back on.
+     */
+    orgId: uuid()
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    /**
+     * Who at the agency wrote it. `set null` for the reason the demo
+     * queue's assignee gives: the request outlives the person, and
+     * losing the whole row because somebody left their agency would
+     * destroy the record of a dispute.
+     */
+    raisedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    subject: text().notNull(),
+    body: text().notNull(),
+    state: supportRequestState().notNull().default("open"),
+    /**
+     * Which member of staff has it — a label, not a lock, exactly as on
+     * `demo_requests`. Anyone may claim, unclaim or resolve regardless
+     * of whose name is on the row; this answers "is anyone on this" for
+     * a queue two people work at once.
+     */
+    assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    resolvedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [
+    /** The queue's own read: open work, oldest first. */
+    index("support_requests_state_idx").on(t.state, t.createdAt),
+    /** For the delete on the other end of the key, and for "mine". */
+    index("support_requests_assignee_idx").on(t.assigneeId),
+    /** An agency reading its own thread list. */
+    index("support_requests_org_idx").on(t.orgId),
+  ]
+);
+
+/**
  * Everything an employer is allowed to see about a sponsored
  * application, and nothing more. Created in
  * `src/lib/db/sql-objects.sql`; declared here as `.existing()` so the
@@ -1307,5 +1376,6 @@ export type CompanionUpdate = typeof companionUpdates.$inferSelect;
 export type FxRate = typeof fxRates.$inferSelect;
 export type DemoRequest = typeof demoRequests.$inferSelect;
 export type DemoRequestStatus = (typeof demoRequestStatus.enumValues)[number];
+export type SupportRequestState = (typeof supportRequestState.enumValues)[number];
 
 export type FlagReason = (typeof flagReason.enumValues)[number];

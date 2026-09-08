@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 
 import { resetFixtures, signUp, testEmail } from "./helpers/auth";
-import { promoteToStaff, seedSubmittedCase } from "./helpers/db";
+import {
+  clearDemoRequest,
+  demoRequestAssignee,
+  promoteToStaff,
+  seedDemoRequest,
+  seedSubmittedCase,
+} from "./helpers/db";
 
 /**
  * The platform console, after the v1.3 tenancy.
@@ -33,6 +39,16 @@ const EMAIL = testEmail("staff");
 const NAME = "Ngozi Balogun";
 const STAFF_ORG = "Ops Reviewer Agency";
 const TRAVELLER = "Chukwuemeka Obi";
+
+/**
+ * Its own account, not the one above. The first test walks a case to a
+ * 404 and back; sharing a signed-in session between two stories makes
+ * either failure explainable by the other.
+ */
+const ENQUIRY_EMAIL = testEmail("enquiries");
+const ENQUIRY_NAME = "Amara Nwosu";
+const ENQUIRY_ORG = "Enquiry Desk Agency";
+const ENQUIRY_COMPANY = "Kite Travel Partners";
 
 test("the platform console curates routes, offers no way into a case, and is somewhere staff exist", async ({
   page,
@@ -114,4 +130,67 @@ test("the platform console curates routes, offers no way into a case, and is som
   // used. `toBeAttached` rather than `toBeVisible`: the input itself is
   // `sr-only` and the label around it is the target.
   await expect(page.getByLabel("Add profile photo")).toBeAttached();
+});
+
+/**
+ * The enquiry queue.
+ *
+ * It existed before it had a screen — as a table at the foot of
+ * `/ops/tenants`, under the agency list and its pagination, which is a
+ * good way to own a sales queue and never read it. What this pins is
+ * that it is now reachable from the rail, that a status still moves, and
+ * that an assignment survives a reload: the column is new, so "it looked
+ * right in the browser" is not evidence it was written.
+ */
+test("the enquiry queue is findable, and an enquiry can be moved and claimed", async ({
+  page,
+}) => {
+  await resetFixtures([ENQUIRY_EMAIL], [ENQUIRY_ORG]);
+  const requestId = await seedDemoRequest(ENQUIRY_COMPANY);
+
+  try {
+    await signUp(page, {
+      email: ENQUIRY_EMAIL,
+      fullName: ENQUIRY_NAME,
+      orgName: ENQUIRY_ORG,
+    });
+    await promoteToStaff(ENQUIRY_EMAIL);
+
+    // ---- reachable from the rail, which is the whole point ----
+    await page.goto("/ops/corridors");
+    const enquiries = page
+      .getByRole("navigation", { name: "Console menu" })
+      .getByRole("link", { name: "Enquiries" });
+    await expect(enquiries).toBeVisible();
+    await enquiries.click();
+    await page.waitForURL("**/ops/enquiries");
+
+    const row = page.getByRole("row").filter({ hasText: ENQUIRY_COMPANY });
+    await expect(row).toBeVisible();
+
+    // ---- the status still moves, from its new address ----
+    await row.getByLabel("Status").selectOption("contacted");
+    await expect(row.getByLabel("Status")).toHaveValue("contacted");
+
+    // ---- and it can be claimed ----
+    // Reloaded before asserting, and the database read after that: the
+    // select showing a name proves the browser re-rendered, not that a
+    // row was written.
+    await expect(row.getByRole("button", { name: "Claim" })).toBeVisible();
+    await row.getByRole("button", { name: "Claim" }).click();
+
+    await expect(row.getByLabel("Assigned to")).toHaveValue(/.+/);
+    await page.reload();
+
+    const claimed = page.getByRole("row").filter({ hasText: ENQUIRY_COMPANY });
+    await expect(claimed.getByLabel("Assigned to")).toHaveValue(/.+/);
+    // Claiming assigns it to the reader, so a row that came back with
+    // somebody else's id would be a worse failure than none at all.
+    expect(await demoRequestAssignee(requestId)).not.toBeNull();
+
+    // Once it is theirs, the shortcut has done its job and goes away.
+    await expect(claimed.getByRole("button", { name: "Claim" })).toHaveCount(0);
+  } finally {
+    await clearDemoRequest(requestId);
+  }
 });

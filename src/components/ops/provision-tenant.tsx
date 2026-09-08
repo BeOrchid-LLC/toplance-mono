@@ -42,7 +42,7 @@ export function ProvisionTenant({
    * bar on `/ops/tenants`, standing in the row of 36px chrome that
    * size exists to match.
    *
-   * It is not always there. `DemoRequestQueue` renders one per row as a
+   * It is not always there. `EnquiryTable` renders one per row as a
    * `DataTable` cell, among 44px `size="sm"` row controls, which is
    * precisely the context `size="bar"` documents itself as not being —
    * it would sit undersized, cut to a tighter radius than its
@@ -85,7 +85,7 @@ export function ProvisionTenant({
 
       // Deferred from `submit`, on purpose. When `demoRequest` is set,
       // this component is rendered from a ternary in
-      // `DemoRequestQueue` keyed on `demoRequest.convertedOrgId` — a
+      // `EnquiryTable` keyed on `demoRequest.convertedOrgId` — a
       // `router.refresh()` fired right after a successful provision
       // lands the instant this row's server data comes back with that
       // id populated, which flips the ternary to a `<Link>` and unmounts

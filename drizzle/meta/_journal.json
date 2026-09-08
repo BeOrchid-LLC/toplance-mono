@@ -232,6 +232,13 @@
       "when": 1788866696108,
       "tag": "0032_furry_randall_flagg",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788867433759,
+      "tag": "0033_sharp_ezekiel_stane",
+      "breakpoints": true
     }
   ]
 }

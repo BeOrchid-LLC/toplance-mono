@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
-import { DemoRequestQueue } from "@/components/ops/demo-request-queue";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { AdminShell } from "@/components/shared/admin-shell";
@@ -58,10 +57,11 @@ export default async function OpsTenantsPage() {
     (OPEN_DEMO_STATUSES as readonly string[]).includes(r.status)
   );
 
-  // No `href` on any of these. This console holds one list of agencies
-  // and one queue of enquiries, neither of which takes a filter in the
-  // URL — so a card offering to open "the suspended ones" would be
-  // offering a view that does not exist.
+  // No `href` on the first three: this console holds one list of
+  // agencies, and it takes no filter in the URL — so a card offering to
+  // open "the suspended ones" would be offering a view that does not
+  // exist. The enquiries card is the exception, because that view now
+  // does exist and is a screen of its own.
   const counters: Kpi[] = [
     {
       label: OPS_TENANTS.counters.liveTenants.label[locale],
@@ -90,6 +90,10 @@ export default async function OpsTenantsPage() {
       sub: OPS_TENANTS.counters.openEnquiries.sub[locale],
       icon: MessageSquareText,
       tone: openEnquiries.length ? "success" : "neutral",
+      // The queue used to be a table at the foot of this page. It is its
+      // own screen now, so the card that counts it opens it — a figure
+      // an operator acts on should not be a dead end.
+      href: "/ops/enquiries",
     },
   ];
 
@@ -122,8 +126,6 @@ export default async function OpsTenantsPage() {
       <KpiRow items={counters} />
 
       <TenantsTable rows={tenants} locale={locale} className="mt-8" />
-
-      <DemoRequestQueue requests={demoRequests} className="mt-8 mb-16" />
     </AdminShell>
   );
 }

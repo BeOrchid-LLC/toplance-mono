@@ -1228,8 +1228,33 @@ export const demoRequests = pgTable("demo_requests", {
    * demo happened is worse than a dangling null.
    */
   convertedOrgId: uuid().references(() => organisations.id, { onDelete: "set null" }),
+  /**
+   * Which member of staff is working this enquiry.
+   *
+   * A label, not a lock: any member of staff may set it, clear it or
+   * change a row's status regardless of whose name is on it. It answers
+   * "is anyone on this" for a queue two people work at once, which
+   * nothing in the table could answer before — `status` says how far
+   * along an enquiry is and never who has it.
+   *
+   * Nullable, because unassigned is the normal state of a new enquiry
+   * and not a defect. `set null` rather than `cascade` for the reason
+   * `converted_org_id` gives one line up: an enquiry outlives whoever
+   * happened to be handling it, and losing the row because a reviewer
+   * left would be worse than losing the name.
+   */
+  assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [
+  /**
+   * For the delete on the other end of the key, the same argument
+   * `applications_assignee_idx` makes: without it, removing a staff
+   * profile scans every row of this table and takes locks while it
+   * does. It earns its keep on reads too — the queue filters by
+   * assignee to answer "mine".
+   */
+  index("demo_requests_assignee_idx").on(t.assigneeId),
+]);
 
 /**
  * Everything an employer is allowed to see about a sponsored

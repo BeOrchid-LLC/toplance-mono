@@ -4,9 +4,15 @@ import { revalidatePath } from "next/cache";
 
 import { track } from "@/lib/analytics/track";
 import { audit } from "@/lib/audit";
+import { ForbiddenError } from "@/lib/auth/errors";
+import { isOrgDirector } from "@/lib/auth/policy";
 import { requireActor, requireOrgAccess, toActionError } from "@/lib/auth/guards";
 import { activeRateCard } from "@/lib/data/billing";
-import { hasActiveSubscription, recordPayment } from "@/lib/data/payments";
+import {
+  cancelSubscription as endSubscription,
+  hasActiveSubscription,
+  recordPayment,
+} from "@/lib/data/payments";
 import { subscriptionCharge } from "@/lib/domain/pricing";
 import { paymentProvider } from "@/lib/payments";
 import { BILLING } from "@/lib/i18n/billing";
@@ -98,6 +104,71 @@ export async function purchaseSubscription() {
 
     revalidatePath("/[locale]/agency", "layout");
     return { ok: true, alreadyActive: false };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Give up the rest of the period the agency has paid for.
+ *
+ * Cancelling in a product where nothing renews can only mean this. There
+ * is no future charge to call off — `purchaseSubscription` sells one
+ * month and the console closes when it runs out — so the only thing an
+ * agency can end is the month it is standing in. It is not refunded, and
+ * the dialog in `CancelPlan` says so before this ever runs.
+ *
+ * Destructive under the rule in `AGENTS.md`: every member stops being
+ * able to open a case, at once, which is the reach of a suspension. So
+ * it asks for rank rather than membership. `requireOrgAccess` is
+ * `isOrgMemberOf` and is right for buying — any colleague may pay — but
+ * a reviewer must not be able to shut the director's own console. The
+ * check is here rather than in the component because the component is
+ * not a boundary: this is a POST endpoint reachable without it.
+ *
+ * The stamp lands in `payments` and nowhere else, which is what keeps
+ * #77 from coming back. `activeSubscription` is the single question both
+ * `resolveAgencyConsole` and `/agency/billing` ask, so the moment this
+ * returns, the agency reads unpaid to both of them — the guard sends
+ * them to the till and the till opens. Nothing here redirects: the
+ * `revalidatePath` below re-renders `/agency/billing` in this same
+ * response, and it is a screen the director may still stand on.
+ */
+export async function cancelSubscription() {
+  try {
+    const actor = await requireActor();
+    const orgId = actor.orgIds[0];
+    if (!orgId) return { error: "You do not have access to that." };
+    await requireOrgAccess(orgId);
+    if (!isOrgDirector(actor, orgId)) throw new ForbiddenError();
+
+    // Nothing running, so take nothing — and report it as success. A
+    // director whose first click landed and who clicks again is not
+    // making a mistake, and an error here would tell them their agency
+    // is somehow still open. Same shape as `alreadyActive` above.
+    const ended = await endSubscription(orgId);
+    if (ended.length === 0) {
+      revalidatePath("/[locale]/agency", "layout");
+      return { ok: true, alreadyEnded: true };
+    }
+
+    // The period the agency walked away from, for whoever asks later why
+    // a paid month shows an early exit. The furthest-reaching row, to
+    // match what `activeSubscription` would have called the live one.
+    const periodEnd = ended
+      .map((row) => row.periodEnd)
+      .filter((end): end is Date => end !== null)
+      .sort((a, b) => b.getTime() - a.getTime())[0];
+
+    await track("toplance.subscription_cancelled", { orgId }, actor.userId);
+    await audit(actor.userId, "subscription.cancelled", "organisation", orgId, {
+      periodEnd: periodEnd?.toISOString() ?? null,
+    });
+
+    revalidatePath("/[locale]/agency", "layout");
+    return { ok: true, alreadyEnded: false };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

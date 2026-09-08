@@ -26,6 +26,7 @@ import {
   handlesCase,
   isAgencyDirectorFor,
   isAgencyFor,
+  isOrgDirector,
   isOrgMemberOf,
   isOwner,
   isStaff,
@@ -634,5 +635,45 @@ describe("invitations", () => {
   it("does not let a forged org_member role manage an org it does not belong to", () => {
     const forged: Actor = { ...traveller, role: "org_member" };
     expect(canManageInvitations(forged, ORG)).toBe(false);
+  });
+});
+
+/**
+ * The rank that decides whether somebody may close the agency down.
+ *
+ * `isAgencyDirectorFor` already answers this, but only about a case —
+ * it takes an `ApplicationRef`, and the acts that need it here are about
+ * the agency itself, which has no case to hang the question on.
+ */
+describe("directing an agency", () => {
+  it("recognises the director of this agency", () => {
+    expect(isOrgDirector(agencyDirector, ORG)).toBe(true);
+  });
+
+  it("refuses a colleague who is only a reviewer", () => {
+    // The whole point of the check. Cancelling the plan closes the
+    // console for the director too, so it is not a reviewer's to do.
+    expect(isOrgDirector(agencyReviewer, ORG)).toBe(false);
+  });
+
+  it("refuses a director of somewhere else", () => {
+    expect(isOrgDirector(otherAgency, ORG)).toBe(false);
+  });
+
+  it("refuses a traveller and platform staff alike", () => {
+    expect(isOrgDirector(traveller, ORG)).toBe(false);
+    expect(isOrgDirector(platformStaff, ORG)).toBe(false);
+    expect(isOrgDirector(platformOwner, ORG)).toBe(false);
+  });
+
+  it("is false when there is no agency to direct", () => {
+    // `resolveAgencyConsole` hands `null` for a director who has not
+    // named an agency, and for a member of a suspended one.
+    expect(isOrgDirector(agencyDirector, null)).toBe(false);
+  });
+
+  it("does not let a forged org_member role direct an agency", () => {
+    const forged: Actor = { ...traveller, role: "org_member" };
+    expect(isOrgDirector(forged, ORG)).toBe(false);
   });
 });

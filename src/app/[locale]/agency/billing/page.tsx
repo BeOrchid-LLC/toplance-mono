@@ -3,13 +3,19 @@ import { redirect } from "next/navigation";
 import { CreditCard } from "lucide-react";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
+import { CancelPlan } from "@/components/agency/cancel-plan";
 import { PayPlan } from "@/components/agency/pay-plan";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { activeRateCard } from "@/lib/data/billing";
-import { activeSubscription, listPaymentsForOrg } from "@/lib/data/payments";
+import {
+  activeSubscription,
+  latestSubscription,
+  listPaymentsForOrg,
+} from "@/lib/data/payments";
 import { formatMoney, subscriptionCharge } from "@/lib/domain/pricing";
+import { describePlanState, type PlanState } from "@/lib/payments/plan-state";
 import { BILLING } from "@/lib/i18n/billing";
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locales";
@@ -25,6 +31,44 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function formatDate(date: Date, locale: Locale): string {
   return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(date);
+}
+
+/**
+ * What the screen says about the plan, or `null` before there is one.
+ *
+ * Five states, one sentence each. `describePlanState` chooses between
+ * them; this only dresses the choice, so the rule that a cancelled plan
+ * reads differently from a lapsed one is testable without rendering
+ * anything.
+ */
+function planSentence(plan: PlanState, locale: Locale): string | null {
+  switch (plan.kind) {
+    case "never":
+      // Nothing to report. `planBody` in the header has already said
+      // what buying gets them, and a second sentence saying they have
+      // not bought it is a screen telling somebody what they know.
+      return null;
+    case "running":
+      return BILLING.planActiveUntil[locale].replace(
+        "{date}",
+        formatDate(plan.until, locale)
+      );
+    case "ending-soon":
+      return BILLING.planEndingSoon[locale].replace(
+        "{date}",
+        formatDate(plan.until, locale)
+      );
+    case "lapsed":
+      return BILLING.planLapsed[locale].replace(
+        "{date}",
+        formatDate(plan.endedOn, locale)
+      );
+    case "cancelled":
+      return BILLING.planCancelled[locale].replace(
+        "{date}",
+        formatDate(plan.endedOn, locale)
+      );
+  }
 }
 
 /**
@@ -50,13 +94,29 @@ export default async function AgencyBillingPage() {
   // that state is explained and where it is fixed.
   if (!membership || !orgId) redirect("/agency");
 
-  const [card, subscription, history] = await Promise.all([
+  const [card, subscription, latest, history] = await Promise.all([
     activeRateCard(),
     activeSubscription(orgId),
+    latestSubscription(orgId),
     listPaymentsForOrg(orgId),
   ]);
 
   const price = subscriptionCharge(card);
+
+  /**
+   * `activeSubscription` decides whether the console is open;
+   * `latestSubscription` only decides which sentence explains why it is
+   * not. Keeping the second one out of the first is the #77 rule — one
+   * question about entitlement, asked in one place, by every guard.
+   */
+  const plan = describePlanState({
+    activeUntil: subscription?.periodEnd ?? null,
+    latest,
+    now: new Date(),
+  });
+  const sentence = planSentence(plan, locale);
+  const paidUntil =
+    plan.kind === "running" || plan.kind === "ending-soon" ? plan.until : null;
 
   return (
     <AgencyShell
@@ -85,18 +145,22 @@ export default async function AgencyBillingPage() {
             {BILLING.perApplicationNote[locale]}
           </p>
 
-          {subscription?.periodEnd ? (
-            <p className="mt-6 text-[15px] text-ink-2">
-              {BILLING.planActiveUntil[locale].replace(
-                "{date}",
-                formatDate(subscription.periodEnd, locale)
-              )}
-            </p>
-          ) : (
-            <div className="mt-6">
+          {sentence ? (
+            <p className="mt-6 max-w-[60ch] text-[15px] text-ink-2">{sentence}</p>
+          ) : null}
+
+          {/* One act, and which one depends on nothing but whether the
+              plan is running. An agency inside its period cannot buy
+              the next month — `purchaseSubscription` refuses while one
+              is active — so offering both would be a button that does
+              nothing. */}
+          <div className="mt-6">
+            {paidUntil ? (
+              <CancelPlan paidUntil={formatDate(paidUntil, locale)} />
+            ) : (
               <PayPlan />
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Said in words on the screen that takes the money, not
               only in an environment variable. Somebody demonstrating

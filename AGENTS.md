@@ -93,11 +93,13 @@ Every destructive control in the product today, and what each one asks:
 | Remove a document | `app/document-row.tsx` | deletes the stored file; the button says "Replace" but nothing replaces it |
 | Remove a trip | `app/travel-history.tsx` | gone from travel history for good, from a bare icon in a list of alike rows |
 | Revoke an invitation | `shared/invitation-actions.tsx` | the link dies on the spot and there is no un-revoke |
+| End the agency plan | `agency/cancel-plan.tsx` | the console closes on every colleague at once, mid-case, and the days already paid for are not refunded |
 
 `CorridorDecision` is the worked example of the other kind and deliberately does
 not confirm: approving a corridor publishes something, it takes nothing away.
 `restoreTenant`, promoting a member and resending an invitation are likewise
-additive.
+additive. So is `purchaseSubscription`, which is the undo for ending the plan
+and commits on the click — the way back in is never gated.
 
 Resending confirms anyway, and its dialog is not destructive — `ConfirmDialog`
 takes `confirmVariant="primary"` for it. The reason is on

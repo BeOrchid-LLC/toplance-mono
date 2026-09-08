@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import {
@@ -76,15 +78,24 @@ export function TeamRoster({
             {members.map((member) => (
               <TableRow key={member.userId}>
                 <TableCell>
-                  <span
-                    className="block truncate font-semibold"
+                  {/* The name opens their page, where the rank can be
+                      changed and what they are carrying is listed. The
+                      address goes inside the link for the reason the
+                      case reference does on the clients table: it is
+                      how a colleague is identified when two people
+                      share a name. */}
+                  <Link
+                    href={`/agency/team/${member.userId}`}
+                    className="group/member block"
                     title={member.email}
                   >
-                    {member.fullName || member.email}
-                  </span>
-                  {member.fullName && (
-                    <span className="special block truncate">{member.email}</span>
-                  )}
+                    <span className="block truncate font-semibold text-brand-text group-hover/member:underline">
+                      {member.fullName || member.email}
+                    </span>
+                    {member.fullName && (
+                      <span className="special block truncate">{member.email}</span>
+                    )}
+                  </Link>
                 </TableCell>
 
                 <TableCell className="t-muted">

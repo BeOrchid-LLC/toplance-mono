@@ -465,5 +465,38 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   // input itself is `sr-only`, and the label around it is the target.
   await expect(colleague.getByLabel("Add profile photo")).toBeAttached();
 
+  // ---- a colleague's page is the director's, and so is their rank ----
+
+  // Typing the path is not a way past the tab they do not have. The id
+  // is arbitrary: the rank guard runs before the member is looked up, so
+  // this proves the redirect rather than a missing row.
+  await colleague.goto("/agency/team/00000000-0000-0000-0000-000000000000");
+  await colleague.waitForURL("**/agency");
+
+  // The director opens them from the roster and promotes them.
+  await consoleNav(page).getByRole("link", { name: "Team" }).click();
+  await page.waitForURL("**/agency/team");
+  await page.getByRole("link", { name: /Grace Okon/ }).click();
+  await page.waitForURL("**/agency/team/**");
+  await expect(page.getByRole("heading", { name: "Grace Okon" })).toBeVisible();
+
+  // `exact`, and it matters: the page explains what the two ranks are —
+  // "A director can invite colleagues…" — so a substring match on
+  // "Director" is true before anybody is promoted. That assertion passed
+  // instantly, which meant the promotion below was never waited on and
+  // the reload underneath it raced the write.
+  const rank = page.getByRole("main");
+  await expect(rank.getByText("Travel agent", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Make director" }).click();
+  await expect(rank.getByText("Director", { exact: true })).toBeVisible();
+
+  // And it reaches their console, not just the director's view of it:
+  // the rank is what decides they have a Team row at all.
+  await colleague.reload();
+  await expect(
+    consoleNav(colleague).getByRole("link", { name: "Team" })
+  ).toBeVisible();
+
   await colleagueContext.close();
 });

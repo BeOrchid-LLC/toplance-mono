@@ -27,6 +27,7 @@ import {
 } from "@/lib/data/invitations";
 import { assignCaseTo, claimCase, releaseCase } from "@/lib/data/assignments";
 import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
+import { setMemberRole } from "@/lib/data/tenants";
 import { hasActiveSubscription } from "@/lib/data/payments";
 import { reviewDocumentTx, type ReviewVerdict } from "@/lib/data/review";
 import { changeStatusTx } from "@/lib/data/transitions";
@@ -479,6 +480,74 @@ export async function setCaseHandler(formData: FormData) {
 
     revalidateCase();
     return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * A director changes a colleague's rank inside their own agency.
+ *
+ * The same write `/ops` makes through `updateMemberRole`, reached by a
+ * different person: BeOrchid staff there, the agency's own director
+ * here. Both go through `setMemberRole`, which holds the rule worth
+ * holding — it locks the membership rows and refuses to demote an
+ * agency's last director, so an agency cannot be left with nobody who
+ * can invite, bill, or hand out a case.
+ *
+ * The raw value is narrowed against exactly the two ranks rather than
+ * `=== "owner" ? … : "reviewer"`. That fallback is the bug #69 found on
+ * the ops side: it turned a missing field or a typo into a demotion, and
+ * the only thing standing between it and an agency with no director was
+ * the guard inside the transaction. An unrecognised rank is refused.
+ */
+export async function setTeamMemberRank(formData: FormData) {
+  try {
+    const actor = await requireActor();
+    const orgId = actor.orgIds[0];
+    if (!orgId) return { error: "You do not have access to that." };
+    await requireOrgAccess(orgId);
+
+    const locale = await getActionLocale();
+
+    // The page hides this control from a reviewer, but a POST endpoint is
+    // reachable without ever rendering that page, and the page gate is
+    // not its gate.
+    if (!(await isAgencyOwner(actor.userId, orgId))) {
+      return { error: AGENCY_ACTIONS.onlyDirectorChangesRank[locale] };
+    }
+
+    const userId = String(formData.get("user_id") ?? "");
+    const raw = String(formData.get("rank") ?? "");
+    const rank = raw === "owner" || raw === "reviewer" ? raw : null;
+    if (!rank) return { error: AGENCY_ACTIONS.chooseARank[locale] };
+
+    const result = await setMemberRole(orgId, userId, rank);
+    if ("error" in result) {
+      return {
+        error:
+          result.error === "last_owner"
+            ? AGENCY_ACTIONS.lastDirector[locale]
+            : AGENCY_ACTIONS.notAColleague[locale],
+      };
+    }
+
+    await track("toplance.agency_member_rank_changed", { orgId, rank }, actor.userId);
+    await audit(actor.userId, "agency.member_rank_changed", "organisation", orgId, {
+      userId,
+      rank,
+    });
+
+    // One call, on the route-tree path, as `revalidateCase` argues: the
+    // rank decides which rail rows this colleague sees, and the rail is
+    // drawn by the shell above every page, so invalidating a page leaves
+    // a stale rail over fresh content. `/[locale]/agency/${userId}` was
+    // the wrong shape anyway — a route pattern with a real id spliced
+    // into it is neither a pattern nor a path.
+    revalidatePath("/[locale]/agency", "layout");
+    return { ok: true as const };
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

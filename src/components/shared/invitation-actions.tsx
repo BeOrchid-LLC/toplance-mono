@@ -5,6 +5,7 @@ import { Send, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useT } from "@/components/locale-provider";
 import { INVITATION_ROSTER } from "@/lib/i18n/invitation-roster";
 
@@ -79,15 +80,25 @@ export function ResendInvitationButton({
   );
 }
 
+/**
+ * Destructive, and the only one of the pair that is: revoking kills the
+ * link on the spot and there is no un-revoke — the way back in is a new
+ * invitation. It takes `email` for the same reason `ResendInvitationButton`
+ * does, so the question can name the address rather than leave the
+ * operator matching a dialog to a row.
+ */
 export function RevokeInvitationButton({
   invitationId,
+  email,
   action,
 }: {
   invitationId: string;
+  email: string;
   action: (formData: FormData) => Promise<RevokeResult>;
 }) {
   const t = useT();
   const [pending, startTransition] = React.useTransition();
+  const [confirming, setConfirming] = React.useState(false);
 
   function submit() {
     const formData = new FormData();
@@ -99,13 +110,32 @@ export function RevokeInvitationButton({
         toast.error(result.error);
         return;
       }
+      setConfirming(false);
       toast.success(t(INVITATION_ROSTER.revoked));
     });
   }
 
   return (
-    <Button variant="tertiary" size="sm" onClick={submit} disabled={pending}>
-      <X /> {t(INVITATION_ROSTER.revoke)}
-    </Button>
+    <>
+      <Button
+        variant="tertiary"
+        size="sm"
+        onClick={() => setConfirming(true)}
+        disabled={pending}
+      >
+        <X /> {t(INVITATION_ROSTER.revoke)}
+      </Button>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t(INVITATION_ROSTER.revokeConfirmTitle).replace("{email}", email)}
+        body={t(INVITATION_ROSTER.revokeConfirmBody)}
+        confirmLabel={t(INVITATION_ROSTER.revoke)}
+        cancelLabel={t(INVITATION_ROSTER.keepInvitation)}
+        icon={<X />}
+        pending={pending}
+        onConfirm={submit}
+      />
+    </>
   );
 }

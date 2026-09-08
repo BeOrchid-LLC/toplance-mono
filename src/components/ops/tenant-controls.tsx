@@ -47,6 +47,15 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [confirmingSuspend, setConfirmingSuspend] = React.useState(false);
+  /**
+   * The member being demoted, or `null`. Promotion hands capability
+   * over and needs no dialog, so only one direction of this toggle is
+   * gated — and the dialog has to name the person, because the button
+   * that opened it is one of many identical ones down a table.
+   */
+  const [demoting, setDemoting] = React.useState<TenantDetail["members_"][number] | null>(
+    null
+  );
 
   /** Every control here posts the same way; only the action differs. */
   function run(
@@ -75,7 +84,9 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
     formData.set("org_id", tenant.id);
     formData.set("user_id", userId);
     formData.set("role", role);
-    run(updateMemberRole, formData, t(OPS_TENANTS.toastRoleChanged));
+    run(updateMemberRole, formData, t(OPS_TENANTS.toastRoleChanged), () =>
+      setDemoting(null)
+    );
   }
 
   function saveBilling(formData: FormData) {
@@ -142,7 +153,9 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
                 variant="tertiary"
                 disabled={pending}
                 onClick={() =>
-                  changeRole(m.userId, m.role === "owner" ? "reviewer" : "owner")
+                  m.role === "owner"
+                    ? setDemoting(m)
+                    : changeRole(m.userId, "owner")
                 }
               >
                 {m.role === "owner"
@@ -158,6 +171,22 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
              operator re-provisioning it. */
           <p className="t-muted max-w-[62ch]">{t(OPS_TENANTS.awaitingFirstOwner)}</p>
         }
+      />
+
+      <ConfirmDialog
+        open={demoting !== null}
+        onOpenChange={(next) => {
+          if (!next) setDemoting(null);
+        }}
+        title={t(OPS_TENANTS.demoteConfirmTitle).replace(
+          "{name}",
+          demoting?.fullName ?? ""
+        )}
+        body={t(OPS_TENANTS.demoteConfirmBody)}
+        confirmLabel={t(OPS_TENANTS.demoteButton)}
+        cancelLabel={t(OPS_COMMON.cancel)}
+        pending={pending}
+        onConfirm={() => demoting && changeRole(demoting.userId, "reviewer")}
       />
 
       <Panel>

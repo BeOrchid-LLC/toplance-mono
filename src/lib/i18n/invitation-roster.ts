@@ -19,6 +19,9 @@ export const INVITATION_ROSTER: {
   sentAgainTemplate: L;
   couldNotEmailTemplate: L;
   revoked: L;
+  revokeConfirmTitle: L;
+  revokeConfirmBody: L;
+  keepInvitation: L;
 } = {
   resend: {
     en: "Resend",
@@ -79,5 +82,47 @@ export const INVITATION_ROSTER: {
     ar: "أُلغيت الدعوة",
     tw: "Wɔatwa nsato no mu",
     zu: "Isimemo sichithiwe",
+  },
+  /**
+   * Revoke sits next to Resend in every row of both consoles, and the
+   * two do opposite things — one gets somebody in, the other shuts them
+   * out. `{email}` names the address so the question is answerable
+   * without counting rows back up to the header.
+   */
+  revokeConfirmTitle: {
+    en: "Revoke the invitation to {email}?",
+    ha: "A soke gayyatar zuwa {email}?",
+    yo: "Fagilé ìpè sí {email}?",
+    ig: "Kagbuo òkù ahụ e zigaara {email}?",
+    fr: "Révoquer l'invitation envoyée à {email} ?",
+    pt: "Revogar o convite para {email}?",
+    sw: "Batilisha mwaliko kwa {email}?",
+    ar: "إلغاء الدعوة المرسلة إلى {email}؟",
+    tw: "Twa nsato a wɔde kɔmaa {email} no mu?",
+    zu: "Chitha isimemo esiya ku-{email}?",
+  },
+  revokeConfirmBody: {
+    en: "Their link stops working straight away, and it cannot be turned back on — getting them in after this means sending a fresh invitation.",
+    ha: "Hanyar haɗin su za ta daina aiki nan take, kuma ba za a iya mayar da ita ba — shigar da su bayan wannan yana nufin aika sabuwar gayyata.",
+    yo: "Ọ̀nà àsopọ̀ wọn yóò dáwọ́ ṣíṣiṣẹ́ dúró lẹ́sẹ̀kẹsẹ̀, a kò sì lè tún un pada — mímú wọn wọlé lẹ́yìn èyí túmọ̀ sí fífi ìpè tuntun ránṣẹ́.",
+    ig: "Njikọ ha ga-akwụsị ịrụ ọrụ ozugbo, a pụghịkwa iweghachi ya — ime ka ha banye mgbe nke a gasịrị pụtara izipu òkù ọhụrụ.",
+    fr: "Leur lien cesse aussitôt de fonctionner et ne peut pas être réactivé — pour les faire entrer ensuite, il faudra envoyer une nouvelle invitation.",
+    pt: "A ligação deixa de funcionar de imediato e não pode ser reativada — para os fazer entrar depois disto, terá de enviar um convite novo.",
+    sw: "Kiungo chao kinaacha kufanya kazi mara moja, na hakiwezi kurudishwa — kuwaingiza baada ya hapa kunamaanisha kutuma mwaliko mpya.",
+    ar: "يتوقف رابطهم عن العمل فورًا، ولا يمكن إعادة تفعيله — وإدخالهم بعد ذلك يعني إرسال دعوة جديدة.",
+    tw: "Wɔn link no bɛgyae adwumayɛ ntɛm ara, na wɔrentumi nsan mmue bio — sɛ wopɛ sɛ wɔba mu akyire yi a, ɛsɛ sɛ woto nsato foforɔ.",
+    zu: "Isixhumanisi sabo siyeka ukusebenza ngokushesha, futhi asikwazi ukubuyiselwa — ukubangenisa ngemva kwalokhu kusho ukuthumela isimemo esisha.",
+  },
+  keepInvitation: {
+    en: "Keep it",
+    ha: "Bar ta",
+    yo: "Fi í sílẹ̀",
+    ig: "Hapụ ya",
+    fr: "La garder",
+    pt: "Manter",
+    sw: "Uache",
+    ar: "الإبقاء عليها",
+    tw: "Gyaa no hɔ",
+    zu: "Sigcine",
   },
 };

@@ -72,6 +72,8 @@ export const OPS_TENANTS: {
   roleReviewer: L;
   promoteButton: L;
   demoteButton: L;
+  demoteConfirmTitle: L;
+  demoteConfirmBody: L;
   toastRoleChanged: L;
   invitesPanel: L;
   emptyInvites: L;
@@ -857,6 +859,36 @@ export const OPS_TENANTS: {
     ar: "تعيينه مراجعًا",
     tw: "Ma no nyɛ ɔhwɛfoɔ",
     zu: "Yenza umhloli",
+  },
+  /**
+   * Only the demotion asks; promoting hands capability over and is the
+   * way back. The two share one button whose label flips, in a table of
+   * rows that look alike, so the wrong row is easy to hit — and the
+   * person on the other end of it is not the one clicking.
+   */
+  demoteConfirmTitle: {
+    en: "Make {name} a reviewer?",
+    ha: "A mai da {name} mai bita?",
+    yo: "Sọ {name} di olùyẹ̀wò?",
+    ig: "Mee ka {name} bụrụ onye nyocha?",
+    fr: "Nommer {name} réviseur ?",
+    pt: "Tornar {name} revisor?",
+    sw: "Umfanye {name} mkaguzi?",
+    ar: "تعيين {name} مراجعًا؟",
+    tw: "Ma {name} nyɛ ɔhwɛfoɔ?",
+    zu: "Wenze u-{name} umhloli?",
+  },
+  demoteConfirmBody: {
+    en: "They lose the owner's controls as soon as you confirm — inviting people, billing, and the agency's settings. They keep their console and their cases. Any owner can hand it back.",
+    ha: "Za su rasa ikon mai gidan da zarar ka tabbatar — gayyatar mutane, biyan kuɗi, da saitunan hukumar. Za su riƙe na'urar aikinsu da shari'o'insu. Kowane mai gida zai iya mayar musu da shi.",
+    yo: "Wọn yóò pàdánù àwọn ìdarí olówó lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́sí — pípe ènìyàn, ìsanwó, àti ètò ilé-iṣẹ́ náà. Wọn yóò pa kọ́ńsọ́ọ̀lù wọn àti àwọn ẹjọ́ wọn mọ́. Olówó èyíkéyìí lè dá a padà fún wọn.",
+    ig: "Ha ga-atụfu njikwa nke onye nwe ozugbo ị kwadoro — ịkpọ ndị mmadụ òkù, ụgwọ, na ntọala ụlọ ọrụ ahụ. Ha ga-ejide console ha na ikpe ha. Onye nwe ọ bụla nwere ike inyeghachi ya.",
+    fr: "Cette personne perd les commandes du propriétaire dès que vous confirmez — inviter, la facturation et les réglages de l'agence. Elle garde sa console et ses dossiers. N'importe quel propriétaire peut les lui rendre.",
+    pt: "Perde os controlos de proprietário assim que confirmar — convidar pessoas, faturação e as definições da agência. Mantém a sua consola e os seus processos. Qualquer proprietário pode devolvê-los.",
+    sw: "Anapoteza vidhibiti vya mmiliki mara tu unapothibitisha — kualika watu, malipo, na mipangilio ya wakala. Anabaki na konsoli yake na kesi zake. Mmiliki yeyote anaweza kumrudishia.",
+    ar: "يفقد صلاحيات المالك فور تأكيدك — دعوة الأشخاص والفوترة وإعدادات الوكالة. ويحتفظ بلوحته وبحالاته. ويستطيع أي مالك إعادتها إليه.",
+    tw: "Sɛ wopene so ara a, ɔbɛhwere owura no tumi — nnipa a ɔfrɛ wɔn, sika a wɔgye, ne adwumakuo no nhyehyɛeɛ. Ne console ne ne nsɛm no bɛka ne nsam. Owura biara bɛtumi asan de ama no.",
+    zu: "Ulahlekelwa izilawuli zomnikazi ngokushesha uma uqinisekisa — ukumema abantu, ukukhokhisa, nezilungiselelo ze-ejensi. Ugcina ikhonsoli yakhe namacala akhe. Noma yimuphi umnikazi angambuyisela zona.",
   },
   toastRoleChanged: {
     en: "Role updated.",

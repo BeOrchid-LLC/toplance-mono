@@ -211,6 +211,13 @@ export const EVENT_NAMES = [
   "toplance.tenant_restored",
   "toplance.tenant_seats_changed",
   "toplance.tenant_member_role_changed",
+  /**
+   * A director changed a colleague's rank inside their own agency —
+   * distinct from `tenant_member_role_changed`, which is BeOrchid staff
+   * doing it from the platform console. Same write, two very different
+   * people, and telling them apart is the whole point of an event name.
+   */
+  "toplance.agency_member_rank_changed",
   "toplance.demo_request_status_changed",
 
   /** A traveller put a photo on their own profile, or replaced it. */

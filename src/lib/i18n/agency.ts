@@ -96,6 +96,15 @@ export const AGENCY: {
    * clickable as short quick links… once they click on those they get
    * navigated to those pages automatically."
    */
+  /** A colleague's own page, reached from the team roster. */
+  backToTeam: L;
+  rankHelp: L;
+  makeDirector: L;
+  makeTravelAgent: L;
+  rankChanged: L;
+  casesTheyHold: L;
+  holdsNoCases: L;
+  memberNotFound: L;
   kpi: {
     clients: { label: L; sub: L };
     awaitingReview: { label: L; sub: L };
@@ -830,6 +839,102 @@ export const AGENCY: {
     ar: "لم يُرسل",
     tw: "Wɔmfaa mmenae",
     zu: "Akuthunyelwe",
+  },
+  backToTeam: {
+    en: "Back to the team",
+    ha: "Koma ga ƙungiyar",
+    yo: "Padà sí ẹgbẹ́ náà",
+    ig: "Laghachi na ndị otu",
+    fr: "Retour à l'équipe",
+    pt: "Voltar à equipa",
+    sw: "Rudi kwa timu",
+    ar: "العودة إلى الفريق",
+    tw: "San kɔ kuo no mu",
+    zu: "Buyela eqenjini",
+  },
+  rankHelp: {
+    en: "A director can invite colleagues, manage the plan and hand a case to anyone here. A travel agent handles the cases they are given.",
+    ha: "Darakta na iya gayyatar abokan aiki, sarrafa shirin, kuma ya ba kowa a nan shari'a. Wakilin balaguro yana kula da shari'o'in da aka ba shi.",
+    yo: "Olùdarí lè pe àwọn alábàáṣiṣẹ́, ṣàkóso ètò náà, kí ó sì fi ẹjọ́ lé ẹnikẹ́ni níbí lọ́wọ́. Aṣojú ìrìn-àjò ń bójú tó àwọn ẹjọ́ tí a fi lé e lọ́wọ́.",
+    ig: "Onye nduzi nwere ike ịkpọ ndị ọrụ ibe oku, jikwaa atụmatụ ahụ, ma nyefee onye ọ bụla ebe a okwu. Onye ọrụ njem na-elekọta okwu e nyere ya.",
+    fr: "Un directeur peut inviter des collègues, gérer le forfait et confier un dossier à n'importe qui ici. Un agent de voyage traite les dossiers qui lui sont confiés.",
+    pt: "Um diretor pode convidar colegas, gerir o plano e atribuir um processo a qualquer pessoa aqui. Um agente de viagens trata dos processos que lhe são atribuídos.",
+    sw: "Mkurugenzi anaweza kualika wenzake, kusimamia mpango, na kukabidhi kesi kwa yeyote hapa. Wakala wa safari hushughulikia kesi anazopewa.",
+    ar: "يمكن للمدير دعوة الزملاء وإدارة الخطة وإسناد ملف إلى أي شخص هنا. يتولى وكيل السفر الملفات المسندة إليه.",
+    tw: "Ɔpanyin bɛtumi afrɛ nnwumayɛfoɔ, ahwɛ nhyehyɛeɛ no so, na ɔde asɛm ama obiara a ɔwɔ ha. Akwantuo ho dwumayɛni hwɛ nsɛm a wɔde ma no so.",
+    zu: "Umqondisi angamema ozakwabo, aphathe uhlelo, futhi anikeze noma ubani lapha icala. I-ejenti yohambo iphatha amacala eyawanikwayo.",
+  },
+  makeDirector: {
+    en: "Make director",
+    ha: "Mai da shi darakta",
+    yo: "Sọ ọ́ di olùdarí",
+    ig: "Mee ka ọ bụrụ onye nduzi",
+    fr: "Nommer directeur",
+    pt: "Tornar diretor",
+    sw: "Mfanye mkurugenzi",
+    ar: "تعيينه مديرًا",
+    tw: "Ma no nyɛ ɔpanyin",
+    zu: "Yenza umqondisi",
+  },
+  makeTravelAgent: {
+    en: "Make travel agent",
+    ha: "Mai da shi wakilin balaguro",
+    yo: "Sọ ọ́ di aṣojú ìrìn-àjò",
+    ig: "Mee ka ọ bụrụ onye ọrụ njem",
+    fr: "Nommer agent de voyage",
+    pt: "Tornar agente de viagens",
+    sw: "Mfanye wakala wa safari",
+    ar: "تعيينه وكيل سفر",
+    tw: "Ma no nyɛ akwantuo ho dwumayɛni",
+    zu: "Yenza i-ejenti yohambo",
+  },
+  rankChanged: {
+    en: "Rank updated.",
+    ha: "An sabunta matsayi.",
+    yo: "A ti ṣàtúnṣe ipò.",
+    ig: "Emelitela ọkwa.",
+    fr: "Rôle mis à jour.",
+    pt: "Função atualizada.",
+    sw: "Cheo kimesasishwa.",
+    ar: "تم تحديث الرتبة.",
+    tw: "Wɔasesa dibea no.",
+    zu: "Isikhundla sibuyekeziwe.",
+  },
+  casesTheyHold: {
+    en: "Cases they hold",
+    ha: "Shari'o'in da suke kula da su",
+    yo: "Àwọn ẹjọ́ tí wọ́n ń bójú tó",
+    ig: "Okwu ha ji",
+    fr: "Dossiers qu'ils suivent",
+    pt: "Processos que acompanham",
+    sw: "Kesi wanazoshughulikia",
+    ar: "الملفات التي يتولاها",
+    tw: "Nsɛm a wɔkura",
+    zu: "Amacala abawaphetheyo",
+  },
+  holdsNoCases: {
+    en: "No cases are assigned to this colleague yet.",
+    ha: "Ba a ba wannan abokin aikin wata shari'a ba tukuna.",
+    yo: "Kò sí ẹjọ́ tí a fi lé alábàáṣiṣẹ́ yìí lọ́wọ́ síbẹ̀.",
+    ig: "Enyebeghị onye ọrụ ibe a okwu ọ bụla.",
+    fr: "Aucun dossier n'est encore confié à ce collègue.",
+    pt: "Ainda não há processos atribuídos a este colega.",
+    sw: "Bado hakuna kesi alizopewa mwenzako huyu.",
+    ar: "لم يُسند إلى هذا الزميل أي ملف بعد.",
+    tw: "Wɔmfaa asɛm biara mmaa saa adwumayɛni yi ɛ.",
+    zu: "Awekho amacala asanikezwe lo ozakwenu.",
+  },
+  memberNotFound: {
+    en: "That colleague is not on this team.",
+    ha: "Wannan abokin aikin ba ya cikin wannan ƙungiyar.",
+    yo: "Alábàáṣiṣẹ́ yìí kò sí nínú ẹgbẹ́ yìí.",
+    ig: "Onye ọrụ ibe ahụ anọghị na otu a.",
+    fr: "Ce collègue ne fait pas partie de cette équipe.",
+    pt: "Esse colega não pertence a esta equipa.",
+    sw: "Mwenzako huyo hayuko katika timu hii.",
+    ar: "هذا الزميل ليس ضمن هذا الفريق.",
+    tw: "Saa adwumayɛni no nni saa kuo yi mu.",
+    zu: "Lowo ozakwenu akakho kuleli qembu.",
   },
   kpi: {
     clients: {

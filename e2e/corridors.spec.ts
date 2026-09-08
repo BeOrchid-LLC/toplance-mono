@@ -46,7 +46,14 @@ test("a reviewer may read a draft but only an owner can publish it", async ({
   await expect(page.getByRole("heading", { name: "Route coverage" })).toBeVisible();
   // The seeded corridors have never been verified by anyone, and the
   // console says so rather than borrowing their effective dates.
-  await expect(page.getByText("Not checked yet").first()).toBeVisible();
+  //
+  // Scoped to the table: the state filter offers "Not checked yet" as an
+  // option too, and an unselected option in a closed `select` is hidden,
+  // so an unscoped `.first()` would resolve to the control rather than
+  // to the row it is meant to be reading.
+  await expect(
+    page.getByRole("table").getByText("Not checked yet").first()
+  ).toBeVisible();
 
   await page.goto(`/ops/corridors/${draft.corridorId}`);
   await expect(page.getByRole("heading", { name: /ZQ → ZR/ })).toBeVisible();

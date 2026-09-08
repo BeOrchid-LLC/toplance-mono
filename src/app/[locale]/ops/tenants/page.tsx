@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
-import { AppBar } from "@/components/app/app-bar";
+import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { DemoRequestQueue } from "@/components/ops/demo-request-queue";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { localizedOpsNav } from "@/components/ops/ops-nav";
-import { CounterRow } from "@/components/shared/counter-row";
-import { Shell } from "@/components/shared/shell";
+import { AdminShell } from "@/components/shared/admin-shell";
+import { opsAdminNav } from "@/components/shared/admin-nav";
+import { KpiRow, type Kpi } from "@/components/shared/kpi-card";
 import {
   Table,
   TableBody,
@@ -22,6 +23,7 @@ import {
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listTenants } from "@/lib/data/tenants";
 import { listDemoRequests } from "@/lib/data/demo-requests";
+import { getOpsCounts } from "@/lib/data/ops-counts";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
@@ -64,65 +66,80 @@ export default async function OpsTenantsPage() {
     (r) => r.status !== "converted" && r.status !== "declined"
   );
 
-  const counters = [
+  // No `href` on any of these. This console holds one list of agencies
+  // and one queue of enquiries, neither of which takes a filter in the
+  // URL — so a card offering to open "the suspended ones" would be
+  // offering a view that does not exist.
+  const counters: Kpi[] = [
     {
       label: OPS_TENANTS.counters.liveTenants.label[locale],
       value: String(live.length),
       sub: OPS_TENANTS.counters.liveTenants.sub[locale],
-      tone: "text-ink",
+      icon: Building2,
+      tone: "neutral",
     },
     {
       label: OPS_TENANTS.counters.suspended.label[locale],
       value: String(suspended.length),
       sub: OPS_TENANTS.counters.suspended.sub[locale],
-      tone: suspended.length ? "text-warning-ink" : "text-ink",
+      icon: PauseCircle,
+      tone: suspended.length ? "warning" : "neutral",
     },
     {
       label: OPS_TENANTS.counters.seats.label[locale],
       value: `${seatsUsed} ${OPS_TENANTS.seatsOf[locale]} ${seatsPurchased}`,
       sub: OPS_TENANTS.counters.seats.sub[locale],
-      tone: "text-info-ink",
+      icon: UsersRound,
+      tone: "info",
     },
     {
       label: OPS_TENANTS.counters.openEnquiries.label[locale],
       value: String(openEnquiries.length),
       sub: OPS_TENANTS.counters.openEnquiries.sub[locale],
-      tone: openEnquiries.length ? "text-brand-text" : "text-ink",
+      icon: MessageSquareText,
+      tone: openEnquiries.length ? "success" : "neutral",
     },
   ];
 
+  const counts = await getOpsCounts();
+
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={localizedOpsNav(locale, actor.staffRole === "owner")}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-        notifications={
+    <AdminShell
+      groups={opsAdminNav({
+        locale,
+        ...counts,
+        isOwner: actor.staffRole === "owner",
+      })}
+      activeId="agencies"
+      railTitle="Toplance"
+      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+      railFooter={
+        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
+          <AccountMenu
+            name={profile.fullName}
+            email={profile.email}
+            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+          />
+          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
+            <p className="t-title truncate">{profile.fullName}</p>
+            <p className="special truncate text-ink-3">{profile.email}</p>
+          </div>
+        </div>
+      }
+      title={OPS_TENANTS.heading[locale]}
+      lead={OPS_TENANTS.intro[locale]}
+      actions={
+        <>
+          <ProvisionTenant />
           <NotificationsMenu
             notifications={notifications}
             unreadCount={unreadCount}
             fallbackHref="/ops"
           />
-        }
-      />
-
-      <div className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px]"
-        />
-
-        <Shell className="pt-10">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="t-h2">{OPS_TENANTS.heading[locale]}</h1>
-              <p className="t-muted mt-2 max-w-[62ch]">{OPS_TENANTS.intro[locale]}</p>
-            </div>
-            <ProvisionTenant />
-          </div>
-
-          <CounterRow counters={counters} />
+        </>
+      }
+    >
+      <KpiRow items={counters} />
 
           <Panel className="mt-8">
             <PanelHeader
@@ -192,9 +209,7 @@ export default async function OpsTenantsPage() {
             )}
           </Panel>
 
-          <DemoRequestQueue requests={demoRequests} className="mt-8 mb-16" />
-        </Shell>
-      </div>
-    </div>
+      <DemoRequestQueue requests={demoRequests} className="mt-8 mb-16" />
+    </AdminShell>
   );
 }

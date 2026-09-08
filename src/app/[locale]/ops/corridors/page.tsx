@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ClipboardCheck, Globe2, Route as RouteIcon, ShieldAlert } from "lucide-react";
 
-import { AppBar } from "@/components/app/app-bar";
+import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { localizedOpsNav } from "@/components/ops/ops-nav";
-import { Shell } from "@/components/shared/shell";
+import { AdminShell } from "@/components/shared/admin-shell";
+import { opsAdminNav } from "@/components/shared/admin-nav";
+import { KpiRow } from "@/components/shared/kpi-card";
+import { TableToolbar } from "@/components/shared/table-toolbar";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
@@ -20,12 +22,16 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { freshnessOf } from "@/lib/domain/freshness";
 import { listCorridors, type CorridorRow } from "@/lib/data/corridors";
+import { getOpsCounts } from "@/lib/data/ops-counts";
 import { SetupNotice } from "@/components/shared/setup-notice";
+import { SortHead } from "@/components/shared/sort-head";
+import { readDir, readSort, sortRows } from "@/lib/domain/sorting";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { cn } from "@/lib/utils";
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locales";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
 
@@ -77,7 +83,60 @@ function freshnessLabel(row: CorridorRow, locale: Locale) {
   return { text: f.checked, tone: "t-muted" };
 }
 
-export default async function OpsCorridorsPage() {
+/**
+ * The coverage filters, as one map.
+ *
+ * These cut across the two columns that are not the same question:
+ * `reviewState` is where a version is in the approval path, `isLive` is
+ * whether the engine serves it, and a superseded version is approved and
+ * not live at once. So the filter names the state a person is looking
+ * for rather than the column it happens to live in.
+ */
+function stateFilters(locale: Locale) {
+  return [
+    { value: "live", label: OPS_COMMON.live[locale] },
+    { value: "pending", label: OPS_COMMON.awaitingReview[locale] },
+    { value: "unverified", label: OPS_CORRIDORS.notCheckedYetShort[locale] },
+    { value: "rejected", label: OPS_COMMON.sentBack[locale] },
+  ];
+}
+
+function matchesState(row: CorridorRow, state: string) {
+  switch (state) {
+    case "live":
+      return row.isLive;
+    case "pending":
+      return row.reviewState === "pending";
+    case "unverified":
+      return row.isLive && !row.lastVerifiedAt;
+    case "rejected":
+      return row.reviewState === "rejected";
+    default:
+      return true;
+  }
+}
+
+/** The columns this table will order by, and nothing else. */
+const SORTS = [
+  "route",
+  "purpose",
+  "version",
+  "state",
+  "documents",
+  "checked",
+] as const;
+
+export default async function OpsCorridorsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    state?: string;
+    purpose?: string;
+    sort?: string;
+    dir?: string;
+  }>;
+}) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
@@ -89,28 +148,80 @@ export default async function OpsCorridorsPage() {
   }
   const { profile, actor } = gate;
 
-  const [rows, notifications, unreadCount] = await Promise.all([
+  const params = await searchParams;
+  const { q, state, purpose } = params;
+  const search = (q ?? "").trim().toLowerCase();
+  const sort = readSort(params.sort, SORTS, "route");
+  const dir = readDir(params.dir, "asc");
+
+  const [rows, notifications, unreadCount, counts] = await Promise.all([
     listCorridors(),
     getNotifications(actor.userId),
     unreadNotificationCount(actor.userId),
+    getOpsCounts(),
   ]);
 
   const pending = rows.filter((r) => r.reviewState === "pending");
   const live = rows.filter((r) => r.isLive);
   const unverified = live.filter((r) => !r.lastVerifiedAt);
+  const purposes = [...new Set(rows.map((r) => r.purpose))].sort();
 
-  const counters = [
+  const visible = rows.filter((r) => {
+    if (state && !matchesState(r, state)) return false;
+    if (purpose && r.purpose !== purpose) return false;
+    if (!search) return true;
+    return [
+      countryName(r.nationalityIso),
+      countryName(r.destinationIso),
+      r.nationalityIso,
+      r.destinationIso,
+      r.visaName,
+      r.purpose,
+    ]
+      .filter(Boolean)
+      .some((field) => field.toLowerCase().includes(search));
+  });
+
+  const sorted = sortRows(
+    visible,
+    (r) => {
+      switch (sort) {
+        case "purpose":
+          return r.purpose;
+        case "version":
+          return r.version;
+        case "state":
+          return stateLabel(r.reviewState, locale);
+        case "documents":
+          return r.requirementCount;
+        case "checked":
+          // The date itself, not the words `freshnessLabel` prints: "Not
+          // checked yet" would otherwise sort among the Ns. Nulls go last
+          // in both directions, which is what `compareCells` does.
+          return r.lastVerifiedAt;
+        default:
+          return `${countryName(r.nationalityIso)} ${countryName(r.destinationIso)}`;
+      }
+    },
+    dir
+  );
+
+  const kpis = [
     {
       label: OPS_CORRIDORS.counters.liveRoutes.label[locale],
       value: live.length,
       sub: OPS_CORRIDORS.counters.liveRoutes.sub[locale],
-      tone: "text-ink",
+      icon: RouteIcon,
+      href: "/ops/corridors?state=live",
+      tone: "neutral" as const,
     },
     {
       label: OPS_COMMON.awaitingReview[locale],
       value: pending.length,
       sub: OPS_CORRIDORS.counters.awaitingReviewSub[locale],
-      tone: "text-warning-ink",
+      icon: ClipboardCheck,
+      href: "/ops/corridors?state=pending",
+      tone: "warning" as const,
     },
     {
       // The number the whole plan is measured against, counted the way
@@ -120,144 +231,181 @@ export default async function OpsCorridorsPage() {
       label: OPS_CORRIDORS.counters.destinations.label[locale],
       value: new Set(live.map((r) => r.destinationIso)).size,
       sub: OPS_CORRIDORS.counters.destinations.sub[locale],
-      tone: "text-info-ink",
+      icon: Globe2,
+      href: "/ops/corridors?state=live",
+      tone: "info" as const,
     },
     {
       label: OPS_CORRIDORS.counters.notCheckedYet.label[locale],
       value: unverified.length,
       sub: OPS_CORRIDORS.counters.notCheckedYet.sub[locale],
-      tone: unverified.length ? "text-danger-ink" : "text-ink",
+      icon: ShieldAlert,
+      href: "/ops/corridors?state=unverified",
+      tone: unverified.length ? ("danger" as const) : ("neutral" as const),
     },
   ];
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={localizedOpsNav(locale, actor.staffRole === "owner")}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-        notifications={
-          <NotificationsMenu
-            notifications={notifications}
-            unreadCount={unreadCount}
-            fallbackHref="/ops"
+    <AdminShell
+      groups={opsAdminNav({
+        locale,
+        ...counts,
+        isOwner: actor.staffRole === "owner",
+      })}
+      activeId="routes"
+      railTitle="Toplance"
+      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+      railFooter={
+        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
+          <AccountMenu
+            name={profile.fullName}
+            email={profile.email}
+            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
           />
-        }
-      />
-
-      <div className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px]"
-        />
-
-        <Shell className="pt-10">
-          <h1 className="t-h2">{OPS_CORRIDORS.heading[locale]}</h1>
-          <p className="t-muted mt-2 max-w-[62ch]">{OPS_CORRIDORS.intro[locale]}</p>
-
-          <div className="laminate mt-8 overflow-hidden rounded-lg">
-            <span aria-hidden className="laminate-sheen" />
-            <dl className="relative z-[1] grid sm:grid-cols-2 lg:grid-cols-4">
-              {counters.map((c, i) => (
-                <div
-                  key={c.label}
-                  className={cn(
-                    "border-border px-5 py-5",
-                    "border-b sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0",
-                    i < counters.length - 1 && "lg:border-e",
-                    i % 2 === 0 && "sm:border-e"
-                  )}
-                >
-                  <dt className="tag">{c.label}</dt>
-                  <dd
-                    className={cn(
-                      "num mt-2 text-[32px] font-semibold leading-none",
-                      c.tone
-                    )}
-                  >
-                    {c.value}
-                  </dd>
-                  <dd className="t-muted mt-2">{c.sub}</dd>
-                </div>
-              ))}
-            </dl>
+          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
+            <p className="t-title truncate">{profile.fullName}</p>
+            <p className="special truncate text-ink-3">{profile.email}</p>
           </div>
+        </div>
+      }
+      title={OPS_CORRIDORS.heading[locale]}
+      lead={OPS_CORRIDORS.intro[locale]}
+      search={
+        <TableToolbar
+          placeholder={OPS_CORRIDORS.searchPlaceholder[locale]}
+          filters={[
+            {
+              param: "state",
+              label: OPS_CORRIDORS.anyState[locale],
+              options: stateFilters(locale),
+            },
+            {
+              param: "purpose",
+              label: OPS_CORRIDORS.anyPurpose[locale],
+              options: purposes.map((p) => ({
+                value: p,
+                label: OPS_COMMON.purpose[p][locale],
+              })),
+            },
+          ]}
+        />
+      }
+      actions={
+        <NotificationsMenu
+          notifications={notifications}
+          unreadCount={unreadCount}
+          fallbackHref="/ops"
+        />
+      }
+    >
+      <KpiRow items={kpis} />
 
-          <Panel className="mt-8 mb-16">
-            <PanelHeader
-              label={OPS_CORRIDORS.allVersionsPanel[locale]}
-              aside={
-                <Badge variant="outline">
-                  <span className="num">{rows.length}</span> {OPS_CORRIDORS.rowsWord[locale]}
-                </Badge>
-              }
-            />
-            {rows.length === 0 ? (
-              <PanelBody>
-                <p className="t-muted max-w-[62ch]">
-                  {OPS_CORRIDORS.emptyPrefix[locale]} <code>npm run db:seed</code>
-                  {OPS_CORRIDORS.emptyMiddle[locale]}{" "}
-                  <code>scripts/draft-corridor.mts</code>.
-                </p>
-              </PanelBody>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{OPS_CORRIDORS.tableHead.route[locale]}</TableHead>
-                    <TableHead>{OPS_CORRIDORS.tableHead.purpose[locale]}</TableHead>
-                    <TableHead>{OPS_CORRIDORS.tableHead.version[locale]}</TableHead>
-                    <TableHead>{OPS_CORRIDORS.tableHead.state[locale]}</TableHead>
-                    <TableHead>{OPS_CORRIDORS.tableHead.documents[locale]}</TableHead>
-                    <TableHead>{OPS_CORRIDORS.tableHead.lastChecked[locale]}</TableHead>
+      <Panel className="mt-6">
+        <PanelHeader
+          label={
+            visible.length === rows.length
+              ? OPS_CORRIDORS.allVersionsPanel[locale]
+              : ADMIN_CONSOLE.showingTemplate[locale]
+                  .replace("{shown}", String(visible.length))
+                  .replace("{total}", String(rows.length))
+          }
+          aside={
+            <Badge variant="outline">
+              <span className="num">{visible.length}</span>{" "}
+              {OPS_CORRIDORS.rowsWord[locale]}
+            </Badge>
+          }
+        />
+        {rows.length === 0 ? (
+          <PanelBody>
+            <p className="t-muted max-w-[62ch]">
+              {OPS_CORRIDORS.emptyPrefix[locale]} <code>npm run db:seed</code>
+              {OPS_CORRIDORS.emptyMiddle[locale]}{" "}
+              <code>scripts/draft-corridor.mts</code>.
+            </p>
+          </PanelBody>
+        ) : visible.length === 0 ? (
+          <PanelBody>
+            <p className="t-muted max-w-[62ch]">
+              {ADMIN_CONSOLE.noMatch[locale]}{" "}
+              <Link
+                href="/ops/corridors"
+                className="font-semibold text-brand-text hover:underline"
+              >
+                {ADMIN_CONSOLE.clearFilters[locale]}
+              </Link>
+            </p>
+          </PanelBody>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {[
+                  { label: OPS_CORRIDORS.tableHead.route[locale], column: "route" },
+                  { label: OPS_CORRIDORS.tableHead.purpose[locale], column: "purpose" },
+                  { label: OPS_CORRIDORS.tableHead.version[locale], column: "version" },
+                  { label: OPS_CORRIDORS.tableHead.state[locale], column: "state" },
+                  { label: OPS_CORRIDORS.tableHead.documents[locale], column: "documents" },
+                  { label: OPS_CORRIDORS.tableHead.lastChecked[locale], column: "checked" },
+                ].map((c) => (
+                  <SortHead
+                    key={c.column}
+                    label={c.label}
+                    column={c.column}
+                    sort={sort}
+                    dir={dir}
+                    basePath="/ops/corridors"
+                    params={params}
+                  />
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sorted.map((row) => {
+                const fresh = freshnessLabel(row, locale);
+                return (
+                  <TableRow key={row.id}>
+                    <TableCell>
+                      <Link
+                        href={`/ops/corridors/${row.id}`}
+                        className="font-semibold text-brand-text hover:underline"
+                      >
+                        {countryName(row.nationalityIso)} →{" "}
+                        {countryName(row.destinationIso)}
+                      </Link>
+                      <span className="t-muted block">{row.visaName}</span>
+                    </TableCell>
+                    <TableCell>{OPS_COMMON.purpose[row.purpose][locale]}</TableCell>
+                    <TableCell className="num">v{row.version}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={STATE_VARIANT[row.reviewState]}>
+                          {stateLabel(row.reviewState, locale)}
+                        </Badge>
+                        {/* Live is a separate fact from approved: a
+                            superseded version stays approved for the
+                            record and stops being served. */}
+                        {row.isLive && (
+                          <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell
+                      className={cn(
+                        "num",
+                        row.requirementCount === 0 && "text-danger-ink"
+                      )}
+                    >
+                      {row.requirementCount}
+                    </TableCell>
+                    <TableCell className={fresh.tone}>{fresh.text}</TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rows.map((row) => {
-                    const variant = STATE_VARIANT[row.reviewState];
-                    const fresh = freshnessLabel(row, locale);
-                    return (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          <Link
-                            href={`/ops/corridors/${row.id}`}
-                            className="font-semibold text-brand-text hover:underline"
-                          >
-                            {countryName(row.nationalityIso)} →{" "}
-                            {countryName(row.destinationIso)}
-                          </Link>
-                          <span className="t-muted block">{row.visaName}</span>
-                        </TableCell>
-                        <TableCell>{OPS_COMMON.purpose[row.purpose][locale]}</TableCell>
-                        <TableCell className="num">v{row.version}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant={variant}>{stateLabel(row.reviewState, locale)}</Badge>
-                            {/* Live is a separate fact from approved: a
-                                superseded version stays approved for the
-                                record and stops being served. */}
-                            {row.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
-                          </div>
-                        </TableCell>
-                        <TableCell
-                          className={cn(
-                            "num",
-                            row.requirementCount === 0 && "text-danger-ink"
-                          )}
-                        >
-                          {row.requirementCount}
-                        </TableCell>
-                        <TableCell className={fresh.tone}>{fresh.text}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            )}
-          </Panel>
-        </Shell>
-      </div>
-    </div>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Panel>
+    </AdminShell>
   );
 }

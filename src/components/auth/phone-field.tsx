@@ -11,6 +11,7 @@ import {
   searchCountries,
   type Country,
 } from "@/lib/domain/countries";
+import { nationalDigits, phoneProblem } from "@/lib/domain/phone";
 import { PHONE_FIELD } from "@/lib/i18n/phone-field";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export function PhoneField({
   defaultDigits = "",
   label,
   hint,
+  required = false,
 }: {
   name?: string;
   countryName?: string;
@@ -40,18 +42,50 @@ export function PhoneField({
   defaultDigits?: string;
   label?: string;
   hint?: string;
+  /**
+   * Whether a blank field is a fault. Off by default: sign-up sends the
+   * phone only when there is one, so the field is genuinely optional
+   * there and must not block the form.
+   */
+  required?: boolean;
 }) {
   const t = useT();
   const [iso, setIso] = React.useState(defaultCountry);
   const [digits, setDigits] = React.useState(defaultDigits);
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
+  // Nothing is wrong with a field nobody has finished with yet. The
+  // message waits for blur (or a submit attempt) so it does not accuse
+  // somebody of a short number while they are still typing it.
+  const [touched, setTouched] = React.useState(false);
   const wrapRef = React.useRef<HTMLDivElement>(null);
   const searchRef = React.useRef<HTMLInputElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const country = countryBy(iso);
   const results = searchCountries(query);
   const resolvedLabel = label ?? t(PHONE_FIELD.defaultLabel);
+
+  // The fault as a fact from the domain rule, then as a sentence in the
+  // reader's own language — `phoneProblem` deliberately returns neither.
+  const problem = phoneProblem(iso, digits, { required });
+  const message =
+    problem === null
+      ? null
+      : problem.kind === "required"
+        ? t(PHONE_FIELD.numberRequired)
+        : t(PHONE_FIELD.wrongLengthTemplate)
+            .replace("{country}", problem.country)
+            .replace("{expected}", String(problem.expected))
+            .replace("{actual}", String(problem.actual));
+  const errorId = `${name}-error`;
+
+  // The browser's own validity, so a bad number stops the form the same
+  // way a missing required field does — including when somebody skips
+  // the field entirely and submits, which no blur handler would catch.
+  React.useEffect(() => {
+    inputRef.current?.setCustomValidity(message ?? "");
+  }, [message]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -97,9 +131,12 @@ export function PhoneField({
           </button>
 
           <input
+            ref={inputRef}
             id={`${name}-input`}
             inputMode="tel"
             autoComplete="tel"
+            aria-invalid={touched && message ? true : undefined}
+            aria-describedby={touched && message ? errorId : undefined}
             className="min-w-0 flex-1 bg-transparent px-4 text-base text-ink outline-none placeholder:text-ink-3"
             value={digits ? `${country.dial} ${applyMask(digits, country.mask)}` : country.dial}
             onChange={(e) => {
@@ -107,6 +144,14 @@ export function PhoneField({
               let raw = e.target.value.replace(/\D/g, "");
               if (raw.startsWith(dial)) raw = raw.slice(dial.length);
               setDigits(raw);
+            }}
+            // Normalising here rather than on every keystroke. A trunk
+            // zero stripped as it is typed disappears under the cursor,
+            // which reads as the field eating input; stripped on the way
+            // out, the number simply settles into its stored form.
+            onBlur={() => {
+              setDigits((current) => nationalDigits(iso, current));
+              setTouched(true);
             }}
           />
         </div>
@@ -167,7 +212,16 @@ export function PhoneField({
         )}
       </div>
 
-      {hint && <p className="t-muted text-[16px]">{hint}</p>}
+      {/* The fault replaces the hint rather than stacking under it: two
+          lines of guidance under one field, one of which is now wrong,
+          is how a form starts arguing with itself. */}
+      {touched && message ? (
+        <p id={errorId} role="alert" className="t-muted text-[16px] text-danger-ink">
+          {message}
+        </p>
+      ) : (
+        hint && <p className="t-muted text-[16px]">{hint}</p>
+      )}
     </div>
   );
 }

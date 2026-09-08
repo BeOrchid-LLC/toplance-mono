@@ -3,21 +3,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
-import { AppBar } from "@/components/app/app-bar";
+import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { CorridorDecision } from "@/components/ops/corridor-decision";
 import { RequirementCondition } from "@/components/ops/requirement-condition";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { localizedOpsNav } from "@/components/ops/ops-nav";
-import { Shell } from "@/components/shared/shell";
+import { AdminShell } from "@/components/shared/admin-shell";
+import { opsAdminNav } from "@/components/shared/admin-nav";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { corridorDiff, isUnchanged } from "@/lib/domain/corridor-diff";
 import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import { freshnessOf } from "@/lib/domain/freshness";
 import { getCorridor, liveVersionOf } from "@/lib/data/corridors";
+import { getOpsCounts } from "@/lib/data/ops-counts";
 import { isOwner } from "@/lib/auth/policy";
 import { isUuid } from "@/lib/domain/uuid";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -110,23 +111,39 @@ export default async function ReviewCorridorPage({
   );
   const decidable = corridor.reviewState === "pending";
 
-  return (
-    <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={localizedOpsNav(locale, actor.staffRole === "owner")}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-        notifications={
-          <NotificationsMenu
-            notifications={notifications}
-            unreadCount={unreadCount}
-            fallbackHref="/ops"
-          />
-        }
-      />
+  const counts = await getOpsCounts();
 
-      <Shell className="py-10">
+  return (
+    <AdminShell
+      groups={opsAdminNav({
+        locale,
+        ...counts,
+        isOwner: actor.staffRole === "owner",
+      })}
+      activeId="routes"
+      railTitle="Toplance"
+      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+      railFooter={
+        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
+          <AccountMenu
+            name={profile.fullName}
+            email={profile.email}
+            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+          />
+          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
+            <p className="t-title truncate">{profile.fullName}</p>
+            <p className="special truncate text-ink-3">{profile.email}</p>
+          </div>
+        </div>
+      }
+      actions={
+        <NotificationsMenu
+          notifications={notifications}
+          unreadCount={unreadCount}
+          fallbackHref="/ops"
+        />
+      }
+    >
         <Link
           href="/ops/corridors"
           className="t-muted inline-flex items-center gap-2 hover:underline"
@@ -402,7 +419,6 @@ export default async function ReviewCorridorPage({
         )}
 
         {!decidable && <div className="mb-16" />}
-      </Shell>
-    </div>
+    </AdminShell>
   );
 }

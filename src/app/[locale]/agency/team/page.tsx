@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
-import { AgencyBar } from "@/components/agency/agency-bar";
-import { ConsoleBand } from "@/components/agency/console-band";
+import { AgencyShell } from "@/components/agency/agency-shell";
 import { InvitationRoster } from "@/components/shared/invitation-roster";
 import { InviteDialog } from "@/components/agency/invite-dialog";
 import { TeamRoster } from "@/components/agency/team-roster";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listInvitations } from "@/lib/data/invitations";
 import { listOrgMembers } from "@/lib/data/organisations";
@@ -42,7 +40,7 @@ export default async function AgencyTeamPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
-  const { profile, membership, orgId } = await requireAgencyConsole();
+  const { profile, actor, membership, orgId } = await requireAgencyConsole();
 
   // The roster of colleagues is the director's screen. A reviewer has no
   // tab for it, and typing the path is not a way around that — who works
@@ -60,34 +58,32 @@ export default async function AgencyTeamPage() {
   const staffInvitations = invitations.filter((i) => i.kind === "staff");
 
   return (
-    <div className="min-h-dvh bg-bg">
-      <AgencyBar profile={profile} membership={membership} locale={locale} />
-
-      <ConsoleBand
-        title={AGENCY.navTeam[locale]}
-        action={
-          // Only the director may invite a colleague, and on a page whose
-          // one action is exactly that, a reviewer is better shown no
-          // button than one that refuses.
-          membership.role === "owner" ? <InviteDialog kind="staff" /> : undefined
-        }
-      >
-        <p className="t-muted mt-2 max-w-[68ch]">{AGENCY.teamCardBody[locale]}</p>
-      </ConsoleBand>
-
-      <main>
-        <Shell className="py-12">
-          <TeamRoster members={members} locale={locale} />
-          <InvitationRoster
-            resendAction={resendInvitation}
-            revokeAction={revokeInvitation}
-            className="mt-8"
-            invitations={staffInvitations}
-            locale={locale}
-            empty={AGENCY.teamInvitationsEmpty[locale]}
-          />
-        </Shell>
-      </main>
-    </div>
+    <AgencyShell
+      profile={profile}
+      membership={membership}
+      actor={actor}
+      orgId={orgId}
+      locale={locale}
+      activeId="team"
+      title={AGENCY.navTeam[locale]}
+      lead={AGENCY.teamCardBody[locale]}
+      actions={
+        // Only the director may invite a colleague, and on a page whose
+        // one action is exactly that, a reviewer is better shown no
+        // button than one that refuses.
+        membership.role === "owner" ? <InviteDialog kind="staff" /> : undefined
+      }
+    >
+      <TeamRoster members={members} locale={locale} />
+      <InvitationRoster
+        resendAction={resendInvitation}
+        revokeAction={revokeInvitation}
+        className="mt-8"
+        invitations={staffInvitations}
+        detailLabel={AGENCY.tableHead.jobTitle[locale]}
+        locale={locale}
+        empty={AGENCY.teamInvitationsEmpty[locale]}
+      />
+    </AgencyShell>
   );
 }

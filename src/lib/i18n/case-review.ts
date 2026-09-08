@@ -64,9 +64,9 @@ export const CASE_REVIEW: {
     zu: "Kunikazi",
   },
   unassignedNoOwner: {
-    en: "Unassigned — no owner yet",
+    en: "Unassigned — no handler yet",
     ha: "Ba a ba wa kowa ba — babu mai kula tukuna",
-    yo: "Aláìní olùdarí — kò tí ì ní olùdarí",
+    yo: "Aláìní olùbójútó — kò tí ì ní olùbójútó",
     ig: "Enyeghị onye ọrụ — enwebeghị onye nlekọta",
     fr: "Non attribué — pas encore de responsable",
     pt: "Não atribuído — ainda sem responsável",

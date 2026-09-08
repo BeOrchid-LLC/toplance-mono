@@ -47,6 +47,13 @@ export const staffRole = pgEnum("staff_role", ["reviewer", "owner"]);
  * Same two words as `staff_role`, deliberately, but a different type and
  * a different side of the boundary: an agency reviewer reviews cases, a
  * platform reviewer reads corridor drafts and cannot publish them.
+ *
+ * `owner` is shown as "Director" — renamed with the client on 7
+ * September 2026 — and the enum member keeps its name on purpose. It is
+ * read by `isAgencyDirectorFor`, `canAssignCase`, `handlesCase` and every
+ * guard built on them; renaming a pg_enum member to match a label buys
+ * nothing and touches the whole permission surface. The word belongs to
+ * `AGENCY.roleLabel`, the value to the policy.
  */
 export const orgRoleEnum = pgEnum("org_role", ["reviewer", "owner"]);
 

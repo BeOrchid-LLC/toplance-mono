@@ -1,4 +1,12 @@
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { InvitationStatusBadge } from "@/components/shared/status-badge";
 import {
@@ -71,6 +79,11 @@ function invitationTimeline(
  * The two actions arrive as props. This lived under
  * `components/agency/` and imported that console's actions directly,
  * which is what made it unusable from `/ops`.
+ *
+ * A table since the client's 7 September review. `detailLabel` is what
+ * that varying middle column is called, and it comes from the caller
+ * because only the caller knows which kind it filtered to. Heading it
+ * "Details" would be the unlabelled fragment a table exists to avoid.
  */
 export function InvitationRoster({
   invitations,
@@ -79,11 +92,18 @@ export function InvitationRoster({
   className,
   resendAction,
   revokeAction,
+  detailLabel,
 }: {
   invitations: ListedInvitation[];
   locale: Locale;
   /** What to say when there are none — a client roster and a team say it differently. */
   empty: string;
+  /**
+   * The middle column's heading. Defaults to the rank, which is what
+   * `/ops/staff` shows; the agency's two callers pass the destination
+   * and the job title respectively.
+   */
+  detailLabel?: string;
   className?: string;
   resendAction: (formData: FormData) => Promise<ResendResult>;
   revokeAction: (formData: FormData) => Promise<RevokeResult>;
@@ -107,61 +127,71 @@ export function InvitationRoster({
           <p className="t-muted max-w-[62ch]">{empty}</p>
         </PanelBody>
       ) : (
-        <ul>
-          {invitations.map((invite) => {
-            const destination = countryFromIso2(invite.destinationIso);
-            return (
-              <li
-                key={invite.id}
-                className="grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto_auto] lg:items-center"
-              >
-                <div className="min-w-0">
-                  <p className="t-title truncate" title={invite.email}>
-                    {invite.fullName || invite.email}
-                  </p>
-                  {invite.fullName && (
-                    <p className="special mt-1 truncate">{invite.email}</p>
-                  )}
-                </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{AGENCY.tableHead.invitation[locale]}</TableHead>
+              <TableHead>{detailLabel ?? AGENCY.tableHead.rank[locale]}</TableHead>
+              <TableHead>{AGENCY.tableHead.status[locale]}</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {invitations.map((invite) => {
+              const destination = countryFromIso2(invite.destinationIso);
+              return (
+                <TableRow key={invite.id}>
+                  <TableCell>
+                    <span
+                      className="block truncate font-semibold"
+                      title={invite.email}
+                    >
+                      {invite.fullName || invite.email}
+                    </span>
+                    {invite.fullName && (
+                      <span className="special block truncate">{invite.email}</span>
+                    )}
+                  </TableCell>
 
-                <div className="min-w-0">
-                  <p className="t-body truncate">
-                    {invite.kind === "platform_staff"
-                      ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]
-                      : invite.kind === "staff"
-                        ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
-                        : (destination?.name ??
-                          invite.destinationIso?.toUpperCase() ??
-                          AGENCY.destinationNotSet[locale])}
-                  </p>
-                  <p className="special mt-1 truncate">
-                    {invitationTimeline(invite, locale)}
-                  </p>
-                </div>
+                  <TableCell>
+                    <span className="block truncate">
+                      {invite.kind === "platform_staff"
+                        ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]
+                        : invite.kind === "staff"
+                          ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
+                          : (destination?.name ??
+                            invite.destinationIso?.toUpperCase() ??
+                            AGENCY.destinationNotSet[locale])}
+                    </span>
+                    <span className="special block truncate">
+                      {invitationTimeline(invite, locale)}
+                    </span>
+                  </TableCell>
 
-                <div className="lg:justify-self-end">
-                  <InvitationStatusBadge status={invite.status} />
-                </div>
+                  <TableCell>
+                    <InvitationStatusBadge status={invite.status} />
+                  </TableCell>
 
-                <div className="lg:justify-self-end">
-                  {invite.status === "pending" && (
-                    <div className="flex items-center gap-1">
-                      <ResendInvitationButton
-                        invitationId={invite.id}
-                        email={invite.email}
-                        action={resendAction}
-                      />
-                      <RevokeInvitationButton
-                        invitationId={invite.id}
-                        action={revokeAction}
-                      />
-                    </div>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                  <TableCell>
+                    {invite.status === "pending" && (
+                      <div className="flex items-center justify-end gap-1">
+                        <ResendInvitationButton
+                          invitationId={invite.id}
+                          email={invite.email}
+                          action={resendAction}
+                        />
+                        <RevokeInvitationButton
+                          invitationId={invite.id}
+                          action={revokeAction}
+                        />
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </Panel>
   );

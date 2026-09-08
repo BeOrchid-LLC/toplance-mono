@@ -71,6 +71,57 @@ export const AGENCY: {
   teamInvitationsEmpty: L;
   jobTitleNotSet: L;
   joinedOn: L;
+  /**
+   * The clients table: its search box, its two filters and its column
+   * headers. The client asked on 7 September for a roster somebody can
+   * work at scale — "a table that works excellently for numerous
+   * applications" — which is a search, a status filter and a date
+   * filter, not a longer list.
+   */
+  searchClients: L;
+  anyStatus: L;
+  anyDate: L;
+  dateLast7: L;
+  dateLast30: L;
+  dateLast90: L;
+  /**
+   * The fourth date option, and the one worth having. It is the set
+   * somebody is actually chasing — a client who has uploaded nothing —
+   * and no range of dates reaches it, because these rows have no date.
+   */
+  dateNotSubmitted: L;
+  /**
+   * The director's dashboard cards. The client asked for these by name
+   * on 7 September, and for them to be doors: "so that they can be
+   * clickable as short quick links… once they click on those they get
+   * navigated to those pages automatically."
+   */
+  kpi: {
+    clients: { label: L; sub: L };
+    awaitingReview: { label: L; sub: L };
+    withHandler: { label: L; sub: L };
+    invitations: { label: L; sub: L };
+  };
+  tableHead: {
+    client: L;
+    route: L;
+    documents: L;
+    status: L;
+    submitted: L;
+    colleague: L;
+    joined: L;
+    rank: L;
+    invitation: L;
+    /**
+     * The invitation table's middle column, which means a different
+     * thing per kind — where a client is going, what a colleague will be
+     * called, what rank a BeOrchid colleague is given. The caller knows
+     * which, and passes it: a column headed "Details" is the unlabelled
+     * fragment a table exists to avoid.
+     */
+    destination: L;
+    jobTitle: L;
+  };
 } = {
   pageTitle: {
     en: "Organisation console",
@@ -157,17 +208,21 @@ export const AGENCY: {
     zu: "Imininingwane yakho",
   },
   roleLabel: {
+    // "Director", not "Owner" — renamed with the client on 7 September.
+    // The enum member stays `owner`; see the note above `orgRoleEnum`.
+    // The words are the ones `roleReason.reviewer` already used for the
+    // same rank in each locale, so the label and the prose agree.
     owner: {
-      en: "Owner",
-      ha: "Mai kamfani",
-      yo: "Onílé-iṣẹ́",
-      ig: "Onyenwe",
-      fr: "Propriétaire",
-      pt: "Proprietário",
-      sw: "Mmiliki",
-      ar: "المالك",
-      tw: "Ɔwura",
-      zu: "Umnikazi",
+      en: "Director",
+      ha: "Darakta",
+      yo: "Olùdarí",
+      ig: "Onye nduzi",
+      fr: "Directeur",
+      pt: "Diretor",
+      sw: "Mkurugenzi",
+      ar: "المدير",
+      tw: "Ɔpanyin",
+      zu: "Umqondisi",
     },
     reviewer: {
       en: "Travel agent",
@@ -184,16 +239,16 @@ export const AGENCY: {
   },
   roleReason: {
     owner: {
-      en: "You are the owner because you created this organisation. Owners can invite people, manage the account and see everyone's progress.",
-      ha: "Kai ne mai wannan kamfani domin kai ne ka kafa shi. Masu kamfani suna iya gayyatar mutane, su sarrafa asusun, kuma su ga ci gaban kowa da kowa.",
-      yo: "Ìwọ ni onílé-iṣẹ́ nítorí ìwọ ni o dá àjọ yìí sílẹ̀. Àwọn onílé-iṣẹ́ lè pe àwọn ènìyàn, ṣàkóso àkọọ́lẹ̀ náà, kí wọ́n sì rí ìtẹ̀síwájú gbogbo ènìyàn.",
-      ig: "Ị bụ onyenwe n'ihi na ị bụ onye guzobere ụlọ ọrụ a. Ndị nwe nwere ike ịkpọ ndị mmadụ oku, jikwaa akaụntụ ahụ, ma hụ ọganihu onye ọ bụla.",
-      fr: "Vous êtes le propriétaire parce que vous avez créé cette organisation. Les propriétaires peuvent inviter des personnes, gérer le compte et voir la progression de chacun.",
-      pt: "É o proprietário porque criou esta organização. Os proprietários podem convidar pessoas, gerir a conta e ver o progresso de todos.",
-      sw: "Wewe ndiye mmiliki kwa sababu ndiwe uliyeunda shirika hili. Wamiliki wanaweza kualika watu, kusimamia akaunti na kuona maendeleo ya kila mtu.",
-      ar: "أنت المالك لأنك أنشأت هذه المؤسسة. يمكن للمالكين دعوة الأشخاص وإدارة الحساب ورؤية تقدم الجميع.",
-      tw: "Wone ɔwura no ɛfiri sɛ wo na wobɔɔ akuo yi. Awuranom bɛtumi afrɛ nnipa, ahwɛ akaunti no so, na wɔahu obiara nkɔso.",
-      zu: "Ungumnikazi ngoba nguwe owadala le nhlangano. Abanikazi bangamema abantu, baphathe i-akhawunti futhi babone inqubekelaphambili yawo wonke umuntu.",
+      en: "You are the director because you created this organisation. Directors can invite people, manage the account, hand cases to colleagues and see everyone's progress.",
+      ha: "Kai ne daraktan wannan kamfani domin kai ne ka kafa shi. Daraktoci suna iya gayyatar mutane, su sarrafa asusun, su mika shari'o'i ga abokan aiki, kuma su ga ci gaban kowa da kowa.",
+      yo: "Ìwọ ni olùdarí nítorí ìwọ ni o dá àjọ yìí sílẹ̀. Àwọn olùdarí lè pe àwọn ènìyàn, ṣàkóso àkọọ́lẹ̀ náà, fi àwọn ìbéèrè lé àwọn ẹlẹgbẹ́ lọ́wọ́, kí wọ́n sì rí ìtẹ̀síwájú gbogbo ènìyàn.",
+      ig: "Ị bụ onye nduzi n'ihi na ị bụ onye guzobere ụlọ ọrụ a. Ndị nduzi nwere ike ịkpọ ndị mmadụ oku, jikwaa akaụntụ ahụ, nyefee ndị ọrụ ibe ha arịrịọ, ma hụ ọganihu onye ọ bụla.",
+      fr: "Vous êtes le directeur parce que vous avez créé cette organisation. Les directeurs peuvent inviter des personnes, gérer le compte, confier des dossiers à leurs collègues et voir la progression de chacun.",
+      pt: "É o diretor porque criou esta organização. Os diretores podem convidar pessoas, gerir a conta, atribuir processos aos colegas e ver o progresso de todos.",
+      sw: "Wewe ndiye mkurugenzi kwa sababu ndiwe uliyeunda shirika hili. Wakurugenzi wanaweza kualika watu, kusimamia akaunti, kukabidhi maombi kwa wenzao na kuona maendeleo ya kila mtu.",
+      ar: "أنت المدير لأنك أنشأت هذه المؤسسة. يمكن للمديرين دعوة الأشخاص وإدارة الحساب وإسناد الطلبات إلى الزملاء ورؤية تقدم الجميع.",
+      tw: "Wone ɔpanyin no ɛfiri sɛ wo na wobɔɔ akuo yi. Mpanyimfoɔ bɛtumi afrɛ nnipa, ahwɛ akaunti no so, de abisadeɛ ama wɔn nnwumayɛfoɔ, na wɔahu obiara nkɔso.",
+      zu: "Ungumqondisi ngoba nguwe owadala le nhlangano. Abaqondisi bangamema abantu, baphathe i-akhawunti, banikeze ozakwabo izicelo futhi babone inqubekelaphambili yawo wonke umuntu.",
     },
     reviewer: {
       en: "You are a travel agent because a director invited you into this organisation. Travel agents check the documents of the clients they are given, decide their applications and message them directly.",
@@ -691,5 +746,329 @@ export const AGENCY: {
     ar: "زميل",
     tw: "Adwumayɛni",
     zu: "Ozakwenu",
+  },
+  searchClients: {
+    en: "Search clients…",
+    ha: "Nemi abokan ciniki…",
+    yo: "Wá àwọn oníbàárà…",
+    ig: "Chọọ ndị ahịa…",
+    fr: "Rechercher des clients…",
+    pt: "Pesquisar clientes…",
+    sw: "Tafuta wateja…",
+    ar: "البحث عن العملاء…",
+    tw: "Hwehwɛ adetɔfoɔ…",
+    zu: "Sesha amakhasimende…",
+  },
+  anyStatus: {
+    en: "Any status",
+    ha: "Kowane matsayi",
+    yo: "Ipò yòówù",
+    ig: "Ọnọdụ ọ bụla",
+    fr: "Tout statut",
+    pt: "Qualquer estado",
+    sw: "Hali yoyote",
+    ar: "أي حالة",
+    tw: "Tebea biara",
+    zu: "Noma isiphi isimo",
+  },
+  anyDate: {
+    en: "Any date",
+    ha: "Kowane kwanan wata",
+    yo: "Ọjọ́ yòówù",
+    ig: "Ụbọchị ọ bụla",
+    fr: "Toute date",
+    pt: "Qualquer data",
+    sw: "Tarehe yoyote",
+    ar: "أي تاريخ",
+    tw: "Da biara",
+    zu: "Noma yiluphi usuku",
+  },
+  dateLast7: {
+    en: "Last 7 days",
+    ha: "Kwanaki 7 da suka wuce",
+    yo: "Ọjọ́ 7 sẹ́yìn",
+    ig: "Ụbọchị 7 gara aga",
+    fr: "7 derniers jours",
+    pt: "Últimos 7 dias",
+    sw: "Siku 7 zilizopita",
+    ar: "آخر 7 أيام",
+    tw: "Nna 7 a atwam",
+    zu: "Izinsuku ezingu-7 ezedlule",
+  },
+  dateLast30: {
+    en: "Last 30 days",
+    ha: "Kwanaki 30 da suka wuce",
+    yo: "Ọjọ́ 30 sẹ́yìn",
+    ig: "Ụbọchị 30 gara aga",
+    fr: "30 derniers jours",
+    pt: "Últimos 30 dias",
+    sw: "Siku 30 zilizopita",
+    ar: "آخر 30 يومًا",
+    tw: "Nna 30 a atwam",
+    zu: "Izinsuku ezingu-30 ezedlule",
+  },
+  dateLast90: {
+    en: "Last 90 days",
+    ha: "Kwanaki 90 da suka wuce",
+    yo: "Ọjọ́ 90 sẹ́yìn",
+    ig: "Ụbọchị 90 gara aga",
+    fr: "90 derniers jours",
+    pt: "Últimos 90 dias",
+    sw: "Siku 90 zilizopita",
+    ar: "آخر 90 يومًا",
+    tw: "Nna 90 a atwam",
+    zu: "Izinsuku ezingu-90 ezedlule",
+  },
+  dateNotSubmitted: {
+    en: "Not submitted",
+    ha: "Ba a gabatar ba",
+    yo: "Kò tíì fi ránṣẹ́",
+    ig: "Ezigabeghị",
+    fr: "Non envoyé",
+    pt: "Não enviado",
+    sw: "Haijawasilishwa",
+    ar: "لم يُرسل",
+    tw: "Wɔmfaa mmenae",
+    zu: "Akuthunyelwe",
+  },
+  kpi: {
+    clients: {
+      label: {
+        en: "Clients",
+        ha: "Abokan ciniki",
+        yo: "Àwọn oníbàárà",
+        ig: "Ndị ahịa",
+        fr: "Clients",
+        pt: "Clientes",
+        sw: "Wateja",
+        ar: "العملاء",
+        tw: "Adetɔfoɔ",
+        zu: "Amakhasimende",
+      },
+      sub: {
+        en: "Everyone this agency is handling",
+        ha: "Duk wanda wannan kamfani ke kula da shi",
+        yo: "Gbogbo ẹni tí àjọ yìí ń bójú tó",
+        ig: "Onye ọ bụla ụlọ ọrụ a na-elekọta",
+        fr: "Toutes les personnes suivies par cette agence",
+        pt: "Todas as pessoas que esta agência acompanha",
+        sw: "Kila mtu ambaye shirika hili linamshughulikia",
+        ar: "كل من تتولى هذه الوكالة ملفه",
+        tw: "Obiara a saa akuo yi hwɛ ne so",
+        zu: "Wonke umuntu le nhlangano emsizayo",
+      },
+    },
+    awaitingReview: {
+      label: {
+        en: "Awaiting review",
+        ha: "Ana jiran bita",
+        yo: "Ń dúró de àyẹ̀wò",
+        ig: "Na-echere nyocha",
+        fr: "En attente d'examen",
+        pt: "A aguardar revisão",
+        sw: "Inasubiri ukaguzi",
+        ar: "في انتظار المراجعة",
+        tw: "Ɛretwɛn nhwehwɛmu",
+        zu: "Kulindwe ukubuyekezwa",
+      },
+      sub: {
+        en: "Sent in, and nobody has opened it yet",
+        ha: "An aika, amma babu wanda ya buɗe shi tukuna",
+        yo: "A ti fi ránṣẹ́, kò sí ẹni tí ó ṣí i síbẹ̀",
+        ig: "E zigara ya, ọ dịghị onye mepere ya",
+        fr: "Envoyé, et personne ne l'a encore ouvert",
+        pt: "Enviado, e ainda ninguém o abriu",
+        sw: "Imetumwa, na bado hakuna aliyeifungua",
+        ar: "أُرسل، ولم يفتحه أحد بعد",
+        tw: "Wɔde amena, na obiara mmuee no",
+        zu: "Kuthunyelwe, futhi akekho osevule",
+      },
+    },
+    withHandler: {
+      label: {
+        en: "With a handler",
+        ha: "Yana hannun mai kula",
+        yo: "Ó wà lọ́wọ́ olùbójútó",
+        ig: "Ọ nọ n'aka onye na-elekọta",
+        fr: "Chez un agent",
+        pt: "Com um agente",
+        sw: "Kwa wakala",
+        ar: "لدى موظف",
+        tw: "Ɛwɔ ɔhwɛfoɔ nsam",
+        zu: "Kumphathi",
+      },
+      sub: {
+        en: "A colleague has the file open",
+        ha: "Wani abokin aiki yana da fayil ɗin a buɗe",
+        yo: "Alábàáṣiṣẹ́ kan ní fáìlì náà ní ṣíṣí",
+        ig: "Otu onye ọrụ ibe mepere faịlụ ahụ",
+        fr: "Un collègue a le dossier ouvert",
+        pt: "Um colega tem o processo aberto",
+        sw: "Mwenzako amefungua faili",
+        ar: "زميل يفتح الملف حاليًا",
+        tw: "Adwumayɛni bi abue fael no",
+        zu: "Ozakwenu uvule ifayela",
+      },
+    },
+    invitations: {
+      label: {
+        en: "Outstanding invitations",
+        ha: "Gayyata da ba a amsa ba",
+        yo: "Àwọn ìpè tí a kò tíì gbà",
+        ig: "Òkù a na-echere",
+        fr: "Invitations en attente",
+        pt: "Convites pendentes",
+        sw: "Mialiko inayosubiri",
+        ar: "دعوات معلقة",
+        tw: "Nsato a wɔnnyee so",
+        zu: "Izimemo ezilindile",
+      },
+      sub: {
+        en: "Sent, and not yet accepted",
+        ha: "An aika, ba a karɓa ba tukuna",
+        yo: "A ti fi ránṣẹ́, kò tíì gbà",
+        ig: "E zigara, a nabatabeghị ya",
+        fr: "Envoyées, pas encore acceptées",
+        pt: "Enviados, ainda não aceites",
+        sw: "Imetumwa, bado haijakubaliwa",
+        ar: "أُرسلت، ولم تُقبل بعد",
+        tw: "Wɔde amena, na wonnyee so",
+        zu: "Kuthunyelwe, akukamukelwa",
+      },
+    },
+  },
+  tableHead: {
+    client: {
+      en: "Client",
+      ha: "Abokin ciniki",
+      yo: "Oníbàárà",
+      ig: "Onye ahịa",
+      fr: "Client",
+      pt: "Cliente",
+      sw: "Mteja",
+      ar: "العميل",
+      tw: "Adetɔfoɔ",
+      zu: "Iklayenti",
+    },
+    route: {
+      en: "Route",
+      ha: "Hanya",
+      yo: "Ọ̀nà",
+      ig: "Ụzọ",
+      fr: "Itinéraire",
+      pt: "Rota",
+      sw: "Njia",
+      ar: "المسار",
+      tw: "Kwan",
+      zu: "Umzila",
+    },
+    documents: {
+      en: "Documents",
+      ha: "Takardu",
+      yo: "Àwọn ìwé",
+      ig: "Akwụkwọ",
+      fr: "Documents",
+      pt: "Documentos",
+      sw: "Nyaraka",
+      ar: "المستندات",
+      tw: "Nkrataa",
+      zu: "Amadokhumenti",
+    },
+    status: {
+      en: "Status",
+      ha: "Matsayi",
+      yo: "Ipò",
+      ig: "Ọnọdụ",
+      fr: "Statut",
+      pt: "Estado",
+      sw: "Hali",
+      ar: "الحالة",
+      tw: "Tebea",
+      zu: "Isimo",
+    },
+    submitted: {
+      en: "Submitted",
+      ha: "An gabatar",
+      yo: "A fi ránṣẹ́",
+      ig: "Ezigara",
+      fr: "Envoyé",
+      pt: "Enviado",
+      sw: "Imewasilishwa",
+      ar: "تم الإرسال",
+      tw: "Wɔde amena",
+      zu: "Kuthunyelwe",
+    },
+    colleague: {
+      en: "Colleague",
+      ha: "Abokin aiki",
+      yo: "Alábàáṣiṣẹ́",
+      ig: "Onye ọrụ ibe",
+      fr: "Collègue",
+      pt: "Colega",
+      sw: "Mwenzako",
+      ar: "زميل",
+      tw: "Adwumayɛni",
+      zu: "Ozakwenu",
+    },
+    joined: {
+      en: "Joined",
+      ha: "Ya shiga",
+      yo: "Ó dara pọ̀",
+      ig: "Ọ sonyeere",
+      fr: "Arrivé",
+      pt: "Entrou",
+      sw: "Alijiunga",
+      ar: "انضم",
+      tw: "Ɔbɛkaa ho",
+      zu: "Wajoyina",
+    },
+    rank: {
+      en: "Rank",
+      ha: "Matsayi",
+      yo: "Ipò",
+      ig: "Ọkwa",
+      fr: "Rôle",
+      pt: "Função",
+      sw: "Cheo",
+      ar: "الرتبة",
+      tw: "Dibea",
+      zu: "Isikhundla",
+    },
+    invitation: {
+      en: "Invitation",
+      ha: "Gayyata",
+      yo: "Ìpè",
+      ig: "Òkù",
+      fr: "Invitation",
+      pt: "Convite",
+      sw: "Mwaliko",
+      ar: "الدعوة",
+      tw: "Nsato",
+      zu: "Isimemo",
+    },
+    destination: {
+      en: "Destination",
+      ha: "Inda za a je",
+      yo: "Ibi tí a ń lọ",
+      ig: "Ebe a na-aga",
+      fr: "Destination",
+      pt: "Destino",
+      sw: "Unakoenda",
+      ar: "الوجهة",
+      tw: "Baabi a wɔrekɔ",
+      zu: "Indawo oya kuyo",
+    },
+    jobTitle: {
+      en: "Job title",
+      ha: "Sunan aiki",
+      yo: "Orúkọ iṣẹ́",
+      ig: "Aha ọrụ",
+      fr: "Fonction",
+      pt: "Cargo",
+      sw: "Cheo cha kazi",
+      ar: "المسمى الوظيفي",
+      tw: "Adwuma din",
+      zu: "Isihloko somsebenzi",
+    },
   },
 };

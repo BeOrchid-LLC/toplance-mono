@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { completeSignUpForm, resetFixtures, signUp, testEmail } from "./helpers/auth";
 import { seedInvitation } from "./helpers/db";
+import { consoleNav } from "./helpers/console";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 /**
@@ -56,7 +57,7 @@ test("an agency cannot open its console until the plan is paid for", async ({ pa
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
   // ---- and the bill now reads as a receipt rather than a till ----
-  await page.getByRole("banner").getByRole("link", { name: "Billing" }).click();
+  await consoleNav(page).getByRole("link", { name: "Billing" }).click();
   await page.waitForURL("**/agency/billing");
   await expect(page.getByText("Your plan runs until")).toBeVisible();
   await expect(

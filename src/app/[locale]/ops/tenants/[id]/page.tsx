@@ -3,15 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { TenantControls } from "@/components/ops/tenant-controls";
-import { localizedOpsNav } from "@/components/ops/ops-nav";
+import { AdminShell } from "@/components/shared/admin-shell";
+import { opsAdminNav } from "@/components/shared/admin-nav";
 import { CounterRow } from "@/components/shared/counter-row";
-import { Shell } from "@/components/shared/shell";
 import {
   Table,
   TableBody,
@@ -22,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getTenant } from "@/lib/data/tenants";
+import { getOpsCounts } from "@/lib/data/ops-counts";
 import { isUuid } from "@/lib/domain/uuid";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
@@ -169,29 +169,33 @@ export default async function OpsTenantPage({
     },
   ];
 
+  const counts = await getOpsCounts();
+
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={localizedOpsNav(locale, actor.staffRole === "owner")}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-        notifications={
-          <NotificationsMenu
-            notifications={notifications}
-            unreadCount={unreadCount}
-            fallbackHref="/ops"
-          />
-        }
-      />
-
-      <div className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px]"
+    // No `title` — this screen opens with a header sheet naming the
+    // agency, and a second heading in the chrome would say it twice.
+    <AdminShell
+      groups={opsAdminNav({
+        locale,
+        ...counts,
+        isOwner: actor.staffRole === "owner",
+      })}
+      activeId="agencies"
+      railTitle="Toplance"
+      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+      account={{
+        name: profile.fullName,
+        email: profile.email,
+        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
+      }}
+      actions={
+        <NotificationsMenu
+          notifications={notifications}
+          unreadCount={unreadCount}
+          fallbackHref="/ops"
         />
-
-        <Shell className="pt-10">
+      }
+    >
           <Link
             href="/ops/tenants"
             className="t-muted inline-flex items-center gap-2 hover:underline"
@@ -278,8 +282,6 @@ export default async function OpsTenantPage({
           <div className="mt-8 mb-16">
             <TenantControls tenant={tenant} />
           </div>
-        </Shell>
-      </div>
-    </div>
+    </AdminShell>
   );
 }

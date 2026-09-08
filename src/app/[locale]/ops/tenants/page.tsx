@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
-import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { DemoRequestQueue } from "@/components/ops/demo-request-queue";
@@ -23,7 +22,7 @@ import {
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listTenants } from "@/lib/data/tenants";
 import { listDemoRequests } from "@/lib/data/demo-requests";
-import { getOpsCounts } from "@/lib/data/ops-counts";
+import { getOpsCounts, OPEN_DEMO_STATUSES } from "@/lib/data/ops-counts";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
@@ -62,8 +61,9 @@ export default async function OpsTenantsPage() {
   const suspended = tenants.filter((t) => t.suspendedAt);
   const seatsUsed = tenants.reduce((sum, t) => sum + t.members, 0);
   const seatsPurchased = tenants.reduce((sum, t) => sum + t.seatsPurchased, 0);
-  const openEnquiries = demoRequests.filter(
-    (r) => r.status !== "converted" && r.status !== "declined"
+  // The same set the rail badge counts — see `OPEN_DEMO_STATUSES`.
+  const openEnquiries = demoRequests.filter((r) =>
+    (OPEN_DEMO_STATUSES as readonly string[]).includes(r.status)
   );
 
   // No `href` on any of these. This console holds one list of agencies
@@ -113,19 +113,11 @@ export default async function OpsTenantsPage() {
       activeId="agencies"
       railTitle="Toplance"
       railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      railFooter={
-        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
-          <AccountMenu
-            name={profile.fullName}
-            email={profile.email}
-            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-          />
-          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
-            <p className="t-title truncate">{profile.fullName}</p>
-            <p className="special truncate text-ink-3">{profile.email}</p>
-          </div>
-        </div>
-      }
+      account={{
+        name: profile.fullName,
+        email: profile.email,
+        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
+      }}
       title={OPS_TENANTS.heading[locale]}
       lead={OPS_TENANTS.intro[locale]}
       actions={

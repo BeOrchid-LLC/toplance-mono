@@ -8,23 +8,42 @@ export type Country = {
   dial: string;
   flag: string;
   mask: string;
+  /**
+   * How many digits the national number has, once the trunk zero is
+   * gone — a single length, or `[min, max]` where the plan genuinely
+   * allows a range.
+   *
+   * It lives on the record beside `mask` rather than in a table of its
+   * own, so the two cannot drift; but it is a separate field because the
+   * mask is a *display* hint and does not encode this. Two masks here
+   * used to disagree with the plan they format: the Dutch one counted
+   * ten because it was written with the trunk zero the field strips, and
+   * the German one counted ten for a plan that allows eleven. Deriving
+   * the length from the mask therefore refused every Dutch number and
+   * half of the German ones.
+   *
+   * Ranges are the honest answer where a country has one. Setting `gb`
+   * to a flat ten would reject the nine-digit landlines that are still
+   * perfectly valid to type into a field labelled "Mobile number".
+   */
+  nationalLength: number | readonly [number, number];
   preferred?: boolean;
 };
 
 export const COUNTRIES: Country[] = [
-  { iso: "ng", name: "Nigeria", dial: "+234", flag: "🇳🇬", mask: "... ... ....", preferred: true },
-  { iso: "gh", name: "Ghana", dial: "+233", flag: "🇬🇭", mask: ".. ... ....", preferred: true },
-  { iso: "ke", name: "Kenya", dial: "+254", flag: "🇰🇪", mask: "... ......", preferred: true },
-  { iso: "za", name: "South Africa", dial: "+27", flag: "🇿🇦", mask: ".. ... ....", preferred: true },
-  { iso: "cm", name: "Cameroon", dial: "+237", flag: "🇨🇲", mask: ". .. .. .. ..", preferred: true },
-  { iso: "gb", name: "United Kingdom", dial: "+44", flag: "🇬🇧", mask: ".... ......" },
-  { iso: "ca", name: "Canada", dial: "+1", flag: "🇨🇦", mask: "(...) ...-...." },
-  { iso: "us", name: "United States", dial: "+1", flag: "🇺🇸", mask: "(...) ...-...." },
-  { iso: "de", name: "Germany", dial: "+49", flag: "🇩🇪", mask: "... ......." },
-  { iso: "ae", name: "United Arab Emirates", dial: "+971", flag: "🇦🇪", mask: ".. ... ...." },
-  { iso: "tr", name: "Türkiye", dial: "+90", flag: "🇹🇷", mask: "... ... .. .." },
-  { iso: "ie", name: "Ireland", dial: "+353", flag: "🇮🇪", mask: ".. ... ...." },
-  { iso: "nl", name: "Netherlands", dial: "+31", flag: "🇳🇱", mask: ".. ........" },
+  { iso: "ng", name: "Nigeria", dial: "+234", flag: "🇳🇬", mask: "... ... ....", nationalLength: 10, preferred: true },
+  { iso: "gh", name: "Ghana", dial: "+233", flag: "🇬🇭", mask: ".. ... ....", nationalLength: 9, preferred: true },
+  { iso: "ke", name: "Kenya", dial: "+254", flag: "🇰🇪", mask: "... ......", nationalLength: 9, preferred: true },
+  { iso: "za", name: "South Africa", dial: "+27", flag: "🇿🇦", mask: ".. ... ....", nationalLength: 9, preferred: true },
+  { iso: "cm", name: "Cameroon", dial: "+237", flag: "🇨🇲", mask: ". .. .. .. ..", nationalLength: 9, preferred: true },
+  { iso: "gb", name: "United Kingdom", dial: "+44", flag: "🇬🇧", mask: ".... ......", nationalLength: [9, 10] as const },
+  { iso: "ca", name: "Canada", dial: "+1", flag: "🇨🇦", mask: "(...) ...-....", nationalLength: 10 },
+  { iso: "us", name: "United States", dial: "+1", flag: "🇺🇸", mask: "(...) ...-....", nationalLength: 10 },
+  { iso: "de", name: "Germany", dial: "+49", flag: "🇩🇪", mask: "... .......", nationalLength: [10, 11] as const },
+  { iso: "ae", name: "United Arab Emirates", dial: "+971", flag: "🇦🇪", mask: ".. ... ....", nationalLength: 9 },
+  { iso: "tr", name: "Türkiye", dial: "+90", flag: "🇹🇷", mask: "... ... .. ..", nationalLength: 10 },
+  { iso: "ie", name: "Ireland", dial: "+353", flag: "🇮🇪", mask: ".. ... ....", nationalLength: 9 },
+  { iso: "nl", name: "Netherlands", dial: "+31", flag: "🇳🇱", mask: ". ........", nationalLength: 9 },
 ];
 
 export function countryBy(iso: string): Country {

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { AccountMenu } from "@/components/app/account-menu";
 import { AdminMobileNav } from "@/components/shared/admin-mobile-nav";
 import { AdminRail, RailProvider, RailToggle } from "@/components/shared/admin-rail";
 import { RAIL_COOKIE } from "@/components/shared/admin-rail-cookie";
@@ -31,7 +32,7 @@ export async function AdminShell({
   activeId,
   railTitle,
   railSubtitle,
-  railFooter,
+  account,
   title,
   lead,
   actions,
@@ -42,7 +43,21 @@ export async function AdminShell({
   activeId: string;
   railTitle: string;
   railSubtitle?: string;
-  railFooter?: React.ReactNode;
+  /**
+   * Who is signed in. The shell takes the facts rather than rendered
+   * chrome because it has to put the control in two places: at the foot
+   * of the rail on a wide screen, and in the bar below `lg`, where the
+   * rail is `hidden` and an account block living only inside it would
+   * take sign-out, the theme and the locale off the screen with it —
+   * `AccountMenu` is where all three live below `md`.
+   */
+  account: {
+    name: string;
+    email: string;
+    subtitle?: string;
+    avatarUrl?: string | null;
+    profileHref?: string;
+  };
   /**
    * Omitted by a detail screen that opens with a header sheet of its own
    * — a case file names the person at the top of the sheet, and a second
@@ -72,7 +87,15 @@ export async function AdminShell({
             title={railTitle}
             subtitle={railSubtitle}
             navLabel={ADMIN_CONSOLE.menuTitle[locale]}
-            footer={railFooter}
+            footer={
+              <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
+                <AccountMenu {...account} />
+                <div className="min-w-0 group-data-[collapsed]/rail:hidden">
+                  <p className="t-title truncate">{account.name}</p>
+                  <p className="special truncate text-ink-3">{account.email}</p>
+                </div>
+              </div>
+            }
           />
         </AdminRail>
 
@@ -88,6 +111,13 @@ export async function AdminShell({
             <div className="min-w-0 flex-1">{search}</div>
             <SettingsCluster className="max-md:hidden" />
             {actions}
+            {/* The same control the rail foot carries, for the widths
+                where there is no rail. Below `md` this is also the only
+                way to the theme and the locale, which `SettingsCluster`
+                drops at that width and `AccountMenu` picks up. */}
+            <div className="lg:hidden">
+              <AccountMenu {...account} />
+            </div>
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">

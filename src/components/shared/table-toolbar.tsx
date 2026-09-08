@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, Search } from "lucide-react";
 
@@ -55,30 +55,54 @@ export function TableToolbar({
     }
   }, [urlQuery]);
 
-  function write(next: URLSearchParams) {
-    const qs = next.toString();
-    startTransition(() => {
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-    });
-  }
+  // The base every write builds on: what this toolbar last asked for,
+  // or the URL when something else changed it.
+  //
+  // It cannot be `params` alone. Pick a filter inside the 250ms search
+  // debounce and two writes race — and `useSearchParams` does not update
+  // until the navigation commits, which on a server-rendered page is
+  // well after the timer fires. The pending timeout would then rebuild
+  // the query string from a URL that predates the filter and silently
+  // drop it. Recording our own write here makes it the base immediately,
+  // so the two compose instead of clobbering; the effect below re-syncs
+  // whenever the URL moves under us — a back button, or a rail link.
+  const search = params.toString();
+  const liveParams = useRef(search);
+  useEffect(() => {
+    liveParams.current = search;
+  }, [search]);
+
+  const write = useCallback(
+    (next: URLSearchParams) => {
+      const qs = next.toString();
+      liveParams.current = qs;
+      startTransition(() => {
+        // `push`, not `replace`. The note above promises the back button
+        // undoes a filter, and `replace` would quietly make that untrue.
+        // The debounce is what keeps this to one history entry per pause
+        // rather than one per keystroke.
+        router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      });
+    },
+    [pathname, router]
+  );
 
   // Typing rewrites the URL, so it is debounced — one navigation per
   // pause, not one per keystroke.
   useEffect(() => {
     if (query === urlQuery) return;
     const timer = setTimeout(() => {
-      const next = new URLSearchParams(params.toString());
+      const next = new URLSearchParams(liveParams.current);
       if (query) next.set("q", query);
       else next.delete("q");
       lastUrlQuery.current = query;
       write(next);
     }, 250);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
+  }, [query, urlQuery, write]);
 
   function setFilter(param: string, value: string) {
-    const next = new URLSearchParams(params.toString());
+    const next = new URLSearchParams(liveParams.current);
     if (value) next.set(param, value);
     else next.delete(param);
     write(next);

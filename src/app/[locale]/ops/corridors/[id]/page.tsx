@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
-import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { CorridorDecision } from "@/components/ops/corridor-decision";
@@ -123,19 +122,11 @@ export default async function ReviewCorridorPage({
       activeId="routes"
       railTitle="Toplance"
       railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      railFooter={
-        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
-          <AccountMenu
-            name={profile.fullName}
-            email={profile.email}
-            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-          />
-          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
-            <p className="t-title truncate">{profile.fullName}</p>
-            <p className="special truncate text-ink-3">{profile.email}</p>
-          </div>
-        </div>
-      }
+      account={{
+        name: profile.fullName,
+        email: profile.email,
+        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
+      }}
       actions={
         <NotificationsMenu
           notifications={notifications}

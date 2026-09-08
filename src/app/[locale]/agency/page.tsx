@@ -2,17 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { ArrowRight, Shield } from "lucide-react";
+import { ArrowRight, FolderOpen, Inbox, Mail, Shield, UsersRound } from "lucide-react";
 import { eq } from "drizzle-orm";
 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import { Shell } from "@/components/shared/shell";
 import { CreateOrganisation } from "@/components/agency/create-organisation";
-import { AgencyBar } from "@/components/agency/agency-bar";
+import { KpiRow, type Kpi } from "@/components/shared/kpi-card";
+import { AgencyShell } from "@/components/agency/agency-shell";
 import { ClientRoster } from "@/components/agency/client-roster";
-import { ConsoleBand } from "@/components/agency/console-band";
 import type { Actor } from "@/lib/auth/policy";
 import { homeFor } from "@/lib/auth/routes";
 import { createOrganisationTx } from "@/lib/data/organisations";
@@ -23,6 +22,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { listInvitations } from "@/lib/data/invitations";
 import {
   countOrgClients,
+  countOrgClientsByStatus,
   listOrgMembers,
   listOrgRoster,
 } from "@/lib/data/organisations";
@@ -107,8 +107,9 @@ function RosterCard({
  * differently depending on which colleague is logged in.
  */
 async function directorSummary(orgIds: readonly string[], orgId: string | null) {
-  const [used, members, invitations] = await Promise.all([
+  const [used, byStatus, members, invitations] = await Promise.all([
     countOrgClients(orgIds),
+    countOrgClientsByStatus(orgIds),
     // Same "no org, no unfiltered read" reasoning as the roster: both of
     // these take one org id and have nothing to filter by without it.
     orgId ? listOrgMembers(orgId) : Promise.resolve([]),
@@ -117,6 +118,7 @@ async function directorSummary(orgIds: readonly string[], orgId: string | null) 
 
   return {
     used,
+    byStatus,
     members,
     pendingInvitations: invitations.filter((i) => i.status === "pending"),
   };
@@ -209,41 +211,43 @@ export default async function EmployerConsolePage() {
     if (ownCase) redirect(homeFor("traveler"));
 
     return (
-      <div className="min-h-dvh bg-bg">
-        <AgencyBar profile={profile} membership={null} locale={locale} />
-        <main>
-          <Shell className="py-12">
-            <Panel className="mx-auto max-w-[560px]">
-              {/* "Name of", not "Name your". The field asks for the
-                  registered name of a licensed travel agency, which is a
-                  fact to be matched against a register — "name your
-                  organisation" invites a label the director makes up. */}
-              <PanelHeader label={AGENCY.nameOrgLabel[locale]} />
-              <PanelBody>
-                <p className="t-muted max-w-[62ch]">
-                  {AGENCY.nameOrgBody[locale]}
-                </p>
-                {/* Why the name they already gave did not take. Said
-                    here rather than as a toast: this render is the first
-                    thing they see after sign-up, and a toast fired
-                    during it would be gone before they had read the
-                    form. */}
-                {pendingOrgError && (
-                  <p
-                    role="alert"
-                    className="t-body mt-4 max-w-[62ch] text-danger-ink"
-                  >
-                    {pendingOrgError}
-                  </p>
-                )}
-                <div className="mt-6">
-                  <CreateOrganisation defaultName={orgName ?? ""} />
-                </div>
-              </PanelBody>
-            </Panel>
-          </Shell>
-        </main>
-      </div>
+      <AgencyShell
+        profile={profile}
+        membership={null}
+        actor={actor}
+        orgId={orgId}
+        locale={locale}
+        activeId="overview"
+      >
+        <Panel className="mx-auto max-w-[560px]">
+          {/* "Name of", not "Name your". The field asks for the
+              registered name of a licensed travel agency, which is a
+              fact to be matched against a register — "name your
+              organisation" invites a label the director makes up. */}
+          <PanelHeader label={AGENCY.nameOrgLabel[locale]} />
+          <PanelBody>
+            <p className="t-muted max-w-[62ch]">
+              {AGENCY.nameOrgBody[locale]}
+            </p>
+            {/* Why the name they already gave did not take. Said
+                here rather than as a toast: this render is the first
+                thing they see after sign-up, and a toast fired
+                during it would be gone before they had read the
+                form. */}
+            {pendingOrgError && (
+              <p
+                role="alert"
+                className="t-body mt-4 max-w-[62ch] text-danger-ink"
+              >
+                {pendingOrgError}
+              </p>
+            )}
+            <div className="mt-6">
+              <CreateOrganisation defaultName={orgName ?? ""} />
+            </div>
+          </PanelBody>
+        </Panel>
+      </AgencyShell>
     );
   }
 
@@ -260,13 +264,59 @@ export default async function EmployerConsolePage() {
   const used = summary?.used ?? 0;
   const seats = org.seatsPurchased ?? 0;
 
-  return (
-    <div className="min-h-dvh bg-bg">
-      <AgencyBar profile={profile} membership={org} locale={locale} />
+  const counters: Kpi[] = summary
+    ? [
+        {
+          label: AGENCY.kpi.clients.label[locale],
+          value: String(summary.used),
+          sub: AGENCY.kpi.clients.sub[locale],
+          icon: UsersRound,
+          href: "/agency/clients",
+          tone: "neutral",
+        },
+        {
+          label: AGENCY.kpi.awaitingReview.label[locale],
+          value: String(summary.byStatus.submitted ?? 0),
+          sub: AGENCY.kpi.awaitingReview.sub[locale],
+          icon: Inbox,
+          href: "/agency/clients?status=submitted",
+          tone: (summary.byStatus.submitted ?? 0) > 0 ? "warning" : "neutral",
+        },
+        {
+          label: AGENCY.kpi.withHandler.label[locale],
+          value: String(summary.byStatus.under_review ?? 0),
+          sub: AGENCY.kpi.withHandler.sub[locale],
+          icon: FolderOpen,
+          href: "/agency/clients?status=under_review",
+          tone: "info",
+        },
+        {
+          label: AGENCY.kpi.invitations.label[locale],
+          value: String(summary.pendingInvitations.length),
+          sub: AGENCY.kpi.invitations.sub[locale],
+          icon: Mail,
+          tone: "neutral",
+        },
+      ]
+    : [];
 
-      <ConsoleBand
-        title={org.name || AGENCY.yourOrganisationFallback[locale]}
-      >
+  return (
+    <AgencyShell
+      profile={profile}
+      membership={org}
+      actor={actor}
+      orgId={orgId}
+      locale={locale}
+      activeId="overview"
+      // The agency's own name, as it was in the band this replaced.
+      // The rail carries it too, but as chrome — `AdminSidebar` renders
+      // its title as a `p`, so making "Dashboard" the heading left the
+      // organisation's name as a heading on no screen at all, which is
+      // what `agency.spec` and `pricing.spec` both caught.
+      title={org.name || AGENCY.yourOrganisationFallback[locale]}
+    >
+      {/* What the rest of the band above the page used to carry. */}
+      <div className="mb-8">
         {/*
           Seats and outstanding invitations are the agency's books, so
           they are the director's line. A reviewer opening this page is
@@ -298,103 +348,110 @@ export default async function EmployerConsolePage() {
               )}
           </p>
         )}
-        {/* The bar names your role; this says how you got it.
-            Seeing "Owner" appended to your account without ever
+        {/* The rail names your role; this says how you got it.
+            Seeing "Director" appended to your account without ever
             having chosen it is the kind of thing that reads as the
             product knowing something about you that you don't. */}
         <p className="t-muted mt-2 max-w-[68ch]">{ROLE_REASON[org.role][locale]}</p>
         {summary && seats > 0 && (
           <Progress value={(used / seats) * 100} className="mt-4 max-w-[320px]" />
         )}
-      </ConsoleBand>
+      </div>
 
-      <main>
-        <Shell className="py-12">
-          {/*
-            The signature moment for this console, per guideline §4, and
-            still the right one — though no longer for the reason it was
-            written. It used to promise the reader that this screen would
-            never show them a passport; v1.3 moved the review boundary to
-            the agency, so now it does. What a director most needs to
-            believe is therefore no longer "not me" but "not anyone
-            else": nobody at BeOrchid can open these documents, and
-            inside their own agency a claimed case narrows to its handler
-            and to them. One laminate, on the page you land on, and none
-            below it — which is also why the two roster pages do not
-            repeat it.
 
-            No MRZ. The mark carries a corridor, and this screen is a
-            roster of many — there is no one corridor here to encode.
-          */}
-          <div className="laminate overflow-hidden rounded-lg">
-            <span aria-hidden className="laminate-sheen" />
-            <div className="relative z-[1] flex items-start gap-4 p-6">
-              <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
-              <div className="min-w-0">
-                <p className="tag">{AGENCY.privacyTag[locale]}</p>
-                <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
-                <p className="t-muted mt-2 max-w-[74ch]">
-                  {AGENCY.privacyBody[locale]}
-                </p>
-              </div>
-            </div>
+      {/*
+        The signature moment for this console, per guideline §4, and
+        still the right one — though no longer for the reason it was
+        written. It used to promise the reader that this screen would
+        never show them a passport; v1.3 moved the review boundary to
+        the agency, so now it does. What a director most needs to
+        believe is therefore no longer "not me" but "not anyone
+        else": nobody at BeOrchid can open these documents, and
+        inside their own agency a claimed case narrows to its handler
+        and to them. One laminate, on the page you land on, and none
+        below it — which is also why the two roster pages do not
+        repeat it.
+
+        No MRZ. The mark carries a corridor, and this screen is a
+        roster of many — there is no one corridor here to encode.
+      */}
+      <div className="laminate overflow-hidden rounded-lg">
+        <span aria-hidden className="laminate-sheen" />
+        <div className="relative z-[1] flex items-start gap-4 p-6">
+          <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
+          <div className="min-w-0">
+            <p className="tag">{AGENCY.privacyTag[locale]}</p>
+            <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
+            <p className="t-muted mt-2 max-w-[74ch]">
+              {AGENCY.privacyBody[locale]}
+            </p>
           </div>
+        </div>
+      </div>
 
-          {summary ? (
-            /* The two rosters, as the doors to their own pages. Equal
-               weight on purpose: an agency is its clients and the people
-               who serve them, and the console used to show only the
-               first. */
-            <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <RosterCard
-                href="/agency/clients"
-                label={AGENCY.navClients[locale]}
-                body={AGENCY.clientsCardBody[locale]}
-                count={used}
-                countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
-              />
-              <RosterCard
-                href="/agency/team"
-                label={AGENCY.navTeam[locale]}
-                body={AGENCY.teamCardBody[locale]}
-                count={summary.members.length}
-                countWord={
-                  (summary.members.length === 1
-                    ? AGENCY.memberWord
-                    : AGENCY.membersWord)[locale]
-                }
-              />
-            </div>
-          ) : (
-            /* A reviewer's desk, not a summary of somebody else's
-               agency. Their own cases first — the ones they can actually
-               open — then the pool, because an empty desk needs a next
-               step and taking a case is that step. Only the first list
-               links into the case screen: a client nobody has taken is
-               a name and a completion score here, and nothing more,
-               until somebody takes it. */
-            <div className="mt-8">
-              <ClientRoster
-                rows={desk?.assigned ?? []}
-                locale={locale}
-                label={AGENCY.assignedToYou[locale]}
-                empty={AGENCY.assignedEmpty[locale]}
-              />
-              <ClientRoster
-                className="mt-8"
-                rows={desk?.unclaimed ?? []}
-                locale={locale}
-                label={AGENCY.unclaimedLabel[locale]}
-                empty={AGENCY.unclaimedEmpty[locale]}
-                // Takeable, not openable: a reviewer may claim one of
-                // these but cannot read it until they have — see
-                // `handlesCase`.
-                takeableBy={profile.id}
-              />
-            </div>
-          )}
-        </Shell>
-      </main>
-    </div>
+      {/* Doors, not decoration. Three of the four open the roster
+          already filtered to exactly the rows the figure counted, which
+          is what the client asked these cards to do; the fourth is a
+          tile, because the invitations it counts are a panel on that
+          page rather than a view of their own, and a card that looks
+          clickable and goes nowhere is worse than one that never
+          offered (guideline §7). No trend deltas anywhere — §7 again:
+          this product has no history to compare against yet. */}
+      {summary && <KpiRow items={counters} />}
+
+      {summary ? (
+        /* The two rosters, as the doors to their own pages. Equal
+           weight on purpose: an agency is its clients and the people
+           who serve them, and the console used to show only the
+           first. */
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          <RosterCard
+            href="/agency/clients"
+            label={AGENCY.navClients[locale]}
+            body={AGENCY.clientsCardBody[locale]}
+            count={used}
+            countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
+          />
+          <RosterCard
+            href="/agency/team"
+            label={AGENCY.navTeam[locale]}
+            body={AGENCY.teamCardBody[locale]}
+            count={summary.members.length}
+            countWord={
+              (summary.members.length === 1
+                ? AGENCY.memberWord
+                : AGENCY.membersWord)[locale]
+            }
+          />
+        </div>
+      ) : (
+        /* A reviewer's desk, not a summary of somebody else's
+           agency. Their own cases first — the ones they can actually
+           open — then the pool, because an empty desk needs a next
+           step and taking a case is that step. Only the first list
+           links into the case screen: a client nobody has taken is
+           a name and a completion score here, and nothing more,
+           until somebody takes it. */
+        <div className="mt-8">
+          <ClientRoster
+            rows={desk?.assigned ?? []}
+            locale={locale}
+            label={AGENCY.assignedToYou[locale]}
+            empty={AGENCY.assignedEmpty[locale]}
+          />
+          <ClientRoster
+            className="mt-8"
+            rows={desk?.unclaimed ?? []}
+            locale={locale}
+            label={AGENCY.unclaimedLabel[locale]}
+            empty={AGENCY.unclaimedEmpty[locale]}
+            // Takeable, not openable: a reviewer may claim one of
+            // these but cannot read it until they have — see
+            // `handlesCase`.
+            takeableBy={profile.id}
+          />
+        </div>
+      )}
+    </AgencyShell>
   );
 }

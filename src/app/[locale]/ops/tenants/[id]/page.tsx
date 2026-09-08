@@ -5,20 +5,12 @@ import { ArrowLeft } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
-import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { TenantControls } from "@/components/ops/tenant-controls";
 import { AdminShell } from "@/components/shared/admin-shell";
+import { TenantInvitesTable } from "@/components/ops/tenant-invites-table";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { CounterRow } from "@/components/shared/counter-row";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getTenant } from "@/lib/data/tenants";
 import { getOpsCounts } from "@/lib/data/ops-counts";
@@ -26,7 +18,6 @@ import { isUuid } from "@/lib/domain/uuid";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
-import { cn } from "@/lib/utils";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { activeSubscription } from "@/lib/data/payments";
@@ -215,69 +206,12 @@ export default async function OpsTenantPage({
 
           <CounterRow counters={counters} />
 
-          <Panel className="mt-8">
-            <PanelHeader
-              label={OPS_TENANTS.invitesPanel[locale]}
-              aside={
-                <Badge variant="outline">
-                  {/* The live count, not the row count: the panel is
-                      titled "Pending invitations", and an expired row is
-                      listed below (nothing here can resend one, so the
-                      operator needs to see it) but labelled rather than
-                      counted. This is the same number the agencies list
-                      shows for this agency. */}
-                  <span className="num">{tenant.pendingInvitations}</span>
-                </Badge>
-              }
-            />
-            {tenant.pendingInvites.length === 0 ? (
-              <PanelBody>
-                <p className="t-muted max-w-[62ch]">{OPS_TENANTS.emptyInvites[locale]}</p>
-              </PanelBody>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{OPS_TENANTS.invitesHead.email[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.invitesHead.kind[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.invitesHead.sent[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.invitesHead.expires[locale]}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tenant.pendingInvites.map((i) => (
-                    <TableRow key={i.id}>
-                      <TableCell>
-                        {i.email}
-                        {i.fullName && <span className="t-muted block">{i.fullName}</span>}
-                      </TableCell>
-                      <TableCell>
-                        {i.kind === "staff"
-                          ? OPS_TENANTS.kindStaff[locale]
-                          : OPS_TENANTS.kindClient[locale]}
-                      </TableCell>
-                      <TableCell className="t-muted">
-                        {i.createdAt.toISOString().slice(0, 10)}
-                      </TableCell>
-                      <TableCell
-                        className={cn("t-muted", i.expired && "text-danger-ink")}
-                      >
-                        {i.expiresAt.toISOString().slice(0, 10)}
-                        {/* Colour alone said this to sighted readers
-                            only, and said it in a language nobody
-                            translated. */}
-                        {i.expired && (
-                          <span className="block">
-                            {OPS_TENANTS.inviteExpired[locale]}
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Panel>
+          <TenantInvitesTable
+            rows={tenant.pendingInvites}
+            locale={locale}
+            pendingCount={tenant.pendingInvitations}
+            className="mt-8"
+          />
 
           <div className="mt-8 mb-16">
             <TenantControls tenant={tenant} />

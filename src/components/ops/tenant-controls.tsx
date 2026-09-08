@@ -10,14 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/shared/data-table";
 import {
   restoreTenant,
   suspendTenant,
@@ -25,7 +18,7 @@ import {
   updateTenantBilling,
 } from "@/app/[locale]/ops/tenants/actions";
 import type { TenantDetail } from "@/lib/data/tenants";
-import { useT } from "@/components/locale-provider";
+import { useLocale, useT } from "@/components/locale-provider";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 
 /**
@@ -40,6 +33,7 @@ import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
  */
 export function TenantControls({ tenant }: { tenant: TenantDetail }) {
   const t = useT();
+  const { locale } = useLocale();
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
 
@@ -87,68 +81,65 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
 
   return (
     <div className="flex flex-col gap-8">
-      <Panel>
-        <PanelHeader
-          label={t(OPS_TENANTS.rosterPanel)}
-          aside={
-            <Badge variant="outline">
-              <span className="num">{tenant.members_.length}</span>
-            </Badge>
-          }
-        />
-        {tenant.members_.length === 0 ? (
-          <PanelBody>
-            {/* Not an error state. A freshly provisioned agency sits
-                here until its first person accepts, and saying so stops
-                an operator re-provisioning it. */}
-            <p className="t-muted max-w-[62ch]">{t(OPS_TENANTS.awaitingFirstOwner)}</p>
-          </PanelBody>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t(OPS_TENANTS.rosterHead.person)}</TableHead>
-                <TableHead>{t(OPS_TENANTS.rosterHead.role)}</TableHead>
-                <TableHead>{t(OPS_TENANTS.rosterHead.joined)}</TableHead>
-                <TableHead>{t(OPS_TENANTS.rosterHead.action)}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tenant.members_.map((m) => (
-                <TableRow key={m.userId}>
-                  <TableCell>
-                    <span className="font-semibold">{m.fullName}</span>
-                    <span className="t-muted block">{m.email}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={m.role === "owner" ? "brand" : "neutral"}>
-                      {m.role === "owner"
-                        ? t(OPS_TENANTS.roleOwner)
-                        : t(OPS_TENANTS.roleReviewer)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="t-muted">
-                    {m.joinedAt.toISOString().slice(0, 10)}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="tertiary"
-                      disabled={pending}
-                      onClick={() =>
-                        changeRole(m.userId, m.role === "owner" ? "reviewer" : "owner")
-                      }
-                    >
-                      {m.role === "owner"
-                        ? t(OPS_TENANTS.demoteButton)
-                        : t(OPS_TENANTS.promoteButton)}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </Panel>
+      <DataTable
+        rows={tenant.members_}
+        rowKey={(m) => m.userId}
+        locale={locale}
+        total={tenant.members_.length}
+        unfilteredTotal={tenant.members_.length}
+        label={t(OPS_TENANTS.rosterPanel)}
+        countLabel=""
+        columns={[
+          {
+            id: "person",
+            label: t(OPS_TENANTS.rosterHead.person),
+            cell: (m) => (
+              <>
+                <span className="font-semibold">{m.fullName}</span>
+                <span className="t-muted block">{m.email}</span>
+              </>
+            ),
+          },
+          {
+            id: "role",
+            label: t(OPS_TENANTS.rosterHead.role),
+            cell: (m) => (
+              <Badge variant={m.role === "owner" ? "brand" : "neutral"}>
+                {m.role === "owner" ? t(OPS_TENANTS.roleOwner) : t(OPS_TENANTS.roleReviewer)}
+              </Badge>
+            ),
+          },
+          {
+            id: "joined",
+            label: t(OPS_TENANTS.rosterHead.joined),
+            className: "t-muted",
+            cell: (m) => m.joinedAt.toISOString().slice(0, 10),
+          },
+          {
+            id: "action",
+            label: t(OPS_TENANTS.rosterHead.action),
+            cell: (m) => (
+              <Button
+                variant="tertiary"
+                disabled={pending}
+                onClick={() =>
+                  changeRole(m.userId, m.role === "owner" ? "reviewer" : "owner")
+                }
+              >
+                {m.role === "owner"
+                  ? t(OPS_TENANTS.demoteButton)
+                  : t(OPS_TENANTS.promoteButton)}
+              </Button>
+            ),
+          },
+        ]}
+        empty={
+          /* Not an error state. A freshly provisioned agency sits here
+             until its first person accepts, and saying so stops an
+             operator re-provisioning it. */
+          <p className="t-muted max-w-[62ch]">{t(OPS_TENANTS.awaitingFirstOwner)}</p>
+        }
+      />
 
       <Panel>
         <PanelHeader label={t(OPS_TENANTS.billingPanel)} />

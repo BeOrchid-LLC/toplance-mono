@@ -48,6 +48,11 @@ export function SortHead({
   for (const [key, value] of Object.entries(params)) {
     if (value && key !== "sort" && key !== "dir") next.set(key, value);
   }
+  // Re-ordering the list moves every row, so the page number the reader
+  // was on no longer points at anything they were looking at. Dropping
+  // it lands them at the top of the new order — the same reasoning that
+  // makes `TableToolbar` drop it when a filter changes.
+  next.delete("page");
   next.set("sort", column);
   next.set("dir", nextDir);
 

@@ -74,6 +74,15 @@ export function TableToolbar({
 
   const write = useCallback(
     (next: URLSearchParams) => {
+      // Every narrowing returns to the first page. Filter a 200-row queue
+      // down to three while reading page five and the honest answer is
+      // the top of the new list, not whatever survives at an offset the
+      // reader chose against different rows. `resolvePage` clamps a page
+      // past the end as a backstop for a bookmarked URL, but silently
+      // landing somebody on the last page of their own search is not the
+      // same as showing them what they just asked for.
+      next.delete("page");
+
       const qs = next.toString();
       liveParams.current = qs;
       startTransition(() => {
@@ -110,21 +119,6 @@ export function TableToolbar({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <div className="relative min-w-0 flex-1 sm:max-w-[360px]">
-        <Search
-          className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-          aria-hidden
-        />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
-          aria-label={placeholder}
-          className="h-9 w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface ps-9 pe-3 text-base text-ink placeholder:text-ink-3"
-        />
-      </div>
-
       {filters.map((f) => (
         <div key={f.param} className="relative">
           {/* Native select behind a styled face, per guideline §10: on a
@@ -149,6 +143,28 @@ export function TableToolbar({
           />
         </div>
       ))}
+
+      {/* Last in the row, pushed to the far end. `ms-auto` rather than
+          `justify-end` on the container so only the search moves: the
+          filters stay left, against the columns they name. Logical, so it
+          lands on the left in Arabic with the rest of the layout.
+
+          Only from `sm`. Below that the row wraps, `flex-1` gives the
+          field the full width, and an auto margin would just add a gap. */}
+      <div className="relative min-w-0 flex-1 sm:ms-auto sm:max-w-[360px]">
+        <Search
+          className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+          aria-hidden
+        />
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={placeholder}
+          aria-label={placeholder}
+          className="h-9 w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface ps-9 pe-3 text-base text-ink placeholder:text-ink-3"
+        />
+      </div>
     </div>
   );
 }

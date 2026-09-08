@@ -7,7 +7,10 @@ import { InviteStaff } from "@/components/ops/invite-staff";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { InvitationRoster } from "@/components/shared/invitation-roster";
+import { InvitationTable } from "@/components/shared/invitation-table";
+import { STAFF_SORTS, staffSortKey } from "@/lib/domain/invitation-table";
+import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { isOwner } from "@/lib/auth/policy";
@@ -47,7 +50,19 @@ export async function generateMetadata(): Promise<Metadata> {
  * The three actions behind it check the rank again for themselves —
  * they are POST endpoints, and this page is not their gate.
  */
-export default async function OpsStaffPage() {
+export default async function OpsStaffPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    rank?: string;
+    sort?: string;
+    dir?: string;
+    page?: string;
+    size?: string;
+  }>;
+}) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
@@ -68,6 +83,33 @@ export default async function OpsStaffPage() {
   ]);
 
   const counts = await getOpsCounts();
+
+  const params = await searchParams;
+  const search = (params.q ?? "").trim().toLowerCase();
+  const sort = readSort(params.sort, STAFF_SORTS, "invited");
+  // Newest first. An invitation roster is read to find out who was asked
+  // recently, not who was asked in 2024.
+  const dir = readDir(params.dir, params.sort ? "asc" : "desc");
+
+  // Any narrowing at all, however many rows survive it — the same test
+  // `/ops/corridors` uses, so the two panels say the same thing about
+  // themselves.
+  const filtered = Boolean(search || params.status || params.rank);
+
+  const visible = invitations.filter((invite) => {
+    if (params.status && invite.status !== params.status) return false;
+    if (params.rank && (invite.staffRank ?? "reviewer") !== params.rank) return false;
+    if (!search) return true;
+    return [invite.fullName, invite.email].some((field) =>
+      field?.toLowerCase().includes(search)
+    );
+  });
+
+  // Allow-listed, so `?size=1000000` cannot ask this page to render
+  // every row it holds.
+  const size = readPageSize(params.size);
+  const sorted = sortRows(visible, (i) => staffSortKey(i, sort, locale), dir);
+  const { page, pageCount, start, end } = resolvePage(params.page, sorted.length, size);
 
   return (
     <AdminShell
@@ -98,15 +140,25 @@ export default async function OpsStaffPage() {
         <p className="t-muted">{OPS_STAFF.secondFactorNotice[locale]}</p>
       </div>
 
-      <div className="mt-8 mb-16">
-        <InvitationRoster
-          invitations={invitations}
-          locale={locale}
-          empty={OPS_STAFF.invitationsEmpty[locale]}
-          resendAction={resendPlatformInvitation}
-          revokeAction={revokePlatformInvitationAction}
-        />
-      </div>
+      <InvitationTable
+        rows={sorted.slice(start, end)}
+        locale={locale}
+        sort={sort}
+        dir={dir}
+        params={params}
+        total={sorted.length}
+        unfilteredTotal={invitations.length}
+        filteredLabel={
+          filtered
+            ? ADMIN_CONSOLE.showingTemplate[locale]
+                .replace("{shown}", String(visible.length))
+                .replace("{total}", String(invitations.length))
+            : undefined
+        }
+        pagination={{ page, pageCount, size }}
+        resendAction={resendPlatformInvitation}
+        revokeAction={revokePlatformInvitationAction}
+      />
     </AdminShell>
   );
 }

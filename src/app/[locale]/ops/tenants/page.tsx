@@ -1,24 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
-import { Badge } from "@/components/ui/badge";
 import { DemoRequestQueue } from "@/components/ops/demo-request-queue";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
-import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { KpiRow, type Kpi } from "@/components/shared/kpi-card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { TenantsTable } from "@/components/ops/tenants-table";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listTenants } from "@/lib/data/tenants";
 import { listDemoRequests } from "@/lib/data/demo-requests";
@@ -133,73 +123,7 @@ export default async function OpsTenantsPage() {
     >
       <KpiRow items={counters} />
 
-          <Panel className="mt-8">
-            <PanelHeader
-              label={OPS_TENANTS.tenantsPanel[locale]}
-              aside={
-                <Badge variant="outline">
-                  <span className="num">{tenants.length}</span>{" "}
-                  {OPS_TENANTS.agenciesWord[locale]}
-                </Badge>
-              }
-            />
-            {tenants.length === 0 ? (
-              <PanelBody>
-                <p className="t-muted max-w-[62ch]">{OPS_TENANTS.emptyTenants[locale]}</p>
-              </PanelBody>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{OPS_TENANTS.tableHead.agency[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.tableHead.members[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.tableHead.applications[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.tableHead.progress[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.tableHead.state[locale]}</TableHead>
-                    <TableHead>{OPS_TENANTS.tableHead.added[locale]}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tenants.map((t) => (
-                    <TableRow key={t.id}>
-                      <TableCell>
-                        <Link
-                          href={`/ops/tenants/${t.id}`}
-                          className="font-semibold text-brand-text hover:underline"
-                        >
-                          {t.name}
-                        </Link>
-                        {t.domain && <span className="t-muted block">{t.domain}</span>}
-                      </TableCell>
-                      <TableCell className="num">
-                        {t.members} {OPS_TENANTS.seatsOf[locale]} {t.seatsPurchased}
-                      </TableCell>
-                      <TableCell className="num">{t.applicationsTotal}</TableCell>
-                      <TableCell className="t-muted">
-                        {/* Four numbers, not four badges: this is a scan
-                            column, and colour here would compete with the
-                            state pill beside it. */}
-                        <span className="num">{t.inProgress}</span> ·{" "}
-                        <span className="num">{t.withReviewer}</span> ·{" "}
-                        <span className="num">{t.approved}</span> ·{" "}
-                        <span className="num">{t.rejected}</span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={t.suspendedAt ? "warning" : "success"}>
-                          {t.suspendedAt
-                            ? OPS_TENANTS.suspendedBadge[locale]
-                            : OPS_TENANTS.live[locale]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="t-muted">
-                        {t.createdAt.toISOString().slice(0, 10)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Panel>
+      <TenantsTable rows={tenants} locale={locale} className="mt-8" />
 
       <DemoRequestQueue requests={demoRequests} className="mt-8 mb-16" />
     </AdminShell>

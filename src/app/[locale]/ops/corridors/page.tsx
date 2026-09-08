@@ -1,35 +1,26 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ClipboardCheck, Globe2, Route as RouteIcon, ShieldAlert } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
-import { Badge } from "@/components/ui/badge";
-import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { CorridorsTable } from "@/components/ops/corridors-table";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { KpiRow } from "@/components/shared/kpi-card";
-import { TableToolbar } from "@/components/shared/table-toolbar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { hasDatabaseEnv } from "@/lib/db/client";
-import { countryFromIso2 } from "@/lib/domain/corridors";
-import { freshnessOf } from "@/lib/domain/freshness";
-import { listCorridors, type CorridorRow } from "@/lib/data/corridors";
+import { listCorridors } from "@/lib/data/corridors";
 import { getOpsCounts } from "@/lib/data/ops-counts";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { SortHead } from "@/components/shared/sort-head";
-import { readDir, readSort, sortRows } from "@/lib/domain/sorting";
+import {
+  CORRIDOR_SORTS,
+  corridorMatchesState,
+  corridorSortKey,
+  countryName,
+} from "@/lib/domain/corridor-table";
+import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
-import { cn } from "@/lib/utils";
 import { getLocale } from "@/lib/i18n/server";
-import type { Locale } from "@/lib/i18n/locales";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
@@ -42,89 +33,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: OPS_CORRIDORS.heading[locale] };
 }
 
-/**
- * The country's name, or the raw code upper-cased when this file cannot
- * resolve it. Never blank and never invented — a drafted corridor for a
- * code we do not map should still be reviewable.
- */
-const countryName = (iso: string) => countryFromIso2(iso)?.name ?? iso.toUpperCase();
-
-/**
- * What a row's review state should look like at a glance. `pending` is
- * the only one that is work rather than record, so it is the only one
- * that gets a colour demanding attention. Labels resolve through
- * `OPS_COMMON` rather than living on this object, since the variant is
- * fixed but the word is not.
- */
-const STATE_VARIANT = {
-  pending: "warning" as const,
-  approved: "success" as const,
-  rejected: "neutral" as const,
-};
-
-function stateLabel(reviewState: keyof typeof STATE_VARIANT, locale: Locale) {
-  if (reviewState === "pending") return OPS_COMMON.awaitingReview[locale];
-  if (reviewState === "approved") return OPS_COMMON.approved[locale];
-  return OPS_COMMON.sentBack[locale];
-}
-
-/**
- * How fresh a live corridor is, said in the fewest words that stay
- * honest. The corridor's own page carries the full sentence; a coverage
- * table needs the verdict.
- */
-function freshnessLabel(row: CorridorRow, locale: Locale) {
-  const f = freshnessOf(row.lastVerifiedAt?.toISOString() ?? null, row.purpose);
-  if (f.state === "unverified")
-    return { text: OPS_CORRIDORS.notCheckedYetShort[locale], tone: "text-danger-ink" };
-  if (f.state === "stale")
-    return { text: `${OPS_CORRIDORS.stale[locale]} · ${f.checked}`, tone: "text-warning-ink" };
-  return { text: f.checked, tone: "t-muted" };
-}
-
-/**
- * The coverage filters, as one map.
- *
- * These cut across the two columns that are not the same question:
- * `reviewState` is where a version is in the approval path, `isLive` is
- * whether the engine serves it, and a superseded version is approved and
- * not live at once. So the filter names the state a person is looking
- * for rather than the column it happens to live in.
- */
-function stateFilters(locale: Locale) {
-  return [
-    { value: "live", label: OPS_COMMON.live[locale] },
-    { value: "pending", label: OPS_COMMON.awaitingReview[locale] },
-    { value: "unverified", label: OPS_CORRIDORS.notCheckedYetShort[locale] },
-    { value: "rejected", label: OPS_COMMON.sentBack[locale] },
-  ];
-}
-
-function matchesState(row: CorridorRow, state: string) {
-  switch (state) {
-    case "live":
-      return row.isLive;
-    case "pending":
-      return row.reviewState === "pending";
-    case "unverified":
-      return row.isLive && !row.lastVerifiedAt;
-    case "rejected":
-      return row.reviewState === "rejected";
-    default:
-      return true;
-  }
-}
-
-/** The columns this table will order by, and nothing else. */
-const SORTS = [
-  "route",
-  "purpose",
-  "version",
-  "state",
-  "documents",
-  "checked",
-] as const;
-
 export default async function OpsCorridorsPage({
   searchParams,
 }: {
@@ -134,6 +42,8 @@ export default async function OpsCorridorsPage({
     purpose?: string;
     sort?: string;
     dir?: string;
+    page?: string;
+    size?: string;
   }>;
 }) {
   if (!hasDatabaseEnv) return <SetupNotice />;
@@ -150,7 +60,7 @@ export default async function OpsCorridorsPage({
   const params = await searchParams;
   const { q, state, purpose } = params;
   const search = (q ?? "").trim().toLowerCase();
-  const sort = readSort(params.sort, SORTS, "route");
+  const sort = readSort(params.sort, CORRIDOR_SORTS, "route");
   const dir = readDir(params.dir, "asc");
 
   const [rows, notifications, unreadCount, counts] = await Promise.all([
@@ -169,7 +79,7 @@ export default async function OpsCorridorsPage({
   const filtered = Boolean(search || state || purpose);
 
   const visible = rows.filter((r) => {
-    if (state && !matchesState(r, state)) return false;
+    if (state && !corridorMatchesState(r, state)) return false;
     if (purpose && r.purpose !== purpose) return false;
     if (!search) return true;
     return [
@@ -184,29 +94,16 @@ export default async function OpsCorridorsPage({
       .some((field) => field.toLowerCase().includes(search));
   });
 
-  const sorted = sortRows(
-    visible,
-    (r) => {
-      switch (sort) {
-        case "purpose":
-          return r.purpose;
-        case "version":
-          return r.version;
-        case "state":
-          return stateLabel(r.reviewState, locale);
-        case "documents":
-          return r.requirementCount;
-        case "checked":
-          // The date itself, not the words `freshnessLabel` prints: "Not
-          // checked yet" would otherwise sort among the Ns. Nulls go last
-          // in both directions, which is what `compareCells` does.
-          return r.lastVerifiedAt;
-        default:
-          return `${countryName(r.nationalityIso)} ${countryName(r.destinationIso)}`;
-      }
-    },
-    dir
-  );
+  const sorted = sortRows(visible, (r) => corridorSortKey(r, sort, locale), dir);
+
+  // 99 versions today and climbing, so this is the table the pager was
+  // written for. Sliced after the sort, never before: page two has to be
+  // the second 25 of the order the reader chose, not 25 arbitrary rows
+  // re-sorted among themselves.
+  // Allow-listed, so `?size=1000000` cannot ask this page to render
+  // every row it holds.
+  const size = readPageSize(params.size);
+  const { page, pageCount, start, end } = resolvePage(params.page, sorted.length, size);
 
   const kpis = [
     {
@@ -264,26 +161,6 @@ export default async function OpsCorridorsPage({
       }}
       title={OPS_CORRIDORS.heading[locale]}
       lead={OPS_CORRIDORS.intro[locale]}
-      search={
-        <TableToolbar
-          placeholder={OPS_CORRIDORS.searchPlaceholder[locale]}
-          filters={[
-            {
-              param: "state",
-              label: OPS_CORRIDORS.anyState[locale],
-              options: stateFilters(locale),
-            },
-            {
-              param: "purpose",
-              label: OPS_CORRIDORS.anyPurpose[locale],
-              options: purposes.map((p) => ({
-                value: p,
-                label: OPS_COMMON.purpose[p][locale],
-              })),
-            },
-          ]}
-        />
-      }
       actions={
         <NotificationsMenu
           notifications={notifications}
@@ -294,116 +171,28 @@ export default async function OpsCorridorsPage({
     >
       <KpiRow items={kpis} />
 
-      <Panel className="mt-6">
-        <PanelHeader
-          label={
-            // Whether the reader narrowed the list, not whether the
-            // counts happen to agree. A filter that matches every row
-            // still filtered — calling that "All versions" tells
-            // somebody the search box is empty when it is not.
-            filtered
-              ? ADMIN_CONSOLE.showingTemplate[locale]
-                  .replace("{shown}", String(visible.length))
-                  .replace("{total}", String(rows.length))
-              : OPS_CORRIDORS.allVersionsPanel[locale]
-          }
-          aside={
-            <Badge variant="outline">
-              <span className="num">{visible.length}</span>{" "}
-              {OPS_CORRIDORS.rowsWord[locale]}
-            </Badge>
-          }
-        />
-        {rows.length === 0 ? (
-          <PanelBody>
-            <p className="t-muted max-w-[62ch]">
-              {OPS_CORRIDORS.emptyPrefix[locale]} <code>npm run db:seed</code>
-              {OPS_CORRIDORS.emptyMiddle[locale]}{" "}
-              <code>scripts/draft-corridor.mts</code>.
-            </p>
-          </PanelBody>
-        ) : visible.length === 0 ? (
-          <PanelBody>
-            <p className="t-muted max-w-[62ch]">
-              {ADMIN_CONSOLE.noMatch[locale]}{" "}
-              <Link
-                href="/ops/corridors"
-                className="font-semibold text-brand-text hover:underline"
-              >
-                {ADMIN_CONSOLE.clearFilters[locale]}
-              </Link>
-            </p>
-          </PanelBody>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {[
-                  { label: OPS_CORRIDORS.tableHead.route[locale], column: "route" },
-                  { label: OPS_CORRIDORS.tableHead.purpose[locale], column: "purpose" },
-                  { label: OPS_CORRIDORS.tableHead.version[locale], column: "version" },
-                  { label: OPS_CORRIDORS.tableHead.state[locale], column: "state" },
-                  { label: OPS_CORRIDORS.tableHead.documents[locale], column: "documents" },
-                  { label: OPS_CORRIDORS.tableHead.lastChecked[locale], column: "checked" },
-                ].map((c) => (
-                  <SortHead
-                    key={c.column}
-                    label={c.label}
-                    column={c.column}
-                    sort={sort}
-                    dir={dir}
-                    basePath="/ops/corridors"
-                    params={params}
-                  />
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sorted.map((row) => {
-                const fresh = freshnessLabel(row, locale);
-                return (
-                  <TableRow key={row.id}>
-                    <TableCell>
-                      <Link
-                        href={`/ops/corridors/${row.id}`}
-                        className="font-semibold text-brand-text hover:underline"
-                      >
-                        {countryName(row.nationalityIso)} →{" "}
-                        {countryName(row.destinationIso)}
-                      </Link>
-                      <span className="t-muted block">{row.visaName}</span>
-                    </TableCell>
-                    <TableCell>{OPS_COMMON.purpose[row.purpose][locale]}</TableCell>
-                    <TableCell className="num">v{row.version}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={STATE_VARIANT[row.reviewState]}>
-                          {stateLabel(row.reviewState, locale)}
-                        </Badge>
-                        {/* Live is a separate fact from approved: a
-                            superseded version stays approved for the
-                            record and stops being served. */}
-                        {row.isLive && (
-                          <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell
-                      className={cn(
-                        "num",
-                        row.requirementCount === 0 && "text-danger-ink"
-                      )}
-                    >
-                      {row.requirementCount}
-                    </TableCell>
-                    <TableCell className={fresh.tone}>{fresh.text}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </Panel>
+      <CorridorsTable
+        rows={sorted.slice(start, end)}
+        locale={locale}
+        sort={sort}
+        dir={dir}
+        params={params}
+        purposes={purposes}
+        total={sorted.length}
+        unfilteredTotal={rows.length}
+        filteredLabel={
+          // Whether the reader narrowed the list, not whether the counts
+          // happen to agree. A filter that matches every row still
+          // filtered — calling that "All versions" tells somebody the
+          // search box is empty when it is not.
+          filtered
+            ? ADMIN_CONSOLE.showingTemplate[locale]
+                .replace("{shown}", String(visible.length))
+                .replace("{total}", String(rows.length))
+            : undefined
+        }
+        pagination={{ page, pageCount, size }}
+      />
     </AdminShell>
   );
 }

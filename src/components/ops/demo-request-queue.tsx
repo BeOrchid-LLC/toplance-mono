@@ -6,15 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
-import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/shared/data-table";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import { updateDemoRequestStatus } from "@/app/[locale]/ops/tenants/actions";
 import type { DemoRequestRow } from "@/lib/data/demo-requests";
@@ -79,90 +71,95 @@ export function DemoRequestQueue({
   }
 
   return (
-    <Panel className={className}>
-      <PanelHeader
-        label={t(OPS_TENANTS.demoPanel)}
-        aside={
-          <Badge variant="outline">
-            <span className="num">{requests.length}</span>
-          </Badge>
-        }
-      />
-      {requests.length === 0 ? (
-        <PanelBody>
-          <p className="t-muted max-w-[62ch]">{t(OPS_TENANTS.emptyDemoRequests)}</p>
-        </PanelBody>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t(OPS_TENANTS.demoHead.who)}</TableHead>
-              <TableHead>{t(OPS_TENANTS.demoHead.company)}</TableHead>
-              <TableHead>{t(OPS_TENANTS.demoHead.preferred)}</TableHead>
-              <TableHead>{t(OPS_TENANTS.demoHead.status)}</TableHead>
-              <TableHead>{t(OPS_TENANTS.demoHead.action)}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {requests.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell>
-                  <span className="font-semibold">{r.fullName}</span>
-                  <span className="t-muted block">{r.email}</span>
-                </TableCell>
-                <TableCell>
-                  {r.companyName}
-                  <span className="t-muted block">{r.jobTitle}</span>
-                </TableCell>
-                <TableCell className="t-muted">
-                  {/* The zone is stored beside the instant precisely so
-                      this reads "14:00 WAT" rather than a UTC number the
-                      operator has to convert in their head. */}
-                  {new Intl.DateTimeFormat(locale, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                    timeZone: r.preferredTz,
-                  }).format(r.preferredAt)}
-                  <span className="block">{r.preferredTz}</span>
-                </TableCell>
-                <TableCell>
-                  {r.status === "converted" ? (
-                    <Badge variant={STATUS_VARIANT.converted}>
-                      {t(OPS_TENANTS.demoStatus.converted)}
-                    </Badge>
-                  ) : (
-                    <select
-                      aria-label={t(OPS_TENANTS.demoHead.status)}
-                      className={inputClass}
-                      value={r.status}
-                      disabled={pending}
-                      onChange={(e) => changeStatus(r.id, e.currentTarget.value)}
-                    >
-                      {CHOOSABLE.map((s) => (
-                        <option key={s} value={s}>
-                          {t(OPS_TENANTS.demoStatus[s])}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {r.convertedOrgId ? (
-                    <Link
-                      href={`/ops/tenants/${r.convertedOrgId}`}
-                      className="font-semibold text-brand-text hover:underline"
-                    >
-                      {r.convertedOrgName}
-                    </Link>
-                  ) : (
-                    <ProvisionTenant demoRequest={r} />
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </Panel>
+    <DataTable
+      className={className}
+      rows={requests}
+      rowKey={(r) => r.id}
+      locale={locale}
+      total={requests.length}
+      unfilteredTotal={requests.length}
+      label={t(OPS_TENANTS.demoPanel)}
+      countLabel=""
+      columns={[
+        {
+          id: "who",
+          label: t(OPS_TENANTS.demoHead.who),
+          cell: (r) => (
+            <>
+              <span className="font-semibold">{r.fullName}</span>
+              <span className="t-muted block">{r.email}</span>
+            </>
+          ),
+        },
+        {
+          id: "company",
+          label: t(OPS_TENANTS.demoHead.company),
+          cell: (r) => (
+            <>
+              {r.companyName}
+              <span className="t-muted block">{r.jobTitle}</span>
+            </>
+          ),
+        },
+        {
+          id: "preferred",
+          label: t(OPS_TENANTS.demoHead.preferred),
+          className: "t-muted",
+          cell: (r) => (
+            <>
+              {/* The zone is stored beside the instant precisely so this
+                  reads "14:00 WAT" rather than a UTC number the operator
+                  has to convert in their head. */}
+              {new Intl.DateTimeFormat(locale, {
+                dateStyle: "medium",
+                timeStyle: "short",
+                timeZone: r.preferredTz,
+              }).format(r.preferredAt)}
+              <span className="block">{r.preferredTz}</span>
+            </>
+          ),
+        },
+        {
+          id: "status",
+          label: t(OPS_TENANTS.demoHead.status),
+          cell: (r) =>
+            r.status === "converted" ? (
+              <Badge variant={STATUS_VARIANT.converted}>
+                {t(OPS_TENANTS.demoStatus.converted)}
+              </Badge>
+            ) : (
+              <select
+                aria-label={t(OPS_TENANTS.demoHead.status)}
+                className={inputClass}
+                value={r.status}
+                disabled={pending}
+                onChange={(e) => changeStatus(r.id, e.currentTarget.value)}
+              >
+                {CHOOSABLE.map((s) => (
+                  <option key={s} value={s}>
+                    {t(OPS_TENANTS.demoStatus[s])}
+                  </option>
+                ))}
+              </select>
+            ),
+        },
+        {
+          id: "action",
+          label: t(OPS_TENANTS.demoHead.action),
+          cell: (r) =>
+            r.convertedOrgId ? (
+              <Link
+                href={`/ops/tenants/${r.convertedOrgId}`}
+                className="font-semibold text-brand-text hover:underline"
+              >
+                {r.convertedOrgName}
+              </Link>
+            ) : (
+              <ProvisionTenant demoRequest={r} />
+            ),
+        },
+      ]}
+      empty={<p className="t-muted max-w-[62ch]">{t(OPS_TENANTS.emptyDemoRequests)}</p>}
+    />
   );
 }

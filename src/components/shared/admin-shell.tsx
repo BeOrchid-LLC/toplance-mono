@@ -36,7 +36,6 @@ export async function AdminShell({
   title,
   lead,
   actions,
-  search,
   children,
 }: {
   groups: AdminNavGroup[];
@@ -67,8 +66,6 @@ export async function AdminShell({
   lead?: string;
   /** Primary actions for this page — an invite button, an export. */
   actions?: React.ReactNode;
-  /** The filter row, when the page has a table worth filtering. */
-  search?: React.ReactNode;
   children: React.ReactNode;
 }) {
   // Read on the server so the rail is already at its stored width in the
@@ -108,7 +105,12 @@ export async function AdminShell({
           <header className="sticky top-0 z-30 flex h-[var(--bar-h)] shrink-0 items-center gap-3 border-b border-border bg-surface px-4 sm:px-6">
             <RailToggle />
             <AdminMobileNav groups={groups} activeId={activeId} />
-            <div className="min-w-0 flex-1">{search}</div>
+            {/* No search slot. A table's search and filters belong in
+                that table's own panel header, beside the columns they
+                act on — putting them here contradicted the rule this
+                comment states, and grouped them with the account menu
+                and the bell as though they were console chrome. */}
+            <div className="min-w-0 flex-1" />
             <SettingsCluster className="max-md:hidden" />
             {actions}
             {/* The same control the rail foot carries, for the widths

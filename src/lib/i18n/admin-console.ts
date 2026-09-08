@@ -25,6 +25,11 @@ export const ADMIN_CONSOLE: {
   rowsWord: L;
   noMatch: L;
   clearFilters: L;
+  pagesLabel: L;
+  rowsPerPage: L;
+  pageOfTemplate: L;
+  previousPage: L;
+  nextPage: L;
 } = {
   collapseMenu: {
     en: "Collapse the menu",
@@ -122,5 +127,67 @@ export const ADMIN_CONSOLE: {
     ar: "امسح عوامل التصفية",
     tw: "Yi nsɛnhwɛso no fi hɔ",
     zu: "Sula izihlungi",
+  },
+  rowsPerPage: {
+    en: "Rows per page",
+    ha: "Layuka kowane shafi",
+    yo: "Ìlà fún ojú ìwé kọ̀ọ̀kan",
+    ig: "Ahịrị kwa peeji",
+    fr: "Lignes par page",
+    pt: "Linhas por página",
+    sw: "Safu kwa kila ukurasa",
+    ar: "صفوف لكل صفحة",
+    tw: "Nsɔre wɔ krataafa biara so",
+    zu: "Imigqa ekhasini ngalinye",
+  },
+  /** Names the pager as a landmark; never shown, read aloud. */
+  pagesLabel: {
+    en: "Pages",
+    ha: "Shafuka",
+    yo: "Àwọn ojú ìwé",
+    ig: "Peeji",
+    fr: "Pages",
+    pt: "Páginas",
+    sw: "Kurasa",
+    ar: "الصفحات",
+    tw: "Nkrataafa",
+    zu: "Amakhasi",
+  },
+  /** `{page}` and `{pages}` are literal markers the call site replaces. */
+  pageOfTemplate: {
+    en: "Page {page} of {pages}",
+    ha: "Shafi {page} na {pages}",
+    yo: "Ojú ìwé {page} nínú {pages}",
+    ig: "Peeji {page} n'ime {pages}",
+    fr: "Page {page} sur {pages}",
+    pt: "Página {page} de {pages}",
+    sw: "Ukurasa {page} kati ya {pages}",
+    ar: "صفحة {page} من {pages}",
+    tw: "Krataafa {page} wɔ {pages} mu",
+    zu: "Ikhasi {page} kwangu-{pages}",
+  },
+  previousPage: {
+    en: "Previous page",
+    ha: "Shafin da ya gabata",
+    yo: "Ojú ìwé tí ó ṣáájú",
+    ig: "Peeji gara aga",
+    fr: "Page précédente",
+    pt: "Página anterior",
+    sw: "Ukurasa uliopita",
+    ar: "الصفحة السابقة",
+    tw: "Krataafa a edi kan",
+    zu: "Ikhasi elidlule",
+  },
+  nextPage: {
+    en: "Next page",
+    ha: "Shafi na gaba",
+    yo: "Ojú ìwé tí ó tẹ̀lé",
+    ig: "Peeji na-esote",
+    fr: "Page suivante",
+    pt: "Página seguinte",
+    sw: "Ukurasa unaofuata",
+    ar: "الصفحة التالية",
+    tw: "Krataafa a edi so",
+    zu: "Ikhasi elilandelayo",
   },
 };

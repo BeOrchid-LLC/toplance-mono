@@ -49,7 +49,12 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "special-caps h-[var(--row-h)] whitespace-nowrap bg-surface-2 px-4 text-start align-middle first:rounded-s-sm last:rounded-e-sm",
+        // Square ends. The rounded corners were right when a table sat
+        // loose on the page, and wrong now that every one of them sits
+        // inside a `Panel`: the header band stops short of the panel's
+        // own edge, leaving a notch of card behind each corner rather
+        // than one clean rule across the table.
+        "special-caps h-[var(--row-h)] whitespace-nowrap bg-surface-2 px-4 text-start align-middle",
         className
       )}
       {...props}

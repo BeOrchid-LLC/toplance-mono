@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -22,7 +22,14 @@ export type CreateInvitationResult =
   | { ok: true; invitation: Invitation }
   | { error: string };
 
-export type AcceptInvitationResult = { ok: true; orgId: string } | { error: string };
+/**
+ * `orgId` is `null` on a platform staff invitation, which attaches a
+ * BeOrchid rank rather than an agency. Callers use it to name what was
+ * joined, and there is nothing to name.
+ */
+export type AcceptInvitationResult =
+  | { ok: true; orgId: string | null }
+  | { error: string };
 
 export type MutateInvitationResult = { ok: true } | { error: string };
 
@@ -37,7 +44,12 @@ export type ListedInvitation = Omit<Invitation, "token">;
 
 /** What the accept page shows a visitor before they have done anything. */
 export type InvitationPreview = {
-  orgName: string;
+  /**
+   * `null` on a platform staff invitation — BeOrchid is not a tenant and
+   * has no `organisations` row. The accept page branches on it rather
+   * than printing an empty name.
+   */
+  orgName: string | null;
   /**
    * The address the invitation was sent to, so the sign-up door can
    * fix the email field rather than ask for it and refuse a miss.
@@ -64,7 +76,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * nothing about either.
  */
 export async function createInvitation(
-  orgId: string,
+  /** `null` mints a platform staff invitation, which belongs to no agency. */
+  orgId: string | null,
   invitedBy: string,
   input: {
     email: string;
@@ -75,7 +88,9 @@ export async function createInvitation(
      * applications. See `invitationKind` in the schema for why both live
      * on one table.
      */
-    kind?: "client" | "staff";
+    kind?: Invitation["kind"];
+    /** Required on a `platform_staff` invitation, and refused on any other. */
+    staffRank?: "reviewer" | "owner";
     jobTitle?: string;
     destinationIso?: string;
     purpose?: TravelPurpose;
@@ -84,16 +99,15 @@ export async function createInvitation(
   const email = input.email.trim().toLowerCase();
   if (!EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
 
+  // `eq(org_id, null)` is never true in SQL, so without this branch a
+  // platform invitation would match no existing row and a second one to
+  // the same address would be minted silently.
+  const scope = orgId === null ? isNull(invitations.orgId) : eq(invitations.orgId, orgId);
+
   const [existing] = await db
     .select({ id: invitations.id })
     .from(invitations)
-    .where(
-      and(
-        eq(invitations.orgId, orgId),
-        eq(invitations.email, email),
-        eq(invitations.status, "pending")
-      )
-    )
+    .where(and(scope, eq(invitations.email, email), eq(invitations.status, "pending")))
     .limit(1);
 
   if (existing) {
@@ -108,6 +122,7 @@ export async function createInvitation(
       email,
       fullName: input.fullName?.trim() || "",
       kind: input.kind ?? "client",
+      staffRank: input.staffRank ?? null,
       jobTitle: input.jobTitle?.trim() || null,
       destinationIso: input.destinationIso || null,
       purpose: input.purpose,
@@ -137,6 +152,7 @@ export async function listInvitations(orgId: string): Promise<ListedInvitation[]
       email: invitations.email,
       fullName: invitations.fullName,
       kind: invitations.kind,
+      staffRank: invitations.staffRank,
       jobTitle: invitations.jobTitle,
       destinationIso: invitations.destinationIso,
       purpose: invitations.purpose,
@@ -157,6 +173,109 @@ export async function listInvitations(orgId: string): Promise<ListedInvitation[]
       ? { ...row, status: "expired" as const }
       : row
   );
+}
+
+/**
+ * The platform's own invitation roster — every BeOrchid staff invite,
+ * newest first.
+ *
+ * Scoped by `org_id is null` rather than by kind, which is the same set
+ * (`platform_invite_has_no_org` makes the two conditions equivalent) and
+ * is the one the partial index is built on.
+ *
+ * Selects every column except `token`, exactly as `listInvitations`
+ * does, and for a sharper reason: this token grants a rank in the
+ * console that curates every corridor.
+ */
+export async function listPlatformInvitations(): Promise<ListedInvitation[]> {
+  const rows = await db
+    .select({
+      id: invitations.id,
+      orgId: invitations.orgId,
+      email: invitations.email,
+      fullName: invitations.fullName,
+      kind: invitations.kind,
+      staffRank: invitations.staffRank,
+      jobTitle: invitations.jobTitle,
+      destinationIso: invitations.destinationIso,
+      purpose: invitations.purpose,
+      status: invitations.status,
+      invitedBy: invitations.invitedBy,
+      acceptedBy: invitations.acceptedBy,
+      acceptedAt: invitations.acceptedAt,
+      createdAt: invitations.createdAt,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(isNull(invitations.orgId))
+    .orderBy(desc(invitations.createdAt));
+
+  const now = new Date();
+  return rows.map((row) =>
+    row.status === "pending" && row.expiresAt < now
+      ? { ...row, status: "expired" as const }
+      : row
+  );
+}
+
+/**
+ * The same gate `resendableInvitation` is, for an invitation that
+ * belongs to no agency. Scoped to platform rows so an ops action can
+ * never reach into a tenant's roster and resend a client's link.
+ */
+export async function resendablePlatformInvitation(
+  invitationId: string
+): Promise<(ResendableInvitation & { staffRank: "reviewer" | "owner" }) | null> {
+  const [row] = await db
+    .select({
+      token: invitations.token,
+      email: invitations.email,
+      fullName: invitations.fullName,
+      staffRank: invitations.staffRank,
+      status: invitations.status,
+      expiresAt: invitations.expiresAt,
+    })
+    .from(invitations)
+    .where(
+      and(
+        eq(invitations.id, invitationId),
+        isNull(invitations.orgId),
+        eq(invitations.status, "pending")
+      )
+    )
+    .limit(1);
+
+  if (!row || row.expiresAt < new Date()) return null;
+
+  return {
+    token: row.token,
+    email: row.email,
+    fullName: row.fullName,
+    // The rank travels with the resend so the second email says the same
+    // thing as the first. `platform_invite_has_no_org` guarantees it is
+    // set on any row this query can return.
+    staffRank: row.staffRank ?? "reviewer",
+  };
+}
+
+/** Revoke a platform staff invitation. Same scoping as the read above. */
+export async function revokePlatformInvitation(
+  invitationId: string
+): Promise<MutateInvitationResult> {
+  const updated = await db
+    .update(invitations)
+    .set({ status: "revoked" })
+    .where(
+      and(
+        eq(invitations.id, invitationId),
+        isNull(invitations.orgId),
+        eq(invitations.status, "pending")
+      )
+    )
+    .returning({ id: invitations.id });
+
+  if (!updated.length) return { error: "That invitation can no longer be revoked." };
+  return { ok: true };
 }
 
 /**
@@ -182,7 +301,10 @@ export async function getInvitationPreview(token: string): Promise<InvitationPre
       orgName: organisations.name,
     })
     .from(invitations)
-    .innerJoin(organisations, eq(organisations.id, invitations.orgId))
+    // A left join, not an inner one. A platform staff invitation has no
+    // organisation, and an inner join would drop the row entirely — so a
+    // perfectly good token would read as "this link is not valid".
+    .leftJoin(organisations, eq(organisations.id, invitations.orgId))
     .where(eq(invitations.token, token))
     .limit(1);
 
@@ -500,7 +622,38 @@ export async function acceptInvitationTx(
       return { error: "This invitation was sent to a different email address." };
     }
 
-    if (invitation.kind === "staff") {
+    if (invitation.kind === "platform_staff") {
+      /**
+       * A BeOrchid colleague, at the rank the owner who sent this chose.
+       *
+       * **One UPDATE, both columns.** `staff_role_only_for_staff` says a
+       * `staff_role` may exist only on a `staff` row, so writing the two
+       * in separate statements would trip the check in between.
+       *
+       * Narrowed to `traveler` for the same reason the agency branch is:
+       * this is an invitation, not a general role editor. It cannot
+       * demote an existing staff account or convert an agency member —
+       * `invitationDoor` refuses the latter before the page even renders
+       * an Accept button, and this is the second line behind it.
+       *
+       * Unlike the agency branch, the rank comes off the invitation
+       * rather than being hardcoded to the lower of the two. That is the
+       * deliberate divergence recorded in the design: a platform
+       * invitation may mint an owner, because only an owner can send
+       * one, and the rank is fixed by the sender rather than chosen by
+       * whoever holds the link.
+       */
+      if (!invitation.staffRank) {
+        // `platform_invite_has_no_org` makes this unreachable; the
+        // column is nullable and the compiler is right to ask.
+        return { error: "This invitation link is not valid." };
+      }
+
+      await tx
+        .update(profiles)
+        .set({ role: "staff", staffRole: invitation.staffRank })
+        .where(and(eq(profiles.id, travelerId), eq(profiles.role, "traveler")));
+    } else if (invitation.kind === "staff") {
       // A colleague gets a seat, not a case. `reviewer` rather than
       // `owner`: an invitation cannot mint someone with the authority to
       // bill and to invite, which has to stay with the person who
@@ -509,6 +662,10 @@ export async function acceptInvitationTx(
       // `onConflictDoNothing` on the composite key makes re-accepting a
       // no-op rather than a demotion — an owner who accepts a second
       // invitation stays an owner.
+      // Guaranteed by `platform_invite_has_no_org`, asked for by the
+      // compiler now that the column is nullable.
+      if (!invitation.orgId) return { error: "This invitation link is not valid." };
+
       await tx
         .insert(orgMembers)
         .values({ orgId: invitation.orgId, userId: travelerId, role: "reviewer" })
@@ -523,6 +680,8 @@ export async function acceptInvitationTx(
         .set({ role: "org_member" })
         .where(and(eq(profiles.id, travelerId), eq(profiles.role, "traveler")));
     } else {
+      if (!invitation.orgId) return { error: "This invitation link is not valid." };
+
       const created = await tx
         .insert(applications)
         .values({ travelerId, orgId: invitation.orgId })

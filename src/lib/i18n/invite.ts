@@ -26,6 +26,8 @@ export const INVITE_PAGE: {
   title: L;
   tag: L;
   summaryHeadingTemplate: L;
+  platformHeading: L;
+  platformNotice: L;
   summaryNoticeTemplate: L;
   wrongAccountTitle: L;
   wrongAccountBodyWithEmailTemplate: L;
@@ -61,6 +63,30 @@ export const INVITE_PAGE: {
     ar: "الدعوة",
     tw: "Nsakraeɛ",
     zu: "Isimemo",
+  },
+  platformHeading: {
+    en: "BeOrchid has invited you to the platform console",
+    ha: "BeOrchid ta gayyace ku zuwa na'urar sarrafa dandamali",
+    yo: "BeOrchid ti pè yín sí kọ̀nsólù pátáforù náà",
+    ig: "BeOrchid akpọọla gị òkù na consul ikpo okwu ahụ",
+    fr: "BeOrchid vous a invité à la console de la plateforme",
+    pt: "A BeOrchid convidou-o para a consola da plataforma",
+    sw: "BeOrchid amekualika kwenye kiweko cha jukwaa",
+    ar: "دعتك BeOrchid إلى لوحة المنصة",
+    tw: "BeOrchid afrɛ wo aba platform console no so",
+    zu: "I-BeOrchid ikumemele kwikhonsoli yenkundla",
+  },
+  platformNotice: {
+    en: "You will be asked to set up a second factor before the console opens. It is not optional — the console curates what every traveller on a route is told to bring.",
+    ha: "Za a nemi ka kafa hanyar tabbatarwa ta biyu kafin na'urar ta buɗe. Ba zaɓi ba ne — na'urar tana tsara abin da ake gaya wa kowane matafiyi ya kawo.",
+    yo: "A ó béèrè lọ́wọ́ yín láti ṣètò ọ̀nà ìjẹ́rìí kejì kí kọ̀nsólù náà tó ṣí. Kì í ṣe àṣàyàn — kọ̀nsólù náà ni ó ń pinnu ohun tí a sọ fún gbogbo arìnrìn-àjò láti mú wá.",
+    ig: "A ga-arịọ gị ka ị tọọ ụzọ nkwenye nke abụọ tupu consul emeghe. Ọ bụghị nhọrọ — consul na-ahazi ihe a na-agwa onye njem ọ bụla ka o weta.",
+    fr: "Il vous sera demandé de configurer un second facteur avant l'ouverture de la console. Ce n'est pas facultatif : la console détermine ce qu'on demande d'apporter à chaque voyageur.",
+    pt: "Ser-lhe-á pedido que configure um segundo fator antes de a consola abrir. Não é opcional — a consola define o que se pede a cada viajante que leve.",
+    sw: "Utaombwa kuweka kithibitishi cha pili kabla kiweko hakijafunguka. Si hiari — kiweko huamua kile kila msafiri anaambiwa alete.",
+    ar: "سيُطلب منك إعداد عامل تحقق ثانٍ قبل فتح اللوحة. وهذا ليس اختياريًا — فاللوحة تحدد ما يُطلب من كل مسافر إحضاره.",
+    tw: "Wɔbɛka akyerɛ wo sɛ si nokwaredi a ɛtɔ so mmienu bi hɔ ansa na console no abue. Ɛnyɛ nea wobetumi apo — console no na ɛkyerɛ nea wɔka kyerɛ ɔkwantuni biara sɛ ɔmfa mmra.",
+    zu: "Uzocelwa ukuba usethe indlela yesibili yokuqinisekisa ngaphambi kokuba ikhonsoli ivuleke. Akukhethwa — ikhonsoli inquma okutshelwa wonke umhambi ukuba akulethe.",
   },
   summaryHeadingTemplate: {
     en: "{orgName} is sponsoring your visa application",

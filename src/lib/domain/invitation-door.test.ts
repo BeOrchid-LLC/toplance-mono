@@ -25,6 +25,28 @@ describe("invitationDoor", () => {
     });
   });
 
+  describe("a platform staff invitation, which attaches a BeOrchid rank", () => {
+    it("admits a traveller — a new colleague is provisioned as one", () => {
+      // The invited colleague signs up through the link and is written
+      // `traveler` by `provisionInvitedProfile`, exactly as an agency's
+      // new hire is. `acceptInvitationTx` is what makes them staff.
+      expect(invitationDoor("traveler", "platform_staff")).toBe("accept");
+    });
+
+    it("refuses an agency member", () => {
+      // The v1.3 boundary, in the one direction nothing else guards. A
+      // BeOrchid account that also held an agency seat would hold
+      // exactly the document reach the tenancy correction removed — and
+      // an invitation is not the place to decide somebody may leave
+      // their agency.
+      expect(invitationDoor("org_member", "platform_staff")).toBe("wrong-persona");
+    });
+
+    it("refuses platform staff, who already are what it grants", () => {
+      expect(invitationDoor("staff", "platform_staff")).toBe("wrong-persona");
+    });
+  });
+
   describe("a staff invitation, which attaches a seat", () => {
     it("admits a traveller — a new colleague is provisioned as one", () => {
       // Sign-up through an invitation link writes `traveler`, and

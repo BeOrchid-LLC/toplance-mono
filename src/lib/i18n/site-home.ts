@@ -46,6 +46,9 @@ export const SITE_HOME: {
   whereHeadLead: L;
   /** `"{{fee}}/month + per application"` */
   pricingDatumTemplate: L;
+  clientFeeTag: L;
+  perApplicationSuffix: L;
+  clientFeeBody: L;
   pricingHeadTitle: L;
   pricingHeadLead: L;
   /** `"{{from}} and above"` — the open-ended top band in the pricing table. */
@@ -333,6 +336,42 @@ export const SITE_HOME: {
     zu: 'UmNigeria oya e-UK ngomsebenzi udinga ifayela elihluke ngokuphelele kunelomuntu waseGhana oya kufunda. Ngakho umbuzo weqiniso akuwona "ningayihambela iCanada na?" — kepha "ningazihambela izindawo eziqondile abahambi bami abaya kuzo na?"',
   },
   /* PRICING */
+  perApplicationSuffix: {
+    en: "per application",
+    ha: "kowace takarda",
+    yo: "lórí ìbéèrè kọ̀ọ̀kan",
+    ig: "kwa arịrịọ",
+    fr: "par dossier",
+    pt: "por processo",
+    sw: "kwa kila ombi",
+    ar: "لكل طلب",
+    tw: "adesrɛ biara",
+    zu: "ngesicelo ngasinye",
+  },
+  clientFeeTag: {
+    en: "And what a traveller pays",
+    ha: "Da abin da matafiyi ke biya",
+    yo: "Àti ohun tí arìnrìn-àjò ń san",
+    ig: "Na ihe onye njem na-akwụ",
+    fr: "Et ce que paie un voyageur",
+    pt: "E o que paga um viajante",
+    sw: "Na kile msafiri anacholipa",
+    ar: "وما يدفعه المسافر",
+    tw: "Ne nea ɔkwantuni tua",
+    zu: "Nokukhokhwa umhambi",
+  },
+  clientFeeBody: {
+    en: "One fee, once, per application — charged to the traveller when their agency invites them, and covering the checklist, the document review and the whole case.",
+    ha: "Kuɗi ɗaya, sau ɗaya, kan kowace takarda — ana caji matafiyi lokacin da hukumarsu ta gayyace su, kuma yana rufe jerin abubuwan, duban takardu da dukan fayil ɗin.",
+    yo: "Owó kan, ẹ̀ẹ̀kan, lórí ìbéèrè kọ̀ọ̀kan — a ó gbà á lọ́wọ́ arìnrìn-àjò nígbà tí ilé-iṣẹ́ wọn bá pè wọ́n, ó sì bo àkọsílẹ̀ ìwé, àyẹ̀wò ìwé àti gbogbo ẹjọ́ náà.",
+    ig: "Otu ụgwọ, otu ugboro, kwa arịrịọ — a na-anara onye njem ya mgbe ụlọ ọrụ ha kpọrọ ha, ọ na-ekpuchikwa ndepụta, nyocha akwụkwọ na ikpe niile.",
+    fr: "Un seul paiement, une fois, par dossier — réglé par le voyageur lorsque son agence l'invite, et couvrant la liste, la vérification des documents et l'ensemble du dossier.",
+    pt: "Uma taxa, uma vez, por processo — paga pelo viajante quando a sua agência o convida, e cobre a lista, a verificação de documentos e todo o processo.",
+    sw: "Ada moja, mara moja, kwa kila ombi — hulipwa na msafiri wakati wakala wake anapomwalika, na inagharamia orodha, ukaguzi wa nyaraka na kesi nzima.",
+    ar: "رسم واحد، مرة واحدة، لكل طلب — يدفعه المسافر حين تدعوه وكالته، ويغطي قائمة المستندات ومراجعتها والملف بأكمله.",
+    tw: "Ka baako, pɛnkoro, wɔ adesrɛ biara ho — ɔkwantuni na otua bere a n'adwumakuw frɛ no, na ɛkata nneɛma nhyehyɛe, nkrataa nhwehwɛmu ne asɛm no nyinaa so.",
+    zu: "Imali eyodwa, kanye, esicelweni ngasinye — ikhokhwa umhambi lapho inhlangano yakhe immema, futhi ihlanganisa uhlu, ukubuyekezwa kwamadokhumenti necala lonke.",
+  },
   pricingDatumTemplate: {
     en: "{{fee}}/month + per application",
     ha: "{{fee}}/wata + kowace aikace-aikace",

@@ -29,7 +29,17 @@ export type { Quote, RateCard, BillingCycle } from "@/lib/domain/pricing";
  * database still quotes correctly rather than billing everyone nothing,
  * which is the failure mode that would look like it worked.
  */
-export async function activeRateCard(at: Date = new Date()): Promise<RateCard> {
+export type ActiveRateCard = RateCard & {
+  /**
+   * The row this card came from, or `null` when it is the fallback and
+   * no row exists. Payments store it so a charge can be re-derived at
+   * the rates that actually applied — the same reason `effective_from`
+   * is on the table at all.
+   */
+  id: string | null;
+};
+
+export async function activeRateCard(at: Date = new Date()): Promise<ActiveRateCard> {
   const [row] = await db
     .select()
     .from(billingRateCards)
@@ -37,12 +47,12 @@ export async function activeRateCard(at: Date = new Date()): Promise<RateCard> {
     .orderBy(desc(billingRateCards.effectiveFrom))
     .limit(1);
 
-  if (!row) return DEFAULT_RATE_CARD;
+  if (!row) return { ...DEFAULT_RATE_CARD, id: null };
 
   // Parsed, not cast. `bands` is a JSON column that a human is expected
   // to edit; `parseRateCard` throws on a card that would under-bill
   // rather than letting it quote a smaller number than the rates say.
-  return parseRateCard(row);
+  return { ...parseRateCard(row), id: row.id };
 }
 
 /**

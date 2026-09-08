@@ -10,7 +10,7 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate && node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/sql-objects.mts",
+    "db:migrate": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/migrate.mts && node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/sql-objects.mts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/seed.mts",
     "db:corridors": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/corridors.mts",

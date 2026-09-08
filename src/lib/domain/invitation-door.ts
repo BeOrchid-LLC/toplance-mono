@@ -1,6 +1,6 @@
 import type { AppRole } from "@/lib/auth/policy";
 
-export type InvitationKind = "client" | "staff";
+export type InvitationKind = "client" | "staff" | "platform_staff";
 
 export type InvitationDoor =
   /** This account may accept this invitation. */
@@ -26,9 +26,20 @@ export type InvitationDoor =
  * somebody who already works at one agency being invited to a second,
  * which is a person, not an application, and carries no case with it.
  *
- * Platform staff may accept neither. BeOrchid provisions agencies; it
- * does not join them, and a BeOrchid account holding an agency seat
- * would hold exactly the document access the v1.3 tenancy removed.
+ * Platform staff may accept none of the three. BeOrchid provisions
+ * agencies; it does not join them, and a BeOrchid account holding an
+ * agency seat would hold exactly the document access the v1.3 tenancy
+ * removed. Its own kind is refused for a duller reason: they already are
+ * what it grants.
+ *
+ * A **platform_staff** invitation makes the accepting account BeOrchid
+ * staff, and only a traveller may take it. A colleague signing up
+ * through the link is provisioned `traveler` and flipped by
+ * `acceptInvitationTx`, the same two steps an agency's new hire takes.
+ * An existing `org_member` is refused, and that refusal is the same
+ * boundary read from the other side: somebody who works at an agency
+ * cannot become the platform by following a link, because their agency
+ * seat would come with them.
  *
  * Address matching is a separate check and deliberately not here: this
  * answers "is this the right kind of account", and `acceptInvitationTx`
@@ -36,6 +47,7 @@ export type InvitationDoor =
  */
 export function invitationDoor(role: AppRole, kind: InvitationKind): InvitationDoor {
   if (role === "staff") return "wrong-persona";
+  if (kind === "platform_staff") return role === "traveler" ? "accept" : "wrong-persona";
   if (kind === "staff") return "accept";
   return role === "traveler" ? "accept" : "wrong-persona";
 }

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 import { AgencyBar } from "@/components/agency/agency-bar";
 import { ConsoleBand } from "@/components/agency/console-band";
-import { InvitationRoster } from "@/components/agency/invitation-roster";
+import { InvitationRoster } from "@/components/shared/invitation-roster";
 import { InviteDialog } from "@/components/agency/invite-dialog";
 import { TeamRoster } from "@/components/agency/team-roster";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -14,6 +14,7 @@ import { listOrgMembers } from "@/lib/data/organisations";
 import { AGENCY } from "@/lib/i18n/agency";
 import { getLocale } from "@/lib/i18n/server";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
+import { resendInvitation, revokeInvitation } from "@/app/[locale]/agency/actions";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -78,6 +79,8 @@ export default async function AgencyTeamPage() {
         <Shell className="py-12">
           <TeamRoster members={members} locale={locale} />
           <InvitationRoster
+            resendAction={resendInvitation}
+            revokeAction={revokeInvitation}
             className="mt-8"
             invitations={staffInvitations}
             locale={locale}

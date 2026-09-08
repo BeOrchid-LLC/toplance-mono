@@ -75,7 +75,12 @@ export type TenantPendingInvite = {
   id: string;
   email: string;
   fullName: string;
-  kind: "client" | "staff";
+  /**
+   * Never `platform_staff` in practice — this read is scoped to one
+   * agency, and a platform invitation belongs to none. The type follows
+   * the column rather than restating a scope the query already enforces.
+   */
+  kind: "client" | "staff" | "platform_staff";
   createdAt: Date;
   expiresAt: Date;
   /**

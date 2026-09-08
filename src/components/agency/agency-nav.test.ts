@@ -11,12 +11,24 @@ describe("agencyNav", () => {
     expect(agencyNav(withOrg)[0].href).toBe("/agency");
   });
 
-  it("carries the two rosters as their own pages", () => {
+  it("carries the two rosters and the plan as their own pages", () => {
     expect(agencyNav(withOrg).map((i) => i.href)).toEqual([
       "/agency",
       "/agency/clients",
       "/agency/team",
+      "/agency/billing",
     ]);
+  });
+
+  it("offers a reviewer neither the roster nor the plan", () => {
+    // Both are questions about running the agency rather than about
+    // handling a case, and both pages turn a reviewer away — a hidden
+    // link is not the guard, it is the courtesy.
+    expect(
+      agencyNav({ locale: "en", hasOrganisation: true, isDirector: false }).map(
+        (i) => i.href
+      )
+    ).toEqual(["/agency", "/agency/clients"]);
   });
 
   /**

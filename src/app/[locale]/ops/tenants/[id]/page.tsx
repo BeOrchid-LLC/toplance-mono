@@ -29,6 +29,7 @@ import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { cn } from "@/lib/utils";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import { activeSubscription } from "@/lib/data/payments";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 
 // Reads a session, so it is never prerendered.
@@ -125,7 +126,27 @@ export default async function OpsTenantPage({
   // has no per-agency wording to borrow instead. `CounterRow.sub` is
   // optional for exactly this — a tile that needs no gloss renders
   // without one rather than inventing or borrowing a wrong string.
+  /**
+   * Read, never set. BeOrchid does not sell the plan and cannot mark one
+   * paid from here — the agency buys it in its own console. This is on
+   * the screen because "why is that agency quiet" and "they have not
+   * paid" are the same question, and the console had no way to see it.
+   */
+  const subscription = await activeSubscription(tenant.id);
+
   const counters = [
+    {
+      label: OPS_TENANTS.planLabel[locale],
+      value: subscription?.periodEnd
+        ? OPS_TENANTS.planPaidUntil[locale].replace(
+            "{date}",
+            new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
+              subscription.periodEnd
+            )
+          )
+        : OPS_TENANTS.planUnpaid[locale],
+      tone: subscription ? "text-success-ink" : "text-warning-ink",
+    },
     {
       label: OPS_TENANTS.tableHead.members[locale],
       value: `${tenant.members} ${OPS_TENANTS.seatsOf[locale]} ${tenant.seatsPurchased}`,
@@ -151,7 +172,7 @@ export default async function OpsTenantPage({
   return (
     <div className="min-h-dvh bg-bg">
       <AppBar
-        nav={localizedOpsNav(locale)}
+        nav={localizedOpsNav(locale, actor.staffRole === "owner")}
         name={profile.fullName}
         email={profile.email}
         subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}

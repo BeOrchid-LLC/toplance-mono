@@ -4,6 +4,7 @@ import {
   companionDigestEmail,
   documentFlaggedEmail,
   invitationEmail,
+  platformInvitationEmail,
   itineraryReadyEmail,
   messageReceivedEmail,
   statusChangedEmail,
@@ -278,5 +279,30 @@ describe("email templates", () => {
       locale: "en",
     });
     expect(email.html).toContain("mailto:bola@sunwaytravel.ng");
+  });
+});
+
+describe("platformInvitationEmail", () => {
+  it("names the rank being granted", () => {
+    const owner = platformInvitationEmail({ inviteUrl: "https://x.test/i/t", rank: "owner" });
+    expect(owner.text).toMatch(/an owner/);
+
+    const reviewer = platformInvitationEmail({
+      inviteUrl: "https://x.test/i/t",
+      rank: "reviewer",
+    });
+    expect(reviewer.text).toMatch(/a reviewer/);
+  });
+
+  it("warns about the second factor before they arrive at it", () => {
+    const email = platformInvitationEmail({ inviteUrl: "https://x.test/i/t", rank: "reviewer" });
+    expect(email.text).toMatch(/second factor/i);
+  });
+
+  it("says nothing about a visa application or an organisation", () => {
+    // The agency template's sentences are wrong in every clause here:
+    // there is no organisation, no application and no sponsorship.
+    const email = platformInvitationEmail({ inviteUrl: "https://x.test/i/t", rank: "owner" });
+    expect(email.text).not.toMatch(/visa application|sponsored/i);
   });
 });

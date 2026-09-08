@@ -23,8 +23,11 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
     getInvitationPreview,
     listInvitations,
     provisionInvitedProfile,
+    listPlatformInvitations,
     resendableInvitation,
+    resendablePlatformInvitation,
     revokeInvitation,
+    revokePlatformInvitation,
   } = await import("@/lib/data/invitations");
 
   const createdProfileIds: string[] = [];
@@ -888,4 +891,193 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
     });
   });
 
+
+  /**
+   * BeOrchid's own invitation, which belongs to no agency.
+   *
+   * The claims worth pinning are the ones a nullable `org_id` put at
+   * risk: that a platform row cannot be malformed, that it does not
+   * appear in any tenant's roster, and that accepting it moves both
+   * `role` and `staff_role` at once — separately would trip
+   * `staff_role_only_for_staff` in between.
+   */
+  describe("a platform staff invitation", () => {
+    const PLATFORM_EMAILS: string[] = [];
+
+    async function invitePlatform(
+      email: string,
+      staffRank: "reviewer" | "owner" = "reviewer",
+      invitedBy = "inviter_platform"
+    ) {
+      PLATFORM_EMAILS.push(email);
+      return createInvitation(null, invitedBy, {
+        email,
+        kind: "platform_staff",
+        staffRank,
+      });
+    }
+
+    afterEach(async () => {
+      // Platform rows survive the outer cleanup: it deletes by
+      // organisation, and these belong to none.
+      if (PLATFORM_EMAILS.length) {
+        await db.delete(invitations).where(inArray(invitations.email, PLATFORM_EMAILS));
+        PLATFORM_EMAILS.length = 0;
+      }
+    });
+
+    it("is minted with no organisation and a rank", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+
+      const result = await invitePlatform("newstaff@test.invalid", "owner");
+
+      expect("ok" in result).toBe(true);
+      if (!("ok" in result)) return;
+      expect(result.invitation.orgId).toBeNull();
+      expect(result.invitation.staffRank).toBe("owner");
+      expect(result.invitation.kind).toBe("platform_staff");
+    });
+
+    it("refuses a platform invitation that names an agency", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      const orgId = await makeOrg("Wrong Shape Agency");
+
+      await expect(
+        createInvitation(orgId, "inviter_platform", {
+          email: "wrong1@test.invalid",
+          kind: "platform_staff",
+          staffRank: "reviewer",
+        })
+      ).rejects.toThrow();
+    });
+
+    it("refuses a platform invitation with no rank", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+
+      await expect(
+        createInvitation(null, "inviter_platform", {
+          email: "wrong2@test.invalid",
+          kind: "platform_staff",
+        })
+      ).rejects.toThrow();
+    });
+
+    it("refuses an agency invitation that carries a rank", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      const orgId = await makeOrg("Ranked Agency");
+
+      await expect(
+        createInvitation(orgId, "inviter_platform", {
+          email: "wrong3@test.invalid",
+          kind: "staff",
+          staffRank: "owner",
+        })
+      ).rejects.toThrow();
+    });
+
+    it("refuses a second pending invitation to the same address", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      await invitePlatform("twice@test.invalid");
+
+      const second = await invitePlatform("twice@test.invalid");
+      expect("error" in second).toBe(true);
+    });
+
+    it("is previewable, with no organisation name to show", async () => {
+      // The left-join regression. An inner join drops the row, and a
+      // perfectly good token reads as "this link is not valid".
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      const created = await invitePlatform("preview@test.invalid");
+      if (!("ok" in created)) throw new Error("invitation was not created");
+
+      const preview = await getInvitationPreview(created.invitation.token);
+
+      expect(preview).not.toBeNull();
+      expect(preview?.orgName).toBeNull();
+      expect(preview?.kind).toBe("platform_staff");
+    });
+
+    it("makes the accepting traveller staff, at the rank on the row", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      await makeProfile("joins_platform", { email: "joins@test.invalid" });
+      const created = await invitePlatform("joins@test.invalid", "owner");
+      if (!("ok" in created)) throw new Error("invitation was not created");
+
+      const result = await acceptInvitationTx(created.invitation.token, "joins_platform");
+
+      expect(result).toEqual({ ok: true, orgId: null });
+      const [profile] = await db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.id, "joins_platform"));
+      expect(profile.role).toBe("staff");
+      expect(profile.staffRole).toBe("owner");
+    });
+
+    it("attaches no application and no membership", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      await makeProfile("joins_clean", { email: "clean@test.invalid" });
+      const created = await invitePlatform("clean@test.invalid");
+      if (!("ok" in created)) throw new Error("invitation was not created");
+
+      await acceptInvitationTx(created.invitation.token, "joins_clean");
+
+      expect(await applicationOf("joins_clean")).toBeUndefined();
+      const seats = await db
+        .select()
+        .from(orgMembers)
+        .where(eq(orgMembers.userId, "joins_clean"));
+      expect(seats).toHaveLength(0);
+    });
+
+    it("does not convert an account that is not a traveller", async () => {
+      // `invitationDoor` refuses an agency member before the page renders
+      // an Accept button; this is the second line behind it. The row is
+      // still marked accepted — the token is spent either way — but the
+      // account keeps the persona it had.
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      await makeProfile("agency_person", {
+        email: "agency@test.invalid",
+        role: "org_member",
+      });
+      const created = await invitePlatform("agency@test.invalid", "owner");
+      if (!("ok" in created)) throw new Error("invitation was not created");
+
+      await acceptInvitationTx(created.invitation.token, "agency_person");
+
+      const [profile] = await db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.id, "agency_person"));
+      expect(profile.role).toBe("org_member");
+      expect(profile.staffRole).toBeNull();
+    });
+
+    it("never appears in an agency's roster, and always in the platform's", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      const orgId = await makeOrg("Unrelated Agency");
+      await createInvitation(orgId, "inviter_platform", { email: "client@test.invalid" });
+      const created = await invitePlatform("roster@test.invalid");
+      if (!("ok" in created)) throw new Error("invitation was not created");
+
+      const agencyRoster = await listInvitations(orgId);
+      expect(agencyRoster.map((i) => i.email)).not.toContain("roster@test.invalid");
+
+      const platformRoster = await listPlatformInvitations();
+      expect(platformRoster.map((i) => i.email)).toContain("roster@test.invalid");
+      expect(platformRoster.every((i) => i.orgId === null)).toBe(true);
+    });
+
+    it("can be resent and revoked, and not resent once revoked", async () => {
+      await makeProfile("inviter_platform", { role: "staff", staffRole: "owner" });
+      const created = await invitePlatform("cycle@test.invalid");
+      if (!("ok" in created)) throw new Error("invitation was not created");
+      const { id, token } = created.invitation;
+
+      expect((await resendablePlatformInvitation(id))?.token).toBe(token);
+      expect(await revokePlatformInvitation(id)).toEqual({ ok: true });
+      expect(await resendablePlatformInvitation(id)).toBeNull();
+      expect("error" in (await revokePlatformInvitation(id))).toBe(true);
+    });
+  });
 });

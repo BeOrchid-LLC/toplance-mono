@@ -16,10 +16,23 @@ type L = Record<Locale, string>;
  */
 export const AGENCY_ACTIONS: {
   onlyOwnerInvitesStaff: L;
+  planNotPaid: L;
   chooseVerdict: L;
   chooseStatus: L;
   chooseFlagReason: L;
 } = {
+  planNotPaid: {
+    en: "Your plan is not paid for, so invitations are on hold. Nothing is lost — pay for the plan and send it again.",
+    ha: "Ba a biya kuɗin shirinku ba, don haka an dakatar da gayyata. Ba a rasa kome ba — ku biya kuɗin shirin sannan ku sake aikawa.",
+    yo: "A kò tíì san owó ètò yín, nítorí náà a ti dá àwọn ìpè dúró. Kò sí ohun tí ó sọnù — san owó ètò náà kí o sì tún fi ránṣẹ́.",
+    ig: "A kwụghị ụgwọ atụmatụ gị, ya mere a kwụsịtụrụ ọkpụkpọ oku. Ọ dịghị ihe furu efu — kwụọ ụgwọ atụmatụ ahụ ziga ya ọzọ.",
+    fr: "Votre formule n'est pas payée, les invitations sont donc suspendues. Rien n'est perdu — réglez la formule et renvoyez-la.",
+    pt: "O seu plano não está pago, por isso os convites estão suspensos. Nada se perdeu — pague o plano e envie de novo.",
+    sw: "Mpango wako haujalipiwa, kwa hivyo mialiko imesimamishwa. Hakuna kilichopotea — lipia mpango kisha utume tena.",
+    ar: "لم تُدفع قيمة خطتك، لذا أُوقفت الدعوات. لم يضع شيء — ادفع قيمة الخطة ثم أرسلها مجددًا.",
+    tw: "Wontuaa wo nhyehyɛe no ka, enti wɔagyae nsato no. Biribiara nyeraeɛ — tua nhyehyɛe no ka na san fa kɔ.",
+    zu: "Uhlelo lwakho alukakhokhelwa, ngakho izimemo zimisiwe. Akukho okulahlekile — khokhela uhlelo bese uyithumela futhi.",
+  },
   onlyOwnerInvitesStaff: {
     en: "Only an owner can invite a colleague.",
     ha: "Mai kamfani ne kawai zai iya gayyatar abokin aiki.",

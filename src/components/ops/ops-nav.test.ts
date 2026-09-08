@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { opsNav } from "@/components/ops/ops-nav";
+import { localizedOpsNav, opsNav } from "@/components/ops/ops-nav";
 
 describe("opsNav", () => {
   it("carries the corridors entry", () => {
@@ -33,5 +33,28 @@ describe("opsNav", () => {
     // list lights the wrong pill.
     expect(opsNav.map((i) => i.href)).toContain("/ops/tenants");
     expect(opsNav[1].href).toBe("/ops/tenants");
+  });
+});
+
+describe("the colleagues entry", () => {
+  it("comes third, leaving the first two where they were", () => {
+    // `AppNav.isActive` matches item 0 exactly as the section root, and
+    // `/ops` redirects to it. Anything inserted ahead of these two lights
+    // the wrong pill.
+    expect(opsNav[0].href).toBe("/ops/corridors");
+    expect(opsNav[1].href).toBe("/ops/tenants");
+    expect(opsNav[2].href).toBe("/ops/staff");
+  });
+
+  it("is offered to an owner and withheld from a reviewer", () => {
+    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/staff");
+    expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain("/ops/staff");
+  });
+
+  it("still offers a reviewer the two consoles that are theirs", () => {
+    expect(localizedOpsNav("en", false).map((i) => i.href)).toEqual([
+      "/ops/corridors",
+      "/ops/tenants",
+    ]);
   });
 });

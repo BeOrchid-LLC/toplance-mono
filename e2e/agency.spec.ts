@@ -1,7 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
-import { completeSignUpForm, resetFixtures, signUp, testEmail } from "./helpers/auth";
+import {
+  completeSignUpForm,
+  payAgencyPlan,
+  resetFixtures,
+  signUp,
+  testEmail,
+} from "./helpers/auth";
 import { invitationTokenFor, localeAndCountryFor } from "./helpers/db";
 
 /**
@@ -51,7 +57,9 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
     orgName: ORG,
     locale: "Hausa",
   });
-  await page.waitForURL("**/agency");
+
+  // A new agency lands on its own bill, not its console.
+  await payAgencyPlan(page);
 
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
@@ -74,6 +82,15 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   });
 
   // ---- the invitation ----
+  /**
+   * From the clients roster, which is where the button lives. #64 took
+   * the invite dialog off the dashboard — "invite from the roster that
+   * knows" — and this spec kept clicking a button that had moved, which
+   * is a three-minute timeout rather than a failure that names itself.
+   */
+  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await page.waitForURL("**/agency/clients");
+
   await page.getByRole("button", { name: "Invite", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Email", { exact: true }).fill(INVITEE_EMAIL);
@@ -123,15 +140,21 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await expect(page.getByRole("button", { name: "Resend" })).toHaveCount(1);
 
   // ---- somebody else, who was forwarded the link ----
-  // The invited address is binding. A link is a bearer credential, so
-  // holding one proves it was received and nothing about who is holding
-  // it.
-  //
-  // The refusal now arrives on the form, before Clerk has been told
-  // anything. It used to arrive after an account existed and the emailed
-  // code had been spent — correct, and far too late to act on, which
-  // under invite-only cost a traveller who merely mistyped the only
-  // route they have into the product.
+  /**
+   * The invited address is binding. A link is a bearer credential, so
+   * holding one proves it was received and nothing about who holds it.
+   *
+   * Where that refusal *lives* moved with #64. It used to be a message
+   * on the form after the holder typed their own address; the door now
+   * fills the invited address in and locks it, so there is no form path
+   * to an account in anybody else's name at all. The only way on is the
+   * code, sent to an inbox whoever forwarded the link does not have.
+   *
+   * This stops short of pressing Continue on purpose. Continuing would
+   * start a Clerk sign-up for the invited address from the wrong
+   * browser, and the invitee's own sign-up further down is the thing
+   * this spec actually needs to survive.
+   */
   const forwardedContext = await browser.newContext();
   const forwarded = await forwardedContext.newPage();
   await setupClerkTestingToken({ page: forwarded });
@@ -139,22 +162,28 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await forwarded.goto(inviteUrl);
   await forwarded.getByRole("link", { name: "Set up your account" }).click();
 
-  await forwarded.getByLabel("Full name", { exact: true }).fill("Chidi Balogun");
-  await forwarded.getByLabel("Email", { exact: true }).fill(FORWARDED_EMAIL);
-  await forwarded.getByRole("button", { name: "Continue" }).click();
+  const forwardedEmail = forwarded.getByLabel("Email", { exact: true });
+  await expect(forwardedEmail).toHaveValue(INVITEE_EMAIL);
+  await expect(forwardedEmail).not.toBeEditable();
 
-  // Scoped to the form: Next mounts its own `role="alert"` route
-  // announcer on every page, so an unscoped alert role matches two.
-  await expect(forwarded.getByRole("main").getByRole("alert")).toHaveText(
-    "That invitation was sent to a different email address."
-  );
-  // The negative is the whole of it: no code screen means no account was
-  // made and no code was spent. The invited address is still never named
-  // back at whoever is holding the link.
-  await expect(
-    forwarded.getByRole("heading", { name: "Enter the code we emailed you" })
-  ).toBeHidden();
-  await expect(forwarded.locator("main")).not.toContainText(INVITEE_EMAIL);
+  // Typing is refused rather than merely discouraged — `fill` on a
+  // readonly input throws, which is the assertion.
+  await expect(forwardedEmail.fill(FORWARDED_EMAIL, { timeout: 2_000 })).rejects.toThrow();
+  await expect(forwardedEmail).toHaveValue(INVITEE_EMAIL);
+
+  /*
+   * Note what the two assertions above say together: the invited address
+   * IS disclosed to whoever holds the link, in the field's own value.
+   *
+   * That is the trade #64 made deliberately, and
+   * `getInvitationPreview` says so in as many words — the preview
+   * already discloses the invitee's name on the same read, so a token
+   * names its person either way, and withholding the address bought a
+   * retyped answer the server then rejected rather than any privacy.
+   * This spec used to assert the opposite; the claim is inverted rather
+   * than dropped, so the disclosure stays something a test states out
+   * loud instead of something nobody notices.
+   */
   await forwardedContext.close();
 
   // ---- the invitee, in a browser of their own ----
@@ -289,7 +318,7 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
     path: "/agency/sign-up",
     orgName: DESK_ORG,
   });
-  await page.waitForURL("**/agency");
+  await payAgencyPlan(page);
 
   // ---- a client, so the desk has something on it ----
   await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();

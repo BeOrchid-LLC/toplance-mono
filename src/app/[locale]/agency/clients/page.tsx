@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { InviteDialog } from "@/components/agency/invite-dialog";
-import { ClientRoster, CLIENT_SORTS } from "@/components/agency/client-roster";
+import { ClientRoster } from "@/components/agency/client-roster";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listOrgRoster } from "@/lib/data/organisations";
+import { CLIENT_SORTS } from "@/lib/domain/client-table";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { matchesDateWindow, windowCutoff } from "@/lib/domain/date-window";
 import { readDir, readSort, sortRows } from "@/lib/domain/sorting";

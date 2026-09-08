@@ -8,6 +8,7 @@ import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { type ToolbarFilter } from "@/components/shared/table-toolbar";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import type { ClientSort } from "@/lib/domain/client-table";
 import type { SortDir } from "@/lib/domain/sorting";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import { AGENCY } from "@/lib/i18n/agency";
@@ -37,16 +38,6 @@ export type RosterRow = {
   completionPct: number | null;
 };
 
-/** The columns `/agency/clients` will order by, as `readSort`'s allow-list. */
-export const CLIENT_SORTS = [
-  "client",
-  "route",
-  "documents",
-  "status",
-  "submitted",
-] as const;
-
-export type ClientSort = (typeof CLIENT_SORTS)[number];
 
 /**
  * The clients this agency is handling.

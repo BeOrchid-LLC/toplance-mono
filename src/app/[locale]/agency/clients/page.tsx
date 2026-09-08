@@ -9,7 +9,7 @@ import { listOrgRoster } from "@/lib/data/organisations";
 import { CLIENT_SORTS } from "@/lib/domain/client-table";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { matchesDateWindow, windowCutoff } from "@/lib/domain/date-window";
-import { readDir, readSort, sortRows } from "@/lib/domain/sorting";
+import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
@@ -54,6 +54,8 @@ export default async function AgencyClientsPage({
     date?: string;
     sort?: string;
     dir?: string;
+    page?: string;
+    size?: string;
   }>;
 }) {
   if (!hasDatabaseEnv) return <SetupNotice />;
@@ -145,6 +147,12 @@ export default async function AgencyClientsPage({
     dir
   );
 
+  // Sliced after the sort, so page two is the second page of the order
+  // the reader chose. Allow-listed size, so `?size=1000000` cannot ask
+  // an agency's whole book onto one screen.
+  const size = readPageSize(params.size);
+  const { page, pageCount, start, end } = resolvePage(params.page, sorted.length, size);
+
   return (
     <AgencyShell
       profile={profile}
@@ -163,7 +171,7 @@ export default async function AgencyClientsPage({
           control that did it. `total` and `unfilteredTotal` are what let
           it tell that from an agency with no clients at all. */}
       <ClientRoster
-        rows={sorted}
+        rows={sorted.slice(start, end)}
         locale={locale}
         toolbar={{ placeholder: AGENCY.searchClients[locale], filters }}
         empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
@@ -181,6 +189,7 @@ export default async function AgencyClientsPage({
         dir={dir}
         basePath="/agency/clients"
         params={params}
+        pagination={{ page, pageCount, size }}
       />
     </AgencyShell>
   );

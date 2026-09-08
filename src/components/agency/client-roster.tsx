@@ -85,6 +85,7 @@ export function ClientRoster({
   total,
   unfilteredTotal,
   toolbar,
+  pagination,
 }: {
   rows: RosterRow[];
   locale: Locale;
@@ -131,6 +132,14 @@ export function ClientRoster({
    * with nothing to do.
    */
   toolbar?: { placeholder: string; filters: ToolbarFilter[] };
+  /**
+   * Paging, when the caller has sliced the rows.
+   *
+   * Optional because a reviewer's dashboard shows this roster cut to
+   * their own handful and a pager under six rows is furniture. The
+   * clients page, which shows an agency's whole book, passes one.
+   */
+  pagination?: { page: number; pageCount: number; size: number };
 }) {
   const shown = count ?? total ?? rows.length;
   const sortable = sort !== undefined && dir !== undefined && basePath !== undefined;
@@ -271,6 +280,7 @@ export function ClientRoster({
       sort={sort}
       dir={dir}
       toolbar={toolbar}
+      pagination={pagination}
       locale={locale}
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}

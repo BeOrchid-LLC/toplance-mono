@@ -101,7 +101,7 @@ export default async function AgencyCasePage({
       docs: docs.filter((d) => d.state === "checking" || d.state === "uploaded"),
     },
     {
-      label: CASE_REVIEW.docSets.alreadyJudged[locale],
+      label: CASE_REVIEW.docSets.alreadyReviewed[locale],
       docs: docs.filter((d) => d.state === "verified" || d.state === "flagged"),
     },
     {

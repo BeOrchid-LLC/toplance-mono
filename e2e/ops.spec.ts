@@ -34,7 +34,7 @@ const NAME = "Ngozi Balogun";
 const STAFF_ORG = "Ops Reviewer Agency";
 const TRAVELLER = "Chukwuemeka Obi";
 
-test("the platform console curates routes and offers no way into a case", async ({
+test("the platform console curates routes, offers no way into a case, and is somewhere staff exist", async ({
   page,
 }) => {
   await resetFixtures([EMAIL], [STAFF_ORG]);
@@ -67,4 +67,51 @@ test("the platform console curates routes and offers no way into a case", async 
   // Nothing of the traveller renders on the way to that 404.
   await expect(page.getByText(seeded.caseRef)).toHaveCount(0);
   await expect(page.getByRole("heading", { name: TRAVELLER })).toHaveCount(0);
+
+  // ---- and their own profile, reached the way staff actually reach it ----
+  // Through the account menu rather than a typed URL: the page existing
+  // and the console offering a way to it are two different claims, and
+  // for six pages the second one was false — every `/ops` screen built
+  // its account block by hand and left `profileHref` out, so the rail
+  // named a member of staff and gave them nothing to click.
+  await page.goto("/ops/corridors");
+
+  // Opened from the keyboard rather than with a click. The account
+  // control sits at the foot of the rail, which is exactly where
+  // `next dev` parks its dev-tools badge: a portal that swallows the
+  // pointer in this environment and exists in no other, and which
+  // `force` does not get past either, since the click still lands on
+  // whatever is topmost. Enter on the focused trigger is both immune to
+  // that and a stronger claim about the control.
+  await page.getByRole("button", { name: "Account menu" }).first().focus();
+  await page.keyboard.press("Enter");
+
+  // The item and where it points are two different claims: this menu is
+  // shared by all three consoles and shows no profile item at all unless
+  // the surface names its own page, which is what every `/ops` screen
+  // failed to do.
+  await expect(page.getByRole("menuitem", { name: "Profile" })).toHaveAttribute(
+    "href",
+    "/ops/profile"
+  );
+  await page.keyboard.press("Escape");
+
+  await page.goto("/ops/profile");
+
+  await expect(page.getByRole("heading", { name: "Your profile" })).toBeVisible();
+  // Scoped to the page: the rail's account footer carries the same name
+  // and address on every console screen, so an unscoped match finds two.
+  await expect(page.getByRole("main").getByText(EMAIL)).toBeVisible();
+  await expect(page.getByRole("main").getByText(NAME).first()).toBeVisible();
+
+  // The rank, which is the one fact here they cannot edit — and a
+  // promoted account has `staff_role = 'reviewer'`.
+  await expect(
+    page.getByRole("main").getByText("Toplance operations · reviewer")
+  ).toBeVisible();
+
+  // The photo control the rail falls back to initials for until it is
+  // used. `toBeAttached` rather than `toBeVisible`: the input itself is
+  // `sr-only` and the label around it is the target.
+  await expect(page.getByLabel("Add profile photo")).toBeAttached();
 });

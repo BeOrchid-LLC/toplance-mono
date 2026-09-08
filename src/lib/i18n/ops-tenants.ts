@@ -72,6 +72,8 @@ export const OPS_TENANTS: {
   roleReviewer: L;
   promoteButton: L;
   demoteButton: L;
+  demoteConfirmTitle: L;
+  demoteConfirmBody: L;
   toastRoleChanged: L;
   invitesPanel: L;
   emptyInvites: L;
@@ -85,6 +87,8 @@ export const OPS_TENANTS: {
   dangerPanel: L;
   suspendNotice: L;
   suspendButton: L;
+  suspendConfirmTitle: L;
+  suspendConfirmBody: L;
   restoreNotice: L;
   restoreButton: L;
   toastSuspended: L;
@@ -856,6 +860,36 @@ export const OPS_TENANTS: {
     tw: "Ma no nyɛ ɔhwɛfoɔ",
     zu: "Yenza umhloli",
   },
+  /**
+   * Only the demotion asks; promoting hands capability over and is the
+   * way back. The two share one button whose label flips, in a table of
+   * rows that look alike, so the wrong row is easy to hit — and the
+   * person on the other end of it is not the one clicking.
+   */
+  demoteConfirmTitle: {
+    en: "Make {name} a reviewer?",
+    ha: "A mai da {name} mai bita?",
+    yo: "Sọ {name} di olùyẹ̀wò?",
+    ig: "Mee ka {name} bụrụ onye nyocha?",
+    fr: "Nommer {name} réviseur ?",
+    pt: "Tornar {name} revisor?",
+    sw: "Umfanye {name} mkaguzi?",
+    ar: "تعيين {name} مراجعًا؟",
+    tw: "Ma {name} nyɛ ɔhwɛfoɔ?",
+    zu: "Wenze u-{name} umhloli?",
+  },
+  demoteConfirmBody: {
+    en: "They lose the owner's controls as soon as you confirm — inviting people, billing, and the agency's settings. They keep their console and their cases. Any owner can hand it back.",
+    ha: "Za su rasa ikon mai gidan da zarar ka tabbatar — gayyatar mutane, biyan kuɗi, da saitunan hukumar. Za su riƙe na'urar aikinsu da shari'o'insu. Kowane mai gida zai iya mayar musu da shi.",
+    yo: "Wọn yóò pàdánù àwọn ìdarí olówó lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́sí — pípe ènìyàn, ìsanwó, àti ètò ilé-iṣẹ́ náà. Wọn yóò pa kọ́ńsọ́ọ̀lù wọn àti àwọn ẹjọ́ wọn mọ́. Olówó èyíkéyìí lè dá a padà fún wọn.",
+    ig: "Ha ga-atụfu njikwa nke onye nwe ozugbo ị kwadoro — ịkpọ ndị mmadụ òkù, ụgwọ, na ntọala ụlọ ọrụ ahụ. Ha ga-ejide console ha na ikpe ha. Onye nwe ọ bụla nwere ike inyeghachi ya.",
+    fr: "Cette personne perd les commandes du propriétaire dès que vous confirmez — inviter, la facturation et les réglages de l'agence. Elle garde sa console et ses dossiers. N'importe quel propriétaire peut les lui rendre.",
+    pt: "Perde os controlos de proprietário assim que confirmar — convidar pessoas, faturação e as definições da agência. Mantém a sua consola e os seus processos. Qualquer proprietário pode devolvê-los.",
+    sw: "Anapoteza vidhibiti vya mmiliki mara tu unapothibitisha — kualika watu, malipo, na mipangilio ya wakala. Anabaki na konsoli yake na kesi zake. Mmiliki yeyote anaweza kumrudishia.",
+    ar: "يفقد صلاحيات المالك فور تأكيدك — دعوة الأشخاص والفوترة وإعدادات الوكالة. ويحتفظ بلوحته وبحالاته. ويستطيع أي مالك إعادتها إليه.",
+    tw: "Sɛ wopene so ara a, ɔbɛhwere owura no tumi — nnipa a ɔfrɛ wɔn, sika a wɔgye, ne adwumakuo no nhyehyɛeɛ. Ne console ne ne nsɛm no bɛka ne nsam. Owura biara bɛtumi asan de ama no.",
+    zu: "Ulahlekelwa izilawuli zomnikazi ngokushesha uma uqinisekisa — ukumema abantu, ukukhokhisa, nezilungiselelo ze-ejensi. Ugcina ikhonsoli yakhe namacala akhe. Noma yimuphi umnikazi angambuyisela zona.",
+  },
   toastRoleChanged: {
     en: "Role updated.",
     ha: "An sabunta matsayi.",
@@ -1049,6 +1083,41 @@ export const OPS_TENANTS: {
     ar: "إيقاف الوكالة",
     tw: "Gyae adwumakuo no",
     zu: "Misa i-ejensi",
+  },
+  /**
+   * The confirmation the client asked for. `{name}` is the agency's own
+   * name, replaced by the caller — an operator holding two tabs open
+   * needs the dialog to say which agency it is about, and "this agency"
+   * would be the one sentence on the screen that cannot tell them.
+   */
+  suspendConfirmTitle: {
+    en: "Suspend {name}?",
+    ha: "A dakatar da {name}?",
+    yo: "Dá {name} dúró?",
+    ig: "Kwụsị {name}?",
+    fr: "Suspendre {name} ?",
+    pt: "Suspender {name}?",
+    sw: "Kusimamisha {name}?",
+    ar: "تعليق {name}؟",
+    tw: "Gyae {name}?",
+    zu: "Misa i-{name}?",
+  },
+  /**
+   * Deliberately not a second copy of `suspendNotice`: it says what
+   * happens at the instant of confirming, which is the part the panel's
+   * own sentence states in the abstract.
+   */
+  suspendConfirmBody: {
+    en: "Everyone at {name} loses the ability to open a case the moment you confirm — including anyone in the middle of one. Nothing is deleted, and restoring gives it all back.",
+    ha: "Duk mutanen {name} za su rasa ikon buɗe shari'a nan take idan ka tabbatar — har da duk wanda ke tsakiyar ɗaya. Ba a share komai ba, kuma maidowa zai mayar da komai.",
+    yo: "Gbogbo ènìyàn ní {name} yóò pàdánù agbára láti ṣí ẹjọ́ lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́sí — títí kan ẹnikẹ́ni tí ó wà láàrin ọ̀kan. A kò pa ohunkóhun rẹ́, dídápadà yóò sì mú gbogbo rẹ̀ padà.",
+    ig: "Onye ọ bụla nọ na {name} ga-enweghịzi ike imeghe ikpe ozugbo ị kwadoro — gụnyere onye ọ bụla nọ n'etiti otu. Ọ dịghị ihe a na-ehichapụ, iweghachi ya ga-eweghachikwa ihe niile.",
+    fr: "Toutes les personnes de {name} perdent la possibilité d'ouvrir un dossier dès que vous confirmez — y compris celles qui sont en plein travail. Rien n'est supprimé, et restaurer redonne tout.",
+    pt: "Todas as pessoas de {name} perdem a possibilidade de abrir um processo assim que confirmar — incluindo quem estiver a meio de um. Nada é eliminado, e restaurar devolve tudo.",
+    sw: "Kila mtu katika {name} anapoteza uwezo wa kufungua kesi mara tu unapothibitisha — pamoja na yeyote aliye katikati ya kesi. Hakuna kinachofutwa, na kurejesha kunarudisha kila kitu.",
+    ar: "يفقد جميع أفراد {name} القدرة على فتح أي حالة فور تأكيدك — بمن فيهم من هو في منتصف حالة. لا يُحذف شيء، وتعيد الاستعادة كل شيء.",
+    tw: "Sɛ wopene so ara a, obiara a ɔwɔ {name} rentumi mmue asɛm bio — a wɔn a wɔgu so reyɛ bi no ka ho. Wɔmpepa hwee, na sɛ wɔsan de ma no a, ɛbɛsan aba biribiara.",
+    zu: "Wonke umuntu ku-{name} ulahlekelwa amandla okuvula icala ngokushesha uma uqinisekisa — kufaka phakathi noma ubani ophakathi kwelinye. Akukho okususwayo, futhi ukubuyisela kubuyisela konke.",
   },
   restoreNotice: {
     en: "This agency is suspended. Its people cannot open a case. Restoring gives back exactly what it had.",

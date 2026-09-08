@@ -128,6 +128,12 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await page.waitForURL("**/agency/clients");
 
   await page.getByRole("button", { name: "Resend" }).click();
+  // Both acts on a row confirm before they commit, so the row's button
+  // raises the question and the dialog's button answers it. Scoped to
+  // the dialog because the two carry the same word — deliberately: the
+  // confirm restates the act rather than renaming it, the way the
+  // revoke's does.
+  await page.getByRole("dialog").getByRole("button", { name: "Resend" }).click();
   // `RESEND_API_KEY` is "" on this server (see `playwright.config.ts`),
   // so nothing is actually emailed — and the console now says so rather
   // than reporting a success it cannot vouch for. That is the assertion:
@@ -138,6 +144,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   ).toBeVisible();
 
   // Still one invitation, still pending — a resend must not mint a row.
+  // The dialog is gone by now, so the only Resend left is the row's.
   await expect(page.getByRole("button", { name: "Resend" })).toHaveCount(1);
 
   // ---- somebody else, who was forwarded the link ----

@@ -19,16 +19,10 @@ export type StaffSort = (typeof STAFF_SORTS)[number];
 /**
  * The value a column sorts on, which is not always the value it prints.
  *
- * `status` sorts on `INVITATION_STATUS_COPY` — the same entry
- * `InvitationStatusBadge` renders, read at the same locale. The rule is
- * that a column orders rows by the words that are on the screen, so the
- * sort key and the cell must come from one dictionary; two would drift
- * and the table would order rows by words nobody can see.
- *
- * This used to read a hardcoded English label, which was right while the
- * badge rendered one. #71 translated the badge and split that record
- * into `INVITATION_STATUS_VARIANT` and `INVITATION_STATUS_COPY`; the
- * import here was left pointing at the name it deleted.
+ * `status` sorts on `INVITATION_STATUS_COPY`, in the reader's own
+ * locale — the same string `InvitationStatusBadge` prints in the cell.
+ * Sorting on anything else would order the rows by words that are not
+ * on the screen.
  */
 export function staffSortKey(
   invite: ListedInvitation,

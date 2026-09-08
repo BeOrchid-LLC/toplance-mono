@@ -19,14 +19,12 @@ export const INVITATION_ROSTER: {
   sentAgainTemplate: L;
   couldNotEmailTemplate: L;
   revoked: L;
-  confirmResendTitle: L;
-  confirmResendBody: L;
-  confirmResendConfirm: L;
-  confirmResendDismiss: L;
-  confirmRevokeTitle: L;
-  confirmRevokeBody: L;
-  confirmRevokeConfirm: L;
-  confirmRevokeDismiss: L;
+  revokeConfirmTitle: L;
+  revokeConfirmBody: L;
+  keepInvitation: L;
+  resendConfirmTitle: L;
+  resendConfirmBody: L;
+  notNow: L;
 } = {
   resend: {
     en: "Resend",
@@ -88,7 +86,70 @@ export const INVITATION_ROSTER: {
     tw: "Wɔatwa nsato no mu",
     zu: "Isimemo sichithiwe",
   },
-  confirmResendTitle: {
+  /**
+   * Revoke sits next to Resend in every row of both consoles, and the
+   * two do opposite things — one gets somebody in, the other shuts them
+   * out. `{email}` names the address so the question is answerable
+   * without counting rows back up to the header.
+   */
+  revokeConfirmTitle: {
+    en: "Revoke the invitation to {email}?",
+    ha: "A soke gayyatar zuwa {email}?",
+    yo: "Fagilé ìpè sí {email}?",
+    ig: "Kagbuo òkù ahụ e zigaara {email}?",
+    fr: "Révoquer l'invitation envoyée à {email} ?",
+    pt: "Revogar o convite para {email}?",
+    sw: "Batilisha mwaliko kwa {email}?",
+    ar: "إلغاء الدعوة المرسلة إلى {email}؟",
+    tw: "Twa nsato a wɔde kɔmaa {email} no mu?",
+    zu: "Chitha isimemo esiya ku-{email}?",
+  },
+  revokeConfirmBody: {
+    en: "Their link stops working straight away, and it cannot be turned back on — getting them in after this means sending a fresh invitation.",
+    ha: "Hanyar haɗin su za ta daina aiki nan take, kuma ba za a iya mayar da ita ba — shigar da su bayan wannan yana nufin aika sabuwar gayyata.",
+    yo: "Ọ̀nà àsopọ̀ wọn yóò dáwọ́ ṣíṣiṣẹ́ dúró lẹ́sẹ̀kẹsẹ̀, a kò sì lè tún un pada — mímú wọn wọlé lẹ́yìn èyí túmọ̀ sí fífi ìpè tuntun ránṣẹ́.",
+    ig: "Njikọ ha ga-akwụsị ịrụ ọrụ ozugbo, a pụghịkwa iweghachi ya — ime ka ha banye mgbe nke a gasịrị pụtara izipu òkù ọhụrụ.",
+    fr: "Leur lien cesse aussitôt de fonctionner et ne peut pas être réactivé — pour les faire entrer ensuite, il faudra envoyer une nouvelle invitation.",
+    pt: "A ligação deixa de funcionar de imediato e não pode ser reativada — para os fazer entrar depois disto, terá de enviar um convite novo.",
+    sw: "Kiungo chao kinaacha kufanya kazi mara moja, na hakiwezi kurudishwa — kuwaingiza baada ya hapa kunamaanisha kutuma mwaliko mpya.",
+    ar: "يتوقف رابطهم عن العمل فورًا، ولا يمكن إعادة تفعيله — وإدخالهم بعد ذلك يعني إرسال دعوة جديدة.",
+    tw: "Wɔn link no bɛgyae adwumayɛ ntɛm ara, na wɔrentumi nsan mmue bio — sɛ wopɛ sɛ wɔba mu akyire yi a, ɛsɛ sɛ woto nsato foforɔ.",
+    zu: "Isixhumanisi sabo siyeka ukusebenza ngokushesha, futhi asikwazi ukubuyiselwa — ukubangenisa ngemva kwalokhu kusho ukuthumela isimemo esisha.",
+  },
+  /**
+   * Never "Cancel". `OPS_COMMON.cancel` and `revoke` above are the same
+   * word in Hausa, Yoruba, Igbo, Twi and Arabic — "Soke", "Fagilé",
+   * "Kagbuo", "Twa mu", "إلغاء" — so a Cancel/Revoke pair would set two
+   * identical buttons side by side for half the languages this product
+   * speaks, with the destructive one indistinguishable from the way out.
+   * Naming what the dismissal *keeps* is legible in all ten, and
+   * `notNow` does the same job for the resend.
+   */
+  keepInvitation: {
+    en: "Keep it",
+    ha: "Bar ta",
+    yo: "Fi í sílẹ̀",
+    ig: "Hapụ ya",
+    fr: "La garder",
+    pt: "Manter",
+    sw: "Uache",
+    ar: "الإبقاء عليها",
+    tw: "Gyaa no hɔ",
+    zu: "Sigcine",
+  },
+  /**
+   * Resending takes nothing away, so `AGENTS.md` does not oblige it to
+   * ask — it is listed there as additive. It asks anyway, on the
+   * client's call of 2026-09-08: it is a text button at the end of a
+   * table row, a hand's breadth from the revoke, and what it commits
+   * leaves this product entirely — a second letter in somebody's inbox,
+   * which no amount of clicking back can retrieve.
+   *
+   * The address goes in the body rather than the title, because a
+   * resend aimed at a typo is the failure this dialog exists to catch
+   * and it is only catchable if the dialog says where it is aimed.
+   */
+  resendConfirmTitle: {
     en: "Send this invitation again?",
     ha: "A sake aika wannan gayyatar?",
     yo: "Ṣé kí a tún fi ìpè yìí ránṣẹ́?",
@@ -100,7 +161,7 @@ export const INVITATION_ROSTER: {
     tw: "Yɛnsan mfa nsato yi nkɔ?",
     zu: "Thumela lesi simemo futhi?",
   },
-  confirmResendBody: {
+  resendConfirmBody: {
     en: "A new email goes to {email}. The link already sent stays valid.",
     ha: "Sabon saƙo zai je zuwa {email}. Hanyar da aka riga aka aika tana nan da inganci.",
     yo: "Ìmèlì tuntun yóò lọ sí {email}. Ọ̀nà tí a ti fi ránṣẹ́ ṣì wúlò.",
@@ -112,19 +173,7 @@ export const INVITATION_ROSTER: {
     tw: "Email foforɔ bɛkɔ {email}. Nkitahodi a wɔasoma dada no da so wɔ hɔ.",
     zu: "I-imeyili entsha iya ku-{email}. Isixhumanisi esesithunyelwe sisasebenza.",
   },
-  confirmResendConfirm: {
-    en: "Send again",
-    ha: "Sake aikawa",
-    yo: "Tún fi ránṣẹ́",
-    ig: "Zigharia",
-    fr: "Renvoyer",
-    pt: "Reenviar",
-    sw: "Tuma tena",
-    ar: "إعادة الإرسال",
-    tw: "San fa kɔ",
-    zu: "Thumela futhi",
-  },
-  confirmResendDismiss: {
+  notNow: {
     en: "Not now",
     ha: "Ba yanzu ba",
     yo: "Kì í ṣe nísinsìnyí",
@@ -135,61 +184,5 @@ export const INVITATION_ROSTER: {
     ar: "ليس الآن",
     tw: "Ɛnyɛ seesei",
     zu: "Hhayi manje",
-  },
-  confirmRevokeTitle: {
-    en: "Revoke this invitation?",
-    ha: "A soke wannan gayyatar?",
-    yo: "Ṣé kí a fagilé ìpè yìí?",
-    ig: "Kagbuo òkù a?",
-    fr: "Révoquer cette invitation ?",
-    pt: "Revogar este convite?",
-    sw: "Batilisha mwaliko huu?",
-    ar: "إلغاء هذه الدعوة؟",
-    tw: "Yɛntwa nsato yi mu?",
-    zu: "Chitha lesi simemo?",
-  },
-  confirmRevokeBody: {
-    en: "{email} will not be able to use the link they were sent. You can invite them again afterwards.",
-    ha: "{email} ba zai iya amfani da hanyar da aka aika masa ba. Kana iya sake gayyatarsa daga baya.",
-    yo: "{email} kò ní lè lo ọ̀nà tí a fi ránṣẹ́ sí i. O lè tún pè é lẹ́yìn náà.",
-    ig: "{email} agaghị enwe ike iji njikọ e zigaara ya. Ị nwere ike ịkpọ ya ọzọ ma emesịa.",
-    fr: "{email} ne pourra plus utiliser le lien qui lui a été envoyé. Vous pourrez l'inviter à nouveau ensuite.",
-    pt: "{email} não poderá usar o link que recebeu. Pode convidá-lo novamente depois.",
-    sw: "{email} hataweza kutumia kiungo alichotumiwa. Unaweza kumwalika tena baadaye.",
-    ar: "لن يتمكن {email} من استخدام الرابط المُرسَل إليه. يمكنك دعوته مرة أخرى لاحقًا.",
-    tw: "{email} rentumi mfa nkitahodi a wɔde kɔmaa no no nni dwuma. Wubetumi asan ato nsa afrɛ no akyiri yi.",
-    zu: "{email} ngeke akwazi ukusebenzisa isixhumanisi asithunyelwe. Ungaphinda ummeme kamuva.",
-  },
-  confirmRevokeConfirm: {
-    en: "Revoke invitation",
-    ha: "Soke gayyatar",
-    yo: "Fagilé ìpè náà",
-    ig: "Kagbuo òkù ahụ",
-    fr: "Révoquer l'invitation",
-    pt: "Revogar convite",
-    sw: "Batilisha mwaliko",
-    ar: "إلغاء الدعوة",
-    tw: "Twa nsato no mu",
-    zu: "Chitha isimemo",
-  },
-  /**
-   * Never "Cancel". `OPS_COMMON.cancel` and `revoke` above are the same
-   * word in Hausa, Yoruba, Igbo, Twi and Arabic — "Soke", "Fagilé",
-   * "Kagbuo", "Twa mu", "إلغاء" — so a Cancel/Revoke pair would set two
-   * identical buttons side by side for half the languages this product
-   * speaks, with the destructive one indistinguishable from the way out.
-   * Naming what the dismissal *keeps* is legible in all ten.
-   */
-  confirmRevokeDismiss: {
-    en: "Keep invitation",
-    ha: "Bar gayyatar",
-    yo: "Fi ìpè náà sílẹ̀",
-    ig: "Hapụ òkù ahụ",
-    fr: "Conserver l'invitation",
-    pt: "Manter convite",
-    sw: "Acha mwaliko",
-    ar: "الإبقاء على الدعوة",
-    tw: "Gyaw nsato no",
-    zu: "Gcina isimemo",
   },
 };

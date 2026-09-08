@@ -24,6 +24,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
+import { opsAccount } from "@/app/[locale]/ops/account";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -56,6 +57,8 @@ export default async function OpsCorridorsPage({
     return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
   }
   const { profile, actor } = gate;
+
+  const account = await opsAccount(profile, actor, locale);
 
   const params = await searchParams;
   const { q, state, purpose } = params;
@@ -153,12 +156,8 @@ export default async function OpsCorridorsPage({
       })}
       activeId="routes"
       railTitle="Toplance"
-      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      account={{
-        name: profile.fullName,
-        email: profile.email,
-        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
-      }}
+      railSubtitle={account.subtitle}
+      account={account}
       title={OPS_CORRIDORS.heading[locale]}
       lead={OPS_CORRIDORS.intro[locale]}
       actions={

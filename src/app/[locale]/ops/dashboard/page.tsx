@@ -38,6 +38,7 @@ import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
+import { opsAccount } from "@/app/[locale]/ops/account";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -106,15 +107,15 @@ export default async function OpsDashboardPage() {
   // errors, because no analytics write is worth failing a page load for.
   void track("toplance.dashboard_viewed", {}, actor.userId);
 
-  const subtitle = `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`;
+  const account = await opsAccount(profile, actor, locale);
 
   return (
     <AdminShell
       groups={opsAdminNav({ locale, ...counts, isOwner: true })}
       activeId="business"
       railTitle="Toplance"
-      railSubtitle={subtitle}
-      account={{ name: profile.fullName, email: profile.email, subtitle }}
+      railSubtitle={account.subtitle}
+      account={account}
       title={OPS_COMMON.nav.dashboard[locale]}
       lead="The state of the business — clients, revenue, the review desk and where demand is going."
       actions={

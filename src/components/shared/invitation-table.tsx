@@ -11,10 +11,10 @@ import {
 import type { ListedInvitation } from "@/lib/data/invitations";
 import type { SortDir } from "@/lib/domain/sorting";
 import type { StaffSort } from "@/lib/domain/invitation-table";
-import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_STAFF } from "@/lib/i18n/ops-staff";
+import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
 
 function formatDay(value: Date) {
   return value.toLocaleDateString("en-GB", {
@@ -88,9 +88,7 @@ export function InvitationTable({
       id: "status",
       label: OPS_STAFF.tableHead.status[locale],
       sortable: true,
-      cell: (invite) => (
-        <InvitationStatusBadge status={invite.status} locale={locale} />
-      ),
+      cell: (invite) => <InvitationStatusBadge status={invite.status} locale={locale} />,
     },
     {
       id: "invited",
@@ -143,18 +141,16 @@ export function InvitationTable({
           {
             param: "status",
             label: OPS_STAFF.anyStatus[locale],
-            // Every status the enum has, because the copy record is
-            // keyed on `InvitationStatus` — so a status added there
-            // reaches this filter without anybody remembering to list it.
-            options: Object.entries(INVITATION_STATUS_COPY).map(
-              ([value, copy]) => ({
-                value,
-                // The badge's own word, in the reader's language, so the
-                // filter and the cell it filters on never disagree. See
-                // `staffSortKey`.
-                label: copy.label[locale],
-              })
-            ),
+            // Every status the enum has, because the copy record is keyed
+            // on `InvitationStatus` — so a status added there reaches this
+            // filter without anybody remembering to list it.
+            options: Object.entries(INVITATION_STATUS_COPY).map(([value, s]) => ({
+              value,
+              // The badge's own word, in the reader's own language, so
+              // the filter and the cell it filters on never disagree.
+              // See `staffSortKey`.
+              label: s.label[locale],
+            })),
           },
           {
             param: "rank",

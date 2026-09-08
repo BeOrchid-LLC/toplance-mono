@@ -5,6 +5,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Label } from "@/components/ui/label";
 import { addTravelRecord, removeTravelRecord } from "@/app/[locale]/(app)/actions";
 import { TripList, type Trip } from "@/components/shared/trip-list";
@@ -43,6 +44,14 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
       setAdding(false);
     });
 
+  /**
+   * Which trip the confirmation is about, and `null` when it is shut.
+   * Holding the trip rather than a boolean is what lets the dialog name
+   * the country — with a flag alone every row would ask the same
+   * question, which is the one thing this dialog exists to prevent.
+   */
+  const [confirming, setConfirming] = React.useState<Trip | null>(null);
+
   const remove = (trip: Trip) =>
     startTransition(async () => {
       const result = await removeTravelRecord(trip.id);
@@ -50,6 +59,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
         toast.error(result.error);
         return;
       }
+      setConfirming(null);
       toast.success(t(TRAVEL_HISTORY.removedToast).replace("{country}", trip.country));
     });
 
@@ -62,7 +72,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           <button
             type="button"
             aria-label={t(TRAVEL_HISTORY.removeAria).replace("{country}", trip.country)}
-            onClick={() => remove(trip)}
+            onClick={() => setConfirming(trip)}
             disabled={pending}
             className="-my-2 -me-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:bg-surface-2 hover:text-danger"
           >
@@ -139,6 +149,23 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           <Plus /> {t(TRAVEL_HISTORY.addTrip)}
         </Button>
       )}
+
+      <ConfirmDialog
+        open={confirming !== null}
+        onOpenChange={(next) => {
+          if (!next) setConfirming(null);
+        }}
+        title={t(TRAVEL_HISTORY.removeConfirmTitle).replace(
+          "{country}",
+          confirming?.country ?? ""
+        )}
+        body={t(TRAVEL_HISTORY.removeConfirmBody)}
+        confirmLabel={t(TRAVEL_HISTORY.removeConfirmCta)}
+        cancelLabel={t(TRAVEL_HISTORY.keepTrip)}
+        icon={<Trash2 />}
+        pending={pending}
+        onConfirm={() => confirming && remove(confirming)}
+      />
     </div>
   );
 }

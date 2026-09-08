@@ -815,7 +815,12 @@ export async function updateProfile(formData: FormData) {
       .set({ ...set, updatedAt: new Date() })
       .where(eq(profiles.id, actor.userId));
 
+    // All three consoles: one action serves a traveller's profile, an
+    // agent's and a member of staff's, and the name it writes is in the
+    // account block on every page of each.
     revalidatePath("/[locale]/app", "layout");
+    revalidatePath("/[locale]/agency", "layout");
+    revalidatePath("/[locale]/ops", "layout");
     return {};
   } catch (error) {
     const message = toActionError(error);
@@ -874,10 +879,12 @@ export async function uploadAvatar(formData: FormData) {
       actor.userId
     );
 
-    // Both consoles: the same action serves a traveller's profile and an
-    // agent's, and the photo appears in the bar on every page of each.
+    // All three consoles: the same action serves a traveller's profile,
+    // an agent's and a member of staff's, and the photo appears in the
+    // bar or the rail on every page of each.
     revalidatePath("/[locale]/app", "layout");
     revalidatePath("/[locale]/agency", "layout");
+    revalidatePath("/[locale]/ops", "layout");
     return {};
   } catch (error) {
     const message = toActionError(error);

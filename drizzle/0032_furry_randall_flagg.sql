@@ -1,0 +1,2 @@
+ALTER TYPE "public"."application_status" ADD VALUE 'processing' BEFORE 'additional_documents';--> statement-breakpoint
+ALTER TABLE "applications" ADD COLUMN "documents_exported_at" timestamp with time zone;

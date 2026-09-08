@@ -1,6 +1,6 @@
 {
-  "id": "975a30c2-595e-439d-a776-1348bc740fb3",
-  "prevId": "f1742105-b300-4021-acb4-4841bc4d6b73",
+  "id": "01feaefe-de42-4423-a5a0-b086fbe451d8",
+  "prevId": "975a30c2-595e-439d-a776-1348bc740fb3",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1023,6 +1023,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "assignee_id": {
+          "name": "assignee_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1031,7 +1037,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "demo_requests_assignee_idx": {
+          "name": "demo_requests_assignee_idx",
+          "columns": [
+            {
+              "expression": "assignee_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "demo_requests_converted_org_id_organisations_id_fk": {
           "name": "demo_requests_converted_org_id_organisations_id_fk",
@@ -1039,6 +1061,19 @@
           "tableTo": "organisations",
           "columnsFrom": [
             "converted_org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "demo_requests_assignee_id_profiles_id_fk": {
+          "name": "demo_requests_assignee_id_profiles_id_fk",
+          "tableFrom": "demo_requests",
+          "tableTo": "profiles",
+          "columnsFrom": [
+            "assignee_id"
           ],
           "columnsTo": [
             "id"

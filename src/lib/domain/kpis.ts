@@ -257,11 +257,19 @@ export type OperationsKpis = {
   decided: number;
 };
 
-/** The statuses that mean somebody still has work to do. */
+/**
+ * The statuses that mean somebody still has work to do.
+ *
+ * `processing` counts. Nobody at the agency is reading the file while a
+ * mission decides, but the case is open, the traveller is waiting, and
+ * dropping it would make the desk's open count fall every time a
+ * reviewer did their job and lodged one.
+ */
 export const OPEN_STATUSES: readonly ApplicationStatus[] = [
   "collecting_documents",
   "submitted",
   "under_review",
+  "processing",
   "additional_documents",
 ];
 

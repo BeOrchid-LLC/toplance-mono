@@ -1,5 +1,5 @@
 import { after } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { track } from "@/lib/analytics/track";
 import { requireApplicationAccess, toActionError } from "@/lib/auth/guards";
@@ -106,6 +106,51 @@ export async function GET(
       userId
     )
   );
+
+  /**
+   * The one write this read does, and the narrowest one that answers the
+   * client's ask of 7 September.
+   *
+   * Not the status. A `GET` that moves a case would be moved by a
+   * prefetch, a double-click and a reviewer opening the pack a second
+   * time to check something — and the status it moved to would arrive on
+   * the traveller's timeline with no message, which is the one thing
+   * every status change in this product is promised to carry. What the
+   * case screen does with this stamp is *ask*, and a reviewer answers it
+   * with `Mark as lodged` and words of their own.
+   *
+   * `isNull` makes it first-export-only: re-downloading the pack in
+   * October is not a new export, and a prompt that reset itself on every
+   * download would be a nag rather than a nudge. That also makes the
+   * concurrent case safe — two tabs downloading at once leave one row
+   * with the earlier instant, not two rows.
+   *
+   * A traveller taking their own copy sets nothing. They are not the one
+   * carrying the pack to a mission, and `isTraveller` is already
+   * resolved above by the guard both sides share.
+   *
+   * Inside `after()` so it cannot delay a byte of the archive, and
+   * swallowed for the same reason `track` is: a failed timestamp is a
+   * missing prompt on a console, and no prompt is worth refusing
+   * somebody their own documents over.
+   */
+  if (!isTraveller) {
+    after(async () => {
+      try {
+        await db
+          .update(applications)
+          .set({ documentsExportedAt: new Date() })
+          .where(
+            and(
+              eq(applications.id, applicationId),
+              isNull(applications.documentsExportedAt)
+            )
+          );
+      } catch {
+        // Deliberately silent — see above.
+      }
+    });
+  }
 
   return new Response(zipEntries(entries()), {
     headers: {

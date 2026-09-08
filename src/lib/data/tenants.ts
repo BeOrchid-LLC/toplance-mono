@@ -107,9 +107,16 @@ export type TenantDetail = TenantRow & {
 /**
  * Which headline number a raw status contributes to.
  *
- * Exhaustive over the enum by type, so adding an eighth
+ * Exhaustive over the enum by type, so adding a ninth
  * `application_status` value is a compile error here rather than a
  * silent zero in a console someone is reading to make a decision.
+ *
+ * The split is whose move it is, not who is working. `inProgress` is the
+ * traveller's court; `withReviewer` is everything that has left it and
+ * has not been decided. `processing` sits in the second: the agency is
+ * not reading the file any more, but the traveller cannot do anything
+ * about it either, and counting a lodged case as "in progress" would
+ * tell BeOrchid an agency was sitting on work it had already sent.
  */
 const BUCKET: Record<
   ApplicationStatus,
@@ -120,6 +127,7 @@ const BUCKET: Record<
   additional_documents: "inProgress",
   submitted: "withReviewer",
   under_review: "withReviewer",
+  processing: "withReviewer",
   approved: "approved",
   rejected: "rejected",
 };

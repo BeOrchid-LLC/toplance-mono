@@ -16,10 +16,15 @@ import type { Locale } from "@/lib/i18n/locales";
  * in the product. An audit-log reader still belongs here when it is
  * built.
  *
- * The third entry renders only for an owner, and the page turns anyone
- * else away: who works at BeOrchid, and at what rank, is a question
- * about running the platform. Hiding the link is the courtesy; the
- * redirect is the guard.
+ * The last two render only for an owner, and both pages turn anyone else
+ * away: who works at BeOrchid and at what rank, and what the business
+ * collected this month, are questions about running the platform. Hiding
+ * the links is the courtesy; the gate is the guard.
+ *
+ * `/ops/dashboard` sits last rather than first despite being an
+ * overview. `AppNav.isActive` matches item 0 exactly as the section
+ * root and `/ops` redirects to it, so a reviewer — who never sees the
+ * dashboard — would land on a screen that refuses them.
  *
  * Nothing that reaches a traveller's case ever does. The v1.3 tenancy
  * moved review into the agency and deleted the case queue and case
@@ -39,20 +44,26 @@ export const opsNav: NavItem[] = [
   { href: "/ops/corridors", label: "Routes" },
   { href: "/ops/tenants", label: "Agencies" },
   { href: "/ops/staff", label: "Colleagues" },
+  { href: "/ops/dashboard", label: "Dashboard" },
 ];
 
 /**
  * `opsNav`, with each label resolved to `locale` — what every ops page
  * actually renders.
  *
- * `isOwner` drops the colleagues tab for a reviewer. It is not the
- * guard: `/ops/staff` redirects them itself, because a hidden link is a
- * courtesy and a typed URL is not an exception.
+ * `isOwner` drops the colleagues and dashboard tabs for a reviewer. It
+ * is not the guard: both pages turn them away themselves, because a
+ * hidden link is a courtesy and a typed URL is not an exception.
  */
 export function localizedOpsNav(locale: Locale, isOwner = false): NavItem[] {
   return [
     { ...opsNav[0], label: OPS_COMMON.nav.routes[locale] },
     { ...opsNav[1], label: OPS_COMMON.nav.tenants[locale] },
-    ...(isOwner ? [{ ...opsNav[2], label: OPS_COMMON.nav.staff[locale] }] : []),
+    ...(isOwner
+      ? [
+          { ...opsNav[2], label: OPS_COMMON.nav.staff[locale] },
+          { ...opsNav[3], label: OPS_COMMON.nav.dashboard[locale] },
+        ]
+      : []),
   ];
 }

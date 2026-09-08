@@ -1,5 +1,6 @@
 import {
   Building2,
+  ChartColumn,
   CreditCard,
   LayoutDashboard,
   Route,
@@ -26,6 +27,9 @@ export const ADMIN_ICONS = {
   routes: Route,
   agencies: Building2,
   colleagues: ShieldCheck,
+  // Bars rather than the agency console's `overview` panel: this row
+  // leads to revenue and a chart, not to a summary of your own work.
+  business: ChartColumn,
   // Agency console — `/agency`.
   overview: LayoutDashboard,
   clients: UserRoundCheck,

@@ -19,21 +19,45 @@ export type Counter = {
    * having none.
    */
   sub?: string;
-  tone: string;
+  /**
+   * A text token — `text-warning-ink` and so on, never a raw colour.
+   * Optional: a figure only earns a colour when its value changes what
+   * somebody does, and a row where every counter is tinted has told the
+   * reader nothing.
+   */
+  tone?: string;
 };
 
 /**
- * The laminated headline strip at the top of an ops screen: up to four
- * counters in a responsive grid, on the same glass surface across every
- * screen that has one. Lifted out of `/ops/corridors/page.tsx`, which
- * keeps its own inline copy — this component is for the screens built
- * after it.
+ * The laminated headline strip at the top of an ops screen: a row of
+ * counters on the same glass surface across every screen that has one.
+ * Lifted out of `/ops/corridors/page.tsx`, which keeps its own inline
+ * copy — this component is for the screens built after it.
+ *
+ * `columns` is the widest the grid ever goes. Four is the common case;
+ * the dashboard's money and operations rows want five, and five tiles in
+ * an `lg:grid-cols-4` grid drop one onto a row of its own.
  */
-export function CounterRow({ counters }: { counters: Counter[] }) {
+export function CounterRow({
+  counters,
+  columns = 4,
+  className,
+}: {
+  counters: Counter[];
+  columns?: 3 | 4 | 5;
+  className?: string;
+}) {
   return (
-    <div className="laminate mt-8 overflow-hidden rounded-lg">
+    <div className={cn("laminate mt-8 overflow-hidden rounded-lg", className)}>
       <span aria-hidden className="laminate-sheen" />
-      <dl className="relative z-[1] grid sm:grid-cols-2 lg:grid-cols-4">
+      <dl
+        className={cn(
+          "relative z-[1] grid sm:grid-cols-2",
+          columns === 3 && "lg:grid-cols-3",
+          columns === 4 && "lg:grid-cols-4",
+          columns === 5 && "lg:grid-cols-5"
+        )}
+      >
         {counters.map((c, i) => (
           <div
             key={c.label}
@@ -45,7 +69,12 @@ export function CounterRow({ counters }: { counters: Counter[] }) {
             )}
           >
             <dt className="tag">{c.label}</dt>
-            <dd className={cn("num mt-2 text-[32px] font-semibold leading-none", c.tone)}>
+            <dd
+              className={cn(
+                "num mt-2 text-[32px] font-semibold leading-none",
+                c.tone ?? "text-ink"
+              )}
+            >
               {c.value}
             </dd>
             {c.sub && <dd className="t-muted mt-2">{c.sub}</dd>}

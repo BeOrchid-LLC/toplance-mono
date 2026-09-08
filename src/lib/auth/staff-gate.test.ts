@@ -42,6 +42,59 @@ describe("decideStaffGate", () => {
       "ok"
     );
   });
+
+  /**
+   * The director's dashboard carries revenue, and `staff_role` already
+   * distinguishes an owner from a reviewer. Until this, nothing did
+   * anything with that distinction — both ops screens gate on staff-ness
+   * alone.
+   */
+  describe("on a screen that asks for a specific staff role", () => {
+    it("turns a reviewer away from an owner-only screen", () => {
+      expect(
+        decideStaffGate({
+          isStaff: true,
+          twoFactorEnabled: true,
+          staffRole: "reviewer",
+          requireRole: "owner",
+        })
+      ).toBe("refuse-role");
+    });
+
+    it("lets an owner through", () => {
+      expect(
+        decideStaffGate({
+          isStaff: true,
+          twoFactorEnabled: true,
+          staffRole: "owner",
+          requireRole: "owner",
+        })
+      ).toBe("ok");
+    });
+
+    it("refuses a reviewer outright rather than sending them to enrol first", () => {
+      // Enrolling an authenticator app would not get them in, so asking
+      // for one is a walk to a door that stays shut.
+      expect(
+        decideStaffGate({
+          isStaff: true,
+          twoFactorEnabled: false,
+          staffRole: "reviewer",
+          requireRole: "owner",
+        })
+      ).toBe("refuse-role");
+    });
+
+    it("leaves screens that ask for no particular role exactly as they were", () => {
+      expect(
+        decideStaffGate({
+          isStaff: true,
+          twoFactorEnabled: true,
+          staffRole: "reviewer",
+        })
+      ).toBe("ok");
+    });
+  });
 });
 
 /**

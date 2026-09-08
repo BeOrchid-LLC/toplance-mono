@@ -3,7 +3,15 @@ import "server-only";
 import { and, desc, eq, gt, isNotNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { payments } from "@/lib/db/schema";
+import { applications, organisations, payments } from "@/lib/db/schema";
+import { activeRateCard } from "@/lib/data/billing";
+import { quote, type RateCard } from "@/lib/domain/pricing";
+import {
+  recentCycles,
+  statusFor,
+  type Invoice,
+  type Settlement,
+} from "@/lib/domain/payments";
 import type { PaymentKind, PaymentStatus } from "@/lib/payments/provider";
 
 export type Payment = typeof payments.$inferSelect;
@@ -140,4 +148,149 @@ export async function listPaymentsForOrg(orgId: string): Promise<Payment[]> {
     .from(payments)
     .where(eq(payments.orgId, orgId))
     .orderBy(desc(payments.createdAt));
+}
+
+/**
+ * How much history the director's dashboard charts. Six cycles is two
+ * quarters — enough to see a trend, few enough that the read below stays
+ * three queries whatever the client count.
+ */
+export const INVOICE_HISTORY_CYCLES = 6;
+
+/**
+ * One invoice per client per billing cycle, newest cycle first.
+ *
+ * An invoice is not stored. A client is billed for every cycle since it
+ * signed up, including the quiet ones — the model is a monthly fee per
+ * business *plus* a fee per application, so a month with no completed
+ * applications is still a month of service and still carries the base
+ * fee. That is arithmetic over rows the database already holds, and
+ * materialising it would be a second copy of the pricing rules to keep
+ * in step with `quote`.
+ *
+ * Settlement comes from `payments`, and only from `payments`. A cycle
+ * with no paid row against it reads `open`, never `paid` — see
+ * `statusFor`. On a product that has taken no payments yet this makes
+ * the whole Collected column $0, which is the point: the alternative is
+ * a plausible number in a board pack.
+ *
+ * Reads organisations, billable applications and subscription payments
+ * in three queries and does the grouping here rather than in SQL. The
+ * alternative is a `generate_series` join against each organisation's
+ * own anniversary, which would push the anniversary clamp documented in
+ * `cycleFor` into a second implementation written in SQL — and two
+ * implementations of a billing boundary is how a business gets charged
+ * twice for February.
+ */
+export async function listInvoices(
+  options: { now?: Date; cycles?: number } = {}
+): Promise<Invoice[]> {
+  const now = options.now ?? new Date();
+  const historyLength = options.cycles ?? INVOICE_HISTORY_CYCLES;
+
+  const [orgs, billable, settlements, card] = await Promise.all([
+    db
+      .select({
+        id: organisations.id,
+        name: organisations.name,
+        createdAt: organisations.createdAt,
+      })
+      .from(organisations),
+    db
+      .select({
+        orgId: applications.orgId,
+        billableAt: applications.billableAt,
+      })
+      .from(applications)
+      .where(isNotNull(applications.billableAt)),
+    // Subscriptions only. A client's own per-application fee is money
+    // between a traveller and Toplance; it settles nothing on the
+    // agency's monthly bill, and counting it here would report an
+    // agency as having paid a cycle its travellers paid for.
+    db
+      .select({
+        orgId: payments.orgId,
+        status: payments.status,
+        paidAt: payments.paidAt,
+        periodStart: payments.periodStart,
+        createdAt: payments.createdAt,
+      })
+      .from(payments)
+      .where(eq(payments.kind, "agency_subscription")),
+    activeRateCard(now),
+  ]);
+
+  // Grouped once rather than filtered per cycle: with six cycles a
+  // client, the naive form walks the whole application list 6n times.
+  const billedByOrg = new Map<string, number[]>();
+  for (const row of billable) {
+    if (!row.orgId || !row.billableAt) continue;
+    const stamps = billedByOrg.get(row.orgId);
+    const at = row.billableAt.getTime();
+    if (stamps) stamps.push(at);
+    else billedByOrg.set(row.orgId, [at]);
+  }
+
+  const paidByOrg = new Map<string, { at: number; row: Settlement }[]>();
+  for (const row of settlements) {
+    if (!row.orgId) continue;
+    // `period_start` is what the payment was *for*; `created_at` is when
+    // it was taken. The first is the truthful key and is set on every
+    // subscription the checkout writes, but it is nullable in the
+    // schema, so a row without one falls back to when it landed rather
+    // than being dropped from the books.
+    const at = (row.periodStart ?? row.createdAt).getTime();
+    const entry = { at, row: { status: row.status, paidAt: row.paidAt } };
+    const rows = paidByOrg.get(row.orgId);
+    if (rows) rows.push(entry);
+    else paidByOrg.set(row.orgId, [entry]);
+  }
+
+  const invoices: Invoice[] = [];
+
+  for (const org of orgs) {
+    const stamps = billedByOrg.get(org.id) ?? [];
+    const paid = paidByOrg.get(org.id) ?? [];
+
+    for (const cycle of recentCycles(org.createdAt, now, historyLength)) {
+      const start = cycle.start.getTime();
+      // `end` is exclusive, matching `cycleFor` — an application
+      // completed at the instant the next cycle opens belongs to that
+      // one, so no application is billed in two cycles or in none.
+      const end = cycle.end.getTime();
+      const count = stamps.filter((at) => at >= start && at < end).length;
+      const settled = paid.filter((p) => p.at >= start && p.at < end).map((p) => p.row);
+
+      invoices.push(invoiceFor(org, cycle, count, settled, card, now));
+    }
+  }
+
+  return invoices;
+}
+
+/** One client, one cycle, priced from the rate card and settled from `payments`. */
+function invoiceFor(
+  org: { id: string; name: string },
+  cycle: { start: Date; end: Date },
+  applicationCount: number,
+  settlements: Settlement[],
+  card: RateCard,
+  now: Date
+): Invoice {
+  const priced = quote(applicationCount, card);
+  const { status, paidAt } = statusFor(cycle.end, settlements, now);
+
+  return {
+    id: `inv_${org.id}_${cycle.start.toISOString().slice(0, 10)}`,
+    orgId: org.id,
+    orgName: org.name,
+    cycleStart: cycle.start,
+    cycleEnd: cycle.end,
+    applications: applicationCount,
+    baseFeeMinor: priced.baseFeeMinor,
+    amountMinor: priced.totalMinor,
+    currency: priced.currency,
+    status,
+    paidAt,
+  };
 }

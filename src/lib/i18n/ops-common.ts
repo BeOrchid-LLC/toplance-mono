@@ -35,7 +35,7 @@ export const OPS_COMMON: {
   caseWord: { one: L; other: L };
   documentWord: { one: L; other: L };
   tripWord: { one: L; other: L };
-  nav: { caseQueue: L; routes: L; tenants: L; staff: L };
+  nav: { caseQueue: L; routes: L; tenants: L; staff: L; dashboard: L };
   purpose: {
     tourism: L;
     work: L;
@@ -307,6 +307,23 @@ export const OPS_COMMON: {
     },
   },
   nav: {
+    /**
+     * The same word the agency console uses for its own overview
+     * (`AGENCY.navDashboard`), deliberately: a director who reads both
+     * consoles should not have to learn two names for the same idea.
+     */
+    dashboard: {
+      en: "Dashboard",
+      ha: "Bayyani",
+      yo: "Àkópọ̀",
+      ig: "Nchịkọta",
+      fr: "Tableau de bord",
+      pt: "Painel",
+      sw: "Dashibodi",
+      ar: "لوحة التحكم",
+      tw: "Nhwɛso",
+      zu: "Ideshibhodi",
+    },
     staff: {
       en: "Colleagues",
       ha: "Abokan aiki",

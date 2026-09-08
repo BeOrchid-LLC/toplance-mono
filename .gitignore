@@ -85,3 +85,6 @@ desktop.ini
 
 # Playwright MCP screenshots and snapshots
 .playwright-mcp/
+
+# Local verification screenshots, written by hand during development.
+e2e-artifacts/

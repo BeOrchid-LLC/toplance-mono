@@ -77,9 +77,9 @@ export function opsAdminNav({
    */
   openDemoRequests: number;
   /**
-   * Drops the colleagues row for a reviewer. Not the guard —
-   * `/ops/staff` turns them away itself, because a hidden link is a
-   * courtesy and a typed URL is not an exception.
+   * Drops the colleagues and dashboard rows for a reviewer. Not the
+   * guard — both pages turn them away themselves, because a hidden link
+   * is a courtesy and a typed URL is not an exception.
    */
   isOwner?: boolean;
 }): AdminNavGroup[] {
@@ -112,6 +112,15 @@ export function opsAdminNav({
                 href: "/ops/staff",
                 label: OPS_COMMON.nav.staff[locale],
                 icon: "colleagues" as const,
+              },
+              {
+                // No badge. Every figure on this screen is one a director
+                // goes and reads; none of them is a queue that shortens
+                // because somebody acted on it.
+                id: "business",
+                href: "/ops/dashboard",
+                label: OPS_COMMON.nav.dashboard[locale],
+                icon: "business" as const,
               },
             ]
           : []),

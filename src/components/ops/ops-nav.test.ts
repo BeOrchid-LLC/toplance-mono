@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { localizedOpsNav, opsNav } from "@/components/ops/ops-nav";
+import { ADMIN_ICONS } from "@/components/shared/admin-icons";
+import { opsAdminNav } from "@/components/shared/admin-nav";
 
 describe("opsNav", () => {
   it("carries the corridors entry", () => {
@@ -56,5 +58,68 @@ describe("the colleagues entry", () => {
       "/ops/corridors",
       "/ops/tenants",
     ]);
+  });
+});
+
+/**
+ * `/ops/dashboard` refuses anyone who is not an owner, so offering a
+ * reviewer the link would be offering them a refusal — and a nav row
+ * that turns you away is worse than no nav row. The bar and the gate
+ * have to agree; these pin that they do.
+ */
+describe("the dashboard entry", () => {
+  it("comes last, so /ops never redirects a reviewer at a refusal", () => {
+    // `AppNav.isActive` matches item 0 exactly as the section root and
+    // `/ops` redirects to it. An overview at the front would land every
+    // reviewer on the one screen they cannot open.
+    expect(opsNav[0].href).toBe("/ops/corridors");
+    expect(opsNav.at(-1)?.href).toBe("/ops/dashboard");
+  });
+
+  it("is offered to an owner and withheld from a reviewer", () => {
+    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/dashboard");
+    expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain(
+      "/ops/dashboard"
+    );
+  });
+});
+
+describe("opsAdminNav", () => {
+  const counts = { pendingRoutes: 0, openDemoRequests: 0 };
+  const hrefs = (isOwner: boolean) =>
+    opsAdminNav({ locale: "en", ...counts, isOwner }).flatMap((g) =>
+      g.items.map((i) => i.href)
+    );
+
+  /**
+   * The rail is what actually renders — `localizedOpsNav` and this list
+   * are two answers to the same question, and the drift they were both
+   * written to prevent would come back the moment they disagreed about
+   * who may see what.
+   */
+  it("shows the dashboard to an owner and hides it from a reviewer", () => {
+    expect(hrefs(true)).toContain("/ops/dashboard");
+    expect(hrefs(false)).not.toContain("/ops/dashboard");
+  });
+
+  it("agrees with the top-bar nav on every destination", () => {
+    expect(hrefs(true).sort()).toEqual(
+      localizedOpsNav("en", true)
+        .map((i) => i.href)
+        .sort()
+    );
+    expect(hrefs(false).sort()).toEqual(
+      localizedOpsNav("en", false)
+        .map((i) => i.href)
+        .sort()
+    );
+  });
+
+  it("hangs every row on an icon the table actually has", () => {
+    for (const group of opsAdminNav({ locale: "en", ...counts, isOwner: true })) {
+      for (const item of group.items) {
+        expect(ADMIN_ICONS).toHaveProperty(item.icon);
+      }
+    }
   });
 });

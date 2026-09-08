@@ -69,6 +69,50 @@ as a named environment tier.
 - Extend the shared renderer when a new Markdown element is needed; do not create
   page-specific Markdown implementations.
 
+# Destructive controls confirm before they commit
+
+Decided 2026-09-08, at the client's request, after the argument recorded in
+`src/components/ops/tenant-controls.tsx`. It applies to anyone working in this
+repo, people and agents alike.
+
+**When you build a control that takes something away, it asks first.** Route it
+through `src/components/shared/confirm-dialog.tsx` rather than assembling a
+dialog at the call site — a rule with ten implementations is ten rules.
+
+A control is destructive when committing it removes access, deletes data, or
+stops work someone else is in the middle of. Publishing, approving, sending back
+for changes and saving a form are not: they add or change something without
+taking anything away.
+
+Every destructive control in the product today, and what each one asks:
+
+| Control | Where | Why it qualifies |
+|---|---|---|
+| Suspend agency | `ops/tenant-controls.tsx` | every member stops being able to open a case, at once |
+| Demote an owner | `ops/tenant-controls.tsx` | takes the owner's controls off a person; only this direction asks |
+| Remove a document | `app/document-row.tsx` | deletes the stored file; the button says "Replace" but nothing replaces it |
+| Remove a trip | `app/travel-history.tsx` | gone from travel history for good, from a bare icon in a list of alike rows |
+| Revoke an invitation | `shared/invitation-actions.tsx` | the link dies on the spot and there is no un-revoke |
+
+`CorridorDecision` is the worked example of the other kind and deliberately does
+not confirm: approving a corridor publishes something, it takes nothing away.
+`restoreTenant`, promoting a member and resending an invitation are likewise
+additive.
+
+Two things the rule is not:
+
+- **Not a substitute for saying what happens.** "Are you sure?" is not a
+  confirmation, it is a speed bump. The dialog's body says, in the present
+  tense, what lands the moment the button commits — and says something the
+  operator has not already read on the page behind it.
+- **Not applied to the undo.** The reverse of a destructive action gives
+  something back, so it commits on the click. Gating the way out of a mistake
+  makes recovery harder than the mistake was.
+
+If you think an action is genuinely the exception, say so in the review rather
+than skipping the dialog quietly, and leave the reasoning in a comment where the
+next person will find it.
+
 # Known deviations in this repo
 
 Recorded so they are neither perpetuated nor silently "fixed" without a plan.

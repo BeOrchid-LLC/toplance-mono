@@ -25,6 +25,10 @@ export const DOCUMENT_ROW: {
   replaceFile: L;
   upload: L;
   removedToast: L;
+  removeConfirmTitle: L;
+  removeConfirmBody: L;
+  removeConfirmCta: L;
+  cancel: L;
   openFailed: L;
   seeExample: L;
   hideExample: L;
@@ -162,6 +166,61 @@ export const DOCUMENT_ROW: {
     ar: "تمت إزالة {name}",
     tw: "Woayi {name} afiri hɔ",
     zu: "{name} isusiwe",
+  },
+  /**
+   * The button says "Replace", but nothing is replaced until a new file
+   * is chosen: the row goes back to empty and the stored file is gone.
+   * This is the one place a traveller can undo a reviewer's verdict on
+   * their own document by accident, so it asks. `{name}` is the
+   * requirement's own title, which stays in English per the brief.
+   */
+  removeConfirmTitle: {
+    en: "Remove {name}?",
+    ha: "A cire {name}?",
+    yo: "Yọ {name} kúrò?",
+    ig: "Wepụ {name}?",
+    fr: "Supprimer {name} ?",
+    pt: "Remover {name}?",
+    sw: "Ondoa {name}?",
+    ar: "إزالة {name}؟",
+    tw: "Yi {name} firi hɔ?",
+    zu: "Susa i-{name}?",
+  },
+  removeConfirmBody: {
+    en: "The file you sent is deleted and the checklist row goes back to empty. Nothing replaces it until you upload again, and a document that was already checked has to be checked afresh.",
+    ha: "Za a share fayil ɗin da ka aika kuma layin jerin zai koma babu komai. Babu abin da zai maye gurbinsa sai ka sake aikawa, kuma takardar da aka riga aka duba dole a sake duba ta.",
+    yo: "A ó pa fáìlì tí o rán níṣẹ́ rẹ́, ọ̀wọ́ àkọsílẹ̀ náà yóò sì padà di òfìfo. Kò sí ohun tí yóò rọ́pò rẹ̀ àyàfi tí o bá tún gbé e sókè, ìwé tí a ti yẹ̀wò tẹ́lẹ̀ yóò sì nílò àyẹ̀wò tuntun.",
+    ig: "A ga-ehichapụ faịlụ ị zitere, ahịrị ndepụta ahụ ga-alaghachikwa n'efu. Ọ dịghị ihe ga-anọchi ya ruo mgbe ị bugotere ọzọ, a ga-enyochakwa akwụkwọ e nyochaworo ọhụrụ.",
+    fr: "Le fichier que vous avez envoyé est supprimé et la ligne de la liste redevient vide. Rien ne le remplace tant que vous n'en envoyez pas un autre, et un document déjà vérifié devra l'être à nouveau.",
+    pt: "O ficheiro que enviou é eliminado e a linha da lista volta a ficar vazia. Nada o substitui até enviar outro, e um documento já verificado terá de ser verificado de novo.",
+    sw: "Faili ulilotuma linafutwa na safu ya orodha inarudi tupu. Hakuna kinachochukua nafasi yake hadi upakie tena, na hati iliyokwisha kaguliwa itabidi ikaguliwe upya.",
+    ar: "يُحذف الملف الذي أرسلته وتعود صفوف القائمة فارغة. لا شيء يحل محله حتى ترفع ملفًا آخر، والمستند الذي جرى التحقق منه سيلزم التحقق منه من جديد.",
+    tw: "Wɔbɛpepa fael a wode kɔeɛ no, na nkyerɛwee no bɛsan ayɛ hunu. Biribiara rensi ananmu kɔsi sɛ wobɛsan de bi akɔ, na krataa a wɔahwɛ mu dada no, ɛsɛ sɛ wɔsan hwɛ mu foforɔ.",
+    zu: "Ifayela olithumele liyasuswa futhi umugqa wohlu ubuyela ube ngaphandle kwalutho. Akukho okuthatha indawo yalo uze ulayishe futhi, futhi idokhumenti esivele ihloliwe kuzodingeka ihlolwe kabusha.",
+  },
+  removeConfirmCta: {
+    en: "Remove it",
+    ha: "Cire shi",
+    yo: "Yọ ọ́ kúrò",
+    ig: "Wepụ ya",
+    fr: "Le supprimer",
+    pt: "Remover",
+    sw: "Iondoe",
+    ar: "إزالته",
+    tw: "Yi firi hɔ",
+    zu: "Yisuse",
+  },
+  cancel: {
+    en: "Keep it",
+    ha: "Bar shi",
+    yo: "Fi í sílẹ̀",
+    ig: "Hapụ ya",
+    fr: "Le garder",
+    pt: "Manter",
+    sw: "Iache",
+    ar: "الإبقاء عليه",
+    tw: "Gyaa no hɔ",
+    zu: "Yigcine",
   },
   openFailed: {
     en: "That file could not be opened.",

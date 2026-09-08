@@ -43,6 +43,7 @@ export const OPS_ACTIONS: {
   kybIncomplete: L;
   noActivationRecipient: L;
   chooseAKybState: L;
+  verifyNeedsDocument: L;
 } = {
   onlyOwnerApprove: {
     en: "Only a super admin can approve a route.",
@@ -362,5 +363,17 @@ export const OPS_ACTIONS: {
     ar: "اختر حالة لهذا المتطلب.",
     tw: "Yi tebea ma saa ahwehwɛdeɛ yi.",
     zu: "Khetha isimo salesi sidingo.",
+  },
+  verifyNeedsDocument: {
+    en: "File the document before verifying this requirement.",
+    ha: "Ku shigar da takardar kafin tabbatar da wannan buƙata.",
+    yo: "Ẹ fi ìwé náà sílẹ̀ kí ẹ tó jẹ́rìísí ìbéèrè yìí.",
+    ig: "Depụta akwụkwọ ahụ tupu ị kwado ihe achọrọ a.",
+    fr: "Déposez le document avant de vérifier cette exigence.",
+    pt: "Arquive o documento antes de verificar este requisito.",
+    sw: "Wasilisha hati kabla ya kuthibitisha hitaji hili.",
+    ar: "أودِع المستند قبل التحقق من هذا المتطلب.",
+    tw: "Fa krataa no si hɔ ansa na woasɔ saa ahwehwɛdeɛ yi ano.",
+    zu: "Faka idokhumenti ngaphambi kokuqinisekisa lesi sidingo.",
   },
 };

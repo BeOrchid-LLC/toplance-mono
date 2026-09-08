@@ -151,6 +151,14 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
         return;
       }
 
+      // A colleague activated it while this tab was open. Nothing was
+      // sent by this call, so nothing is claimed about an email.
+      if (result.alreadyActivated) {
+        toast.info(t(OPS_KYB.toastAlreadyActivated));
+        router.refresh();
+        return;
+      }
+
       // The letter is the point of the act, so a dead mail provider is
       // said out loud rather than folded into a success message. The
       // console is open either way; whether the director knows is the
@@ -182,7 +190,26 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
         <PanelBody className="flex flex-col gap-6">
           {agency.requirements.map((requirement) => (
             <RequirementRow
-              key={requirement.id}
+              /**
+               * Keyed on the server's own values, not on the id alone.
+               *
+               * `RequirementRow` seeds its select and its note field from
+               * props with `useState`, and an initialiser runs once. With
+               * a stable key React reused the instance across
+               * `router.refresh()`, so the draft state survived a write
+               * that had changed the row underneath it: remove a
+               * document, and the badge correctly reads "Not started"
+               * while the select beside it still says "Verified" —
+               * pressing Save then re-verifies a requirement with no
+               * document on file, and the activate button unlocks. Same
+               * divergence when a colleague takes a different verdict in
+               * another tab.
+               *
+               * Remounting is the right reset here because there is no
+               * draft worth preserving: the only values that change the
+               * key are ones the server has just confirmed.
+               */
+              key={`${requirement.id}:${requirement.state}:${requirement.note ?? ""}`}
               requirement={requirement}
               agencyId={agency.orgId}
               pending={pending}

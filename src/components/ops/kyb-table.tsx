@@ -8,6 +8,7 @@ import { KYB_STANDING } from "@/components/ops/kyb-standing";
 import type { KybQueueRow } from "@/lib/data/kyb";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
+import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 
 /**
  * The verification queue, as columns over the shared `DataTable`.
@@ -57,9 +58,23 @@ export function KybTable({
       cell: (row) => {
         const standing = KYB_STANDING[row.standing];
         return (
-          <Badge variant={standing.variant}>
-            {OPS_KYB.standing[standing.key][locale]}
-          </Badge>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant={standing.variant}>
+              {OPS_KYB.standing[standing.key][locale]}
+            </Badge>
+            {/* A suspended agency sorts with the settled rows and owes
+                nobody a decision, so it must say why it is not near the
+                top — otherwise "Not started" at the bottom of the list
+                reads as a row somebody forgot.
+
+                `OPS_TENANTS.suspendedBadge` rather than a word of our
+                own: it is the same state on the adjacent screen, and
+                `ops-tenants.ts` says it plainly — a second copy of a
+                word is a word that will disagree with itself. */}
+            {row.suspendedAt && (
+              <Badge variant="warning">{OPS_TENANTS.suspendedBadge[locale]}</Badge>
+            )}
+          </div>
         );
       },
     },

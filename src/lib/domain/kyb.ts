@@ -32,10 +32,19 @@ export type KybRequirementSpec = {
  * created the account owns *this* company, and that the money moves
  * under the company's own name.
  *
- * Changing this list is a deploy. That is the right cost while BeOrchid
- * collects these by email and the wrong one once agencies upload their
- * own — at which point the list becomes data. Recorded here so the next
- * person reads the constant as a stage rather than a decision.
+ * Changing this list is a deploy, **and a migration**. Editing this
+ * array alone reaches agencies created after the deploy and no others:
+ * `seedKybRequirements` runs inside the two transactions that create an
+ * `organisations` row and nowhere else. An existing agency would keep
+ * its six rows, `kybProgress` counts `rows.length` as the total, and it
+ * would read six of six — activatable without the new requirement ever
+ * having been asked for. `drizzle/0035_massive_switch.sql` is the shape
+ * the backfill takes.
+ *
+ * That cost is the right one while BeOrchid collects these by email and
+ * the wrong one once agencies upload their own, at which point the list
+ * becomes data. Recorded here so the next person reads the constant as
+ * a stage rather than a decision.
  *
  * English, and not localised: every reader is BeOrchid staff, and these
  * are the names of legal documents. The screen's own chrome localises

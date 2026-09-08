@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cache } from "react";
-import { and, asc, count, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -88,16 +88,35 @@ export type KybQueueRow = {
   total: number;
   standing: KybStanding;
   activatedAt: Date | null;
+  /** Shown as a marker in the queue: a suspended agency is owed nothing. */
+  suspendedAt: Date | null;
   createdAt: Date;
 };
 
 /**
- * Every agency, oldest-waiting first.
+ * Every agency: the ones waiting on BeOrchid first, oldest first
+ * within that.
  *
- * Ordered by `created_at` ascending rather than by standing, because
- * that is what a queue is: the agency that has been waiting on BeOrchid
- * longest is the one to open next. Sorting by standing would bury it
- * under whichever rows happened to be furthest along.
+ * `created_at` ascending alone was wrong, and wrong in the direction
+ * that makes the screen useless. Migration `0035` backfilled
+ * `activated_at` onto every agency that already existed, so the oldest
+ * rows are precisely the settled ones — they sorted to the top and
+ * pushed the agencies actually awaiting a decision to the bottom of a
+ * list that only grows. The queue read as the opposite of a queue.
+ *
+ * So the first key is whether anything is owed. Within the waiting
+ * group `created_at` ascending still means what it always meant: the
+ * agency that has been waiting on us longest is the one to open next.
+ *
+ * Suspended agencies sort with the settled ones even when they have
+ * never been activated. They are not owed a decision — somebody already
+ * took one — and leaving them at the head of the queue is how a list
+ * meant to be driven to zero never reaches it.
+ *
+ * Unpaginated on purpose while this is one screen over a pre-launch
+ * table. `DataTable` takes a `pagination` prop the day that stops being
+ * true; the ordering above is what makes the un-paged list usable in
+ * the meantime, because the rows that matter are the first ones.
  *
  * One grouped select, not a query per agency. The counts come back from
  * Postgres as strings through `count()`, which `Number` settles here so
@@ -109,6 +128,7 @@ export const kybQueue = cache(async (): Promise<KybQueueRow[]> => {
       orgId: organisations.id,
       name: organisations.name,
       activatedAt: organisations.activatedAt,
+      suspendedAt: organisations.suspendedAt,
       createdAt: organisations.createdAt,
       total: count(kybRequirements.id),
       verified: sql<number>`count(*) filter (where ${kybRequirements.state} = 'verified')`,
@@ -120,9 +140,13 @@ export const kybQueue = cache(async (): Promise<KybQueueRow[]> => {
       organisations.id,
       organisations.name,
       organisations.activatedAt,
+      organisations.suspendedAt,
       organisations.createdAt
     )
-    .orderBy(asc(organisations.createdAt));
+    .orderBy(
+      sql`(${organisations.activatedAt} is not null or ${organisations.suspendedAt} is not null)`,
+      asc(organisations.createdAt)
+    );
 
   return rows.map((row) => {
     const counts = {
@@ -135,6 +159,7 @@ export const kybQueue = cache(async (): Promise<KybQueueRow[]> => {
       orgId: row.orgId,
       name: row.name,
       activatedAt: row.activatedAt,
+      suspendedAt: row.suspendedAt,
       createdAt: row.createdAt,
       ...counts,
       standing: kybStanding({ activatedAt: row.activatedAt, ...counts }),
@@ -330,15 +355,45 @@ export async function removeRequirementDocument(input: {
   return { ok: true };
 }
 
-/** An admin's verdict on one requirement. */
+/**
+ * An admin's verdict on one requirement.
+ *
+ * `verified` requires a document on file, and that is the whole point
+ * of the surface rather than a nicety: without it six empty rows could
+ * be marked verified and `activateAgency` would open a console for a
+ * business nobody had seen a single paper from — for a table whose
+ * entire purpose is "document the businesses we have vetted".
+ *
+ * `rejected` deliberately does not require one. "They sent nothing and
+ * stopped answering" is a real verdict, and a rejection an admin cannot
+ * record is a rejection that lives in somebody's inbox instead.
+ */
 export async function setRequirementState(input: {
   orgId: string;
   docKey: string;
   state: KybState;
   note: string | null;
   reviewedBy: string;
-}): Promise<{ ok: true } | { error: "requirement_not_found" }> {
+}): Promise<
+  { ok: true } | { error: "requirement_not_found" | "verify_needs_document" }
+> {
   const settled = input.state === "verified" || input.state === "rejected";
+
+  if (input.state === "verified") {
+    const [row] = await db
+      .select({ storagePath: kybRequirements.storagePath })
+      .from(kybRequirements)
+      .where(
+        and(
+          eq(kybRequirements.orgId, input.orgId),
+          eq(kybRequirements.docKey, input.docKey)
+        )
+      )
+      .limit(1);
+
+    if (!row) return { error: "requirement_not_found" };
+    if (!row.storagePath) return { error: "verify_needs_document" };
+  }
 
   const updated = await db
     .update(kybRequirements)
@@ -431,6 +486,12 @@ export async function activateAgency(orgId: string): Promise<ActivateResult> {
       .from(orgMembers)
       .innerJoin(profiles, eq(profiles.id, orgMembers.userId))
       .where(and(eq(orgMembers.orgId, orgId), eq(orgMembers.role, "owner")))
+      // Ordered, because `limit(1)` without one is "whichever row
+      // Postgres felt like". An agency with two directors would get the
+      // letter at a different address on a retry than on the first
+      // attempt, and the audit row would name someone who never
+      // received it.
+      .orderBy(asc(profiles.email))
       .limit(1);
 
     const recipient: ActivationRecipient | null = owner
@@ -455,17 +516,13 @@ export async function activateAgency(orgId: string): Promise<ActivateResult> {
   });
 }
 
-/** How many agencies are waiting on BeOrchid, for the console's counters. */
-export async function awaitingKybCount(): Promise<number> {
-  const [row] = await db
-    .select({ n: count() })
-    .from(organisations)
-    .where(isNull(organisations.activatedAt));
-
-  return Number(row?.n ?? 0);
-}
-
-/** Whether BeOrchid has opened this agency's console. */
+/**
+ * Whether BeOrchid has opened this agency's console.
+ *
+ * Read by `purchaseSubscription`, which is a POST endpoint reachable
+ * without the page whose button posts to it — so the holding screen is
+ * not its guard, this is.
+ */
 export async function isAgencyActivated(orgId: string): Promise<boolean> {
   const [row] = await db
     .select({ activatedAt: organisations.activatedAt })

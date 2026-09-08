@@ -39,8 +39,21 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
   const ORGS = [SEATED, OWNERLESS];
   const PEOPLE = [DIRECTOR, REVIEWER];
 
-  /** Mark every requirement on one agency verified, as an admin would. */
+  /**
+   * File a document and verify it, on every requirement — what an admin
+   * actually does. `setRequirementState` refuses `verified` on a row
+   * with nothing on file, so the storage path has to be written first.
+   *
+   * Written straight to the column rather than through
+   * `attachRequirementDocument`, which would put six objects in the
+   * bucket. The column is what the guard reads.
+   */
   async function verifyAll(orgId: string) {
+    await db
+      .update(kybRequirements)
+      .set({ storagePath: `kyb/${orgId}/fixture` })
+      .where(eq(kybRequirements.orgId, orgId));
+
     for (const requirement of KYB_REQUIREMENTS) {
       await setRequirementState({
         orgId,
@@ -112,6 +125,15 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
       // agency. `onConflictDoNothing` is what makes that safe, and
       // "safe" has to mean the existing row is left exactly as it was —
       // not re-inserted at `not_started`.
+      await db
+        .update(kybRequirements)
+        .set({ storagePath: `kyb/${SEATED}/operating_licence` })
+        .where(
+          and(
+            eq(kybRequirements.orgId, SEATED),
+            eq(kybRequirements.docKey, "operating_licence")
+          )
+        );
       await setRequirementState({
         orgId: SEATED,
         docKey: "operating_licence",
@@ -181,6 +203,38 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
     });
   });
 
+  describe("verifying without a document", () => {
+    it("refuses, because the checklist is the documents", async () => {
+      // Six empty rows marked verified would open a console for a
+      // business nobody had seen a single paper from — for a table
+      // whose whole purpose is documenting what was vetted.
+      const result = await setRequirementState({
+        orgId: SEATED,
+        docKey: "operating_licence",
+        state: "verified",
+        note: null,
+        reviewedBy: REVIEWER,
+      });
+
+      expect(result).toEqual({ error: "verify_needs_document" });
+      expect(await activateAgency(SEATED)).toEqual({ error: "kyb_incomplete" });
+    });
+
+    it("still lets an admin reject one that never arrived", async () => {
+      // "They sent nothing and stopped answering" is a real verdict. A
+      // rejection an admin cannot record is one that lives in an inbox.
+      const result = await setRequirementState({
+        orgId: SEATED,
+        docKey: "operating_licence",
+        state: "rejected",
+        note: "Asked three times, nothing sent.",
+        reviewedBy: REVIEWER,
+      });
+
+      expect(result).toEqual({ ok: true });
+    });
+  });
+
   describe("kybQueue", () => {
     it("separates waiting-on-them from waiting-on-us", async () => {
       await setRequirementState({
@@ -194,6 +248,37 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
       const rows = await kybQueue();
       expect(rows.find((r) => r.orgId === SEATED)?.standing).toBe("in_review");
       expect(rows.find((r) => r.orgId === OWNERLESS)?.standing).toBe("not_started");
+    });
+
+    it("puts the agencies that owe us nothing last", async () => {
+      // The backfill stamped `activated_at` on every agency that already
+      // existed, so the settled rows are also the oldest. Ordering by
+      // `created_at` alone floated them to the top and sank the ones
+      // actually waiting — a queue that read as the opposite of a queue.
+      await verifyAll(SEATED);
+      await activateAgency(SEATED);
+
+      const rows = await kybQueue();
+      const waiting = rows.findIndex((r) => r.orgId === OWNERLESS);
+      const settled = rows.findIndex((r) => r.orgId === SEATED);
+
+      expect(waiting).toBeLessThan(settled);
+    });
+
+    it("does not leave a suspended agency at the head of the queue", async () => {
+      // Nobody owes it a decision — somebody already took one. Leaving
+      // it first is how a list meant to be driven to zero never gets
+      // there.
+      await db
+        .update(organisations)
+        .set({ suspendedAt: new Date() })
+        .where(eq(organisations.id, OWNERLESS));
+
+      const rows = await kybQueue();
+      const suspended = rows.findIndex((r) => r.orgId === OWNERLESS);
+      const live = rows.findIndex((r) => r.orgId === SEATED);
+
+      expect(live).toBeLessThan(suspended);
     });
 
     it("calls a full checklist ready, and an activated agency activated", async () => {
@@ -325,6 +410,15 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
 
   describe("the boundary", () => {
     it("keeps one agency's checklist out of another's", async () => {
+      await db
+        .update(kybRequirements)
+        .set({ storagePath: `kyb/${SEATED}/operating_licence` })
+        .where(
+          and(
+            eq(kybRequirements.orgId, SEATED),
+            eq(kybRequirements.docKey, "operating_licence")
+          )
+        );
       await setRequirementState({
         orgId: SEATED,
         docKey: "operating_licence",

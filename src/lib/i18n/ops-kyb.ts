@@ -36,7 +36,6 @@ export const OPS_KYB: {
   openDocument: L;
   noDocument: L;
   fileLabel: L;
-  filing: L;
   replace: L;
   replaceTitle: L;
   replaceBody: L;
@@ -59,6 +58,7 @@ export const OPS_KYB: {
   toastVerdict: L;
   toastActivated: L;
   toastActivatedNoEmail: L;
+  toastAlreadyActivated: L;
 } = {
   heading: {
     en: "KYB",
@@ -343,18 +343,6 @@ export const OPS_KYB: {
     tw: "Fa krataa si hɔ",
     zu: "Faka idokhumenti",
   },
-  filing: {
-    en: "Filing…",
-    ha: "Ana shigarwa…",
-    yo: "À ń fi sílẹ̀…",
-    ig: "Na-edepụta…",
-    fr: "Dépôt en cours…",
-    pt: "A arquivar…",
-    sw: "Inawasilisha…",
-    ar: "جارٍ الإيداع…",
-    tw: "Yɛde resi hɔ…",
-    zu: "Iyafaka…",
-  },
   replace: {
     en: "Replace",
     ha: "Maye gurbi",
@@ -621,5 +609,23 @@ export const OPS_KYB: {
     ar: "تم تفعيل الوكالة، لكن البريد لم يُرسل. أبلغ المدير بنفسك.",
     tw: "Wɔabue adwumakuo no, nanso email no ankɔ. Wo ara ka kyerɛ ɔhwɛfoɔ no.",
     zu: "I-ejensi ivuliwe, kodwa i-imeyili ayithunyelwanga. Tshela umqondisi ngokwakho.",
+  },
+  /**
+   * Two admins pressed the button; the second one's call found the
+   * console already open and sent nothing. Saying "we have emailed the
+   * director" here would be the one sentence `emailSent` exists to stop
+   * the product telling somebody.
+   */
+  toastAlreadyActivated: {
+    en: "This agency was already activated",
+    ha: "An riga an kunna wannan hukuma",
+    yo: "A ti mú ilé-iṣẹ́ yìí ṣiṣẹ́ tẹ́lẹ̀",
+    ig: "Akwalitelarị ụlọ ọrụ a",
+    fr: "Cette agence était déjà activée",
+    pt: "Esta agência já estava ativada",
+    sw: "Wakala huyu alikuwa amewashwa tayari",
+    ar: "سبق تفعيل هذه الوكالة",
+    tw: "Na wɔabue adwumakuo yi dada",
+    zu: "Le-ejensi isivele ivuliwe",
   },
 };

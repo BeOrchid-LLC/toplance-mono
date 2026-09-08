@@ -40,7 +40,11 @@ export async function GET(
   // somebody guessing which agency uuids exist.
   if (!isUuid(orgId)) return new Response(null, { status: 404 });
 
-  const url = await signedRequirementUrl(orgId, decodeURIComponent(docKey));
+  // `docKey` arrives already percent-decoded — Next decodes route
+  // params. A second `decodeURIComponent` here threw `URIError` on a
+  // key like `%zz`, which is an unhandled 500 from a route whose stated
+  // contract two lines up is that a malformed id reads as a missing one.
+  const url = await signedRequirementUrl(orgId, docKey);
   if (!url) return new Response(null, { status: 404 });
 
   redirect(url);

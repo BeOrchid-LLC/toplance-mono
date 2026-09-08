@@ -35,9 +35,13 @@ UPDATE "organisations" SET "activated_at" = now() WHERE "activated_at" IS NULL;-
 -- A point-in-time snapshot of `KYB_REQUIREMENTS` (`src/lib/domain/kyb`),
 -- which is the same discipline the `name`/`description` columns follow:
 -- a row carries its own copy, and editing the constant must not rewrite
--- history. `seedKybRequirements` is idempotent on (org_id, doc_key), so
--- a later change to the list is applied by the application rather than
--- by editing this file.
+-- history.
+--
+-- Which also means: adding a seventh requirement to that constant does
+-- NOT reach the agencies that already exist. `seedKybRequirements` runs
+-- only when an `organisations` row is created, so a later addition needs
+-- its own migration in the shape of this one. `KYB_REQUIREMENTS` says so
+-- too, beside the list itself.
 --
 INSERT INTO "kyb_requirements" ("org_id", "doc_key", "name", "description", "sort_order")
 SELECT o."id", r."doc_key", r."name", r."description", r."sort_order"

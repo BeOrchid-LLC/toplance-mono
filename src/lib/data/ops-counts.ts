@@ -1,6 +1,6 @@
 import "server-only";
 
-import { count, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { corridors, demoRequests, organisations, supportRequests } from "@/lib/db/schema";
@@ -30,7 +30,16 @@ export type OpsCounts = {
    * look at work that is already being done.
    */
   openSupport: number;
-  /** Agencies with no `activated_at` — the KYB queue's to-do list. */
+  /**
+   * Agencies BeOrchid still owes a decision: no `activated_at`, and not
+   * suspended.
+   *
+   * The suspension filter is what keeps this a number somebody can
+   * drive to zero. An agency provisioned and then suspended before
+   * activation is not waiting on us — somebody already decided about
+   * it — and counting it forever is how a badge stops being read, which
+   * is exactly what `opsAdminNav`'s own comment says badges are for.
+   */
   agenciesAwaitingKyb: number;
 };
 
@@ -71,7 +80,9 @@ export async function getOpsCounts(): Promise<OpsCounts> {
     db
       .select({ n: count() })
       .from(organisations)
-      .where(isNull(organisations.activatedAt)),
+      .where(
+        and(isNull(organisations.activatedAt), isNull(organisations.suspendedAt))
+      ),
   ]);
 
   return {

@@ -161,7 +161,14 @@ export async function reviewKybRequirement(formData: FormData): Promise<ActionRe
     note,
     reviewedBy: actor.userId,
   });
-  if ("error" in result) return { error: OPS_ACTIONS.requirementNotFound[locale] };
+  if ("error" in result) {
+    return {
+      error:
+        result.error === "verify_needs_document"
+          ? OPS_ACTIONS.verifyNeedsDocument[locale]
+          : OPS_ACTIONS.requirementNotFound[locale],
+    };
+  }
 
   await track("toplance.kyb_document_reviewed", { orgId, docKey, state }, actor.userId);
   await audit(actor.userId, "kyb.document_reviewed", "organisation", orgId, {
@@ -189,7 +196,11 @@ export async function reviewKybRequirement(formData: FormData): Promise<ActionRe
  */
 export async function activateTenant(
   formData: FormData
-): Promise<{ ok: true; emailSent: boolean } | { error: string }> {
+): Promise<
+  | { ok: true; alreadyActivated: true }
+  | { ok: true; alreadyActivated?: false; emailSent: boolean }
+  | { error: string }
+> {
   const gate = await gateFor(formData);
   if ("error" in gate) return gate;
   const { actor, orgId } = gate;
@@ -207,10 +218,15 @@ export async function activateTenant(
   }
 
   // Somebody else got there first — two admins on the same agency both
-  // meant the same thing and both got it. One activation, one letter.
+  // meant the same thing and both got it. One activation, one letter,
+  // and this call is not the one that sent it: reporting `emailSent:
+  // true` here would have the screen tell the second admin we had
+  // written to the director, which is the single sentence this whole
+  // `emailSent` thread exists to stop the product saying when it might
+  // not be so. The caller shows its own toast for this.
   if (result.alreadyActivated) {
     revalidateKyb();
-    return { ok: true as const, emailSent: true };
+    return { ok: true as const, alreadyActivated: true as const };
   }
 
   const emailSent = await sendEmail({

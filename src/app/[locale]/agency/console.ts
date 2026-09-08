@@ -2,7 +2,7 @@ import "server-only";
 
 import { notFound, redirect } from "next/navigation";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import { homeFor } from "@/lib/auth/routes";
@@ -159,6 +159,30 @@ export async function resolveAgencyConsole(
   // said the opposite of what the product does.
   if (actor.role === "staff") redirect(homeFor(actor.role));
 
+  const orgId = actor.orgIds[0] ?? null;
+
+  /**
+   * The membership row, correlated to `orgId` whenever there is one.
+   *
+   * The `where` used to be `userId` alone with a bare `limit(1)`, which
+   * is an unordered pick over every `org_members` row the person holds.
+   * That was survivable while the row was read only to put a name in the
+   * bar. It stopped being survivable when `activated_at` joined the
+   * select: an account holding a stale membership in a suspended,
+   * never-activated agency alongside a live one would have the KYB gate
+   * decided by whichever row Postgres happened to return — parking a
+   * director on the holding screen for an agency that *is* activated,
+   * with no way out.
+   *
+   * `hasActiveSubscription` and `purchaseSubscription` both ask about
+   * `actor.orgIds[0]`, so asking anything else here is two guards
+   * disagreeing about which agency the visitor is in — the exact shape
+   * of bug #77, which the comment below this one is about.
+   *
+   * The `userId`-only fallback survives for the one case that needs it:
+   * a member of a suspended agency has no live `orgId`, and the bar
+   * still names the agency they belong to.
+   */
   const [membership] = await db
     .select({
       role: orgMembers.role,
@@ -169,10 +193,13 @@ export async function resolveAgencyConsole(
     })
     .from(orgMembers)
     .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
-    .where(eq(orgMembers.userId, profile.id))
+    .where(
+      orgId
+        ? and(eq(orgMembers.userId, profile.id), eq(orgMembers.orgId, orgId))
+        : eq(orgMembers.userId, profile.id)
+    )
     .limit(1);
 
-  const orgId = actor.orgIds[0] ?? null;
   const subscriptionActive = orgId ? await hasActiveSubscription(orgId) : false;
 
   // The paywall, and it is here rather than in `requireAgencyConsole`

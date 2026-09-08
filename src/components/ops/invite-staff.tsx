@@ -67,7 +67,11 @@ export function InviteStaff() {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="bar">
+        {/* `sm`, not `bar`: this button left the console's working bar on
+            2026-09-08 for the colleagues panel header, where the row it
+            aligns with is the count badge rather than the rail toggle
+            and the search field. */}
+        <Button size="sm">
           <UserPlus /> {t(OPS_STAFF.inviteAction)}
         </Button>
       </DialogTrigger>

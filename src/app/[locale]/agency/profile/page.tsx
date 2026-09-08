@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { AvatarUpload } from "@/components/app/avatar-upload";
+import { LogoUpload } from "@/components/agency/logo-upload";
 import { Badge } from "@/components/ui/badge";
 import { EditableName, EditablePhone } from "@/components/app/profile-fields";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
@@ -72,6 +73,18 @@ export default async function AgencyProfilePage() {
   const avatarUrl = profile.avatarPath
     ? await signedDocumentUrl(profile.avatarPath)
     : null;
+
+  // The agency's logo, on the same terms and from the same bucket. The
+  // director alone gets the panel: it is the agency's face on every
+  // colleague's screen, so changing it is a decision about the business
+  // rather than about the person reading this page. `uploadOrgLogo`
+  // asks the same question again — a hidden panel is a courtesy, and a
+  // POST endpoint is not gated by what rendered.
+  const isDirector = membership?.role === "owner";
+  const logoUrl =
+    isDirector && membership?.logoPath
+      ? await signedDocumentUrl(membership.logoPath)
+      : null;
 
   return (
     <AgencyShell
@@ -145,6 +158,18 @@ export default async function AgencyProfilePage() {
           </div>
         </PanelBody>
       </Panel>
+
+      {isDirector && membership && (
+        <Panel className="mt-8">
+          <PanelHeader label={AGENCY.logoPanelLabel[locale]} />
+          <PanelBody className="pt-6">
+            <p className="t-muted max-w-[62ch]">{AGENCY.logoPanelBody[locale]}</p>
+            <div className="mt-5">
+              <LogoUpload orgName={membership.name} logoUrl={logoUrl} />
+            </div>
+          </PanelBody>
+        </Panel>
+      )}
     </AgencyShell>
   );
 }

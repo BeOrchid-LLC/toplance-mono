@@ -5,6 +5,7 @@ import {
   CreditCard,
   LayoutDashboard,
   Route,
+  Send,
   ShieldCheck,
   UserRoundCheck,
   UsersRound,
@@ -37,6 +38,10 @@ export const ADMIN_ICONS = {
   // Agency console — `/agency`.
   overview: LayoutDashboard,
   clients: UserRoundCheck,
+  // A paper plane, not an envelope: this row leads to what has been
+  // sent and not yet answered, which is the only state an invitation is
+  // interesting in.
+  invitations: Send,
   team: UsersRound,
   billing: CreditCard,
 } satisfies Record<string, LucideIcon>;

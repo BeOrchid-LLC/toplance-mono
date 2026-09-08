@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 
 import { track } from "@/lib/analytics/track";
 import { audit } from "@/lib/audit";
+import { ForbiddenError } from "@/lib/auth/errors";
 import { revalidateCase } from "@/lib/cache/consoles";
 import {
   requireActor,
@@ -17,6 +18,7 @@ import {
   canDecideCase,
   canReviewDocuments,
   isAgencyDirectorFor,
+  isOrgDirector,
 } from "@/lib/auth/policy";
 import { db } from "@/lib/db/client";
 import { organisations } from "@/lib/db/schema";
@@ -30,11 +32,13 @@ import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
 import { hasActiveSubscription } from "@/lib/data/payments";
 import { reviewDocumentTx, type ReviewVerdict } from "@/lib/data/review";
 import { changeStatusTx } from "@/lib/data/transitions";
+import { orgLogoKey, validateLogoFile } from "@/lib/domain/org-logo";
 import { isApplicationStatus } from "@/lib/domain/status";
 import { STATUS_COPY } from "@/lib/i18n/status";
 import { isFlagReason } from "@/lib/domain/flag-reason";
 import { sendEmail } from "@/lib/notifications/email";
 import { appUrl, notify } from "@/lib/notifications/notify";
+import { deleteDocument, putDocument } from "@/lib/storage/documents";
 import { invitationEmail } from "@/lib/notifications/templates";
 import { AGENCY_ACTIONS } from "@/lib/i18n/agency-actions";
 import { getActionLocale } from "@/lib/i18n/server";
@@ -489,6 +493,88 @@ export async function setCaseHandler(formData: FormData) {
 
     revalidateCase();
     return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Put the agency's own logo in the rail of its console.
+ *
+ * The director's, not any member's. A logo is the agency's face on every
+ * screen its colleagues and — through an invitation email's console
+ * link — its clients see; changing it is a decision about how the
+ * business presents itself, which is the same class of act as ending
+ * the plan or inviting a colleague. `requireOrgAccess` asks whether you
+ * belong to the agency, which is a different question, so `isOrgDirector`
+ * asks the one that matters. Hiding the control on `/agency/profile` was
+ * never the gate: this is a POST endpoint with a public id.
+ *
+ * Same storage as documents and profile photos — MinIO locally,
+ * Cloudflare R2 deployed — under a `logos/<orgId>/` key, and the same
+ * replace-then-cleanup order as `uploadAvatar`: the old object is
+ * deleted only after the row points at the new one, so a failure leaves
+ * a spare file rather than an agency pointing at nothing.
+ *
+ * Not destructive under the AGENTS.md rule, so it commits on the pick: a
+ * logo replacing a logo takes nothing away, and an agency with none
+ * falls back to its name in the rail — which is what every agency had
+ * before this existed.
+ */
+export async function uploadOrgLogo(formData: FormData) {
+  try {
+    const actor = await requireActor();
+    const orgId = actor.orgIds[0];
+    if (!orgId) return { error: "You do not have access to that." };
+    await requireOrgAccess(orgId);
+    if (!isOrgDirector(actor, orgId)) throw new ForbiddenError();
+
+    const file = formData.get("file");
+    if (!(file instanceof File)) return { error: "Choose a logo first." };
+
+    const invalid = validateLogoFile(file.type, file.size);
+    if (invalid) return { error: invalid };
+
+    const [current] = await db
+      .select({ logoPath: organisations.logoPath })
+      .from(organisations)
+      .where(eq(organisations.id, orgId))
+      .limit(1);
+
+    const path = orgLogoKey(orgId, file.type, Date.now());
+
+    try {
+      await putDocument(path, file);
+    } catch {
+      return {
+        error: "That upload did not complete. Try again when you have signal.",
+      };
+    }
+
+    await db
+      .update(organisations)
+      .set({ logoPath: path })
+      .where(eq(organisations.id, orgId));
+
+    if (current?.logoPath && current.logoPath !== path) {
+      await deleteDocument(current.logoPath).catch(() => {});
+    }
+
+    await track(
+      "toplance.agency_logo_uploaded",
+      { orgId, replaced: current?.logoPath != null },
+      actor.userId
+    );
+    await audit(actor.userId, "organisation.logo_uploaded", "organisation", orgId, {
+      replaced: current?.logoPath != null,
+    });
+
+    // The rail is on every page of this console, so the layout is what
+    // has to be rebuilt — not the profile screen the picker sits on.
+    revalidatePath("/[locale]/agency", "layout");
+    return {};
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };

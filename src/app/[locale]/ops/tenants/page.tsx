@@ -4,6 +4,7 @@ import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-re
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { KpiRow, type Kpi } from "@/components/shared/kpi-card";
@@ -107,7 +108,8 @@ export default async function OpsTenantsPage() {
         isOwner: actor.staffRole === "owner",
       })}
       activeId="agencies"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_TENANTS.heading[locale]}

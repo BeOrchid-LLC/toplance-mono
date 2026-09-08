@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
-import { InviteStaff } from "@/components/ops/invite-staff";
+import { ColleaguesTable } from "@/components/ops/colleagues-table";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
@@ -16,6 +17,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import { isOwner } from "@/lib/auth/policy";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { listPlatformInvitations } from "@/lib/data/invitations";
+import { listStaffColleagues } from "@/lib/data/staff";
 import { getOpsCounts } from "@/lib/data/ops-counts";
 import {
   getNotifications,
@@ -78,8 +80,9 @@ export default async function OpsStaffPage({
 
   const account = await opsAccount(profile, actor, locale);
 
-  const [invitations, notifications, unreadCount] = await Promise.all([
+  const [invitations, colleagues, notifications, unreadCount] = await Promise.all([
     listPlatformInvitations(),
+    listStaffColleagues(),
     getNotifications(actor.userId),
     unreadNotificationCount(actor.userId),
   ]);
@@ -117,26 +120,30 @@ export default async function OpsStaffPage({
     <AdminShell
       groups={opsAdminNav({ locale, ...counts, isOwner: true })}
       activeId="colleagues"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_STAFF.heading[locale]}
       lead={OPS_STAFF.intro[locale]}
       actions={
-        <>
-          <InviteStaff />
-          <NotificationsMenu
-            notifications={notifications}
-            unreadCount={unreadCount}
-            fallbackHref="/ops"
-          />
-        </>
+        <NotificationsMenu
+          notifications={notifications}
+          unreadCount={unreadCount}
+          fallbackHref="/ops"
+        />
       }
     >
       <div className="flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
         <ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
         <p className="t-muted">{OPS_STAFF.secondFactorNotice[locale]}</p>
       </div>
+
+      {/* Colleagues first, invitations second — the order the heading
+          above them reads in, and the order of consequence: who holds a
+          console account today is the fact, and who has been asked to is
+          the outstanding work. */}
+      <ColleaguesTable rows={colleagues} locale={locale} className="mt-8" />
 
       <InvitationTable
         rows={sorted.slice(start, end)}

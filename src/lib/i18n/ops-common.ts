@@ -71,17 +71,26 @@ export const OPS_COMMON: {
       tw: "ɔhwɛfoɔ",
       zu: "umhloli",
     },
+    /**
+     * Keyed on the `staff_role` enum, which still says `owner` — the
+     * column is not being renamed unilaterally (see AGENTS.md). The word
+     * a reader sees is "director", the same one `OPS_TENANTS.roleOwner`
+     * already gives the agency's own top rank: a rank that read
+     * "Director" in one console and "Owner" in the other would be two
+     * names for one idea. Lower case because it renders mid-sentence, in
+     * the rail's "Toplance operations · director" subtitle.
+     */
     owner: {
-      en: "owner",
-      ha: "mai gida",
-      yo: "onílé",
-      ig: "onye nwe ya",
-      fr: "propriétaire",
-      pt: "proprietário",
-      sw: "mmiliki",
-      ar: "المالك",
-      tw: "ɔwura",
-      zu: "umnikazi",
+      en: "director",
+      ha: "darakta",
+      yo: "olùdarí",
+      ig: "onye nduzi",
+      fr: "directeur",
+      pt: "diretor",
+      sw: "mkurugenzi",
+      ar: "المدير",
+      tw: "ɔpanyin",
+      zu: "umqondisi",
     },
   },
   unnamed: {

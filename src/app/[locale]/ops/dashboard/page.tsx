@@ -9,21 +9,15 @@ import {
   StaffAccessRefused,
   StaffEnrollmentRequired,
 } from "@/components/ops/refusal";
+import { ClientsTable } from "@/components/ops/clients-table";
 import { DashboardTabs } from "@/components/ops/dashboard-tabs";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { CounterRow, type Counter } from "@/components/shared/counter-row";
 import { RevenueChart } from "@/components/ops/revenue-chart";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { StatusBadge } from "@/components/shared/status-badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getOpsCounts } from "@/lib/data/ops-counts";
@@ -32,7 +26,7 @@ import { track } from "@/lib/analytics/track";
 import { dashboardData, USAGE_WINDOW_DAYS, type DashboardData } from "@/lib/data/dashboard";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { formatMoney } from "@/lib/domain/pricing";
-import type { ClientRow, TopCount } from "@/lib/domain/kpis";
+import type { TopCount } from "@/lib/domain/kpis";
 import type { Invoice } from "@/lib/domain/payments";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { getLocale } from "@/lib/i18n/server";
@@ -113,7 +107,8 @@ export default async function OpsDashboardPage() {
     <AdminShell
       groups={opsAdminNav({ locale, ...counts, isOwner: true })}
       activeId="business"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_COMMON.nav.dashboard[locale]}
@@ -156,7 +151,11 @@ export default async function OpsDashboardPage() {
       <DashboardTabs
         tabs={[
           { value: "overview", label: "Overview", panel: <Overview data={data} /> },
-          { value: "clients", label: "Clients", panel: <Clients data={data} /> },
+          {
+            value: "clients",
+            label: "Clients",
+            panel: <Clients data={data} locale={locale} />,
+          },
           {
             value: "operations",
             label: "Operations",
@@ -291,17 +290,15 @@ function Exceptions({
   );
 }
 
-function Clients({ data }: { data: DashboardData }) {
-  const currency = data.payments.currency;
-
+function Clients({ data, locale }: { data: DashboardData; locale: Locale }) {
   // Money per client, so the table can show what each one is worth
   // without a second pass over the invoice list per row.
-  const billed = new Map<string, { billedMinor: number; paidMinor: number }>();
+  const billed: Record<string, { billedMinor: number; paidMinor: number }> = {};
   for (const invoice of data.invoices) {
-    const entry = billed.get(invoice.orgId) ?? { billedMinor: 0, paidMinor: 0 };
+    const entry = billed[invoice.orgId] ?? { billedMinor: 0, paidMinor: 0 };
     if (invoice.status !== "draft") entry.billedMinor += invoice.amountMinor;
     if (invoice.status === "paid") entry.paidMinor += invoice.amountMinor;
-    billed.set(invoice.orgId, entry);
+    billed[invoice.orgId] = entry;
   }
 
   // Clients with nothing at all are real rows (a client who bought seats
@@ -309,139 +306,18 @@ function Clients({ data }: { data: DashboardData }) {
   // a pre-launch database, so the ones with activity come first and the
   // dormant tail is counted rather than listed.
   const active = data.clients.filter((c) => c.invited > 0 || c.applicants > 0);
-  const dormant = data.clients.length - active.length;
 
   return (
-    <Panel>
-      <PanelHeader
-        label="Every client, busiest first"
-        aside={
-          <Badge variant="brand">
-            <span className="num">{data.clients.length}</span> clients
-          </Badge>
-        }
-      />
-
-      {active.length === 0 ? (
-        <PanelBody>
-          <p className="t-muted max-w-[62ch]">
-            No client has invited anybody yet. A row appears here as soon as one
-            sends its first invitation.
-          </p>
-        </PanelBody>
-      ) : (
-        /*
-          A table rather than §6's ruled rows, for the queue page's
-          reason and one of its own: this is read by scanning a money
-          column down the page to find the client worth chasing, and
-          column alignment is the whole affordance. Ruled rows put the
-          same fact at a different horizontal position on every line.
-        */
-        <div className="overflow-x-auto px-2 pb-2">
-          <Table className="min-w-[860px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[24%]">Client</TableHead>
-                <TableHead className="w-[12%]">Seats</TableHead>
-                <TableHead className="w-[14%]">Invited</TableHead>
-                <TableHead className="w-[12%]">Applied</TableHead>
-                <TableHead className="w-[12%]">Approved</TableHead>
-                <TableHead className="w-[13%]">Billed</TableHead>
-                <TableHead className="w-[13%]">Paid</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {active.map((client) => (
-                <ClientTableRow
-                  key={client.orgId}
-                  client={client}
-                  money={billed.get(client.orgId)}
-                  currency={currency}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {dormant > 0 && (
-        <div className="border-t border-border px-5 py-3 sm:px-6">
-          <p className="t-muted">
-            <span className="num">{dormant}</span> further{" "}
-            {dormant === 1 ? "client has" : "clients have"} an account but have
-            not invited anybody yet.
-          </p>
-        </div>
-      )}
-    </Panel>
-  );
-}
-
-function ClientTableRow({
-  client,
-  money,
-  currency,
-}: {
-  client: ClientRow;
-  money: { billedMinor: number; paidMinor: number } | undefined;
-  currency: string;
-}) {
-  const billedMinor = money?.billedMinor ?? 0;
-  const paidMinor = money?.paidMinor ?? 0;
-
-  return (
-    <TableRow>
-      <TableCell>
-        <span className="t-title block truncate">{client.name}</span>
-        {/* One line about this client, and the one worth acting on wins:
-            somebody stuck at 100% is a phone call, an approval rate is
-            just a fact. A client with neither gets nothing rather than
-            an em dash standing in for a number that does not exist. */}
-        {client.stalled > 0 ? (
-          <span className="special">{client.stalled} waiting to submit</span>
-        ) : client.approvalRate !== null ? (
-          <span className="special">{pct(client.approvalRate)} approved</span>
-        ) : null}
-      </TableCell>
-      <TableCell>
-        <span className="num block">{client.seatsPurchased}</span>
-        {client.seatUtilisation !== null && (
-          <span className="special">{pct(client.seatUtilisation)} used</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <span className="num block">{client.invited}</span>
-        {/* The gap between invited and accepted is the client's
-            activation problem, so it is said under the figure rather
-            than left for the reader to subtract. */}
-        {client.invited > 0 && (
-          <span className="special">{client.accepted} accepted</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <span className="num block">{client.applicants}</span>
-      </TableCell>
-      <TableCell>
-        <span className="num block">{client.approved}</span>
-        {client.rejected > 0 && (
-          <span className="special">{client.rejected} rejected</span>
-        )}
-      </TableCell>
-      <TableCell>
-        <span className="num block">{formatMoney(billedMinor, currency)}</span>
-      </TableCell>
-      <TableCell>
-        <span
-          className={cn(
-            "num block",
-            // Only worth a colour when there is a shortfall to chase.
-            paidMinor < billedMinor && "text-warning-ink font-semibold"
-          )}
-        >
-          {formatMoney(paidMinor, currency)}
-        </span>
-      </TableCell>
-    </TableRow>
+    <ClientsTable
+      rows={active}
+      // A plain object rather than a `Map`: this crosses the boundary
+      // into a client component, and React cannot serialise a `Map`.
+      money={billed}
+      currency={data.payments.currency}
+      locale={locale}
+      totalClients={data.clients.length}
+      dormant={data.clients.length - active.length}
+    />
   );
 }
 

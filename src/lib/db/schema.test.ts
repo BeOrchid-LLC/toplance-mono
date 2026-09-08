@@ -286,6 +286,40 @@ describe.skipIf(!process.env.DATABASE_URL)("profiles.avatarPath", async () => {
 });
 
 /**
+ * The agency logo's storage key. Nullable on the same terms as
+ * `profiles.avatarPath` — an agency without one gets its name in the
+ * console rail, never a placeholder image. Skipped without a database.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("organisations.logoPath", async () => {
+  const { eq } = await import("drizzle-orm");
+  const { db } = await import("@/lib/db/client");
+  const { organisations } = await import("@/lib/db/schema");
+
+  it("round-trips a storage key and defaults to null", async () => {
+    let id: string | undefined;
+    try {
+      const [row] = await db
+        .insert(organisations)
+        .values({ name: "test_logo_path_agency" })
+        .returning();
+      id = row.id;
+
+      expect(row.logoPath).toBeNull();
+
+      const [updated] = await db
+        .update(organisations)
+        .set({ logoPath: `logos/${row.id}/1.png` })
+        .where(eq(organisations.id, row.id))
+        .returning();
+
+      expect(updated.logoPath).toBe(`logos/${row.id}/1.png`);
+    } finally {
+      if (id) await db.delete(organisations).where(eq(organisations.id, id));
+    }
+  });
+});
+
+/**
  * Every foreign key on `applications` is indexed.
  *
  * Not a performance nicety — a correctness-of-the-suite one. An

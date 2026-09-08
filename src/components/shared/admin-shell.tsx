@@ -33,6 +33,7 @@ export async function AdminShell({
   groups,
   activeId,
   railTitle,
+  railBrand,
   railSubtitle,
   account,
   title,
@@ -44,6 +45,18 @@ export async function AdminShell({
   groups: AdminNavGroup[];
   activeId: string;
   railTitle: string;
+  /**
+   * A mark to print at the head of the rail in place of `railTitle`'s
+   * text — the Toplance wordmark in `/ops`, an agency's own uploaded
+   * logo in `/agency`.
+   *
+   * `railTitle` is still required alongside it, and still does two jobs a
+   * picture cannot: it is the letter the rail shows when it is collapsed
+   * to 56px, and it is the fallback when an agency has uploaded nothing.
+   * A console whose identity vanished at the width somebody works at all
+   * day would be worse than one that never had a logo.
+   */
+  railBrand?: React.ReactNode;
   railSubtitle?: string;
   /**
    * Who is signed in. The shell takes the facts rather than rendered
@@ -98,6 +111,7 @@ export async function AdminShell({
             groups={groups}
             activeId={activeId}
             title={railTitle}
+            brand={railBrand}
             subtitle={railSubtitle}
             navLabel={ADMIN_CONSOLE.menuTitle[locale]}
             footer={

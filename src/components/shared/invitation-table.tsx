@@ -36,6 +36,11 @@ function formatDay(value: Date) {
  * The lifecycle sentence the roster prints under each name is dropped
  * here on purpose: a table has a column for the date, and the sentence
  * was doing the job a column header does.
+ *
+ * "Invites", not "Everyone invited": since 2026-09-08 this is the second
+ * of two panels on `/ops/staff`, under `ColleaguesTable`, and a heading
+ * claiming everyone would be claiming the half of the screen above it
+ * too.
  */
 export function InvitationTable({
   rows,
@@ -126,7 +131,7 @@ export function InvitationTable({
       rows={rows}
       rowKey={(invite) => invite.id}
       columns={columns}
-      label={OPS_STAFF.colleaguesPanel[locale]}
+      label={OPS_STAFF.invitesPanel[locale]}
       filteredLabel={filteredLabel}
       basePath="/ops/staff"
       params={params}

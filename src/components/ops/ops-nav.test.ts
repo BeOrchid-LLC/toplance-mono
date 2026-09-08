@@ -9,12 +9,6 @@ describe("opsNav", () => {
     expect(opsNav.map((i) => i.href)).toContain("/ops/corridors");
   });
 
-  it("keeps route curation first, since AppNav treats item 0 as the section root", () => {
-    // `isActive` matches the first item exactly and every other item on
-    // its children — reordering this list would light the wrong pill.
-    expect(opsNav[0].href).toBe("/ops/corridors");
-  });
-
   /**
    * The v1.3 tenancy. BeOrchid provisions agencies, curates routes and
    * reads the audit log; it reviews nothing. A case queue in this nav
@@ -30,11 +24,51 @@ describe("opsNav", () => {
   });
 
   it("carries the tenants entry, second", () => {
-    // Not first: `AppNav.isActive` matches item 0 exactly as the section
-    // root, and `/ops` redirects to `/ops/corridors`. Reordering this
-    // list lights the wrong pill.
     expect(opsNav.map((i) => i.href)).toContain("/ops/tenants");
     expect(opsNav[1].href).toBe("/ops/tenants");
+  });
+});
+
+/**
+ * The overview, moved to the front on 2026-09-08 at the client's
+ * request. `AppNav.isActive` matches item 0 exactly as the section root,
+ * so this is also what makes the dashboard the console's front door.
+ */
+describe("the dashboard entry", () => {
+  it("leads the list, as the section root", () => {
+    expect(opsNav[0].href).toBe("/ops/dashboard");
+  });
+
+  it("is offered to a director and withheld from a reviewer", () => {
+    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/dashboard");
+    expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain(
+      "/ops/dashboard"
+    );
+  });
+});
+
+/**
+ * Route curation, moved to the back by the same request. The pairing is
+ * the point: an overview a director opens for ten seconds leads, and the
+ * reference data every case is judged against closes.
+ */
+describe("the routes entry", () => {
+  it("comes last, for both ranks", () => {
+    expect(opsNav.at(-1)?.href).toBe("/ops/corridors");
+    expect(localizedOpsNav("en", true).at(-1)?.href).toBe("/ops/corridors");
+    expect(localizedOpsNav("en", false).at(-1)?.href).toBe("/ops/corridors");
+  });
+
+  /**
+   * `/ops` used to redirect at a fixed path, which is why the dashboard
+   * was kept out of slot 0. It now reads the rank instead (`OpsHome`), so
+   * a reviewer is never sent at a screen that refuses them — and this
+   * pins the half of that contract the nav owns: the entry a reviewer
+   * lands on is still one they can open.
+   */
+  it("is offered to every rank", () => {
+    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/corridors");
+    expect(localizedOpsNav("en", false).map((i) => i.href)).toContain("/ops/corridors");
   });
 });
 
@@ -44,20 +78,16 @@ describe("opsNav", () => {
  * and not findable.
  */
 describe("the enquiries entry", () => {
-  it("comes after agencies, leaving the first two where they were", () => {
-    // `AppNav.isActive` matches item 0 exactly as the section root, and
-    // `/ops` redirects to it. Anything inserted ahead of these two lights
-    // the wrong pill.
-    expect(opsNav[0].href).toBe("/ops/corridors");
+  it("comes after agencies", () => {
     expect(opsNav[1].href).toBe("/ops/tenants");
     expect(opsNav[2].href).toBe("/ops/enquiries");
   });
 
   /**
-   * Unlike the two rows after it. Working the enquiry queue is the whole
-   * platform team's job, and `/ops/enquiries` refuses nobody who is
-   * staff — so hiding it from a reviewer would hide a screen they may
-   * actually open.
+   * Unlike the two rows a director alone sees. Working the enquiry queue
+   * is the whole platform team's job, and `/ops/enquiries` refuses nobody
+   * who is staff — so hiding it from a reviewer would hide a screen they
+   * may actually open.
    */
   it("is offered to every rank", () => {
     expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/enquiries");
@@ -66,46 +96,22 @@ describe("the enquiries entry", () => {
 });
 
 describe("the colleagues entry", () => {
-  it("comes after the enquiry queue, leaving the first two where they were", () => {
-    expect(opsNav[0].href).toBe("/ops/corridors");
-    expect(opsNav[1].href).toBe("/ops/tenants");
+  it("comes after the enquiry queue", () => {
+    expect(opsNav[2].href).toBe("/ops/enquiries");
     expect(opsNav[3].href).toBe("/ops/staff");
   });
 
-  it("is offered to an owner and withheld from a reviewer", () => {
+  it("is offered to a director and withheld from a reviewer", () => {
     expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/staff");
     expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain("/ops/staff");
   });
 
   it("still offers a reviewer the three screens that are theirs", () => {
     expect(localizedOpsNav("en", false).map((i) => i.href)).toEqual([
-      "/ops/corridors",
       "/ops/tenants",
       "/ops/enquiries",
+      "/ops/corridors",
     ]);
-  });
-});
-
-/**
- * `/ops/dashboard` refuses anyone who is not an owner, so offering a
- * reviewer the link would be offering them a refusal — and a nav row
- * that turns you away is worse than no nav row. The bar and the gate
- * have to agree; these pin that they do.
- */
-describe("the dashboard entry", () => {
-  it("comes last, so /ops never redirects a reviewer at a refusal", () => {
-    // `AppNav.isActive` matches item 0 exactly as the section root and
-    // `/ops` redirects to it. An overview at the front would land every
-    // reviewer on the one screen they cannot open.
-    expect(opsNav[0].href).toBe("/ops/corridors");
-    expect(opsNav.at(-1)?.href).toBe("/ops/dashboard");
-  });
-
-  it("is offered to an owner and withheld from a reviewer", () => {
-    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/dashboard");
-    expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain(
-      "/ops/dashboard"
-    );
   });
 });
 
@@ -122,7 +128,7 @@ describe("opsAdminNav", () => {
    * written to prevent would come back the moment they disagreed about
    * who may see what.
    */
-  it("shows the dashboard to an owner and hides it from a reviewer", () => {
+  it("shows the dashboard to a director and hides it from a reviewer", () => {
     expect(hrefs(true)).toContain("/ops/dashboard");
     expect(hrefs(false)).not.toContain("/ops/dashboard");
   });
@@ -138,6 +144,20 @@ describe("opsAdminNav", () => {
         .map((i) => i.href)
         .sort()
     );
+  });
+
+  /**
+   * Route curation below "Toplance operations", not above it — the same
+   * move the top-bar nav makes, expressed as the rail's group order.
+   */
+  it("puts route curation in the last group, on its own", () => {
+    const groups = opsAdminNav({ locale: "en", ...counts, isOwner: true });
+
+    expect(groups.at(-1)?.items.map((i) => i.id)).toEqual(["routes"]);
+    // The operations heading is above it, which is what "below" means
+    // once the rail is the thing rendering.
+    expect(groups[0].label).toBeTruthy();
+    expect(groups[0].items.map((i) => i.id)).not.toContain("routes");
   });
 
   /**

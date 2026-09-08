@@ -4,6 +4,7 @@ import { ClipboardCheck, Globe2, Route as RouteIcon, ShieldAlert } from "lucide-
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { CorridorsTable } from "@/components/ops/corridors-table";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { KpiRow } from "@/components/shared/kpi-card";
@@ -155,7 +156,8 @@ export default async function OpsCorridorsPage({
         isOwner: actor.staffRole === "owner",
       })}
       activeId="routes"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_CORRIDORS.heading[locale]}

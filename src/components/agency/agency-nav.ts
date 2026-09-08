@@ -46,6 +46,14 @@ export function agencyNav({
     { href: "/agency/clients", label: AGENCY.navClients[locale] },
     ...(isDirector
       ? [
+          // Directly after the roster it used to sit at the foot of. An
+          // address nobody has accepted is not yet a client, which is
+          // why it is a page beside the roster rather than a section
+          // inside it — and why it is the director's, like the team.
+          {
+            href: "/agency/clients/invitations",
+            label: AGENCY.invitationsLabel[locale],
+          },
           { href: "/agency/team", label: AGENCY.navTeam[locale] },
           // The plan is the director's too, and for the same reason the
           // roster is: what the agency pays and until when is a fact

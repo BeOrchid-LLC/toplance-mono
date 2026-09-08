@@ -16,6 +16,10 @@ type L = Record<Locale, string>;
 export const TRAVEL_HISTORY: {
   tripAdded: L;
   removedToast: L;
+  removeConfirmTitle: L;
+  removeConfirmBody: L;
+  removeConfirmCta: L;
+  keepTrip: L;
   empty: L;
   removeAria: L;
   countryLabel: L;
@@ -52,6 +56,60 @@ export const TRAVEL_HISTORY: {
     ar: "تمت إزالة {country}",
     tw: "Woayi {country} afiri hɔ",
     zu: "I-{country} isusiwe",
+  },
+  /**
+   * The control is a bare trash icon at the end of a row, in a list of
+   * rows that look alike — the easiest thing in the product to hit on
+   * the wrong line, and on a phone the likeliest. `{country}` is there
+   * so the question names the trip the finger actually landed on.
+   */
+  removeConfirmTitle: {
+    en: "Remove your trip to {country}?",
+    ha: "A cire tafiyarka zuwa {country}?",
+    yo: "Yọ ìrìn àjò rẹ sí {country} kúrò?",
+    ig: "Wepụ njem gị na {country}?",
+    fr: "Supprimer votre voyage à {country} ?",
+    pt: "Remover a sua viagem a {country}?",
+    sw: "Ondoa safari yako ya {country}?",
+    ar: "إزالة رحلتك إلى {country}؟",
+    tw: "Yi wo akwantuo a wotuu kɔɔ {country} no firi hɔ?",
+    zu: "Susa uhambo lwakho oluya e-{country}?",
+  },
+  removeConfirmBody: {
+    en: "It comes off your travel history for good. Visa forms ask about past trips, so anything you take out here you will have to remember at the desk.",
+    ha: "Zai fita daga tarihin tafiye-tafiyenka har abada. Fom ɗin biza yakan tambaya game da tafiye-tafiyen baya, don haka duk abin da ka cire a nan sai ka tuna da shi a ofis.",
+    yo: "Yóò kúrò nínú ìtàn ìrìn àjò rẹ pátápátá. Fọ́mù fisa máa ń béèrè nípa àwọn ìrìn àjò tí ó ti kọjá, nítorí náà ohunkóhun tí o bá yọ kúrò níbí, ìwọ ni yóò rántí rẹ̀ ní tábìlì.",
+    ig: "Ọ ga-apụ na akụkọ njem gị kpamkpam. Fọm visa na-ajụ maka njem gara aga, ya mere ihe ọ bụla ị wepụrụ ebe a ka ị ga-echeta na tebụl.",
+    fr: "Il disparaît définitivement de votre historique de voyages. Les formulaires de visa portent sur les voyages passés : ce que vous retirez ici, il faudra vous en souvenir au guichet.",
+    pt: "Desaparece do seu histórico de viagens definitivamente. Os formulários de visto perguntam sobre viagens anteriores, por isso o que retirar aqui terá de recordar no balcão.",
+    sw: "Inatoka kwenye historia yako ya safari kabisa. Fomu za viza huuliza kuhusu safari zilizopita, kwa hiyo chochote unachoondoa hapa itabidi ukikumbuke mezani.",
+    ar: "تختفي من سجل سفرك نهائيًا. تسأل استمارات التأشيرة عن الرحلات السابقة، فما تحذفه هنا سيلزمك تذكّره عند المكتب.",
+    tw: "Ɛbɛfiri wo akwantuo abakɔsɛm mu koraa. Visa nkrataa bisa akwantuo a atwam ho asɛm, enti biribiara a woyi firi ha no, ɛsɛ sɛ wokae wɔ ɛpono no ho.",
+    zu: "Luphuma emlandweni wakho wokuhamba unomphela. Amafomu evisa abuza ngezinhambo ezedlule, ngakho noma yini oyisusa lapha kuzodingeka uyikhumbule etafuleni.",
+  },
+  removeConfirmCta: {
+    en: "Remove trip",
+    ha: "Cire tafiya",
+    yo: "Yọ ìrìn àjò kúrò",
+    ig: "Wepụ njem",
+    fr: "Supprimer le voyage",
+    pt: "Remover viagem",
+    sw: "Ondoa safari",
+    ar: "إزالة الرحلة",
+    tw: "Yi akwantuo no firi hɔ",
+    zu: "Susa uhambo",
+  },
+  keepTrip: {
+    en: "Keep it",
+    ha: "Bar shi",
+    yo: "Fi í sílẹ̀",
+    ig: "Hapụ ya",
+    fr: "Le garder",
+    pt: "Manter",
+    sw: "Iache",
+    ar: "الإبقاء عليها",
+    tw: "Gyaa no hɔ",
+    zu: "Lugcine",
   },
   empty: {
     en: "No past trips recorded. Visa forms ask about them — adding yours here saves digging through old passports at the desk.",

@@ -5,6 +5,7 @@ import { Camera, Eye, RotateCcw, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DocStateBadge } from "@/components/shared/status-badge";
 import { RequirementBadge } from "@/components/shared/requirement-badge";
 import { documentUrl, removeDocument, uploadDocument } from "@/app/[locale]/(app)/actions";
@@ -53,6 +54,7 @@ export function DocumentRow({
   const t = useT();
   const { locale } = useLocale();
   const [pending, startTransition] = React.useTransition();
+  const [confirmingRemove, setConfirmingRemove] = React.useState(false);
   const cameraRef = React.useRef<HTMLInputElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
@@ -102,11 +104,22 @@ export function DocumentRow({
     });
   }
 
+  /**
+   * Destructive: `removeDocument` deletes the stored file and puts the
+   * row back to `not_started`. The button that reaches it is labelled
+   * "Replace", which is what makes the confirmation worth having — the
+   * word promises a swap, and what actually happens is a deletion with
+   * nothing on the other side of it until the traveller uploads again.
+   */
   function reset() {
     startTransition(async () => {
       const result = await removeDocument(applicationId, doc.docKey);
-      if (result?.error) toast.error(result.error);
-      else toast.info(t(DOCUMENT_ROW.removedToast).replace("{name}", doc.name));
+      if (result?.error) {
+        toast.error(result.error);
+        return;
+      }
+      setConfirmingRemove(false);
+      toast.info(t(DOCUMENT_ROW.removedToast).replace("{name}", doc.name));
     });
   }
 
@@ -195,7 +208,7 @@ export function DocumentRow({
             <Button
               variant="tertiary"
               size="sm"
-              onClick={reset}
+              onClick={() => setConfirmingRemove(true)}
               disabled={pending}
               aria-label={t(DOCUMENT_ROW.replaceAria).replace("{name}", doc.name)}
             >
@@ -254,6 +267,18 @@ export function DocumentRow({
           if (f) upload(f);
           e.target.value = "";
         }}
+      />
+
+      <ConfirmDialog
+        open={confirmingRemove}
+        onOpenChange={setConfirmingRemove}
+        title={t(DOCUMENT_ROW.removeConfirmTitle).replace("{name}", doc.name)}
+        body={t(DOCUMENT_ROW.removeConfirmBody)}
+        confirmLabel={t(DOCUMENT_ROW.removeConfirmCta)}
+        cancelLabel={t(DOCUMENT_ROW.cancel)}
+        icon={<Trash2 />}
+        pending={pending}
+        onConfirm={reset}
       />
     </div>
   );

@@ -80,11 +80,24 @@ through `src/components/shared/confirm-dialog.tsx` rather than assembling a
 dialog at the call site — a rule with ten implementations is ten rules.
 
 A control is destructive when committing it removes access, deletes data, or
-stops work someone else is in the middle of. Suspending an agency, deleting a
-record, revoking an invitation and removing a member are all destructive.
-Publishing, approving, sending back for changes and saving a form are not: they
-add or change something without taking anything away. `CorridorDecision` is the
-worked example of the second kind, and deliberately does not confirm.
+stops work someone else is in the middle of. Publishing, approving, sending back
+for changes and saving a form are not: they add or change something without
+taking anything away.
+
+Every destructive control in the product today, and what each one asks:
+
+| Control | Where | Why it qualifies |
+|---|---|---|
+| Suspend agency | `ops/tenant-controls.tsx` | every member stops being able to open a case, at once |
+| Demote an owner | `ops/tenant-controls.tsx` | takes the owner's controls off a person; only this direction asks |
+| Remove a document | `app/document-row.tsx` | deletes the stored file; the button says "Replace" but nothing replaces it |
+| Remove a trip | `app/travel-history.tsx` | gone from travel history for good, from a bare icon in a list of alike rows |
+| Revoke an invitation | `shared/invitation-actions.tsx` | the link dies on the spot and there is no un-revoke |
+
+`CorridorDecision` is the worked example of the other kind and deliberately does
+not confirm: approving a corridor publishes something, it takes nothing away.
+`restoreTenant`, promoting a member and resending an invitation are likewise
+additive.
 
 Two things the rule is not:
 

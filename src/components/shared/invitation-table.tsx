@@ -110,7 +110,11 @@ export function InvitationTable({
               email={invite.email}
               action={resendAction}
             />
-            <RevokeInvitationButton invitationId={invite.id} action={revokeAction} />
+            <RevokeInvitationButton
+              invitationId={invite.id}
+              email={invite.email}
+              action={revokeAction}
+            />
           </div>
         ) : null,
     },

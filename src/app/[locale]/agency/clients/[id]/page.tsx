@@ -11,6 +11,7 @@ import { MessageComposer } from "@/components/app/message-composer";
 import { MessageThread } from "@/components/app/message-thread";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { DownloadDocuments } from "@/components/shared/download-documents";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -20,9 +21,11 @@ import { listOrgMembers } from "@/lib/data/organisations";
 import { isAgencyDirectorFor } from "@/lib/auth/policy";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { AGENCY } from "@/lib/i18n/agency";
+import { ARCHIVE } from "@/lib/i18n/archive";
 import { CASE_REVIEW } from "@/lib/i18n/case-review";
 import { MESSAGES } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/server";
+import { exportableDocuments } from "@/lib/storage/archive";
 import { requireAgencyCase } from "@/app/[locale]/agency/console";
 
 // Reads a session, so it is never prerendered.
@@ -76,6 +79,10 @@ export default async function AgencyCasePage({
 
   const completion = completionOf(docs);
   const destination = countryFromIso2(row.destinationIso);
+
+  // Files that exist, not required documents collected — an optional
+  // document is still something the embassy pack should carry.
+  const uploaded = exportableDocuments(docs).length;
 
   // A write, not something this screen's own response should wait on —
   // the same idiom the traveller's messages page uses.
@@ -152,14 +159,29 @@ export default async function AgencyCasePage({
               />
             </div>
           </div>
-          <p className="t-muted">
-            <span className="num font-semibold text-ink">{completion.verified}</span>{" "}
-            {CASE_REVIEW.completion.of[locale]}{" "}
-            <span className="num">{completion.total}</span>{" "}
-            {CASE_REVIEW.completion.verified[locale]} ·{" "}
-            <span className="num">{completion.collected}</span>{" "}
-            {CASE_REVIEW.completion.uploaded[locale]}
-          </p>
+          <div>
+            <p className="t-muted">
+              <span className="num font-semibold text-ink">{completion.verified}</span>{" "}
+              {CASE_REVIEW.completion.of[locale]}{" "}
+              <span className="num">{completion.total}</span>{" "}
+              {CASE_REVIEW.completion.verified[locale]} ·{" "}
+              <span className="num">{completion.collected}</span>{" "}
+              {CASE_REVIEW.completion.uploaded[locale]}
+            </p>
+            {/* Beside the counts rather than in the decision rail: this
+                is reading the case, not deciding it, and a reviewer
+                taking the pack to an embassy does it before the verdict
+                exists. Hidden until something has been uploaded, the
+                same condition the traveller's page uses. */}
+            {uploaded > 0 && (
+              <div className="mt-4">
+                <DownloadDocuments
+                  applicationId={row.id}
+                  label={ARCHIVE.agencyLabel[locale]}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </Panel>
 

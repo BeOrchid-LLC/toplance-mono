@@ -154,9 +154,18 @@ export async function resolveAgencyConsole(
   //
   // `name-organisation` is not redirected: that state is the dashboard's
   // to render, and it is the one page a director with no agency has.
+  //
+  // The question is asked of `orgId`, not of `membership`, and the two
+  // differ for exactly one person: a member of a suspended agency, who
+  // holds an `org_members` row that `liveMembershipsFor` has already
+  // dropped. Reading the membership row here decided they owed money and
+  // sent them to `/agency/billing` — a page that cannot open without an
+  // `orgId` and redirects back, which the browser ends with
+  // ERR_TOO_MANY_REDIRECTS. A suspended agency has no plan to buy: the
+  // membership row below is read only so the bar can still name it.
   if (!allowUnpaid) {
     const decision = decideAgencyBilling({
-      hasOrganisation: !!membership,
+      hasOrganisation: !!orgId,
       subscriptionActive,
     });
     if (decision === "checkout") redirect("/agency/billing");

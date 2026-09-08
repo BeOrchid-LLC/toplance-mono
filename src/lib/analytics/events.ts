@@ -57,6 +57,14 @@ export const EVENT_NAMES = [
   "toplance.application_became_billable",
   "toplance.document_removed",
 
+  /**
+   * A whole checklist downloaded as one ZIP, from either side of the
+   * desk — the traveller keeping a copy of what they sent, or the agency
+   * taking the pack to an embassy. `viewer` says which, because those
+   * are different behaviours that happen to share an endpoint.
+   */
+  "toplance.documents_exported",
+
   /** A reviewer's verdict — the transitions out of `checking`. */
   "toplance.document_verified",
   "toplance.document_flagged",

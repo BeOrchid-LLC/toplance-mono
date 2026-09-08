@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { DocumentRow } from "@/components/app/document-row";
+import { DownloadDocuments } from "@/components/shared/download-documents";
 import { UploadOutcomeProvider } from "@/components/app/upload-outcome";
 import { SubmitButton } from "@/components/app/submit-button";
 import { CompletionRing } from "@/components/app/completion-ring";
@@ -24,6 +25,8 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import type { BadgeVariant } from "@/lib/domain/status";
 import { getLocale } from "@/lib/i18n/server";
 import { DOCUMENTS } from "@/lib/i18n/documents";
+import { ARCHIVE } from "@/lib/i18n/archive";
+import { exportableDocuments } from "@/lib/storage/archive";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -44,6 +47,13 @@ export default async function DocumentsPage() {
 
   const docs = await getDocuments(application.id);
   const completion = completionOf(docs);
+
+  /**
+   * How many files exist to be downloaded — not `completion.collected`,
+   * which counts required documents only and would hide the link from a
+   * traveller who has uploaded nothing but optional ones.
+   */
+  const uploaded = exportableDocuments(docs).length;
 
   /**
    * Whether uploading this row finishes the traveller's part of the
@@ -97,7 +107,21 @@ export default async function DocumentsPage() {
     <main>
       <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
-          <h1 className="t-h2">{t.heading[locale]}</h1>
+          <div>
+            <h1 className="t-h2">{t.heading[locale]}</h1>
+            {/* Only once there is something to download. An empty
+                checklist offering a copy of nothing is a button that
+                exists to disappoint, and the route answers 404 for the
+                same state. */}
+            {uploaded > 0 && (
+              <div className="mt-4">
+                <DownloadDocuments
+                  applicationId={application.id}
+                  label={ARCHIVE.travelerLabel[locale]}
+                />
+              </div>
+            )}
+          </div>
           <CompletionRing pct={completion.pct} size={120} />
         </div>
 

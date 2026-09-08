@@ -42,6 +42,7 @@ export const REQUIREMENTS: {
   perEntrySub: L;
   refusalReasonSub: L;
   approxAtRatesDate: L;
+  approxUnavailable: L;
   officialEvisaPortal: L;
   registrationSuffix: L;
   embassyContact: L;
@@ -288,6 +289,28 @@ export const REQUIREMENTS: {
     ar: "بأسعار {date}",
     tw: "sɛnea sika bo teɛ {date}",
     zu: "ngamanani ka-{date}",
+  },
+  /**
+   * Shown in place of the converted figure when there is a conversion to
+   * want and no rate to make it with.
+   *
+   * A silently absent number is what caused this feedback: the fee
+   * appeared in the mission's currency alone, which reads as the feature
+   * not existing rather than as a rate we could not fetch today. Absent
+   * entirely when the two currencies match, because then there is
+   * genuinely nothing to approximate.
+   */
+  approxUnavailable: {
+    en: "We could not convert this into {currency} today.",
+    ha: "Ba mu iya canza wannan zuwa {currency} yau ba.",
+    yo: "A kò lè yí èyí padà sí {currency} lónìí.",
+    ig: "Anyị enweghị ike ịtụgharị nke a n'ime {currency} taa.",
+    fr: "Nous n'avons pas pu convertir ce montant en {currency} aujourd'hui.",
+    pt: "Hoje não conseguimos converter este valor em {currency}.",
+    sw: "Hatukuweza kubadilisha kiasi hiki kuwa {currency} leo.",
+    ar: "لم نتمكن من تحويل هذا المبلغ إلى {currency} اليوم.",
+    tw: "Yɛantumi ansesa eyi ankɔ {currency} mu nnɛ.",
+    zu: "Asikwazanga ukuguqula lokhu kube yi-{currency} namuhla.",
   },
   officialEvisaPortal: {
     en: "Official eVisa portal",

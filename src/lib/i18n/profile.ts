@@ -7,11 +7,10 @@ type L = Record<Locale, string>;
  * and the five side panels under it. Anything the traveller or the agent
  * actually produced — their name, their trip answers, a case note's
  * body, a status event's message, a rule set's own name and source — is
- * data and stays exactly as recorded; `STATUS` labels/blurbs
- * (`@/lib/domain/status`) rendered via `event.toStatus` are a shared
- * domain constant outside this pass's ownership and stay in English —
- * see the handover notes. Everything here is the sheet's fixed labels
- * and connective prose around that data.
+ * data and stays exactly as recorded. The status names rendered via
+ * `event.toStatus` are `STATUS_COPY` (`@/lib/i18n/status`), localised in
+ * their own module because the pills share them. Everything here is the
+ * sheet's fixed labels and connective prose around that data.
  *
  * English values here are exactly the copy the page already had; every
  * other locale was translated in-house from that English, the same way

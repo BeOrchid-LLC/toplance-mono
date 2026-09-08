@@ -8,8 +8,11 @@ import { CompletionRing } from "@/components/app/completion-ring";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
-import { STATUS, VERIFIED_MEANS, canSubmitFrom } from "@/lib/domain/status";
-import { UPLOAD_GUIDANCE } from "@/lib/domain/uploads";
+import { canSubmitFrom } from "@/lib/domain/status";
+import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
+import { MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
+import { UPLOADS } from "@/lib/i18n/uploads";
+import { fill } from "@/lib/i18n/fill";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import {
   completionOf,
@@ -97,13 +100,18 @@ export default async function DocumentsPage() {
           <div className="max-w-[62ch]">
             <h1 className="t-h2">{t.heading[locale]}</h1>
             <p className="t-muted mt-3">
-              {t.intro[locale]} {VERIFIED_MEANS}
+              {t.intro[locale]} {VERIFIED_MEANS[locale]}
             </p>
             {/* Said before they photograph anything, not after a refusal.
                 Legibility is the largest single cause of a re-upload and
                 the one thing entirely within the traveller's control at
                 the moment they take the picture. */}
-            <p className="t-muted mt-3">{UPLOAD_GUIDANCE}</p>
+            <p className="t-muted mt-3">
+              {fill(UPLOADS.guidance[locale], {
+                formats: UPLOADS.acceptedFormats[locale],
+                size: MAX_UPLOAD_LABEL,
+              })}
+            </p>
             {/* Mandatory, not a nicety. Decision 2 made the pre-check
                 unconditional — there is no setting under which a
                 traveller's file is not read by a machine — so saying so
@@ -172,9 +180,9 @@ export default async function DocumentsPage() {
                the panel disappearing on its own would read as the
                submission having failed. */
             <section className="mt-8 rounded-lg border border-border-strong px-5 py-5 sm:px-6">
-              <h2 className="t-h3">{STATUS[application.status].label}</h2>
+              <h2 className="t-h3">{STATUS_COPY[application.status].label[locale]}</h2>
               <p className="t-muted mt-2 max-w-[74ch]">
-                {STATUS[application.status].blurb}
+                {STATUS_COPY[application.status].blurb[locale]}
               </p>
             </section>
           ))}

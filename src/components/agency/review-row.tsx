@@ -13,7 +13,7 @@ import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { FLAG_REASON_KEYS } from "@/lib/domain/flag-reason";
 import type { FlagReason } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
-import { useT } from "@/components/locale-provider";
+import { useLocale, useT } from "@/components/locale-provider";
 import {
   CASE_COMMON,
   FLAG_REASONS,
@@ -39,6 +39,7 @@ import {
  */
 export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: string }) {
   const t = useT();
+  const { locale } = useLocale();
   const [pending, startTransition] = React.useTransition();
   const [flagging, setFlagging] = React.useState(false);
   const [reason, setReason] = React.useState("");
@@ -109,7 +110,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
         <div className="min-w-[280px] flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="t-title">{doc.name}</h3>
-            <DocStateBadge state={doc.state} />
+            <DocStateBadge state={doc.state} locale={locale} />
             {!doc.isRequired && (
               <span className="special-caps">{t(REVIEW_ROW.optional)}</span>
             )}

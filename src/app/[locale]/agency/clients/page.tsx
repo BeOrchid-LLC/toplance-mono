@@ -14,9 +14,10 @@ import { listOrgRoster } from "@/lib/data/organisations";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import { matchesDateWindow, windowCutoff } from "@/lib/domain/date-window";
 import { readDir, readSort, sortRows } from "@/lib/domain/sorting";
-import { STATUS, type ApplicationStatus } from "@/lib/domain/status";
+import type { ApplicationStatus } from "@/lib/domain/status";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
+import { STATUS_COPY } from "@/lib/i18n/status";
 import { getLocale } from "@/lib/i18n/server";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
 import { resendInvitation, revokeInvitation } from "@/app/[locale]/agency/actions";
@@ -114,7 +115,7 @@ export default async function AgencyClientsPage({
         case "documents":
           return r.completionPct;
         case "status":
-          return STATUS[r.status].label;
+          return STATUS_COPY[r.status].label[locale];
         case "submitted":
           return r.submittedAt;
         default:
@@ -142,13 +143,11 @@ export default async function AgencyClientsPage({
             {
               param: "status",
               label: AGENCY.anyStatus[locale],
-              options: (Object.keys(STATUS) as ApplicationStatus[]).map((s) => ({
+              options: (Object.keys(STATUS_COPY) as ApplicationStatus[]).map((s) => ({
                 value: s,
-                // The badge's own word, so the filter and the cell it
-                // filters cannot drift apart. Still English everywhere:
-                // `STATUS` is not localised, which is a gap across the
-                // whole product rather than this table's to close.
-                label: STATUS[s].label,
+                // The badge's own word, in the reader's own language, so
+                // the filter and the cell it filters cannot drift apart.
+                label: STATUS_COPY[s].label[locale],
               })),
             },
             {

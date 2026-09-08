@@ -15,7 +15,7 @@ import { documentGuidance } from "@/lib/domain/document-guidance";
 import { specimenFor } from "@/lib/domain/specimens";
 import { ACCEPT } from "@/lib/domain/uploads";
 import { cn } from "@/lib/utils";
-import { useT } from "@/components/locale-provider";
+import { useLocale, useT } from "@/components/locale-provider";
 import { DOCUMENT_ROW } from "@/lib/i18n/document-row";
 
 /**
@@ -51,6 +51,7 @@ export function DocumentRow({
   completesChecklist?: boolean;
 }) {
   const t = useT();
+  const { locale } = useLocale();
   const [pending, startTransition] = React.useTransition();
   const cameraRef = React.useRef<HTMLInputElement>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -147,7 +148,7 @@ export function DocumentRow({
         <div className="min-w-[280px] flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="t-title">{doc.name}</h3>
-            <DocStateBadge state={doc.state} />
+            <DocStateBadge state={doc.state} locale={locale} />
             <RequirementBadge required={doc.isRequired} />
           </div>
           {rejection ? (

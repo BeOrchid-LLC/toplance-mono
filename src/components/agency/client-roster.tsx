@@ -226,7 +226,7 @@ export function ClientRoster({
                   </TableCell>
 
                   <TableCell>
-                    {r.status && <StatusBadge status={r.status} short />}
+                    {r.status && <StatusBadge status={r.status} locale={locale} short />}
                   </TableCell>
 
                   <TableCell className="t-muted">

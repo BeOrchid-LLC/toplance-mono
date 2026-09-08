@@ -169,7 +169,7 @@ export function InvitationRoster({
                   </TableCell>
 
                   <TableCell>
-                    <InvitationStatusBadge status={invite.status} />
+                    <InvitationStatusBadge status={invite.status} locale={locale} />
                   </TableCell>
 
                   <TableCell>

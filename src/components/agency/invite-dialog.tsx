@@ -67,9 +67,23 @@ type Recipient = {
  */
 export function InviteDialog({
   kind,
+  size = "bar",
 }: {
   /** Fixed by the page. Every caller is a roster that knows. */
   kind: "client" | "staff";
+  /**
+   * `bar` because that is where this trigger usually is — the console
+   * bar, standing in the row of 36px chrome that size exists to match.
+   *
+   * The team roster passes `sm`. Its trigger sits in a panel header
+   * beside the member count, which is page content rather than chrome —
+   * `bar` is the one size allowed below the 44px tap minimum, and it is
+   * allowed there because a console bar is only ever reached with a
+   * pointer. A panel header is not, so the button that lives in one
+   * takes the full size. Same exception, same reasoning, as
+   * `ProvisionTenant`.
+   */
+  size?: "bar" | "sm";
 }) {
   const t = useT();
   const [open, setOpen] = React.useState(false);
@@ -140,7 +154,7 @@ export function InviteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="bar">
+        <Button size={size}>
           <Mail /> {t(INVITE_DIALOG.inviteButton)}
         </Button>
       </DialogTrigger>

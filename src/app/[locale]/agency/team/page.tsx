@@ -67,14 +67,26 @@ export default async function AgencyTeamPage() {
       activeId="team"
       title={AGENCY.navTeam[locale]}
       lead={AGENCY.teamCardBody[locale]}
-      actions={
-        // Only the director may invite a colleague, and on a page whose
-        // one action is exactly that, a reviewer is better shown no
-        // button than one that refuses.
-        membership.role === "owner" ? <InviteDialog kind="staff" /> : undefined
-      }
     >
-      <TeamRoster members={members} locale={locale} />
+      <TeamRoster
+        members={members}
+        locale={locale}
+        action={
+          // On the roster's own header row since 8 September, not the
+          // console bar. See `TeamRoster.action` for why the button
+          // belongs beside the count rather than in the chrome.
+          //
+          // Only the director may invite a colleague, and on a page
+          // whose one action is exactly that, a reviewer is better shown
+          // no button than one that refuses. The redirect above already
+          // means nobody else is reading this, so the check is a second
+          // lock on a door rather than the door — kept because the day
+          // the redirect moves is the day it stops being redundant.
+          membership.role === "owner" ? (
+            <InviteDialog kind="staff" size="sm" />
+          ) : undefined
+        }
+      />
       <InvitationRoster
         resendAction={resendInvitation}
         revokeAction={revokeInvitation}

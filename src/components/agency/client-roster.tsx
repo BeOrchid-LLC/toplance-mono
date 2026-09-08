@@ -119,6 +119,10 @@ export function ClientRoster({
    * in the console bar. `AdminShell` dropped its search slot in #74 on
    * the grounds that a table's controls belong beside the columns they
    * act on, and `DataTable` puts them here for the same reason.
+   *
+   * Optional, because the two roster slices on the dashboard filter
+   * nothing — a toolbar over a reviewer's own six cases is a control
+   * with nothing to do.
    */
   toolbar?: { placeholder: string; filters: ToolbarFilter[] };
 }) {

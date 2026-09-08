@@ -117,7 +117,7 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="bar">
           <Building2 /> {t(OPS_TENANTS.provisionButton)}
         </Button>
       </DialogTrigger>

@@ -128,6 +128,12 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   await page.waitForURL("**/agency/clients");
 
   await page.getByRole("button", { name: "Resend" }).click();
+  // Both acts on a row confirm before they commit, so the row's button
+  // raises the question and the dialog's button answers it. Scoped to
+  // the dialog because the two carry the same word — deliberately: the
+  // confirm restates the act rather than renaming it, the way the
+  // revoke's does.
+  await page.getByRole("dialog").getByRole("button", { name: "Resend" }).click();
   // `RESEND_API_KEY` is "" on this server (see `playwright.config.ts`),
   // so nothing is actually emailed — and the console now says so rather
   // than reporting a success it cannot vouch for. That is the assertion:
@@ -138,6 +144,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   ).toBeVisible();
 
   // Still one invitation, still pending — a resend must not mint a row.
+  // The dialog is gone by now, so the only Resend left is the row's.
   await expect(page.getByRole("button", { name: "Resend" })).toHaveCount(1);
 
   // ---- somebody else, who was forwarded the link ----
@@ -448,6 +455,16 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
 
   await consoleNav(colleague).getByRole("link", { name: "Dashboard" }).click();
   await colleague.waitForURL("**/agency");
+
+  // The agency's books are the director's line. A reviewer's dashboard
+  // answers "what is on my desk", and what the agency's clients have
+  // paid is not on it — they cannot act on it, and it is not their
+  // money. Asserted rather than assumed because the gate is a single
+  // `isDirector` ternary: if `summary` were ever computed
+  // unconditionally, every figure it feeds would appear here at once
+  // and nothing else in this suite would notice.
+  await expect(colleague.getByText("Paid by clients")).toHaveCount(0);
+  await expect(colleague.getByText("Where your clients' cases stop")).toHaveCount(0);
 
   // ---- and their own profile ----
   await colleague.goto("/agency/profile");

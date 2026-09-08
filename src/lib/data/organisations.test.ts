@@ -318,8 +318,16 @@ describe.skipIf(!process.env.DATABASE_URL)("isAgencyOwner", async () => {
   const REVIEWER = "test_owner_check_reviewer";
   const OUTSIDER = "test_owner_check_outsider";
   const IDS = [OWNER, REVIEWER, OUTSIDER];
-  const ORG = "00000000-0000-4000-8000-0000000e0001";
-  const OTHER_ORG = "00000000-0000-4000-8000-0000000e0002";
+  // A prefix of this suite's own. These were `…0e0001`/`…0e0002`, which
+  // `payments.test.ts` also claims — and claims exclusively, in a comment
+  // asserting no other file uses them. Two suites inserting the same
+  // organisation ids only collide when they overlap, so it stayed hidden
+  // until a third database suite shifted the scheduling: the loser's
+  // `afterEach` then fails deleting an organisation whose applications
+  // the winner still holds, and the failure surfaces in whichever file
+  // happened to run second.
+  const ORG = "00000000-0000-4000-8000-000000110001";
+  const OTHER_ORG = "00000000-0000-4000-8000-000000110002";
 
   beforeEach(async () => {
     await db.insert(profiles).values([

@@ -141,6 +141,9 @@ export function InvitationTable({
           {
             param: "status",
             label: OPS_STAFF.anyStatus[locale],
+            // Every status the enum has, because the copy record is keyed
+            // on `InvitationStatus` — so a status added there reaches this
+            // filter without anybody remembering to list it.
             options: Object.entries(INVITATION_STATUS_COPY).map(([value, s]) => ({
               value,
               // The badge's own word, in the reader's own language, so

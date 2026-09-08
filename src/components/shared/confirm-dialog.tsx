@@ -42,6 +42,7 @@ export function ConfirmDialog({
   onConfirm,
   pending = false,
   icon,
+  confirmVariant = "danger",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -54,6 +55,16 @@ export function ConfirmDialog({
   pending?: boolean;
   /** Rendered inside the confirm button, ahead of its label. */
   icon?: React.ReactNode;
+  /**
+   * `danger` unless a caller says otherwise, because the rule this
+   * component serves is about destructive controls and that is what
+   * nearly every caller is. The exception is an act that asks for a
+   * reason other than destruction — resending an invitation puts a
+   * second letter in an inbox and takes nothing away, and painting its
+   * confirm button red would teach the operator that the colour means
+   * nothing.
+   */
+  confirmVariant?: "primary" | "danger";
 }) {
   return (
     <Dialog
@@ -91,7 +102,7 @@ export function ConfirmDialog({
           </Button>
           <Button
             type="button"
-            variant="danger"
+            variant={confirmVariant}
             disabled={pending}
             onClick={onConfirm}
           >

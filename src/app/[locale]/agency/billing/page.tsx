@@ -68,8 +68,13 @@ export default async function AgencyBillingPage() {
       activeId="billing"
       title={BILLING.planTitle[locale]}
       lead={BILLING.planBody[locale]}
+      // The plan and its receipts are a document, not a table: ~720px
+      // wide whatever the viewport does, so left-aligning them stranded
+      // the whole page against one edge of a wide screen. Same call as
+      // the profile sheet, and for the same reason — see `AdminShell`.
+      centred
     >
-      <Panel className="max-w-[720px]">
+      <Panel>
         <PanelHeader label={BILLING.planName[locale]} />
         <PanelBody className="pt-6">
           <p className="d-sm">
@@ -104,7 +109,7 @@ export default async function AgencyBillingPage() {
         </PanelBody>
       </Panel>
 
-      <Panel className="mt-8 max-w-[720px]">
+      <Panel className="mt-8">
         <PanelHeader label={BILLING.historyTitle[locale]} />
         <PanelBody className="pt-6">
           {history.length === 0 ? (

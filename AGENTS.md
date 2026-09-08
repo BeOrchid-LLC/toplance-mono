@@ -99,6 +99,14 @@ not confirm: approving a corridor publishes something, it takes nothing away.
 `restoreTenant`, promoting a member and resending an invitation are likewise
 additive.
 
+Resending confirms anyway, and its dialog is not destructive — `ConfirmDialog`
+takes `confirmVariant="primary"` for it. The reason is on
+`INVITATION_ROSTER.resendConfirmTitle`, and it is about where the button sits
+rather than about what it does: it is a text button a hand's breadth from the
+revoke at the end of the same table row, and the letter it sends leaves this
+product for somebody's inbox. Asking is allowed above the rule; it is skipping
+that has to be argued for.
+
 Two things the rule is not:
 
 - **Not a substitute for saying what happens.** "Are you sure?" is not a

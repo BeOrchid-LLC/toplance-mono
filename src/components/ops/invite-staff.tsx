@@ -67,7 +67,7 @@ export function InviteStaff() {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="bar">
           <UserPlus /> {t(OPS_STAFF.inviteAction)}
         </Button>
       </DialogTrigger>

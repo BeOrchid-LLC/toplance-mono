@@ -341,3 +341,154 @@ export function summarise(
 
   return { currency, ...totals };
 }
+
+/** One currency's worth of settled client fees, as the database groups them. */
+export type ClientRevenueRow = {
+  currency: string;
+  totalMinor: number;
+  /** Distinct applications that have a paid fee against them. */
+  cases: number;
+};
+
+/** What the director's "paid by clients" tile shows. */
+export type ClientRevenue = {
+  currency: string;
+  totalMinor: number;
+  cases: number;
+  /**
+   * True when settled fees exist in a currency other than the one
+   * reported. See `collapseClientRevenue` for why those are left out.
+   */
+  mixedCurrency: boolean;
+};
+
+/**
+ * Collapse per-currency totals into the single figure a tile can show.
+ *
+ * Minor units are not comparable across currencies — ₦100 and $100 are
+ * both `100_00`, and adding them produces a number that is not money in
+ * any currency. So this picks the largest single currency rather than
+ * summing, and sets `mixedCurrency` when it had to leave something out,
+ * so the screen can say so instead of quietly under-reporting.
+ *
+ * In practice there is one: client fees are priced from
+ * `billing_rate_cards.client_fee_minor`, and a card carries one
+ * `currency`. A second currency here means rows priced under an older
+ * card in a different unit, which is a real thing that can happen once
+ * and must not silently corrupt the total when it does.
+ *
+ * Ties break on the currency name so the figure is stable between
+ * renders rather than depending on the order Postgres grouped in.
+ */
+export function collapseClientRevenue(
+  rows: readonly ClientRevenueRow[],
+  fallbackCurrency = "USD"
+): ClientRevenue {
+  if (rows.length === 0) {
+    return { currency: fallbackCurrency, totalMinor: 0, cases: 0, mixedCurrency: false };
+  }
+
+  const [top] = [...rows].sort(
+    (a, b) => b.totalMinor - a.totalMinor || a.currency.localeCompare(b.currency)
+  );
+
+  return {
+    currency: top.currency,
+    totalMinor: top.totalMinor,
+    cases: top.cases,
+    mixedCurrency: rows.length > 1,
+  };
+}
+
+
+/**
+ * One settled client fee, narrowed to the three fields the fold turns
+ * on.
+ *
+ * Structural rather than `typeof payments.$inferSelect`, for the same
+ * reason `Settlement` is: this module stays free of Drizzle and of
+ * `server-only`, so the arithmetic behind a figure on a director's
+ * screen can be tested without a database.
+ */
+export type ClientFee = {
+  /** When the money actually landed, not when the cycle closed. */
+  paidAt: Date;
+  amountMinor: number;
+  /** Distinct-counted, so a case charged twice is still one case. */
+  applicationId: string;
+};
+
+/** One month of settled client fees — a bar on the director's chart. */
+export type ClientFeePoint = {
+  /** `YYYY-MM` in UTC. The chart's x value. */
+  month: string;
+  totalMinor: number;
+  /** Distinct applications settled in this month, not rows. */
+  cases: number;
+};
+
+/** `2026-09-08T…` → `2026-09`, in UTC. */
+function monthKey(at: Date): string {
+  return at.toISOString().slice(0, 7);
+}
+
+/**
+ * Settled client fees folded into one point per calendar month, oldest
+ * first, across a fixed window ending in the current month.
+ *
+ * **Every month in the window comes back, including the empty ones.** A
+ * bar chart's category axis draws exactly what it is handed, so dropping
+ * a quiet month does not leave a gap in the row — it closes it, and
+ * August ends up drawn next to June as though they were consecutive. A
+ * month in which nobody paid is a fact about the business, and it
+ * belongs on the chart as a zero rather than as a month that never
+ * happened.
+ *
+ * Grouped on the calendar month rather than on the agency's billing
+ * cycle, and the reason is stronger here than the one `revenueByCycle`
+ * gives for the same choice: a client fee is not billed on a cycle at
+ * all. `payment_shape_matches_kind` keeps `org_id` off these rows —
+ * the traveller pays at checkout, on whatever day they get to it — so
+ * the agency's anniversary is not a period this money belongs to. The
+ * month it settled in is.
+ *
+ * Cases are distinct applications, matching `clientRevenueForOrgs`
+ * exactly: a case charged twice after a failed attempt is one client who
+ * paid, and the tile above this chart must not disagree with it.
+ */
+export function clientFeesByMonth(
+  fees: readonly ClientFee[],
+  months: number,
+  now: Date = new Date()
+): ClientFeePoint[] {
+  const points = new Map<string, { totalMinor: number; cases: Set<string> }>();
+
+  // The window is laid down first, so the empty months exist as keys
+  // before anything is bucketed into them — and so the order this
+  // returns in is the order time runs in, rather than the order the
+  // rows happened to arrive.
+  for (let back = months - 1; back >= 0; back--) {
+    // `Date.UTC` normalises a negative month index into the previous
+    // year, so a six-month window in February reaches back into the one
+    // before it without any arithmetic here.
+    const at = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1));
+    points.set(monthKey(at), { totalMinor: 0, cases: new Set() });
+  }
+
+  for (const fee of fees) {
+    // Anything outside the window is not this chart's business. The read
+    // that produces these rows is already bounded, so this is the second
+    // line of defence rather than the first.
+    const point = points.get(monthKey(fee.paidAt));
+    if (!point) continue;
+
+    point.totalMinor += fee.amountMinor;
+    point.cases.add(fee.applicationId);
+  }
+
+  return [...points.entries()].map(([month, point]) => ({
+    month,
+    totalMinor: point.totalMinor,
+    cases: point.cases.size,
+  }));
+}

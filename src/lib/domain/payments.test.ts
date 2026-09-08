@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   OVERDUE_AFTER_DAYS,
+  clientFeesByMonth,
+  collapseClientRevenue,
   recentCycles,
   revenueByCycle,
   statusFor,
@@ -375,5 +377,152 @@ describe("revenueByCycle", () => {
     ]);
 
     expect(points[0].applications).toBe(7);
+  });
+});
+
+describe("collapseClientRevenue", () => {
+  it("reports zero in the fallback currency when nothing has settled", () => {
+    const revenue = collapseClientRevenue([], "NGN");
+
+    expect(revenue).toEqual({
+      currency: "NGN",
+      totalMinor: 0,
+      cases: 0,
+      mixedCurrency: false,
+    });
+  });
+
+  it("passes a single currency straight through", () => {
+    const revenue = collapseClientRevenue([
+      { currency: "USD", totalMinor: 45_00, cases: 3 },
+    ]);
+
+    expect(revenue).toEqual({
+      currency: "USD",
+      totalMinor: 45_00,
+      cases: 3,
+      mixedCurrency: false,
+    });
+  });
+
+  /**
+   * The reason this function exists. Summing would report 145_00 of a
+   * currency that does not exist; the tile must show one real total and
+   * admit that it is not the whole story.
+   */
+  it("never adds minor units across currencies", () => {
+    const revenue = collapseClientRevenue([
+      { currency: "USD", totalMinor: 45_00, cases: 3 },
+      { currency: "NGN", totalMinor: 100_00, cases: 2 },
+    ]);
+
+    expect(revenue.totalMinor).toBe(100_00);
+    expect(revenue.currency).toBe("NGN");
+    expect(revenue.cases).toBe(2);
+    expect(revenue.mixedCurrency).toBe(true);
+  });
+
+  it("breaks ties on the currency name so the figure does not flicker", () => {
+    const rows = [
+      { currency: "USD", totalMinor: 50_00, cases: 1 },
+      { currency: "EUR", totalMinor: 50_00, cases: 4 },
+    ];
+
+    expect(collapseClientRevenue(rows).currency).toBe("EUR");
+    expect(collapseClientRevenue([...rows].reverse()).currency).toBe("EUR");
+  });
+});
+
+
+describe("clientFeesByMonth", () => {
+  const now = new Date("2026-09-08T12:00:00Z");
+  const fee = (paidAt: string, amountMinor: number, applicationId = "a1") => ({
+    paidAt: new Date(paidAt),
+    amountMinor,
+    applicationId,
+  });
+
+  it("returns every month in the window, oldest first", () => {
+    const points = clientFeesByMonth([], 6, now);
+
+    expect(points.map((p) => p.month)).toEqual([
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+    ]);
+  });
+
+  it("reaches back across a year boundary", () => {
+    const points = clientFeesByMonth([], 4, new Date("2026-02-14T00:00:00Z"));
+
+    expect(points.map((p) => p.month)).toEqual([
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+    ]);
+  });
+
+  // The whole reason the window is laid down before the rows are
+  // bucketed: a quiet month must draw as a zero, not vanish and leave
+  // two non-adjacent months looking consecutive.
+  it("keeps a month nobody paid in as a zero", () => {
+    const points = clientFeesByMonth(
+      [fee("2026-07-02T00:00:00Z", 25_00), fee("2026-09-01T00:00:00Z", 25_00)],
+      6,
+      now
+    );
+
+    const august = points.find((p) => p.month === "2026-08");
+    expect(august).toEqual({ month: "2026-08", totalMinor: 0, cases: 0 });
+    expect(points).toHaveLength(6);
+  });
+
+  it("sums the fees that settled in each month", () => {
+    const points = clientFeesByMonth(
+      [
+        fee("2026-08-03T00:00:00Z", 25_00, "a1"),
+        fee("2026-08-19T00:00:00Z", 30_00, "a2"),
+        fee("2026-09-01T00:00:00Z", 25_00, "a3"),
+      ],
+      6,
+      now
+    );
+
+    expect(points.find((p) => p.month === "2026-08")).toEqual({
+      month: "2026-08",
+      totalMinor: 55_00,
+      cases: 2,
+    });
+    expect(points.find((p) => p.month === "2026-09")?.totalMinor).toBe(25_00);
+  });
+
+  // Matches `clientRevenueForOrgs`, which counts distinct applications
+  // for the tile sitting above this chart. Two figures derived from the
+  // same rows must not disagree about how many clients paid.
+  it("counts a case charged twice as one case", () => {
+    const points = clientFeesByMonth(
+      [
+        fee("2026-08-03T00:00:00Z", 25_00, "a1"),
+        fee("2026-08-04T00:00:00Z", 25_00, "a1"),
+      ],
+      6,
+      now
+    );
+
+    expect(points.find((p) => p.month === "2026-08")).toEqual({
+      month: "2026-08",
+      totalMinor: 50_00,
+      cases: 1,
+    });
+  });
+
+  it("drops a fee that settled outside the window", () => {
+    const points = clientFeesByMonth([fee("2025-12-01T00:00:00Z", 99_00)], 6, now);
+
+    expect(points.every((p) => p.totalMinor === 0)).toBe(true);
   });
 });

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useT } from "@/components/locale-provider";
+import { fill } from "@/lib/i18n/fill";
 import { INVITATION_ROSTER } from "@/lib/i18n/invitation-roster";
 
 /**
@@ -22,6 +23,11 @@ import { INVITATION_ROSTER } from "@/lib/i18n/invitation-roster";
  * revoking an invitation was told "Invitation revoked" in English. They
  * are localised here, which changes what the agency console says as well
  * — deliberately, and it is a fix rather than a side effect.
+ *
+ * Both ask before they commit, and both ask through `ConfirmDialog` —
+ * the rule and the component `AGENTS.md` names. Only the revoke is
+ * destructive; the resend's reason for asking is on
+ * `INVITATION_ROSTER.resendConfirmTitle`.
  */
 
 /**
@@ -36,6 +42,12 @@ import { INVITATION_ROSTER } from "@/lib/i18n/invitation-roster";
 export type ResendResult = { error: string } | { ok: boolean; delivered: boolean };
 export type RevokeResult = { error: string } | { ok: boolean };
 
+/**
+ * Additive — it puts a second link in an inbox and invalidates nothing,
+ * so `confirmVariant` is the ordinary primary rather than `danger`.
+ * It confirms all the same, because it sits a hand's breadth from the
+ * revoke at the end of the same row and what it sends cannot be recalled.
+ */
 export function ResendInvitationButton({
   invitationId,
   email,
@@ -47,6 +59,7 @@ export function ResendInvitationButton({
 }) {
   const t = useT();
   const [pending, startTransition] = React.useTransition();
+  const [confirming, setConfirming] = React.useState(false);
 
   function submit() {
     const formData = new FormData();
@@ -58,25 +71,46 @@ export function ResendInvitationButton({
         toast.error(result.error);
         return;
       }
+      setConfirming(false);
       // Resending is the documented remedy for an invitation that did
       // not arrive. Reporting a second silent failure as success is how
       // someone presses this four times and still wonders why nobody
       // has joined. The message names the address rather than saying
       // "sent", because a typo there is the likeliest cause.
       if (result.delivered) {
-        toast.success(t(INVITATION_ROSTER.sentAgainTemplate).replace("{email}", email));
+        toast.success(fill(t(INVITATION_ROSTER.sentAgainTemplate), { email }));
       } else {
-        toast.warning(
-          t(INVITATION_ROSTER.couldNotEmailTemplate).replace("{email}", email)
-        );
+        toast.warning(fill(t(INVITATION_ROSTER.couldNotEmailTemplate), { email }));
       }
     });
   }
 
   return (
-    <Button variant="tertiary" size="sm" onClick={submit} disabled={pending}>
-      <Send /> {t(INVITATION_ROSTER.resend)}
-    </Button>
+    <>
+      <Button
+        variant="tertiary"
+        size="sm"
+        onClick={() => setConfirming(true)}
+        disabled={pending}
+      >
+        <Send /> {t(INVITATION_ROSTER.resend)}
+      </Button>
+      <ConfirmDialog
+        open={confirming}
+        onOpenChange={setConfirming}
+        title={t(INVITATION_ROSTER.resendConfirmTitle)}
+        // The address is the whole point of the question. A resend aimed
+        // at a typo is the failure this dialog exists to catch, and it is
+        // only catchable if the dialog says which address it is aimed at.
+        body={fill(t(INVITATION_ROSTER.resendConfirmBody), { email })}
+        confirmLabel={t(INVITATION_ROSTER.resend)}
+        confirmVariant="primary"
+        cancelLabel={t(INVITATION_ROSTER.notNow)}
+        icon={<Send />}
+        pending={pending}
+        onConfirm={submit}
+      />
+    </>
   );
 }
 
@@ -93,6 +127,7 @@ export function RevokeInvitationButton({
   action,
 }: {
   invitationId: string;
+  /** Named in the confirmation, for the same reason the resend names it. */
   email: string;
   action: (formData: FormData) => Promise<RevokeResult>;
 }) {
@@ -128,7 +163,7 @@ export function RevokeInvitationButton({
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
-        title={t(INVITATION_ROSTER.revokeConfirmTitle).replace("{email}", email)}
+        title={fill(t(INVITATION_ROSTER.revokeConfirmTitle), { email })}
         body={t(INVITATION_ROSTER.revokeConfirmBody)}
         confirmLabel={t(INVITATION_ROSTER.revoke)}
         cancelLabel={t(INVITATION_ROSTER.keepInvitation)}

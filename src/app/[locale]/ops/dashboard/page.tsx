@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { FunnelBars } from "@/components/shared/funnel-bars";
 import {
   OwnerAccessRefused,
   StaffAccessRefused,
@@ -494,34 +495,11 @@ function Operations({ data, locale }: { data: DashboardData; locale: Locale }) {
             ) : undefined
           }
         />
-        <PanelBody className="space-y-4">
-          {funnel.map((stage) => {
-            // Width against the widest stage, which is always the first —
-            // `funnelOf` counts each stage as reached-or-passed, so the
-            // series cannot widen and a bar can never overflow.
-            const share = funnel[0].count ? stage.count / funnel[0].count : 0;
-            return (
-              <div key={stage.key}>
-                <div className="flex items-baseline justify-between gap-4">
-                  <span className="t-body">{stage.label}</span>
-                  <span className="num text-ink-2">
-                    {stage.count}
-                    {stage.ofPrevious !== null && (
-                      <span className="special ms-2 inline">
-                        {pct(stage.ofPrevious)} of previous
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2">
-                  <div
-                    className="h-full rounded-full bg-brand"
-                    style={{ width: `${Math.max(share * 100, share > 0 ? 1 : 0)}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+        <PanelBody>
+          <FunnelBars
+            stages={funnel}
+            ofPreviousLabel={(share) => `${share} of previous`}
+          />
         </PanelBody>
       </Panel>
 

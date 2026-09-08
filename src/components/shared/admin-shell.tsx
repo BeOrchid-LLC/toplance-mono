@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 
+import { cn } from "@/lib/utils";
+
 import { AccountMenu } from "@/components/app/account-menu";
 import { AdminMobileNav } from "@/components/shared/admin-mobile-nav";
 import { AdminRail, RailProvider, RailToggle } from "@/components/shared/admin-rail";
@@ -36,6 +38,7 @@ export async function AdminShell({
   title,
   lead,
   actions,
+  centred = false,
   children,
 }: {
   groups: AdminNavGroup[];
@@ -66,6 +69,19 @@ export async function AdminShell({
   lead?: string;
   /** Primary actions for this page — an invite button, an export. */
   actions?: React.ReactNode;
+  /**
+   * Centres this page on a reading measure instead of letting it start
+   * at the left padding.
+   *
+   * Off by default, and the comment above this component says why: a
+   * table wants every pixel the rail leaves it, and a measure that
+   * narrows when the rail opens is the wrong shape for one. A sheet of
+   * a person's own details is the opposite case — it is a document, it
+   * is ~720px wide whatever the viewport does, and left-aligning it
+   * strands it against one edge of a very wide screen. Pages opt in;
+   * the console's default stays wide.
+   */
+  centred?: boolean;
   children: React.ReactNode;
 }) {
   // Read on the server so the rail is already at its stored width in the
@@ -123,13 +139,19 @@ export async function AdminShell({
           </header>
 
           <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">
-            {title && (
-              <div className="mb-8 min-w-0">
-                <h1 className="t-h2">{title}</h1>
-                {lead && <p className="t-muted mt-2 max-w-[62ch]">{lead}</p>}
-              </div>
-            )}
-            {children}
+            {/* One wrapper over the heading and the page, so a centred
+                page keeps its title on the same vertical as its panel.
+                Centring the children alone would leave the h1 at the
+                left padding, describing a sheet sitting somewhere else. */}
+            <div className={cn("min-w-0", centred && "mx-auto w-full max-w-[720px]")}>
+              {title && (
+                <div className="mb-8 min-w-0">
+                  <h1 className="t-h2">{title}</h1>
+                  {lead && <p className="t-muted mt-2 max-w-[62ch]">{lead}</p>}
+                </div>
+              )}
+              {children}
+            </div>
           </main>
         </div>
       </div>

@@ -22,6 +22,9 @@ export const INVITATION_ROSTER: {
   revokeConfirmTitle: L;
   revokeConfirmBody: L;
   keepInvitation: L;
+  resendConfirmTitle: L;
+  resendConfirmBody: L;
+  notNow: L;
 } = {
   resend: {
     en: "Resend",
@@ -113,6 +116,15 @@ export const INVITATION_ROSTER: {
     tw: "Wɔn link no bɛgyae adwumayɛ ntɛm ara, na wɔrentumi nsan mmue bio — sɛ wopɛ sɛ wɔba mu akyire yi a, ɛsɛ sɛ woto nsato foforɔ.",
     zu: "Isixhumanisi sabo siyeka ukusebenza ngokushesha, futhi asikwazi ukubuyiselwa — ukubangenisa ngemva kwalokhu kusho ukuthumela isimemo esisha.",
   },
+  /**
+   * Never "Cancel". `OPS_COMMON.cancel` and `revoke` above are the same
+   * word in Hausa, Yoruba, Igbo, Twi and Arabic — "Soke", "Fagilé",
+   * "Kagbuo", "Twa mu", "إلغاء" — so a Cancel/Revoke pair would set two
+   * identical buttons side by side for half the languages this product
+   * speaks, with the destructive one indistinguishable from the way out.
+   * Naming what the dismissal *keeps* is legible in all ten, and
+   * `notNow` does the same job for the resend.
+   */
   keepInvitation: {
     en: "Keep it",
     ha: "Bar ta",
@@ -124,5 +136,53 @@ export const INVITATION_ROSTER: {
     ar: "الإبقاء عليها",
     tw: "Gyaa no hɔ",
     zu: "Sigcine",
+  },
+  /**
+   * Resending takes nothing away, so `AGENTS.md` does not oblige it to
+   * ask — it is listed there as additive. It asks anyway, on the
+   * client's call of 2026-09-08: it is a text button at the end of a
+   * table row, a hand's breadth from the revoke, and what it commits
+   * leaves this product entirely — a second letter in somebody's inbox,
+   * which no amount of clicking back can retrieve.
+   *
+   * The address goes in the body rather than the title, because a
+   * resend aimed at a typo is the failure this dialog exists to catch
+   * and it is only catchable if the dialog says where it is aimed.
+   */
+  resendConfirmTitle: {
+    en: "Send this invitation again?",
+    ha: "A sake aika wannan gayyatar?",
+    yo: "Ṣé kí a tún fi ìpè yìí ránṣẹ́?",
+    ig: "Zigharia òkù a ọzọ?",
+    fr: "Renvoyer cette invitation ?",
+    pt: "Reenviar este convite?",
+    sw: "Tuma mwaliko huu tena?",
+    ar: "إعادة إرسال هذه الدعوة؟",
+    tw: "Yɛnsan mfa nsato yi nkɔ?",
+    zu: "Thumela lesi simemo futhi?",
+  },
+  resendConfirmBody: {
+    en: "A new email goes to {email}. The link already sent stays valid.",
+    ha: "Sabon saƙo zai je zuwa {email}. Hanyar da aka riga aka aika tana nan da inganci.",
+    yo: "Ìmèlì tuntun yóò lọ sí {email}. Ọ̀nà tí a ti fi ránṣẹ́ ṣì wúlò.",
+    ig: "Ozi ọhụrụ ga-aga na {email}. Njikọ e zigaralarị ka dị irè.",
+    fr: "Un nouvel e-mail part vers {email}. Le lien déjà envoyé reste valable.",
+    pt: "Um novo e-mail segue para {email}. O link já enviado continua válido.",
+    sw: "Barua pepe mpya itakwenda kwa {email}. Kiungo kilichotumwa tayari bado ni halali.",
+    ar: "سيُرسَل بريد جديد إلى {email}. الرابط المُرسَل سابقًا ما زال صالحًا.",
+    tw: "Email foforɔ bɛkɔ {email}. Nkitahodi a wɔasoma dada no da so wɔ hɔ.",
+    zu: "I-imeyili entsha iya ku-{email}. Isixhumanisi esesithunyelwe sisasebenza.",
+  },
+  notNow: {
+    en: "Not now",
+    ha: "Ba yanzu ba",
+    yo: "Kì í ṣe nísinsìnyí",
+    ig: "Ọ bụghị ugbu a",
+    fr: "Pas maintenant",
+    pt: "Agora não",
+    sw: "Si sasa",
+    ar: "ليس الآن",
+    tw: "Ɛnyɛ seesei",
+    zu: "Hhayi manje",
   },
 };

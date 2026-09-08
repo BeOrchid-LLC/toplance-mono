@@ -380,6 +380,44 @@ export type ClientRevenue = {
  * Ties break on the currency name so the figure is stable between
  * renders rather than depending on the order Postgres grouped in.
  */
+/**
+ * Which currency a fee series is drawn in, and whether that left money
+ * out of it.
+ *
+ * Split from `collapseClientRevenue` because the two answer different
+ * questions. That one asks "of these rows, which currency wins" — a
+ * question about one set of rows. This one asks "given a currency
+ * somebody else already chose, is this series in it" — which is the
+ * question a chart under a tile has to answer, because running the same
+ * collapse over a different set of rows is not the same as agreeing
+ * with it. The tile totals every fee ever settled; the chart totals a
+ * six-month window. An agency whose older money is NGN and whose recent
+ * money is USD gets two different winners from one rule.
+ *
+ * `preferred` is that already-chosen currency. Without one this falls
+ * back to the collapse, so a caller reading the series on its own still
+ * gets the same rule applied to its own rows.
+ *
+ * `mixedCurrency` is asked of the rows rather than inferred from how
+ * the currency was picked, which is why it cannot come from
+ * `collapseClientRevenue` here: with a `preferred` that the window
+ * happens not to contain, every row is "other", the chart draws
+ * nothing, and the reason is emphatically not "nothing settled".
+ */
+export function pickFeeCurrency(
+  rows: readonly ClientRevenueRow[],
+  options: { preferred?: string; fallbackCurrency?: string } = {}
+): { currency: string; mixedCurrency: boolean } {
+  const currency =
+    options.preferred ??
+    collapseClientRevenue(rows, options.fallbackCurrency ?? "USD").currency;
+
+  return {
+    currency,
+    mixedCurrency: rows.some((row) => row.currency !== currency),
+  };
+}
+
 export function collapseClientRevenue(
   rows: readonly ClientRevenueRow[],
   fallbackCurrency = "USD"

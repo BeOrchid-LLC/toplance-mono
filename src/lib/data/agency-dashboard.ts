@@ -66,7 +66,7 @@ export type AgencyDashboardData = {
    * The tile above it is every fee ever paid and this is a window, so
    * the two are not expected to agree on a total — see
    * `clientFeesForOrgs` on why they nonetheless share one rule about
-   * what counts as paid.
+   * what counts as paid, and one currency, which the tile chooses.
    */
   clientFees: ClientFeeSeries;
 };
@@ -92,6 +92,12 @@ export async function agencyDashboard(
   options: { now?: Date } = {}
 ): Promise<AgencyDashboardData> {
   const now = options.now ?? new Date();
+
+  // The tile's read, started here rather than inline below because the
+  // series underneath it has to be denominated in whatever currency
+  // this one picks. Only the fees wait on it; everything else in the
+  // `Promise.all` still goes out at once.
+  const clientRevenuePromise = clientRevenueForOrgs(orgIds);
 
   const [rows, invoices, clientRevenue, clientFees] = await Promise.all([
     // One row per traveller by constraint, so this is a small read even
@@ -121,11 +127,20 @@ export async function agencyDashboard(
     // above rather than the bill below: it counts the same cases the
     // funnel counts, so scoping the two differently would let a
     // director read a fee total against a caseload it does not cover.
-    clientRevenueForOrgs(orgIds),
+    clientRevenuePromise,
     // `orgIds`, matching the tile rather than the bill: a client fee is
     // not billed on an agency's cycle at all, so there is no single
     // organisation this money belongs to the way an invoice does.
-    clientFeesForOrgs(orgIds, { now }),
+    //
+    // The currency comes from the tile rather than from this window.
+    // Both would otherwise run the same collapse over different rows —
+    // all-time against six months — which is not the same as agreeing,
+    // and an agency whose older money is in another currency would read
+    // a chart denominated differently from the figure directly above
+    // it. See `clientFeesForOrgs`.
+    clientRevenuePromise.then((revenue) =>
+      clientFeesForOrgs(orgIds, { now, currency: revenue.currency })
+    ),
   ]);
 
   return {

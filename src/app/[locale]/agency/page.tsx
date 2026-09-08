@@ -544,6 +544,7 @@ export default async function EmployerConsolePage() {
               <PanelBody className="px-2 sm:px-3">
                 <BillChart
                   invoices={summary.charts.invoices}
+                  locale={locale}
                   copy={{
                     empty: AGENCY.billEmpty[locale],
                     charged: AGENCY.billCharged[locale],
@@ -599,6 +600,7 @@ export default async function EmployerConsolePage() {
                 currency={summary.charts.clientFees.currency}
                 totalMinor={summary.charts.clientFees.totalMinor}
                 mixedCurrency={summary.charts.clientFees.mixedCurrency}
+                locale={locale}
                 copy={{
                   empty: AGENCY.clientFeesEmpty[locale],
                   paid: AGENCY.clientFeesPaid[locale],

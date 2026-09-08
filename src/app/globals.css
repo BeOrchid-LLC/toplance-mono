@@ -22,10 +22,22 @@
      as flush rather than as a sheet laid on a page. Client's call,
      2026-09-08. It stays on the same hue: the separation this buys is
      in lightness, not in a second temperature the paragraph above
-     argues against. Everything below it is untouched — --surface-2 is
-     only ~1.5 L* under this now, but it is a hover state on white
-     surfaces rather than a fill sitting on the page, so the two do not
-     meet. */
+     argues against.
+
+     Everything below it is untouched, which costs --surface-2 most of
+     its contrast against the ground — ~1.5 L* now, down from ~2.6.
+     Nearly every use of --surface-2 is on a white surface (table
+     headers, code blocks, badges, hover states), where the step it has
+     to clear is --surface and nothing changed. The exception is a
+     --surface-2 fill sitting directly on the page, and there is one:
+     TabsList, which DashboardTabs renders on the ground. That call site
+     carries a border rather than relying on a fill difference that is
+     now too small to see. Lifting --surface-2 to suit it is the wrong
+     trade — it would have to clear the ground *and* stay under white,
+     and it is on white far more often than on the page.
+
+     Skeleton is the same shape of risk and has no instance on the
+     ground today. Put one there and it needs the same border. */
   --bg: #f1f4fa;
   --surface: #ffffff;
   --surface-2: #eef0f5;

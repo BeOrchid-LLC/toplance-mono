@@ -155,7 +155,7 @@ export function DemoRequestQueue({
                 {r.convertedOrgName}
               </Link>
             ) : (
-              <ProvisionTenant demoRequest={r} />
+              <ProvisionTenant demoRequest={r} size="sm" />
             ),
         },
       ]}

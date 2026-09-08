@@ -34,7 +34,11 @@ export function DashboardTabs({ tabs }: { tabs: DashboardTab[] }) {
       {/* Its own scroller: four labels fit a laptop and do not fit a
           phone, and the page body must never scroll sideways. */}
       <div className="-mx-1 overflow-x-auto px-1">
-        <TabsList className="w-max">
+        {/* Bordered because this strip sits on the page ground rather
+            than on a panel, and --bg moved close enough to --surface-2
+            that the fill alone no longer frames it. See the neutrals
+            note in globals.css. */}
+        <TabsList className="w-max border border-border">
           {tabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.label}

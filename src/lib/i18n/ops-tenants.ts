@@ -25,6 +25,8 @@ export const OPS_TENANTS: {
   };
   tenantsPanel: L;
   agenciesWord: L;
+  searchPlaceholder: L;
+  anyStatus: L;
   emptyTenants: L;
   tableHead: {
     agency: L;
@@ -226,6 +228,30 @@ export const OPS_TENANTS: {
     ar: "كل وكالة",
     tw: "Adwumakuo biara",
     zu: "Yonke i-ejensi",
+  },
+  searchPlaceholder: {
+    en: "Search by agency or domain",
+    ha: "Nemo ta hukuma ko yanki",
+    yo: "Wá nípa ilé-iṣẹ́ tàbí ìkápá",
+    ig: "Chọọ site na ụlọ ọrụ ma ọ bụ ngalaba",
+    fr: "Rechercher par agence ou domaine",
+    pt: "Pesquisar por agência ou domínio",
+    sw: "Tafuta kwa wakala au kikoa",
+    ar: "ابحث حسب الوكالة أو النطاق",
+    tw: "Hwehwɛ adwumakuo anaa domain so",
+    zu: "Sesha nge-ejensi noma isizinda",
+  },
+  anyStatus: {
+    en: "Any status",
+    ha: "Kowane matsayi",
+    yo: "Ipò yòówù",
+    ig: "Ọnọdụ ọ bụla",
+    fr: "Tout statut",
+    pt: "Qualquer estado",
+    sw: "Hali yoyote",
+    ar: "أي حالة",
+    tw: "Tebea biara",
+    zu: "Noma isiphi isimo",
   },
   agenciesWord: {
     en: "agencies",

@@ -19,14 +19,30 @@ export function TenantsTable({
   rows,
   locale,
   className,
+  params,
+  sort,
+  dir,
+  total,
+  unfilteredTotal,
+  pagination,
+  filteredLabel,
 }: {
+  /** The current page of agencies: already filtered, sorted and sliced. */
   rows: TenantRow[];
   locale: Locale;
   className?: string;
+  params?: Record<string, string | undefined>;
+  sort?: string;
+  dir?: "asc" | "desc";
+  total?: number;
+  unfilteredTotal?: number;
+  pagination?: { page: number; pageCount: number; size: number };
+  filteredLabel?: string;
 }) {
   const columns: DataColumn<TenantRow>[] = [
     {
       id: "agency",
+      sortable: true,
       label: OPS_TENANTS.tableHead.agency[locale],
       cell: (t) => (
         <>
@@ -42,12 +58,14 @@ export function TenantsTable({
     },
     {
       id: "members",
+      sortable: true,
       label: OPS_TENANTS.tableHead.members[locale],
       className: "num",
       cell: (t) => `${t.members} ${OPS_TENANTS.seatsOf[locale]} ${t.seatsPurchased}`,
     },
     {
       id: "applications",
+      sortable: true,
       label: OPS_TENANTS.tableHead.applications[locale],
       className: "num",
       cell: (t) => t.applicationsTotal,
@@ -69,6 +87,7 @@ export function TenantsTable({
     },
     {
       id: "state",
+      sortable: true,
       label: OPS_TENANTS.tableHead.state[locale],
       cell: (t) => (
         <Badge variant={t.suspendedAt ? "warning" : "success"}>
@@ -78,6 +97,7 @@ export function TenantsTable({
     },
     {
       id: "added",
+      sortable: true,
       label: OPS_TENANTS.tableHead.added[locale],
       className: "t-muted",
       cell: (t) => t.createdAt.toISOString().slice(0, 10),
@@ -92,10 +112,29 @@ export function TenantsTable({
       numbered
       columns={columns}
       locale={locale}
-      total={rows.length}
-      unfilteredTotal={rows.length}
+      total={total ?? rows.length}
+      unfilteredTotal={unfilteredTotal ?? rows.length}
       label={OPS_TENANTS.tenantsPanel[locale]}
+      filteredLabel={filteredLabel}
       countLabel={OPS_TENANTS.agenciesWord[locale]}
+      basePath="/ops/tenants"
+      params={params}
+      sort={sort}
+      dir={dir}
+      pagination={pagination}
+      toolbar={{
+        placeholder: OPS_TENANTS.searchPlaceholder[locale],
+        filters: [
+          {
+            param: "state",
+            label: OPS_TENANTS.anyStatus[locale],
+            options: [
+              { value: "live", label: OPS_TENANTS.live[locale] },
+              { value: "suspended", label: OPS_TENANTS.suspendedBadge[locale] },
+            ],
+          },
+        ],
+      }}
       empty={<p className="t-muted max-w-[62ch]">{OPS_TENANTS.emptyTenants[locale]}</p>}
     />
   );

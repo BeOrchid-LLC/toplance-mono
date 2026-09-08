@@ -18,6 +18,20 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
+import { fill } from "@/lib/i18n/fill";
+import {
+  TENANT_SORTS,
+  tenantMatches,
+  tenantSortKey,
+} from "@/lib/domain/tenant-table";
+import {
+  readDir,
+  readPageSize,
+  readSort,
+  resolvePage,
+  sortRows,
+} from "@/lib/domain/sorting";
 import { opsAccount } from "@/app/[locale]/ops/account";
 
 // Reads a session, so it is never prerendered.
@@ -28,7 +42,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: OPS_TENANTS.heading[locale] };
 }
 
-export default async function OpsTenantsPage() {
+export default async function OpsTenantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    q?: string;
+    state?: string;
+    sort?: string;
+    dir?: string;
+    page?: string;
+    size?: string;
+  }>;
+}) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
@@ -100,6 +125,26 @@ export default async function OpsTenantsPage() {
 
   const counts = await getOpsCounts();
 
+  const params = await searchParams;
+  const search = (params.q ?? "").trim();
+  const state = params.state ?? "";
+  const sort = readSort(params.sort, TENANT_SORTS, "agency");
+  const dir = readDir(params.dir, "asc");
+
+  // Any narrowing at all, however many rows survive it — the panel
+  // heading has to say "showing 3 of 104" whenever the reader is not
+  // looking at everything.
+  const narrowed = Boolean(search || state);
+  const visible = tenants.filter((t) => tenantMatches(t, search, state));
+  const sorted = sortRows(visible, (t) => tenantSortKey(t, sort), dir);
+
+  // Sliced after the sort, never before: page two is the second page of
+  // the order the reader chose, not an arbitrary 25 re-sorted among
+  // themselves. `readPageSize` allow-lists the size so `?size=1000000`
+  // cannot ask this page for every row it holds.
+  const size = readPageSize(params.size);
+  const { page, pageCount, start, end } = resolvePage(params.page, sorted.length, size);
+
   return (
     <AdminShell
       groups={opsAdminNav({
@@ -127,7 +172,25 @@ export default async function OpsTenantsPage() {
     >
       <KpiRow items={counters} />
 
-      <TenantsTable rows={tenants} locale={locale} className="mt-8" />
+      <TenantsTable
+        rows={sorted.slice(start, end)}
+        locale={locale}
+        className="mt-8"
+        params={{ q: params.q, state: params.state, size: params.size }}
+        sort={sort}
+        dir={dir}
+        total={sorted.length}
+        unfilteredTotal={tenants.length}
+        pagination={{ page, pageCount, size }}
+        filteredLabel={
+          narrowed
+            ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
+                shown: sorted.length,
+                total: tenants.length,
+              })
+            : undefined
+        }
+      />
     </AdminShell>
   );
 }

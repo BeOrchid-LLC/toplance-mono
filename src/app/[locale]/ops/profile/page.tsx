@@ -5,6 +5,7 @@ import { AvatarUpload } from "@/components/app/avatar-upload";
 import { Badge } from "@/components/ui/badge";
 import { EditableName, EditablePhone } from "@/components/app/profile-fields";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
@@ -115,7 +116,8 @@ export default async function OpsProfilePage() {
     <AdminShell
       groups={opsAdminNav({ locale, ...counts, isOwner: isOwner(actor) })}
       activeId="profile"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={opsSubtitle(actor.staffRole, locale)}
       account={account}
       title={OPS_PROFILE.heading[locale]}

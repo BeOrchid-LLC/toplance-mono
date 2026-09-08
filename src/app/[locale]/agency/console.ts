@@ -33,6 +33,14 @@ export type AgencyMembership = {
   role: (typeof orgMembers.$inferSelect)["role"];
   name: string;
   seatsPurchased: number;
+  /**
+   * Storage key of the agency's logo, or `null` while it has none. Read
+   * here rather than by `AgencyShell` on its own, because the director's
+   * profile screen needs the same key to show them what they uploaded —
+   * two reads of one column on one request is the drift this preamble
+   * exists to prevent.
+   */
+  logoPath: string | null;
 };
 
 export type AgencyConsole = {
@@ -138,6 +146,7 @@ export async function resolveAgencyConsole(
       role: orgMembers.role,
       name: organisations.name,
       seatsPurchased: organisations.seatsPurchased,
+      logoPath: organisations.logoPath,
     })
     .from(orgMembers)
     .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))

@@ -24,6 +24,7 @@ export function AdminSidebar({
   groups,
   activeId,
   title,
+  brand,
   subtitle,
   navLabel,
   footer,
@@ -32,6 +33,12 @@ export function AdminSidebar({
   activeId: string;
   /** The console's own name. */
   title: string;
+  /**
+   * A mark printed in place of the name — see `AdminShell.railBrand`.
+   * Only the name line is replaced: the subtitle under it says which
+   * console this is and at what rank, which a logo never does.
+   */
+  brand?: React.ReactNode;
   subtitle?: string;
   /**
    * Names the landmark. A console page carries more than one `nav` —
@@ -55,7 +62,7 @@ export function AdminSidebar({
           {title.charAt(0)}
         </span>
         <div className="min-w-0 group-data-[collapsed]/rail:hidden">
-          <p className="t-title truncate">{title}</p>
+          {brand ?? <p className="t-title truncate">{title}</p>}
           {subtitle && <p className="special truncate text-ink-3">{subtitle}</p>}
         </div>
       </div>

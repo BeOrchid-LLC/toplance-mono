@@ -58,9 +58,18 @@ export type AdminNavGroup = {
  * The platform console.
  *
  * Two groups because BeOrchid's staff do two different jobs here:
- * curating the reference data every case is judged against, and running
- * the platform itself. Only the first carries a badge — a route waiting
- * on a decision is work; a count of agencies is a fact nobody acts on.
+ * running the platform itself, and curating the reference data every
+ * case is judged against. Only the second carries a badge — a route
+ * waiting on a decision is work; a count of agencies is a fact nobody
+ * acts on.
+ *
+ * Route curation sits below "Toplance operations" rather than above it,
+ * at the client's request on 2026-09-08 and for the reason the reorder
+ * of `opsNav` gives: the console opens on the business, and the
+ * reference data is the screen somebody goes down to. It keeps a group
+ * of its own — folding it into the operations rows would file corridor
+ * curation under running the platform, which is the one thing on this
+ * rail that is not.
  */
 export function opsAdminNav({
   locale,
@@ -86,17 +95,6 @@ export function opsAdminNav({
   isOwner?: boolean;
 }): AdminNavGroup[] {
   return [
-    {
-      items: [
-        {
-          id: "routes",
-          href: "/ops/corridors",
-          label: OPS_COMMON.nav.routes[locale],
-          icon: "routes",
-          badge: pendingRoutes,
-        },
-      ],
-    },
     {
       label: OPS_COMMON.subtitlePrefix[locale],
       items: [
@@ -137,6 +135,20 @@ export function opsAdminNav({
           : []),
       ],
     },
+    {
+      // Unlabelled, so the rail does not print "Routes" as a heading over
+      // a single row that already says it. The `mt-6` `AdminSidebar` puts
+      // above every group but the first is the separation this needs.
+      items: [
+        {
+          id: "routes",
+          href: "/ops/corridors",
+          label: OPS_COMMON.nav.routes[locale],
+          icon: "routes",
+          badge: pendingRoutes,
+        },
+      ],
+    },
   ];
 }
 
@@ -150,19 +162,36 @@ export function opsAdminNav({
  * the dashboard alone, for the reason `agencyNav` gives: they have no
  * roster and no colleagues, so the other rows would be round trips back
  * to the screen they are already on.
+ *
+ * Invitations sit directly under Clients, and only for a director. They
+ * were a second panel at the foot of `/agency/clients` until 2026-09-08,
+ * when the client asked for the two to be pages — so the roster is what
+ * `/agency/clients` still opens on, and the addresses waiting to join it
+ * are the row beneath. Adjacent rather than indented because the rail
+ * has one level: `AdminNavGroup` groups, it does not nest.
  */
 export function agencyAdminNav({
   locale,
   hasOrganisation,
   clients,
-  pendingInvitations,
+  pendingClientInvitations,
+  pendingTeamInvitations,
   isDirector = false,
 }: {
   locale: Locale;
   hasOrganisation: boolean;
   clients: number;
-  /** Invitations still outstanding — somebody is waiting on each one. */
-  pendingInvitations: number;
+  /**
+   * Invitations still outstanding, split by what they invite somebody to
+   * be — a client, or a colleague.
+   *
+   * One figure served both rows before, which put every unanswered client
+   * invitation on the Team badge: a count of people waiting to join the
+   * agency's staff that was mostly travellers. The two rows lead to two
+   * different lists, so they carry two different numbers.
+   */
+  pendingClientInvitations: number;
+  pendingTeamInvitations: number;
   /**
    * The team roster and the plan are the director's: who works here and
    * what the agency pays are questions about running it, not about
@@ -190,6 +219,17 @@ export function agencyAdminNav({
           icon: "clients",
           badge: clients,
         },
+        ...(isDirector
+          ? [
+              {
+                id: "invitations",
+                href: "/agency/clients/invitations",
+                label: AGENCY.invitationsLabel[locale],
+                icon: "invitations" as const,
+                badge: pendingClientInvitations,
+              },
+            ]
+          : []),
       ],
     },
     ...(isDirector
@@ -202,7 +242,7 @@ export function agencyAdminNav({
                 href: "/agency/team",
                 label: AGENCY.navTeam[locale],
                 icon: "team" as const,
-                badge: pendingInvitations,
+                badge: pendingTeamInvitations,
               },
               {
                 id: "billing",

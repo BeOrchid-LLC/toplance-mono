@@ -1,5 +1,12 @@
 import { redirect } from "next/navigation";
 
+import { isOwner } from "@/lib/auth/policy";
+import { requireStaffConsole } from "@/lib/auth/staff-gate";
+
+// Reads a session to decide where to send the visitor, so it is never
+// prerendered.
+export const dynamic = "force-dynamic";
+
 /**
  * The platform console's landing page.
  *
@@ -12,7 +19,23 @@ import { redirect } from "next/navigation";
  *
  * A redirect rather than a deletion because `/ops` is bookmarked and
  * printed in the corridor approval runbook.
+ *
+ * Where it lands is the rank's question, not the URL's. The client asked
+ * on 2026-09-08 for the dashboard to be the console's front door, and it
+ * is director-only — so sending everybody there would land every
+ * reviewer on `OwnerAccessRefused`, which is a worse first screen than
+ * the one they had. A reviewer keeps route curation, which is what
+ * `/ops` has meant for them all along and what the dashboard's own
+ * refusal offers as the way back.
+ *
+ * The gate runs here rather than being assumed: a visitor who is not
+ * staff at all is sent to `/ops/corridors`, which renders the honest
+ * refusal — the same screen they reached before this page read anything.
  */
-export default function OpsHome() {
+export default async function OpsHome() {
+  const gate = await requireStaffConsole();
+
+  if (gate.decision === "ok" && isOwner(gate.actor)) redirect("/ops/dashboard");
+
   redirect("/ops/corridors");
 }

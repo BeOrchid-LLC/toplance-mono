@@ -78,6 +78,8 @@ export function DataTable<T>({
   total,
   unfilteredTotal,
   empty,
+  action,
+  footer,
   className,
 }: {
   /** The current page of rows: already filtered, sorted and sliced. */
@@ -106,6 +108,27 @@ export function DataTable<T>({
   unfilteredTotal: number;
   /** Shown when the table holds nothing at all. */
   empty: ReactNode;
+  /**
+   * One control at the end of the panel header, after the count badge.
+   *
+   * For the action that makes a row in *this* table and nothing else —
+   * `/ops/staff`'s "Invite a colleague", which sat in the console bar
+   * until 2026-09-08 and named a thing three screens away from the list
+   * it fills. `PanelHeader` calls its right-hand slot one datum about
+   * the sheet; a button that adds to the sheet is that, where a page-wide
+   * export or a filter would not be.
+   */
+  action?: ReactNode;
+  /**
+   * A note under the table, in the band the pager would use.
+   *
+   * For a fact about the rows that are *not* here — the ops dashboard
+   * counts its dormant clients rather than listing them, and that
+   * sentence has to sit inside the panel or it reads as a caption
+   * belonging to whatever comes next on the page. Not a place for
+   * controls: the pager is already the row below this one.
+   */
+  footer?: ReactNode;
   className?: string;
 }) {
   const isEmpty = unfilteredTotal === 0;
@@ -121,10 +144,13 @@ export function DataTable<T>({
       <PanelHeader
         label={filteredLabel ?? label}
         aside={
-          <Badge variant="outline">
-            <span className="num">{count ?? total}</span>{" "}
-            {countLabel ?? ADMIN_CONSOLE.rowsWord[locale]}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline">
+              <span className="num">{count ?? total}</span>{" "}
+              {countLabel ?? ADMIN_CONSOLE.rowsWord[locale]}
+            </Badge>
+            {action}
+          </div>
         }
       />
 
@@ -197,6 +223,10 @@ export function DataTable<T>({
             ))}
           </TableBody>
         </Table>
+      )}
+
+      {footer && (
+        <div className="border-t border-border px-5 py-3 sm:px-6">{footer}</div>
       )}
 
       {pagination && !isEmpty && !isNoMatch && (

@@ -6,7 +6,7 @@ import { LOCALES } from "@/lib/i18n/locales";
 
 describe("opsSubtitle", () => {
   it("names the console and the rank", () => {
-    expect(opsSubtitle("owner", "en")).toBe("Toplance operations · owner");
+    expect(opsSubtitle("owner", "en")).toBe("Toplance operations · director");
     expect(opsSubtitle("reviewer", "en")).toBe("Toplance operations · reviewer");
   });
 
@@ -51,7 +51,7 @@ describe("opsAccountBlock", () => {
     expect(opsAccountBlock(profile)).toMatchObject({
       name: "Ngozi Balogun",
       email: "ngozi@toplance.test",
-      subtitle: "Toplance operations · owner",
+      subtitle: "Toplance operations · director",
     });
   });
 

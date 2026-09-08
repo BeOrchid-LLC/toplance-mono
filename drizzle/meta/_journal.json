@@ -239,6 +239,13 @@
       "when": 1788867433759,
       "tag": "0033_sharp_ezekiel_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788869693637,
+      "tag": "0034_first_sway",
+      "breakpoints": true
     }
   ]
 }

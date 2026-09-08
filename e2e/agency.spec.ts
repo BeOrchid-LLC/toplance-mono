@@ -119,13 +119,15 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // than a second live one.
   await page.keyboard.press("Escape");
 
-  // The roster and its invitations have their own page now — the
-  // console's Clients tab. Everything below is a fact about a row, so
-  // this is where the rest of this journey is watched from. Scoped to
-  // the bar because the dashboard also links to this page from a card,
-  // and Playwright matches an accessible name by substring.
-  await consoleNav(page).getByRole("link", { name: "Clients" }).click();
-  await page.waitForURL("**/agency/clients");
+  // The invitations are their own page under the Clients row since
+  // 2026-09-08 — the roster kept the search, the filters and the pager,
+  // and the addresses waiting to accept moved out from under them.
+  // Everything below is a fact about an invitation row, so this is where
+  // the rest of this journey is watched from. Scoped to the bar because
+  // the dashboard also links into this section from a card, and
+  // Playwright matches an accessible name by substring.
+  await consoleNav(page).getByRole("link", { name: "Invitations" }).click();
+  await page.waitForURL("**/agency/clients/invitations");
 
   await page.getByRole("button", { name: "Resend" }).click();
   // Both acts on a row confirm before they commit, so the row's button

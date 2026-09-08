@@ -347,6 +347,16 @@ export const organisations = pgTable(
     id: uuid().primaryKey().defaultRandom(),
     name: text().notNull(),
     domain: text(),
+    /**
+     * Storage key of the agency's own logo — the same private bucket as
+     * the documents and the profile photos, signed per render. A key
+     * rather than a URL, for the reason `profiles.avatarPath` gives.
+     *
+     * Null is the ordinary state, not a defect: an agency that has not
+     * uploaded one gets its name in the rail, which is what every agency
+     * had before this column existed.
+     */
+    logoPath: text(),
     seatsPurchased: integer().notNull().default(0),
     billingContact: text(),
     /**

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { EnquiryTable } from "@/components/ops/enquiry-table";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -126,7 +127,8 @@ export default async function OpsEnquiriesPage({
     <AdminShell
       groups={opsAdminNav({ locale, ...counts, isOwner: isOwner(actor) })}
       activeId="enquiries"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_ENQUIRIES.heading[locale]}

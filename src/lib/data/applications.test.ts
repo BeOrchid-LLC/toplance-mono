@@ -91,8 +91,14 @@ describe.skipIf(!process.env.DATABASE_URL)("liveOrgIdsFor", async () => {
   const { liveOrgIdsFor } = await import("@/lib/data/applications");
 
   const MEMBER = "test_suspend_member";
-  const LIVE = "00000000-0000-4000-8000-0000000d0001";
-  const SUSPENDED = "00000000-0000-4000-8000-0000000d0002";
+  // `…d0011` / `…d0012`, not `…d0001` / `…d0002`: `tenants.test.ts`
+  // claims that pair for its own agencies, vitest runs the two files in
+  // parallel against one database, and the loser of the race either
+  // collides on the primary key or has its rows deleted mid-test by the
+  // other file's `afterEach`. Fixture ids in this suite are global, so a
+  // uuid used twice is two tests sharing a row.
+  const LIVE = "00000000-0000-4000-8000-0000000d0011";
+  const SUSPENDED = "00000000-0000-4000-8000-0000000d0012";
 
   beforeEach(async () => {
     await db

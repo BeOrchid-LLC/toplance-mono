@@ -236,6 +236,9 @@ export const EVENT_NAMES = [
   /** A traveller put a photo on their own profile, or replaced it. */
   "toplance.avatar_uploaded",
 
+  /** An agency director put their company's logo in the console rail. */
+  "toplance.agency_logo_uploaded",
+
   /** An approved traveller opened the post-arrival companion. */
   "toplance.companion_viewed",
 

@@ -58,13 +58,17 @@ export async function AgencyShell({
   centred?: boolean;
   children: React.ReactNode;
 }) {
-  const [notifications, unreadCount, avatarUrl, clients, invitations] =
+  const [notifications, unreadCount, avatarUrl, logoUrl, clients, invitations] =
     await Promise.all([
       getNotifications(profile.id),
       unreadNotificationCount(profile.id),
       // Private bucket, so the photo is signed fresh per render — the same
       // stance the traveller's layout and profile take.
       profile.avatarPath ? signedDocumentUrl(profile.avatarPath) : null,
+      // The agency's own logo, on the same terms. Signed here rather than
+      // on the one screen that uploads it, because the rail is on every
+      // screen and this component is the only place that renders it.
+      membership?.logoPath ? signedDocumentUrl(membership.logoPath) : null,
       // The agency's figure, not the viewer's: a badge that changed
       // depending on which colleague was logged in would not be a count
       // of anything.
@@ -82,8 +86,15 @@ export async function AgencyShell({
         locale,
         hasOrganisation: membership !== null,
         clients,
-        pendingInvitations: invitations.filter((i) => i.status === "pending")
-          .length,
+        // Split by kind, because the two badges lead to two lists. One
+        // figure served both rows until 2026-09-08, which put every
+        // unanswered client invitation on the Team badge.
+        pendingClientInvitations: invitations.filter(
+          (i) => i.status === "pending" && i.kind === "client"
+        ).length,
+        pendingTeamInvitations: invitations.filter(
+          (i) => i.status === "pending" && i.kind === "staff"
+        ).length,
         isDirector: membership?.role === "owner",
       })}
       activeId={activeId}
@@ -91,6 +102,23 @@ export async function AgencyShell({
       // one organisation and says so; `/ops` reads "Toplance" because it
       // belongs to all of them.
       railTitle={membership?.name || AGENCY.yourOrganisationFallback[locale]}
+      // The agency's own mark, once its director has uploaded one on
+      // `/agency/profile`. `railTitle` above stays the fallback and stays
+      // the letter a collapsed rail shows — a picture cannot be either.
+      railBrand={
+        logoUrl ? (
+          // A signed, short-lived URL: next/image's optimizer would cache
+          // a link that expires in ten minutes, so the plain element is
+          // the correct one. `object-contain`, never `cover` — a logo
+          // cropped to fill its box is a logo with its edges cut off.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            alt={membership?.name ?? ""}
+            className="max-h-7 w-auto max-w-full object-contain"
+          />
+        ) : undefined
+      }
       railSubtitle={subtitle}
       account={{
         name: profile.fullName,

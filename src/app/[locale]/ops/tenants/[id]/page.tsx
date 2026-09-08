@@ -7,6 +7,7 @@ import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { TenantControls } from "@/components/ops/tenant-controls";
+import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { TenantInvitesTable } from "@/components/ops/tenant-invites-table";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -175,7 +176,8 @@ export default async function OpsTenantPage({
         isOwner: actor.staffRole === "owner",
       })}
       activeId="agencies"
-      railTitle="Toplance"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
       railSubtitle={account.subtitle}
       account={account}
       actions={

@@ -30,6 +30,8 @@ export const AGENCY: {
   profileTitle: L;
   profileBody: L;
   profileDetailsLabel: L;
+  logoPanelLabel: L;
+  logoPanelBody: L;
   roleLabel: { owner: L; reviewer: L };
   roleReason: { owner: L; reviewer: L };
   nameOrgLabel: L;
@@ -50,6 +52,7 @@ export const AGENCY: {
   routeNotSet: L;
   documentsVerified: L;
   invitationsLabel: L;
+  invitationsPageBody: L;
   pendingWord: L;
   invitationsEmpty: L;
   destinationNotSet: L;
@@ -238,6 +241,40 @@ export const AGENCY: {
     ar: "بياناتك",
     tw: "Wo ho nsɛm",
     zu: "Imininingwane yakho",
+  },
+  /**
+   * The agency's own logo, on the director's profile screen.
+   *
+   * It is on this page rather than a settings screen of its own because
+   * this is where the console already keeps "what people see of us" —
+   * the photo directly above it answers the same question about one
+   * person. The body says where it lands, since the effect is two
+   * hundred pixels away in the rail and not on the panel it is picked
+   * from.
+   */
+  logoPanelLabel: {
+    en: "Your agency's logo",
+    ha: "Tambarin hukumarka",
+    yo: "Àmì ilé-iṣẹ́ rẹ",
+    ig: "Akara ụlọ ọrụ gị",
+    fr: "Le logo de votre agence",
+    pt: "O logótipo da sua agência",
+    sw: "Nembo ya wakala wako",
+    ar: "شعار وكالتك",
+    tw: "W'adwumakuo agyiraeɛ",
+    zu: "Ilogo ye-ejensi yakho",
+  },
+  logoPanelBody: {
+    en: "Shown along the top of the side panel on every screen of this console. Your agency's name is used until you add one.",
+    ha: "Ana nuna shi a saman gefen kowane shafi na wannan na'ura. Ana amfani da sunan hukumarka har sai ka ƙara ɗaya.",
+    yo: "Ó máa hàn ní òkè pánẹ́ẹ̀lì ẹ̀gbẹ́ ní gbogbo ojú-ìwé kọ́ńsólù yìí. Orúkọ ilé-iṣẹ́ rẹ ni a ó lò títí ìwọ ó fi fi ọ̀kan kún un.",
+    ig: "A na-egosi ya n'elu mpanaka akụkụ na ihuenyo ọ bụla nke console a. A na-eji aha ụlọ ọrụ gị ruo mgbe ị tinyere otu.",
+    fr: "Affiché en haut du panneau latéral sur chaque écran de cette console. Le nom de votre agence est utilisé tant que vous n'en ajoutez pas.",
+    pt: "Mostrado no topo do painel lateral em todos os ecrãs desta consola. O nome da sua agência é usado até adicionar um.",
+    sw: "Huonyeshwa juu ya paneli ya kando katika kila skrini ya konsoli hii. Jina la wakala wako hutumika hadi utakapoongeza moja.",
+    ar: "يظهر أعلى اللوحة الجانبية في كل شاشة من شاشات وحدة التحكم هذه. يُستخدم اسم وكالتك إلى أن تضيف شعارًا.",
+    tw: "Ɛda adi wɔ nkyɛn panel no atifi wɔ console yi kratafa biara so. Wɔde w'adwumakuo din di dwuma kɔsi sɛ wode bi bɛka ho.",
+    zu: "Ikhonjiswa phezulu kwephaneli eseceleni kuso sonke isikrini salekhonsoli. Igama le-ejensi yakho lisetshenziswa uze ungeze elilodwa.",
   },
   roleLabel: {
     // "Director", not "Owner" — renamed with the client on 7 September.
@@ -526,6 +563,24 @@ export const AGENCY: {
     ar: "الدعوات",
     tw: "Nfrɛ",
     zu: "Izimemo",
+  },
+  /**
+   * The lead under the heading on `/agency/clients/invitations`, which
+   * was a second panel at the foot of the roster until 2026-09-08. It
+   * says what an invitation *is* here, because the page it left made
+   * that obvious by proximity and a page of its own does not.
+   */
+  invitationsPageBody: {
+    en: "Addresses you have invited to become clients, and what has become of each one.",
+    ha: "Adireshin da ka gayyata don su zama abokan ciniki, da abin da ya faru da kowanne.",
+    yo: "Àwọn àdírẹ́sì tí o pè láti di oníbàárà, àti ohun tí ó ṣẹlẹ̀ sí ọ̀kọ̀ọ̀kan.",
+    ig: "Adreesị ndị ị kpọrọ òkù ka ha bụrụ ndị ahịa, na ihe mere nke ọ bụla.",
+    fr: "Les adresses que vous avez invitées à devenir clientes, et ce qu'il est advenu de chacune.",
+    pt: "Endereços que convidou para se tornarem clientes, e o que aconteceu a cada um.",
+    sw: "Anwani ulizoalika kuwa wateja, na kilichotokea kwa kila moja.",
+    ar: "العناوين التي دعوتها لتصبح عملاء، وما آل إليه كل منها.",
+    tw: "Adreseɛ a woafrɛ sɛ wɔnyɛ adetɔfoɔ, ne deɛ asi biara.",
+    zu: "Amakheli owamemile ukuthi abe ngamakhasimende, nokwenzeke kulelo nalelo.",
   },
   pendingWord: {
     en: "pending",

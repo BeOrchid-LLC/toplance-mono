@@ -28,7 +28,9 @@ export const OPS_STAFF: {
   anyStatus: L;
   anyRank: L;
   colleaguesPanel: L;
-  tableHead: { person: L; rank: L; status: L; invited: L; actions: L };
+  invitesPanel: L;
+  colleaguesEmpty: L;
+  tableHead: { person: L; rank: L; status: L; invited: L; joined: L; actions: L };
 } = {
   heading: {
     en: "Colleagues",
@@ -43,16 +45,16 @@ export const OPS_STAFF: {
     zu: "Ozakwethu",
   },
   intro: {
-    en: "Who works at BeOrchid, and who has been asked to. An invitation grants the rank you choose here, and only an owner can send one.",
-    ha: "Wa ke aiki a BeOrchid, da kuma wanda aka gayyata. Gayyata tana ba da matsayin da kuka zaɓa a nan, kuma mai kamfani ne kaɗai zai iya aikawa.",
-    yo: "Ta ni ó ń ṣiṣẹ́ ní BeOrchid, àti ẹni tí a ti pè. Ìpè kan ń fún ni ní ipò tí ẹ yàn níbí, onílé-iṣẹ́ nìkan sì ló lè fi ránṣẹ́.",
-    ig: "Onye na-arụ ọrụ na BeOrchid, na onye a kpọrọ òkù. Òkù na-enye ọkwa ị họọrọ ebe a, naanị onyenwe nwekwara ike izipu ya.",
-    fr: "Qui travaille chez BeOrchid, et qui a été invité à le faire. Une invitation accorde le rang choisi ici, et seul un propriétaire peut en envoyer une.",
-    pt: "Quem trabalha na BeOrchid, e quem foi convidado. Um convite concede o nível escolhido aqui, e só um proprietário pode enviá-lo.",
-    sw: "Nani anafanya kazi BeOrchid, na nani amealikwa. Mwaliko hutoa cheo unachochagua hapa, na mmiliki pekee ndiye anayeweza kuutuma.",
-    ar: "من يعمل في BeOrchid، ومن دُعي للعمل بها. تمنح الدعوة الرتبة التي تختارها هنا، ولا يرسلها إلا مالك.",
-    tw: "Hena na ɔyɛ adwuma wɔ BeOrchid, ne hena na wɔafrɛ no. Nsato de dibea a wopaw wɔ ha ma, na ɔwura nko ara na obetumi de akɔ.",
-    zu: "Ubani osebenza e-BeOrchid, nobani omenyiwe. Isimemo sinikeza izinga olikhethayo lapha, futhi umnikazi kuphela ongasithumela.",
+    en: "Who works at BeOrchid, and who has been asked to. An invitation grants the rank you choose here, and only a director can send one.",
+    ha: "Wa ke aiki a BeOrchid, da kuma wanda aka gayyata. Gayyata tana ba da matsayin da kuka zaɓa a nan, kuma darakta ne kaɗai zai iya aikawa.",
+    yo: "Ta ni ó ń ṣiṣẹ́ ní BeOrchid, àti ẹni tí a ti pè. Ìpè kan ń fún ni ní ipò tí ẹ yàn níbí, olùdarí nìkan sì ló lè fi ránṣẹ́.",
+    ig: "Onye na-arụ ọrụ na BeOrchid, na onye a kpọrọ òkù. Òkù na-enye ọkwa ị họọrọ ebe a, naanị onye nduzi nwekwara ike izipu ya.",
+    fr: "Qui travaille chez BeOrchid, et qui a été invité à le faire. Une invitation accorde le rang choisi ici, et seul un directeur peut en envoyer une.",
+    pt: "Quem trabalha na BeOrchid, e quem foi convidado. Um convite concede o nível escolhido aqui, e só um diretor pode enviá-lo.",
+    sw: "Nani anafanya kazi BeOrchid, na nani amealikwa. Mwaliko hutoa cheo unachochagua hapa, na mkurugenzi pekee ndiye anayeweza kuutuma.",
+    ar: "من يعمل في BeOrchid، ومن دُعي للعمل بها. تمنح الدعوة الرتبة التي تختارها هنا، ولا يرسلها إلا مدير.",
+    tw: "Hena na ɔyɛ adwuma wɔ BeOrchid, ne hena na wɔafrɛ no. Nsato de dibea a wopaw wɔ ha ma, na ɔpanyin nko ara na obetumi de akɔ.",
+    zu: "Ubani osebenza e-BeOrchid, nobani omenyiwe. Isimemo sinikeza izinga olikhethayo lapha, futhi umqondisi kuphela ongasithumela.",
   },
   inviteAction: {
     en: "Invite a colleague",
@@ -115,16 +117,16 @@ export const OPS_STAFF: {
     zu: "Izinga",
   },
   rankHint: {
-    en: "An owner can approve corridors and invite more colleagues. A reviewer can do neither. The rank is fixed now, by you — the person accepting cannot change it.",
-    ha: "Mai kamfani zai iya amincewa da hanyoyi da gayyatar ƙarin abokan aiki. Mai duba ba zai iya yin ko ɗaya ba. Ana kayyade matsayin yanzu, ta ku — wanda ya karɓa ba zai iya canza shi ba.",
-    yo: "Onílé-iṣẹ́ lè fọwọ́sí àwọn ọ̀nà àti pe àwọn ẹlẹgbẹ́ mìíràn. Olùyẹ̀wò kò lè ṣe ìkankan. Ẹ̀yin ni ẹ pinnu ipò náà báyìí — ẹni tí ó bá gbà kò lè yí i padà.",
-    ig: "Onyenwe nwere ike ikwado ụzọ na ịkpọ ndị ọrụ ibe ndị ọzọ òkù. Onye nyocha enweghị ike ime nke ọ bụla. Ị na-edozi ọkwa ahụ ugbu a — onye nabatara ya enweghị ike ịgbanwe ya.",
-    fr: "Un propriétaire peut approuver des corridors et inviter d'autres collègues. Un relecteur ne peut ni l'un ni l'autre. Le rang est fixé maintenant, par vous — la personne qui accepte ne peut pas le changer.",
-    pt: "Um proprietário pode aprovar corredores e convidar mais colegas. Um revisor não pode fazer nem uma coisa nem outra. O nível é fixado agora, por si — quem aceita não o pode alterar.",
-    sw: "Mmiliki anaweza kuidhinisha njia na kualika wenzake zaidi. Mkaguzi hawezi lolote kati ya hayo. Cheo kinawekwa sasa, na wewe — anayekubali hawezi kukibadilisha.",
-    ar: "يمكن للمالك اعتماد المسارات ودعوة زملاء آخرين، ولا يمكن للمراجع أي منهما. تُحدَّد الرتبة الآن، من جانبك — ولا يستطيع من يقبل الدعوة تغييرها.",
-    tw: "Ɔwura betumi apene akwan so na wafrɛ nnwumayɛfo foforo. Ɔhwɛfo ntumi nyɛ emu biara. Wo na wusi dibea no pi seesei — nea ogye no ntumi nsesa.",
-    zu: "Umnikazi angagunyaza imizila futhi ameme abanye ozakwabo. Umbuyekezi akakwazi nakukodwa. Izinga limiswa manje, nguwe — lowo osamukelayo akakwazi ukulishintsha.",
+    en: "A director can approve corridors and invite more colleagues. A reviewer can do neither. The rank is fixed now, by you — the person accepting cannot change it.",
+    ha: "Darakta zai iya amincewa da hanyoyi da gayyatar ƙarin abokan aiki. Mai duba ba zai iya yin ko ɗaya ba. Ana kayyade matsayin yanzu, ta ku — wanda ya karɓa ba zai iya canza shi ba.",
+    yo: "Olùdarí lè fọwọ́sí àwọn ọ̀nà àti pe àwọn ẹlẹgbẹ́ mìíràn. Olùyẹ̀wò kò lè ṣe ìkankan. Ẹ̀yin ni ẹ pinnu ipò náà báyìí — ẹni tí ó bá gbà kò lè yí i padà.",
+    ig: "Onye nduzi nwere ike ikwado ụzọ na ịkpọ ndị ọrụ ibe ndị ọzọ òkù. Onye nyocha enweghị ike ime nke ọ bụla. Ị na-edozi ọkwa ahụ ugbu a — onye nabatara ya enweghị ike ịgbanwe ya.",
+    fr: "Un directeur peut approuver des corridors et inviter d'autres collègues. Un relecteur ne peut ni l'un ni l'autre. Le rang est fixé maintenant, par vous — la personne qui accepte ne peut pas le changer.",
+    pt: "Um diretor pode aprovar corredores e convidar mais colegas. Um revisor não pode fazer nem uma coisa nem outra. O nível é fixado agora, por si — quem aceita não o pode alterar.",
+    sw: "Mkurugenzi anaweza kuidhinisha njia na kualika wenzake zaidi. Mkaguzi hawezi lolote kati ya hayo. Cheo kinawekwa sasa, na wewe — anayekubali hawezi kukibadilisha.",
+    ar: "يمكن للمدير اعتماد المسارات ودعوة زملاء آخرين، ولا يمكن للمراجع أي منهما. تُحدَّد الرتبة الآن، من جانبك — ولا يستطيع من يقبل الدعوة تغييرها.",
+    tw: "Ɔpanyin betumi apene akwan so na wafrɛ nnwumayɛfo foforo. Ɔhwɛfo ntumi nyɛ emu biara. Wo na wusi dibea no pi seesei — nea ogye no ntumi nsesa.",
+    zu: "Umqondisi angagunyaza imizila futhi ameme abanye ozakwabo. Umbuyekezi akakwazi nakukodwa. Izinga limiswa manje, nguwe — lowo osamukelayo akakwazi ukulishintsha.",
   },
   send: {
     en: "Send invitation",
@@ -187,16 +189,16 @@ export const OPS_STAFF: {
     zu: "Akekho osamenyiwe.",
   },
   ownerOnly: {
-    en: "Only an owner can invite a BeOrchid colleague.",
-    ha: "Mai kamfani ne kaɗai zai iya gayyatar abokin aikin BeOrchid.",
-    yo: "Onílé-iṣẹ́ nìkan ló lè pe alábàáṣiṣẹ́ BeOrchid.",
-    ig: "Ọ bụ naanị onyenwe nwere ike ịkpọ onye ọrụ ibe BeOrchid òkù.",
-    fr: "Seul un propriétaire peut inviter un collègue BeOrchid.",
-    pt: "Só um proprietário pode convidar um colega da BeOrchid.",
-    sw: "Mmiliki pekee ndiye anayeweza kualika mwenzake wa BeOrchid.",
-    ar: "المالك وحده يمكنه دعوة زميل في BeOrchid.",
-    tw: "Ɔwura nko ara na obetumi afrɛ BeOrchid nnwumayɛfo.",
-    zu: "Umnikazi kuphela ongamema ozakwabo base-BeOrchid.",
+    en: "Only a director can invite a BeOrchid colleague.",
+    ha: "Darakta ne kaɗai zai iya gayyatar abokin aikin BeOrchid.",
+    yo: "Olùdarí nìkan ló lè pe alábàáṣiṣẹ́ BeOrchid.",
+    ig: "Ọ bụ naanị onye nduzi nwere ike ịkpọ onye ọrụ ibe BeOrchid òkù.",
+    fr: "Seul un directeur peut inviter un collègue BeOrchid.",
+    pt: "Só um diretor pode convidar um colega da BeOrchid.",
+    sw: "Mkurugenzi pekee ndiye anayeweza kualika mwenzake wa BeOrchid.",
+    ar: "المدير وحده يمكنه دعوة زميل في BeOrchid.",
+    tw: "Ɔpanyin nko ara na obetumi afrɛ BeOrchid nnwumayɛfo.",
+    zu: "Umqondisi kuphela ongamema ozakwabo base-BeOrchid.",
   },
   secondFactorNotice: {
     en: "They will be asked to set up a second factor before the console opens. The invitation email says so.",
@@ -246,17 +248,55 @@ export const OPS_STAFF: {
     tw: "Dibea biara",
     zu: "Noma yiliphi izinga",
   },
+  /**
+   * The two lists this screen carries, split in two on 2026-09-08. One
+   * panel called "Everyone invited" was the whole page, which made the
+   * heading above it — "Who works at BeOrchid, and who has been asked
+   * to" — a promise the screen only half kept: an invitation that had
+   * been accepted a month ago still read as an invitation, and there was
+   * nowhere at all to see who actually holds a console account.
+   */
   colleaguesPanel: {
-    en: "Everyone invited",
-    ha: "Duk wanda aka gayyata",
-    yo: "Gbogbo àwọn tí a pè",
-    ig: "Ndị niile a kpọrọ òkù",
-    fr: "Toutes les invitations",
-    pt: "Todos os convidados",
-    sw: "Kila aliyealikwa",
-    ar: "كل من تمت دعوته",
-    tw: "Obiara a wɔafrɛ no",
-    zu: "Wonke omenyiwe",
+    en: "Colleagues",
+    ha: "Abokan aiki",
+    yo: "Àwọn ẹlẹgbẹ́",
+    ig: "Ndị ọrụ ibe",
+    fr: "Collègues",
+    pt: "Colegas",
+    sw: "Wenzetu",
+    ar: "الزملاء",
+    tw: "Nnwumayɛfo",
+    zu: "Ozakwethu",
+  },
+  invitesPanel: {
+    en: "Invites",
+    ha: "Gayyatu",
+    yo: "Àwọn ìpè",
+    ig: "Òkù",
+    fr: "Invitations",
+    pt: "Convites",
+    sw: "Mialiko",
+    ar: "الدعوات",
+    tw: "Nsato",
+    zu: "Izimemo",
+  },
+  /**
+   * Unreachable in practice — whoever is reading this screen is a
+   * director, so the list holds at least them. Written anyway because
+   * `DataTable` takes an empty state rather than inventing one, and a
+   * fallback that says nothing is how a blank panel gets shipped.
+   */
+  colleaguesEmpty: {
+    en: "Nobody holds a console account yet.",
+    ha: "Babu wanda ke da asusun na'ura tukuna.",
+    yo: "Kò sí ẹni tí ó ní àkàǹtì kọ́ńsólù síbẹ̀.",
+    ig: "Ọ dịghị onye nwere akaụntụ console ugbu a.",
+    fr: "Personne n'a encore de compte console.",
+    pt: "Ainda ninguém tem conta na consola.",
+    sw: "Bado hakuna mwenye akaunti ya konsoli.",
+    ar: "لا أحد يملك حساب وحدة التحكم بعد.",
+    tw: "Obiara nni console akawnt ɛ.",
+    zu: "Akekho onalo i-akhawunti yekhonsoli okwamanje.",
   },
   tableHead: {
     person: {
@@ -306,6 +346,18 @@ export const OPS_STAFF: {
       ar: "إجراءات",
       tw: "Nneyɛe",
       zu: "Izenzo",
+    },
+    joined: {
+      en: "Joined",
+      ha: "Ya shiga",
+      yo: "Ó dara pọ̀",
+      ig: "Sonyeere",
+      fr: "Arrivé le",
+      pt: "Entrou",
+      sw: "Alijiunga",
+      ar: "تاريخ الانضمام",
+      tw: "Ɔbɛkaa ho",
+      zu: "Wajoyina",
     },
     invited: {
       en: "Invited",

@@ -5,6 +5,7 @@ import { ArrowRight, Check, ExternalLink, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Hint } from "@/components/ui/hint";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelHeader } from "@/components/shared/panel";
 import { DocStateBadge } from "@/components/shared/status-badge";
@@ -548,8 +549,9 @@ export default async function RequirementsPage() {
                 somebody can actually go and verify it. Asking the
                 traveller to weigh our own sourcing is asking them to do
                 the job they came here to have done. */}
-            <span className="t-muted">
+            <span className="t-muted inline-flex items-center gap-1.5">
               {t.inEffectSince[locale].replace("{date}", effective)}
+              <Hint label={t.inEffectSinceHint[locale]} />
             </span>
             {ruleSet.sourceUrl && (
               <a

@@ -46,6 +46,7 @@ export const REQUIREMENTS: {
   registrationSuffix: L;
   embassyContact: L;
   inEffectSince: L;
+  inEffectSinceHint: L;
   contributionsAnd: L;
   contributionsComeSingular: L;
   contributionsComePlural: L;
@@ -335,6 +336,30 @@ export const REQUIREMENTS: {
     ar: "ساري المفعول منذ {date}",
     tw: "Ɛreyɛ adwuma efi {date}",
     zu: "Isebenza kusukela ngo-{date}",
+  },
+  /**
+   * What the date beside it actually is.
+   *
+   * The client asked for "when the requirements were last verified via
+   * the platform". That is a different date, it is ours, and
+   * `src/lib/domain/freshness.ts` argues at length that it is staff-only:
+   * a traveller told the checklist in their hand might be stale cannot go
+   * and check it against a mission, so the sentence only costs them
+   * confidence in a list that is very probably right. This explains the
+   * date that is on screen — the mission's own effective-from — and says
+   * that we re-check, without inviting the reader to weigh how recently.
+   */
+  inEffectSinceHint: {
+    en: "The date the mission itself published these rules. Toplance re-checks them against the mission's own pages, so if they change, this list changes.",
+    ha: "Ranar da ofishin jakadancin da kansa ya buga waɗannan ka'idojin. Toplance na sake duba su a shafukan ofishin jakadancin, don haka idan suka canza, wannan jerin ma zai canza.",
+    yo: "Ọjọ́ tí iṣẹ́ aṣojú fúnra rẹ̀ tẹ àwọn òfin wọ̀nyí jáde. Toplance máa ń tún wọn yẹ̀wò lórí àwọn ojú-ìwé iṣẹ́ aṣojú fúnra rẹ̀, nítorí náà tí wọ́n bá yípadà, àkọsílẹ̀ yìí yóò yípadà.",
+    ig: "Ụbọchị ndị nnọchiteanya n'onwe ha bipụtara iwu ndị a. Toplance na-elelegharị ha na ibe weebụ nke ndị nnọchiteanya, ya mere ọ bụrụ na ha gbanwee, ndepụta a ga-agbanwe.",
+    fr: "La date à laquelle la mission a elle-même publié ces règles. Toplance les revérifie sur les pages de la mission, donc si elles changent, cette liste change.",
+    pt: "A data em que a própria missão publicou estas regras. A Toplance volta a verificá-las nas páginas da própria missão, por isso, se mudarem, esta lista muda.",
+    sw: "Tarehe ambayo ubalozi wenyewe ulichapisha sheria hizi. Toplance huzikagua tena kwenye kurasa za ubalozi wenyewe, kwa hivyo zikibadilika, orodha hii inabadilika.",
+    ar: "التاريخ الذي نشرت فيه البعثة هذه القواعد بنفسها. تعيد Toplance التحقق منها على صفحات البعثة نفسها، فإذا تغيّرت تغيّرت هذه القائمة.",
+    tw: "Da a ɔmanpanyin no ankasa tintimii mmara yi. Toplance san hwɛ wɔ ɔmanpanyin no ankasa nkratafa so, enti sɛ ɛsesa a, saa nhwehwɛmu yi nso sesa.",
+    zu: "Usuku inxusa ngokwalo elashicilela ngalo le mithetho. I-Toplance iyaphinda iyihlole emakhasini enxusa uqobo, ngakho uma ishintsha, lolu hlu luyashintsha.",
   },
   contributionsAnd: {
     en: "and",

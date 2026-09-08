@@ -4,15 +4,15 @@ import { eq, inArray } from "drizzle-orm";
 import type { Actor } from "@/lib/auth/policy";
 
 /**
- * Ending a plan, from the POST to the row.
+ * Starting and ending a plan, from the POST to the row.
  *
- * This action is a public endpoint like every other server action: the
- * button that posts to it is rendered only for a director, and that is
- * not a check. So the claims worth pinning are the refusals — a reviewer
- * cannot close their colleagues' console, and a member of one agency
- * cannot close another's — and they are asserted against the real
- * database rather than a mocked guard, because a mocked guard would only
- * prove the mock says no.
+ * Both actions are public endpoints like every other server action: the
+ * buttons that post to them are rendered only for a director, and that
+ * is not a check. So the claims worth pinning are the refusals — a
+ * reviewer can neither close their colleagues' console nor charge their
+ * employer, and a member of one agency cannot close another's — and they
+ * are asserted against the real database rather than a mocked guard,
+ * because a mocked guard would only prove the mock says no.
  *
  * The Clerk session is the one seam. `revalidatePath` is stubbed because
  * it needs a request store that no test has.
@@ -46,14 +46,14 @@ const ORG = "00000000-0000-4000-8000-00000000d001";
 const OTHER_ORG = "00000000-0000-4000-8000-00000000d002";
 const ORG_IDS = [ORG, OTHER_ORG];
 
-describe.skipIf(!hasDb)("cancelSubscription", async () => {
+describe.skipIf(!hasDb)("agency plan actions", async () => {
   const { db } = await import("@/lib/db/client");
   const { auditLog, analyticsEvents, orgMembers, organisations, payments, profiles } =
     await import("@/lib/db/schema");
   const { hasActiveSubscription, recordPayment } = await import(
     "@/lib/data/payments"
   );
-  const { cancelSubscription } = await import("./actions");
+  const { cancelSubscription, purchaseSubscription } = await import("./actions");
 
   /** Signs in as one of the fixtures, at the rank they hold in `ORG`. */
   function signIn(userId: string, orgs: { orgId: string; role: "owner" | "reviewer" }[]) {
@@ -155,9 +155,9 @@ describe.skipIf(!hasDb)("cancelSubscription", async () => {
   });
 
   it("refuses a reviewer, and leaves the plan running", async () => {
-    // The whole reason this action asks for rank rather than membership.
-    // Buying is any colleague's to do; ending it shuts the director's
-    // own console.
+    // The whole reason this action asks for rank rather than membership:
+    // ending a plan shuts the director's own console, and everybody
+    // else's with it.
     await buyMonth();
     signIn(REVIEWER, [{ orgId: ORG, role: "reviewer" }]);
 
@@ -165,6 +165,45 @@ describe.skipIf(!hasDb)("cancelSubscription", async () => {
       error: "You do not have access to that.",
     });
     expect(await hasActiveSubscription(ORG)).toBe(true);
+  });
+
+  /**
+   * The other end of the same plan, and the check it was missing until
+   * 8 September.
+   *
+   * `purchaseSubscription` asked `requireOrgAccess` — do you belong to
+   * this agency — and stopped there, so any travel agent could charge
+   * their employer for a month by posting to an endpoint whose button
+   * they were never shown. An earlier note in this file argued that
+   * buying was any colleague's to do because it only ever restores
+   * access; the client's answer on 8 September was that what the agency
+   * pays is the director's, and spending somebody else's money is not
+   * made harmless by the thing it buys.
+   *
+   * A reviewer locked out by a lapsed plan is not stranded by this: the
+   * billing page tells them the plan has ended and that a director can
+   * start it again.
+   */
+  it("refuses a reviewer, and charges the agency nothing", async () => {
+    signIn(REVIEWER, [{ orgId: ORG, role: "reviewer" }]);
+
+    expect(await purchaseSubscription()).toEqual({
+      error: "You do not have access to that.",
+    });
+
+    // The refusal lands before the rate card is read, so there is no
+    // provider call to have half-happened and no row to roll back.
+    expect(await hasActiveSubscription(ORG)).toBe(false);
+    const rows = await db.select().from(payments).where(eq(payments.orgId, ORG));
+    expect(rows).toEqual([]);
+  });
+
+  it("refuses a buyer with no agency at all", async () => {
+    signIn(REVIEWER, []);
+
+    expect(await purchaseSubscription()).toEqual({
+      error: "You do not have access to that.",
+    });
   });
 
   it("refuses a director of a different agency", async () => {

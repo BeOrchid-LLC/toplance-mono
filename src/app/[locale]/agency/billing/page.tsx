@@ -86,13 +86,59 @@ export default async function AgencyBillingPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
-  const { profile, actor, membership, orgId } = await resolveAgencyConsole({
-    allowUnpaid: true,
-  });
+  const { profile, actor, membership, orgId, subscriptionActive } =
+    await resolveAgencyConsole({ allowUnpaid: true });
 
   // No organisation, nothing to buy a plan for. The dashboard is where
   // that state is explained and where it is fixed.
   if (!membership || !orgId) redirect("/agency");
+
+  /**
+   * What the agency pays is the director's business, asked for by the
+   * client on 8 September. The rail has always hidden this row from a
+   * travel agent; the page itself never checked, so typing the path
+   * handed them the plan, every past payment and a live Pay button.
+   *
+   * A notice rather than a `redirect`, which is the one thing this page
+   * may not do. It is the paywall's landing page: when the plan lapses
+   * every other console route redirects *here*, so sending a travel
+   * agent back to `/agency` would bounce them straight back and end in
+   * ERR_TOO_MANY_REDIRECTS — bug #77, rebuilt. `/agency/team` redirects
+   * safely only because nothing ever redirects *to* it.
+   *
+   * So they are told, in the two states that mean something to them:
+   * either the plan is running and none of this is theirs, or it has
+   * ended and that is why their console is shut. Neither sentence
+   * carries an amount, a date or a receipt.
+   */
+  const isDirector = membership.role === "owner";
+
+  if (!isDirector) {
+    return (
+      <AgencyShell
+        profile={profile}
+        membership={membership}
+        actor={actor}
+        orgId={orgId}
+        locale={locale}
+        activeId="billing"
+        title={BILLING.planTitle[locale]}
+        lead={BILLING.reviewerLead[locale]}
+        centred
+      >
+        <Panel>
+          <PanelHeader label={BILLING.planName[locale]} />
+          <PanelBody className="pt-6">
+            <p className="max-w-[60ch] text-[15px] text-ink-2">
+              {subscriptionActive
+                ? BILLING.reviewerNotice[locale]
+                : BILLING.reviewerBlocked[locale]}
+            </p>
+          </PanelBody>
+        </Panel>
+      </AgencyShell>
+    );
+  }
 
   const [card, subscription, latest, history] = await Promise.all([
     activeRateCard(),

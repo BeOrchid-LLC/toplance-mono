@@ -41,6 +41,20 @@ function oneMonthOn(from: Date): Date {
  * the honest behaviour while the provider is a mock — a recurring charge
  * that nothing can actually collect would be a promise the product
  * cannot keep.
+ *
+ * The director check is the one this action was missing.
+ * `requireOrgAccess` asks whether you belong to the agency, which is not
+ * the same question as whether you may spend its money — and by the same
+ * reasoning as the amount above, hiding the Pay button was never a
+ * control. `cancelSubscription` has always asked; the two ends of the
+ * same plan now agree.
+ *
+ * It does not contradict the "never gate the way back in" rule in
+ * AGENTS.md. That rule is about confirmation dialogs — recovery must not
+ * cost an extra click — and it says nothing about who is entitled to
+ * recover. A travel agent locked out by a lapsed plan is told the plan
+ * has lapsed and who can renew it; they are not handed their employer's
+ * card.
  */
 export async function purchaseSubscription() {
   try {
@@ -48,6 +62,7 @@ export async function purchaseSubscription() {
     const orgId = actor.orgIds[0];
     if (!orgId) return { error: "You do not have access to that." };
     await requireOrgAccess(orgId);
+    if (!isOrgDirector(actor, orgId)) throw new ForbiddenError();
 
     const locale = await getActionLocale();
 
@@ -123,10 +138,12 @@ export async function purchaseSubscription() {
  * Destructive under the rule in `AGENTS.md`: every member stops being
  * able to open a case, at once, which is the reach of a suspension. So
  * it asks for rank rather than membership. `requireOrgAccess` is
- * `isOrgMemberOf` and is right for buying — any colleague may pay — but
- * a reviewer must not be able to shut the director's own console. The
- * check is here rather than in the component because the component is
- * not a boundary: this is a POST endpoint reachable without it.
+ * `isOrgMemberOf`, which answers whether you work here and not whether
+ * this is yours to do — a reviewer must not be able to shut the
+ * director's own console. The check is here rather than in the component
+ * because the component is not a boundary: this is a POST endpoint
+ * reachable without it. `purchaseSubscription` asks the same question
+ * now, for the reason recorded there.
  *
  * The stamp lands in `payments` and nowhere else, which is what keeps
  * #77 from coming back. `activeSubscription` is the single question both

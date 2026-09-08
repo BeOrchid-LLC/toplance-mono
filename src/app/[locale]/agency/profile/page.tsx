@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { AvatarUpload } from "@/components/app/avatar-upload";
+import { Badge } from "@/components/ui/badge";
 import { EditableName, EditablePhone } from "@/components/app/profile-fields";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -111,10 +112,20 @@ export default async function AgencyProfilePage() {
                 {profile.fullName || profile.email}
               </p>
               {membership && (
-                <p className="t-muted mt-1 truncate">
-                  {membership.name} ·{" "}
-                  {AGENCY.roleLabel[membership.role][locale]}
-                </p>
+                // The rank as a badge rather than the tail of a muted
+                // sentence, asked for on 8 September. It was already on
+                // this page and read as part of the agency's name, which
+                // is how somebody looks straight past the one line that
+                // says what they may do. Same treatment `TeamRoster`
+                // gives a colleague's rank, and for the reason recorded
+                // there: a member whose rank is not visible is a member
+                // whose permissions nobody can explain.
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                  <span className="t-muted truncate">{membership.name}</span>
+                  <Badge variant="neutral">
+                    {AGENCY.roleLabel[membership.role][locale]}
+                  </Badge>
+                </div>
               )}
             </div>
           </div>

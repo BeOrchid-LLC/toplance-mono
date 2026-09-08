@@ -28,6 +28,9 @@ export const BILLING: {
   planTitle: L;
   planBody: L;
   planName: L;
+  reviewerLead: L;
+  reviewerNotice: L;
+  reviewerBlocked: L;
   perMonth: L;
   perApplicationNote: L;
   payPlan: L;
@@ -94,6 +97,48 @@ export const BILLING: {
     ar: "خطة الوكالة",
     tw: "Adwumakuw nhyehyɛe",
     zu: "Uhlelo lwenhlangano",
+  },
+  /**
+   * The three strings a travel agent sees on this page, and the whole of
+   * what it tells them. No amount, no renewal date, no receipt — see the
+   * note on the reviewer branch in `billing/page.tsx` for why they reach
+   * a screen at all rather than a redirect.
+   */
+  reviewerLead: {
+    en: "What your agency pays is your director's to manage.",
+    ha: "Abin da hukumarka ke biya, daraktanka ne ke kula da shi.",
+    yo: "Ohun tí ilé-iṣẹ́ rẹ ń san jẹ́ ti olùdarí rẹ láti ṣàkóso.",
+    ig: "Ihe ụlọ ọrụ gị na-akwụ bụ nke onye nduzi gị ga-elekọta.",
+    fr: "Ce que votre agence paie relève de votre directeur.",
+    pt: "O que a sua agência paga é da responsabilidade do seu diretor.",
+    sw: "Kile wakala wako analipa ni jukumu la mkurugenzi wako.",
+    ar: "ما تدفعه وكالتك من شأن مديرك.",
+    tw: "Deɛ w'adwumakuo tua no yɛ wo panyin no dea sɛ ɔhwɛ so.",
+    zu: "Lokho i-ejensi yakho ekukhokhayo kungokomqondisi wakho.",
+  },
+  reviewerNotice: {
+    en: "The plan is running and there is nothing here for you to do. Carry on with your cases — your director can see the plan, the renewal date and every payment on this page.",
+    ha: "Shirin yana gudana kuma babu abin da za ka yi a nan. Ka ci gaba da shari'o'inka — daraktanka zai iya ganin shirin, ranar sabuntawa da kowane biyan kuɗi a wannan shafin.",
+    yo: "Ètò náà ń lọ, kò sì sí ohun tí o ní láti ṣe níbí. Máa bá àwọn ẹjọ́ rẹ lọ — olùdarí rẹ lè rí ètò náà, ọjọ́ ìsọdọ̀tun àti gbogbo owó tí a san ní ojú-ìwé yìí.",
+    ig: "Atụmatụ ahụ na-arụ ọrụ, ọ dịghịkwa ihe ị ga-eme ebe a. Gaa n'ihu na ndị ọrụ gị — onye nduzi gị nwere ike ịhụ atụmatụ ahụ, ụbọchị mmeghari na ụgwọ ọ bụla e kwụrụ na peeji a.",
+    fr: "La formule est active et vous n'avez rien à faire ici. Poursuivez vos dossiers — votre directeur voit la formule, la date de renouvellement et chaque paiement sur cette page.",
+    pt: "O plano está ativo e não há nada a fazer aqui. Continue com os seus processos — o seu diretor vê o plano, a data de renovação e cada pagamento nesta página.",
+    sw: "Mpango unaendelea na hakuna cha kufanya hapa. Endelea na kesi zako — mkurugenzi wako anaona mpango, tarehe ya kuhuisha na kila malipo kwenye ukurasa huu.",
+    ar: "الخطة سارية ولا شيء عليك فعله هنا. تابع ملفاتك — يرى مديرك الخطة وتاريخ التجديد وكل دفعة في هذه الصفحة.",
+    tw: "Nhyehyɛe no rekɔ so na biribiara nni ha a ɛsɛ sɛ woyɛ. Kɔ so yɛ wo nsɛm no — wo panyin no tumi hu nhyehyɛe no, da a wɔbɛyɛ no foforɔ ne sika biara a wɔatua wɔ krataafa yi so.",
+    zu: "Uhlelo luyasebenza futhi akukho okumele ukwenze lapha. Qhubeka namacala akho — umqondisi wakho ubona uhlelo, usuku lokuvuselela nayo yonke inkokhelo kuleli khasi.",
+  },
+  reviewerBlocked: {
+    en: "Your agency's plan has ended, which is why the rest of your console is closed. Only a director can start it again — ask a colleague who holds that rank.",
+    ha: "Shirin hukumarka ya ƙare, shi ya sa sauran na'urarka ta rufe. Darakta kaɗai zai iya sake fara shi — ka tambayi abokin aiki mai wannan matsayi.",
+    yo: "Ètò ilé-iṣẹ́ rẹ ti parí, ìdí nìyẹn tí ìyókù kọ̀ǹsólù rẹ fi tì. Olùdarí nìkan ni ó lè bẹ̀rẹ̀ rẹ̀ lẹ́ẹ̀kansí — bi ẹlẹgbẹ́ rẹ tí ó ní ipò yẹn.",
+    ig: "Atụmatụ ụlọ ọrụ gị akwụsịla, nke ahụ mere ka ndị ọzọ na kọnsol gị mechie. Naanị onye nduzi nwere ike ịmalite ya ọzọ — jụọ onye ọrụ ibe gị nwere ọkwa ahụ.",
+    fr: "La formule de votre agence a pris fin, d'où la fermeture du reste de votre console. Seul un directeur peut la relancer — demandez à un collègue qui a ce rang.",
+    pt: "O plano da sua agência terminou, e é por isso que o resto da sua consola está fechado. Só um diretor o pode reiniciar — peça a um colega que tenha essa posição.",
+    sw: "Mpango wa wakala wako umeisha, ndiyo maana sehemu nyingine ya konsoli yako imefungwa. Mkurugenzi pekee ndiye anayeweza kuuanzisha tena — muulize mwenzako mwenye cheo hicho.",
+    ar: "انتهت خطة وكالتك، ولهذا أُغلق باقي لوحتك. المدير وحده يستطيع تجديدها — اسأل زميلاً يحمل هذه الرتبة.",
+    tw: "W'adwumakuo nhyehyɛe no aba awieeɛ, ɛno na ɛma wo console no nkaeɛ ato mu. Ɔpanyin nko ara na ɔbɛtumi ahyɛ aseɛ bio — bisa wo yɔnko a ɔwɔ saa dibea no.",
+    zu: "Uhlelo lwe-ejensi yakho luphelile, yingakho okunye kwekhonsoli yakho kuvaliwe. Umqondisi kuphela ongaluqala kabusha — buza ozakwenu onaleso sikhundla.",
   },
   perMonth: {
     en: "per month",

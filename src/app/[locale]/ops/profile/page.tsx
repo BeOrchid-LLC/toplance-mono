@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { AvatarUpload } from "@/components/app/avatar-upload";
+import { Badge } from "@/components/ui/badge";
 import { EditableName, EditablePhone } from "@/components/app/profile-fields";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { AdminShell } from "@/components/shared/admin-shell";
@@ -14,6 +15,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import { getOpsCounts } from "@/lib/data/ops-counts";
 import { countryBy } from "@/lib/domain/countries";
 import { opsSubtitle } from "@/lib/domain/ops-account";
+import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_PROFILE } from "@/lib/i18n/ops-profile";
 import { PROFILE } from "@/lib/i18n/profile";
 import { getLocale } from "@/lib/i18n/server";
@@ -143,9 +145,22 @@ export default async function OpsProfilePage() {
               <p className="d-sm truncate">
                 {profile.fullName || profile.email}
               </p>
-              <p className="t-muted mt-1 truncate">
-                {opsSubtitle(actor.staffRole, locale)}
-              </p>
+              {/* Split out of `opsSubtitle` rather than rendered through
+                  it, and only here. That helper's whole point is that
+                  the rail and the account menu say the same string, so
+                  this page reads its two halves instead — the operation
+                  as quiet text, the rank as a badge. Same change, same
+                  day and same reason as the agency profile's. An absent
+                  `staffRole` is a reviewer, the lesser of the two, so a
+                  row that lost its rank can never read as an owner. */}
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                <span className="t-muted truncate">
+                  {OPS_COMMON.subtitlePrefix[locale]}
+                </span>
+                <Badge variant="neutral">
+                  {OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}
+                </Badge>
+              </div>
             </div>
           </div>
 

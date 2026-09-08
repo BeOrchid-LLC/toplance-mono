@@ -188,6 +188,8 @@ export const STATUS_CONTROL: {
   noAction: L;
   confirmApproval: L;
   confirmRejection: L;
+  markLodged: L;
+  exportedNudge: L;
   toastMoved: L;
 } = {
   messagePlaceholder: {
@@ -237,6 +239,46 @@ export const STATUS_CONTROL: {
     ar: "تأكيد الرفض",
     tw: "Si so dua sɛ wɔapow",
     zu: "Qinisekisa ukwenqatshwa",
+  },
+  /**
+   * The `under_review → processing` button. A verb, where every other
+   * exit is named after the status it lands on — see `ACTION_LABEL` in
+   * `status-control.tsx` for why that one status needs its own word.
+   */
+  markLodged: {
+    en: "Mark as lodged",
+    ha: "Yi alama an gabatar",
+    yo: "Sàmì sí i pé a ti fi sílẹ̀",
+    ig: "Kaa akara na e nyefeela ya",
+    fr: "Marquer comme déposé",
+    pt: "Marcar como entregue",
+    sw: "Weka alama kuwa imewasilishwa",
+    ar: "وضع علامة: تم التقديم",
+    tw: "Hyɛ no agyiraeɛ sɛ wɔde ama",
+    zu: "Maka njengokufakiwe",
+  },
+  /**
+   * Shown on the case screen once the pack has been exported and the
+   * case is still `under_review`. `{date}` is the export, formatted in
+   * the reader's own locale.
+   *
+   * It asks rather than tells, because that is exactly the limit of what
+   * this product knows: it watched somebody download a ZIP. Whether it
+   * reached a mission is the reviewer's fact to supply, and the button
+   * beneath is where they supply it — with a message the traveller can
+   * read, which is the thing an automatic transition could never write.
+   */
+  exportedNudge: {
+    en: "Documents exported {date}. If the pack has gone to the embassy, mark this case as lodged so the traveler stops waiting on you.",
+    ha: "An fitar da takardu {date}. Idan an kai fayil ɗin zuwa ofishin jakadanci, yi masa alama an gabatar don matafiyin ya daina jiran ka.",
+    yo: "A ti kó àwọn ìwé jáde ní {date}. Bí a bá ti gbé àpò náà lọ sí ilé-iṣẹ́ aṣojú, sàmì sí ẹjọ́ yìí pé a ti fi sílẹ̀ kí arìnrìn-àjò má bàa máa dúró de ọ́.",
+    ig: "E bupụtara akwụkwọ na {date}. Ọ bụrụ na ngwugwu ahụ agaala ụlọ ọrụ nnọchiteanya, kaa ikpe a akara na e nyefeela ya ka onye njem kwụsị ichere gị.",
+    fr: "Documents exportés le {date}. Si le dossier est parti à l'ambassade, marquez-le comme déposé pour que le voyageur cesse de vous attendre.",
+    pt: "Documentos exportados a {date}. Se o processo seguiu para a embaixada, marque-o como entregue para que o viajante deixe de estar à sua espera.",
+    sw: "Nyaraka zilihamishwa {date}. Ikiwa jalada limekwenda ubalozini, liweke alama kuwa limewasilishwa ili msafiri aache kukusubiri.",
+    ar: "صُدِّرت المستندات في {date}. إذا كان الملف قد ذهب إلى السفارة، فضع علامة على هذه الحالة بأنها قُدِّمت حتى يتوقف المسافر عن انتظارك.",
+    tw: "Wɔyii nkrataa no firii mu {date}. Sɛ kotokuo no akɔ ɔmanpanin asoeɛ hɔ a, hyɛ asɛm yi agyiraeɛ sɛ wɔde ama sɛdeɛ ɛbɛyɛ a ɔkwantuni no nnyae wo twɛn.",
+    zu: "Amadokhumenti athunyelwe ngo-{date}. Uma iphakethe seliye enxusweni, maka leli cala njengelifakiwe ukuze isihambi siyeke ukukulinda.",
   },
   /** `{status}` is `STATUS_COPY[to].label` (`@/lib/i18n/status.ts`), localised into the same locale as this sentence. */
   toastMoved: {

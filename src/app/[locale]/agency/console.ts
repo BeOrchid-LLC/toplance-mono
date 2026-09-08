@@ -213,6 +213,7 @@ export type AgencyCase = {
   travelerName: string;
   travelerEmail: string;
   travelerCountryIso: string | null;
+  documentsExportedAt: Date | null;
   visaName: string | null;
   destinationIso: string | null;
 };
@@ -285,6 +286,10 @@ async function requireAgencyCaseFor(
       travelerName: profiles.fullName,
       travelerEmail: profiles.email,
       travelerCountryIso: profiles.countryIso,
+      // When the pack was first taken away, which is the whole of what
+      // licenses the decision panel to ask whether the case is lodged.
+      // See the column's own note in `schema.ts`.
+      documentsExportedAt: applications.documentsExportedAt,
       visaName: corridors.visaName,
       destinationIso: corridors.destinationIso,
     })

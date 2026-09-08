@@ -59,14 +59,28 @@ export const orgRoleEnum = pgEnum("org_role", ["reviewer", "owner"]);
 
 /**
  * Locked status model. Colour mapping lives in the design system:
- * submitted → info · under_review → warning · approved → success
- * rejected → danger · additional_docs → neutral · collecting → brand
+ * submitted → info · under_review → warning · processing → brand
+ * approved → success · rejected → danger · additional_docs → neutral
+ * collecting → neutral
+ *
+ * `processing` is the leg the product had no name for until 7 September:
+ * the agency has taken the pack to the mission and is waiting on a
+ * decision that is not theirs to make. Before it, a case sat in
+ * `under_review` from the moment a reviewer opened it until the embassy
+ * answered — weeks in which the traveller's screen said the agency was
+ * still reading their documents, and the desk's own queue could not tell
+ * the cases it still owed work from the cases it was only waiting on.
+ *
+ * Added after `under_review` in the list because that is where it falls
+ * in the case's life, and the enum's own order is what `order by status`
+ * would follow if anything ever did.
  */
 export const applicationStatus = pgEnum("application_status", [
   "draft",
   "collecting_documents",
   "submitted",
   "under_review",
+  "processing",
   "additional_documents",
   "approved",
   "rejected",
@@ -783,6 +797,29 @@ export const applications = pgTable(
      * make visible.
      */
     checklistCompleteAt: timestamp({ withTimezone: true }),
+    /**
+     * The first time somebody on the agency side took this case's
+     * documents away as a ZIP.
+     *
+     * It is not the status and does not try to be. Exporting is a read —
+     * a reviewer downloads the pack, and whether it reached a mission,
+     * a colleague's desktop or a shredder is not something this product
+     * can see. What it does license is a question: the case screen uses
+     * this to ask "you exported on the 8th, is this lodged?", which is
+     * the prompt the client asked for without inventing a fact about
+     * the embassy that nobody here observed.
+     *
+     * Stamped once and never cleared, under `where documents_exported_at
+     * is null`, for the same reason `billable_at` is — a reviewer
+     * re-downloading the pack a week later has not exported it again,
+     * and a nudge that resets itself on every download is a nag.
+     *
+     * A traveller downloading their own documents never sets it. They
+     * are not the ones taking the pack to a mission, and their download
+     * is guarded by the same route, so the route asks which side of the
+     * desk the caller is on before it writes.
+     */
+    documentsExportedAt: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },

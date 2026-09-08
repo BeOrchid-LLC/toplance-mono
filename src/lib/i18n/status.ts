@@ -198,6 +198,56 @@ export const STATUS_COPY: Record<
       zu: "Umphathi wecala oqanjwe ngegama ulivulile ifayela lakho.",
     },
   },
+  /**
+   * "With the embassy", not "Processing" — chosen with the client on 7
+   * September over their own first word for it. The pill's whole job on
+   * this screen is to answer "who is holding this now", and the product
+   * already spends "In progress" on `collecting_documents` and "Under
+   * review" on `under_review`. A third near-synonym would have told a
+   * traveller that something, somewhere, was happening.
+   *
+   * The blurb says there is nothing for them to do, because the most
+   * common thing a traveller does at this point is upload another
+   * document nobody asked for.
+   */
+  processing: {
+    label: {
+      en: "With the embassy",
+      ha: "Yana hannun ofishin jakadanci",
+      yo: "Ó wà lọ́wọ́ ilé-iṣẹ́ aṣojú orílẹ̀-èdè",
+      ig: "Ọ nọ n'aka ụlọ ọrụ nnọchiteanya",
+      fr: "À l'ambassade",
+      pt: "Na embaixada",
+      sw: "Iko ubalozini",
+      ar: "لدى السفارة",
+      tw: "Ɛwɔ ɔmanpanin asoeɛ hɔ",
+      zu: "Kusenxusweni",
+    },
+    short: {
+      en: "At embassy",
+      ha: "A ofishin jakadanci",
+      yo: "Ní ilé aṣojú",
+      ig: "N'ụlọ nnọchiteanya",
+      fr: "Ambassade",
+      pt: "Na embaixada",
+      sw: "Ubalozini",
+      ar: "في السفارة",
+      tw: "Asoeɛ hɔ",
+      zu: "Enxusweni",
+    },
+    blurb: {
+      en: "Your agency has sent your application to the embassy. There is nothing for you to do while they decide.",
+      ha: "Hukumarka ta aika da takardar neman ka zuwa ofishin jakadanci. Ba abin da za ka yi yayin da suke yanke shawara.",
+      yo: "Ilé-iṣẹ́ rẹ ti fi ìbéèrè rẹ ránṣẹ́ sí ilé-iṣẹ́ aṣojú orílẹ̀-èdè. Kò sí ohun tí o ní láti ṣe nígbà tí wọ́n ń pinnu.",
+      ig: "Ụlọ ọrụ gị ezigala arịrịọ gị n'ụlọ ọrụ nnọchiteanya. Ọ dịghị ihe ị ga-eme mgbe ha na-ekpebi.",
+      fr: "Votre agence a transmis votre demande à l'ambassade. Vous n'avez rien à faire pendant qu'ils décident.",
+      pt: "A sua agência enviou o seu pedido para a embaixada. Não tem nada a fazer enquanto eles decidem.",
+      sw: "Wakala wako ametuma ombi lako ubalozini. Hakuna cha kufanya wakati wanaamua.",
+      ar: "أرسلت وكالتك طلبك إلى السفارة. لا شيء عليك فعله ريثما يبتّون فيه.",
+      tw: "W'adwumakuo no de wo abisadeɛ no akɔ ɔmanpanin asoeɛ hɔ. Biribiara nni hɔ a ɛsɛ sɛ woyɛ ɛberɛ a wɔresi gyinaeɛ.",
+      zu: "I-ejensi yakho ithumele isicelo sakho enxusweni. Akukho okumele ukwenze ngenkathi benquma.",
+    },
+  },
   additional_documents: {
     label: {
       en: "Additional documents needed",

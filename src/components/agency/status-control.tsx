@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, FileWarning, Search, X } from "lucide-react";
+import { Check, FileWarning, Landmark, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,24 @@ import { CASE_COMMON, STATUS_CONTROL } from "@/lib/i18n/case-review-actions";
 
 const ICON: Partial<Record<ApplicationStatus, React.ComponentType<{ className?: string }>>> = {
   under_review: Search,
+  processing: Landmark,
   additional_documents: FileWarning,
   approved: Check,
   rejected: X,
+};
+
+/**
+ * The buttons whose label is not the status they lead to.
+ *
+ * Every other exit reads as a destination — "Under review", "Approved" —
+ * and works as a button because moving the case there is the whole
+ * action. `processing`'s pill says "With the embassy", which is a place
+ * the case is rather than a thing the reviewer does, and a button
+ * reading "With the embassy" asks somebody to click a fact. The
+ * traveller still sees the pill; the desk sees the verb.
+ */
+const ACTION_LABEL: Partial<Record<ApplicationStatus, typeof STATUS_CONTROL.markLodged>> = {
+  processing: STATUS_CONTROL.markLodged,
 };
 
 /**
@@ -107,7 +122,7 @@ export function StatusControl({
             ? to === "approved"
               ? t(STATUS_CONTROL.confirmApproval)
               : t(STATUS_CONTROL.confirmRejection)
-            : t(STATUS_COPY[to].label);
+            : t(ACTION_LABEL[to] ?? STATUS_COPY[to].label);
           const variant =
             to === "approved" ? "success" : to === "rejected" ? "danger" : "secondary";
 

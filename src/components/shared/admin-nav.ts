@@ -73,7 +73,9 @@ export function opsAdminNav({
   pendingRoutes: number;
   /**
    * Demo enquiries still open — the same set `/ops/tenants` counts for
-   * its "Open enquiries" card, so the badge and the card agree.
+   * its "Open enquiries" card, so the badge and the card agree. The
+   * badge hangs on the enquiries row, which is where acting on that
+   * number happens.
    */
   openDemoRequests: number;
   /**
@@ -99,10 +101,19 @@ export function opsAdminNav({
       label: OPS_COMMON.subtitlePrefix[locale],
       items: [
         {
+          // No badge. A count of agencies is a fact nobody acts on, and
+          // the enquiry count that used to sit here has gone to the row
+          // that actually leads to the work.
           id: "agencies",
           href: "/ops/tenants",
           label: OPS_COMMON.nav.tenants[locale],
           icon: "agencies",
+        },
+        {
+          id: "enquiries",
+          href: "/ops/enquiries",
+          label: OPS_COMMON.nav.enquiries[locale],
+          icon: "enquiries",
           badge: openDemoRequests,
         },
         ...(isOwner

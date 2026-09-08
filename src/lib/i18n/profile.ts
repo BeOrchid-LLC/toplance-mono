@@ -47,6 +47,17 @@ export const PROFILE: {
   officialSourceFallback: L;
   ruleSetVersion: L;
   inEffectSince: L;
+  /**
+   * What the provenance line beside it is, revealed on the info mark.
+   *
+   * It names the source and the version; it does not invite the reader
+   * to weigh how fresh our sourcing is. `freshness.ts` makes that
+   * argument at length: a traveller told their checklist might be out of
+   * date has been handed our job back, cannot check it against a
+   * mission, and loses confidence in a list that is very probably right.
+   * Staff read that notice, in the ops console. This one is a caption.
+   */
+  provenanceHint: L;
   travelHistoryLabel: L;
   tripSingular: L;
   tripPlural: L;
@@ -397,6 +408,18 @@ export const PROFILE: {
     ar: "مجموعة القواعد v{version}",
     tw: "mmara nhyehyɛeɛ v{version}",
     zu: "isethi yemithetho v{version}",
+  },
+  provenanceHint: {
+    en: "Where this checklist comes from: the official source we read it from, which version of the rules it is, and the date those rules came into force.",
+    ha: "Daga inda wannan jerin ya fito: hukumar da muka karanta shi daga gare ta, wane sigar dokokin ne, da ranar da dokokin suka fara aiki.",
+    yo: "Ibi tí àkọsílẹ̀ yìí ti wá: orísun ìjọba tí a kà á láti ọ̀dọ̀ rẹ̀, ẹ̀dà òfin wo ni, àti ọjọ́ tí àwọn òfin náà bẹ̀rẹ̀ sí í ṣiṣẹ́.",
+    ig: "Ebe ndepụta a si bịa: isi mmalite gọọmentị anyị gụrụ ya, ụdị iwu ọ bụ, na ụbọchị iwu ndị ahụ malitere ịrụ ọrụ.",
+    fr: "D'où vient cette liste : la source officielle consultée, la version des règles, et la date d'entrée en vigueur de ces règles.",
+    pt: "De onde vem esta lista: a fonte oficial consultada, a versão das regras, e a data em que essas regras entraram em vigor.",
+    sw: "Orodha hii inatoka wapi: chanzo rasmi tulichoisoma, toleo la kanuni, na tarehe kanuni hizo zilipoanza kutumika.",
+    ar: "من أين تأتي هذه القائمة: المصدر الرسمي الذي قرأناها منه، وأي إصدار من القواعد هي، وتاريخ بدء سريان تلك القواعد.",
+    tw: "Baabi a saa nhwehwɛmu yi firi: aban asɛnnie a yɛkenkan firii mu, mmara no nsakraeɛ a ɛyɛ, ne da a mmara no hyɛɛ aseɛ yɛɛ adwuma.",
+    zu: "Lapho lolu hlu luvela khona: umthombo osemthethweni esilufunde kuwo, inguqulo yemithetho, nosuku leyo mithetho eyaqala ukusebenza ngalo.",
   },
   inEffectSince: {
     en: "in effect since {date}",

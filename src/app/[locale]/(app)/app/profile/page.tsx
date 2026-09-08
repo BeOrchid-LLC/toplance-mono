@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Clock3, Sparkles } from "lucide-react";
 
+import { Hint } from "@/components/ui/hint";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Shell } from "@/components/shared/shell";
@@ -430,8 +432,14 @@ export default async function ProfilePage() {
                       {feeApprox && <span className="num"> · {feeApprox}</span>}
                       {weeks && <span className="num"> · {weeks}</span>}
                     </p>
+                    {/* An info mark, not a clock. This line is provenance
+                        — source, rule-set version, the date the rules
+                        took effect — and a clock face said "this is a
+                        time", which is what the client read it as. The
+                        second clock on this page, over "generated on",
+                        genuinely is one and stays. */}
                     <p className="special mt-2 flex items-start gap-1.5">
-                      <Clock3 className="mt-px size-4 shrink-0" aria-hidden />
+                      <Hint label={t.provenanceHint[uiLocale]} />
                       <span>
                         {corridor.sourceName ?? t.officialSourceFallback[uiLocale]} ·{" "}
                         {t.ruleSetVersion[uiLocale].replace("{version}", String(corridor.version))} ·{" "}

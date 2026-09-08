@@ -13,6 +13,7 @@
     "db:migrate": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/migrate.mts && node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/sql-objects.mts",
     "db:studio": "drizzle-kit studio",
     "db:seed": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/seed.mts",
+    "fx:refresh": "node --env-file-if-exists=.env.local --conditions=react-server --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/refresh-fx.mts",
     "db:corridors": "node --env-file-if-exists=.env.local --experimental-strip-types src/lib/db/corridors.mts",
     "corridors:export": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/export-corridors.mts",
     "corridor:draft": "node --env-file-if-exists=.env.local --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/draft-corridor.mts",

@@ -97,29 +97,46 @@ export default async function DocumentsPage() {
     <main>
       <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
-          <div className="max-w-[62ch]">
-            <h1 className="t-h2">{t.heading[locale]}</h1>
-            <p className="t-muted mt-3">
-              {t.intro[locale]} {VERIFIED_MEANS[locale]}
-            </p>
-            {/* Said before they photograph anything, not after a refusal.
-                Legibility is the largest single cause of a re-upload and
-                the one thing entirely within the traveller's control at
-                the moment they take the picture. */}
-            <p className="t-muted mt-3">
-              {fill(UPLOADS.guidance[locale], {
-                formats: UPLOADS.acceptedFormats[locale],
-                size: MAX_UPLOAD_LABEL,
-              })}
-            </p>
-            {/* Mandatory, not a nicety. Decision 2 made the pre-check
-                unconditional — there is no setting under which a
-                traveller's file is not read by a machine — so saying so
-                is what makes it honest, and it is said where they upload
-                rather than buried in terms. */}
-            <p className="t-muted mt-3">{t.precheckDisclosure[locale]}</p>
-          </div>
+          <h1 className="t-h2">{t.heading[locale]}</h1>
           <CompletionRing pct={completion.pct} size={120} />
+        </div>
+
+        {/* Three columns, not one stacked block and not one long line.
+
+            Stacked in a 62ch column beside the ring — what this was —
+            three paragraphs took twice the height for the same words and
+            pushed the first document off the fold, which is what the
+            client saw. But simply removing the measure trades that for a
+            140-character line at this page's width, which is the other
+            way to make a paragraph unreadable.
+
+            Side by side, each block keeps a sane measure, the row fills
+            the width of the panels it explains, and the whole explainer
+            costs a third of the vertical space. §6's measures are about
+            a paragraph being readable; a column here is one.
+
+            They stack below `md`, where there is only one column's worth
+            of width to begin with. */}
+        <div className="mt-6 grid gap-x-10 gap-y-3 border-t border-border pt-6 md:grid-cols-3">
+          <p className="t-muted">
+            {t.intro[locale]} {VERIFIED_MEANS[locale]}
+          </p>
+          {/* Said before they photograph anything, not after a refusal.
+              Legibility is the largest single cause of a re-upload and
+              the one thing entirely within the traveller's control at
+              the moment they take the picture. */}
+          <p className="t-muted">
+            {fill(UPLOADS.guidance[locale], {
+              formats: UPLOADS.acceptedFormats[locale],
+              size: MAX_UPLOAD_LABEL,
+            })}
+          </p>
+          {/* Mandatory, not a nicety. Decision 2 made the pre-check
+              unconditional — there is no setting under which a
+              traveller's file is not read by a machine — so saying so
+              is what makes it honest, and it is said where they upload
+              rather than buried in terms. */}
+          <p className="t-muted">{t.precheckDisclosure[locale]}</p>
         </div>
 
 {/* The ring reaches 100% when everything is uploaded; this

@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   isApplicationStatus,
+  isTerminalStatus,
   RESUBMITTABLE,
   STAFF_TRANSITIONS,
   STATUS_VARIANT,
   TERMINAL_STATUSES,
+  type ApplicationStatus,
 } from "@/lib/domain/status";
 
 /**
@@ -50,6 +52,53 @@ describe("RESUBMITTABLE", () => {
       .filter((s) => !RESUBMITTABLE.includes(s));
 
     expect(stuck).toEqual([]);
+  });
+});
+
+/**
+ * The lodgement leg, added 7 September.
+ *
+ * `processing` is the only status in the machine that describes somebody
+ * outside this product holding the case, which makes two things easy to
+ * get wrong and worth pinning: that a reviewer can actually reach it,
+ * and that a case sitting in it is not stranded there when the embassy
+ * comes back wanting something.
+ */
+describe("processing", () => {
+  it("is reachable from review, and only from review", () => {
+    const entries = (Object.keys(STAFF_TRANSITIONS) as ApplicationStatus[]).filter((from) =>
+      STAFF_TRANSITIONS[from].includes("processing")
+    );
+
+    // Not from `submitted`: a pack cannot go to a mission before anyone
+    // here has read it. Not from `additional_documents`, which is the
+    // traveller's move to make. One door in.
+    expect(entries).toEqual(["under_review"]);
+  });
+
+  it("keeps every decision exit review had", () => {
+    // An embassy answers yes, answers no, or comes back wanting more.
+    // Losing the third would strand a queried case with nobody able to
+    // move it — the traveller cannot resubmit from `processing`, and
+    // the desk would have only two verdicts it cannot honestly give.
+    for (const exit of STAFF_TRANSITIONS.under_review) {
+      if (exit === "processing") continue;
+      expect(STAFF_TRANSITIONS.processing).toContain(exit);
+    }
+  });
+
+  it("is not somewhere the traveller can submit from", () => {
+    // Their case is with a mission. An upload at this point reaches
+    // nobody who can act on it, so the documents screen must not offer
+    // one — `RESUBMITTABLE` is what draws that panel.
+    expect(RESUBMITTABLE).not.toContain("processing");
+  });
+
+  it("is not a decision", () => {
+    // Lodged is not decided. `decidedAt` is stamped off `isTerminalStatus`
+    // in `changeStatusTx`, so getting this wrong would date every case's
+    // outcome to the day it left the building.
+    expect(isTerminalStatus("processing")).toBe(false);
   });
 });
 

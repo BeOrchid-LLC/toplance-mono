@@ -42,12 +42,21 @@ export function isApplicationStatus(value: string): value is ApplicationStatus {
  * Mapping locked with the client 2026-08-21:
  *   Not started → grey outline · In progress → grey fill · Submitted → blue
  *   Under review → amber · Approved → green · Rejected → red
+ *
+ * `processing` joined on 7 September and takes `brand`, the one variant
+ * no application status was using. Not `info`: `submitted` already holds
+ * blue, and the two are the two handoffs — traveller to agency, agency
+ * to mission — so a reader glancing at a queue would have had to read
+ * the words to tell "we have it" from "the embassy has it". Not
+ * `warning` either, which is `under_review`'s and means somebody here
+ * owes work; waiting on a mission is the state where nobody here does.
  */
 export const STATUS_VARIANT: Record<ApplicationStatus, BadgeVariant> = {
   draft: "outline",
   collecting_documents: "neutral",
   submitted: "info",
   under_review: "warning",
+  processing: "brand",
   additional_documents: "neutral",
   approved: "success",
   rejected: "danger",
@@ -65,6 +74,23 @@ export const STATUS_VARIANT: Record<ApplicationStatus, BadgeVariant> = {
  * are terminal — this product has no un-decide, only a fresh case if the
  * situation genuinely changes.
  *
+ * `under_review → processing` is the lodgement, and it is a button here
+ * rather than a side effect of the export route. The client's words on 7
+ * September were "once the admin exports the file the status changes to
+ * processing", and the same minute, "once they export, the next primary
+ * action the admin should take is to update the application status" —
+ * the second is the one built, because every status change in this
+ * product carries a written message to the traveller (see `statusEvents`
+ * in schema.ts) and a download has nobody to write one. What the export
+ * does instead is stamp `documents_exported_at` and let the case screen
+ * ask. A generated "your documents were sent" would be this product
+ * asserting something about a mission that nothing here observed.
+ *
+ * `processing` keeps all three of `under_review`'s decision exits. An
+ * embassy answers yes, answers no, or comes back wanting more — and the
+ * third has to lead somewhere the traveller can act, or a case lodged
+ * and queried would be stuck with nobody able to move it.
+ *
  * Lives here rather than in `@/lib/data/transitions` (which enforces it
  * against the database) so `status-control.tsx` — a client component —
  * can read the same map to draw its buttons without pulling `db` and
@@ -75,13 +101,14 @@ export const STAFF_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationSt
   draft: [],
   collecting_documents: [],
   submitted: ["under_review", "additional_documents"],
-  under_review: ["approved", "rejected", "additional_documents"],
+  under_review: ["processing", "approved", "rejected", "additional_documents"],
+  processing: ["approved", "rejected", "additional_documents"],
   additional_documents: [],
   approved: [],
   rejected: [],
 };
 
-/** Every status a staff transition can land on — the four buttons the desk ever draws. */
+/** Every status a staff transition can land on — the buttons the desk ever draws. */
 export const STAFF_REACHABLE_STATUSES: readonly ApplicationStatus[] = Array.from(
   new Set(Object.values(STAFF_TRANSITIONS).flat())
 );

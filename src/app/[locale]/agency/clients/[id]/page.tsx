@@ -23,6 +23,7 @@ import { countryFromIso2 } from "@/lib/domain/corridors";
 import { AGENCY } from "@/lib/i18n/agency";
 import { ARCHIVE } from "@/lib/i18n/archive";
 import { CASE_REVIEW } from "@/lib/i18n/case-review";
+import { STATUS_CONTROL } from "@/lib/i18n/case-review-actions";
 import { MESSAGES } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/server";
 import { exportableDocuments } from "@/lib/storage/archive";
@@ -222,6 +223,21 @@ export default async function AgencyCasePage({
           <Panel>
             <PanelHeader label={CASE_REVIEW.decisionPanel[locale]} />
             <PanelBody>
+              {/* The export nudge, and the only place the exported
+                  stamp is read. Drawn only while the case is still
+                  `under_review`: once it is lodged the question has
+                  been answered, and on a decided case it would be
+                  asking about a case that is over. */}
+              {row.documentsExportedAt && row.status === "under_review" && (
+                <p className="t-muted mb-4 max-w-[62ch]">
+                  {STATUS_CONTROL.exportedNudge[locale].replace(
+                    "{date}",
+                    new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
+                      row.documentsExportedAt
+                    )
+                  )}
+                </p>
+              )}
               <StatusControl applicationId={row.id} status={row.status} />
             </PanelBody>
           </Panel>

@@ -5,6 +5,7 @@ import { ArrowRight, MessageSquare, Sparkles, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AttendanceNotice } from "@/components/app/attendance-notice";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -17,6 +18,7 @@ import {
   getApplication,
   getProfile,
 } from "@/lib/data/applications";
+import { latestAttendanceRequest } from "@/lib/data/attendance";
 import { unreadCountFor } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -57,8 +59,9 @@ export default async function DashboardPage() {
   // Intake first — there is nothing meaningful to show before it.
   if (!application.intakeComplete) redirect("/app/agent");
 
-  const [docs, answers, unreadMessages] = await Promise.all([
+  const [docs, attendance, answers, unreadMessages] = await Promise.all([
     getDocuments(application.id),
+    latestAttendanceRequest(application.id),
     getIntakeAnswers(application.id),
     unreadCountFor(application.id, "traveler"),
   ]);
@@ -75,6 +78,11 @@ export default async function DashboardPage() {
   return (
     <main>
       <Shell className="py-8 md:py-10">
+        {/* Above the completion ring, deliberately. Every other thing
+            on this page is about a document; this one asks the reader
+            to be somewhere on a day, and it is the only message here
+            whose cost of being missed is a missed appointment. */}
+        <AttendanceNotice request={attendance} locale={locale} />
         {/*
           The lead card is the next action, not a greeting. The corridor,
           the status and the case reference are all on the laminate above

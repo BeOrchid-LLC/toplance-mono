@@ -234,6 +234,16 @@ export const paymentKind = pgEnum("payment_kind", [
  */
 export const paymentStatus = pgEnum("payment_status", ["pending", "paid", "failed"]);
 
+/**
+ * What a traveller is being called in for.
+ *
+ * Two, and they are genuinely different appointments rather than two
+ * words for one: biometrics is a visa centre capturing fingerprints,
+ * an interview is a consular officer asking questions. A traveller
+ * prepares differently for each, so the notice has to say which.
+ */
+export const attendanceKind = pgEnum("attendance_kind", ["biometrics", "interview"]);
+
 export const notificationKind = pgEnum("notification_kind", [
   "application_submitted", // → staff: a file reached 100% and was submitted
   "status_changed", // → traveller
@@ -249,6 +259,18 @@ export const notificationKind = pgEnum("notification_kind", [
    * news to them.
    */
   "checklist_changed",
+  /**
+   * → traveller: the agency needs them in person, for biometrics or an
+   * interview.
+   *
+   * The one notification about a step this product cannot perform.
+   * Biometric capture happens on the government's own portal and an
+   * interview happens at a consulate; neither has an API and neither
+   * ever will. What the product can own is the summons — telling the
+   * traveller where to be and when — and before this existed a handler
+   * who had finished a review had no way to say "come in".
+   */
+  "attendance_requested",
   /**
    * → traveller: their visa is approaching the expiry date they gave us.
    * Sent at most three times per application (see `EXPIRY_THRESHOLDS`),
@@ -1063,6 +1085,57 @@ export const itineraries = pgTable("itineraries", {
  * Invitations are deliberately NOT a kind — the invitee has no profiles
  * row.
  */
+/**
+ * A traveller called in to an office.
+ *
+ * The record behind an `attendance_requested` notification, kept as a
+ * row of its own rather than left in the notification's payload for two
+ * reasons: the traveller's application page shows a standing notice
+ * until the appointment has passed, and a notification stops being a
+ * good place to read that from the moment somebody marks it read. A
+ * banner that disappeared because the traveller opened their bell would
+ * be the worst possible behaviour for the one message that tells them
+ * where to be.
+ *
+ * Never deleted, and no cancel column yet: the agency asked, the
+ * traveller was told, and that happened whatever follows. When
+ * cancelling is asked for it is a `cancelled_at` here, not a delete.
+ */
+export const attendanceRequests = pgTable(
+  "attendance_requests",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    applicationId: uuid()
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    kind: attendanceKind().notNull(),
+    /**
+     * When to come, or null for "we will confirm".
+     *
+     * Nullable on purpose. An agency often knows the office and the
+     * week before it knows the slot, and forcing a placeholder time
+     * would put a wrong appointment in front of a traveller — worse
+     * than an honest "we will confirm the time".
+     */
+    scheduledFor: timestamp({ withTimezone: true }),
+    /** Where to go, in the agency's own words. Free text: it is an address. */
+    place: text().notNull(),
+    /** Anything else the traveller has to bring or know. */
+    note: text(),
+    /**
+     * Who at the agency asked. `set null` rather than `cascade`: the
+     * appointment outlives whoever booked it, and losing the row
+     * because a handler left would take the traveller's notice with it.
+     */
+    requestedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    /** The traveller's page reads the latest row for one application. */
+    index("attendance_requests_application_idx").on(t.applicationId, t.createdAt),
+  ]
+);
+
 export const notifications = pgTable(
   "notifications",
   {
@@ -1307,5 +1380,7 @@ export type CompanionUpdate = typeof companionUpdates.$inferSelect;
 export type FxRate = typeof fxRates.$inferSelect;
 export type DemoRequest = typeof demoRequests.$inferSelect;
 export type DemoRequestStatus = (typeof demoRequestStatus.enumValues)[number];
+export type AttendanceRequest = typeof attendanceRequests.$inferSelect;
+export type AttendanceKind = (typeof attendanceKind.enumValues)[number];
 
 export type FlagReason = (typeof flagReason.enumValues)[number];

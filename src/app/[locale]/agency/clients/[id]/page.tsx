@@ -6,11 +6,13 @@ import { ArrowLeft } from "lucide-react";
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { CaseHandlerControl } from "@/components/agency/case-handler-control";
 import { ReviewRow } from "@/components/agency/review-row";
+import { InviteAttendance } from "@/components/agency/invite-attendance";
 import { StatusControl } from "@/components/agency/status-control";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MessageThread } from "@/components/app/message-thread";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { ATTENDANCE } from "@/lib/i18n/attendance";
 import { DownloadDocuments } from "@/components/shared/download-documents";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -239,6 +241,19 @@ export default async function AgencyCasePage({
                 </p>
               )}
               <StatusControl applicationId={row.id} status={row.status} />
+            </PanelBody>
+          </Panel>
+
+          {/* Beside the decision rather than inside it. Calling somebody
+              in is not a status — the case stays exactly where it is
+              while they travel to an office — but it is the same kind of
+              thing as a decision: something the desk does to move the
+              case along, so it belongs in the same rail and in view as
+              the reviewer scrolls the checklist. */}
+          <Panel>
+            <PanelHeader label={ATTENDANCE.panelTitle[locale]} />
+            <PanelBody>
+              <InviteAttendance applicationId={row.id} />
             </PanelBody>
           </Panel>
 

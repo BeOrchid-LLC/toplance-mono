@@ -20,7 +20,33 @@ export const AGENCY_ACTIONS: {
   chooseVerdict: L;
   chooseStatus: L;
   chooseFlagReason: L;
+  chooseAttendanceKind: L;
+  attendanceNeedsPlace: L;
 } = {
+  chooseAttendanceKind: {
+    en: "Choose whether this is biometrics or an interview.",
+    ha: "Zaɓi ko wannan biometrics ne ko tattaunawa.",
+    yo: "Yan bóyá biometrics ni tàbí ìfọ̀rọ̀wánilẹ́nuwò.",
+    ig: "Họrọ ma ọ bụ biometrics ka ọ bụ ajụjụ ọnụ.",
+    fr: "Choisissez s'il s'agit de biométrie ou d'un entretien.",
+    pt: "Escolha se é biometria ou uma entrevista.",
+    sw: "Chagua kama ni biometriki au mahojiano.",
+    ar: "اختر ما إذا كان هذا قياسات حيوية أم مقابلة.",
+    tw: "Paw sɛ biometrics anaa nkɔmmɔbisa.",
+    zu: "Khetha ukuthi yi-biometrics noma yinhlolokhono.",
+  },
+  attendanceNeedsPlace: {
+    en: "Say where the traveller should go — an address they can find.",
+    ha: "Faɗi inda matafiyin zai je — adireshin da za su iya samu.",
+    yo: "Sọ ibi tí arìnrìn-àjò yóò lọ — àdírẹ́sì tí wọ́n lè rí.",
+    ig: "Kwuo ebe onye njem ga-aga — adreesị ha nwere ike ịchọta.",
+    fr: "Indiquez où le voyageur doit se rendre — une adresse qu'il peut trouver.",
+    pt: "Diga para onde o viajante deve ir — uma morada que consiga encontrar.",
+    sw: "Sema msafiri aende wapi — anwani wanayoweza kuipata.",
+    ar: "حدّد إلى أين يذهب المسافر — عنوان يمكنه الوصول إليه.",
+    tw: "Ka baabi a ɔkwantufoɔ no nkɔ — address a wɔbɛtumi ahu.",
+    zu: "Sho ukuthi umhambi kufanele aye kuphi — ikheli angalithola.",
+  },
   planNotPaid: {
     en: "Your plan is not paid for, so invitations are on hold. Nothing is lost — pay for the plan and send it again.",
     ha: "Ba a biya kuɗin shirinku ba, don haka an dakatar da gayyata. Ba a rasa kome ba — ku biya kuɗin shirin sannan ku sake aikawa.",

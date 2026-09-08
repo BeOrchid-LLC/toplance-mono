@@ -36,7 +36,8 @@ type NotificationKindKey =
   | "companion_digest"
   | "checklist_changed"
   | "visa_expiring"
-  | "advisory_changed";
+  | "advisory_changed"
+  | "attendance_requested";
 
 /**
  * Chrome for the notifications bell (`notifications-menu.tsx`) — the
@@ -202,6 +203,18 @@ export const NOTIFICATIONS: {
       ar: "ملخصك الأسبوعي جاهز",
       tw: "Wo dapɛn nhyehyɛeɛ tiawa awie",
       zu: "Isifinyezo sakho sesonto sesilungile",
+    },
+    attendance_requested: {
+      en: "Your agency has asked you to come in",
+      ha: "Hukumarka ta buƙaci ka zo",
+      yo: "Ilé-iṣẹ́ rẹ ti béèrè kí o wá",
+      ig: "Ụlọ ọrụ gị arịọla ka ị bịa",
+      fr: "Votre agence vous demande de venir",
+      pt: "A sua agência pediu que fosse lá",
+      sw: "Wakala wako amekuomba uje",
+      ar: "طلبت منك وكالتك الحضور",
+      tw: "W'adwumakuo abisa sɛ bra",
+      zu: "I-ejensi yakho icele ukuthi uze",
     },
     checklist_changed: {
       en: "Your document checklist changed",

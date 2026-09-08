@@ -15,6 +15,7 @@ import { sendEmail } from "@/lib/notifications/email";
 import { emailDueFor } from "@/lib/notifications/email-buffer";
 import {
   advisoryChangedEmail,
+  attendanceRequestedEmail,
   checklistChangedEmail,
   checklistCompleteEmail,
   companionDigestEmail,
@@ -107,6 +108,18 @@ export type NotificationPayload = {
     removed: string[];
     url: string;
   };
+  /**
+   * `when` is already formatted, and null means the agency has not
+   * fixed a time yet — the copy says "we will confirm" rather than
+   * inventing one. `place` is free text because it is an address.
+   */
+  attendance_requested: {
+    kind: "biometrics" | "interview";
+    when: string | null;
+    place: string;
+    note: string | null;
+    url: string;
+  };
 };
 
 function templateFor<K extends keyof NotificationPayload>(
@@ -136,6 +149,10 @@ function templateFor<K extends keyof NotificationPayload>(
       return visaExpiringEmail(payload as NotificationPayload["visa_expiring"]);
     case "companion_digest":
       return companionDigestEmail(payload as NotificationPayload["companion_digest"]);
+    case "attendance_requested":
+      return attendanceRequestedEmail(
+        payload as NotificationPayload["attendance_requested"]
+      );
     case "checklist_changed":
       return checklistChangedEmail(
         payload as NotificationPayload["checklist_changed"]

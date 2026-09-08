@@ -21,6 +21,8 @@ export const PHONE_FIELD: {
   commonHere: L;
   allCountries: L;
   noMatchTemplate: L;
+  numberRequired: L;
+  wrongLengthTemplate: L;
 } = {
   defaultLabel: {
     en: "Mobile number",
@@ -93,5 +95,35 @@ export const PHONE_FIELD: {
     ar: "لا توجد دولة مطابقة لـ ”{query}“.",
     tw: "Ɔman biara nni hɔ a ɛne “{query}” hyia.",
     zu: "Alikho izwe elifana ne-“{query}”.",
+  },
+  numberRequired: {
+    en: "Enter your mobile number.",
+    ha: "Shigar da lambar wayarka.",
+    yo: "Tẹ nọ́mbà fóònù alágbèéká rẹ sí i.",
+    ig: "Tinye nọmba ekwentị gị.",
+    fr: "Saisissez votre numéro de mobile.",
+    pt: "Introduza o seu número de telemóvel.",
+    sw: "Weka nambari yako ya simu.",
+    ar: "أدخل رقم هاتفك المحمول.",
+    tw: "Kyerɛw wo mobile nɔma no.",
+    zu: "Faka inombolo yakho yeselula.",
+  },
+  /**
+   * `{country}` is a proper noun and stays English, like the country
+   * list itself. `{expected}` and `{actual}` are digit counts — the
+   * sentence names both so somebody who mistyped one digit knows which
+   * direction to correct in.
+   */
+  wrongLengthTemplate: {
+    en: "A {country} mobile number is {expected} digits. This one has {actual}.",
+    ha: "Lambar waya ta {country} tana da lambobi {expected}. Wannan tana da {actual}.",
+    yo: "Nọ́mbà fóònù {country} ní nọ́mbà {expected}. Èyí ní {actual}.",
+    ig: "Nọmba ekwentị {country} nwere ọnụọgụ {expected}. Nke a nwere {actual}.",
+    fr: "Un numéro de mobile {country} compte {expected} chiffres. Celui-ci en a {actual}.",
+    pt: "Um número de telemóvel de {country} tem {expected} dígitos. Este tem {actual}.",
+    sw: "Nambari ya simu ya {country} ina tarakimu {expected}. Hii ina {actual}.",
+    ar: "رقم الهاتف المحمول في {country} من {expected} أرقام. هذا الرقم به {actual}.",
+    tw: "{country} mobile nɔma wɔ dijit {expected}. Yei wɔ {actual}.",
+    zu: "Inombolo yeselula yase-{country} inezinombolo ezingu-{expected}. Le inezingu-{actual}.",
   },
 };

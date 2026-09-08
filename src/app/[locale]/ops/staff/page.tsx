@@ -2,18 +2,19 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
-import { AppBar } from "@/components/app/app-bar";
+import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { InviteStaff } from "@/components/ops/invite-staff";
-import { localizedOpsNav } from "@/components/ops/ops-nav";
+import { AdminShell } from "@/components/shared/admin-shell";
+import { opsAdminNav } from "@/components/shared/admin-nav";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { InvitationRoster } from "@/components/shared/invitation-roster";
 import { SetupNotice } from "@/components/shared/setup-notice";
-import { Shell } from "@/components/shared/shell";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { isOwner } from "@/lib/auth/policy";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { listPlatformInvitations } from "@/lib/data/invitations";
+import { getOpsCounts } from "@/lib/data/ops-counts";
 import {
   getNotifications,
   unreadNotificationCount,
@@ -67,55 +68,54 @@ export default async function OpsStaffPage() {
     unreadNotificationCount(actor.userId),
   ]);
 
+  const counts = await getOpsCounts();
+
   return (
-    <div className="min-h-dvh bg-bg">
-      <AppBar
-        nav={localizedOpsNav(locale, true)}
-        name={profile.fullName}
-        email={profile.email}
-        subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-        notifications={
+    <AdminShell
+      groups={opsAdminNav({ locale, ...counts, isOwner: true })}
+      activeId="colleagues"
+      railTitle="Toplance"
+      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+      railFooter={
+        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
+          <AccountMenu
+            name={profile.fullName}
+            email={profile.email}
+            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
+          />
+          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
+            <p className="t-title truncate">{profile.fullName}</p>
+            <p className="special truncate text-ink-3">{profile.email}</p>
+          </div>
+        </div>
+      }
+      title={OPS_STAFF.heading[locale]}
+      lead={OPS_STAFF.intro[locale]}
+      actions={
+        <>
+          <InviteStaff />
           <NotificationsMenu
             notifications={notifications}
             unreadCount={unreadCount}
             fallbackHref="/ops"
           />
-        }
-      />
-
-      <div className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[360px]"
-        />
-
-        <Shell className="pt-10">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="t-h2">{OPS_STAFF.heading[locale]}</h1>
-              <p className="t-muted mt-2 max-w-[62ch]">{OPS_STAFF.intro[locale]}</p>
-            </div>
-            <InviteStaff />
-          </div>
-
-          <div className="mt-8 flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
-            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
-            <p className="t-muted">{OPS_STAFF.secondFactorNotice[locale]}</p>
-          </div>
-        </Shell>
+        </>
+      }
+    >
+      <div className="flex items-start gap-3 rounded-md border border-border bg-surface-2 px-4 py-4">
+        <ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
+        <p className="t-muted">{OPS_STAFF.secondFactorNotice[locale]}</p>
       </div>
 
-      <main>
-        <Shell className="py-12">
-          <InvitationRoster
-            invitations={invitations}
-            locale={locale}
-            empty={OPS_STAFF.invitationsEmpty[locale]}
-            resendAction={resendPlatformInvitation}
-            revokeAction={revokePlatformInvitationAction}
-          />
-        </Shell>
-      </main>
-    </div>
+      <div className="mt-8 mb-16">
+        <InvitationRoster
+          invitations={invitations}
+          locale={locale}
+          empty={OPS_STAFF.invitationsEmpty[locale]}
+          resendAction={resendPlatformInvitation}
+          revokeAction={revokePlatformInvitationAction}
+        />
+      </div>
+    </AdminShell>
   );
 }

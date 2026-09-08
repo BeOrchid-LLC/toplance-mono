@@ -34,6 +34,9 @@ export const OPS_CORRIDORS: {
   };
   stale: L;
   notCheckedYetShort: L;
+  searchPlaceholder: L;
+  anyState: L;
+  anyPurpose: L;
 } = {
   heading: {
     en: "Route coverage",
@@ -297,5 +300,41 @@ export const OPS_CORRIDORS: {
     ar: "لم يُفحص بعد",
     tw: "Wɔnhwɛɛ mu ɛnnye",
     zu: "Akukahlolwa",
+  },
+  searchPlaceholder: {
+    en: "Search by country, route or visa name",
+    ha: "Nemo ta ƙasa, hanya ko sunan biza",
+    yo: "Wá nípa orílẹ̀-èdè, ipa ọ̀nà tàbí orúkọ fisa",
+    ig: "Chọọ site na obodo, ụzọ ma ọ bụ aha visa",
+    fr: "Rechercher par pays, itinéraire ou nom de visa",
+    pt: "Pesquisar por país, rota ou nome do visto",
+    sw: "Tafuta kwa nchi, njia au jina la visa",
+    ar: "ابحث حسب الدولة أو المسار أو اسم التأشيرة",
+    tw: "Hwehwɛ ɔman, kwan anaa visa din so",
+    zu: "Sesha ngezwe, indlela noma igama levisa",
+  },
+  anyState: {
+    en: "Any state",
+    ha: "Kowane hali",
+    yo: "Ipò yòówù",
+    ig: "Ọnọdụ ọ bụla",
+    fr: "Tout état",
+    pt: "Qualquer estado",
+    sw: "Hali yoyote",
+    ar: "أي حالة",
+    tw: "Tebea biara",
+    zu: "Noma isiphi isimo",
+  },
+  anyPurpose: {
+    en: "Any purpose",
+    ha: "Kowane dalili",
+    yo: "Ìdí yòówù",
+    ig: "Ebumnuche ọ bụla",
+    fr: "Tout motif",
+    pt: "Qualquer finalidade",
+    sw: "Madhumuni yoyote",
+    ar: "أي غرض",
+    tw: "Atirimpɔ biara",
+    zu: "Noma yiliphi injongo",
   },
 };

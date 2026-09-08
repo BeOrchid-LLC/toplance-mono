@@ -114,11 +114,15 @@ test("an owner invites a BeOrchid colleague, and a reviewer cannot", async ({
   await expect(
     colleaguePage.getByRole("heading", { name: "This console is for Toplance staff" })
   ).toHaveCount(0);
-  await expect(colleaguePage.getByRole("link", { name: "Routes" })).toBeVisible();
+  // Scoped to the rail. The page also carries a "Live routes" KPI card
+  // that links to the same place, and an unscoped accessible-name match
+  // finds both — so the assertion names the landmark it means.
+  const rail = colleaguePage.getByRole("navigation", { name: "Console menu" });
+  await expect(rail.getByRole("link", { name: "Routes" })).toBeVisible();
 
   // A reviewer, because that is the rank the invitation carried — not
   // the owner who sent it.
-  await expect(colleaguePage.getByRole("link", { name: "Colleagues" })).toHaveCount(0);
+  await expect(rail.getByRole("link", { name: "Colleagues" })).toHaveCount(0);
 
   await colleagueContext.close();
 });

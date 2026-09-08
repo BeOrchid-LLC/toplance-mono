@@ -85,6 +85,8 @@ export const OPS_TENANTS: {
   dangerPanel: L;
   suspendNotice: L;
   suspendButton: L;
+  suspendConfirmTitle: L;
+  suspendConfirmBody: L;
   restoreNotice: L;
   restoreButton: L;
   toastSuspended: L;
@@ -1049,6 +1051,41 @@ export const OPS_TENANTS: {
     ar: "إيقاف الوكالة",
     tw: "Gyae adwumakuo no",
     zu: "Misa i-ejensi",
+  },
+  /**
+   * The confirmation the client asked for. `{name}` is the agency's own
+   * name, replaced by the caller — an operator holding two tabs open
+   * needs the dialog to say which agency it is about, and "this agency"
+   * would be the one sentence on the screen that cannot tell them.
+   */
+  suspendConfirmTitle: {
+    en: "Suspend {name}?",
+    ha: "A dakatar da {name}?",
+    yo: "Dá {name} dúró?",
+    ig: "Kwụsị {name}?",
+    fr: "Suspendre {name} ?",
+    pt: "Suspender {name}?",
+    sw: "Kusimamisha {name}?",
+    ar: "تعليق {name}؟",
+    tw: "Gyae {name}?",
+    zu: "Misa i-{name}?",
+  },
+  /**
+   * Deliberately not a second copy of `suspendNotice`: it says what
+   * happens at the instant of confirming, which is the part the panel's
+   * own sentence states in the abstract.
+   */
+  suspendConfirmBody: {
+    en: "Everyone at {name} loses the ability to open a case the moment you confirm — including anyone in the middle of one. Nothing is deleted, and restoring gives it all back.",
+    ha: "Duk mutanen {name} za su rasa ikon buɗe shari'a nan take idan ka tabbatar — har da duk wanda ke tsakiyar ɗaya. Ba a share komai ba, kuma maidowa zai mayar da komai.",
+    yo: "Gbogbo ènìyàn ní {name} yóò pàdánù agbára láti ṣí ẹjọ́ lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́sí — títí kan ẹnikẹ́ni tí ó wà láàrin ọ̀kan. A kò pa ohunkóhun rẹ́, dídápadà yóò sì mú gbogbo rẹ̀ padà.",
+    ig: "Onye ọ bụla nọ na {name} ga-enweghịzi ike imeghe ikpe ozugbo ị kwadoro — gụnyere onye ọ bụla nọ n'etiti otu. Ọ dịghị ihe a na-ehichapụ, iweghachi ya ga-eweghachikwa ihe niile.",
+    fr: "Toutes les personnes de {name} perdent la possibilité d'ouvrir un dossier dès que vous confirmez — y compris celles qui sont en plein travail. Rien n'est supprimé, et restaurer redonne tout.",
+    pt: "Todas as pessoas de {name} perdem a possibilidade de abrir um processo assim que confirmar — incluindo quem estiver a meio de um. Nada é eliminado, e restaurar devolve tudo.",
+    sw: "Kila mtu katika {name} anapoteza uwezo wa kufungua kesi mara tu unapothibitisha — pamoja na yeyote aliye katikati ya kesi. Hakuna kinachofutwa, na kurejesha kunarudisha kila kitu.",
+    ar: "يفقد جميع أفراد {name} القدرة على فتح أي حالة فور تأكيدك — بمن فيهم من هو في منتصف حالة. لا يُحذف شيء، وتعيد الاستعادة كل شيء.",
+    tw: "Sɛ wopene so ara a, obiara a ɔwɔ {name} rentumi mmue asɛm bio — a wɔn a wɔgu so reyɛ bi no ka ho. Wɔmpepa hwee, na sɛ wɔsan de ma no a, ɛbɛsan aba biribiara.",
+    zu: "Wonke umuntu ku-{name} ulahlekelwa amandla okuvula icala ngokushesha uma uqinisekisa — kufaka phakathi noma ubani ophakathi kwelinye. Akukho okususwayo, futhi ukubuyisela kubuyisela konke.",
   },
   restoreNotice: {
     en: "This agency is suspended. Its people cannot open a case. Restoring gives back exactly what it had.",

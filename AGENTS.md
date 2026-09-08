@@ -69,6 +69,37 @@ as a named environment tier.
 - Extend the shared renderer when a new Markdown element is needed; do not create
   page-specific Markdown implementations.
 
+# Destructive controls confirm before they commit
+
+Decided 2026-09-08, at the client's request, after the argument recorded in
+`src/components/ops/tenant-controls.tsx`. It applies to anyone working in this
+repo, people and agents alike.
+
+**When you build a control that takes something away, it asks first.** Route it
+through `src/components/shared/confirm-dialog.tsx` rather than assembling a
+dialog at the call site — a rule with ten implementations is ten rules.
+
+A control is destructive when committing it removes access, deletes data, or
+stops work someone else is in the middle of. Suspending an agency, deleting a
+record, revoking an invitation and removing a member are all destructive.
+Publishing, approving, sending back for changes and saving a form are not: they
+add or change something without taking anything away. `CorridorDecision` is the
+worked example of the second kind, and deliberately does not confirm.
+
+Two things the rule is not:
+
+- **Not a substitute for saying what happens.** "Are you sure?" is not a
+  confirmation, it is a speed bump. The dialog's body says, in the present
+  tense, what lands the moment the button commits — and says something the
+  operator has not already read on the page behind it.
+- **Not applied to the undo.** The reverse of a destructive action gives
+  something back, so it commits on the click. Gating the way out of a mistake
+  makes recovery harder than the mistake was.
+
+If you think an action is genuinely the exception, say so in the review rather
+than skipping the dialog quietly, and leave the reasoning in a comment where the
+next person will find it.
+
 # Known deviations in this repo
 
 Recorded so they are neither perpetuated nor silently "fixed" without a plan.

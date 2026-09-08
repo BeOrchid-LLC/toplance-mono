@@ -68,6 +68,12 @@ export function PhoneField({
 
   // The fault as a fact from the domain rule, then as a sentence in the
   // reader's own language — `phoneProblem` deliberately returns neither.
+  // What actually gets submitted. `digits` is whatever is on screen and
+  // may still carry a trunk zero or a pasted dial code, because it is
+  // only tidied on blur — and Enter submits a form without ever firing
+  // one. Normalising here means the hidden input cannot disagree with
+  // what `phoneProblem` just judged, whichever way the form was sent.
+  const submitted = nationalDigits(iso, digits);
   const problem = phoneProblem(iso, digits, { required });
   const message =
     problem === null
@@ -156,8 +162,9 @@ export function PhoneField({
           />
         </div>
 
-        {/* Submitted values: the raw national digits plus the country. */}
-        <input type="hidden" name={name} value={digits} />
+        {/* Submitted values: the canonical national digits plus the
+            country — never the raw field state. */}
+        <input type="hidden" name={name} value={submitted} />
         <input type="hidden" name={countryName} value={iso} />
 
         {open && (

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { COUNTRIES } from "@/lib/domain/countries";
 import { nationalDigits, phoneProblem } from "@/lib/domain/phone";
 
 describe("nationalDigits", () => {
@@ -36,6 +37,13 @@ describe("nationalDigits", () => {
     expect(nationalDigits("ng", "")).toBe("");
     expect(nationalDigits("ng", "   ")).toBe("");
   });
+
+  it("is idempotent, so a value can be normalised twice safely", () => {
+    // `PhoneField` normalises on blur *and* again for the hidden input.
+    // A second pass must not eat another digit.
+    const once = nationalDigits("ng", "23408031234567");
+    expect(nationalDigits("ng", once)).toBe(once);
+  });
 });
 
 describe("phoneProblem", () => {
@@ -63,7 +71,7 @@ describe("phoneProblem", () => {
     expect(phoneProblem("ng", "803")).toEqual({
       kind: "length",
       country: "Nigeria",
-      expected: 10,
+      expected: "10",
       actual: 3,
     });
   });
@@ -72,7 +80,7 @@ describe("phoneProblem", () => {
     expect(phoneProblem("ng", "80312345678901")).toEqual({
       kind: "length",
       country: "Nigeria",
-      expected: 10,
+      expected: "10",
       actual: 14,
     });
   });
@@ -83,7 +91,7 @@ describe("phoneProblem", () => {
     expect(phoneProblem("gh", "2412345678")).toEqual({
       kind: "length",
       country: "Ghana",
-      expected: 9,
+      expected: "9",
       actual: 10,
     });
   });
@@ -96,7 +104,7 @@ describe("phoneProblem", () => {
     expect(phoneProblem("zz", "803")).toEqual({
       kind: "length",
       country: "Nigeria",
-      expected: 10,
+      expected: "10",
       actual: 3,
     });
   });
@@ -106,7 +114,51 @@ describe("phoneProblem", () => {
     // owns the sentence because the sentence has ten translations.
     const problem = phoneProblem("gh", "24");
     expect(problem).not.toBeNull();
-    expect(typeof problem).toBe("object");
     expect(JSON.stringify(problem)).not.toMatch(/digits/i);
+  });
+
+  describe("the length comes from the plan, not from the display mask", () => {
+    it("accepts a Dutch mobile, whose mask used to count the trunk zero", () => {
+      // "06 12345678" is nine digits once the trunk zero is gone. The
+      // mask was written with the zero, so counting its dots gave ten
+      // and refused every valid Dutch number outright.
+      expect(phoneProblem("nl", "612345678")).toBeNull();
+      expect(phoneProblem("nl", "0612345678")).toBeNull();
+    });
+
+    it("accepts both German lengths, where the plan allows a range", () => {
+      expect(phoneProblem("de", "1511234567")).toBeNull();
+      expect(phoneProblem("de", "15112345678")).toBeNull();
+      expect(phoneProblem("de", "151123456")).toEqual({
+        kind: "length",
+        country: "Germany",
+        expected: "10–11",
+        actual: 9,
+      });
+    });
+
+    it("accepts a nine-digit UK landline as well as a ten-digit mobile", () => {
+      expect(phoneProblem("gb", "7911123456")).toBeNull();
+      expect(phoneProblem("gb", "201234567")).toBeNull();
+    });
+
+    it("gives every country a length that a real number can satisfy", () => {
+      // The guard against the whole class of bug above: a plan whose
+      // minimum exceeds its maximum, or is zero, refuses everything.
+      for (const c of COUNTRIES) {
+        const [min, max] =
+          typeof c.nationalLength === "number"
+            ? [c.nationalLength, c.nationalLength]
+            : c.nationalLength;
+        expect(min, `${c.iso} minimum`).toBeGreaterThan(0);
+        expect(max, `${c.iso} maximum`).toBeGreaterThanOrEqual(min);
+        // A number of exactly the allowed length must pass, and one
+        // built from it must survive `nationalDigits` unchanged — which
+        // fails if the mask and the plan disagree about the trunk zero.
+        const sample = "9".repeat(min);
+        expect(nationalDigits(c.iso, sample), `${c.iso} round trip`).toBe(sample);
+        expect(phoneProblem(c.iso, sample), `${c.iso} accepts its own length`).toBeNull();
+      }
+    });
   });
 });

@@ -65,14 +65,17 @@ export type AdminNavGroup = {
 export function opsAdminNav({
   locale,
   pendingRoutes,
-  newDemoRequests,
+  openDemoRequests,
   isOwner = false,
 }: {
   locale: Locale;
   /** Corridors sitting in `pending`, which is a reviewer's to-do list. */
   pendingRoutes: number;
-  /** Demo requests nobody has picked up, worked from `/ops/tenants`. */
-  newDemoRequests: number;
+  /**
+   * Demo enquiries still open — the same set `/ops/tenants` counts for
+   * its "Open enquiries" card, so the badge and the card agree.
+   */
+  openDemoRequests: number;
   /**
    * Drops the colleagues row for a reviewer. Not the guard —
    * `/ops/staff` turns them away itself, because a hidden link is a
@@ -100,7 +103,7 @@ export function opsAdminNav({
           href: "/ops/tenants",
           label: OPS_COMMON.nav.tenants[locale],
           icon: "agencies",
-          badge: newDemoRequests,
+          badge: openDemoRequests,
         },
         ...(isOwner
           ? [

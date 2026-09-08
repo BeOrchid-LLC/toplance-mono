@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ClipboardCheck, Globe2, Route as RouteIcon, ShieldAlert } from "lucide-react";
 
-import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
@@ -166,6 +165,9 @@ export default async function OpsCorridorsPage({
   const unverified = live.filter((r) => !r.lastVerifiedAt);
   const purposes = [...new Set(rows.map((r) => r.purpose))].sort();
 
+  // Any narrowing at all, however many rows survive it.
+  const filtered = Boolean(search || state || purpose);
+
   const visible = rows.filter((r) => {
     if (state && !matchesState(r, state)) return false;
     if (purpose && r.purpose !== purpose) return false;
@@ -255,19 +257,11 @@ export default async function OpsCorridorsPage({
       activeId="routes"
       railTitle="Toplance"
       railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      railFooter={
-        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
-          <AccountMenu
-            name={profile.fullName}
-            email={profile.email}
-            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-          />
-          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
-            <p className="t-title truncate">{profile.fullName}</p>
-            <p className="special truncate text-ink-3">{profile.email}</p>
-          </div>
-        </div>
-      }
+      account={{
+        name: profile.fullName,
+        email: profile.email,
+        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
+      }}
       title={OPS_CORRIDORS.heading[locale]}
       lead={OPS_CORRIDORS.intro[locale]}
       search={
@@ -303,11 +297,15 @@ export default async function OpsCorridorsPage({
       <Panel className="mt-6">
         <PanelHeader
           label={
-            visible.length === rows.length
-              ? OPS_CORRIDORS.allVersionsPanel[locale]
-              : ADMIN_CONSOLE.showingTemplate[locale]
+            // Whether the reader narrowed the list, not whether the
+            // counts happen to agree. A filter that matches every row
+            // still filtered — calling that "All versions" tells
+            // somebody the search box is empty when it is not.
+            filtered
+              ? ADMIN_CONSOLE.showingTemplate[locale]
                   .replace("{shown}", String(visible.length))
                   .replace("{total}", String(rows.length))
+              : OPS_CORRIDORS.allVersionsPanel[locale]
           }
           aside={
             <Badge variant="outline">

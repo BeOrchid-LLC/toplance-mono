@@ -35,7 +35,7 @@ export const OPS_COMMON: {
   caseWord: { one: L; other: L };
   documentWord: { one: L; other: L };
   tripWord: { one: L; other: L };
-  nav: { caseQueue: L; routes: L; tenants: L; staff: L; dashboard: L };
+  nav: { caseQueue: L; routes: L; tenants: L; enquiries: L; staff: L; dashboard: L };
   purpose: {
     tourism: L;
     work: L;
@@ -359,6 +359,24 @@ export const OPS_COMMON: {
       ar: "المسارات",
       tw: "Akwan",
       zu: "Izindlela",
+    },
+    /**
+     * "Enquiries", not "Demo requests": the row is read by somebody
+     * deciding where to spend the next hour, and the shorter word is
+     * the one they would use out loud. The form on the marketing site
+     * still books a demo — this is the queue that form fills.
+     */
+    enquiries: {
+      en: "Enquiries",
+      ha: "Tambayoyi",
+      yo: "Àwọn ìbéèrè",
+      ig: "Ajụjụ",
+      fr: "Demandes",
+      pt: "Pedidos",
+      sw: "Maulizo",
+      ar: "الاستفسارات",
+      tw: "Nsɛmmisa",
+      zu: "Imibuzo",
     },
     tenants: {
       en: "Agencies",

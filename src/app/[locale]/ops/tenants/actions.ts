@@ -12,8 +12,6 @@ import {
   setTenantSuspension,
   type TenantError,
 } from "@/lib/data/tenants";
-import { setDemoRequestStatus } from "@/lib/data/demo-requests";
-import { demoRequestStatus } from "@/lib/db/schema";
 import { isUuid } from "@/lib/domain/uuid";
 import { appUrl } from "@/lib/notifications/notify";
 import { sendEmail } from "@/lib/notifications/email";
@@ -157,7 +155,7 @@ export async function provisionTenant(formData: FormData) {
    * ships a fresh RSC payload in its own response, and the client
    * commits that payload in the same transition as the `setInviteUrl`
    * below it. When this was called from a demo-request row,
-   * `DemoRequestQueue` renders `<ProvisionTenant>` from a ternary on
+   * `EnquiryTable` renders `<ProvisionTenant>` from a ternary on
    * `convertedOrgId`, which this transaction has just populated: the row
    * re-rendered as a `<Link>`, the dialog unmounted, and the invitation
    * URL — the only copy, since the roster never selects `token` and
@@ -304,65 +302,3 @@ export async function updateMemberRole(formData: FormData) {
   return { ok: true as const };
 }
 
-export async function updateDemoRequestStatus(formData: FormData) {
-  const requestId = String(formData.get("request_id") ?? "");
-  const raw = String(formData.get("status") ?? "");
-
-  const gate = await requireStaffAction();
-  if ("error" in gate) return gate;
-  const { actor } = gate;
-
-  const locale = await getActionLocale();
-
-  if (!isUuid(requestId)) return { error: OPS_ACTIONS.demoRequestNotFound[locale] };
-
-  // Narrowed against the enum's own values rather than cast. The status
-  // arrives from a POST body, and a value Postgres has never heard of
-  // should be a sentence here, not an error from the driver.
-  const status = demoRequestStatus.enumValues.find((v) => v === raw);
-  if (!status) return { error: OPS_ACTIONS.chooseADemoStatus[locale] };
-
-  /**
-   * `converted` is refused. Its other half is `converted_org_id`, and
-   * only `provisionTenantTx` can write both — a request marked converted
-   * with nothing to point at is a lie the console would then display.
-   *
-   * Not `provisionFailed`: nobody here attempted a provision, so a
-   * string that reports one failing describes an operation the operator
-   * never asked for. `conversionNotAStatus` says why this button is the
-   * wrong one and points at the one that isn't.
-   */
-  if (status === "converted") {
-    return { error: OPS_ACTIONS.conversionNotAStatus[locale] };
-  }
-
-  /**
-   * `setDemoRequestStatus` returns a code, not a sentence, resolved here
-   * at the caller's locale the same way `tenantError` resolves a
-   * `TenantError`. `already_converted` gets its own sentence — the
-   * operator is looking at a row that already became an agency, so
-   * telling them it does not exist would be a worse lie than the
-   * un-conversion this refusal exists to stop (it would re-arm
-   * `provisionTenantTx`'s guard against provisioning the same enquiry
-   * twice). Every other code (`not_found`, and `invalid_status`, which
-   * `status === "converted"` above already keeps this from ever seeing)
-   * reads as "we could not find that demo request".
-   */
-  const result = await setDemoRequestStatus(requestId, status);
-  if ("error" in result) {
-    return {
-      error:
-        result.error === "already_converted"
-          ? OPS_ACTIONS.demoRequestAlreadyConverted[locale]
-          : OPS_ACTIONS.demoRequestNotFound[locale],
-    };
-  }
-
-  await track("toplance.demo_request_status_changed", { status }, actor.userId);
-  await audit(actor.userId, "demo_request.status_changed", "demo_request", requestId, {
-    status,
-  });
-
-  revalidateTenants();
-  return { ok: true as const };
-}

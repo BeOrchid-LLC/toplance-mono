@@ -28,6 +28,7 @@ export const OPS_ACTIONS: {
   demoRequestNotFound: L;
   demoRequestAlreadyConverted: L;
   provisionFailed: L;
+  assigneeNotStaff: L;
   chooseADemoStatus: L;
   chooseARole: L;
   conversionNotAStatus: L;
@@ -154,6 +155,25 @@ export const OPS_ACTIONS: {
     ar: "لم نتمكن من إعداد تلك الوكالة. لم يتم إنشاء أي شيء.",
     tw: "Yɛantumi ansiesie saa adwumakuo no. Wɔanyɛ biribiara.",
     zu: "Asikwazanga ukusetha leyo ejensi. Akukho okudaliwe.",
+  },
+  /**
+   * The picker only offers colleagues, so this is only ever reached by a
+   * request that did not come from it. Named for what is wrong rather
+   * than "not found": the profile exists — it is a person, just not one
+   * who works here — and "we could not find that" would send an operator
+   * hunting a typo that is not there.
+   */
+  assigneeNotStaff: {
+    en: "Only Toplance staff can be assigned an enquiry.",
+    ha: "Ma'aikatan Toplance kaɗai za a iya ba su tambaya.",
+    yo: "Àwọn òṣìṣẹ́ Toplance nìkan ni a lè fún ní ìbéèrè.",
+    ig: "Naanị ndị ọrụ Toplance ka a pụrụ inye ajụjụ.",
+    fr: "Seul le personnel de Toplance peut se voir attribuer une demande.",
+    pt: "Só a equipa da Toplance pode ficar responsável por um pedido.",
+    sw: "Ni wafanyakazi wa Toplance pekee wanaoweza kukabidhiwa ulizo.",
+    ar: "لا يمكن إسناد استفسار إلا إلى موظفي Toplance.",
+    tw: "Toplance adwumayɛfoɔ nko ara na wɔbɛtumi de nsɛmmisa ama wɔn.",
+    zu: "Abasebenzi be-Toplance kuphela abangabelwa umbuzo.",
   },
   chooseADemoStatus: {
     en: "Choose a status for this request.",

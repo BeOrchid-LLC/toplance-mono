@@ -38,14 +38,38 @@ describe("opsNav", () => {
   });
 });
 
-describe("the colleagues entry", () => {
-  it("comes third, leaving the first two where they were", () => {
+/**
+ * The enquiry queue. It used to be a table at the foot of
+ * `/ops/tenants`, below the agency list and its pagination — present,
+ * and not findable.
+ */
+describe("the enquiries entry", () => {
+  it("comes after agencies, leaving the first two where they were", () => {
     // `AppNav.isActive` matches item 0 exactly as the section root, and
     // `/ops` redirects to it. Anything inserted ahead of these two lights
     // the wrong pill.
     expect(opsNav[0].href).toBe("/ops/corridors");
     expect(opsNav[1].href).toBe("/ops/tenants");
-    expect(opsNav[2].href).toBe("/ops/staff");
+    expect(opsNav[2].href).toBe("/ops/enquiries");
+  });
+
+  /**
+   * Unlike the two rows after it. Working the enquiry queue is the whole
+   * platform team's job, and `/ops/enquiries` refuses nobody who is
+   * staff — so hiding it from a reviewer would hide a screen they may
+   * actually open.
+   */
+  it("is offered to every rank", () => {
+    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/enquiries");
+    expect(localizedOpsNav("en", false).map((i) => i.href)).toContain("/ops/enquiries");
+  });
+});
+
+describe("the colleagues entry", () => {
+  it("comes after the enquiry queue, leaving the first two where they were", () => {
+    expect(opsNav[0].href).toBe("/ops/corridors");
+    expect(opsNav[1].href).toBe("/ops/tenants");
+    expect(opsNav[3].href).toBe("/ops/staff");
   });
 
   it("is offered to an owner and withheld from a reviewer", () => {
@@ -53,10 +77,11 @@ describe("the colleagues entry", () => {
     expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain("/ops/staff");
   });
 
-  it("still offers a reviewer the two consoles that are theirs", () => {
+  it("still offers a reviewer the three screens that are theirs", () => {
     expect(localizedOpsNav("en", false).map((i) => i.href)).toEqual([
       "/ops/corridors",
       "/ops/tenants",
+      "/ops/enquiries",
     ]);
   });
 });
@@ -113,6 +138,24 @@ describe("opsAdminNav", () => {
         .map((i) => i.href)
         .sort()
     );
+  });
+
+  /**
+   * The badge belongs to the row that leads to the work. It hung on
+   * "Agencies" while the queue lived at the foot of that page; a count
+   * of open enquiries beside a link to a list of agencies now names one
+   * thing and opens another.
+   */
+  it("hangs the open-enquiry count on the enquiries row and nowhere else", () => {
+    const rows = opsAdminNav({
+      locale: "en",
+      pendingRoutes: 0,
+      openDemoRequests: 4,
+      isOwner: true,
+    }).flatMap((g) => g.items);
+
+    expect(rows.find((i) => i.id === "enquiries")?.badge).toBe(4);
+    expect(rows.find((i) => i.id === "agencies")?.badge).toBeUndefined();
   });
 
   it("hangs every row on an icon the table actually has", () => {

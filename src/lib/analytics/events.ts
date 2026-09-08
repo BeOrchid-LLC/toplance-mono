@@ -212,6 +212,7 @@ export const EVENT_NAMES = [
   "toplance.tenant_seats_changed",
   "toplance.tenant_member_role_changed",
   "toplance.demo_request_status_changed",
+  "toplance.demo_request_assigned",
 
   /** A traveller put a photo on their own profile, or replaced it. */
   "toplance.avatar_uploaded",

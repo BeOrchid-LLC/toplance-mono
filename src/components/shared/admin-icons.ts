@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarClock,
   ChartColumn,
   CreditCard,
   LayoutDashboard,
@@ -26,6 +27,9 @@ export const ADMIN_ICONS = {
   // Platform console — `/ops`.
   routes: Route,
   agencies: Building2,
+  // A demo enquiry is a requested meeting slot — the row leads to a
+  // queue of times somebody asked for, not to a list of companies.
+  enquiries: CalendarClock,
   colleagues: ShieldCheck,
   // Bars rather than the agency console's `overview` panel: this row
   // leads to revenue and a chart, not to a summary of your own work.

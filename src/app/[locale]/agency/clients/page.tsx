@@ -106,6 +106,31 @@ export default async function AgencyClientsPage({
       .some((field) => String(field).toLowerCase().includes(search));
   });
 
+  // Defined once and handed to whichever panel is on the screen: the
+  // roster, or the "nothing matched" panel that replaces it.
+  const filters = [
+    {
+      param: "status",
+      label: AGENCY.anyStatus[locale],
+      options: (Object.keys(STATUS_COPY) as ApplicationStatus[]).map((s) => ({
+        value: s,
+        // The badge's own word, in the reader's own language, so the
+        // filter and the cell it filters cannot drift apart.
+        label: STATUS_COPY[s].label[locale],
+      })),
+    },
+    {
+      param: "date",
+      label: AGENCY.anyDate[locale],
+      options: [
+        { value: "7", label: AGENCY.dateLast7[locale] },
+        { value: "30", label: AGENCY.dateLast30[locale] },
+        { value: "90", label: AGENCY.dateLast90[locale] },
+        { value: "none", label: AGENCY.dateNotSubmitted[locale] },
+      ],
+    },
+  ];
+
   const sorted = sortRows(
     visible,
     (r) => {
@@ -136,36 +161,17 @@ export default async function AgencyClientsPage({
       title={AGENCY.navClients[locale]}
       lead={AGENCY.clientsCardBody[locale]}
       actions={<InviteDialog kind="client" />}
-      search={
-        <TableToolbar
-          placeholder={AGENCY.searchClients[locale]}
-          filters={[
-            {
-              param: "status",
-              label: AGENCY.anyStatus[locale],
-              options: (Object.keys(STATUS_COPY) as ApplicationStatus[]).map((s) => ({
-                value: s,
-                // The badge's own word, in the reader's own language, so
-                // the filter and the cell it filters cannot drift apart.
-                label: STATUS_COPY[s].label[locale],
-              })),
-            },
-            {
-              param: "date",
-              label: AGENCY.anyDate[locale],
-              options: [
-                { value: "7", label: AGENCY.dateLast7[locale] },
-                { value: "30", label: AGENCY.dateLast30[locale] },
-                { value: "90", label: AGENCY.dateLast90[locale] },
-                { value: "none", label: AGENCY.dateNotSubmitted[locale] },
-              ],
-            },
-          ]}
-        />
-      }
     >
       {rows.length > 0 && visible.length === 0 ? (
+        // Filtered to nothing, which is the moment the reader most needs
+        // the control that did it — so the toolbar stays on the screen
+        // above the way out.
         <Panel>
+          <TableToolbar
+            placeholder={AGENCY.searchClients[locale]}
+            filters={filters}
+            className="border-b border-border px-5 py-3 sm:px-6"
+          />
           <PanelBody>
             <p className="t-muted max-w-[62ch]">
               {ADMIN_CONSOLE.noMatch[locale]}{" "}
@@ -182,6 +188,7 @@ export default async function AgencyClientsPage({
         <ClientRoster
           rows={sorted}
           locale={locale}
+          toolbar={{ placeholder: AGENCY.searchClients[locale], filters }}
           empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
           label={
             narrowed

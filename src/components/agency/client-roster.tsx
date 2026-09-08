@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { SortHead } from "@/components/shared/sort-head";
+import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
 import { StatusBadge } from "@/components/shared/status-badge";
 import {
   Table,
@@ -86,6 +87,7 @@ export function ClientRoster({
   basePath,
   params,
   count,
+  toolbar,
 }: {
   rows: RosterRow[];
   locale: Locale;
@@ -112,6 +114,13 @@ export function ClientRoster({
   params?: Record<string, string | undefined>;
   /** Overrides the badge figure when the list has been narrowed. */
   count?: number;
+  /**
+   * Search and filters for this roster, in the panel header rather than
+   * in the console bar. `AdminShell` dropped its search slot in #74 on
+   * the grounds that a table's controls belong beside the columns they
+   * act on, and `DataTable` puts them here for the same reason.
+   */
+  toolbar?: { placeholder: string; filters: ToolbarFilter[] };
 }) {
   const shown = count ?? rows.length;
   const sortable = sort !== undefined && dir !== undefined && basePath !== undefined;
@@ -145,6 +154,14 @@ export function ClientRoster({
           </Badge>
         }
       />
+
+      {toolbar && (
+        <TableToolbar
+          placeholder={toolbar.placeholder}
+          filters={toolbar.filters}
+          className="border-b border-border px-5 py-3 sm:px-6"
+        />
+      )}
 
       {rows.length === 0 ? (
         <PanelBody>

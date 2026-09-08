@@ -39,9 +39,11 @@ export function AccountMenu({
   /** A short-lived signed link to the profile photo, when one exists. */
   avatarUrl?: string | null;
   /**
-   * Only the traveller surface has a profile page, so the item exists
-   * only where a caller can name one — the employer and ops consoles
-   * share this menu and must not link into `/app`.
+   * All three surfaces now have a profile page of their own, and each
+   * names its own: this menu is shared, so a caller that fell back to
+   * `/app/profile` would walk an agent or a member of staff out of their
+   * console. Still optional, and the item is simply absent when no
+   * caller names one.
    */
   profileHref?: string;
 }) {

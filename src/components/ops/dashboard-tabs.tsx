@@ -24,7 +24,13 @@ export type DashboardTab = {
 
 export function DashboardTabs({ tabs }: { tabs: DashboardTab[] }) {
   return (
-    <Tabs defaultValue={tabs[0].value} className="gap-8">
+    /* `mt-8` for the same reason `CounterRow` carries one: `AdminShell`
+       stacks a page's blocks with no gap of its own, so each block owns
+       the space above it. Without it the tab strip sat flush against the
+       counter row's bottom edge — two separate things reading as one
+       control. `gap-8` is the space *inside*, between the strip and the
+       panel it switches. */
+    <Tabs defaultValue={tabs[0].value} className="mt-8 gap-8">
       {/* Its own scroller: four labels fit a laptop and do not fit a
           phone, and the page body must never scroll sideways. */}
       <div className="-mx-1 overflow-x-auto px-1">

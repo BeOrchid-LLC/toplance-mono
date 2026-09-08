@@ -22,6 +22,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { activeSubscription } from "@/lib/data/payments";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { opsAccount } from "@/app/[locale]/ops/account";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -83,6 +84,8 @@ export default async function OpsTenantPage({
     return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
   }
   const { profile, actor } = gate;
+
+  const account = await opsAccount(profile, actor, locale);
 
   const { id } = await params;
 
@@ -173,12 +176,8 @@ export default async function OpsTenantPage({
       })}
       activeId="agencies"
       railTitle="Toplance"
-      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      account={{
-        name: profile.fullName,
-        email: profile.email,
-        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
-      }}
+      railSubtitle={account.subtitle}
+      account={account}
       actions={
         <NotificationsMenu
           notifications={notifications}

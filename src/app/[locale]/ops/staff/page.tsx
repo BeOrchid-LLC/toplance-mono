@@ -21,13 +21,13 @@ import {
   getNotifications,
   unreadNotificationCount,
 } from "@/lib/notifications/notify";
-import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_STAFF } from "@/lib/i18n/ops-staff";
 import { getLocale } from "@/lib/i18n/server";
 import {
   resendPlatformInvitation,
   revokePlatformInvitationAction,
 } from "@/app/[locale]/ops/staff/actions";
+import { opsAccount } from "@/app/[locale]/ops/account";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -76,6 +76,8 @@ export default async function OpsStaffPage({
 
   if (!isOwner(actor)) redirect("/ops/corridors");
 
+  const account = await opsAccount(profile, actor, locale);
+
   const [invitations, notifications, unreadCount] = await Promise.all([
     listPlatformInvitations(),
     getNotifications(actor.userId),
@@ -116,12 +118,8 @@ export default async function OpsStaffPage({
       groups={opsAdminNav({ locale, ...counts, isOwner: true })}
       activeId="colleagues"
       railTitle="Toplance"
-      railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      account={{
-        name: profile.fullName,
-        email: profile.email,
-        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
-      }}
+      railSubtitle={account.subtitle}
+      account={account}
       title={OPS_STAFF.heading[locale]}
       lead={OPS_STAFF.intro[locale]}
       actions={

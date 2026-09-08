@@ -9,6 +9,7 @@ import {
   testEmail,
 } from "./helpers/auth";
 import { invitationTokenFor, localeAndCountryFor } from "./helpers/db";
+import { consoleNav } from "./helpers/console";
 
 /**
  * Journey three: an organisation sponsors somebody.
@@ -88,7 +89,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
    * knows" — and this spec kept clicking a button that had moved, which
    * is a three-minute timeout rather than a failure that names itself.
    */
-  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await consoleNav(page).getByRole("link", { name: "Clients" }).click();
   await page.waitForURL("**/agency/clients");
 
   await page.getByRole("button", { name: "Invite", exact: true }).click();
@@ -123,7 +124,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // this is where the rest of this journey is watched from. Scoped to
   // the bar because the dashboard also links to this page from a card,
   // and Playwright matches an accessible name by substring.
-  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await consoleNav(page).getByRole("link", { name: "Clients" }).click();
   await page.waitForURL("**/agency/clients");
 
   await page.getByRole("button", { name: "Resend" }).click();
@@ -285,7 +286,7 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // The privacy promise is the console's front page, and stays there:
   // one laminate, on the screen you land on, none on the rosters or the
   // case it opens.
-  await page.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
+  await consoleNav(page).getByRole("link", { name: "Dashboard" }).click();
   await page.waitForURL("**/agency");
   await expect(page.getByText("The documents stop at your agency")).toBeVisible();
 });
@@ -321,7 +322,7 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   await payAgencyPlan(page);
 
   // ---- a client, so the desk has something on it ----
-  await page.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await consoleNav(page).getByRole("link", { name: "Clients" }).click();
   await page.waitForURL("**/agency/clients");
   await page.getByRole("button", { name: "Invite" }).click();
   const clientDialog = page.getByRole("dialog");
@@ -355,7 +356,7 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   // Only a director sees this button: `inviteTraveller` refuses a staff
   // invitation from anyone else, so the team page shows a reviewer no
   // control whose one outcome is a refusal.
-  await page.getByRole("banner").getByRole("link", { name: "Team" }).click();
+  await consoleNav(page).getByRole("link", { name: "Team" }).click();
   await page.waitForURL("**/agency/team");
   await page.getByRole("button", { name: "Invite" }).click();
   const teamDialog = page.getByRole("dialog");
@@ -411,20 +412,20 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   // The team roster is the director's screen, and a hidden tab is not a
   // guard — the path turns them away too.
   await expect(
-    colleague.getByRole("banner").getByRole("link", { name: "Team" })
+    consoleNav(colleague).getByRole("link", { name: "Team" })
   ).toHaveCount(0);
   await colleague.goto("/agency/team");
   await colleague.waitForURL("**/agency");
 
   // Their clients page is their own book of work, and it is empty.
-  await colleague.getByRole("banner").getByRole("link", { name: "Clients" }).click();
+  await consoleNav(colleague).getByRole("link", { name: "Clients" }).click();
   await colleague.waitForURL("**/agency/clients");
   await expect(
     colleague.getByText(/You have not been assigned a client yet/)
   ).toBeVisible();
 
   // ---- taking a case, which is also taking the permission ----
-  await colleague.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
+  await consoleNav(colleague).getByRole("link", { name: "Dashboard" }).click();
   await colleague.waitForURL("**/agency");
 
   // The pool row is not a link: a reviewer may take an unheld case but
@@ -445,13 +446,17 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
     colleague.getByRole("button", { name: "Hand back" })
   ).toBeVisible();
 
-  await colleague.getByRole("banner").getByRole("link", { name: "Dashboard" }).click();
+  await consoleNav(colleague).getByRole("link", { name: "Dashboard" }).click();
   await colleague.waitForURL("**/agency");
 
   // ---- and their own profile ----
   await colleague.goto("/agency/profile");
   await expect(colleague.getByRole("heading", { name: "Your profile" })).toBeVisible();
-  await expect(colleague.getByText(DESK_COLLEAGUE)).toBeVisible();
+  // Scoped to the page: the rail's account footer carries the same
+  // address on every console screen, so an unscoped match now finds two.
+  await expect(
+    colleague.getByRole("main").getByText(DESK_COLLEAGUE)
+  ).toBeVisible();
   // Twice on the page now: the heading beside the photo, and the field
   // that edits it — the same anatomy the traveller's profile has.
   await expect(colleague.getByText("Grace Okon").first()).toBeVisible();

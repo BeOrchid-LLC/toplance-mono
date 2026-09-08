@@ -4,8 +4,18 @@ import { TakeCaseButton } from "@/components/agency/take-case-button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { SortHead } from "@/components/shared/sort-head";
 import { StatusBadge } from "@/components/shared/status-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import type { SortDir } from "@/lib/domain/sorting";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
@@ -27,19 +37,42 @@ export type RosterRow = {
   status: ApplicationStatus;
   destinationIso: string | null;
   visaName: string | null;
+  /** `null` until the traveller sends the file. Sorts and filters on it. */
+  submittedAt: Date | null;
   documentsTotal: number | null;
   documentsVerified: number | null;
   completionPct: number | null;
 };
 
+/** The columns `/agency/clients` will order by, as `readSort`'s allow-list. */
+export const CLIENT_SORTS = [
+  "client",
+  "route",
+  "documents",
+  "status",
+  "submitted",
+] as const;
+
+export type ClientSort = (typeof CLIENT_SORTS)[number];
+
 /**
- * The clients this agency is handling — "people" until the console
- * learned to say what they are. A client is somebody whose visa this
- * agency is running; a colleague is on `/agency/team`, and the two
- * were one word for as long as the console showed only one of them.
+ * The clients this agency is handling.
  *
- * One sheet in the case file: the roster is a single object, so it is
- * one card with ruled rows inside, not a stack of boxes.
+ * A table, since the client's 7 September review: "what we want to
+ * achieve here is a table that works excellently for numerous
+ * applications". This was ruled rows before, on the argument that four
+ * columns and a progress bar have no honest 390px form — which is true,
+ * and is why `Table` scrolls its container below `lg` rather than
+ * collapsing into unlabelled fragments. The guideline reading that came
+ * with it does not survive contact with §6, which prefers rules to
+ * *boxes* and says nothing about tables; `/ops/corridors` and
+ * `/ops/tenants` have both been tables under the same guideline since
+ * #68.
+ *
+ * Sorting is the page's, not this component's: it arrives already
+ * ordered, and `sort`/`dir` are passed only so the headers can render
+ * which way they point. Omit them and the headers are plain — the
+ * dashboard's two desk lists are short and have no URL to sort in.
  */
 export function ClientRoster({
   rows,
@@ -48,6 +81,11 @@ export function ClientRoster({
   empty,
   className,
   takeableBy,
+  sort,
+  dir,
+  basePath,
+  params,
+  count,
 }: {
   rows: RosterRow[];
   locale: Locale;
@@ -62,12 +100,39 @@ export function ClientRoster({
   className?: string;
   /**
    * The viewer's own id, when these are cases they may take but not yet
-   * open. Rows stop being links — the case screen would refuse them —
-   * and carry a button that claims the case instead.
+   * open. The name stops being a link — the case screen would refuse
+   * them — and the row carries the two things that are theirs instead:
+   * the thread, and the claim.
    */
   takeableBy?: string;
+  /** Present together, or not at all: the sort this table is showing. */
+  sort?: ClientSort;
+  dir?: SortDir;
+  basePath?: string;
+  params?: Record<string, string | undefined>;
+  /** Overrides the badge figure when the list has been narrowed. */
+  count?: number;
 }) {
-  const used = rows.length;
+  const shown = count ?? rows.length;
+  const sortable = sort !== undefined && dir !== undefined && basePath !== undefined;
+
+  const head = (column: ClientSort, text: string, className?: string) =>
+    sortable ? (
+      <SortHead
+        key={column}
+        label={text}
+        column={column}
+        sort={sort}
+        dir={dir}
+        basePath={basePath}
+        params={params ?? {}}
+        className={className}
+      />
+    ) : (
+      <TableHead key={column} className={className}>
+        {text}
+      </TableHead>
+    );
 
   return (
     <Panel className={className}>
@@ -75,8 +140,8 @@ export function ClientRoster({
         label={label ?? AGENCY.yourClientsLabel[locale]}
         aside={
           <Badge variant="brand">
-            <span className="num">{used}</span>
-            {(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
+            <span className="num">{shown}</span>
+            {(shown === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
           </Badge>
         }
       />
@@ -88,102 +153,117 @@ export function ClientRoster({
           </p>
         </PanelBody>
       ) : (
-        /*
-          Ruled rows, not a table. Four columns with a progress bar in
-          one of them has no honest 390px form — it either scrolls
-          sideways or collapses into unlabelled fragments — and §6
-          prefers rules anyway. Each person is one row that reflows.
-        */
-        <ul>
-          {rows.map((r) => {
-            const destination = countryFromIso2(r.destinationIso);
-            const pct = r.completionPct ?? 0;
-            const cells = (
-              <>
-                <div className="min-w-0">
-                  <p className="t-title truncate" title={r.fullName ?? ""}>
-                    {r.fullName}
-                  </p>
-                  <p className="special mt-1">{r.caseRef}</p>
-                </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {head("client", AGENCY.tableHead.client[locale])}
+              {head("route", AGENCY.tableHead.route[locale])}
+              {head("documents", AGENCY.tableHead.documents[locale])}
+              {head("status", AGENCY.tableHead.status[locale])}
+              {head("submitted", AGENCY.tableHead.submitted[locale])}
+              {takeableBy && <TableHead />}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => {
+              const destination = countryFromIso2(r.destinationIso);
+              const pct = r.completionPct ?? 0;
 
-                <div className="min-w-0">
-                  <p className="t-body truncate">
-                    {destination?.name ??
-                      r.destinationIso?.toUpperCase() ??
-                      AGENCY.routeNotSet[locale]}
-                  </p>
-                  <p className="special mt-1 truncate" title={r.visaName ?? ""}>
-                    {r.visaName ?? AGENCY.routeNotSet[locale]}
-                  </p>
-                </div>
-
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <Progress value={pct} className="flex-1" />
-                    <span className="w-12 shrink-0 text-end text-base font-semibold">
-                      {pct}%
-                    </span>
-                  </div>
-                  <p className="special mt-1">
-                    {fill(AGENCY.documentsVerified[locale], {
-                      verified: r.documentsVerified ?? 0,
-                      total: r.documentsTotal ?? 0,
-                    })}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-3 lg:justify-self-end">
-                  {r.status && <StatusBadge status={r.status} short />}
-                  {takeableBy && (
-                    <>
-                      {/* The one door into an unheld case that is not
-                          claiming it. `reachesThread` opens the
-                          conversation to the whole agency, so a
-                          traveller's question is answerable without
-                          somebody taking a client to find out what it
-                          was. The case screen still refuses them, which
-                          is why this points at the thread route. */}
+              return (
+                <TableRow key={r.id}>
+                  <TableCell>
+                    {takeableBy ? (
+                      <>
+                        <p className="t-title truncate" title={r.fullName ?? ""}>
+                          {r.fullName}
+                        </p>
+                        <span className="special block">{r.caseRef}</span>
+                      </>
+                    ) : (
+                      /* The reference is inside the link, not beside it.
+                         It is how staff name a case to each other, so it
+                         belongs to the thing that opens it — which also
+                         makes the link announce which case it opens
+                         rather than only whose it is. */
                       <Link
-                        href={`/agency/clients/${r.id}/messages`}
-                        className="text-base font-semibold text-brand-text hover:underline"
+                        href={`/agency/clients/${r.id}`}
+                        className="group/case block"
+                        title={r.fullName ?? ""}
                       >
-                        {MESSAGES.panelLabel[locale]}
+                        <span className="block truncate font-semibold text-brand-text group-hover/case:underline">
+                          {r.fullName}
+                        </span>
+                        <span className="special block">{r.caseRef}</span>
                       </Link>
-                      <TakeCaseButton
-                        applicationId={r.id}
-                        viewerId={takeableBy}
-                      />
-                    </>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    <span className="block truncate">
+                      {destination?.name ??
+                        r.destinationIso?.toUpperCase() ??
+                        AGENCY.routeNotSet[locale]}
+                    </span>
+                    <span
+                      className="special block truncate"
+                      title={r.visaName ?? ""}
+                    >
+                      {r.visaName ?? AGENCY.routeNotSet[locale]}
+                    </span>
+                  </TableCell>
+
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Progress value={pct} className="w-24 flex-none" />
+                      <span className="num shrink-0 font-semibold">{pct}%</span>
+                    </div>
+                    <span className="special block">
+                      {fill(AGENCY.documentsVerified[locale], {
+                        verified: r.documentsVerified ?? 0,
+                        total: r.documentsTotal ?? 0,
+                      })}
+                    </span>
+                  </TableCell>
+
+                  <TableCell>
+                    {r.status && <StatusBadge status={r.status} short />}
+                  </TableCell>
+
+                  <TableCell className="t-muted">
+                    {/* The same ISO date the platform console's tables
+                        print. A console is read across ten locales and a
+                        localised short date is the one format that means
+                        two different days to two readers. */}
+                    {r.submittedAt
+                      ? r.submittedAt.toISOString().slice(0, 10)
+                      : AGENCY.dateNotSubmitted[locale]}
+                  </TableCell>
+
+                  {takeableBy && (
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-3">
+                        {/* The one door into an unheld case that is not
+                            claiming it. `reachesThread` opens the
+                            conversation to the whole agency, so a
+                            traveller's question is answerable without
+                            somebody taking a client to find out what it
+                            was. The case screen still refuses them, which
+                            is why this points at the thread route. */}
+                        <Link
+                          href={`/agency/clients/${r.id}/messages`}
+                          className="font-semibold text-brand-text hover:underline"
+                        >
+                          {MESSAGES.panelLabel[locale]}
+                        </Link>
+                        <TakeCaseButton applicationId={r.id} viewerId={takeableBy} />
+                      </div>
+                    </TableCell>
                   )}
-                </div>
-              </>
-            );
-
-            const layout =
-              "grid gap-x-8 gap-y-3 border-b border-border px-5 py-5 last:border-b-0 sm:px-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center";
-
-            return (
-              // The whole row opens the case — unless it is one nobody
-              // has taken, which a reviewer may claim but not read. A
-              // row-wide link there would be a link to a refusal, so
-              // those rows carry the two things that are theirs: the
-              // thread, and the claim.
-              <li key={r.id}>
-                {takeableBy ? (
-                  <div className={layout}>{cells}</div>
-                ) : (
-                  <Link
-                    href={`/agency/clients/${r.id}`}
-                    className={`${layout} transition-colors hover:bg-[color-mix(in_srgb,var(--brand)_5%,transparent)]`}
-                  >
-                    {cells}
-                  </Link>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
     </Panel>
   );

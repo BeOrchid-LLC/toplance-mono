@@ -12,6 +12,7 @@ import {
 } from "@/lib/db/schema";
 import type { Actor } from "@/lib/auth/policy";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
+import type { ApplicationStatus } from "@/lib/domain/status";
 import {
   EMPTY_PENDING_PROFILE,
   profileColumnsFrom,
@@ -327,4 +328,32 @@ export async function countOrgClients(orgIds: readonly string[]): Promise<number
     .where(inArray(applications.orgId, [...orgIds]));
 
   return row?.total ?? 0;
+}
+
+/**
+ * The same count, cut by status — the figures the director's dashboard
+ * cards carry.
+ *
+ * One grouped query rather than one per card, and counts rather than
+ * rows for the reason above: the dashboard says how the agency is doing
+ * and the roster pages say who, so reading a hundred cases here to
+ * measure four of them would be the front page paying for a list it
+ * does not show.
+ *
+ * Returns only the statuses actually present. A caller wanting a figure
+ * for every status reads through `?? 0`, which is also what makes an
+ * agency with no cases render zeroes instead of nothing.
+ */
+export async function countOrgClientsByStatus(
+  orgIds: readonly string[]
+): Promise<Partial<Record<ApplicationStatus, number>>> {
+  if (!orgIds.length) return {};
+
+  const rows = await db
+    .select({ status: applications.status, total: count() })
+    .from(applications)
+    .where(inArray(applications.orgId, [...orgIds]))
+    .groupBy(applications.status);
+
+  return Object.fromEntries(rows.map((r) => [r.status, r.total]));
 }

@@ -13,6 +13,7 @@ import {
   hasActiveSubscription,
   recordPayment,
 } from "@/lib/data/payments";
+import { isAgencyActivated } from "@/lib/data/kyb";
 import { subscriptionCharge } from "@/lib/domain/pricing";
 import { paymentProvider } from "@/lib/payments";
 import { BILLING } from "@/lib/i18n/billing";
@@ -36,6 +37,11 @@ function oneMonthOn(from: Date): Date {
  * read off the form. A browser that can name its own price is a browser
  * that pays what it likes, and this action is a POST endpoint reachable
  * without ever rendering the page whose button posts to it.
+ *
+ * It also refuses an agency BeOrchid has not activated. See below: the
+ * gate is in `decideAgencyBilling` and the holding screen enforces it
+ * for anyone arriving through a page, which leaves this endpoint as the
+ * way past it.
  *
  * Nothing renews. A period ends and the console closes again, which is
  * the honest behaviour while the provider is a mock — a recurring charge
@@ -65,6 +71,15 @@ export async function purchaseSubscription() {
     if (!isOrgDirector(actor, orgId)) throw new ForbiddenError();
 
     const locale = await getActionLocale();
+
+    // KYB before money, the same order `decideAgencyBilling` puts them
+    // in. The holding screen keeps a director away from the Pay button,
+    // but this is a POST endpoint reachable without ever rendering the
+    // page that button sits on — and a payment taken from a business
+    // BeOrchid has not let in is a refund waiting to be argued about.
+    if (!(await isAgencyActivated(orgId))) {
+      return { error: BILLING.notVerifiedYet[locale] };
+    }
 
     // Already paid, so take nothing. Double-clicking a Pay button must
     // not buy two months, and the button is not the only way in here.

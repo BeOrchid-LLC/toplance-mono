@@ -73,14 +73,57 @@ describe("the routes entry", () => {
 });
 
 /**
+ * The verification queue, added on 2026-09-08 — the sixth entry in a
+ * nav whose own comment says curation closes the list. The exception is
+ * argued in `ops-nav.ts` and pinned here: KYB is a queue, and a queue
+ * with no front door is a queue nobody works.
+ */
+describe("the KYB entry", () => {
+  it("sits beside agencies, before the enquiry queue", () => {
+    expect(opsNav[1].href).toBe("/ops/tenants");
+    expect(opsNav[2].href).toBe("/ops/kyb");
+  });
+
+  /**
+   * Like the enquiry queue and unlike the two director-only rows.
+   * `/ops/kyb` refuses nobody who is staff, so hiding it from a reviewer
+   * would hide a screen they may actually open — and verifying a
+   * business is the platform team's shared work.
+   */
+  it("is offered to every rank", () => {
+    expect(localizedOpsNav("en", true).map((i) => i.href)).toContain("/ops/kyb");
+    expect(localizedOpsNav("en", false).map((i) => i.href)).toContain("/ops/kyb");
+  });
+
+  /**
+   * The one badge on this rail that shortens because somebody did the
+   * work behind it. It must not drift onto the agencies row the way the
+   * enquiry count once did.
+   */
+  it("carries the awaiting-KYB count, and no other row does", () => {
+    const rows = opsAdminNav({
+      locale: "en",
+      pendingRoutes: 0,
+      openDemoRequests: 0,
+      openSupport: 0,
+      agenciesAwaitingKyb: 3,
+      isOwner: true,
+    }).flatMap((g) => g.items);
+
+    expect(rows.find((i) => i.id === "kyb")?.badge).toBe(3);
+    expect(rows.find((i) => i.id === "agencies")?.badge).toBeUndefined();
+  });
+});
+
+/**
  * The enquiry queue. It used to be a table at the foot of
  * `/ops/tenants`, below the agency list and its pagination — present,
  * and not findable.
  */
 describe("the enquiries entry", () => {
-  it("comes after agencies", () => {
-    expect(opsNav[1].href).toBe("/ops/tenants");
-    expect(opsNav[2].href).toBe("/ops/enquiries");
+  it("comes after KYB", () => {
+    expect(opsNav[2].href).toBe("/ops/kyb");
+    expect(opsNav[3].href).toBe("/ops/enquiries");
   });
 
   /**
@@ -97,8 +140,8 @@ describe("the enquiries entry", () => {
 
 describe("the colleagues entry", () => {
   it("comes after the enquiry queue", () => {
-    expect(opsNav[2].href).toBe("/ops/enquiries");
-    expect(opsNav[3].href).toBe("/ops/staff");
+    expect(opsNav[3].href).toBe("/ops/enquiries");
+    expect(opsNav[4].href).toBe("/ops/staff");
   });
 
   it("is offered to a director and withheld from a reviewer", () => {
@@ -106,9 +149,10 @@ describe("the colleagues entry", () => {
     expect(localizedOpsNav("en", false).map((i) => i.href)).not.toContain("/ops/staff");
   });
 
-  it("still offers a reviewer the three screens that are theirs", () => {
+  it("still offers a reviewer the four screens that are theirs", () => {
     expect(localizedOpsNav("en", false).map((i) => i.href)).toEqual([
       "/ops/tenants",
+      "/ops/kyb",
       "/ops/enquiries",
       "/ops/support",
       "/ops/corridors",
@@ -117,7 +161,7 @@ describe("the colleagues entry", () => {
 });
 
 describe("opsAdminNav", () => {
-  const counts = { pendingRoutes: 0, openDemoRequests: 0, openSupport: 0 };
+  const counts = { pendingRoutes: 0, openDemoRequests: 0, openSupport: 0, agenciesAwaitingKyb: 0 };
   const hrefs = (isOwner: boolean) =>
     opsAdminNav({ locale: "en", ...counts, isOwner }).flatMap((g) =>
       g.items.map((i) => i.href)
@@ -173,6 +217,7 @@ describe("opsAdminNav", () => {
       pendingRoutes: 0,
       openDemoRequests: 4,
       openSupport: 0,
+      agenciesAwaitingKyb: 0,
       isOwner: true,
     }).flatMap((g) => g.items);
 
@@ -190,6 +235,7 @@ describe("opsAdminNav", () => {
       pendingRoutes: 0,
       openDemoRequests: 0,
       openSupport: 3,
+      agenciesAwaitingKyb: 0,
       isOwner: false,
     }).flatMap((g) => g.items);
 

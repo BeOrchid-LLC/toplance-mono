@@ -3,6 +3,7 @@ import {
   CalendarClock,
   ChartColumn,
   CreditCard,
+  FileCheck,
   LayoutDashboard,
   Route,
   Send,
@@ -32,6 +33,9 @@ export const ADMIN_ICONS = {
   // queue of times somebody asked for, not to a list of companies.
   enquiries: CalendarClock,
   colleagues: ShieldCheck,
+  // A stamped file, not the shield `colleagues` already has: this row
+  // leads to documents somebody signs off, not to who may sign them.
+  kyb: FileCheck,
   // Bars rather than the agency console's `overview` panel: this row
   // leads to revenue and a chart, not to a summary of your own work.
   business: ChartColumn,

@@ -33,6 +33,8 @@ export type AgencyMembership = {
   role: (typeof orgMembers.$inferSelect)["role"];
   name: string;
   seatsPurchased: number;
+  /** When BeOrchid let this agency in, or `null` while KYB is open. */
+  activatedAt: Date | null;
   /**
    * Storage key of the agency's logo, or `null` while it has none. Read
    * here rather than by `AgencyShell` on its own, because the director's
@@ -68,6 +70,14 @@ export type AgencyConsole = {
    * nothing to have paid for.
    */
   subscriptionActive: boolean;
+  /**
+   * Whether BeOrchid has finished this agency's KYB and opened its
+   * console — `organisations.activated_at` is set.
+   *
+   * `false` for a director with no agency yet, for the same reason
+   * `subscriptionActive` is: there is nothing to have been verified.
+   */
+  kybActivated: boolean;
 };
 
 /**
@@ -111,8 +121,16 @@ export async function resolveAgencyConsole(
    * `allowUnpaid` exists for exactly one caller: `/agency/billing`, the
    * screen an unpaid agency is sent to. Without it that page would
    * redirect to itself, which is a loop rather than a paywall.
+   *
+   * `allowPending` is the same exemption one gate earlier, for
+   * `/agency/verification` — the screen an agency BeOrchid has not let
+   * in yet is sent to, which would likewise redirect to itself. The two
+   * flags do not imply each other: see the checks below.
    */
-  { allowUnpaid = false }: { allowUnpaid?: boolean } = {}
+  {
+    allowUnpaid = false,
+    allowPending = false,
+  }: { allowUnpaid?: boolean; allowPending?: boolean } = {}
 ): Promise<AgencyConsole> {
   let [profile, actor] = await Promise.all([getProfile(), getActor()]);
 
@@ -147,6 +165,7 @@ export async function resolveAgencyConsole(
       name: organisations.name,
       seatsPurchased: organisations.seatsPurchased,
       logoPath: organisations.logoPath,
+      activatedAt: organisations.activatedAt,
     })
     .from(orgMembers)
     .innerJoin(organisations, eq(organisations.id, orgMembers.orgId))
@@ -172,13 +191,25 @@ export async function resolveAgencyConsole(
   // `orgId` and redirects back, which the browser ends with
   // ERR_TOO_MANY_REDIRECTS. A suspended agency has no plan to buy: the
   // membership row below is read only so the bar can still name it.
-  if (!allowUnpaid) {
-    const decision = decideAgencyBilling({
-      hasOrganisation: !!orgId,
-      subscriptionActive,
-    });
-    if (decision === "checkout") redirect("/agency/billing");
+  const kybActivated = !!membership?.activatedAt;
+  const decision = decideAgencyBilling({
+    hasOrganisation: !!orgId,
+    kybActivated,
+    subscriptionActive,
+  });
+
+  // Two independent checks, deliberately not a ladder.
+  //
+  // `/agency/billing` passes `allowUnpaid` and not `allowPending`, so a
+  // director whose agency has not been let in yet is walked off the
+  // billing screen to the holding screen — rather than shown a Pay
+  // button by the very flag that exists to let the paywall render its
+  // own escape hatch. Nesting the KYB check inside `!allowUnpaid` would
+  // make the paywall's exemption the hole in the gate in front of it.
+  if (!allowPending && decision === "pending-verification") {
+    redirect("/agency/verification");
   }
+  if (!allowUnpaid && decision === "checkout") redirect("/agency/billing");
 
   return {
     profile,
@@ -186,6 +217,7 @@ export async function resolveAgencyConsole(
     membership: membership ?? null,
     orgId,
     subscriptionActive,
+    kybActivated,
   };
 }
 

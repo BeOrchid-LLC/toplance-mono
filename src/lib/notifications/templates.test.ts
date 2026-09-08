@@ -4,6 +4,7 @@ import {
   companionDigestEmail,
   documentFlaggedEmail,
   invitationEmail,
+  kybActivatedEmail,
   platformInvitationEmail,
   itineraryReadyEmail,
   messageReceivedEmail,
@@ -238,6 +239,43 @@ describe("email templates", () => {
    * found the landing page, which makes it the escaping case that
    * matters most in this file.
    */
+  it("kybActivatedEmail escapes the agency name and the director's own", () => {
+    const email = kybActivatedEmail({
+      orgName: SCRIPT,
+      fullName: SCRIPT,
+      billingUrl: "https://x.test/agency/billing",
+    });
+    expect(email.subject).not.toHaveLength(0);
+    expect(email.html).not.toContain("<script>");
+    expect(email.html).toContain("https://x.test/agency/billing");
+  });
+
+  it("kybActivatedEmail reads as a sentence without a name to greet", () => {
+    // `fullName` is null whenever the recipient came from
+    // `organisations.billing_contact` rather than a seated owner, which
+    // is a real path through `activateAgency` and not a rare one.
+    const email = kybActivatedEmail({
+      orgName: "Sahara Travel",
+      fullName: null,
+      billingUrl: "https://x.test/agency/billing",
+    });
+    expect(email.text).toContain("We have finished verifying Sahara Travel");
+    expect(email.text).not.toContain("null");
+  });
+
+  it("kybActivatedEmail names no document from the internal checklist", () => {
+    // The checklist is BeOrchid's record. A letter listing what was
+    // looked at invites a reply about the one thing it did not name,
+    // and this milestone has nowhere for the agency to send it.
+    const email = kybActivatedEmail({
+      orgName: "Sahara Travel",
+      billingUrl: "https://x.test/agency/billing",
+    });
+    for (const word of ["licence", "incorporation", "passport", "bank"]) {
+      expect(email.text.toLowerCase()).not.toContain(word);
+    }
+  });
+
   it("demoRequestEmail escapes every field a stranger typed", () => {
     const email = demoRequestEmail({
       fullName: SCRIPT,

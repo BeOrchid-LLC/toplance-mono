@@ -139,6 +139,28 @@ export const corridorReviewState = pgEnum("corridor_review_state", [
   "rejected",
 ]);
 
+/**
+ * How far one KYB requirement has been carried, for one agency.
+ *
+ * Its own enum rather than `documentState`, which carries `checking`,
+ * `flagged` and `failed` — the AI pre-check's vocabulary. Nothing in
+ * KYB is checked by a model this milestone: a BeOrchid admin files a
+ * document that arrived by email and takes a verdict on it themselves.
+ * An ops screen switching on a state that can never occur is a state
+ * somebody eventually tries to set.
+ *
+ * Four values, which is the client's three plus the one every row
+ * starts in. `not_started` and `in_review` are the distinction the
+ * queue is actually read for — nothing received yet, versus received
+ * and being looked at.
+ */
+export const kybState = pgEnum("kyb_state", [
+  "not_started",
+  "in_review",
+  "verified",
+  "rejected",
+]);
+
 export const travelPurpose = pgEnum("travel_purpose", [
   "tourism",
   "work",
@@ -396,6 +418,28 @@ export const organisations = pgTable(
     seatsPurchased: integer().notNull().default(0),
     billingContact: text(),
     /**
+     * When BeOrchid let this agency in, or null while its KYB is still
+     * open. Set by `activateAgency` once every `kyb_requirements` row
+     * reads `verified`, and never unset.
+     *
+     * Its own column beside `suspendedAt` rather than one lifecycle
+     * enum shared with it. The two answer different questions and are
+     * genuinely orthogonal — an agency can be activated and later
+     * suspended, and restoring it must not re-open a KYB that was
+     * already settled. Collapsing them into one status column is how
+     * "restore" becomes ambiguous about which of the two it undoes.
+     *
+     * Read by `decideAgencyBilling` through `resolveAgencyConsole`: an
+     * agency that exists but is not activated is shown a holding screen
+     * rather than a bill, because asking a business for money before
+     * deciding whether to let it in has the order backwards.
+     *
+     * Backfilled to the migration's own timestamp for every agency that
+     * existed before this column did. A rule introduced today does not
+     * lock out somebody who onboarded last week.
+     */
+    activatedAt: timestamp({ withTimezone: true }),
+    /**
      * When BeOrchid suspended this agency, or null while it is live.
      *
      * Suspension is how an agency is removed — the row is never deleted,
@@ -414,6 +458,71 @@ export const organisations = pgTable(
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check("seats_not_negative", sql`${t.seatsPurchased} >= 0`)]
+);
+
+/**
+ * The KYB file on one agency — one row per required document.
+ *
+ * BeOrchid establishes that a business is a licensed agency, and that
+ * whoever holds the owner seat has something to do with it, before the
+ * console opens. This milestone does that by hand: documents arrive by
+ * email, an admin files them here and takes a verdict on each, and
+ * `organisations.activated_at` is stamped only when all of them read
+ * `verified`. The provider integration is the next milestone and writes
+ * into exactly these columns.
+ *
+ * Six rows are seeded per agency from `KYB_REQUIREMENTS`
+ * (`@/lib/domain/kyb`), by both doors into an `organisations` row —
+ * `provisionTenantTx` and `createOrganisationTx`. A checklist that only
+ * one of the two creation paths leaves behind is a checklist half the
+ * agencies escape.
+ *
+ * `name` and `description` are copied from the constant at seed time
+ * rather than joined to it, for the reason `documents.description`
+ * gives at length: a checklist row must carry its own instructions.
+ * Editing the constant later must not rewrite what a reviewer was
+ * actually looking at when they verified something — an audit record
+ * whose history changes underneath it is not one.
+ *
+ * Nothing here reaches a traveller. Like `@/lib/data/tenants`, the
+ * module that reads this table selects from `organisations` and this
+ * one and from no case, no document and no application.
+ */
+export const kybRequirements = pgTable(
+  "kyb_requirements",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    orgId: uuid()
+      .notNull()
+      .references(() => organisations.id, { onDelete: "cascade" }),
+    /** Stable key from `KYB_REQUIREMENTS`; `name` is the prose for it. */
+    docKey: text().notNull(),
+    name: text().notNull(),
+    description: text(),
+    state: kybState().notNull().default("not_started"),
+    /**
+     * Key in the same private bucket as the passports and the logos,
+     * signed per render. `kyb/<org_id>/<doc_key>` — deterministic, so
+     * replacing a document overwrites one object rather than orphaning
+     * the old one, which is also what the replace dialog warns about.
+     */
+    storagePath: text(),
+    /**
+     * Why it was rejected, or any remark the next admin should read
+     * before touching this row. Internal: the agency never sees it,
+     * because the agency never sees this table.
+     */
+    note: text(),
+    sortOrder: integer().notNull().default(0),
+    checkedAt: timestamp({ withTimezone: true }),
+    reviewedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("kyb_requirements_doc_key").on(t.orgId, t.docKey),
+    index("kyb_requirements_org_idx").on(t.orgId, t.state),
+  ]
 );
 
 /**
@@ -1454,3 +1563,6 @@ export type AttendanceKind = (typeof attendanceKind.enumValues)[number];
 export type SupportRequestState = (typeof supportRequestState.enumValues)[number];
 
 export type FlagReason = (typeof flagReason.enumValues)[number];
+
+export type KybRequirement = typeof kybRequirements.$inferSelect;
+export type KybState = (typeof kybState.enumValues)[number];

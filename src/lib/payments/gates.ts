@@ -13,16 +13,28 @@
  */
 
 /** What an agency console should do with the person who just arrived. */
-export type AgencyBillingDecision = "name-organisation" | "checkout" | "ok";
+export type AgencyBillingDecision =
+  | "name-organisation"
+  | "pending-verification"
+  | "checkout"
+  | "ok";
 
 export function decideAgencyBilling(input: {
   hasOrganisation: boolean;
+  /** `organisations.activated_at` is set — BeOrchid has passed its KYB. */
+  kybActivated: boolean;
   subscriptionActive: boolean;
 }): AgencyBillingDecision {
   // Ahead of the subscription check on purpose: a director who has
   // signed up but not yet named an agency has nothing to buy a plan
   // for, and no row for the payment to name.
   if (!input.hasOrganisation) return "name-organisation";
+  // Ahead of the subscription check for the same shape of reason, one
+  // step further along: asking a business for money before deciding
+  // whether to let it in has the order backwards. The agency exists,
+  // so there is something to verify; it has not been let in, so there
+  // is nothing yet to sell.
+  if (!input.kybActivated) return "pending-verification";
   if (!input.subscriptionActive) return "checkout";
   return "ok";
 }

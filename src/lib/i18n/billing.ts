@@ -49,6 +49,7 @@ export const BILLING: {
   historyEmpty: L;
   testPaymentNotice: L;
   paymentFailed: L;
+  notVerifiedYet: L;
 } = {
   navBilling: {
     en: "Billing",
@@ -349,6 +350,23 @@ export const BILLING: {
     ar: "هذه دفعة تجريبية. لا تنتقل أي أموال ولا تُخصم من أي بطاقة.",
     tw: "Eyi yɛ sɔhwɛ akatua. Sika biara nkɔ, na wonnye biribiara mfi kaad so.",
     zu: "Lena yinkokhelo yokuhlola. Ayikho imali ehambayo, futhi ayikho ikhadi elikhokhiswayo.",
+  },
+  /**
+   * `purchaseSubscription`'s refusal for an agency BeOrchid has not
+   * activated. Rarely read: the holding screen keeps a director away
+   * from the Pay button, and this is what answers a direct POST.
+   */
+  notVerifiedYet: {
+    en: "We are still verifying your agency. You will be emailed the moment your console is open.",
+    ha: "Har yanzu muna tabbatar da hukumarku. Za a aika muku da imel nan da nan da na'urar sarrafa ta buɗe.",
+    yo: "À ṣì ń jẹ́rìísí ilé-iṣẹ́ yín. A ó fi ímeèlì ránṣẹ́ sí yín kété tí kọ̀nsólù yín bá ṣí.",
+    ig: "Ka anyị ka na-akwado ụlọ ọrụ gị. A ga-ezigara gị ozi ozugbo consul gị meghere.",
+    fr: "Nous vérifions encore votre agence. Vous recevrez un e-mail dès l'ouverture de votre console.",
+    pt: "Ainda estamos a verificar a sua agência. Receberá um e-mail assim que a sua consola abrir.",
+    sw: "Bado tunathibitisha wakala wako. Utatumiwa barua pepe mara kiweko chako kitakapofunguka.",
+    ar: "ما زلنا نتحقق من وكالتك. سنراسلك بالبريد فور فتح لوحتك.",
+    tw: "Yɛda so ara resɔ wo adwumakuo no ano. Yɛbɛsoma email akɔma wo bere a wo console no bue.",
+    zu: "Sisaqinisekisa i-ejensi yakho. Uzothunyelwa i-imeyili ngokushesha lapho ikhonsoli yakho ivuleka.",
   },
   paymentFailed: {
     en: "That payment could not be taken. Nothing has been charged — try again.",

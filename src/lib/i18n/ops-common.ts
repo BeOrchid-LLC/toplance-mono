@@ -35,7 +35,15 @@ export const OPS_COMMON: {
   caseWord: { one: L; other: L };
   documentWord: { one: L; other: L };
   tripWord: { one: L; other: L };
-  nav: { caseQueue: L; routes: L; tenants: L; enquiries: L; staff: L; dashboard: L };
+  nav: {
+    caseQueue: L;
+    routes: L;
+    tenants: L;
+    kyb: L;
+    enquiries: L;
+    staff: L;
+    dashboard: L;
+  };
   purpose: {
     tourism: L;
     work: L;
@@ -413,6 +421,24 @@ export const OPS_COMMON: {
       ar: "الوكالات",
       tw: "Adwumakuo",
       zu: "Ama-ejensi",
+    },
+    /**
+     * Left as the initialism in every locale, on purpose. "Know your
+     * business" is a term of art in compliance, not a phrase to be
+     * translated: the reader is BeOrchid staff, and a localised
+     * expansion would be a word nobody in the trade uses.
+     */
+    kyb: {
+      en: "KYB",
+      ha: "KYB",
+      yo: "KYB",
+      ig: "KYB",
+      fr: "KYB",
+      pt: "KYB",
+      sw: "KYB",
+      ar: "KYB",
+      tw: "KYB",
+      zu: "KYB",
     },
   },
   purpose: {

@@ -1,9 +1,9 @@
 import "server-only";
 
-import { count, eq, inArray } from "drizzle-orm";
+import { count, eq, inArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { corridors, demoRequests, supportRequests } from "@/lib/db/schema";
+import { corridors, demoRequests, organisations, supportRequests } from "@/lib/db/schema";
 
 /**
  * A demo enquiry somebody still has to do something about — the
@@ -30,10 +30,12 @@ export type OpsCounts = {
    * look at work that is already being done.
    */
   openSupport: number;
+  /** Agencies with no `activated_at` — the KYB queue's to-do list. */
+  agenciesAwaitingKyb: number;
 };
 
 /**
- * The three figures the platform rail's badges carry.
+ * The figures the platform rail's badges carry.
  *
  * Its own query rather than counting rows a page already fetched,
  * because the pages showing the rail do not all fetch them: the corridor
@@ -42,7 +44,7 @@ export type OpsCounts = {
  * screen and none on the next, and somebody reading the colleagues page
  * could not see that four routes had arrived while they were there.
  *
- * Both counts are things a person then does something about. The rail
+ * All of them are things a person then does something about. The rail
  * deliberately carries no badge for the number of agencies: that is a
  * fact about the platform rather than a queue, and a badge on every row
  * is decoration that stops being read.
@@ -53,7 +55,7 @@ export type OpsCounts = {
  * exists to prevent.
  */
 export async function getOpsCounts(): Promise<OpsCounts> {
-  const [[routes], [demos], [support]] = await Promise.all([
+  const [[routes], [demos], [support], [awaitingKyb]] = await Promise.all([
     db
       .select({ n: count() })
       .from(corridors)
@@ -66,11 +68,16 @@ export async function getOpsCounts(): Promise<OpsCounts> {
       .select({ n: count() })
       .from(supportRequests)
       .where(eq(supportRequests.state, "open")),
+    db
+      .select({ n: count() })
+      .from(organisations)
+      .where(isNull(organisations.activatedAt)),
   ]);
 
   return {
     pendingRoutes: routes?.n ?? 0,
     openDemoRequests: demos?.n ?? 0,
     openSupport: support?.n ?? 0,
+    agenciesAwaitingKyb: awaitingKyb?.n ?? 0,
   };
 }

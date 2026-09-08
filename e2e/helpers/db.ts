@@ -642,6 +642,43 @@ export async function seedStaffRecipient(): Promise<string> {
   return id;
 }
 
+/**
+ * A demo enquiry, as the marketing site's form would leave one.
+ *
+ * Seeded rather than driven through that form: this spec is about the
+ * queue the form fills, and walking a public dialog to reach an ops
+ * screen would make an ops failure look like a marketing one.
+ */
+export async function seedDemoRequest(companyName: string): Promise<string> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ id: string }>(
+      `insert into demo_requests
+         (full_name, email, company_name, job_title, preferred_at, preferred_tz, locale)
+       values ($1, $2, $3, 'Director', now() + interval '3 days', 'Africa/Lagos', 'en')
+       returning id`,
+      ["Ada Enquirer", `ada+${Date.now()}@test.invalid`, companyName]
+    );
+    return rows[0].id;
+  });
+}
+
+/** Who the queue says is on an enquiry, read straight from the column. */
+export async function demoRequestAssignee(id: string): Promise<string | null> {
+  return withClient(async (client) => {
+    const { rows } = await client.query<{ assignee_id: string | null }>(
+      "select assignee_id from demo_requests where id = $1",
+      [id]
+    );
+    return rows[0]?.assignee_id ?? null;
+  });
+}
+
+export async function clearDemoRequest(id: string): Promise<void> {
+  await withClient(async (client) => {
+    await client.query("delete from demo_requests where id = $1", [id]);
+  });
+}
+
 export async function removeStaffRecipient(id: string): Promise<void> {
   await withClient(async (client) => {
     await client.query("delete from profiles where id = $1", [id]);

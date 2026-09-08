@@ -85,7 +85,7 @@ export function ProvisionTenant({
 
       // Deferred from `submit`, on purpose. When `demoRequest` is set,
       // this component is rendered from a ternary in
-      // `DemoRequestQueue` keyed on `demoRequest.convertedOrgId` — a
+      // `EnquiryTable` keyed on `demoRequest.convertedOrgId` — a
       // `router.refresh()` fired right after a successful provision
       // lands the instant this row's server data comes back with that
       // id populated, which flips the ternary to a `<Link>` and unmounts

@@ -94,24 +94,34 @@ export default async function DocumentsPage() {
     <main>
       <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
-          <div className="max-w-[62ch]">
-            <h1 className="t-h2">{t.heading[locale]}</h1>
-            <p className="t-muted mt-3">
-              {t.intro[locale]} {VERIFIED_MEANS}
-            </p>
-            {/* Said before they photograph anything, not after a refusal.
-                Legibility is the largest single cause of a re-upload and
-                the one thing entirely within the traveller's control at
-                the moment they take the picture. */}
-            <p className="t-muted mt-3">{UPLOAD_GUIDANCE}</p>
-            {/* Mandatory, not a nicety. Decision 2 made the pre-check
-                unconditional — there is no setting under which a
-                traveller's file is not read by a machine — so saying so
-                is what makes it honest, and it is said where they upload
-                rather than buried in terms. */}
-            <p className="t-muted mt-3">{t.precheckDisclosure[locale]}</p>
-          </div>
+          <h1 className="t-h2">{t.heading[locale]}</h1>
           <CompletionRing pct={completion.pct} size={120} />
+        </div>
+
+        {/* Full page measure, not a 62ch column beside the ring. Three
+            paragraphs in half the width of the panels below them is
+            twice the height for the same words, and it pushed the first
+            document off the fold — which is what the client saw.
+
+            The 62ch rule in §6 is about a *paragraph* being readable;
+            this is one short block above a table it explains, and
+            matching the table's width is what makes it read as its
+            caption rather than as a column of its own. */}
+        <div className="mt-4 flex flex-col gap-2">
+          <p className="t-muted">
+            {t.intro[locale]} {VERIFIED_MEANS}
+          </p>
+          {/* Said before they photograph anything, not after a refusal.
+              Legibility is the largest single cause of a re-upload and
+              the one thing entirely within the traveller's control at
+              the moment they take the picture. */}
+          <p className="t-muted">{UPLOAD_GUIDANCE}</p>
+          {/* Mandatory, not a nicety. Decision 2 made the pre-check
+              unconditional — there is no setting under which a
+              traveller's file is not read by a machine — so saying so
+              is what makes it honest, and it is said where they upload
+              rather than buried in terms. */}
+          <p className="t-muted">{t.precheckDisclosure[locale]}</p>
         </div>
 
 {/* The ring reaches 100% when everything is uploaded; this

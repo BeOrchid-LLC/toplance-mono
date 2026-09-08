@@ -9,10 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { changeCaseStatus } from "@/app/[locale]/agency/actions";
 import {
   STAFF_TRANSITIONS,
-  STATUS,
   isTerminalStatus,
   type ApplicationStatus,
 } from "@/lib/domain/status";
+import { STATUS_COPY } from "@/lib/i18n/status";
 import { useT } from "@/components/locale-provider";
 import { CASE_COMMON, STATUS_CONTROL } from "@/lib/i18n/case-review-actions";
 
@@ -68,10 +68,9 @@ export function StatusControl({
       }
       setMessage("");
       setConfirming(null);
-      // `STATUS[to].label` (`@/lib/domain/status.ts`) is not itself
-      // localised — see the review's flags — so this toast is only
-      // partly translated until that file gets its own pass.
-      toast.success(t(STATUS_CONTROL.toastMoved).replace("{status}", STATUS[to].label));
+      toast.success(
+        t(STATUS_CONTROL.toastMoved).replace("{status}", t(STATUS_COPY[to].label))
+      );
     });
   }
 
@@ -104,13 +103,11 @@ export function StatusControl({
         {exits.map((to) => {
           const Icon = ICON[to];
           const isConfirming = confirming === to;
-          // `STATUS[to].label` (`@/lib/domain/status.ts`) is not itself
-          // localised — see the review's flags.
           const label = isConfirming
             ? to === "approved"
               ? t(STATUS_CONTROL.confirmApproval)
               : t(STATUS_CONTROL.confirmRejection)
-            : STATUS[to].label;
+            : t(STATUS_COPY[to].label);
           const variant =
             to === "approved" ? "success" : to === "rejected" ? "danger" : "secondary";
 

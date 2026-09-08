@@ -23,16 +23,18 @@ export const MAX_UPLOAD_LABEL = "10MB";
 /** The picker's filter, on the camera and the file input alike. */
 export const ACCEPT = "image/*,application/pdf";
 
-/** The formats worth naming to a traveller, in their own words. */
-export const ACCEPTED_LABEL = "JPG, PNG, HEIC or PDF";
-
 /**
- * The one sentence that has to reach a traveller before they photograph
- * a passport on a kitchen table. Legibility is the single largest cause
- * of a re-upload, and it is entirely within their control at the moment
- * they take the picture — afterwards it costs them a round trip.
+ * The formats worth naming to a traveller, as the four tokens a person
+ * reads — not a MIME list.
+ *
+ * Only the tokens live here. The sentence that carries them, conjunction
+ * and all, is `UPLOADS.acceptedFormats` in `@/lib/i18n/uploads`: "JPG,
+ * PNG, HEIC or PDF" has an English "or" in it, which has no business in
+ * an otherwise Arabic paragraph. Keeping the tokens on this side is what
+ * stops ten translations from becoming ten lists that drift away from
+ * `ACCEPT`; `uploads.test.ts` checks each locale still names all four.
  */
-export const UPLOAD_GUIDANCE = `Upload a clear, high-resolution image or PDF — a blurred, cropped or dark file cannot be read and will be sent back. ${ACCEPTED_LABEL}, up to ${MAX_UPLOAD_LABEL} each.`;
+export const ACCEPTED_FORMATS = ["JPG", "PNG", "HEIC", "PDF"] as const;
 
 /** Why a file was refused. Keys into `UPLOAD_ACTIONS`, never prose. */
 export type UploadRejection = "empty" | "tooLarge" | "unsupportedType";

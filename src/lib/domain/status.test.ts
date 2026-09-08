@@ -4,7 +4,7 @@ import {
   isApplicationStatus,
   RESUBMITTABLE,
   STAFF_TRANSITIONS,
-  STATUS,
+  STATUS_VARIANT,
   TERMINAL_STATUSES,
 } from "@/lib/domain/status";
 
@@ -55,7 +55,7 @@ describe("RESUBMITTABLE", () => {
 
 describe("isApplicationStatus", () => {
   it("accepts every status the machine has", () => {
-    for (const key of Object.keys(STATUS)) {
+    for (const key of Object.keys(STATUS_VARIANT)) {
       expect(isApplicationStatus(key)).toBe(true);
     }
   });
@@ -65,11 +65,11 @@ describe("isApplicationStatus", () => {
   });
 
   /**
-   * Same defect as `isFlagReason`: `value in STATUS` walks the prototype
-   * chain, so `to=toString` on the `changeCaseStatus` POST passed the
-   * guard. It got as far as `STATUS[to].label` in the notification,
-   * which reads a function off the prototype and sends the traveller a
-   * garbled status name.
+   * Same defect as `isFlagReason`: `value in STATUS_VARIANT` walks the
+   * prototype chain, so `to=toString` on the `changeCaseStatus` POST
+   * passed the guard. It got as far as the status label in the
+   * notification, which reads a function off the prototype and sends the
+   * traveller a garbled status name.
    */
   it("refuses inherited object keys", () => {
     expect(isApplicationStatus("toString")).toBe(false);

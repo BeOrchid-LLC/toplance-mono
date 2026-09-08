@@ -5,11 +5,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { applications, documents, statusEvents } from "@/lib/db/schema";
 import {
-  STATUS,
   STAFF_TRANSITIONS,
   isTerminalStatus,
   type ApplicationStatus,
 } from "@/lib/domain/status";
+import { STATUS_COPY } from "@/lib/i18n/status";
 
 // The map itself lives in `@/lib/domain/status` — pure and I/O-free, so
 // `status-control.tsx` can import it without pulling `db` into the
@@ -61,8 +61,14 @@ export async function changeStatusTx(
     if (!current) return { error: "That application does not exist." };
 
     if (!STAFF_TRANSITIONS[current.status].includes(to)) {
+      // `.en` on purpose. Every error this module returns is an English
+      // sentence — it is `server-only` and has no locale to read — so a
+      // translated status name dropped into one would give the reviewer
+      // half a sentence in each language, which is worse than either.
+      // Localising these is one job for the whole file, not two words of
+      // it; the pills the reviewer actually reads are localised.
       return {
-        error: `Cannot move a case from "${STATUS[current.status].label}" to "${STATUS[to].label}".`,
+        error: `Cannot move a case from "${STATUS_COPY[current.status].label.en}" to "${STATUS_COPY[to].label.en}".`,
       };
     }
 

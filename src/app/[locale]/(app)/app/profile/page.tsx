@@ -33,7 +33,7 @@ import { AvatarUpload } from "@/components/app/avatar-upload";
 import { TravelHistory } from "@/components/app/travel-history";
 import { signedDocumentUrl } from "@/lib/storage/documents";
 import { readDigestFrequency } from "@/lib/domain/digest";
-import { STATUS } from "@/lib/domain/status";
+import { STATUS_COPY } from "@/lib/i18n/status";
 import { itinerarySections } from "@/lib/domain/itinerary";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -310,7 +310,7 @@ export default async function ProfilePage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <StatusBadge status={application.status} />
+              <StatusBadge status={application.status} locale={uiLocale} />
               <Badge variant="brand">
                 <span className="num">{completion.pct}%</span>{" "}
                 {t.percentComplete[uiLocale]}
@@ -606,7 +606,7 @@ export default async function ProfilePage() {
             <Panel>
               <PanelHeader
                 label={t.statusHistoryLabel[uiLocale]}
-                aside={<StatusBadge status={application.status} short />}
+                aside={<StatusBadge status={application.status} locale={uiLocale} short />}
               />
               <PanelBody className="pt-2">
                 {events.length > 0 ? (
@@ -618,7 +618,7 @@ export default async function ProfilePage() {
                       >
                         <div className="flex items-baseline justify-between gap-6">
                           <p className="t-title">
-                            {STATUS[event.toStatus].label}
+                            {STATUS_COPY[event.toStatus].label[uiLocale]}
                           </p>
                           <p className="special num shrink-0">
                             {formatDay(event.createdAt)}

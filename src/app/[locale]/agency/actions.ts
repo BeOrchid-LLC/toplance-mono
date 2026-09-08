@@ -30,7 +30,8 @@ import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
 import { hasActiveSubscription } from "@/lib/data/payments";
 import { reviewDocumentTx, type ReviewVerdict } from "@/lib/data/review";
 import { changeStatusTx } from "@/lib/data/transitions";
-import { isApplicationStatus, STATUS } from "@/lib/domain/status";
+import { isApplicationStatus } from "@/lib/domain/status";
+import { STATUS_COPY } from "@/lib/i18n/status";
 import { isFlagReason } from "@/lib/domain/flag-reason";
 import { sendEmail } from "@/lib/notifications/email";
 import { appUrl, notify } from "@/lib/notifications/notify";
@@ -397,7 +398,16 @@ export async function changeCaseStatus(formData: FormData) {
       result.travelerId,
       "status_changed",
       {
-        statusLabel: STATUS[to].label,
+        // `.en`, not `locale`. This string is persisted into
+        // `notifications.payload` and read back later by
+        // `@/lib/notifications/templates`, whose subject and heading
+        // ("Your application is now: …") are themselves English. Worse,
+        // `locale` here is the *reviewer's* — `getActionLocale()` reads
+        // the request that is deciding the case — and this notification
+        // is read by the traveller. Localising it means reading the
+        // recipient's own `profiles.locale` at render time, together
+        // with the template around it.
+        statusLabel: STATUS_COPY[to].label.en,
         message: message.trim(),
         url: appUrl("/app"),
       },

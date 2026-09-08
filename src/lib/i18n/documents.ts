@@ -3,12 +3,12 @@ import type { Locale } from "@/lib/i18n/locales";
 type L = Record<Locale, string>;
 
 /**
- * The traveller's documents checklist screen. `VERIFIED_MEANS` and
- * `UPLOAD_GUIDANCE` (`@/lib/domain/status`, `@/lib/domain/uploads`) and
- * the `STATUS` labels/blurbs rendered here are shared domain constants
- * outside this pass's file ownership and stay in English — see the
- * handover notes. A document's own name, description and reason come
- * from the database and stay in English too.
+ * The traveller's documents checklist screen. Three strings this page
+ * renders live outside it because other screens share them:
+ * `STATUS_COPY` and `VERIFIED_MEANS` (`@/lib/i18n/status`) and `UPLOADS`
+ * (`@/lib/i18n/uploads`). All three are localised. A document's own
+ * name, description and reason come from the database and stay in
+ * English.
  *
  * English values here are exactly the copy the page already had; every
  * other locale was translated in-house from that English, the same way

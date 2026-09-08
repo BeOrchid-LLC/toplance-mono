@@ -16,73 +16,41 @@ export type BadgeVariant =
   | "outline";
 
 /**
- * Every pill carries a written label. Colour reinforces the state, it never
- * carries it alone, so the pills survive colour blindness and greyscale
- * printing without needing an icon to disambiguate.
+ * Whether a string off a form is one of the statuses.
+ *
+ * Reads `STATUS_VARIANT`'s own keys rather than the enum, because this
+ * module takes the schema as types only — see the note at the top. Own
+ * keys literally: `in` would also answer for everything on
+ * `Object.prototype`, which let `to=toString` past this guard and into
+ * the status label in a traveller's notification.
+ */
+export function isApplicationStatus(value: string): value is ApplicationStatus {
+  return Object.hasOwn(STATUS_VARIANT, value);
+}
+
+/**
+ * The colour of every application-status pill, and nothing else.
+ *
+ * Every pill carries a written label too — colour reinforces the state,
+ * it never carries it alone, so the pills survive colour blindness and
+ * greyscale printing without needing an icon to disambiguate. Those
+ * labels are `STATUS_COPY` in `@/lib/i18n/status`: the words differ per
+ * reader and need native review, the colour is the same for everybody,
+ * and keeping them apart is what lets this module stay free of a locale
+ * argument so `status-control.tsx` can import it into the browser.
  *
  * Mapping locked with the client 2026-08-21:
  *   Not started → grey outline · In progress → grey fill · Submitted → blue
  *   Under review → amber · Approved → green · Rejected → red
  */
-/**
- * Whether a string off a form is one of the statuses.
- *
- * Reads `STATUS`'s own keys rather than the enum, because this module
- * takes the schema as types only — see the note at the top. Own keys
- * literally: `in` would also answer for everything on
- * `Object.prototype`, which let `to=toString` past this guard and into
- * `STATUS[to].label`.
- */
-export function isApplicationStatus(value: string): value is ApplicationStatus {
-  return Object.hasOwn(STATUS, value);
-}
-
-export const STATUS: Record<
-  ApplicationStatus,
-  { label: string; short: string; variant: BadgeVariant; blurb: string }
-> = {
-  draft: {
-    label: "Not started",
-    short: "Not started",
-    variant: "outline",
-    blurb: "Not started yet. Nothing has been sent anywhere.",
-  },
-  collecting_documents: {
-    label: "In progress",
-    short: "In progress",
-    variant: "neutral",
-    blurb: "Your checklist is ready. Upload each file and we check it as it arrives.",
-  },
-  submitted: {
-    label: "Submitted",
-    short: "Submitted",
-    variant: "info",
-    blurb: "Everything is in and the file has gone to our review team.",
-  },
-  under_review: {
-    label: "Under review",
-    short: "Reviewing",
-    variant: "warning",
-    blurb: "A named case handler has your file open.",
-  },
-  additional_documents: {
-    label: "Additional documents needed",
-    short: "More docs needed",
-    variant: "neutral",
-    blurb: "Something needs replacing before this can go further. We have told you which.",
-  },
-  approved: {
-    label: "Approved",
-    short: "Approved",
-    variant: "success",
-    blurb: "Congratulations. Your arrival plan is now in the app.",
-  },
-  rejected: {
-    label: "Rejected",
-    short: "Rejected",
-    variant: "danger",
-    blurb: "The mission declined this application. Your handler will talk you through why.",
-  },
+export const STATUS_VARIANT: Record<ApplicationStatus, BadgeVariant> = {
+  draft: "outline",
+  collecting_documents: "neutral",
+  submitted: "info",
+  under_review: "warning",
+  additional_documents: "neutral",
+  approved: "success",
+  rejected: "danger",
 };
 
 /**
@@ -156,36 +124,25 @@ export function canSubmitFrom(status: ApplicationStatus): boolean {
   return RESUBMITTABLE.includes(status);
 }
 
-export const DOC_STATE: Record<DocumentState, { label: string; variant: BadgeVariant }> = {
-  not_started: { label: "Not started", variant: "outline" },
-  uploaded: { label: "Uploaded", variant: "info" },
-  checking: { label: "Checking", variant: "brand" },
-  verified: { label: "Verified", variant: "success" },
-  flagged: { label: "Needs re-upload", variant: "warning" },
-  failed: { label: "Upload failed", variant: "danger" },
+/** The same split, for one document's pill. Words in `DOC_STATE_COPY`. */
+export const DOC_STATE_VARIANT: Record<DocumentState, BadgeVariant> = {
+  not_started: "outline",
+  uploaded: "info",
+  checking: "brand",
+  verified: "success",
+  flagged: "warning",
+  failed: "danger",
 };
 
 /**
- * Same shape as `STATUS`, for the roster's other list — an invitation
- * has no reviewer-facing "short" label, so this map skips it.
- * `expired` is a status `listInvitations` computes on read (a `pending`
- * row past `expiresAt`), never written until `acceptInvitationTx` sees
- * the same row and flips it for real — this pill reads correctly either
- * way, since both paths land on the same key.
+ * Same split again, for the roster's other list. An invitation has no
+ * reviewer-facing "short" label, so `INVITATION_STATUS_COPY` carries
+ * only a `label`.
  */
-export const INVITATION_STATUS: Record<InvitationStatus, { label: string; variant: BadgeVariant }> = {
-  pending: { label: "Pending", variant: "neutral" },
-  accepted: { label: "Accepted", variant: "success" },
-  expired: { label: "Expired", variant: "outline" },
-  revoked: { label: "Revoked", variant: "danger" },
+export const INVITATION_STATUS_VARIANT: Record<InvitationStatus, BadgeVariant> = {
+  pending: "neutral",
+  accepted: "success",
+  expired: "outline",
+  revoked: "danger",
 };
 
-/**
- * Deliberate wording, agreed with the client: verified means a document
- * has been accepted for review. It is never a promise of approval, and
- * no copy anywhere in the product should imply otherwise. AI resolves the
- * checklist and triages uploads — the accept/reject call is always a
- * human handler's.
- */
-export const VERIFIED_MEANS =
-  "Verified means accepted for review — not that your visa has been approved.";

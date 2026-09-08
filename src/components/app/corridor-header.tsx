@@ -73,7 +73,7 @@ export async function CorridorHeader({
           </div>
 
           <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-            <StatusBadge status={status} />
+            <StatusBadge status={status} locale={locale} />
             <span className="num text-[13px] font-semibold text-ink-2">
               {CORRIDOR_HEADER.casePrefix[locale]} {caseRef.toUpperCase()}
             </span>

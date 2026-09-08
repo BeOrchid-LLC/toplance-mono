@@ -666,7 +666,7 @@ export default async function RequirementsPage() {
                       come to disagree about one document. */}
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                     <p className="t-title">{r.name}</p>
-                    <DocStateBadge state={stateOf(r.docKey)} />
+                    <DocStateBadge state={stateOf(r.docKey)} locale={locale} />
                   </div>
                   {/* The names carry the list; the guidance is what
                       someone opens when they are about to photograph

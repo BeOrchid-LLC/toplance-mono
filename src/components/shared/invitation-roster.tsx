@@ -140,7 +140,7 @@ export function InvitationRoster({
                 </div>
 
                 <div className="lg:justify-self-end">
-                  <InvitationStatusBadge status={invite.status} />
+                  <InvitationStatusBadge status={invite.status} locale={locale} />
                 </div>
 
                 <div className="lg:justify-self-end">

@@ -130,7 +130,7 @@ export default async function AgencyCasePage({
                   {row.visaName ? ` · ${row.visaName}` : ""}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <StatusBadge status={row.status} />
+                  <StatusBadge status={row.status} locale={locale} />
                   <Badge variant="outline">
                     <span className="num">{row.caseRef.toUpperCase()}</span>
                   </Badge>

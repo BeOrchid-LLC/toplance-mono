@@ -238,7 +238,7 @@ export const STATUS_CONTROL: {
     tw: "Si so dua sɛ wɔapow",
     zu: "Qinisekisa ukwenqatshwa",
   },
-  /** `{status}` is `STATUS[to].label` (`@/lib/domain/status.ts`), which is not itself localised — see the review's flags. */
+  /** `{status}` is `STATUS_COPY[to].label` (`@/lib/i18n/status.ts`), localised into the same locale as this sentence. */
   toastMoved: {
     en: 'Case moved to "{status}" — the traveler has been told',
     ha: 'An mayar da shari\'a zuwa "{status}" — an sanar da matafiyi',

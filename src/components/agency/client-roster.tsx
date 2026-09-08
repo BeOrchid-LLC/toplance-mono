@@ -134,7 +134,7 @@ export function ClientRoster({
                 </div>
 
                 <div className="flex items-center gap-3 lg:justify-self-end">
-                  {r.status && <StatusBadge status={r.status} short />}
+                  {r.status && <StatusBadge status={r.status} locale={locale} short />}
                   {takeableBy && (
                     <>
                       {/* The one door into an unheld case that is not

@@ -9,7 +9,7 @@ import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CompletionRing } from "@/components/app/completion-ring";
-import { STATUS, VERIFIED_MEANS } from "@/lib/domain/status";
+import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
 import {
   completionOf,
   getDocuments,
@@ -64,7 +64,7 @@ export default async function DashboardPage() {
   ]);
 
   const completion = completionOf(docs);
-  const status = STATUS[application.status];
+  const statusCopy = STATUS_COPY[application.status];
   // Three moments, in order: uploads outstanding, everything uploaded
   // but still being checked, everything verified. Only the first leaves
   // the traveller something to do.
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
                           .replace("{collected}", String(completion.collected))
                           .replace("{total}", String(completion.total))}
                 </p>
-                <p className="special mt-4 text-ink-2">{VERIFIED_MEANS}</p>
+                <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
                 <Button asChild className="mt-6">
                   <Link href="/app/documents">
                     {done ? (
@@ -135,8 +135,8 @@ export default async function DashboardPage() {
           <Panel>
             <PanelHeader label={t.statusPanelLabel[locale]} />
             <PanelBody>
-              <StatusBadge status={application.status} />
-              <p className="t-muted mt-3">{status.blurb}</p>
+              <StatusBadge status={application.status} locale={locale} />
+              <p className="t-muted mt-3">{statusCopy.blurb[locale]}</p>
             </PanelBody>
             <PanelHeader label={t.caseHandlerLabel[locale]} className="border-t" />
             <PanelBody>

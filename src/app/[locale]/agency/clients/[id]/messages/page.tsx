@@ -85,7 +85,7 @@ export default async function AgencyCaseThreadPage({
           <div className="mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-2">
             <h1 className="t-h2">{row.travelerName}</h1>
             <p className="special">{row.caseRef}</p>
-            <StatusBadge status={row.status} />
+            <StatusBadge status={row.status} locale={locale} />
           </div>
           <p className="t-muted mt-2">
             {destination?.name ??

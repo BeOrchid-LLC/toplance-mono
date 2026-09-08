@@ -39,23 +39,50 @@ function formatDay(value: Date) {
 export function TeamRoster({
   members,
   locale,
+  action,
 }: {
   members: OrgMemberRow[];
   locale: Locale;
+  /**
+   * The invite trigger, on the same row as the count it changes.
+   *
+   * Moved off the console bar at the client's request on 8 September,
+   * and the request is the right one: the bar is chrome shared by every
+   * agency screen, so a button there reads as "this console can invite"
+   * rather than "this list is the one you are adding to". Beside the
+   * member count it is unmistakably about these people — and it sits
+   * directly above the sentence that says "Invite a colleague and they
+   * appear here once they accept", which until now named an action the
+   * reader had to go looking for at the top of the window.
+   *
+   * Passed in rather than built here because it is a client component
+   * and this is not, and because who may invite is the page's question
+   * to answer — a reviewer gets no button, and gets no `redirect` from
+   * this component either.
+   */
+  action?: React.ReactNode;
 }) {
   return (
     <Panel>
       <PanelHeader
         label={AGENCY.yourTeamLabel[locale]}
         aside={
-          <Badge variant="brand">
-            <span className="num">{members.length}</span>
-            {
-              (members.length === 1 ? AGENCY.memberWord : AGENCY.membersWord)[
-                locale
-              ]
-            }
-          </Badge>
+          // The badge stays the rightmost thing when it is alone. With an
+          // action beside it the count leads, because the count is the
+          // fact about the panel and the button is what you do about it —
+          // reading "0 members · Invite" in that order is the sentence
+          // the empty state is making.
+          <div className="flex items-center gap-3">
+            <Badge variant="brand">
+              <span className="num">{members.length}</span>
+              {
+                (members.length === 1 ? AGENCY.memberWord : AGENCY.membersWord)[
+                  locale
+                ]
+              }
+            </Badge>
+            {action}
+          </div>
         }
       />
 

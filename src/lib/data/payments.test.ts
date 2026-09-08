@@ -20,6 +20,7 @@ describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
     activeSubscription,
     hasActiveSubscription,
     isApplicationPaid,
+    listInvoices,
     listPaymentsForOrg,
     recordPayment,
   } = await import("@/lib/data/payments");
@@ -236,5 +237,80 @@ describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
     const rows = await listPaymentsForOrg(ORG);
     expect(rows).toHaveLength(1);
     expect(rows[0].orgId).toBe(ORG);
+  });
+
+  /**
+   * The director's dashboard reads these. `statusFor` is unit tested
+   * without a database; what needs one is the join — that a cycle finds
+   * the payment rows that actually fall inside it, and finds no others.
+   *
+   * The claim these exist for is the negative one: an unpaid cycle must
+   * come back `open`, never `paid`. An earlier draft of this screen
+   * generated settlement from a hash because there was no `payments`
+   * table to read, and the fixtures below are what stops that returning
+   * as a plausible figure in a board pack.
+   */
+  describe("invoices for the dashboard", () => {
+    // Both fixture agencies are created by `beforeEach`, so their first
+    // cycle is open right now and every invoice is theirs alone.
+    const invoicesForOrg = async (now = new Date()) =>
+      (await listInvoices({ now })).filter((i) => i.orgId === ORG);
+
+    it("bills an open cycle as a draft, with nothing collected", async () => {
+      const [current] = await invoicesForOrg();
+      expect(current.status).toBe("draft");
+      expect(current.paidAt).toBeNull();
+      // The base fee is running up whether or not anybody has applied.
+      expect(current.amountMinor).toBeGreaterThan(0);
+    });
+
+    it("settles the cycle a paid subscription falls inside", async () => {
+      const [current] = await invoicesForOrg();
+      const paidOn = new Date(current.cycleStart.getTime() + 60_000);
+
+      await subscription({ status: "paid", periodStart: paidOn });
+
+      const [settled] = await invoicesForOrg();
+      expect(settled.status).toBe("paid");
+    });
+
+    it("leaves a cycle alone when the payment belongs to a different one", async () => {
+      const [current] = await invoicesForOrg();
+      // A millisecond before this cycle opened, which is the previous
+      // cycle's business. `cycleFor` is half-open, so an off-by-one here
+      // would settle the wrong month.
+      const before = new Date(current.cycleStart.getTime() - 1);
+
+      await subscription({ status: "paid", periodStart: before });
+
+      const [unsettled] = await invoicesForOrg();
+      expect(unsettled.status).toBe("draft");
+    });
+
+    it("ignores a client's own application fee", async () => {
+      // A traveller paying for their case settles nothing on the
+      // agency's monthly bill — different payer, different thing bought.
+      // No `period_start`, so it falls back to `created_at` and lands
+      // squarely inside the open cycle: `kind` is the only thing keeping
+      // it out of the books.
+      await recordPayment({
+        kind: "client_application",
+        status: "paid",
+        amountMinor: 50_00,
+        currency: "USD",
+        applicationId: APP,
+        payerId: TRAVELER,
+        provider: "mock",
+      });
+
+      const [after] = await invoicesForOrg();
+      expect(after.status).toBe("draft");
+    });
+
+    it("never invoices a client for a cycle that closed before it existed", async () => {
+      // Six cycles asked for, one organisation a few moments old.
+      const invoices = await invoicesForOrg();
+      expect(invoices).toHaveLength(1);
+    });
   });
 });

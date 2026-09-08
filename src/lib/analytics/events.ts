@@ -233,6 +233,15 @@ export const EVENT_NAMES = [
    * bring anyone in, or whether every lead reads English anyway.
    */
   "toplance.demo_requested",
+
+  /**
+   * A director opened the business dashboard.
+   *
+   * Worth counting because the dashboard is the one screen built for an
+   * audience of about three people: if it turns out nobody opens it, the
+   * answer is to change what it shows rather than to add more to it.
+   */
+  "toplance.dashboard_viewed",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

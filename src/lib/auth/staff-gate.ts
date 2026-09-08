@@ -6,7 +6,7 @@ import { currentUser } from "@clerk/nextjs/server";
 
 import { getActor, getProfile, type Profile } from "@/lib/data/applications";
 import { isStaff } from "@/lib/auth/policy";
-import type { Actor } from "@/lib/auth/policy";
+import type { Actor, StaffRole } from "@/lib/auth/policy";
 import { buildAccountsBaseUrl } from "@clerk/shared/buildAccountsBaseUrl";
 
 /**
@@ -15,13 +15,30 @@ import { buildAccountsBaseUrl } from "@clerk/shared/buildAccountsBaseUrl";
  * network call — `requireStaffConsole` below is the only thing that
  * knows how to ask Clerk for the two facts this needs.
  */
-export type StaffGateDecision = "ok" | "refuse" | "enroll";
+export type StaffGateDecision = "ok" | "refuse" | "refuse-role" | "enroll";
 
+/**
+ * `refuse` and `refuse-role` are both a closed door, kept apart so the
+ * screen can say which one it is. Telling a reviewer "this console is
+ * for Toplance staff" when they *are* staff reads as a bug in their
+ * account rather than the boundary it actually is.
+ */
 export function decideStaffGate(input: {
   isStaff: boolean;
   twoFactorEnabled: boolean;
+  staffRole?: StaffRole | null;
+  /** Set by screens only some staff may open, e.g. the director's dashboard. */
+  requireRole?: StaffRole;
 }): StaffGateDecision {
   if (!input.isStaff) return "refuse";
+
+  // Before the second factor, deliberately. Enrolling an authenticator
+  // app would not get a reviewer into an owner-only screen, so asking
+  // them to go and do it first is a walk to a door that stays shut.
+  if (input.requireRole && input.staffRole !== input.requireRole) {
+    return "refuse-role";
+  }
+
   if (!input.twoFactorEnabled) return "enroll";
   return "ok";
 }
@@ -65,6 +82,20 @@ export type StaffGateResult =
   | { decision: "enroll"; accountsUrl: string };
 
 /**
+ * What a screen that named a required role can get back.
+ *
+ * Kept apart from `StaffGateResult` rather than folded into it, because
+ * only a caller that asked for a role can be refused for one. Folded
+ * together, every ops screen would have to handle a `refuse-role` it can
+ * never receive just to narrow the union — five unreachable refusals
+ * rendering copy nobody will ever read. The overloads below hand each
+ * caller exactly the outcomes its own call can produce.
+ */
+export type StaffRoleGateResult =
+  | StaffGateResult
+  | { decision: "refuse-role"; requiredRole: StaffRole };
+
+/**
  * The one door into either ops screen. Row-level security does not
  * exist here (see `guards.ts`), so this check is the only thing
  * standing between an unauthorised or under-verified session and a
@@ -84,8 +115,16 @@ export type StaffGateResult =
  * a cost fix — the gate still runs, in full, once. React's `cache` is a
  * no-op with no request dispatcher bound, so nothing outside a request
  * (tests included) sees a memo at all.
+ *
+ * `requireRole` is a bare `StaffRole` rather than an options object for
+ * that memo's sake: `cache()` keys on the arguments it is handed, and a
+ * fresh `{ requireRole }` literal is a new key on every call — an object
+ * would quietly hand every role-gated screen back the second round trip
+ * the memo exists to remove.
  */
-export const requireStaffConsole = cache(async function requireStaffConsole(): Promise<StaffGateResult> {
+const staffGate = cache(async function staffGate(
+  requireRole?: StaffRole
+): Promise<StaffRoleGateResult> {
   const [profile, actor] = await Promise.all([getProfile(), getActor()]);
   // `/go` rather than the ops door, for the reason on `GoPage`: the
   // proxy bounces a signed-in visitor off every auth page, so a session
@@ -93,6 +132,14 @@ export const requireStaffConsole = cache(async function requireStaffConsole(): P
   if (!profile || !actor) redirect("/go");
 
   if (!isStaff(actor)) return { decision: "refuse" };
+
+  // Role first, so a reviewer opening an owner-only screen is never sent
+  // off to enrol an authenticator app that would not let them in. It
+  // also saves the Clerk round-trip below on a request that cannot
+  // succeed.
+  if (requireRole && actor.staffRole !== requireRole) {
+    return { decision: "refuse-role", requiredRole: requireRole };
+  }
 
   // Backend `currentUser()`, not the session claims — `twoFactorEnabled`
   // reflects whether an authenticator app or backup codes are actually
@@ -102,11 +149,32 @@ export const requireStaffConsole = cache(async function requireStaffConsole(): P
   const decision = decideStaffGate({
     isStaff: true,
     twoFactorEnabled: staffTwoFactorSkipped() || (user?.twoFactorEnabled ?? false),
+    staffRole: actor.staffRole,
+    requireRole,
   });
 
+  if (decision === "refuse-role") {
+    // Unreachable — the early return above catches it — but the union
+    // has the case, and narrowing it here beats casting below.
+    return { decision: "refuse-role", requiredRole: requireRole! };
+  }
   if (decision === "enroll") return { decision: "enroll", accountsUrl: accountsBaseUrl() };
   return { decision: "ok", profile, actor };
 });
+
+/**
+ * The gate itself — `staffGate` above, with the return type narrowed to
+ * what this particular call can produce. A screen that named no role
+ * cannot be refused for one, and does not have to say what it would do
+ * if it were.
+ */
+export function requireStaffConsole(): Promise<StaffGateResult>;
+export function requireStaffConsole(
+  requireRole: StaffRole
+): Promise<StaffRoleGateResult>;
+export function requireStaffConsole(requireRole?: StaffRole) {
+  return staffGate(requireRole);
+}
 
 export type StaffActionResult = { actor: Actor } | { error: string };
 

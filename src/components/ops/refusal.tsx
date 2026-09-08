@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,33 @@ export function StaffAccessRefused() {
           Your account does not have operations access. If that is wrong, ask
           a Director to set your role — it cannot be granted from this screen.
         </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Staff, but not a Director.
+ *
+ * Separate from `StaffAccessRefused` because telling a reviewer "this
+ * console is for Toplance staff" when they *are* staff — and work in
+ * this console every day — reads as their account being broken rather
+ * than as the boundary it is. The screen names the real reason and does
+ * not offer a way around it, since there is not one from here.
+ */
+export function OwnerAccessRefused() {
+  return (
+    <div className="grid min-h-dvh place-items-center px-6">
+      <div className="max-w-[440px] text-center">
+        <h1 className="t-h2">The dashboard is for Directors</h1>
+        <p className="t-muted mt-3">
+          This screen carries revenue and client billing, so it is limited to
+          accounts with the Director role. Your operations access is
+          unaffected — route curation is where it was.
+        </p>
+        <Button asChild className="mt-6" variant="secondary">
+          <Link href="/ops/corridors">Back to routes</Link>
+        </Button>
       </div>
     </div>
   );

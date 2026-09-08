@@ -72,6 +72,20 @@ export default async function DashboardPage() {
   const done = completion.total > 0 && completion.verified >= completion.total;
   const allUploaded = toUpload <= 0;
 
+  /**
+   * Sent back beats everything else this page could say.
+   *
+   * The ring can honestly read 100% while a document is waiting to be
+   * redone — it measures collecting, and the file was collected. What
+   * it must not do is leave "100%" as the only sentence on the screen
+   * while the agency is waiting for a new one, which is the
+   * contradiction the client called out on 8 September. The headline
+   * names the documents, because "additional document needed" without
+   * saying which is a question rather than an instruction.
+   */
+  const sentBack = docs.filter((d) => d.isRequired && d.state === "flagged");
+  const sentBackNames = sentBack.map((d) => d.name).join(", ");
+
   return (
     <main>
       <Shell className="py-8 md:py-10">
@@ -87,17 +101,24 @@ export default async function DashboardPage() {
               <CompletionRing pct={completion.pct} />
               <div className="min-w-[260px] max-w-[58ch] flex-1">
                 <h1 className="t-h2">
-                  {done
-                    ? t.headingVerified[locale]
-                    : allUploaded
-                      ? t.headingUploaded[locale]
-                      : (toUpload === 1 ? t.headingToUploadOne[locale] : t.headingToUploadMany[locale]).replace(
-                          "{n}",
-                          String(toUpload)
-                        )}
+                  {sentBack.length > 0
+                    ? (sentBack.length === 1
+                        ? t.headingSentBackOne[locale]
+                        : t.headingSentBackMany[locale]
+                      ).replace("{n}", String(sentBack.length))
+                    : done
+                      ? t.headingVerified[locale]
+                      : allUploaded
+                        ? t.headingUploaded[locale]
+                        : (toUpload === 1 ? t.headingToUploadOne[locale] : t.headingToUploadMany[locale]).replace(
+                            "{n}",
+                            String(toUpload)
+                          )}
                 </h1>
                 <p className="t-body-lg mt-3 text-ink-2">
-                  {done
+                  {sentBack.length > 0
+                    ? t.bodySentBack[locale].replace("{names}", sentBackNames)
+                    : done
                     ? t.bodyVerified[locale]
                     : allUploaded
                       ? t.bodyUploaded[locale]
@@ -110,7 +131,11 @@ export default async function DashboardPage() {
                 <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
                 <Button asChild className="mt-6">
                   <Link href="/app/documents">
-                    {done ? (
+                    {sentBack.length > 0 ? (
+                      <>
+                        {t.ctaFixSentBack[locale]} <ArrowRight />
+                      </>
+                    ) : done ? (
                       <>
                         {t.ctaReviewSubmit[locale]} <ArrowRight />
                       </>

@@ -27,6 +27,23 @@ export type Completion = {
   verified: number;
   collected: number;
   pct: number;
+  /**
+   * Required documents a reviewer has sent back.
+   *
+   * Reported separately rather than taken out of `collected`, because
+   * the ring measures collecting and a flagged file *has* been
+   * collected — dropping the ring the moment somebody is told their
+   * passport photo is blurry reads as losing work they did, which is
+   * the reasoning in `applications.test.ts` and it still holds.
+   *
+   * What did not hold was the page around it. The dashboard read
+   * "100%" and "additional document needed" in the same breath, which
+   * the client called a contradiction on 8 September, and she was
+   * right: the ring was answering a question the headline was not
+   * asking. This count is what lets the headline say the true thing
+   * without the ring having to lie about the other one.
+   */
+  flagged: number;
 };
 
 /**
@@ -222,11 +239,13 @@ export function completionOf(docs: DocumentRow[]): Completion {
   const collected = required.filter(
     (d) => d.state === "checking" || d.state === "verified" || d.state === "flagged"
   ).length;
+  const flagged = required.filter((d) => d.state === "flagged").length;
   const total = required.length;
   return {
     total,
     verified,
     collected,
+    flagged,
     pct: total === 0 ? 0 : Math.round((100 * collected) / total),
   };
 }

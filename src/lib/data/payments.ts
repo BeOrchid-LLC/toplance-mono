@@ -9,6 +9,7 @@ import { quote, type RateCard } from "@/lib/domain/pricing";
 import {
   clientFeesByMonth,
   collapseClientRevenue,
+  pickFeeCurrency,
   recentCycles,
   statusFor,
   type ClientFee,
@@ -410,9 +411,19 @@ export type ClientFeeSeries = {
  *
  * The tile and this chart answer different questions on purpose — the
  * tile is every fee ever settled, this is the last six months — so they
- * are not expected to agree, and the chart is labelled with its window.
- * What they must agree on is the *rule*: `status = 'paid'` only, and
- * cases counted distinctly.
+ * are not expected to agree on a total, and the chart is labelled with
+ * its window. What they must agree on is the *rule* — `status = 'paid'`
+ * only, cases counted distinctly — and the *unit*.
+ *
+ * The unit is the part a shared function does not buy on its own.
+ * `collapseClientRevenue` picks the dominant currency of whatever rows
+ * it is handed, and these two reads hand it different rows: an agency
+ * whose older money is NGN and whose last six months are all USD would
+ * get a ₦ tile above a $ chart, with nothing on the screen marking the
+ * change of unit. So the currency is an *input* here rather than
+ * something derived a second time — `options.currency` is the caller
+ * handing down the answer it already has. Deriving is the fallback, for
+ * a caller reading this series on its own.
  *
  * Bounded on `coalesce(paid_at, created_at)` rather than on `paid_at`
  * alone. The column is nullable, so a settled row that never had one
@@ -422,7 +433,17 @@ export type ClientFeeSeries = {
  */
 export async function clientFeesForOrgs(
   orgIds: readonly string[],
-  options: { now?: Date; months?: number; fallbackCurrency?: string } = {}
+  options: {
+    now?: Date;
+    months?: number;
+    fallbackCurrency?: string;
+    /**
+     * The currency this series must be denominated in, when the caller
+     * has already chosen one for a figure sitting beside it. Omit it
+     * and the window picks its own.
+     */
+    currency?: string;
+  } = {}
 ): Promise<ClientFeeSeries> {
   const now = options.now ?? new Date();
   const months = options.months ?? CLIENT_FEE_HISTORY_MONTHS;
@@ -441,7 +462,7 @@ export async function clientFeesForOrgs(
   // Same rule as every other agency-scoped read on this page: no
   // membership means no `where` to read by, and an unfiltered sum would
   // total every agency's client fees onto one dashboard.
-  if (orgIds.length === 0) return empty(fallbackCurrency);
+  if (orgIds.length === 0) return empty(options.currency ?? fallbackCurrency);
 
   const windowStart = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1)
@@ -466,13 +487,10 @@ export async function clientFeesForOrgs(
       )
     );
 
-  if (rows.length === 0) return empty(fallbackCurrency);
+  if (rows.length === 0) return empty(options.currency ?? fallbackCurrency);
 
-  // Which currency the chart is in is decided by `collapseClientRevenue`
-  // rather than by a rule written again here: minor units are not
-  // comparable across currencies, the tile already picks the dominant
-  // one, and a chart that picked differently would sit under a tile
-  // denominated in something else.
+  // Minor units are not comparable across currencies, so the series is
+  // drawn in exactly one of them and says so when it left money out.
   const byCurrency = new Map<string, { totalMinor: number; cases: Set<string> }>();
   for (const row of rows) {
     const entry = byCurrency.get(row.currency) ?? {
@@ -484,13 +502,15 @@ export async function clientFeesForOrgs(
     byCurrency.set(row.currency, entry);
   }
 
-  const { currency, mixedCurrency } = collapseClientRevenue(
+  // Told, or derived — see the note on `options.currency` above, and
+  // `pickFeeCurrency` for why this is not a second `collapseClientRevenue`.
+  const { currency, mixedCurrency } = pickFeeCurrency(
     [...byCurrency.entries()].map(([code, entry]) => ({
       currency: code,
       totalMinor: entry.totalMinor,
       cases: entry.cases.size,
     })),
-    fallbackCurrency
+    { preferred: options.currency, fallbackCurrency }
   );
 
   const fees: ClientFee[] = rows

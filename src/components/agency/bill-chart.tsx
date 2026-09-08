@@ -11,6 +11,7 @@ import {
 import { formatMoney } from "@/lib/domain/pricing";
 import { fill } from "@/lib/i18n/fill";
 import type { Invoice, InvoiceStatus } from "@/lib/domain/payments";
+import type { Locale } from "@/lib/i18n/locales";
 
 /**
  * What this agency has been charged, one bar per billing cycle.
@@ -74,9 +75,18 @@ export type BillChartCopy = {
   status: Record<InvoiceStatus, string>;
 };
 
-/** `2026-07-01` → `Jul`, with the year when the series crosses one. */
-function cycleLabel(start: Date, showYear: boolean): string {
-  return start.toLocaleDateString("en-GB", {
+/**
+ * `2026-07-01` → `Jul`, with the year when the series crosses one.
+ *
+ * In the reader's own language. This panel is on the agency console,
+ * which is translated into all ten of `LOCALES`, and a fully translated
+ * panel with a Latin-script "Jul / Aug / Sep" axis is a screen that
+ * gave up halfway. `@/components/ops/revenue-chart` hardcodes `en-GB`
+ * and is right to: `/ops` is BeOrchid's own English-only console, which
+ * is the distinction `funnelLabel` on this page already draws.
+ */
+function cycleLabel(start: Date, showYear: boolean, locale: Locale): string {
+  return start.toLocaleDateString(locale, {
     month: "short",
     year: showYear ? "2-digit" : undefined,
     timeZone: "UTC",
@@ -85,9 +95,12 @@ function cycleLabel(start: Date, showYear: boolean): string {
 
 export function BillChart({
   invoices,
+  locale,
   copy,
 }: {
   invoices: Invoice[];
+  /** Formats the month axis; the words come from `copy`. */
+  locale: Locale;
   copy: BillChartCopy;
 }) {
   if (invoices.length === 0) {
@@ -99,7 +112,7 @@ export function BillChart({
     new Set(invoices.map((i) => i.cycleStart.getUTCFullYear())).size > 1;
 
   const data = invoices.map((invoice) => ({
-    label: cycleLabel(invoice.cycleStart, spansYears),
+    label: cycleLabel(invoice.cycleStart, spansYears, locale),
     amountMinor: invoice.amountMinor,
     baseFeeMinor: invoice.baseFeeMinor,
     // Derived rather than carried: `quote` layers the per-application
@@ -129,8 +142,13 @@ export function BillChart({
         />
         <ChartTooltip
           content={
+            /* No `labelKey`. There is no `label` entry in `config`, and
+               recharts does not put one on the payload either, so naming
+               it resolved to nothing and `ChartTooltipContent` rendered
+               no header at all — a tooltip that never said which month
+               it was about. Left off, it falls back to the axis
+               category, which is the month. */
             <ChartTooltipContent
-              labelKey="label"
               hideIndicator
               formatter={(value, _name, item) => {
                 const row = item?.payload as (typeof data)[number] | undefined;

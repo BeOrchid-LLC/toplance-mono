@@ -11,6 +11,7 @@ import {
 import { formatMoney } from "@/lib/domain/pricing";
 import { fill } from "@/lib/i18n/fill";
 import type { ClientFeePoint } from "@/lib/domain/payments";
+import type { Locale } from "@/lib/i18n/locales";
 
 /**
  * What this agency's clients have paid, one bar per month.
@@ -59,12 +60,16 @@ export type ClientFeeChartCopy = {
   mixedCurrency: string;
 };
 
-/** `2026-08` → `Aug`, with the year when the window crosses one. */
-function monthLabel(month: string, showYear: boolean): string {
+/**
+ * `2026-08` → `Aug`, with the year when the window crosses one, in the
+ * reader's own language — see `cycleLabel` in `BillChart` on why this
+ * console localises its axis where `/ops` does not.
+ */
+function monthLabel(month: string, showYear: boolean, locale: Locale): string {
   // Midday rather than midnight: the key is a UTC month, and a date
   // built at 00:00Z formats as the previous month anywhere west of
   // Greenwich. The chart would read one month behind its own data.
-  return new Date(`${month}-15T12:00:00Z`).toLocaleDateString("en-GB", {
+  return new Date(`${month}-15T12:00:00Z`).toLocaleDateString(locale, {
     month: "short",
     year: showYear ? "2-digit" : undefined,
     timeZone: "UTC",
@@ -76,6 +81,7 @@ export function ClientFeeChart({
   currency,
   totalMinor,
   mixedCurrency,
+  locale,
   copy,
 }: {
   points: ClientFeePoint[];
@@ -83,18 +89,30 @@ export function ClientFeeChart({
   /** The window's total. Zero means nothing settled, not "no data". */
   totalMinor: number;
   mixedCurrency: boolean;
+  /** Formats the month axis; the words come from `copy`. */
+  locale: Locale;
   copy: ClientFeeChartCopy;
 }) {
   // A row of six zero-height bars draws an axis and says nothing. The
   // sentence says the same thing and says it in the reader's language.
   if (totalMinor === 0) {
-    return <p className="t-muted px-6 py-10 text-center">{copy.empty}</p>;
+    return (
+      <div className="px-6 py-10 text-center">
+        <p className="t-muted">{copy.empty}</p>
+        {/* An empty chart and money in the window are not exclusive:
+            the currency is chosen by the tile above, so a window
+            holding nothing but fees in some *other* currency draws no
+            bars. Saying only "nothing settled" there would be false.
+            See `clientFeesForOrgs`. */}
+        {mixedCurrency && <p className="special mt-2">{copy.mixedCurrency}</p>}
+      </div>
+    );
   }
 
   const spansYears = new Set(points.map((p) => p.month.slice(0, 4))).size > 1;
 
   const data = points.map((point) => ({
-    label: monthLabel(point.month, spansYears),
+    label: monthLabel(point.month, spansYears, locale),
     totalMinor: point.totalMinor,
     cases: point.cases,
   }));
@@ -124,8 +142,10 @@ export function ClientFeeChart({
           />
           <ChartTooltip
             content={
+              /* No `labelKey` — see `BillChart`. Naming one resolves to
+                 nothing and suppresses the tooltip's header, leaving a
+                 tooltip that never says which month it is about. */
               <ChartTooltipContent
-                labelKey="label"
                 hideIndicator
                 formatter={(value, _name, item) => {
                   const row = item?.payload as (typeof data)[number] | undefined;

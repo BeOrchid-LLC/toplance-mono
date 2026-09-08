@@ -4,6 +4,7 @@ import {
   OVERDUE_AFTER_DAYS,
   clientFeesByMonth,
   collapseClientRevenue,
+  pickFeeCurrency,
   recentCycles,
   revenueByCycle,
   statusFor,
@@ -433,6 +434,60 @@ describe("collapseClientRevenue", () => {
   });
 });
 
+
+describe("pickFeeCurrency", () => {
+  it("derives the dominant currency when no caller has chosen one", () => {
+    expect(
+      pickFeeCurrency([
+        { currency: "USD", totalMinor: 40_00, cases: 2 },
+        { currency: "NGN", totalMinor: 900_00, cases: 1 },
+      ])
+    ).toEqual({ currency: "NGN", mixedCurrency: true });
+  });
+
+  it("takes the caller's currency over the one these rows would pick", () => {
+    // The whole reason this function exists. The tile collapses every
+    // fee ever settled and the chart collapses a six-month window, so
+    // running one rule over two sets of rows is not agreement: left to
+    // itself this window would say NGN, under a tile reading USD.
+    expect(
+      pickFeeCurrency(
+        [
+          { currency: "USD", totalMinor: 40_00, cases: 2 },
+          { currency: "NGN", totalMinor: 900_00, cases: 1 },
+        ],
+        { preferred: "USD" }
+      )
+    ).toEqual({ currency: "USD", mixedCurrency: true });
+  });
+
+  it("is not mixed when every row is already in the chosen currency", () => {
+    expect(
+      pickFeeCurrency([{ currency: "USD", totalMinor: 40_00, cases: 2 }], {
+        preferred: "USD",
+      })
+    ).toEqual({ currency: "USD", mixedCurrency: false });
+  });
+
+  it("reports mixed when the window holds none of the chosen currency", () => {
+    // The case the empty state has to survive: the chart draws nothing,
+    // and the reason is not "nothing settled" — it is that everything
+    // which settled is in another unit. `ClientFeeChart` shows the
+    // mixed-currency line alongside its empty sentence for this.
+    expect(
+      pickFeeCurrency([{ currency: "NGN", totalMinor: 900_00, cases: 1 }], {
+        preferred: "USD",
+      })
+    ).toEqual({ currency: "USD", mixedCurrency: true });
+  });
+
+  it("falls back rather than inventing a currency for no rows", () => {
+    expect(pickFeeCurrency([], { fallbackCurrency: "NGN" })).toEqual({
+      currency: "NGN",
+      mixedCurrency: false,
+    });
+  });
+});
 
 describe("clientFeesByMonth", () => {
   const now = new Date("2026-09-08T12:00:00Z");

@@ -32,7 +32,25 @@ import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
  * `demoRequest` pre-fills the form and carries the enquiry's id, so the
  * transaction can stamp it converted. Without one this is a walk-in.
  */
-export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow }) {
+export function ProvisionTenant({
+  demoRequest,
+  size = "bar",
+}: {
+  demoRequest?: DemoRequestRow;
+  /**
+   * `bar` because that is where this button usually is — the console
+   * bar on `/ops/tenants`, standing in the row of 36px chrome that
+   * size exists to match.
+   *
+   * It is not always there. `DemoRequestQueue` renders one per row as a
+   * `DataTable` cell, among 44px `size="sm"` row controls, which is
+   * precisely the context `size="bar"` documents itself as not being —
+   * it would sit undersized, cut to a tighter radius than its
+   * neighbours, and under the tap minimum in a table meant for thumbs.
+   * That call site passes `sm`.
+   */
+  size?: "bar" | "sm";
+}) {
   const t = useT();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
@@ -117,7 +135,7 @@ export function ProvisionTenant({ demoRequest }: { demoRequest?: DemoRequestRow 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button size="bar">
+        <Button size={size}>
           <Building2 /> {t(OPS_TENANTS.provisionButton)}
         </Button>
       </DialogTrigger>

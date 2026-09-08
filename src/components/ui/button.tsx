@@ -45,10 +45,19 @@ const buttonVariants = cva(
          * 2026-09-08.
          *
          * 36px is under the 44px tap minimum the comment above states,
-         * so it applies from `md` only. That is not a compromise but the
-         * same line the bar already draws: `SettingsCluster` is
-         * `max-md:hidden`, so below `md` there is no 36px row to match
-         * and the button is back among thumbs. It stays 44px there.
+         * so it applies from `md` only, and below `md` this button is
+         * the taller of the two things it stands next to.
+         *
+         * That *is* a compromise, and it is worth naming rather than
+         * explaining away. What thins out below `md` is `SettingsCluster`
+         * (`max-md:hidden` in `AdminShell`) and `RailToggle` (`lg:` and
+         * up), but `NotificationsMenu` does not: it is `size-9` — 36px —
+         * at every width, in this same header row, immediately beside
+         * these buttons on `/ops/staff` and `/ops/tenants`. So the
+         * alignment this size exists to fix is not absent below `md`,
+         * it is outranked. A row of chrome that looks a little uneven
+         * costs a phone user a glance; a 36px primary action costs them
+         * the tap. The tap wins.
          *
          * The icon steps down with it. A 20px glyph in a 36px button
          * leaves 8px of air and reads as an icon that outgrew its

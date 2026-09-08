@@ -52,16 +52,21 @@ vi.mock("next/navigation", () => ({
 
 const SUSPENDED_MEMBER = "test_console_suspended";
 const LIVE_MEMBER = "test_console_live";
-const USER_IDS = [SUSPENDED_MEMBER, LIVE_MEMBER];
+const CANCELLED_MEMBER = "test_console_cancelled";
+const USER_IDS = [SUSPENDED_MEMBER, LIVE_MEMBER, CANCELLED_MEMBER];
 
 const SUSPENDED_ORG = "00000000-0000-4000-8000-00000000c001";
 const LIVE_ORG = "00000000-0000-4000-8000-00000000c002";
-const ORG_IDS = [SUSPENDED_ORG, LIVE_ORG];
+const CANCELLED_ORG = "00000000-0000-4000-8000-00000000c003";
+const ORG_IDS = [SUSPENDED_ORG, LIVE_ORG, CANCELLED_ORG];
 
 describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
   const { db } = await import("@/lib/db/client");
-  const { orgMembers, organisations, profiles } = await import(
+  const { orgMembers, organisations, payments, profiles } = await import(
     "@/lib/db/schema"
+  );
+  const { cancelSubscription, recordPayment } = await import(
+    "@/lib/data/payments"
   );
   const { resolveAgencyConsole } = await import(
     "@/app/[locale]/agency/console"
@@ -71,6 +76,7 @@ describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
     await db.insert(organisations).values([
       { id: SUSPENDED_ORG, name: "Suspended Agency", suspendedAt: new Date() },
       { id: LIVE_ORG, name: "Live Agency" },
+      { id: CANCELLED_ORG, name: "Departed Agency" },
     ]);
 
     await db.insert(profiles).values([
@@ -86,15 +92,40 @@ describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
         fullName: "Live Owner",
         role: "org_member",
       },
+      {
+        id: CANCELLED_MEMBER,
+        email: "cancelled@test.invalid",
+        fullName: "Departed Owner",
+        role: "org_member",
+      },
     ]);
 
     await db.insert(orgMembers).values([
       { orgId: SUSPENDED_ORG, userId: SUSPENDED_MEMBER, role: "owner" },
       { orgId: LIVE_ORG, userId: LIVE_MEMBER, role: "owner" },
+      { orgId: CANCELLED_ORG, userId: CANCELLED_MEMBER, role: "owner" },
     ]);
+
+    // A month bought and then given up: paid, still inside its period,
+    // and cancelled. Every column the paywall used to read says this
+    // agency is entitled, so only the `cancelled_at` filter inside
+    // `activeSubscription` keeps it out of the console.
+    await recordPayment({
+      kind: "agency_subscription",
+      status: "paid",
+      amountMinor: 300_00,
+      currency: "USD",
+      orgId: CANCELLED_ORG,
+      payerId: CANCELLED_MEMBER,
+      provider: "mock",
+      periodStart: new Date(Date.now() - 60_000),
+      periodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+    await cancelSubscription(CANCELLED_ORG);
   });
 
   afterAll(async () => {
+    await db.delete(payments).where(inArray(payments.orgId, ORG_IDS));
     await db.delete(orgMembers).where(inArray(orgMembers.orgId, ORG_IDS));
     await db.delete(organisations).where(inArray(organisations.id, ORG_IDS));
     await db.delete(profiles).where(inArray(profiles.id, USER_IDS));
@@ -148,5 +179,31 @@ describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
 
     expect(console_.orgId).toBe(LIVE_ORG);
     expect(console_.subscriptionActive).toBe(false);
+  });
+
+  it("closes the console on an agency that ended its own plan", async () => {
+    // The cancelled agency holds a paid subscription whose period has
+    // not run out. Before `cancelled_at`, this member walked straight
+    // into the console.
+    await signIn(CANCELLED_MEMBER, [CANCELLED_ORG]);
+
+    await expect(resolveAgencyConsole()).rejects.toThrow(
+      "redirect(/agency/billing)"
+    );
+  });
+
+  it("lets that agency open the till it was just sent to", async () => {
+    // The #77 shape, for the state cancellation adds. The loop was two
+    // guards disagreeing about one person; cancellation is enforced
+    // inside `activeSubscription`, which both of them read, so a
+    // cancelled agency is an unpaid one to each of them at once — it
+    // gets the paywall and the paywall opens.
+    await signIn(CANCELLED_MEMBER, [CANCELLED_ORG]);
+
+    const console_ = await resolveAgencyConsole({ allowUnpaid: true });
+
+    expect(console_.orgId).toBe(CANCELLED_ORG);
+    expect(console_.subscriptionActive).toBe(false);
+    expect(console_.membership?.name).toBe("Departed Agency");
   });
 });

@@ -133,6 +133,24 @@ export function isAgencyDirectorFor(actor: Actor, app: ApplicationRef): boolean 
 }
 
 /**
+ * The same person, asked about the agency rather than about a case.
+ *
+ * `isAgencyDirectorFor` needs an `ApplicationRef` to read the org off,
+ * which is fine for everything that happens inside a case and useless
+ * for the acts that are about the agency itself — ending its plan, most
+ * of all. Both go through `rankIn`, so there is one definition of what
+ * "director" means and this is not a second one.
+ *
+ * Deliberately narrower than `isOrgMemberOf`, which is what
+ * `requireOrgAccess` asks. Buying the plan is any member's to do; ending
+ * it shuts every colleague's console at once, which is the blast radius
+ * of a suspension and not a reviewer's call.
+ */
+export function isOrgDirector(actor: Actor, orgId: string | null): boolean {
+  return rankIn(actor, orgId) === "owner";
+}
+
+/**
  * The agency's reach into one case, which is the *handler's* reach.
  *
  * The director, and the colleague the case was handed to. Nobody else,

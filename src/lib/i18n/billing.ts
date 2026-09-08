@@ -33,6 +33,15 @@ export const BILLING: {
   payPlan: L;
   paying: L;
   planActiveUntil: L;
+  planEndingSoon: L;
+  planLapsed: L;
+  planCancelled: L;
+  cancelPlan: L;
+  cancelling: L;
+  cancelConfirmTitle: L;
+  cancelConfirmBody: L;
+  keepPlan: L;
+  planEnded: L;
   historyTitle: L;
   historyEmpty: L;
   testPaymentNotice: L;
@@ -145,6 +154,120 @@ export const BILLING: {
     ar: "خطتك سارية حتى {date}.",
     tw: "Wo nhyehyɛe no kɔ so kosi {date}.",
     zu: "Uhlelo lwakho lusebenza kuze kube ngu-{date}.",
+  },
+  planEndingSoon: {
+    en: "Your plan ends on {date}. Nothing renews it — the console closes that day, and the next month can be bought from here once it has.",
+    ha: "Shirinku zai ƙare a {date}. Babu abin da ke sabunta shi — na'urar sarrafa za ta rufe a wannan ranar, kuma za a iya sayen watan gaba daga nan bayan ta rufe.",
+    yo: "Ètò yín yóò parí ní {date}. Kò sí ohun tí ó ń tún un ṣe — kọ̀nsólù yóò tì ní ọjọ́ náà, a sì lè ra oṣù tó ń bọ̀ láti ibí yìí lẹ́yìn tí ó bá ti tì.",
+    ig: "Atụmatụ gị ga-akwụsị na {date}. Ọ dịghị ihe na-emeghari ya — consul ga-emechi n'ụbọchị ahụ, a ga-enwekwa ike ịzụta ọnwa ọzọ site ebe a mgbe o mechiri.",
+    fr: "Votre formule prend fin le {date}. Rien ne la renouvelle — la console se ferme ce jour-là, et le mois suivant s'achète ici une fois qu'elle l'est.",
+    pt: "O seu plano termina a {date}. Nada o renova — a consola fecha nesse dia, e o mês seguinte pode ser comprado aqui assim que fechar.",
+    sw: "Mpango wako unaisha tarehe {date}. Hakuna kinachouhuisha — kiweko kitafungwa siku hiyo, na mwezi ujao unaweza kununuliwa hapa mara tu kitakapofungwa.",
+    ar: "تنتهي خطتك في {date}. لا شيء يجددها — تُغلق اللوحة في ذلك اليوم، ويمكن شراء الشهر التالي من هنا بعد إغلاقها.",
+    tw: "Wo nhyehyɛe no bɛba awiei wɔ {date}. Biribiara nsan nyɛ no foforo — console no bɛto mu saa da no, na wubetumi atɔ ɔsram a edi hɔ no wɔ ha bere a ato mu.",
+    zu: "Uhlelo lwakho luphela ngomhla ka-{date}. Akukho okuluvuselelayo — ikhonsoli ivalwa ngalolo suku, futhi inyanga elandelayo ingathengwa lapha uma isivaliwe.",
+  },
+  planLapsed: {
+    en: "Your plan ended on {date}. The console opens again as soon as the next month is paid for.",
+    ha: "Shirinku ya ƙare a {date}. Na'urar sarrafa za ta sake buɗewa da zarar an biya kuɗin watan gaba.",
+    yo: "Ètò yín parí ní {date}. Kọ̀nsólù yóò tún ṣí ní kété tí a bá san owó oṣù tó ń bọ̀.",
+    ig: "Atụmatụ gị kwụsịrị na {date}. Consul ga-emeghe ọzọ ozugbo a kwụrụ ụgwọ ọnwa ọzọ.",
+    fr: "Votre formule a pris fin le {date}. La console rouvre dès que le mois suivant est payé.",
+    pt: "O seu plano terminou a {date}. A consola volta a abrir assim que o mês seguinte for pago.",
+    sw: "Mpango wako uliisha tarehe {date}. Kiweko kitafunguka tena mara tu mwezi ujao utakapolipiwa.",
+    ar: "انتهت خطتك في {date}. تُفتح اللوحة من جديد بمجرد دفع قيمة الشهر التالي.",
+    tw: "Wo nhyehyɛe no baa awiei wɔ {date}. Console no bebue bio bere a wɔatua ɔsram a edi hɔ no ka.",
+    zu: "Uhlelo lwakho luphele ngomhla ka-{date}. Ikhonsoli ivuleka futhi uma inyanga elandelayo isikhokhelwe.",
+  },
+  planCancelled: {
+    en: "You ended your plan on {date}. The console opens again as soon as the next month is paid for.",
+    ha: "Kun ƙare shirinku a {date}. Na'urar sarrafa za ta sake buɗewa da zarar an biya kuɗin watan gaba.",
+    yo: "Ẹ parí ètò yín ní {date}. Kọ̀nsólù yóò tún ṣí ní kété tí a bá san owó oṣù tó ń bọ̀.",
+    ig: "I kwụsịrị atụmatụ gị na {date}. Consul ga-emeghe ọzọ ozugbo a kwụrụ ụgwọ ọnwa ọzọ.",
+    fr: "Vous avez mis fin à votre formule le {date}. La console rouvre dès que le mois suivant est payé.",
+    pt: "Terminou o seu plano a {date}. A consola volta a abrir assim que o mês seguinte for pago.",
+    sw: "Ulisitisha mpango wako tarehe {date}. Kiweko kitafunguka tena mara tu mwezi ujao utakapolipiwa.",
+    ar: "أنهيت خطتك في {date}. تُفتح اللوحة من جديد بمجرد دفع قيمة الشهر التالي.",
+    tw: "Wode wo nhyehyɛe no baa awiei wɔ {date}. Console no bebue bio bere a wɔatua ɔsram a edi hɔ no ka.",
+    zu: "Uluqedile uhlelo lwakho ngomhla ka-{date}. Ikhonsoli ivuleka futhi uma inyanga elandelayo isikhokhelwe.",
+  },
+  cancelPlan: {
+    en: "End the plan",
+    ha: "Ƙare shirin",
+    yo: "Parí ètò náà",
+    ig: "Kwụsị atụmatụ ahụ",
+    fr: "Mettre fin à la formule",
+    pt: "Terminar o plano",
+    sw: "Sitisha mpango",
+    ar: "إنهاء الخطة",
+    tw: "Ma nhyehyɛe no mmra awiei",
+    zu: "Qeda uhlelo",
+  },
+  cancelling: {
+    en: "Ending the plan…",
+    ha: "Ana ƙare shirin…",
+    yo: "À ń parí ètò náà…",
+    ig: "Na-akwụsị atụmatụ ahụ…",
+    fr: "Fin de la formule en cours…",
+    pt: "A terminar o plano…",
+    sw: "Inasitisha mpango…",
+    ar: "جارٍ إنهاء الخطة…",
+    tw: "Yɛrema nhyehyɛe no aba awiei…",
+    zu: "Iqeda uhlelo…",
+  },
+  cancelConfirmTitle: {
+    en: "End the agency plan?",
+    ha: "A ƙare shirin hukumar?",
+    yo: "Ṣé kí a parí ètò ilé-iṣẹ́ náà?",
+    ig: "Ị chọrọ ịkwụsị atụmatụ ụlọ ọrụ ahụ?",
+    fr: "Mettre fin à la formule de l'agence ?",
+    pt: "Terminar o plano da agência?",
+    sw: "Kusitisha mpango wa wakala?",
+    ar: "إنهاء خطة الوكالة؟",
+    tw: "Wopɛ sɛ adwumakuw nhyehyɛe no ba awiei?",
+    zu: "Uqeda uhlelo lwenhlangano?",
+  },
+  /**
+   * What lands the moment the button commits, and none of it is on the
+   * screen behind the dialog: that it is immediate, that it closes on
+   * colleagues mid-case and not only on whoever clicked, and that the
+   * days already paid for go with it.
+   */
+  cancelConfirmBody: {
+    en: "The console closes now — for you and for every colleague, in the middle of whatever case they have open. You have paid up to {date} and none of it is refunded.",
+    ha: "Na'urar sarrafa za ta rufe yanzu — gare ku da kowane abokin aiki, a tsakiyar duk fayil ɗin da suke kai. Kun biya har zuwa {date} kuma ba za a mayar da kome ba.",
+    yo: "Kọ̀nsólù yóò tì báyìí — fún yín àti fún gbogbo ẹlẹgbẹ́ yín, ní àárín ẹjọ́ yòówù tí wọ́n ṣí. Ẹ ti san owó títí di {date} a kò sì ní dá ọ̀kankan padà.",
+    ig: "Consul ga-emechi ugbu a — maka gị na maka onye ọrụ ibe gị ọ bụla, n'etiti ikpe ọ bụla ha meghere. Ị kwụrụ ụgwọ ruo {date} ma a gaghị eweghachi ihe ọ bụla.",
+    fr: "La console se ferme maintenant — pour vous et pour chaque collègue, au milieu du dossier qu'il a ouvert. Vous avez payé jusqu'au {date} et rien n'est remboursé.",
+    pt: "A consola fecha agora — para si e para cada colega, a meio do processo que tiver aberto. Pagou até {date} e nada é reembolsado.",
+    sw: "Kiweko kinafungwa sasa — kwako na kwa kila mwenzako, katikati ya kesi yoyote aliyoifungua. Umelipa hadi {date} na hakuna kinachorejeshwa.",
+    ar: "تُغلق اللوحة الآن — لك ولكل زميل، في منتصف أي ملف مفتوح لديه. لقد دفعت حتى {date} ولا يُسترد شيء من ذلك.",
+    tw: "Console no bɛto mu seesei — ama wo ne wo nnwumayɛfo biara, wɔ asɛm biara a wɔabue mu no mfimfini. Woatua ka akosi {date} na wɔrensan mma biribiara.",
+    zu: "Ikhonsoli ivalwa manje — kuwe nakuzo zonke ozakwenu, phakathi nanoma yiliphi icala abalivulile. Ukhokhele kuze kube ngu-{date} futhi akukho okubuyiselwayo.",
+  },
+  keepPlan: {
+    en: "Keep the plan",
+    ha: "Ci gaba da shirin",
+    yo: "Jẹ́ kí ètò náà wà",
+    ig: "Hapụ atụmatụ ahụ ka ọ dịrị",
+    fr: "Conserver la formule",
+    pt: "Manter o plano",
+    sw: "Endelea na mpango",
+    ar: "الإبقاء على الخطة",
+    tw: "Ma nhyehyɛe no ntena hɔ",
+    zu: "Gcina uhlelo",
+  },
+  planEnded: {
+    en: "Your plan has ended.",
+    ha: "Shirinku ya ƙare.",
+    yo: "Ètò yín ti parí.",
+    ig: "Atụmatụ gị akwụsịla.",
+    fr: "Votre formule a pris fin.",
+    pt: "O seu plano terminou.",
+    sw: "Mpango wako umesitishwa.",
+    ar: "انتهت خطتك.",
+    tw: "Wo nhyehyɛe no aba awiei.",
+    zu: "Uhlelo lwakho seluphelile.",
   },
   historyTitle: {
     en: "Payments",

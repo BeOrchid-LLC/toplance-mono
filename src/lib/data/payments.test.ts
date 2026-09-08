@@ -18,8 +18,10 @@ describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
   );
   const {
     activeSubscription,
+    cancelSubscription,
     hasActiveSubscription,
     isApplicationPaid,
+    latestSubscription,
     listInvoices,
     listPaymentsForOrg,
     recordPayment,
@@ -27,9 +29,17 @@ describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
 
   // Fixed ids no other suite uses, so two files running against the same
   // database cannot delete each other's rows.
-  const ORG = "00000000-0000-4000-8000-0000000e0001";
-  const OTHER_ORG = "00000000-0000-4000-8000-0000000e0002";
-  const APP = "00000000-0000-4000-8000-0000000e0003";
+  //
+  // Moved off the `…e000n` block, which `organisations.test.ts` claims
+  // too. Vitest runs the files in parallel against one database, so the
+  // two suites raced: this one holds an application against `ORG` while
+  // that one drops the organisation, and the loser dies on
+  // `applications_org_id_organisations_id_fk`. It surfaced when this
+  // file grew, which is the only reason a collision that was always
+  // there had not bitten yet.
+  const ORG = "00000000-0000-4000-8000-0000000e1001";
+  const OTHER_ORG = "00000000-0000-4000-8000-0000000e1002";
+  const APP = "00000000-0000-4000-8000-0000000e1003";
   const OWNER = "test_pay_owner";
   const TRAVELER = "test_pay_traveler";
 
@@ -346,6 +356,152 @@ describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
         });
         expect(invoices).toEqual([]);
       });
+    });
+  });
+
+  /**
+   * Cancellation, which in a product where nothing renews can only mean
+   * one thing: ending the period the agency has already paid for.
+   *
+   * The stamp is `cancelled_at` rather than a payment status, and the
+   * last claim below is why. `listInvoices` settles a cycle from
+   * `status`, so a month that was genuinely collected has to go on
+   * reading paid after the agency walks out of it. Entitlement stops;
+   * the books do not move.
+   */
+  describe("cancelSubscription", () => {
+    it("ends the entitlement the moment it is stamped", async () => {
+      await subscription();
+      expect(await hasActiveSubscription(ORG)).toBe(true);
+
+      await cancelSubscription(ORG);
+
+      expect(await hasActiveSubscription(ORG)).toBe(false);
+    });
+
+    it("ends every period that was still running, not just the furthest", async () => {
+      // `purchaseSubscription` refuses to sell a second month while one
+      // is live, so two overlapping rows are a race rather than a normal
+      // state. Stamping only the row `activeSubscription` happens to
+      // return would leave the console open while the director has been
+      // told it is shut.
+      await subscription({ periodEnd: future(24) });
+      await subscription({ periodEnd: future(24 * 60) });
+
+      const ended = await cancelSubscription(ORG);
+
+      expect(ended).toHaveLength(2);
+      expect(await hasActiveSubscription(ORG)).toBe(false);
+    });
+
+    it("leaves a period that already lapsed alone", async () => {
+      // History. Stamping it would rewrite a month that ran its full
+      // course as one the agency walked out of.
+      await subscription({ periodStart: past(48), periodEnd: past(1) });
+
+      expect(await cancelSubscription(ORG)).toHaveLength(0);
+    });
+
+    it("stamps nothing the second time", async () => {
+      await subscription();
+      await cancelSubscription(ORG);
+
+      // What makes the action idempotent: a double-clicked button cannot
+      // move the date the agency ended its plan.
+      expect(await cancelSubscription(ORG)).toHaveLength(0);
+    });
+
+    it("leaves another agency's live plan running", async () => {
+      await subscription();
+      await recordPayment({
+        kind: "agency_subscription",
+        status: "paid",
+        amountMinor: 300_00,
+        currency: "USD",
+        orgId: OTHER_ORG,
+        payerId: OWNER,
+        provider: "mock",
+        periodStart: past(1),
+        periodEnd: future(24),
+      });
+
+      await cancelSubscription(ORG);
+
+      expect(await hasActiveSubscription(OTHER_ORG)).toBe(true);
+    });
+
+    it("keeps the cancelled payment in the agency's history", async () => {
+      await subscription();
+      await cancelSubscription(ORG);
+
+      const rows = await listPaymentsForOrg(ORG);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].cancelledAt).toBeInstanceOf(Date);
+    });
+
+    it("still settles the cycle the cancelled payment was made in", async () => {
+      // The money moved. A board pack that un-collects it the day an
+      // agency leaves is a board pack that disagrees with the bank.
+      const forOrg = async () => (await listInvoices({})).filter((i) => i.orgId === ORG);
+      const [current] = await forOrg();
+      await subscription({
+        periodStart: new Date(current.cycleStart.getTime() + 60_000),
+      });
+
+      await cancelSubscription(ORG);
+
+      const [settled] = await forOrg();
+      expect(settled.status).toBe("paid");
+    });
+  });
+
+  /**
+   * What the billing screen says when nothing is running.
+   *
+   * "Your plan ended" and "you ended your plan" are different sentences,
+   * and `activeSubscription` can tell neither apart: it answers `null`
+   * for a lapsed plan, a cancelled one and an agency that never paid
+   * alike.
+   */
+  describe("latestSubscription", () => {
+    it("is null for an agency that never paid", async () => {
+      expect(await latestSubscription(ORG)).toBeNull();
+    });
+
+    it("returns a lapsed plan, still carrying the date it ran out", async () => {
+      await subscription({ periodStart: past(48), periodEnd: past(1) });
+
+      const last = await latestSubscription(ORG);
+      expect(last?.periodEnd?.getTime()).toBeLessThan(Date.now());
+      expect(last?.cancelledAt).toBeNull();
+    });
+
+    it("returns a cancelled plan carrying the date it was ended", async () => {
+      await subscription();
+      await cancelSubscription(ORG);
+
+      const last = await latestSubscription(ORG);
+      expect(last?.cancelledAt).toBeInstanceOf(Date);
+    });
+
+    it("ignores a payment that never went through", async () => {
+      // A failed card is not a plan the agency once held, and a screen
+      // telling them theirs "ended" would be a receipt for nothing.
+      await subscription({ status: "failed" });
+      expect(await latestSubscription(ORG)).toBeNull();
+    });
+
+    it("prefers the plan that reached furthest ahead", async () => {
+      await subscription({ periodEnd: past(1) });
+      await subscription({ periodEnd: future(24) });
+
+      const last = await latestSubscription(ORG);
+      expect(last?.periodEnd?.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it("is not satisfied by another agency's plan", async () => {
+      await subscription();
+      expect(await latestSubscription(OTHER_ORG)).toBeNull();
     });
   });
 });

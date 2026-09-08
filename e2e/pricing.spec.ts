@@ -23,8 +23,10 @@ import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 const DIRECTOR = testEmail("pricing-director");
 const CLIENT = testEmail("pricing-client");
+const LEAVER = testEmail("pricing-leaver");
 const ORG = "Pricing Test Agency";
 const CLIENT_ORG = "Pricing Client Agency";
+const LEAVER_ORG = "Pricing Leaver Agency";
 
 test("an agency cannot open its console until the plan is paid for", async ({ page }) => {
   await resetFixtures([DIRECTOR], [ORG]);
@@ -63,6 +65,65 @@ test("an agency cannot open its console until the plan is paid for", async ({ pa
   await expect(
     page.getByRole("button", { name: "Pay and open the console" })
   ).toHaveCount(0);
+});
+
+/**
+ * The way back out, and back in.
+ *
+ * Nothing renews here, so the only thing an agency can end is the month
+ * it is standing in — and ending it has to leave the product somewhere a
+ * director can act. That is the claim: the console shuts, the paywall
+ * catches them, and the paywall *opens*. #77 was the version where it
+ * did not, and the browser gave up with ERR_TOO_MANY_REDIRECTS.
+ */
+test("an agency can end its plan, and is not stranded when it does", async ({
+  page,
+}) => {
+  await resetFixtures([LEAVER], [LEAVER_ORG]);
+
+  await signUp(page, {
+    email: LEAVER,
+    fullName: "Amaka Obi",
+    path: "/agency/sign-up",
+    orgName: LEAVER_ORG,
+  });
+
+  await page.waitForURL("**/agency/billing");
+  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.waitForURL("**/agency");
+
+  await consoleNav(page).getByRole("link", { name: "Billing" }).click();
+  await page.waitForURL("**/agency/billing");
+
+  // ---- it asks first, and taking the way out changes nothing ----
+  await page.getByRole("button", { name: "End the plan" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText("End the agency plan?");
+  // The dialog says what the screen behind it does not: that it lands
+  // now, and on colleagues rather than only on whoever clicked.
+  await expect(dialog).toContainText("every colleague");
+
+  await dialog.getByRole("button", { name: "Keep the plan" }).click();
+  await expect(page.getByText("Your plan runs until")).toBeVisible();
+
+  // ---- confirming it closes the console ----
+  await page.getByRole("button", { name: "End the plan" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "End the plan" }).click();
+
+  await expect(page.getByText("You ended your plan on")).toBeVisible();
+
+  // ---- and the console is shut, not merely relabelled ----
+  await page.goto("/agency/clients");
+  await page.waitForURL("**/agency/billing");
+
+  // The half #77 got wrong. The guard sends them here; this page opens.
+  await expect(page.getByRole("heading", { name: "Your plan" })).toBeVisible();
+  await expect(page.getByText("You ended your plan on")).toBeVisible();
+
+  // ---- buying again reopens it, and nothing gates the way back in ----
+  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.waitForURL("**/agency");
+  await expect(page.getByRole("heading", { name: LEAVER_ORG })).toBeVisible();
 });
 
 test("a client pays for their own application before intake opens", async ({ page }) => {

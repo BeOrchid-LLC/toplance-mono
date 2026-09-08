@@ -438,6 +438,28 @@ export const payments = pgTable(
     periodEnd: timestamp({ withTimezone: true }),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
     paidAt: timestamp({ withTimezone: true }),
+    /**
+     * When the agency gave up the rest of a period it had paid for.
+     *
+     * Only `cancelSubscription` writes it, and that query filters on
+     * `kind = 'agency_subscription'`, so a client's application fee
+     * never carries one. Not folded into `payment_shape_matches_kind`
+     * below: that check is about a row naming the thing it paid for,
+     * and widening it would make the invariant harder to read for a
+     * column no other writer touches.
+     *
+     * The one column on this table that is written after a row settles,
+     * and it is deliberately additive: `status`, `amount_minor`,
+     * `period_start` and `period_end` go on saying what was sold and
+     * collected, because the money moved and `listInvoices` reads them
+     * to settle the cycle. Cancelling is a second fact about the same
+     * payment, not a correction of it — which is why it is not
+     * `status = 'cancelled'`, a value that would un-collect a month the
+     * bank has already seen.
+     *
+     * Written once and never cleared. Buying again writes a new row.
+     */
+    cancelledAt: timestamp({ withTimezone: true }),
   },
   (t) => [
     /**

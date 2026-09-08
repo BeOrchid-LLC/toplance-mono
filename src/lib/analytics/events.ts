@@ -177,6 +177,17 @@ export const EVENT_NAMES = [
   "toplance.application_purchased",
 
   /**
+   * An agency gave up the rest of a month it had paid for.
+   *
+   * Counted apart from a plan simply running out, which emits nothing
+   * because nothing happens — a period ends on its own. This is a
+   * decision somebody made mid-month, and the gap between it and
+   * `subscription_purchased` is the only churn signal the product has
+   * while nothing renews.
+   */
+  "toplance.subscription_cancelled",
+
+  /**
    * The corridor review lifecycle. `corridor_drafted` is emitted by the
    * drafting script, the other two by the ops console.
    *

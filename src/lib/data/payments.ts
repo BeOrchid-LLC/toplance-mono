@@ -1,6 +1,16 @@
 import "server-only";
 
-import { and, desc, eq, gt, gte, inArray, isNotNull, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  sql,
+} from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, organisations, payments } from "@/lib/db/schema";
@@ -27,9 +37,14 @@ export type Payment = typeof payments.$inferSelect;
  *
  * There is no `subscription_status` on `organisations` and no `paid`
  * flag on `applications`, deliberately. Entitlement is derived here,
- * from rows that are never edited after they settle: a status column in
- * two places is a status column that disagrees with itself the first
- * time a payment lands and the second write does not.
+ * from what a settled row says rather than from a flag beside it: a
+ * status column in two places is a status column that disagrees with
+ * itself the first time a payment lands and the second write does not.
+ *
+ * `cancelSubscription` is the one write that touches a row after it
+ * settles, and it adds a fact rather than editing one — see
+ * `cancelled_at` in the schema. Everything the row says about the money
+ * stays true, because the money moved.
  *
  * Both reads below are on the path of every gated request — the agency's
  * on every console page, the client's on every `/app` page — which is
@@ -88,11 +103,21 @@ export async function recordPayment(input: RecordPaymentInput): Promise<Payment>
 /**
  * The agency's live subscription, or `null`.
  *
- * "Live" is three conditions and all of them matter: paid rather than
- * pending or failed, a subscription rather than a client's fee, and an
- * end date still ahead of us. A row that has lapsed is history, not
- * entitlement — nothing renews, by design, so an agency that stops
- * paying stops passing this.
+ * "Live" is four conditions and all of them matter: paid rather than
+ * pending or failed, a subscription rather than a client's fee, an end
+ * date still ahead of us, and not cancelled. A row that has lapsed is
+ * history, not entitlement — nothing renews, by design, so an agency
+ * that stops paying stops passing this.
+ *
+ * Cancellation is enforced here and nowhere else, and that placement is
+ * the whole of it. #77 was two guards asking different questions about
+ * the same person: `resolveAgencyConsole` decided an agency owed money
+ * while `/agency/billing` decided it had nothing to sell, and the
+ * browser bounced between them until it gave up. Both of those read this
+ * function, so a cancelled agency becomes exactly an unpaid one to the
+ * two of them at the same instant. A second predicate anywhere — a
+ * `cancelled` branch in `decideAgencyBilling`, a `cancelledAt` check on
+ * a page — is how that bug comes back.
  */
 export async function activeSubscription(
   orgId: string,
@@ -106,6 +131,7 @@ export async function activeSubscription(
         eq(payments.orgId, orgId),
         eq(payments.kind, "agency_subscription"),
         eq(payments.status, "paid"),
+        isNull(payments.cancelledAt),
         isNotNull(payments.periodEnd),
         gt(payments.periodEnd, at)
       )
@@ -121,6 +147,77 @@ export async function hasActiveSubscription(
   at: Date = new Date()
 ): Promise<boolean> {
   return (await activeSubscription(orgId, at)) !== null;
+}
+
+/**
+ * The newest plan the agency ever held, live or not.
+ *
+ * The billing screen needs this because `activeSubscription` answers
+ * `null` three different ways — never paid, lapsed, cancelled — and the
+ * agency is owed a different sentence for each. Only `paid` rows: a card
+ * that failed is not a plan somebody once had, and telling them theirs
+ * "ended" would be a receipt for nothing.
+ *
+ * Ordered by `period_end` like `activeSubscription`, so the two agree
+ * about which row is the current one on an agency that holds more than
+ * one.
+ */
+export async function latestSubscription(orgId: string): Promise<Payment | null> {
+  const [row] = await db
+    .select()
+    .from(payments)
+    .where(
+      and(
+        eq(payments.orgId, orgId),
+        eq(payments.kind, "agency_subscription"),
+        eq(payments.status, "paid"),
+        isNotNull(payments.periodEnd)
+      )
+    )
+    .orderBy(desc(payments.periodEnd))
+    .limit(1);
+
+  return row ?? null;
+}
+
+/**
+ * End every period this agency is still inside, and return what changed.
+ *
+ * One statement rather than a read followed by a write, for two reasons.
+ * `cancelled_at is null` in the WHERE makes it idempotent against the
+ * database rather than against a check the caller remembered to do, so a
+ * double-clicked button cannot move the date the agency left. And it
+ * stamps *every* live row: `purchaseSubscription` refuses to sell a
+ * second month while one is running, but two overlapping rows are one
+ * lost race away, and cancelling only the row `activeSubscription`
+ * happens to return would leave the console open while the director has
+ * just been told it is shut.
+ *
+ * An empty array means there was nothing to end. That is the caller's
+ * signal, not an error — see `cancelSubscription` in the billing action.
+ *
+ * `status`, `amount_minor` and the period are left exactly as they were.
+ * The month was sold and collected; `listInvoices` settles the cycle
+ * from those columns and must go on doing so.
+ */
+export async function cancelSubscription(
+  orgId: string,
+  at: Date = new Date()
+): Promise<Payment[]> {
+  return db
+    .update(payments)
+    .set({ cancelledAt: at })
+    .where(
+      and(
+        eq(payments.orgId, orgId),
+        eq(payments.kind, "agency_subscription"),
+        eq(payments.status, "paid"),
+        isNull(payments.cancelledAt),
+        isNotNull(payments.periodEnd),
+        gt(payments.periodEnd, at)
+      )
+    )
+    .returning();
 }
 
 /**

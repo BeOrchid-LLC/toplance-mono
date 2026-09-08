@@ -39,7 +39,6 @@ export async function AgencyShell({
   title,
   lead,
   actions,
-  search,
   children,
 }: {
   profile: Profile;
@@ -54,7 +53,6 @@ export async function AgencyShell({
   title?: string;
   lead?: string;
   actions?: React.ReactNode;
-  search?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const [notifications, unreadCount, avatarUrl, clients, invitations] =
@@ -113,7 +111,6 @@ export async function AgencyShell({
           />
         </>
       }
-      search={search}
     >
       {children}
     </AdminShell>

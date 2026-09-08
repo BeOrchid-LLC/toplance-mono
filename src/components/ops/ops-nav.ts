@@ -48,8 +48,8 @@ import type { Locale } from "@/lib/i18n/locales";
 export const opsNav: NavItem[] = [
   { href: "/ops/dashboard", label: "Dashboard" },
   { href: "/ops/tenants", label: "Agencies" },
-  { href: "/ops/enquiries", label: "Enquiries" },
-  { href: "/ops/staff", label: "Colleagues" },
+  { href: "/ops/enquiries", label: "Demo requests" },
+  { href: "/ops/staff", label: "Team" },
   { href: "/ops/corridors", label: "Routes" },
 ];
 

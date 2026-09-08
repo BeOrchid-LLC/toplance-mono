@@ -112,7 +112,7 @@ export default async function OpsDashboardPage() {
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_COMMON.nav.dashboard[locale]}
-      lead="The state of the business — clients, revenue, the review desk and where demand is going."
+      lead="The state of the business — agencies, revenue, the review desk and where demand is going."
       actions={
         <NotificationsMenu
           notifications={notifications}
@@ -125,14 +125,18 @@ export default async function OpsDashboardPage() {
         className="mt-0"
         counters={[
           {
-            label: "Clients",
+            label: "Agencies",
             value: data.totals.clients,
             sub: "organisations on the platform",
           },
           {
-            label: "Seats bought",
-            value: data.totals.seatsPurchased,
-            sub: `${data.totals.applicants} applicants so far`,
+            // Per application, not per seat. Seats stay on the
+            // per-agency table, where they mean team members and a cap
+            // is a real thing; up here they were the wrong unit for a
+            // business that bills on throughput.
+            label: "Applications processed",
+            value: data.totals.applicationsProcessed,
+            sub: `${data.totals.applicants} started, drafts included`,
           },
           {
             label: "Travellers",
@@ -153,7 +157,7 @@ export default async function OpsDashboardPage() {
           { value: "overview", label: "Overview", panel: <Overview data={data} /> },
           {
             value: "clients",
-            label: "Clients",
+            label: "Agencies",
             panel: <Clients data={data} locale={locale} />,
           },
           {

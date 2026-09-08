@@ -300,12 +300,22 @@ export const OPS_TENANTS: {
       tw: "Nkɔso",
       zu: "Inqubekelaphambili",
     },
+    /**
+     * "Status" over the live/suspended pill, at the client's request on
+     * 8 September. The key stays `state`, and so does the `?state=`
+     * filter it labels: those are a URL contract an operator can have
+     * bookmarked, and renaming a query parameter to match a heading
+     * breaks the link without improving the page.
+     *
+     * Only `en` and `fr` move. Every other locale already used its word
+     * for status here, which is how the English drifted unnoticed.
+     */
     state: {
-      en: "State",
+      en: "Status",
       ha: "Matsayi",
       yo: "Ipò",
       ig: "Ọnọdụ",
-      fr: "État",
+      fr: "Statut",
       pt: "Estado",
       sw: "Hali",
       ar: "الحالة",

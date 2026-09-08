@@ -84,6 +84,17 @@ export type DashboardData = {
   totals: {
     clients: number;
     seatsPurchased: number;
+    /**
+     * Applications that were actually sent, across every agency.
+     *
+     * This is the platform's throughput and the figure the business is
+     * billed on — BeOrchid charges per application, not per seat, so
+     * `seatsPurchased` was never the number to show beside it. Drafts
+     * are excluded: a file somebody opened and never submitted is not
+     * work the platform processed, and counting it would overstate the
+     * product to the person deciding whether it works.
+     */
+    applicationsProcessed: number;
     travellers: number;
     applicants: number;
     directApplicants: number;
@@ -208,6 +219,7 @@ export async function dashboardData(
     totals: {
       clients: orgRows.length,
       seatsPurchased: orgRows.reduce((sum, o) => sum + o.seatsPurchased, 0),
+      applicationsProcessed: applicationRows.filter((a) => a.status !== "draft").length,
       travellers: travellerCount[0]?.n ?? 0,
       applicants: applicationRows.length,
       directApplicants: applicationRows.filter((a) => !a.orgId).length,

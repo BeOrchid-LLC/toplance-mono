@@ -260,17 +260,25 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
 
   // ---- and on the roster, from the other side of the privacy boundary ----
   await page.reload();
-  // One client on the roster, and the invitation that put them there is
-  // settled. The case reference rather than the traveller's name,
-  // because the roster prints the name from their own profile and this
-  // journey has no business asserting what the sign-up form wrote.
+  // The invitation that put them there is settled, asserted on the page
+  // that owns invitations since 2026-09-08. These two facts and the
+  // roster's used to be one screen, which is the only reason they were
+  // ever one block: the address and its status are the invitation's,
+  // and the client below is the roster's.
+  await expect(page.getByText(INVITEE_EMAIL).first()).toBeVisible();
+  await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
+
+  // One client on the roster next door. The case reference rather than
+  // the traveller's name, because the roster prints the name from their
+  // own profile and this journey has no business asserting what the
+  // sign-up form wrote.
   //
   // Not the "1 client" badge: the count and the word are separate
   // elements with a CSS gap between them, so the accessible text has no
   // space in it and a `/1 client/` regex silently never matches.
+  await consoleNav(page).getByRole("link", { name: "Clients" }).click();
+  await page.waitForURL("**/agency/clients");
   await expect(page.getByRole("heading", { name: "Your clients" })).toBeVisible();
-  await expect(page.getByText(INVITEE_EMAIL).first()).toBeVisible();
-  await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
 
   // ---- the case screen, which is what the roster is a way into ----
   const caseLink = page.getByRole("link", { name: /TPL-/ });

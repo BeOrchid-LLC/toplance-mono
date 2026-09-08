@@ -140,7 +140,7 @@ export function InviteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button>
+        <Button size="bar">
           <Mail /> {t(INVITE_DIALOG.inviteButton)}
         </Button>
       </DialogTrigger>

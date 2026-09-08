@@ -449,6 +449,16 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   await consoleNav(colleague).getByRole("link", { name: "Dashboard" }).click();
   await colleague.waitForURL("**/agency");
 
+  // The agency's books are the director's line. A reviewer's dashboard
+  // answers "what is on my desk", and what the agency's clients have
+  // paid is not on it — they cannot act on it, and it is not their
+  // money. Asserted rather than assumed because the gate is a single
+  // `isDirector` ternary: if `summary` were ever computed
+  // unconditionally, every figure it feeds would appear here at once
+  // and nothing else in this suite would notice.
+  await expect(colleague.getByText("Paid by clients")).toHaveCount(0);
+  await expect(colleague.getByText("Where your clients' cases stop")).toHaveCount(0);
+
   // ---- and their own profile ----
   await colleague.goto("/agency/profile");
   await expect(colleague.getByRole("heading", { name: "Your profile" })).toBeVisible();

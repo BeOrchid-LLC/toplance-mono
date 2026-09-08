@@ -136,33 +136,6 @@ export default async function AgencyClientsPage({
       title={AGENCY.navClients[locale]}
       lead={AGENCY.clientsCardBody[locale]}
       actions={<InviteDialog kind="client" />}
-      search={
-        <TableToolbar
-          placeholder={AGENCY.searchClients[locale]}
-          filters={[
-            {
-              param: "status",
-              label: AGENCY.anyStatus[locale],
-              options: (Object.keys(STATUS_COPY) as ApplicationStatus[]).map((s) => ({
-                value: s,
-                // The badge's own word, in the reader's own language, so
-                // the filter and the cell it filters cannot drift apart.
-                label: STATUS_COPY[s].label[locale],
-              })),
-            },
-            {
-              param: "date",
-              label: AGENCY.anyDate[locale],
-              options: [
-                { value: "7", label: AGENCY.dateLast7[locale] },
-                { value: "30", label: AGENCY.dateLast30[locale] },
-                { value: "90", label: AGENCY.dateLast90[locale] },
-                { value: "none", label: AGENCY.dateNotSubmitted[locale] },
-              ],
-            },
-          ]}
-        />
-      }
     >
       {rows.length > 0 && visible.length === 0 ? (
         <Panel>
@@ -182,6 +155,33 @@ export default async function AgencyClientsPage({
         <ClientRoster
           rows={sorted}
           locale={locale}
+          toolbar={
+            <TableToolbar
+              placeholder={AGENCY.searchClients[locale]}
+              filters={[
+                {
+                  param: "status",
+                  label: AGENCY.anyStatus[locale],
+                  options: (Object.keys(STATUS_COPY) as ApplicationStatus[]).map((s) => ({
+                    value: s,
+                    // The badge's own word, in the reader's own language, so
+                    // the filter and the cell it filters cannot drift apart.
+                    label: STATUS_COPY[s].label[locale],
+                  })),
+                },
+                {
+                  param: "date",
+                  label: AGENCY.anyDate[locale],
+                  options: [
+                    { value: "7", label: AGENCY.dateLast7[locale] },
+                    { value: "30", label: AGENCY.dateLast30[locale] },
+                    { value: "90", label: AGENCY.dateLast90[locale] },
+                    { value: "none", label: AGENCY.dateNotSubmitted[locale] },
+                  ],
+                },
+              ]}
+            />
+          }
           empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
           label={
             narrowed

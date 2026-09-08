@@ -82,8 +82,12 @@ export default async function AgencyProfilePage() {
       activeId="overview"
       title={AGENCY.profileTitle[locale]}
       lead={AGENCY.profileBody[locale]}
+      // A sheet of one person's own details, not a table: it reads at
+      // one width whatever the viewport does, so it sits in the middle
+      // of the console rather than pinned to the rail's edge.
+      centred
     >
-      <Panel className="max-w-[720px]">
+      <Panel>
         {/* Not the traveller's "Personal and travel details": an
             agent has no trip, and borrowing that heading described
             the wrong person on their own page. */}

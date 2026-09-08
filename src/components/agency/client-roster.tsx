@@ -86,6 +86,7 @@ export function ClientRoster({
   basePath,
   params,
   count,
+  toolbar,
 }: {
   rows: RosterRow[];
   locale: Locale;
@@ -112,6 +113,21 @@ export function ClientRoster({
   params?: Record<string, string | undefined>;
   /** Overrides the badge figure when the list has been narrowed. */
   count?: number;
+  /**
+   * This table's own search and filters, rendered under its header.
+   *
+   * In the panel rather than in the console's top bar, which is where
+   * the clients page used to put it: #74 removed `AdminShell`'s search
+   * slot on the rule that a table's controls belong beside the columns
+   * they act on, not grouped with the account menu and the bell as
+   * though they were console chrome. The slot went; this caller did
+   * not follow, and the page stopped type-checking.
+   *
+   * Optional, because the two roster slices on the dashboard filter
+   * nothing — a toolbar over a reviewer's own six cases is a control
+   * with nothing to do.
+   */
+  toolbar?: React.ReactNode;
 }) {
   const shown = count ?? rows.length;
   const sortable = sort !== undefined && dir !== undefined && basePath !== undefined;
@@ -145,6 +161,13 @@ export function ClientRoster({
           </Badge>
         }
       />
+
+      {/* Under the header and above the rows, ruled off from both —
+          the placement `DataTable` uses, so the two table components on
+          this console do not each invent their own. */}
+      {toolbar && (
+        <div className="border-b border-border px-5 py-3 sm:px-6">{toolbar}</div>
+      )}
 
       {rows.length === 0 ? (
         <PanelBody>

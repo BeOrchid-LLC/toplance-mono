@@ -98,6 +98,7 @@ export const AGENCY: {
    */
   kpi: {
     clients: { label: L; sub: L };
+    clientsPaid: { label: L; sub: L; mixed: L };
     awaitingReview: { label: L; sub: L };
     withHandler: { label: L; sub: L };
     invitations: { label: L; sub: L };
@@ -121,6 +122,37 @@ export const AGENCY: {
      */
     destination: L;
     jobTitle: L;
+  };
+  pipelineTitle: L;
+  pipelineEmpty: L;
+  pipelineOfPrevious: L;
+  pipelineStalled: L;
+  funnel: {
+    started: L;
+    intake: L;
+    collected: L;
+    submitted: L;
+    decided: L;
+  };
+  billTitle: L;
+  billEmpty: L;
+  billCharged: L;
+  billBaseFee: L;
+  billPerCase: L;
+  billCases: L;
+  billThisCycle: L;
+  clientFeesTitle: L;
+  clientFeesWindow: L;
+  clientFeesNote: L;
+  clientFeesEmpty: L;
+  clientFeesPaid: L;
+  clientFeesCases: L;
+  clientFeesMixed: L;
+  billStatus: {
+    paid: L;
+    draft: L;
+    open: L;
+    failed: L;
   };
 } = {
   pageTitle: {
@@ -832,6 +864,50 @@ export const AGENCY: {
     zu: "Akuthunyelwe",
   },
   kpi: {
+    // Settled client fees. Deliberately not called "revenue": the money
+    // is the traveller's fee for their own application, and an agency
+    // reading it as its own earnings would be reading the wrong ledger.
+    clientsPaid: {
+      label: {
+        en: "Paid by clients",
+        ha: "Abokan ciniki sun biya",
+        yo: "Ó san láti ọwọ́ àwọn oníbàárà",
+        ig: "Ndị ahịa kwụrụ",
+        fr: "Payé par les clients",
+        pt: "Pago pelos clientes",
+        sw: "Kilicholipwa na wateja",
+        ar: "ما دفعه العملاء",
+        tw: "Deɛ adetɔfoɔ atua",
+        zu: "Okukhokhwe amakhasimende",
+      },
+      sub: {
+        en: "Settled application fees",
+        ha: "Kuɗin nema da aka biya",
+        yo: "Owó ìbéèrè tí a ti san",
+        ig: "Ụgwọ ngwa arịrịọ akwụchara",
+        fr: "Frais de dossier réglés",
+        pt: "Taxas de candidatura liquidadas",
+        sw: "Ada za maombi zilizolipwa",
+        ar: "رسوم الطلبات المسددة",
+        tw: "Abisadeɛ ho ka a wɔatua",
+        zu: "Izimali zezicelo ezikhokhiwe",
+      },
+      // Shown instead of the plain sub line when settled fees exist in
+      // more than one currency, because the figure above is then one
+      // currency's total rather than everything clients have paid.
+      mixed: {
+        en: "In one currency — others not shown",
+        ha: "A kuɗi ɗaya — ba a nuna sauran ba",
+        yo: "Nínú owó kan ṣoṣo — a kò fi àwọn yòókù hàn",
+        ig: "N'otu ego — egosighị ndị ọzọ",
+        fr: "Dans une seule devise — les autres ne sont pas affichées",
+        pt: "Numa só moeda — as outras não são mostradas",
+        sw: "Kwa sarafu moja — nyingine hazionyeshwi",
+        ar: "بعملة واحدة — لا تظهر العملات الأخرى",
+        tw: "Sika baako mu — wɔnkyerɛ nkaeɛ no",
+        zu: "Ngohlobo olulodwa lwemali — okunye akuboniswa",
+      },
+    },
     clients: {
       label: {
         en: "Clients",
@@ -1069,6 +1145,345 @@ export const AGENCY: {
       ar: "المسمى الوظيفي",
       tw: "Adwuma din",
       zu: "Isihloko somsebenzi",
+    },
+  },
+  pipelineTitle: {
+    en: "Where your clients' cases stop",
+    ha: "Inda shari'o'in abokan cinikinku ke tsayawa",
+    yo: "Ibi tí àwọn ẹjọ́ oníbàárà yín ń dúró sí",
+    ig: "Ebe ikpe ndị ahịa gị na-akwụsị",
+    fr: "Où s'arrêtent les dossiers de vos clients",
+    pt: "Onde param os processos dos seus clientes",
+    sw: "Mahali kesi za wateja wako zinasimama",
+    ar: "أين تتوقف ملفات عملائك",
+    tw: "Baabi a wo adetɔfoɔ nsɛm gyina",
+    zu: "Lapho amacala amakhasimende akho ema khona",
+  },
+  pipelineEmpty: {
+    en: "No cases yet. Each stage fills in as your clients work through their documents.",
+    ha: "Babu shari'a tukuna. Kowane mataki zai cika yayin da abokan cinikinku ke aiki kan takardunsu.",
+    yo: "Kò sí ẹjọ́ kankan síbẹ̀. Ìpele kọ̀ọ̀kan yóò kún bí àwọn oníbàárà yín ṣe ń ṣiṣẹ́ lórí àwọn ìwé wọn.",
+    ig: "Enweghị ikpe ugbu a. Ogbo ọ bụla na-ejupụta ka ndị ahịa gị na-arụ ọrụ na akwụkwọ ha.",
+    fr: "Aucun dossier pour l'instant. Chaque étape se remplit à mesure que vos clients avancent dans leurs documents.",
+    pt: "Ainda não há processos. Cada etapa preenche-se à medida que os seus clientes tratam dos documentos.",
+    sw: "Bado hakuna kesi. Kila hatua hujaa wateja wako wanapoendelea na hati zao.",
+    ar: "لا توجد ملفات بعد. تمتلئ كل مرحلة مع تقدّم عملائك في مستنداتهم.",
+    tw: "Asɛm biara nni hɔ seesei. Ɔfa biara bɛyɛ ma bere a wo adetɔfoɔ reyɛ wɔn nkrataa ho adwuma.",
+    zu: "Awekho amacala okwamanje. Isigaba ngasinye siyagcwala njengoba amakhasimende akho eqhubeka namadokhumenti awo.",
+  },
+  pipelineOfPrevious: {
+    en: "{pct} of previous",
+    ha: "{pct} na na baya",
+    yo: "{pct} nínú tí ó ṣáájú",
+    ig: "{pct} nke nke gara aga",
+    fr: "{pct} de l'étape précédente",
+    pt: "{pct} da etapa anterior",
+    sw: "{pct} ya hatua iliyotangulia",
+    ar: "{pct} من المرحلة السابقة",
+    tw: "{pct} wɔ deɛ ɛdi kan no mu",
+    zu: "{pct} yesigaba esidlule",
+  },
+  pipelineStalled: {
+    en: "{n} never submitted",
+    ha: "{n} ba a taɓa aikawa ba",
+    yo: "{n} kò fi ránṣẹ́ rárá",
+    ig: "{n} ezigaghị ya ma ọlị",
+    fr: "{n} jamais envoyé",
+    pt: "{n} nunca enviado",
+    sw: "{n} hawakuwahi kuwasilisha",
+    ar: "{n} لم يُرسل قط",
+    tw: "{n} amfa ankɔ da",
+    zu: "{n} abakaze bathumele",
+  },
+  funnel: {
+    started: {
+      en: "Started",
+      ha: "An fara",
+      yo: "Bẹ̀rẹ̀",
+      ig: "Malitere",
+      fr: "Commencé",
+      pt: "Iniciado",
+      sw: "Imeanza",
+      ar: "بدأ",
+      tw: "Afiri aseɛ",
+      zu: "Kuqaliwe",
+    },
+    intake: {
+      en: "Finished intake",
+      ha: "An kammala tambayoyi",
+      yo: "Parí ìforúkọsílẹ̀",
+      ig: "Mechara ajụjụ mbata",
+      fr: "Questionnaire terminé",
+      pt: "Questionário concluído",
+      sw: "Amemaliza maswali",
+      ar: "أكمل الاستبيان",
+      tw: "Awie nsɛmmisa no",
+      zu: "Uqedile imibuzo",
+    },
+    collected: {
+      en: "Documents complete",
+      ha: "Takardu sun cika",
+      yo: "Àwọn ìwé ti pé",
+      ig: "Akwụkwọ zuru ezu",
+      fr: "Documents complets",
+      pt: "Documentos completos",
+      sw: "Hati zimekamilika",
+      ar: "اكتملت المستندات",
+      tw: "Nkrataa no awie",
+      zu: "Amadokhumenti aphelele",
+    },
+    submitted: {
+      en: "Submitted",
+      ha: "An aika",
+      yo: "Ti fi ránṣẹ́",
+      ig: "Ezigara ya",
+      fr: "Envoyé",
+      pt: "Enviado",
+      sw: "Imewasilishwa",
+      ar: "تم الإرسال",
+      tw: "Wɔde akɔ",
+      zu: "Kuthunyelwe",
+    },
+    decided: {
+      en: "Decided",
+      ha: "An yanke shawara",
+      yo: "Ti pinnu",
+      ig: "Ekpebiela",
+      fr: "Décidé",
+      pt: "Decidido",
+      sw: "Imeamuliwa",
+      ar: "تم البت فيه",
+      tw: "Wɔasi gyinaeɛ",
+      zu: "Kunqunyiwe",
+    },
+  },
+  billTitle: {
+    en: "What your agency is charged",
+    ha: "Abin da ake caji kamfaninku",
+    yo: "Ohun tí a ń gba lọ́wọ́ àjọ yín",
+    ig: "Ihe a na-anara ụlọ ọrụ gị",
+    fr: "Ce que votre agence paie",
+    pt: "O que a sua agência paga",
+    sw: "Kile shirika lako linatozwa",
+    ar: "ما تدفعه وكالتك",
+    tw: "Deɛ wɔgye firi wo adwumakuo hɔ",
+    zu: "Okukhokhiswa inhlangano yakho",
+  },
+  billEmpty: {
+    en: "No billing history yet. A cycle appears here once your agency has been through one.",
+    ha: "Babu tarihin biyan kuɗi tukuna. Zagaye zai bayyana nan da zarar kamfaninku ya cika ɗaya.",
+    yo: "Kò sí ìtàn ìsanwó síbẹ̀. Àkókò kan yóò farahàn níhìn-ín ní kété tí àjọ yín bá ti kọjá ọ̀kan.",
+    ig: "Enweghị akụkọ ụgwọ ugbu a. Otu oge ga-apụta ebe a ozugbo ụlọ ọrụ gị gafere otu.",
+    fr: "Aucun historique de facturation. Un cycle apparaîtra ici dès que votre agence en aura terminé un.",
+    pt: "Ainda não há histórico de faturação. Um ciclo aparece aqui assim que a sua agência concluir um.",
+    sw: "Bado hakuna historia ya malipo. Mzunguko utaonekana hapa mara shirika lako litakapokamilisha mmoja.",
+    ar: "لا يوجد سجل فوترة بعد. تظهر الدورة هنا بمجرد أن تُكمل وكالتك واحدة.",
+    tw: "Sika tua ho abakɔsɛm biara nni hɔ. Bere bi bɛda adi ha bere a wo adwumakuo awie baako.",
+    zu: "Awukho umlando wokukhokha okwamanje. Umjikelezo uvela lapha uma inhlangano yakho isiqede owodwa.",
+  },
+  billCharged: {
+    en: "Charged",
+    ha: "An caji",
+    yo: "Tí a gbà",
+    ig: "Anara ya",
+    fr: "Facturé",
+    pt: "Cobrado",
+    sw: "Imetozwa",
+    ar: "المبلغ المستحق",
+    tw: "Wɔagye",
+    zu: "Kukhokhisiwe",
+  },
+  billBaseFee: {
+    en: "Base fee",
+    ha: "Kuɗin asali",
+    yo: "Owó ìpìlẹ̀",
+    ig: "Ụgwọ ntọala",
+    fr: "Forfait de base",
+    pt: "Taxa base",
+    sw: "Ada ya msingi",
+    ar: "الرسوم الأساسية",
+    tw: "Ntoasoɔ ka",
+    zu: "Imali eyisisekelo",
+  },
+  billPerCase: {
+    en: "Per case",
+    ha: "Kowace shari'a",
+    yo: "Fún ẹjọ́ kọ̀ọ̀kan",
+    ig: "Maka ikpe ọ bụla",
+    fr: "Par dossier",
+    pt: "Por processo",
+    sw: "Kwa kila kesi",
+    ar: "لكل ملف",
+    tw: "Asɛm biara",
+    zu: "Ngecala ngalinye",
+  },
+  billCases: {
+    en: "{n} cases this cycle",
+    ha: "Shari'o'i {n} a wannan zagaye",
+    yo: "Ẹjọ́ {n} ní àkókò yìí",
+    ig: "Ikpe {n} n'oge a",
+    fr: "{n} dossiers ce cycle",
+    pt: "{n} processos neste ciclo",
+    sw: "Kesi {n} katika mzunguko huu",
+    ar: "{n} ملفات في هذه الدورة",
+    tw: "Nsɛm {n} wɔ saa bere yi mu",
+    zu: "Amacala angu-{n} kulo mjikelezo",
+  },
+  billThisCycle: {
+    en: "This cycle",
+    ha: "Wannan zagaye",
+    yo: "Àkókò yìí",
+    ig: "Oge a",
+    fr: "Ce cycle",
+    pt: "Este ciclo",
+    sw: "Mzunguko huu",
+    ar: "هذه الدورة",
+    tw: "Saa bere yi",
+    zu: "Lo mjikelezo",
+  },
+  /**
+   * The client-fee chart's words.
+   *
+   * Every one of these is written to avoid a single sentence:
+   * "your earnings". The fees are the traveller's, paid to BeOrchid for
+   * their own application — `payment_shape_matches_kind` in `schema.ts`
+   * is explicit that the agency is not the payee — and what an agency
+   * charges its own clients is not modelled in this product at all.
+   * `clientFeesNote` says so on the panel rather than leaving a director
+   * to assume the friendlier reading.
+   */
+  clientFeesTitle: {
+    en: "Paid by your clients",
+    ha: "Abokan cinikinku sun biya",
+    yo: "Ó san láti ọwọ́ àwọn oníbàárà rẹ",
+    ig: "Ndị ahịa gị kwụrụ",
+    fr: "Payé par vos clients",
+    pt: "Pago pelos seus clientes",
+    sw: "Kilicholipwa na wateja wako",
+    ar: "ما دفعه عملاؤك",
+    tw: "Deɛ w'adetɔfoɔ atua",
+    zu: "Okukhokhwe amakhasimende akho",
+  },
+  clientFeesWindow: {
+    en: "Last 6 months",
+    ha: "Watanni 6 da suka gabata",
+    yo: "Oṣù 6 sẹ́yìn",
+    ig: "Ọnwa 6 gara aga",
+    fr: "6 derniers mois",
+    pt: "Últimos 6 meses",
+    sw: "Miezi 6 iliyopita",
+    ar: "آخر 6 أشهر",
+    tw: "Abosome 6 a atwam",
+    zu: "Izinyanga eziyi-6 ezedlule",
+  },
+  clientFeesNote: {
+    en: "Application fees your clients paid Toplance. Not your agency's own charges.",
+    ha: "Kuɗin nema da abokan cinikinku suka biya Toplance. Ba kuɗin da hukumarku ke karɓa ba.",
+    yo: "Owó ìbéèrè tí àwọn oníbàárà rẹ san fún Toplance. Kì í ṣe owó tí ilé-iṣẹ́ rẹ gbà.",
+    ig: "Ụgwọ arịrịọ ndị ahịa gị kwụrụ Toplance. Ọ bụghị ụgwọ ụlọ ọrụ gị na-ana.",
+    fr: "Frais de dossier que vos clients ont payés à Toplance. Pas les honoraires de votre agence.",
+    pt: "Taxas de candidatura que os seus clientes pagaram à Toplance. Não os honorários da sua agência.",
+    sw: "Ada za maombi ambazo wateja wako walilipa Toplance. Si malipo ya wakala wako.",
+    ar: "رسوم الطلبات التي دفعها عملاؤك إلى Toplance. وليست أتعاب وكالتك.",
+    tw: "Abisadeɛ ho ka a w'adetɔfoɔ tuaa Toplance. Ɛnyɛ wo adwumakuo no ankasa ka.",
+    zu: "Izimali zezicelo amakhasimende akho azikhokhele i-Toplance. Akuzona izimali ze-ejensi yakho.",
+  },
+  clientFeesEmpty: {
+    en: "No client fees have settled in the last six months.",
+    ha: "Babu kuɗin abokan ciniki da aka biya cikin watanni shida da suka gabata.",
+    yo: "Kò sí owó oníbàárà kankan tí a san ní oṣù mẹ́fà sẹ́yìn.",
+    ig: "Ọ dịghị ụgwọ ndị ahịa akwụchara n'ọnwa isii gara aga.",
+    fr: "Aucun frais client n'a été réglé ces six derniers mois.",
+    pt: "Nenhuma taxa de cliente foi liquidada nos últimos seis meses.",
+    sw: "Hakuna ada za wateja zilizolipwa katika miezi sita iliyopita.",
+    ar: "لم تُسدَّد أي رسوم عملاء خلال الأشهر الستة الماضية.",
+    tw: "Wɔntuaa adetɔfoɔ ho ka biara wɔ abosome nsia a atwam no mu.",
+    zu: "Azikho izimali zamakhasimende ezikhokhelwe ezinyangeni eziyisithupha ezedlule.",
+  },
+  clientFeesPaid: {
+    en: "Paid",
+    ha: "An biya",
+    yo: "A san",
+    ig: "Akwụrụ",
+    fr: "Payé",
+    pt: "Pago",
+    sw: "Imelipwa",
+    ar: "مدفوع",
+    tw: "Wɔatua",
+    zu: "Kukhokhiwe",
+  },
+  clientFeesCases: {
+    en: "{n} cases paid for",
+    ha: "An biya shari'o'i {n}",
+    yo: "A san fún ẹjọ́ {n}",
+    ig: "A kwụrụ ụgwọ ikpe {n}",
+    fr: "{n} dossiers payés",
+    pt: "{n} processos pagos",
+    sw: "Kesi {n} zimelipiwa",
+    ar: "{n} ملفات مدفوعة",
+    tw: "Wɔatua nsɛm {n} ho ka",
+    zu: "Amacala angu-{n} akhokhelwe",
+  },
+  clientFeesMixed: {
+    en: "Fees settled in another currency are not shown here.",
+    ha: "Ba a nuna kuɗin da aka biya da wata kuɗi daban a nan ba.",
+    yo: "A kò fi owó tí a san ní owó orílẹ̀-èdè mìíràn hàn níbí.",
+    ig: "Egosighị ụgwọ akwụrụ n'ego ọzọ ebe a.",
+    fr: "Les frais réglés dans une autre devise ne figurent pas ici.",
+    pt: "As taxas liquidadas noutra moeda não aparecem aqui.",
+    sw: "Ada zilizolipwa kwa sarafu nyingine hazionyeshwi hapa.",
+    ar: "الرسوم المسددة بعملة أخرى غير معروضة هنا.",
+    tw: "Wɔnkyerɛ ka a wɔtua wɔ sika foforɔ mu wɔ ha.",
+    zu: "Izimali ezikhokhwe ngenye imali azivezwa lapha.",
+  },
+  billStatus: {
+    paid: {
+      en: "Paid",
+      ha: "An biya",
+      yo: "Ti san",
+      ig: "Akwụọla",
+      fr: "Payé",
+      pt: "Pago",
+      sw: "Imelipwa",
+      ar: "مدفوع",
+      tw: "Watua",
+      zu: "Kukhokhiwe",
+    },
+    draft: {
+      en: "Still accruing",
+      ha: "Har yanzu yana ƙaruwa",
+      yo: "Ó ṣì ń pọ̀ sí i",
+      ig: "Ka na-abawanye",
+      fr: "En cours d'accumulation",
+      pt: "Ainda a acumular",
+      sw: "Bado inaongezeka",
+      ar: "قيد التراكم",
+      tw: "Ɛda so redɔɔso",
+      zu: "Kusanda",
+    },
+    open: {
+      en: "Outstanding",
+      ha: "Ba a biya ba",
+      yo: "Kò tíì san",
+      ig: "Akwụbeghị",
+      fr: "Impayé",
+      pt: "Em dívida",
+      sw: "Bado haijalipwa",
+      ar: "غير مسدد",
+      tw: "Wɔntuaeɛ",
+      zu: "Akukakhokhwa",
+    },
+    failed: {
+      en: "Payment failed",
+      ha: "Biyan kuɗi ya gaza",
+      yo: "Ìsanwó kùnà",
+      ig: "Ịkwụ ụgwọ dara",
+      fr: "Échec du paiement",
+      pt: "Pagamento falhou",
+      sw: "Malipo yameshindikana",
+      ar: "فشل الدفع",
+      tw: "Sika tua no anyɛ yie",
+      zu: "Ukukhokha kwehlulekile",
     },
   },
 };

@@ -182,6 +182,7 @@ export function InvitationRoster({
                         />
                         <RevokeInvitationButton
                           invitationId={invite.id}
+                          email={invite.email}
                           action={revokeAction}
                         />
                       </div>

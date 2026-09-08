@@ -312,5 +312,40 @@ describe.skipIf(!process.env.DATABASE_URL)("payments", async () => {
       const invoices = await invoicesForOrg();
       expect(invoices).toHaveLength(1);
     });
+
+    describe("narrowed to one agency", () => {
+      // What the agency console's own bill panel reads. The claim worth
+      // pinning is that narrowing the *input* did not become a second
+      // way of pricing a cycle: same agency, same figures, whoever asked.
+      it("returns exactly what filtering the whole platform would", async () => {
+        const now = new Date();
+        await subscription({
+          status: "paid",
+          periodStart: new Date(now.getTime() - 60_000),
+        });
+
+        const narrowed = await listInvoices({ now, orgId: ORG });
+        const filtered = (await listInvoices({ now })).filter(
+          (i) => i.orgId === ORG
+        );
+
+        expect(narrowed).toEqual(filtered);
+        expect(narrowed.length).toBeGreaterThan(0);
+      });
+
+      it("never returns another agency's cycles", async () => {
+        // `OTHER_ORG` is a live fixture agency with its own open cycle,
+        // so an unfiltered read here would come back with rows.
+        const invoices = await listInvoices({ orgId: ORG });
+        expect(invoices.every((i) => i.orgId === ORG)).toBe(true);
+      });
+
+      it("is empty for an agency that does not exist", async () => {
+        const invoices = await listInvoices({
+          orgId: "00000000-0000-4000-8000-0000000e0009",
+        });
+        expect(invoices).toEqual([]);
+      });
+    });
   });
 });

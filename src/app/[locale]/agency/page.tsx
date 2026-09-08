@@ -2,7 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import { ArrowRight, FolderOpen, Inbox, Mail, Shield, UsersRound } from "lucide-react";
+import {
+  ArrowRight,
+  FolderOpen,
+  Inbox,
+  Mail,
+  Shield,
+  UsersRound,
+  Wallet,
+} from "lucide-react";
 import { eq } from "drizzle-orm";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +18,9 @@ import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { CreateOrganisation } from "@/components/agency/create-organisation";
 import { KpiRow, type Kpi } from "@/components/shared/kpi-card";
+import { FunnelBars } from "@/components/shared/funnel-bars";
+import { BillChart } from "@/components/agency/bill-chart";
+import { ClientFeeChart } from "@/components/agency/client-fee-chart";
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { ClientRoster } from "@/components/agency/client-roster";
 import type { Actor } from "@/lib/auth/policy";
@@ -26,6 +37,8 @@ import {
   listOrgMembers,
   listOrgRoster,
 } from "@/lib/data/organisations";
+import { agencyDashboard } from "@/lib/data/agency-dashboard";
+import { formatMoney } from "@/lib/domain/pricing";
 import { getLocale } from "@/lib/i18n/server";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
@@ -107,13 +120,18 @@ function RosterCard({
  * differently depending on which colleague is logged in.
  */
 async function directorSummary(orgIds: readonly string[], orgId: string | null) {
-  const [used, byStatus, members, invitations] = await Promise.all([
+  const [used, byStatus, members, invitations, charts] = await Promise.all([
     countOrgClients(orgIds),
     countOrgClientsByStatus(orgIds),
     // Same "no org, no unfiltered read" reasoning as the roster: both of
     // these take one org id and have nothing to filter by without it.
     orgId ? listOrgMembers(orgId) : Promise.resolve([]),
     orgId ? listInvitations(orgId) : Promise.resolve([]),
+    // The funnel and the bill. In the same `Promise.all` rather than
+    // awaited after it: these are the two slowest reads on the page and
+    // running them behind the four counts above would make the console's
+    // front page wait for its own summary twice.
+    agencyDashboard(orgIds, orgId),
   ]);
 
   return {
@@ -121,6 +139,7 @@ async function directorSummary(orgIds: readonly string[], orgId: string | null) 
     byStatus,
     members,
     pendingInvitations: invitations.filter((i) => i.status === "pending"),
+    charts,
   };
 }
 
@@ -264,6 +283,27 @@ export default async function EmployerConsolePage() {
   const used = summary?.used ?? 0;
   const seats = org.seatsPurchased ?? 0;
 
+  /**
+   * A funnel stage's name in the reader's language.
+   *
+   * `funnelOf` carries BeOrchid's own English label on every stage,
+   * which is right for `/ops` and wrong here. Falling back to it rather
+   * than to `undefined` means a stage added to `FUNNEL_STAGES` without a
+   * translation shows English on this screen instead of the word
+   * "undefined" — worse than translated, better than broken.
+   */
+  const funnelLabel = (stage: { key: string; label: string }) =>
+    AGENCY.funnel[stage.key as keyof typeof AGENCY.funnel]?.[locale] ??
+    stage.label;
+
+  /**
+   * The cycle now running. Last, because `agencyDashboard` sorts oldest
+   * first for the chart's benefit — and `undefined` for an agency whose
+   * first cycle has not opened, which is what hides the header figure
+   * rather than printing a confident $0.00.
+   */
+  const thisCycle = summary?.charts.invoices.at(-1);
+
   const counters: Kpi[] = summary
     ? [
         {
@@ -296,6 +336,30 @@ export default async function EmployerConsolePage() {
           sub: AGENCY.kpi.invitations.sub[locale],
           icon: Mail,
           tone: "neutral",
+        },
+        {
+          /*
+             What this agency's clients have paid for their own
+             applications — settled fees only, so it is money that
+             arrived rather than money that was asked for.
+
+             Not a door. `/agency/billing` is the agency's own bill from
+             Toplance, which is the opposite side of a different ledger,
+             and sending a director there from this figure would answer
+             a question they did not ask. There is no per-client payment
+             view to link to yet, so this card does not pretend there is
+             (see the `href` note on `Kpi`).
+          */
+          label: AGENCY.kpi.clientsPaid.label[locale],
+          value: formatMoney(
+            summary.charts.clientRevenue.totalMinor,
+            summary.charts.clientRevenue.currency
+          ),
+          sub: summary.charts.clientRevenue.mixedCurrency
+            ? AGENCY.kpi.clientsPaid.mixed[locale]
+            : AGENCY.kpi.clientsPaid.sub[locale],
+          icon: Wallet,
+          tone: "success",
         },
       ]
     : [];
@@ -360,98 +424,246 @@ export default async function EmployerConsolePage() {
 
 
       {/*
-        The signature moment for this console, per guideline §4, and
-        still the right one — though no longer for the reason it was
-        written. It used to promise the reader that this screen would
-        never show them a passport; v1.3 moved the review boundary to
-        the agency, so now it does. What a director most needs to
-        believe is therefore no longer "not me" but "not anyone
-        else": nobody at BeOrchid can open these documents, and
-        inside their own agency a claimed case narrows to its handler
-        and to them. One laminate, on the page you land on, and none
-        below it — which is also why the two roster pages do not
-        repeat it.
-
-        No MRZ. The mark carries a corridor, and this screen is a
-        roster of many — there is no one corridor here to encode.
+        One rhythm for the whole page, rather than an `mt-8` on some
+        blocks and nothing on others. The laminate and the figure cards
+        used to be adjacent siblings with no margin between them, so the
+        console's most emphatic panel ran straight into the first row of
+        numbers with no air at all — and every block below it set its own
+        spacing, which is how that gap survived three screens' worth of
+        additions. `space-y-8` here means a panel added later inherits
+        the spacing instead of having to remember it.
       */}
-      <div className="laminate overflow-hidden rounded-lg">
-        <span aria-hidden className="laminate-sheen" />
-        <div className="relative z-[1] flex items-start gap-4 p-6">
-          <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
-          <div className="min-w-0">
-            <p className="tag">{AGENCY.privacyTag[locale]}</p>
-            <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
-            <p className="t-muted mt-2 max-w-[74ch]">
-              {AGENCY.privacyBody[locale]}
-            </p>
+      <div className="space-y-8">
+        {/*
+          The signature moment for this console, per guideline §4, and
+          still the right one — though no longer for the reason it was
+          written. It used to promise the reader that this screen would
+          never show them a passport; v1.3 moved the review boundary to
+          the agency, so now it does. What a director most needs to
+          believe is therefore no longer "not me" but "not anyone
+          else": nobody at BeOrchid can open these documents, and
+          inside their own agency a claimed case narrows to its handler
+          and to them. One laminate, on the page you land on, and none
+          below it — which is also why the two roster pages do not
+          repeat it.
+
+          No MRZ. The mark carries a corridor, and this screen is a
+          roster of many — there is no one corridor here to encode.
+        */}
+        <div className="laminate overflow-hidden rounded-lg">
+          <span aria-hidden className="laminate-sheen" />
+          <div className="relative z-[1] flex items-start gap-4 p-6">
+            <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
+            <div className="min-w-0">
+              <p className="tag">{AGENCY.privacyTag[locale]}</p>
+              <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
+              <p className="t-muted mt-2 max-w-[74ch]">
+                {AGENCY.privacyBody[locale]}
+              </p>
+            </div>
           </div>
         </div>
+
+        {/* Doors, not decoration. Three of the four open the roster
+            already filtered to exactly the rows the figure counted, which
+            is what the client asked these cards to do; the fourth is a
+            tile, because the invitations it counts are a panel on that
+            page rather than a view of their own, and a card that looks
+            clickable and goes nowhere is worse than one that never
+            offered (guideline §7). No trend deltas anywhere — §7 again:
+            this product has no history to compare against yet. */}
+        {summary && <KpiRow items={counters} />}
+
+        {/*
+          The two questions the cards above cannot answer: where the
+          agency's cases get stuck, and what the agency is being charged
+          for them. Side by side because they are the same size of
+          question — neither is the headline, and stacking one over the
+          other would say it was.
+
+          Director only, like everything else fed by `summary`. A reviewer
+          is not managing the account, and their desk below is the screen
+          they came for.
+        */}
+        {summary && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Panel>
+              <PanelHeader
+                label={AGENCY.pipelineTitle[locale]}
+                // The one figure here somebody can act on today, so it
+                // sits in the header rather than being left to be
+                // inferred from the gap between two bars.
+                aside={
+                  summary.charts.stalled > 0 ? (
+                    <Badge variant="warning">
+                      {fill(AGENCY.pipelineStalled[locale], {
+                        n: summary.charts.stalled,
+                      })}
+                    </Badge>
+                  ) : undefined
+                }
+              />
+              <PanelBody>
+                {summary.charts.funnel[0].count === 0 ? (
+                  <p className="t-muted max-w-[62ch]">
+                    {AGENCY.pipelineEmpty[locale]}
+                  </p>
+                ) : (
+                  <FunnelBars
+                    stages={summary.charts.funnel.map((stage) => ({
+                      ...stage,
+                      label: funnelLabel(stage),
+                    }))}
+                    ofPreviousLabel={(share) =>
+                      fill(AGENCY.pipelineOfPrevious[locale], { pct: share })
+                    }
+                  />
+                )}
+              </PanelBody>
+            </Panel>
+
+            <Panel>
+              <PanelHeader
+                label={AGENCY.billTitle[locale]}
+                // What this cycle has run up so far. The chart's last bar
+                // says the same thing, but a director opening this panel
+                // is asking the number, not reading it off an axis.
+                aside={
+                  thisCycle ? (
+                    <span className="flex items-baseline gap-2">
+                      <span className="special">
+                        {AGENCY.billThisCycle[locale]}
+                      </span>
+                      <span className="num font-semibold">
+                        {formatMoney(thisCycle.amountMinor, thisCycle.currency)}
+                      </span>
+                    </span>
+                  ) : undefined
+                }
+              />
+              <PanelBody className="px-2 sm:px-3">
+                <BillChart
+                  invoices={summary.charts.invoices}
+                  copy={{
+                    empty: AGENCY.billEmpty[locale],
+                    charged: AGENCY.billCharged[locale],
+                    baseFee: AGENCY.billBaseFee[locale],
+                    perCase: AGENCY.billPerCase[locale],
+                    cases: AGENCY.billCases[locale],
+                    status: {
+                      paid: AGENCY.billStatus.paid[locale],
+                      draft: AGENCY.billStatus.draft[locale],
+                      open: AGENCY.billStatus.open[locale],
+                      failed: AGENCY.billStatus.failed[locale],
+                    },
+                  }}
+                />
+              </PanelBody>
+            </Panel>
+          </div>
+        )}
+
+        {/*
+          Full width and below the pair, not a third column in it.
+
+          Two reasons, and the layout one is the weaker: three panels in a
+          two-column grid leaves a hole. The other is that this chart is
+          not the same *kind* of question as the two above it. Those are
+          the agency's own operation — where its cases stick, what it is
+          charged. This is money that moved between a traveller and
+          BeOrchid on cases the agency happens to be handling, which is
+          worth knowing and is not the agency's ledger. Sitting it beside
+          the bill would invite exactly the subtraction nobody should do.
+
+          Hence `clientFeesNote` under the heading rather than in a
+          tooltip. A director who reads only the panel title must still
+          come away with the right idea of whose money this is.
+        */}
+        {summary && (
+          <Panel>
+            <PanelHeader
+              label={AGENCY.clientFeesTitle[locale]}
+              aside={
+                <span className="special">{AGENCY.clientFeesWindow[locale]}</span>
+              }
+            />
+            <PanelBody className="px-2 sm:px-3">
+              {/* `px-3` against the body's reduced `px-2 sm:px-3`: this panel
+                  gives its padding to the chart, and prose sitting flush
+                  against the panel edge reads as a caption that fell off. */}
+              <p className="t-muted mb-4 max-w-[74ch] px-3">
+                {AGENCY.clientFeesNote[locale]}
+              </p>
+              <ClientFeeChart
+                points={summary.charts.clientFees.points}
+                currency={summary.charts.clientFees.currency}
+                totalMinor={summary.charts.clientFees.totalMinor}
+                mixedCurrency={summary.charts.clientFees.mixedCurrency}
+                copy={{
+                  empty: AGENCY.clientFeesEmpty[locale],
+                  paid: AGENCY.clientFeesPaid[locale],
+                  cases: AGENCY.clientFeesCases[locale],
+                  mixedCurrency: AGENCY.clientFeesMixed[locale],
+                }}
+              />
+            </PanelBody>
+          </Panel>
+        )}
+
+        {summary ? (
+          /* The two rosters, as the doors to their own pages. Equal
+             weight on purpose: an agency is its clients and the people
+             who serve them, and the console used to show only the
+             first. */
+          <div className="grid gap-6 md:grid-cols-2">
+            <RosterCard
+              href="/agency/clients"
+              label={AGENCY.navClients[locale]}
+              body={AGENCY.clientsCardBody[locale]}
+              count={used}
+              countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
+            />
+            <RosterCard
+              href="/agency/team"
+              label={AGENCY.navTeam[locale]}
+              body={AGENCY.teamCardBody[locale]}
+              count={summary.members.length}
+              countWord={
+                (summary.members.length === 1
+                  ? AGENCY.memberWord
+                  : AGENCY.membersWord)[locale]
+              }
+            />
+          </div>
+        ) : (
+          /* A reviewer's desk, not a summary of somebody else's
+             agency. Their own cases first — the ones they can actually
+             open — then the pool, because an empty desk needs a next
+             step and taking a case is that step. Only the first list
+             links into the case screen: a client nobody has taken is
+             a name and a completion score here, and nothing more,
+             until somebody takes it. */
+          <div>
+            <ClientRoster
+              rows={desk?.assigned ?? []}
+              locale={locale}
+              label={AGENCY.assignedToYou[locale]}
+              empty={AGENCY.assignedEmpty[locale]}
+            />
+            <ClientRoster
+              className="mt-8"
+              rows={desk?.unclaimed ?? []}
+              locale={locale}
+              label={AGENCY.unclaimedLabel[locale]}
+              empty={AGENCY.unclaimedEmpty[locale]}
+              // Takeable, not openable: a reviewer may claim one of
+              // these but cannot read it until they have — see
+              // `handlesCase`.
+              takeableBy={profile.id}
+            />
+          </div>
+        )}
       </div>
-
-      {/* Doors, not decoration. Three of the four open the roster
-          already filtered to exactly the rows the figure counted, which
-          is what the client asked these cards to do; the fourth is a
-          tile, because the invitations it counts are a panel on that
-          page rather than a view of their own, and a card that looks
-          clickable and goes nowhere is worse than one that never
-          offered (guideline §7). No trend deltas anywhere — §7 again:
-          this product has no history to compare against yet. */}
-      {summary && <KpiRow items={counters} />}
-
-      {summary ? (
-        /* The two rosters, as the doors to their own pages. Equal
-           weight on purpose: an agency is its clients and the people
-           who serve them, and the console used to show only the
-           first. */
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
-          <RosterCard
-            href="/agency/clients"
-            label={AGENCY.navClients[locale]}
-            body={AGENCY.clientsCardBody[locale]}
-            count={used}
-            countWord={(used === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
-          />
-          <RosterCard
-            href="/agency/team"
-            label={AGENCY.navTeam[locale]}
-            body={AGENCY.teamCardBody[locale]}
-            count={summary.members.length}
-            countWord={
-              (summary.members.length === 1
-                ? AGENCY.memberWord
-                : AGENCY.membersWord)[locale]
-            }
-          />
-        </div>
-      ) : (
-        /* A reviewer's desk, not a summary of somebody else's
-           agency. Their own cases first — the ones they can actually
-           open — then the pool, because an empty desk needs a next
-           step and taking a case is that step. Only the first list
-           links into the case screen: a client nobody has taken is
-           a name and a completion score here, and nothing more,
-           until somebody takes it. */
-        <div className="mt-8">
-          <ClientRoster
-            rows={desk?.assigned ?? []}
-            locale={locale}
-            label={AGENCY.assignedToYou[locale]}
-            empty={AGENCY.assignedEmpty[locale]}
-          />
-          <ClientRoster
-            className="mt-8"
-            rows={desk?.unclaimed ?? []}
-            locale={locale}
-            label={AGENCY.unclaimedLabel[locale]}
-            empty={AGENCY.unclaimedEmpty[locale]}
-            // Takeable, not openable: a reviewer may claim one of
-            // these but cannot read it until they have — see
-            // `handlesCase`.
-            takeableBy={profile.id}
-          />
-        </div>
-      )}
     </AgencyShell>
   );
 }

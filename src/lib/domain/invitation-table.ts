@@ -1,7 +1,7 @@
 import type { ListedInvitation } from "@/lib/data/invitations";
-import { INVITATION_STATUS } from "@/lib/domain/status";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
+import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
 
 /**
  * What the platform-staff roster knows that is not a rendered cell.
@@ -19,11 +19,16 @@ export type StaffSort = (typeof STAFF_SORTS)[number];
 /**
  * The value a column sorts on, which is not always the value it prints.
  *
- * `status` sorts on `INVITATION_STATUS`, which is the string the badge
- * itself renders — English in every locale today. That is a gap in the
- * dictionary rather than one to paper over here: a localised sort key
- * beside an untranslated badge would order the rows by words that are
- * not on the screen.
+ * `status` sorts on `INVITATION_STATUS_COPY` — the same entry
+ * `InvitationStatusBadge` renders, read at the same locale. The rule is
+ * that a column orders rows by the words that are on the screen, so the
+ * sort key and the cell must come from one dictionary; two would drift
+ * and the table would order rows by words nobody can see.
+ *
+ * This used to read a hardcoded English label, which was right while the
+ * badge rendered one. #71 translated the badge and split that record
+ * into `INVITATION_STATUS_VARIANT` and `INVITATION_STATUS_COPY`; the
+ * import here was left pointing at the name it deleted.
  */
 export function staffSortKey(
   invite: ListedInvitation,
@@ -34,7 +39,7 @@ export function staffSortKey(
     case "rank":
       return invite.staffRank ? OPS_COMMON.staffRole[invite.staffRank][locale] : null;
     case "status":
-      return INVITATION_STATUS[invite.status].label;
+      return INVITATION_STATUS_COPY[invite.status].label[locale];
     case "invited":
       return invite.createdAt;
     default:

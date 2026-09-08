@@ -15,8 +15,18 @@
      One ramp, one hue. Every step carries the same cool blue-grey cast,
      so text does not drift warm as it lightens. The previous ramp mixed
      a cool --ink with warm mid-tones, which read as muddy rather than
-     as a deliberate temperature. */
-  --bg: #f6f7fa;
+     as a deliberate temperature.
+
+     The ground is a step deeper than the near-white it was (#f6f7fa),
+     which was close enough to --surface that a white panel on it read
+     as flush rather than as a sheet laid on a page. Client's call,
+     2026-09-08. It stays on the same hue: the separation this buys is
+     in lightness, not in a second temperature the paragraph above
+     argues against. Everything below it is untouched — --surface-2 is
+     only ~1.5 L* under this now, but it is a hover state on white
+     surfaces rather than a fill sitting on the page, so the two do not
+     meet. */
+  --bg: #f1f4fa;
   --surface: #ffffff;
   --surface-2: #eef0f5;
   --surface-inset: #e7eaf1;

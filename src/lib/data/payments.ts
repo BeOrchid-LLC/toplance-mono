@@ -1,14 +1,19 @@
 import "server-only";
 
-import { and, desc, eq, gt, isNotNull } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, organisations, payments } from "@/lib/db/schema";
 import { activeRateCard } from "@/lib/data/billing";
 import { quote, type RateCard } from "@/lib/domain/pricing";
 import {
+  clientFeesByMonth,
+  collapseClientRevenue,
   recentCycles,
   statusFor,
+  type ClientFee,
+  type ClientFeePoint,
+  type ClientRevenue,
   type Invoice,
   type Settlement,
 } from "@/lib/domain/payments";
@@ -181,12 +186,22 @@ export const INVOICE_HISTORY_CYCLES = 6;
  * `cycleFor` into a second implementation written in SQL — and two
  * implementations of a billing boundary is how a business gets charged
  * twice for February.
+ *
+ * `orgId` narrows all three reads to one agency, which is what the
+ * agency console's own bill panel asks for. It is a `where` rather than
+ * a filter over the result for the same reason: without it, a page
+ * rendered per request for one agency reads every organisation, every
+ * billable application and every subscription on the platform in order
+ * to throw all but one away. The arithmetic below is untouched by it —
+ * narrowing the input must never become a second way of pricing a
+ * cycle, which is the failure the paragraph above is about.
  */
 export async function listInvoices(
-  options: { now?: Date; cycles?: number } = {}
+  options: { now?: Date; cycles?: number; orgId?: string } = {}
 ): Promise<Invoice[]> {
   const now = options.now ?? new Date();
   const historyLength = options.cycles ?? INVOICE_HISTORY_CYCLES;
+  const only = options.orgId;
 
   const [orgs, billable, settlements, card] = await Promise.all([
     db
@@ -195,14 +210,19 @@ export async function listInvoices(
         name: organisations.name,
         createdAt: organisations.createdAt,
       })
-      .from(organisations),
+      .from(organisations)
+      .where(only ? eq(organisations.id, only) : undefined),
     db
       .select({
         orgId: applications.orgId,
         billableAt: applications.billableAt,
       })
       .from(applications)
-      .where(isNotNull(applications.billableAt)),
+      .where(
+        only
+          ? and(isNotNull(applications.billableAt), eq(applications.orgId, only))
+          : isNotNull(applications.billableAt)
+      ),
     // Subscriptions only. A client's own per-application fee is money
     // between a traveller and Toplance; it settles nothing on the
     // agency's monthly bill, and counting it here would report an
@@ -216,7 +236,14 @@ export async function listInvoices(
         createdAt: payments.createdAt,
       })
       .from(payments)
-      .where(eq(payments.kind, "agency_subscription")),
+      .where(
+        only
+          ? and(
+              eq(payments.kind, "agency_subscription"),
+              eq(payments.orgId, only)
+            )
+          : eq(payments.kind, "agency_subscription")
+      ),
     activeRateCard(now),
   ]);
 
@@ -292,5 +319,200 @@ function invoiceFor(
     currency: priced.currency,
     status,
     paidAt,
+  };
+}
+
+
+/**
+ * What this agency's clients have actually paid, settled only.
+ *
+ * Joined through `applications` rather than filtered on `payments.org_id`,
+ * because a client fee does not have one: `payment_shape_matches_kind`
+ * requires a `client_application` row to name an application and *not*
+ * an organisation, on the reasoning that the traveller is the payer and
+ * the agency is not. So the agency is reached the only way it can be —
+ * through the case the fee was paid for.
+ *
+ * `status = 'paid'` and nothing else. `pending` is the window before the
+ * provider has confirmed, and counting it would put money on a
+ * director's screen that may never arrive; `failed` is money that
+ * definitively did not.
+ *
+ * Grouped by currency and collapsed by `collapseClientRevenue`, which is
+ * where the reasoning about mixed currencies lives.
+ */
+export async function clientRevenueForOrgs(
+  orgIds: readonly string[],
+  fallbackCurrency = "USD"
+): Promise<ClientRevenue> {
+  // Same rule as every other agency-scoped read on this page: no
+  // membership means no `where` to read by, and an unfiltered sum here
+  // would total every agency's client fees onto one dashboard.
+  if (orgIds.length === 0) {
+    return collapseClientRevenue([], fallbackCurrency);
+  }
+
+  const rows = await db
+    .select({
+      currency: payments.currency,
+      totalMinor: sql<number>`coalesce(sum(${payments.amountMinor}), 0)::int`,
+      // Distinct applications, not rows: a case that was charged twice
+      // (a retry after a failure, say) is still one client who paid.
+      cases: sql<number>`count(distinct ${payments.applicationId})::int`,
+    })
+    .from(payments)
+    .innerJoin(applications, eq(applications.id, payments.applicationId))
+    .where(
+      and(
+        eq(payments.kind, "client_application"),
+        eq(payments.status, "paid"),
+        inArray(applications.orgId, [...orgIds])
+      )
+    )
+    .groupBy(payments.currency);
+
+  return collapseClientRevenue(rows, fallbackCurrency);
+}
+
+
+/**
+ * How many months of settled client fees the director's chart plots.
+ *
+ * Six, matching `INVOICE_HISTORY_CYCLES` above — the two charts sit side
+ * by side on one screen, and one showing half a year while the other
+ * showed a quarter would invite a comparison that is not being made.
+ */
+export const CLIENT_FEE_HISTORY_MONTHS = 6;
+
+/** What the director's client-fee chart plots, in one currency. */
+export type ClientFeeSeries = {
+  currency: string;
+  /**
+   * True when settled fees exist in a currency this series leaves out —
+   * the same flag and the same reasoning as `ClientRevenue`.
+   */
+  mixedCurrency: boolean;
+  /** One point per month, oldest first, empty months included. */
+  points: ClientFeePoint[];
+  /** The window's total, so a caller can tell "no fees yet" from "a quiet month". */
+  totalMinor: number;
+};
+
+/**
+ * The last few months of settled client fees, for this agency's cases.
+ *
+ * The time series behind `clientRevenueForOrgs`, and it reaches the
+ * agency the same way and for the same reason: `payment_shape_matches_kind`
+ * keeps `org_id` off a `client_application` row, so the only route from
+ * a fee to the agency is through the case it was paid for. Both reads
+ * therefore join `applications` and filter on its `org_id`, and neither
+ * may become a second way of deciding whose money this is.
+ *
+ * The tile and this chart answer different questions on purpose — the
+ * tile is every fee ever settled, this is the last six months — so they
+ * are not expected to agree, and the chart is labelled with its window.
+ * What they must agree on is the *rule*: `status = 'paid'` only, and
+ * cases counted distinctly.
+ *
+ * Bounded on `coalesce(paid_at, created_at)` rather than on `paid_at`
+ * alone. The column is nullable, so a settled row that never had one
+ * written would be dropped from the books by a `paid_at >= …` filter —
+ * the same fallback, for the same reason, that `listInvoices` applies to
+ * a subscription's `period_start`.
+ */
+export async function clientFeesForOrgs(
+  orgIds: readonly string[],
+  options: { now?: Date; months?: number; fallbackCurrency?: string } = {}
+): Promise<ClientFeeSeries> {
+  const now = options.now ?? new Date();
+  const months = options.months ?? CLIENT_FEE_HISTORY_MONTHS;
+  const fallbackCurrency = options.fallbackCurrency ?? "USD";
+
+  const empty = (currency: string): ClientFeeSeries => ({
+    currency,
+    mixedCurrency: false,
+    // Still a full window rather than an empty array: the chart's own
+    // "nothing yet" state is decided by `totalMinor`, and a caller that
+    // wanted to draw the axis anyway should be able to.
+    points: clientFeesByMonth([], months, now),
+    totalMinor: 0,
+  });
+
+  // Same rule as every other agency-scoped read on this page: no
+  // membership means no `where` to read by, and an unfiltered sum would
+  // total every agency's client fees onto one dashboard.
+  if (orgIds.length === 0) return empty(fallbackCurrency);
+
+  const windowStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1), 1)
+  );
+
+  const rows = await db
+    .select({
+      currency: payments.currency,
+      amountMinor: payments.amountMinor,
+      applicationId: payments.applicationId,
+      paidAt: payments.paidAt,
+      createdAt: payments.createdAt,
+    })
+    .from(payments)
+    .innerJoin(applications, eq(applications.id, payments.applicationId))
+    .where(
+      and(
+        eq(payments.kind, "client_application"),
+        eq(payments.status, "paid"),
+        inArray(applications.orgId, [...orgIds]),
+        gte(sql`coalesce(${payments.paidAt}, ${payments.createdAt})`, windowStart)
+      )
+    );
+
+  if (rows.length === 0) return empty(fallbackCurrency);
+
+  // Which currency the chart is in is decided by `collapseClientRevenue`
+  // rather than by a rule written again here: minor units are not
+  // comparable across currencies, the tile already picks the dominant
+  // one, and a chart that picked differently would sit under a tile
+  // denominated in something else.
+  const byCurrency = new Map<string, { totalMinor: number; cases: Set<string> }>();
+  for (const row of rows) {
+    const entry = byCurrency.get(row.currency) ?? {
+      totalMinor: 0,
+      cases: new Set<string>(),
+    };
+    entry.totalMinor += row.amountMinor;
+    if (row.applicationId) entry.cases.add(row.applicationId);
+    byCurrency.set(row.currency, entry);
+  }
+
+  const { currency, mixedCurrency } = collapseClientRevenue(
+    [...byCurrency.entries()].map(([code, entry]) => ({
+      currency: code,
+      totalMinor: entry.totalMinor,
+      cases: entry.cases.size,
+    })),
+    fallbackCurrency
+  );
+
+  const fees: ClientFee[] = rows
+    .filter((row) => row.currency === currency && row.applicationId)
+    .map((row) => ({
+      // `paid_at` is what the money is dated by; `created_at` is the
+      // fallback the bound above already allows for.
+      paidAt: row.paidAt ?? row.createdAt,
+      amountMinor: row.amountMinor,
+      applicationId: row.applicationId as string,
+    }));
+
+  const points = clientFeesByMonth(fees, months, now);
+
+  return {
+    currency,
+    mixedCurrency,
+    points,
+    // Summed from the points rather than from `rows`, so the figure the
+    // caller tests for emptiness is the one the chart actually draws —
+    // a fee outside the window must not make an empty chart claim to
+    // have something in it.
+    totalMinor: points.reduce((sum, point) => sum + point.totalMinor, 0),
   };
 }

@@ -78,9 +78,32 @@ function KpiBody({ kpi }: { kpi: Kpi }) {
  * polish: a figure nobody has earned does not get rendered. The `sub`
  * line carries a fact we do have instead.
  */
+/**
+ * Widest-breakpoint columns, keyed by how many cards there are.
+ *
+ * Written out rather than interpolated because Tailwind scans source
+ * for whole class names — `xl:grid-cols-${n}` compiles to nothing. Four
+ * is the default and the shape every `/ops` row uses; five exists
+ * because the agency dashboard's money tile makes that row odd, and
+ * four columns would leave the fifth card alone on a line looking like
+ * a mistake rather than a figure.
+ */
+const COLUMNS: Record<number, string> = {
+  1: "xl:grid-cols-1",
+  2: "xl:grid-cols-2",
+  3: "xl:grid-cols-3",
+  4: "xl:grid-cols-4",
+  5: "xl:grid-cols-5",
+};
+
 export function KpiRow({ items }: { items: Kpi[] }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={cn(
+        "grid gap-4 sm:grid-cols-2",
+        COLUMNS[items.length] ?? "xl:grid-cols-4"
+      )}
+    >
       {items.map((kpi) =>
         kpi.href ? (
           <Link

@@ -39,7 +39,7 @@ export async function AgencyShell({
   title,
   lead,
   actions,
-  search,
+  centred,
   children,
 }: {
   profile: Profile;
@@ -54,7 +54,8 @@ export async function AgencyShell({
   title?: string;
   lead?: string;
   actions?: React.ReactNode;
-  search?: React.ReactNode;
+  /** Centre this page on a reading measure — see `AdminShell`. */
+  centred?: boolean;
   children: React.ReactNode;
 }) {
   const [notifications, unreadCount, avatarUrl, clients, invitations] =
@@ -113,7 +114,7 @@ export async function AgencyShell({
           />
         </>
       }
-      search={search}
+      centred={centred}
     >
       {children}
     </AdminShell>

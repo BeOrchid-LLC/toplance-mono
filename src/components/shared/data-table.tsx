@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Pagination } from "@/components/shared/pagination";
+import { rowOffset } from "@/lib/domain/row-number";
 import { SortHead } from "@/components/shared/sort-head";
 import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
 import {
@@ -64,6 +65,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   columns,
+  numbered = false,
   label,
   filteredLabel,
   countLabel,
@@ -86,6 +88,14 @@ export function DataTable<T>({
   rows: T[];
   rowKey: (row: T) => string;
   columns: DataColumn<T>[];
+  /**
+   * Count the rows in a leading column.
+   *
+   * The count is of the whole table, not of the page: row 1 of page 3
+   * reads 51. Off by default so a table that is a list of one thing —
+   * a plan, a card — does not gain a column of 1.
+   */
+  numbered?: boolean;
   /** Panel heading when nothing is filtered. */
   label: string;
   /** Panel heading when something is — usually "Showing 12 of 96". */
@@ -126,11 +136,13 @@ export function DataTable<T>({
    * counts its dormant clients rather than listing them, and that
    * sentence has to sit inside the panel or it reads as a caption
    * belonging to whatever comes next on the page. Not a place for
-   * controls: the pager is already the row below this one.
+   * controls: the pager is the row above the table, not below this one.
    */
   footer?: ReactNode;
   className?: string;
 }) {
+  const offset = rowOffset(pagination);
+
   const isEmpty = unfilteredTotal === 0;
   // Only a table with a toolbar can have been filtered to nothing. Without
   // one there is no filter to have emptied it, so a zero count means the
@@ -167,6 +179,24 @@ export function DataTable<T>({
         />
       )}
 
+      {/* Above the rows, not below them. The pager sat under the table
+          until 2026-09-08, which on a long page put the only way to
+          page below a screen of header and a screen of rows — far
+          enough down that a reader took the first page for the whole
+          table. */}
+      {pagination && !isEmpty && !isNoMatch && (
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          total={total}
+          size={pagination.size}
+          basePath={basePath}
+          params={params}
+          locale={locale}
+          className="border-b border-border px-5 py-4 sm:px-6"
+        />
+      )}
+
       {isEmpty ? (
         <PanelBody>{empty}</PanelBody>
       ) : isNoMatch ? (
@@ -182,6 +212,11 @@ export function DataTable<T>({
         <Table>
           <TableHeader>
             <TableRow>
+              {numbered && (
+                <TableHead className="w-12 text-end">
+                  {ADMIN_CONSOLE.ordinalHeading[locale]}
+                </TableHead>
+              )}
               {columns.map((c) =>
                 c.sortable ? (
                   <SortHead
@@ -209,8 +244,11 @@ export function DataTable<T>({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
+            {rows.map((row, i) => (
               <TableRow key={rowKey(row)}>
+                {numbered && (
+                  <TableCell className="num t-muted text-end">{offset + i + 1}</TableCell>
+                )}
                 {columns.map((c) => (
                   <TableCell
                     key={c.id}
@@ -229,18 +267,6 @@ export function DataTable<T>({
         <div className="border-t border-border px-5 py-3 sm:px-6">{footer}</div>
       )}
 
-      {pagination && !isEmpty && !isNoMatch && (
-        <Pagination
-          page={pagination.page}
-          pageCount={pagination.pageCount}
-          total={total}
-          size={pagination.size}
-          basePath={basePath}
-          params={params}
-          locale={locale}
-          className="border-t border-border px-5 py-4 sm:px-6"
-        />
-      )}
     </Panel>
   );
 }

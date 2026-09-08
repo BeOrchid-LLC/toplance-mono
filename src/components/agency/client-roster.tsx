@@ -261,6 +261,7 @@ export function ClientRoster({
       className={className}
       rows={rows}
       rowKey={(r) => r.id}
+      numbered
       columns={columns}
       label={label ?? AGENCY.yourClientsLabel[locale]}
       count={shown}

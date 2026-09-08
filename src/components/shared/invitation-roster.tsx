@@ -17,6 +17,7 @@ import {
 } from "@/components/shared/invitation-actions";
 import type { ListedInvitation } from "@/lib/data/invitations";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { fill } from "@/lib/i18n/fill";
@@ -130,6 +131,7 @@ export function InvitationRoster({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12 text-end">{ADMIN_CONSOLE.ordinalHeading[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.invitation[locale]}</TableHead>
               <TableHead>{detailLabel ?? AGENCY.tableHead.rank[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.status[locale]}</TableHead>
@@ -137,10 +139,11 @@ export function InvitationRoster({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invitations.map((invite) => {
+            {invitations.map((invite, i) => {
               const destination = countryFromIso2(invite.destinationIso);
               return (
                 <TableRow key={invite.id}>
+                  <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                   <TableCell>
                     <span
                       className="block truncate font-semibold"

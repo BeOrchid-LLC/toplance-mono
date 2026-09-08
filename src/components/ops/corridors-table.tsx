@@ -124,6 +124,7 @@ export function CorridorsTable({
       className="mt-6"
       rows={rows}
       rowKey={(row) => row.id}
+      numbered
       columns={columns}
       label={OPS_CORRIDORS.allVersionsPanel[locale]}
       filteredLabel={filteredLabel}

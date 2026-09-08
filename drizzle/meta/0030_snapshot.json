@@ -1,5 +1,5 @@
 {
-  "id": "f3b2a404-ebc5-4397-b0a3-b52a4a5f949b",
+  "id": "67eca3a6-5337-49a8-8c12-759b937bd160",
   "prevId": "109408ec-6ec0-4a10-93f3-816dc9d830ec",
   "version": "7",
   "dialect": "postgresql",
@@ -1575,7 +1575,7 @@
       "checkConstraints": {
         "platform_invite_has_no_org": {
           "name": "platform_invite_has_no_org",
-          "value": "(\"invitations\".\"kind\" = 'platform_staff' and \"invitations\".\"org_id\" is null and \"invitations\".\"staff_rank\" is not null)\n       or (\"invitations\".\"kind\" <> 'platform_staff' and \"invitations\".\"org_id\" is not null and \"invitations\".\"staff_rank\" is null)"
+          "value": "(\"invitations\".\"kind\"::text = 'platform_staff' and \"invitations\".\"org_id\" is null and \"invitations\".\"staff_rank\" is not null)\n       or (\"invitations\".\"kind\"::text <> 'platform_staff' and \"invitations\".\"org_id\" is not null and \"invitations\".\"staff_rank\" is null)"
         }
       },
       "isRLSEnabled": false

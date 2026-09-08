@@ -1,7 +1,6 @@
 import { join } from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
-import { setupClerkTestingToken } from "@clerk/testing/playwright";
 
 import { resetFixtures, signUpInvited, testEmail } from "./helpers/auth";
 import {
@@ -25,8 +24,6 @@ const EMAIL = testEmail("traveller");
 const ORG = "Traveller Spec Sponsor";
 const NAME = "Amara Okonkwo";
 const FIXTURE = join(__dirname, "fixtures/passport.jpg");
-const TYPO_EMAIL = testEmail("traveller.typo");
-const TYPO_ORG = "Traveller Typo Sponsor";
 
 /** The twelve answers, as the chips label them in English. */
 const ANSWERS = [
@@ -251,35 +248,19 @@ test("a traveller signs up, finishes intake and uploads a document", async ({ pa
  * appearing proves the check ran; the code screen *not* appearing is the
  * whole of the fix, because that screen is the point of no return.
  */
-test("a mistyped address is corrected on the form, not after the code is spent", async ({
-  page,
-}) => {
-  await resetFixtures([TYPO_EMAIL], [TYPO_ORG]);
+/*
+ * REMOVED 2026-09-08: "a mistyped address is corrected on the form, not
+ * after the code is spent".
+ *
+ * Its premise no longer exists. That test typed a one-character typo
+ * into the email field and asserted the form said so before Clerk was
+ * told anything — but #64 made the invited door fill the address in and
+ * lock it, so there is no longer a field to mistype.
+ *
+ * What replaced the protection, and where it is now asserted:
+ *   - `completeSignUpForm` (helpers/auth.ts) asserts the door filled in
+ *     the invited address, on every invited sign-up this suite runs.
+ *   - `agency.spec.ts` asserts the field is readonly and that typing a
+ *     different address into it is refused outright.
+ */
 
-  const token = await seedInvitation(TYPO_EMAIL, TYPO_ORG);
-  await setupClerkTestingToken({ page });
-  await page.goto(`/sign-up?token=${encodeURIComponent(token)}`);
-
-  const emailField = page.getByLabel("Email", { exact: true });
-  const codeScreen = page.getByRole("heading", { name: "Enter the code we emailed you" });
-
-  await page.getByLabel("Full name", { exact: true }).fill(NAME);
-  // The invited address, one character out — the ordinary typo, not an
-  // attempt to use somebody else's invitation.
-  await emailField.fill(TYPO_EMAIL.replace("@", "x@"));
-  await page.getByRole("button", { name: "Continue" }).click();
-
-  // Scoped to the form. Next mounts its own `role="alert"` route
-  // announcer on every page, so an unscoped alert role matches two
-  // elements and fails strict mode whatever the form is saying.
-  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
-    "That invitation was sent to a different email address."
-  );
-  await expect(codeScreen).toBeHidden();
-
-  // And the form is still standing, with the field still editable —
-  // which is the part that was lost before.
-  await emailField.fill(TYPO_EMAIL);
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(codeScreen).toBeVisible();
-});

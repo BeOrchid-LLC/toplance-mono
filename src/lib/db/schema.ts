@@ -517,10 +517,22 @@ export const invitations = pgTable(
      * three columns together: a platform invitation has no agency and a
      * rank, every other kind has an agency and no rank.
      */
+    /**
+     * `kind::text`, not `kind`, and the cast is load-bearing.
+     *
+     * Postgres refuses "unsafe use of a new value" of an enum in the
+     * same transaction that adds it, and Drizzle's migrator runs every
+     * pending migration in one transaction — so a fresh database
+     * (staging, or anyone's first `db:migrate`) adds `platform_staff`
+     * and then fails here, rolling the whole schema back. Splitting the
+     * two into separate migration files does not help, for the same
+     * reason. Comparing the text never parses an enum literal, and
+     * enforces exactly the same rule.
+     */
     check(
       "platform_invite_has_no_org",
-      sql`(${t.kind} = 'platform_staff' and ${t.orgId} is null and ${t.staffRank} is not null)
-       or (${t.kind} <> 'platform_staff' and ${t.orgId} is not null and ${t.staffRank} is null)`
+      sql`(${t.kind}::text = 'platform_staff' and ${t.orgId} is null and ${t.staffRank} is not null)
+       or (${t.kind}::text <> 'platform_staff' and ${t.orgId} is not null and ${t.staffRank} is null)`
     ),
     /**
      * The ops roster's read. `invitations_org_idx` cannot serve it —

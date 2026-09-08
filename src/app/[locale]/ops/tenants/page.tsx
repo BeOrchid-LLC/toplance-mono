@@ -126,7 +126,6 @@ export default async function OpsTenantsPage() {
       <KpiRow items={counters} />
 
       <TenantsTable rows={tenants} locale={locale} className="mt-8" />
-
     </AdminShell>
   );
 }

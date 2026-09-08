@@ -225,6 +225,13 @@
       "when": 1788859535334,
       "tag": "0031_deep_rocket_racer",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1788867079502,
+      "tag": "0032_lonely_bulldozer",
+      "breakpoints": true
     }
   ]
 }

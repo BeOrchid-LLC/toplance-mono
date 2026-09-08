@@ -42,7 +42,7 @@ export function ProvisionTenant({
    * bar on `/ops/tenants`, standing in the row of 36px chrome that
    * size exists to match.
    *
-   * It is not always there. `DemoRequestQueue` renders one per row as a
+   * It is not always there. `EnquiryTable` renders one per row as a
    * `DataTable` cell, among 44px `size="sm"` row controls, which is
    * precisely the context `size="bar"` documents itself as not being —
    * it would sit undersized, cut to a tighter radius than its

@@ -1,16 +1,21 @@
 import { countryBy } from "@/lib/domain/countries";
 
 /**
- * How many national digits a country's number has, read off the mask the
- * field already formats with.
+ * The national number length a country allows, as a closed range.
  *
- * The mask is the single source of truth for both jobs — one dot, one
- * digit — so the expected length cannot drift from the formatting the
- * traveller is looking at while they type. A second table of lengths
- * beside `COUNTRIES` is a table that goes stale.
+ * Read from `Country.nationalLength`, never counted off `Country.mask`.
+ * The mask is a display hint: it says where to put the spaces, and it is
+ * written the way people write the number down — which for the
+ * Netherlands meant with the trunk zero this module strips, so counting
+ * its dots gave ten for a nine-digit plan and refused every Dutch
+ * number. Germany failed the other way, its plan allowing eleven where
+ * the mask showed ten.
  */
-function expectedLength(iso: string): number {
-  return (countryBy(iso).mask.match(/\./g) ?? []).length;
+function allowedLength(iso: string): { min: number; max: number } {
+  const n = countryBy(iso).nationalLength;
+  return typeof n === "number"
+    ? { min: n, max: n }
+    : { min: n[0], max: n[1] };
 }
 
 /**
@@ -33,14 +38,17 @@ function expectedLength(iso: string): number {
  * to be a number. Ghana dials +233 and has nine-digit numbers that can
  * themselves begin "233", so a blind prefix strip would eat the first
  * three digits of a perfectly good number.
+ *
+ * This is the canonical form. Everything that stores, submits or
+ * validates a number runs it through here first — a caller that reads
+ * the raw field state instead is the bug this function exists to close.
  */
 export function nationalDigits(iso: string, input: string): string {
   let digits = input.replace(/\D/g, "");
   if (!digits) return "";
 
   const dial = countryBy(iso).dial.replace(/\D/g, "");
-  const expected = expectedLength(iso);
-  const floor = expected || 4;
+  const floor = allowedLength(iso).min;
 
   if (dial && digits.startsWith(dial) && digits.length - dial.length >= floor) {
     digits = digits.slice(dial.length);
@@ -63,10 +71,13 @@ export function nationalDigits(iso: string, input: string): string {
  * travels as a name rather than an iso code for the same reason the
  * country list itself stays English — those names are proper nouns, not
  * UI copy.
+ *
+ * `expected` is what to say the length should be: one number, or "9–10"
+ * where the plan allows a range.
  */
 export type PhoneProblem =
   | { kind: "required" }
-  | { kind: "length"; country: string; expected: number; actual: number };
+  | { kind: "length"; country: string; expected: string; actual: number };
 
 /**
  * What is wrong with this number, or `null` when nothing is.
@@ -95,14 +106,14 @@ export function phoneProblem(
   // traveller who skipped it out of creating an account.
   if (!digits) return required ? { kind: "required" } : null;
 
-  const expected = expectedLength(iso);
-  if (!expected) return null;
+  const { min, max } = allowedLength(iso);
+  if (!min && !max) return null;
 
-  if (digits.length !== expected) {
+  if (digits.length < min || digits.length > max) {
     return {
       kind: "length",
       country: countryBy(iso).name,
-      expected,
+      expected: min === max ? String(min) : `${min}–${max}`,
       actual: digits.length,
     };
   }

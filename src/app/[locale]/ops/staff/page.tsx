@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 
-import { AccountMenu } from "@/components/app/account-menu";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { InviteStaff } from "@/components/ops/invite-staff";
 import { AdminShell } from "@/components/shared/admin-shell";
@@ -76,19 +75,11 @@ export default async function OpsStaffPage() {
       activeId="colleagues"
       railTitle="Toplance"
       railSubtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-      railFooter={
-        <div className="flex items-center gap-3 px-1.5 py-1 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
-          <AccountMenu
-            name={profile.fullName}
-            email={profile.email}
-            subtitle={`${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`}
-          />
-          <div className="min-w-0 group-data-[collapsed]/rail:hidden">
-            <p className="t-title truncate">{profile.fullName}</p>
-            <p className="special truncate text-ink-3">{profile.email}</p>
-          </div>
-        </div>
-      }
+      account={{
+        name: profile.fullName,
+        email: profile.email,
+        subtitle: `${OPS_COMMON.subtitlePrefix[locale]} · ${OPS_COMMON.staffRole[actor.staffRole ?? "reviewer"][locale]}`,
+      }}
       title={OPS_STAFF.heading[locale]}
       lead={OPS_STAFF.intro[locale]}
       actions={

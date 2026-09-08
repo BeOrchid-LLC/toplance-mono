@@ -1,15 +1,27 @@
 import "server-only";
 
-import { count, eq } from "drizzle-orm";
+import { count, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { corridors, demoRequests } from "@/lib/db/schema";
 
+/**
+ * A demo enquiry somebody still has to do something about — the
+ * complement of `converted` and `declined`, which are the two endings.
+ *
+ * Exported because `/ops/tenants` counts the same set for its "Open
+ * enquiries" figure. The rail badge used to count `new` alone, so the
+ * number beside "Agencies" disagreed with the card on the page it
+ * opened, which is exactly the drift this module's docstring claims to
+ * prevent.
+ */
+export const OPEN_DEMO_STATUSES = ["new", "contacted", "scheduled"] as const;
+
 export type OpsCounts = {
   /** Corridors sitting in `pending` — a reviewer's to-do list. */
   pendingRoutes: number;
-  /** Demo enquiries still at `new`, worked from `/ops/tenants`. */
-  newDemoRequests: number;
+  /** Demo enquiries still open, worked from `/ops/tenants`. */
+  openDemoRequests: number;
 };
 
 /**
@@ -41,11 +53,11 @@ export async function getOpsCounts(): Promise<OpsCounts> {
     db
       .select({ n: count() })
       .from(demoRequests)
-      .where(eq(demoRequests.status, "new")),
+      .where(inArray(demoRequests.status, [...OPEN_DEMO_STATUSES])),
   ]);
 
   return {
     pendingRoutes: routes?.n ?? 0,
-    newDemoRequests: demos?.n ?? 0,
+    openDemoRequests: demos?.n ?? 0,
   };
 }

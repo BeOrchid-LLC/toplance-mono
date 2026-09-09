@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import {
   ArrowRight,
+  ChevronDown,
   FolderOpen,
   Inbox,
   Mail,
@@ -461,12 +462,30 @@ export default async function EmployerConsolePage() {
             once before it can be put away. */}
         <details open className="laminate group overflow-hidden rounded-lg">
           <span aria-hidden className="laminate-sheen" />
-          <summary className="relative z-[1] flex cursor-pointer list-none items-start gap-4 p-6">
+          {/* `list-none` covers most engines; WebKit needs its own marker
+              turned off too, or the chevron below is the second
+              disclosure mark on the row. */}
+          <summary className="relative z-[1] flex cursor-pointer list-none items-start gap-4 p-6 [&::-webkit-details-marker]:hidden">
             <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
-            <div className="min-w-0">
+            {/* `me-auto` on the text rather than a wrapper around it, the
+                same way `DisclosurePanel` keeps its aside at the edge. */}
+            <div className="me-auto min-w-0">
               <p className="tag">{AGENCY.privacyTag[locale]}</p>
               <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
             </div>
+            {/* Down when shut, up when open — the strip opens by default,
+                so the mark a director meets first is the one that says
+                this can be put away. Rotated rather than swapped for a
+                second icon so the turn is animated, and on the vertical
+                axis rather than `DisclosurePanel`'s `ChevronRight`,
+                which would point into the text in Arabic.
+
+                `aria-hidden`: `<summary>` already carries the expanded
+                state, and a second announcement of it is noise. */}
+            <ChevronDown
+              className="mt-0.5 size-4 shrink-0 text-ink-3 transition-transform duration-[var(--dur-toggle)] ease-[var(--ease-out)] group-open:rotate-180"
+              aria-hidden
+            />
           </summary>
           <div className="relative z-[1] px-6 pb-6 ps-16">
             <p className="t-muted">{AGENCY.privacyBody[locale]}</p>

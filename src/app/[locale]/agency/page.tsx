@@ -115,9 +115,9 @@ function RosterCard({
  * list is its length, and `countOrgClients` is that question asked as a
  * `count(*)` rather than by reading a roster in order to measure it.
  *
- * The client count is also the agency's rather than the viewer's — it is
- * divided by `seats_purchased` below, and a billing figure must not read
- * differently depending on which colleague is logged in.
+ * The client count is the agency's rather than the viewer's: it is a
+ * figure about the business, and one that must not read differently
+ * depending on which colleague is logged in.
  */
 async function directorSummary(orgIds: readonly string[], orgId: string | null) {
   const [used, byStatus, members, invitations, charts] = await Promise.all([
@@ -281,7 +281,6 @@ export default async function EmployerConsolePage() {
   const desk = isDirector ? null : await reviewerDesk(actor);
 
   const used = summary?.used ?? 0;
-  const seats = org.seatsPurchased ?? 0;
 
   /**
    * A funnel stage's name in the reader's language.
@@ -382,34 +381,22 @@ export default async function EmployerConsolePage() {
       {/* What the rest of the band above the page used to carry. */}
       <div className="mb-8">
         {/*
-          Seats and outstanding invitations are the agency's books, so
-          they are the director's line. A reviewer opening this page is
-          not managing the account — the two rosters below are their
-          screen — and a seat count over their own work would be a
-          number they can do nothing about.
+          How many people work here. It is the one fact this page has
+          that no card below repeats and no rail badge carries — the
+          Team badge counts pending invitations, not colleagues.
 
-          "0 of 0 seats in use" is a sentence made of two facts we do not
-          have. Seats are a placeholder until the client sets them (§7),
-          so with no seat count the line states the number that is real
-          and says the other is not set.
+          What stood here until 2026-09-09 was "{n} people · seat count
+          not set yet · {n} invitation pending", whose three clauses
+          were each wrong or redundant: "people" read
+          `countOrgClients`, which counts applications; the seat clause
+          named a cap nothing in the product enforces; and the
+          invitation clause repeated the card directly beneath it.
         */}
         {summary && (
           <p className="t-muted mt-2">
-            {seats > 0
-              ? fill(AGENCY.seatsInUse[locale], { used, seats })
-              : fill(
-                  (used === 1
-                    ? AGENCY.seatCountNotSetOne
-                    : AGENCY.seatCountNotSetOther)[locale],
-                  { used }
-                )}
-            {summary.pendingInvitations.length > 0 &&
-              fill(
-                (summary.pendingInvitations.length === 1
-                  ? AGENCY.pendingSuffixOne
-                  : AGENCY.pendingSuffixOther)[locale],
-                { n: summary.pendingInvitations.length }
-              )}
+            {summary.members.length === 1
+              ? AGENCY.teamSizeOne[locale]
+              : fill(AGENCY.teamSizeOther[locale], { n: summary.members.length })}
           </p>
         )}
         {/* The rail names your role; this says how you got it.
@@ -431,9 +418,6 @@ export default async function EmployerConsolePage() {
             has to say so — otherwise a handler reads the agency's
             forty open cases as their own. */}
         <p className="t-muted mt-2 text-pretty">{AGENCY.overviewIsAgencyWide[locale]}</p>
-        {summary && seats > 0 && (
-          <Progress value={(used / seats) * 100} className="mt-4 max-w-[320px]" />
-        )}
       </div>
 
 

@@ -8,7 +8,6 @@ import { toActionError } from "@/lib/auth/guards";
 import {
   applicationBelongsToOrg,
   getSupportRequest,
-  listSupportRequestsForOrg,
   postSupportMessage,
   raiseSupportRequest,
   resolveSupportRequest,

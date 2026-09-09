@@ -149,18 +149,26 @@ describe("rollupClients", () => {
   });
 
   it("gives a client with no activity at all a row of zeros, not no row", () => {
-    // A client who bought seats and has not used them is the single most
-    // useful row on this table, and a rollup keyed off applications
-    // would drop them entirely.
+    // A client who has been provisioned and has sent nobody is the
+    // single most useful row on this table, and a rollup keyed off
+    // applications would drop them entirely.
     const rows = rollupClients({ orgs, invitations: [], applications: [] });
 
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.orgId === "org-2")).toMatchObject({
       name: "Globex",
-      seatsPurchased: 5,
       applicants: 0,
       approvalRate: null,
     });
+  });
+
+  it("reports no seat figure — this table counts applications", () => {
+    // The Seats column came off `/ops/dashboard` on 2026-09-09, and the
+    // row should not keep carrying the number behind it: a field nothing
+    // renders is a field that grows a column back.
+    const [row] = rollupClients({ orgs, invitations: [], applications: [] });
+    expect(row).not.toHaveProperty("seatsPurchased");
+    expect(row).not.toHaveProperty("seatUtilisation");
   });
 
   it("works out an approval rate from decisions alone", () => {

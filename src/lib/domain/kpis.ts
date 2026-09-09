@@ -148,7 +148,6 @@ export type ClientInvitation = { orgId: string; status: InvitationStatus };
 export type ClientRow = {
   orgId: string;
   name: string;
-  seatsPurchased: number;
   /** People this client has invited, whatever became of the invitation. */
   invited: number;
   accepted: number;
@@ -160,9 +159,18 @@ export type ClientRow = {
   rejected: number;
   /** Approved over decided; `null` until this client has a decision. */
   approvalRate: number | null;
-  /** Seats used over seats bought; `null` when they bought none. */
-  seatUtilisation: number | null;
 };
+
+/*
+ * No `seatsPurchased`, and no `seatUtilisation`.
+ *
+ * The ratio divided *applicants* by seats — a throughput figure over a
+ * headcount cap, which is two units in one number and read as neither.
+ * The cap itself is a billing field, set and shown on `/ops/tenants`,
+ * and the client's instruction on 8 September was that this product
+ * bills per application. `applicants` is the number the removed column
+ * was standing in for, and it was already on the row beside it.
+ */
 
 /**
  * One row per client for the dashboard's Clients tab.
@@ -183,7 +191,7 @@ export type ClientRow = {
  * sponsored.
  */
 export function rollupClients(input: {
-  orgs: readonly { id: string; name: string; seatsPurchased: number }[];
+  orgs: readonly { id: string; name: string }[];
   invitations: readonly ClientInvitation[];
   applications: readonly ClientApplication[];
 }): ClientRow[] {
@@ -193,7 +201,6 @@ export function rollupClients(input: {
       {
         orgId: org.id,
         name: org.name,
-        seatsPurchased: org.seatsPurchased,
         invited: 0,
         accepted: 0,
         applicants: 0,
@@ -201,7 +208,6 @@ export function rollupClients(input: {
         approved: 0,
         rejected: 0,
         approvalRate: null,
-        seatUtilisation: null,
       },
     ])
   );
@@ -233,7 +239,6 @@ export function rollupClients(input: {
       // non-approval would show a client's rate dropping every time they
       // sent somebody new, which is the opposite of what happened.
       approvalRate: rate(row.approved, row.approved + row.rejected),
-      seatUtilisation: rate(row.applicants, row.seatsPurchased),
     }))
     .sort((a, b) => b.applicants - a.applicants || a.name.localeCompare(b.name));
 }

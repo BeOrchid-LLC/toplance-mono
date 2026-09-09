@@ -31,10 +31,14 @@ export type ClientMoney = { billedMinor: number; paidMinor: number };
  * client's request, which leaves this file holding the only part that
  * was ever actually particular to it: the columns.
  *
- * No toolbar, no sort links, no pager. The rows arrive ordered by the
- * dashboard's single query pass, and every tab on that screen is built
- * from it — a sort that wrote `?sort=` into the URL would reload all
- * four.
+ * No Seats column. It was the last place on the console that priced a
+ * client in seats, and it was wrong twice over: the client said on
+ * 8 September that the platform bills per application, not per seat,
+ * and the percentage under the figure divided *applicants* by seats —
+ * two different units in one cell. The number a reader wanted from it
+ * is the Applied column, which was already on the same row. The stored
+ * `seats_purchased` is untouched; it is a billing field on
+ * `/ops/tenants`, not a unit this table reports in.
  */
 export function ClientsTable({
   rows,
@@ -74,7 +78,7 @@ export function ClientsTable({
     {
       id: "client",
       label: "Client",
-      className: "w-[24%]",
+      className: "w-[30%]",
       cell: (client) => (
         <>
           <span className="t-title block truncate">{client.name}</span>
@@ -88,19 +92,6 @@ export function ClientsTable({
           ) : client.approvalRate !== null ? (
             <span className="special">{pct(client.approvalRate)} approved</span>
           ) : null}
-        </>
-      ),
-    },
-    {
-      id: "seats",
-      label: "Seats",
-      className: "w-[12%]",
-      cell: (client) => (
-        <>
-          <span className="num block">{client.seatsPurchased}</span>
-          {client.seatUtilisation !== null && (
-            <span className="special">{pct(client.seatUtilisation)} used</span>
-          )}
         </>
       ),
     },
@@ -123,7 +114,7 @@ export function ClientsTable({
     {
       id: "applied",
       label: "Applied",
-      className: "w-[12%]",
+      className: "w-[18%]",
       cell: (client) => <span className="num block">{client.applicants}</span>,
     },
     {

@@ -1,6 +1,7 @@
 import type { NavItem } from "@/components/app/app-nav";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { AGENCY } from "@/lib/i18n/agency";
+import { AGENCY_RULE_SETS } from "@/lib/i18n/agency-rule-sets";
 import { BILLING } from "@/lib/i18n/billing";
 import type { Locale } from "@/lib/i18n/locales";
 
@@ -64,10 +65,17 @@ export function agencyNav({
           { href: "/agency/billing", label: BILLING.navBilling[locale] },
         ]
       : []),
-    // Every rank, unlike the three above it. A handler whose case was
-    // claimed by the wrong colleague is the person with the problem;
-    // making the only channel out a director's tab would make a dispute
-    // wait on somebody else's calendar.
+    // The last two are every rank's, unlike the three above them.
+    //
+    // Rule sets, because the person who has to explain why a client was
+    // asked for a bank statement is whoever picked up the phone, and
+    // the screen is read-only — there is no permission to gate.
+    //
+    // Support, because a handler whose case was claimed by the wrong
+    // colleague is the person with the problem; making the only channel
+    // out a director's tab would make a dispute wait on somebody else's
+    // calendar.
+    { href: "/agency/rule-sets", label: AGENCY_RULE_SETS.nav[locale] },
     { href: "/agency/support", label: OPS_SUPPORT.agencyHeading[locale] },
   ];
 }

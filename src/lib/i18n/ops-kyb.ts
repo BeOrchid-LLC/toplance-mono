@@ -27,6 +27,9 @@ export const OPS_KYB: {
   queuePanel: L;
   agenciesWord: L;
   emptyQueue: L;
+  searchPlaceholder: L;
+  anyStanding: L;
+  noMatchHint: L;
   tableHead: { agency: L; progress: L; standing: L; added: L };
   standing: { notStarted: L; inReview: L; ready: L; activated: L };
   state: { notStarted: L; inReview: L; verified: L; rejected: L };
@@ -120,6 +123,47 @@ export const OPS_KYB: {
     tw: "Adwumakuo biara nni hɔ. Baako bɛpue wɔ ha bere a wɔbɔ no.",
     zu: "Awekho ama-ejensi okwamanje. Elilodwa livela lapha ngokushesha lapho lidalwa.",
   },
+  /**
+   * The name and nothing else — see `kybMatches`. Saying so in the
+   * placeholder is what stops an empty result reading as a broken box
+   * when somebody types a registration number into it.
+   */
+  searchPlaceholder: {
+    en: "Search by agency name",
+    ha: "Nemo ta sunan hukuma",
+    yo: "Wá nípa orúkọ ilé-iṣẹ́",
+    ig: "Chọọ site na aha ụlọ ọrụ",
+    fr: "Rechercher par nom d'agence",
+    pt: "Pesquisar por nome da agência",
+    sw: "Tafuta kwa jina la wakala",
+    ar: "ابحث حسب اسم الوكالة",
+    tw: "Hwehwɛ adwumakuo din so",
+    zu: "Sesha ngegama le-ejensi",
+  },
+  anyStanding: {
+    en: "Any status",
+    ha: "Kowane matsayi",
+    yo: "Ipò yòówù",
+    ig: "Ọnọdụ ọ bụla",
+    fr: "Tout statut",
+    pt: "Qualquer estado",
+    sw: "Hali yoyote",
+    ar: "أي حالة",
+    tw: "Tebea biara",
+    zu: "Noma isiphi isimo",
+  },
+  noMatchHint: {
+    en: "Nothing matches that. Clear the filters to see the whole queue.",
+    ha: "Babu abin da ya dace. Share tacewa don ganin dukan layin.",
+    yo: "Kò sí ohun tí ó bá a mu. Pa àwọn ìwẹ̀ rẹ́ láti rí gbogbo ìlà náà.",
+    ig: "Ọ dịghị ihe dabara. Hichapụ ihe nzacha iji hụ ahịrị niile.",
+    fr: "Aucun résultat. Effacez les filtres pour voir toute la file.",
+    pt: "Nada corresponde. Limpe os filtros para ver toda a fila.",
+    sw: "Hakuna kinacholingana. Futa vichujio ili kuona foleni nzima.",
+    ar: "لا شيء يطابق ذلك. امسح عوامل التصفية لعرض قائمة الانتظار كاملة.",
+    tw: "Biribiara nhyia. Popa nhwehwɛmu no na woahu santen no nyinaa.",
+    zu: "Akukho okufanayo. Sula izihlungi ukuze ubone ulayini wonke.",
+  },
   tableHead: {
     agency: {
       en: "Agency",
@@ -145,12 +189,19 @@ export const OPS_KYB: {
       tw: "Nkɔsoɔ",
       zu: "Inqubekela phambili",
     },
+    /*
+     * "Status", not "State" — the client's words on 8 September, given
+     * about `/ops/tenants` and applying here for the reason that file
+     * states: the same fact must not wear two different headings on two
+     * screens a reviewer moves between. `OPS_TENANTS.tableHead.state`
+     * carries the identical strings.
+     */
     standing: {
-      en: "State",
+      en: "Status",
       ha: "Matsayi",
       yo: "Ipò",
       ig: "Ọnọdụ",
-      fr: "État",
+      fr: "Statut",
       pt: "Estado",
       sw: "Hali",
       ar: "الحالة",

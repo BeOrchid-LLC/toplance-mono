@@ -54,12 +54,26 @@ branch — **it is stale**. Verify with `gh repo view` before opening a PR.
 | `8b9cf78` | The favicon repaint, and Task 6 step 1 |
 | `8ac9b1d` | Task 4 — the passport materials out, 216 lines of CSS with them |
 | `8323edb` | Task 4 marked landed, with what the plan had wrong |
+| `7bd072f` | This map corrected — there is no plan 1b–1e to write |
+| `32ab623` | Task 8 — the funnel ramp re-derived on the route hue |
+| `e66f22f` | Task 5 — Plex in, Inter and JetBrains out, Arabic given a face |
+| `0ca7d2a` | Task 6 — the primitives, steps 2–6 |
+| `74054b4` | Task 7 — error boundaries, loading states, the skip link |
+
+**The foundation plan is finished.** All nine tasks and all 63 steps are
+ticked. Every surface plan below is now unblocked.
 
 **Verification status:** the token layer has been through three adversarial
 rounds. Rounds one and two each shipped work that passed review and was broken
 in the browser; both defects are recorded in §4. A full green suite was
-observed after Task 4: 131/131 files, 1856/1856 tests, typecheck clean. Check
-`git log` and the suite rather than trusting this line.
+observed after Task 4: 131/131 files, 1856/1856 tests, typecheck clean.
+
+Tasks 5–8 were verified by typecheck, lint, the design suites (115 tests across
+`src/lib/design` and `src/lib/i18n`) and by measurement in a real browser —
+which is what found three of the defects in §4. A full green run was NOT
+observed after them: see the suite note in §5, which is an environment problem
+rather than a claim about this work. Check `git log` and the suite rather than
+trusting this line.
 
 ---
 
@@ -75,14 +89,17 @@ exact code. Execute the task; do not go looking for a plan that does not exist.
 | Foundation task | Was called | State |
 |---|---|---|
 | Tasks 1–3 — guard rail, repaint, plate geometry | 1a | landed |
-| **Task 4** — retire the passport materials | 1b | landed (`8ac9b1d`) |
-| **Task 5** — the faces | 1c | open |
-| **Task 6** — the primitives | 1d | step 1 landed, 2–9 open |
-| **Task 7** — error boundaries, loading, skip link | 1e | open |
-| **Task 8** — re-derive the funnel ramp | 1d | open |
+| Task 4 — retire the passport materials | 1b | landed (`8ac9b1d`) |
+| Task 5 — the faces | 1c | landed (`e66f22f`) |
+| Task 6 — the primitives | 1d | landed (`0ca7d2a`; step 1 in `65a4498`) |
+| Task 7 — error boundaries, loading, skip link | 1e | landed (`74054b4`) |
+| Task 8 — re-derive the funnel ramp | 1d | landed (`32ab623`) |
 | Task 9 — the things no token owns | — | landed |
 
-These four still have to be written, and only after the foundation lands:
+**The foundation is done.** The ordering rule below no longer blocks anything;
+what remains is that plans 2–5 have not been written.
+
+These four still have to be written. The foundation they were waiting on has landed:
 
 | Plan | Scope | State |
 |---|---|---|
@@ -91,12 +108,19 @@ These four still have to be written, and only after the foundation lands:
 | **4a / 4b** Ops dispatch | dashboard, tenants, KYB / corridors, enquiries, support, staff | to write |
 | **5** The sweep | 10 locales × 2 themes × RTL × 390px across 46 routes | to write |
 
-**Order matters more than session count.** Plans 2–5 lay out screens against
-primitives that Tasks 5–8 are still moving. Do not start a surface plan before
-the foundation is finished, or the surface work gets redone. Plan 5 is the one
-partial exception: it asserts invariants — no horizontal overflow at 390px, RTL
-mirroring, contrast in both themes — rather than appearances, so its harness can
-be built before the surfaces settle. Nothing in `e2e/` sweeps today.
+**Order mattered more than session count, and that constraint has now been
+served.** Plans 2–5 laid out screens against primitives Tasks 5–8 were still
+moving; those have stopped moving, so any of the four can be written next.
+Plan 5 remains the one whose harness is independent of the rest: it asserts
+invariants — no horizontal overflow at 390px, RTL mirroring, contrast in both
+themes — rather than appearances. Nothing in `e2e/` sweeps today.
+
+What the primitives now give a surface plan to build on: `Button` has a `way`
+variant for the one next action on a screen, the semantic variants carry
+`--on-*` label inks, `StatusBadge`'s mapping is unchanged and client-locked,
+`Panel` is the plate, every route group has an error boundary and a loading
+state, and `SkipLink` is mounted on all three surfaces with `<main id="main">`
+to land on.
 
 ---
 
@@ -144,6 +168,57 @@ copy on the landing page. Passing on one ground proves nothing.
 `--route`/`--way` pair is deferred until that product needs it, and gets the
 same validation run then.
 
+### One `localFont` per subset, and no `fallback` on any of them
+
+A browser picks ONE face out of a family for a text run. When a glyph is
+missing from it the search moves to the next *family* in the stack, never to
+another face in the same family. With Plex Sans's four subsets under a single
+`localFont`, `/ar` painted its Arabic in Geeza Pro — confirmed by collapsing
+them back after the fix and watching it return.
+
+`fallback:` compounds it and is the subtler half: next/font bakes that list
+INTO the variable it emits, so `var(--font-plex-sans)` expands to `plexSans,
+system-ui, …, sans-serif` and drops the generics into the MIDDLE of the chain,
+ahead of every subset after it. No `localFont` in this repo declares
+`fallback` now; `globals.css` owns each stack's tail. `fonts.test.ts` fails on
+either mistake.
+
+### IBM Plex Sans has no Hausa hook letters, and Inter did
+
+Checked against the `cmap`, not assumed: ƙ ɓ ɗ ƴ ɲ are in no Plex Sans subset
+and in no Archivo subset. Inter's `latin-ext` had them. So the face swap took
+the hook letters out of Hausa, where ƙaura is an ordinary word.
+
+Inter survives as `inter-latin-african.woff2` — 3.7KB, exactly those ten
+codepoints, weight axis intact, last real family in the chain. **Before
+swapping the body face again, run the coverage check.** This file exists
+because that was not done once.
+
+### A pill's ground is not a token, so PAIRS cannot see it
+
+`color-mix(in srgb, var(--x) N%, transparent)` over whichever surface the pill
+landed on. `PAIRS` compares two tokens and structurally cannot reach it, which
+is why no status pill had ever been measured here — through a repaint that
+moved every token they mix.
+
+Measuring them found `brand` at 4.283:1 on `--surface-2` in dark, under the 4.5
+a 13px label needs. `--brand` was the only fill in the system with no `-ink`
+half, so it was borrowing `--brand-text`, which is tuned to land on a plate. It
+has `--brand-ink` now. No tint strength fixes it — 6% still only reaches 4.405.
+
+The assertions read their strengths out of `badge.tsx` rather than copying
+them, and assert the variant list by name. That is what caught `brand`, which
+Task 6's own file list did not mention.
+
+### `--way` marks one thing per screen, so status pills do not wear it
+
+Task 6 step 5 read literally would map pending states onto `--way`. Two things
+forbid it: `--way`'s own rule in `globals.css` — exactly one thing per screen,
+two means one is wrong — against a pill that renders once per table row; and
+`STATUS_VARIANT`'s mapping, locked with the client on 2026-08-21. Taken as
+"new colours, same vocabulary": the mapping is untouched, and the pills were
+verified rather than repainted.
+
 ### Some things genuinely cannot read a token
 
 The plan originally claimed "nothing hard-codes a hue". Three counter-examples
@@ -174,6 +249,31 @@ list; update it with the palette.
   and leak fixtures; `tail` keeps only the summary, so the failure detail you
   need is gone and the rerun costs two minutes. Redirect to a file and read
   that.
+- **`db:clean-fixtures` does not cover `corridors`.** A leaked
+  `zz`/`zz`/`work` row survives it and fails `checklist.test.ts` with
+  `duplicate key … corridors_corridor_version_key`, then a teardown error
+  about `invalid input syntax for type uuid: ""`. `zz` is a reserved ISO code,
+  so any row carrying it is fixture residue. Delete it directly.
+- **The suite's redness does not converge, and the cause is still open.** On
+  unchanged code, six consecutive runs gave 20 → 9 → 0 → 17 → 71 → 27
+  failures, all Postgres suites, all `afterEach` DELETE timeouts. One run was
+  fully green. `analytics_events.user_id` has no index and the table grows
+  every run, which looked like the cause and **is not**: clearing it to 15 rows
+  and vacuuming left the suite red at 390s. The missing index is still worth
+  adding; it is not the explanation. Do not report a count from a single run
+  as a fact about the code — that is what the trap above means by mutually
+  inconsistent counts.
+- **Never verify a font by reading the CSS either.** The same lesson as the
+  focus ring, one layer out. A font stack can name the right family, the file
+  can be fetched, the face can report `loaded` — and the glyph can still be
+  painted by Arial. Ask the renderer: drive Chromium, then
+  `CSS.getPlatformFontsForNode` over CDP tells you which font actually drew
+  each run, with glyph counts. Three separate defects this session were
+  invisible to every other method.
+- **`/en` and every console route redirect to `/sign-in` without a session.**
+  `/ar`, `/ha` and `/yo` serve the marketing pages signed out. So a browser
+  check of `/en/agency` or `/en/ops/dashboard` needs a real sign-in; anything
+  that only needs a rendered page can use a locale marketing route instead.
 - **Never verify a focus style by reading CSS.** Tailwind v4 emits
   `@layer theme, base, components, utilities`, and layers order by *declaration*,
   not source position — so `outline-none` on a component beats `:focus-visible`

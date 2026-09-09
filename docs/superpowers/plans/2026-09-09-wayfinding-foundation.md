@@ -538,7 +538,7 @@ Retires Inter and JetBrains Mono for IBM Plex Sans and IBM Plex Mono, and closes
 - Add: `src/app/fonts/plex-sans-{latin,latin-ext,vietnamese,arabic}.woff2`, `src/app/fonts/plex-mono-latin.woff2`
 - Delete: `src/app/fonts/inter-latin.woff2`, `inter-latin-ext.woff2`, `jetbrains-latin.woff2`
 
-- [ ] **Step 1: Vendor the subsets**
+- [x] **Step 1: Vendor the subsets**
 
 ```bash
 npm i -D @fontsource-variable/ibm-plex-sans @fontsource-variable/ibm-plex-sans-arabic @fontsource-variable/ibm-plex-mono
@@ -551,7 +551,7 @@ cp node_modules/@fontsource-variable/ibm-plex-mono/files/ibm-plex-mono-latin-400
 
 If a filename does not exist, list `node_modules/@fontsource-variable/<pkg>/files/` and take the variable-weight normal file for that subset. Plex Mono may ship static weights only; if so take 400 and 600 and declare them separately.
 
-- [ ] **Step 2: Check the byte budget before going further**
+- [x] **Step 2: Check the byte budget before going further**
 
 ```bash
 ls -l src/app/fonts/
@@ -559,7 +559,7 @@ ls -l src/app/fonts/
 
 The spec flags this as a risk: this product is read on mid-range Android over slow connections. Record the before and after totals in the commit message. The previous set was 384KB across six files. If the new set exceeds roughly 450KB, drop `plex-mono-latin-ext` (Task 5 does not add it) and consider subsetting Plex Sans Arabic.
 
-- [ ] **Step 3: Wire the faces**
+- [x] **Step 3: Wire the faces**
 
 In `src/app/[locale]/layout.tsx`, replace the `inter` and `jetbrains` declarations:
 
@@ -601,7 +601,7 @@ Update the `className` on `<html>` or `<body>` — wherever `inter.variable` and
 
 Update the refresh instructions in the doc comment above the declarations to name the new packages.
 
-- [ ] **Step 4: Repoint the stacks**
+- [x] **Step 4: Repoint the stacks**
 
 In `globals.css`, the `@theme` block:
 
@@ -619,7 +619,7 @@ And in `@layer base`'s `body` block, where the stacks are re-declared because `@
     --data: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 ```
 
-- [ ] **Step 5: Remove the retired files**
+- [x] **Step 5: Remove the retired files**
 
 ```bash
 git rm src/app/fonts/inter-latin.woff2 src/app/fonts/inter-latin-ext.woff2 src/app/fonts/jetbrains-latin.woff2
@@ -628,13 +628,13 @@ grep -rn "font-inter\|font-jetbrains" src/
 
 Expected: no output from the grep.
 
-- [ ] **Step 6: Verify, including Arabic**
+- [x] **Step 6: Verify, including Arabic**
 
 Run: `npm run typecheck && npm run lint`, then `npx next dev -p 3400`. Open `/en` and `/ar`. Confirm on `/ar` that the page runs right-to-left **and** that Arabic text renders in Plex rather than an OS fallback — check in devtools that the computed `font-family` resolves to the Plex face and that the rendered glyphs match Plex Sans Arabic's forms.
 
 Also open `/ha` and `/yo` and confirm ƙ/ɓ/ɗ and ẹ/ọ render in Plex rather than falling back mid-word.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A src/app/fonts src/app/[locale]/layout.tsx src/app/globals.css package.json package-lock.json
@@ -762,7 +762,7 @@ would clip an outward one, and it moves onto the visible shell where the
 element that takes focus is not the element a person sees. A third appearing
 without a comment beside it is a regression, and `focus.test.ts` will say so.
 
-- [ ] **Step 2: Put the semantic button labels over the contrast floor**
+- [x] **Step 2: Put the semantic button labels over the contrast floor**
 
 `button.tsx` sets its three semantic variants as `bg-<semantic> text-white`.
 That `text-white` is the hard-coded hue the Architecture note names: one
@@ -840,7 +840,7 @@ unread count in the bell. That one is genuinely text — a numeral a person
 reads — at 10px, which is small text with nothing to relax the floor, and it
 sits at 3.642:1 in dark.
 
-- [ ] **Step 3: Add the `way` variant to Button**
+- [x] **Step 3: Add the `way` variant to Button**
 
 In `buttonVariants`, add to `variants.variant`, after `primary`:
 
@@ -853,15 +853,15 @@ In `buttonVariants`, add to `variants.variant`, after `primary`:
         way: "bg-way text-way-ink hover:bg-[color-mix(in_srgb,var(--way)_88%,#fff)] active:bg-[color-mix(in_srgb,var(--way)_88%,#000)]",
 ```
 
-- [ ] **Step 4: Drop the glass from Badge**
+- [x] **Step 4: Drop the glass from Badge**
 
 `src/components/ui/badge.tsx` carries `laminate` — Task 4 removed it. Confirm the class is gone and the badge reads `bg-surface-2 border border-border`.
 
-- [ ] **Step 5: Repoint StatusBadge onto the signage vocabulary**
+- [x] **Step 5: Repoint StatusBadge onto the signage vocabulary**
 
 `src/components/shared/status-badge.tsx` maps states to tokens. Guideline §8's vocabulary survives with new colours: live/verified/complete → `--success`; pending/needs action → `--way` as a fill with `--way-ink`; rejected/expired → `--danger`; draft/not started → `--ink-3` on `--surface-2`. Keep every state's icon and label — status is never colour alone.
 
-- [ ] **Step 6: Turn Panel into a plate**
+- [x] **Step 6: Turn Panel into a plate**
 
 In `src/components/shared/panel.tsx`, both `Panel` and `DisclosurePanel` carry `rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]`. The radius token already changed under them, so the only edit is the doc comment — the "matte on purpose … the laminate in the corridor header is the only glass on any screen" paragraph describes a system that no longer exists. Replace it:
 
@@ -872,7 +872,7 @@ In `src/components/shared/panel.tsx`, both `Panel` and `DisclosurePanel` carry `
  * which is why the elevation is a 1px contact shadow and not a blur.
 ```
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 Run: `npm run typecheck && npm run lint && npm test`
 
@@ -880,7 +880,7 @@ Run: `npm run typecheck && npm run lint && npm test`
 `tokens.test.ts` in step 2, so the two things this task fixed that cannot be
 seen in a screenshot are both covered by the same command.
 
-- [ ] **Step 8: Look at every primitive at once**
+- [x] **Step 8: Look at every primitive at once**
 
 `npx next dev -p 3400`, then open `/en/agency` and `/en/ops/dashboard` in both themes. Confirm buttons, badges, status pills and panels all read as one family.
 
@@ -888,7 +888,7 @@ Tab through each screen as well as looking at it. Buttons, badges, status
 pills and panels reading as one family is the easy half; the ring being the
 same ring on all of them, in both themes, is the half step 1 exists for.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/components src/app/globals.css src/lib/design/tokens.test.ts
@@ -912,7 +912,7 @@ The spec's §6. None of this is defended by a recorded decision, and all of it i
 - Consumes: `Panel`, `Button` from Task 6.
 - Produces: `<SkipLink />`, mounted in both shells.
 
-- [ ] **Step 1: Write the skip link**
+- [x] **Step 1: Write the skip link**
 
 ```tsx
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
@@ -943,11 +943,11 @@ export function SkipLink({ locale }: { locale: Locale }) {
 
 Add `skipToContent` to `src/lib/i18n/admin-console.ts` as a `Record<Locale, string>` — all ten locales, English "Skip to content". The type is a compile error until every locale is present, which is the point.
 
-- [ ] **Step 2: Mount it and give `<main>` an id**
+- [x] **Step 2: Mount it and give `<main>` an id**
 
 In `src/components/shared/admin-shell.tsx`, render `<SkipLink locale={locale} />` as the first child inside the outer `div`, and change `<main className="min-w-0 flex-1 px-4 py-8 sm:px-6">` to carry `id="main"`. Do the same in `src/components/shared/shell.tsx` for the traveller and marketing surfaces.
 
-- [ ] **Step 3: Write one error boundary and copy it per group**
+- [x] **Step 3: Write one error boundary and copy it per group**
 
 `src/app/[locale]/ops/error.tsx`:
 
@@ -1000,7 +1000,7 @@ export default function OpsError({
 
 Copy to `agency/error.tsx` (back link `/agency`, "Back to the console"), `(app)/error.tsx` (back link `/app`, "Back to my application"), and `[locale]/error.tsx` (back link `/`, "Back to the start"). Copy goes through `src/lib/i18n` for the `(app)` and `agency` ones, which are translated surfaces; `/ops` is English-only, consistent with the rest of that console.
 
-- [ ] **Step 4: Write the loading fallbacks**
+- [x] **Step 4: Write the loading fallbacks**
 
 `src/app/[locale]/ops/loading.tsx`:
 
@@ -1031,21 +1031,21 @@ export default function OpsLoading() {
 
 Copy to `agency/loading.tsx` and `(app)/loading.tsx`, adjusting the shape to what that group's pages actually render.
 
-- [ ] **Step 5: Fill the metadata holes**
+- [x] **Step 5: Fill the metadata holes**
 
 Add `export const metadata = { title: "..." }` (or `generateMetadata` where the title is localised) to `agency/people/page.tsx`, `(auth)/agency/sign-in/page.tsx`, `(auth)/ops/sign-in/page.tsx`, `ops/page.tsx`, `go/page.tsx`.
 
-- [ ] **Step 6: Verify the boundaries actually catch**
+- [x] **Step 6: Verify the boundaries actually catch**
 
 Temporarily add `throw new Error("boundary check")` to the top of `src/app/[locale]/ops/dashboard/page.tsx`, run `npx next dev -p 3400`, open `/en/ops/dashboard`, and confirm the branded error page renders with a working "Try again". **Remove the throw.**
 
 Then tab into `/en/ops` from the address bar and confirm the skip link appears on first Tab and jumps to the content.
 
-- [ ] **Step 7: Verify the suite**
+- [x] **Step 7: Verify the suite**
 
 Run: `npm run typecheck && npm run lint && npm test`
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A src/app src/components src/lib/i18n
@@ -1065,23 +1065,23 @@ The ordinal ramp committed earlier on 2026-09-09 is derived from the old brand h
 - Consumes: `--brand` (now `#0a4ea3`) and `--surface` from Tasks 2 and 3.
 - Produces: nothing new; `FunnelBars` already reads these five tokens by index.
 
-- [ ] **Step 1: Derive five steps on the new hue**
+- [x] **Step 1: Derive five steps on the new hue**
 
 `#0a4ea3` is roughly OKLCH hue 258°. Build a five-step ordinal ramp on that hue: light mode L 0.36 → 0.68 in 0.08 steps, dark mode L 0.78 → 0.46, chroma held near 0.16 until the gamut takes it.
 
-- [ ] **Step 2: Validate as an ordinal ramp, both modes**
+- [x] **Step 2: Validate as an ordinal ramp, both modes**
 
 The check is monotone lightness, every adjacent ΔL ≥ 0.06, and the pale end clearing 2:1 against that mode's `--surface` — `#ffffff` light, `#132029` dark. Running the categorical checks on a sequential ramp fails by design; do not "fix" a good ramp to satisfy them.
 
-- [ ] **Step 3: Write the values in**
+- [x] **Step 3: Write the values in**
 
 Replace the ten hexes, and update the two doc comments to name the new hue and the re-measured light-end ratios. The existing comments state 2.94:1 and 2.38:1 — both will change.
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 Run: `npm run typecheck && npm test`, then `npx next dev -p 3400` and look at `/en/ops/dashboard` and `/en/agency` in both themes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/app/globals.css

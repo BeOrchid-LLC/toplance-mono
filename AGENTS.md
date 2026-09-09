@@ -96,11 +96,15 @@ Every destructive control in the product today, and what each one asks:
 | End the agency plan | `agency/cancel-plan.tsx` | the console closes on every colleague at once, mid-case, and the days already paid for are not refunded |
 | Remove a KYB document | `ops/kyb-checklist.tsx` | deletes the filed licence or passport scan; this product keeps no other copy |
 | Replace a KYB document | `ops/kyb-checklist.tsx` | the upload overwrites the object, so the file it replaces is gone before anyone reads the new one |
+| Remove a colleague | `ops/colleague-actions.tsx` | the console closes on a member of staff and the way back is a fresh invitation |
+| Suspend a colleague | `ops/colleague-actions.tsx` | shuts somebody out mid-case, and only another director can lift it |
+| Reset a colleague's 2FA | `ops/colleague-actions.tsx` | drops their enrolled factors and ends every session they have open, from a row of alike buttons |
 
 `CorridorDecision` is the worked example of the other kind and deliberately does
 not confirm: approving a corridor publishes something, it takes nothing away.
 `restoreTenant`, promoting a member and resending an invitation are likewise
-additive. So is `purchaseSubscription`, which is the undo for ending the plan
+additive — and so is `restoreColleague`, the undo for a suspended member of
+staff, which commits on the click beside a suspension that asks. So is `purchaseSubscription`, which is the undo for ending the plan
 and commits on the click — the way back in is never gated. So is
 `activateTenant`: opening an agency's console and emailing its director gives
 something, and what stands in its way is the checklist itself rather than a

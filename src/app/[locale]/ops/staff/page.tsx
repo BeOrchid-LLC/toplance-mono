@@ -158,6 +158,11 @@ export default async function OpsStaffPage({
           the outstanding work. */}
       <ColleaguesTable
         rows={colleaguesVisible}
+        // Unfiltered, and deliberately: the row actions ask "is this the
+        // last director left", which the toolbar must not be able to
+        // change the answer to.
+        allRows={colleagues}
+        viewerId={actor.userId}
         locale={locale}
         className="mt-8"
         params={{ cq: params.cq, crank: params.crank }}

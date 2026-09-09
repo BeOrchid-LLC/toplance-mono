@@ -1,5 +1,6 @@
 "use client";
 
+import { ColleagueActions } from "@/components/ops/colleague-actions";
 import { InviteStaff } from "@/components/ops/invite-staff";
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,8 @@ function formatDay(value: Date) {
  */
 export function ColleaguesTable({
   rows,
+  allRows,
+  viewerId,
   locale,
   className,
   params,
@@ -49,6 +52,15 @@ export function ColleaguesTable({
 }: {
   /** The colleagues left after the toolbar, already filtered. */
   rows: StaffColleague[];
+  /**
+   * Every colleague, filter or no filter. `rows` is what the table
+   * draws; this is what the row actions decide against, because "is
+   * this the last director" is a question about the whole roster and
+   * a search box must not be able to change its answer.
+   */
+  allRows: StaffColleague[];
+  /** The director reading the screen — nobody may act on their own row. */
+  viewerId: string;
   locale: Locale;
   className?: string;
   params?: Record<string, string | undefined>;
@@ -64,6 +76,17 @@ export function ColleaguesTable({
         <>
           <p className="t-title truncate" title={person.email}>
             {person.fullName || person.email}
+            {/* Beside the name rather than in a column of its own.
+                Suspension is the exception on this roster — one row in
+                twenty — and a column would spend width on "live, live,
+                live" to say it. It has to be on the screen somewhere:
+                a suspension taken here and invisible here is one whose
+                only symptom is a colleague saying they cannot sign in. */}
+            {person.suspendedAt && (
+              <Badge variant="neutral" className="ml-2 align-middle">
+                {OPS_STAFF.suspendedBadge[locale]}
+              </Badge>
+            )}
           </p>
           {person.fullName && (
             <span className="special block truncate">{person.email}</span>
@@ -91,6 +114,22 @@ export function ColleaguesTable({
       label: OPS_STAFF.tableHead.joined[locale],
       className: "num whitespace-nowrap",
       cell: (person) => formatDay(person.createdAt),
+    },
+    {
+      id: "actions",
+      label: OPS_STAFF.tableHead.actions[locale],
+      // Hidden, aligned right — the shape `InvitationTable` sets on the
+      // same screen. A header over three buttons labels the obvious.
+      labelHidden: true,
+      align: "end",
+      cell: (person) => (
+        <ColleagueActions
+          colleague={person}
+          colleagues={allRows}
+          viewerId={viewerId}
+          locale={locale}
+        />
+      ),
     },
   ];
 

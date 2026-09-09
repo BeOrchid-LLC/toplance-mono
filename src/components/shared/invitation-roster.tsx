@@ -107,7 +107,11 @@ export function InvitationRoster({
    * `AGENCY.invitationsLabel`, which on 2026-09-08 became "Client
    * invitations" — correct on one of the three screens and wrong on
    * the other two, where the panel then announced clients above a list
-   * of colleagues. `empty` was already a prop for the same reason.
+   * of colleagues. `empty` was already a prop for the same reason. That
+   * string is back to a bare "Invitations" since 2026-09-09, which
+   * happens to read acceptably on all three, but the prop stays: it is
+   * the caller who knows whose list this is, and the next rewording of
+   * one screen's heading should not reach the other two.
    */
   label: string;
   /** What to say when there are none — a client roster and a team say it differently. */

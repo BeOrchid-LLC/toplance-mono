@@ -207,6 +207,20 @@ export function opsAdminNav({
  * `/agency/clients` still opens on, and the addresses waiting to join it
  * are the row beneath. Adjacent rather than indented because the rail
  * has one level: `AdminNavGroup` groups, it does not nest.
+ *
+ * Which is why those two now carry a heading of their own, at the
+ * client's request on 2026-09-09: they were sharing an unlabelled group
+ * with the dashboard, so the rail's one titled section was Team and the
+ * clients half of the console read as loose rows under the front door.
+ * The dashboard moves out to a group by itself — it is the console's
+ * front door and belongs to no section — and Clients becomes a section
+ * beside Team.
+ *
+ * The heading appears only when the section holds more than one row. A
+ * reviewer has no invitations row, and "Clients" printed over a single
+ * row called Clients is a label for a group of one. Same test the ops
+ * rail applies to its route row and this file to Support: a lone entry
+ * that already names itself needs no heading above it.
  */
 export function agencyAdminNav({
   locale,
@@ -246,29 +260,35 @@ export function agencyAdminNav({
 
   if (!hasOrganisation) return [{ items: [dashboard] }];
 
-  return [
+  const clientRows: AdminNavItem[] = [
     {
-      items: [
-        dashboard,
-        {
-          id: "clients",
-          href: "/agency/clients",
-          label: AGENCY.navClients[locale],
-          icon: "clients",
-          badge: clients,
-        },
-        ...(isDirector
-          ? [
-              {
-                id: "invitations",
-                href: "/agency/clients/invitations",
-                label: AGENCY.invitationsLabel[locale],
-                icon: "invitations" as const,
-                badge: pendingClientInvitations,
-              },
-            ]
-          : []),
-      ],
+      id: "clients",
+      href: "/agency/clients",
+      label: AGENCY.navClients[locale],
+      icon: "clients",
+      badge: clients,
+    },
+    ...(isDirector
+      ? [
+          {
+            id: "invitations",
+            href: "/agency/clients/invitations",
+            label: AGENCY.invitationsLabel[locale],
+            icon: "invitations" as const,
+            badge: pendingClientInvitations,
+          },
+        ]
+      : []),
+  ];
+
+  return [
+    { items: [dashboard] },
+    {
+      // The same word over the section and on the row inside it, exactly
+      // as the team section does it below — and only once there are two
+      // rows to gather.
+      label: clientRows.length > 1 ? AGENCY.navClients[locale] : undefined,
+      items: clientRows,
     },
     /* A rule-sets group sat here until 2026-09-09, when the client
        asked for the tab to come off. The group went whole rather than

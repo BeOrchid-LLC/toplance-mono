@@ -157,19 +157,37 @@ describe("agencyAdminNav", () => {
     );
   });
 
-  it("puts invitations in the clients group, straight after the roster", () => {
-    const first = agencyAdminNav({
+  it("gives clients a section of its own, invitations straight after the roster", () => {
+    const groups = agencyAdminNav({
       locale: "en",
       hasOrganisation: true,
       ...counts,
       isDirector: true,
-    })[0];
+    });
 
-    expect(first.items.map((i) => i.id)).toEqual([
-      "overview",
-      "clients",
-      "invitations",
-    ]);
+    // The dashboard is the console's front door and belongs to no
+    // section, so it heads the rail on its own and unlabelled.
+    expect(groups[0].label).toBeUndefined();
+    expect(groups[0].items.map((i) => i.id)).toEqual(["overview"]);
+
+    expect(groups[1].label).toBe("Clients");
+    expect(groups[1].items.map((i) => i.id)).toEqual(["clients", "invitations"]);
+  });
+
+  /**
+   * A heading over one row called Clients would be a label for a group
+   * of one. The same test the route row and Support already pass.
+   */
+  it("drops the clients heading for a reviewer, who has no invitations row", () => {
+    const groups = agencyAdminNav({
+      locale: "en",
+      hasOrganisation: true,
+      ...counts,
+      isDirector: false,
+    });
+
+    expect(groups[1].items.map((i) => i.id)).toEqual(["clients"]);
+    expect(groups[1].label).toBeUndefined();
   });
 
   /**

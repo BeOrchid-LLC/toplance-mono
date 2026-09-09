@@ -361,28 +361,49 @@ export default async function HomePage() {
 
                 The ground is genuinely transparent, so in light mode
                 `security-paper` rules straight through the artwork and
-                there is nothing to frame, tint or blend. Dark mode still
-                needs the panel: the linework is #3f3d56 and #090814,
-                which on a #0b0d13 page is invisible rather than merely
-                low-contrast. A light panel is the honest fix — this is a
-                light-ground drawing, so it gets presented as one.
+                there is nothing to frame, tint or blend.
 
-                `unoptimized` because the source is SVG. Next's optimizer
-                refuses SVG unless `images.dangerouslyAllowSVG` is set,
-                and there is nothing in a 16KB vector worth loosening
-                that setting for. */}
+                Dark mode used to sit the drawing on a light panel,
+                because its linework is #3f3d56 and #090814 and that is
+                invisible on a #0b0d13 page. The client saw that panel
+                on 8 September and said the white ground felt off — she
+                is right, and she also ruled out the other easy answer:
+                not without a background. So there is a second file
+                whose value scale is inverted and whose brand blue is
+                untouched, and the panel is gone. The drawing now sits
+                on the dark page the way it sits on the light one.
+
+                Two `<Image>`s rather than one with a filter: a CSS
+                invert would take the brand blue with it, and #2450d8 is
+                the one colour in here that must survive both grounds.
+                Swapped with `dark:` classes rather than by reading the
+                theme in JS, so the right one is in the first paint and
+                neither flashes.
+
+                `unoptimized` because the source is SVG. Next's
+                optimizer refuses SVG unless
+                `images.dangerouslyAllowSVG` is set, and there is
+                nothing in a 16KB vector worth loosening that setting
+                for. */}
             <div className="rise hidden lg:block" style={{ animationDelay: "190ms" }}>
-              <div className="rounded-lg dark:bg-[#f2f4f8] dark:p-6 dark:shadow-[var(--shadow)]">
-                <Image
-                  src="/hero/travel-everywhere.svg"
-                  alt=""
-                  width={1071}
-                  height={863}
-                  priority
-                  unoptimized
-                  className="h-auto w-full"
-                />
-              </div>
+              <Image
+                src="/hero/travel-everywhere.svg"
+                alt=""
+                width={1071}
+                height={863}
+                priority
+                unoptimized
+                className="h-auto w-full dark:hidden"
+              />
+              <Image
+                src="/hero/travel-everywhere-dark.svg"
+                alt=""
+                width={1071}
+                height={863}
+                priority
+                unoptimized
+                className="hidden h-auto w-full dark:block"
+              />
             </div>
           </div>
 

@@ -12,6 +12,10 @@ type L = Record<Locale, string>;
 export const DASHBOARD: {
   title: L;
   notAnsweredAria: L;
+  headingSentBackOne: L;
+  headingSentBackMany: L;
+  bodySentBack: L;
+  ctaFixSentBack: L;
   headingVerified: L;
   headingUploaded: L;
   headingToUploadOne: L;
@@ -62,6 +66,63 @@ export const DASHBOARD: {
     ar: "لم تتم الإجابة بعد",
     tw: "Wɔnnyaa ho mmuae ɛnnora",
     zu: "Akukaphendulwa okwamanje",
+  },
+  /**
+   * When a reviewer has sent something back.
+   *
+   * Takes precedence over every other headline on this page, including
+   * "everything is verified". The ring can legitimately read 100% —
+   * the file was collected — but a page that says 100% and nothing
+   * else, while a document is waiting to be redone, is the
+   * contradiction the client called out on 8 September.
+   */
+  headingSentBackOne: {
+    en: "One document needs redoing",
+    ha: "Takarda ɗaya na buƙatar sake yi",
+    yo: "Ìwé kan nílò àtúnṣe",
+    ig: "Otu akwụkwọ chọrọ imegharị",
+    fr: "Un document est à refaire",
+    pt: "Um documento precisa de ser refeito",
+    sw: "Hati moja inahitaji kufanywa upya",
+    ar: "مستند واحد يحتاج إلى إعادة",
+    tw: "Krataa baako hia sɛ wɔyɛ no bio",
+    zu: "Umbhalo owodwa udinga ukwenziwa kabusha",
+  },
+  headingSentBackMany: {
+    en: "{n} documents need redoing",
+    ha: "Takardu {n} na buƙatar sake yi",
+    yo: "Àwọn ìwé {n} nílò àtúnṣe",
+    ig: "Akwụkwọ {n} chọrọ imegharị",
+    fr: "{n} documents sont à refaire",
+    pt: "{n} documentos precisam de ser refeitos",
+    sw: "Hati {n} zinahitaji kufanywa upya",
+    ar: "{n} مستندات تحتاج إلى إعادة",
+    tw: "Nkrataa {n} hia sɛ wɔyɛ no bio",
+    zu: "Imibhalo engu-{n} idinga ukwenziwa kabusha",
+  },
+  bodySentBack: {
+    en: "Your agency looked at these and asked for them again: {names}. Open your documents to see why and upload a new one.",
+    ha: "Hukumarku ta duba waɗannan sannan ta sake neman su: {names}. Ku buɗe takardunku don ganin dalili sannan ku ɗora sabo.",
+    yo: "Ilé-iṣẹ́ yín wo àwọn wọ̀nyí wọ́n sì tún béèrè wọn: {names}. Ṣí àwọn ìwé yín láti rí ìdí rẹ̀ kí o sì gbé tuntun sókè.",
+    ig: "Ụlọ ọrụ gị lere ndị a anya wee rịọ ha ọzọ: {names}. Mepee akwụkwọ gị ka ị hụ ihe kpatara ya wee bulite ọhụrụ.",
+    fr: "Votre agence les a examinés et les redemande : {names}. Ouvrez vos documents pour voir pourquoi et en envoyer un nouveau.",
+    pt: "A sua agência analisou-os e voltou a pedi-los: {names}. Abra os seus documentos para ver porquê e enviar um novo.",
+    sw: "Wakala wako aliyaangalia na kuyaomba tena: {names}. Fungua hati zako uone sababu na upakie mpya.",
+    ar: "راجعت وكالتك هذه وطلبتها مجددًا: {names}. افتح مستنداتك لمعرفة السبب ورفع مستند جديد.",
+    tw: "W'adwumakuo hwɛɛ yeinom na wɔsan bisaeɛ: {names}. Bue wo nkrataa hwɛ deɛ enti na fa foforɔ kɔ.",
+    zu: "I-ejensi yakho iyibhekile yaphinde yayicela: {names}. Vula imibhalo yakho ubone ukuthi kungani bese ulayisha entsha.",
+  },
+  ctaFixSentBack: {
+    en: "See what is needed",
+    ha: "Duba abin da ake buƙata",
+    yo: "Wo ohun tí a nílò",
+    ig: "Hụ ihe achọrọ",
+    fr: "Voir ce qui est demandé",
+    pt: "Ver o que é preciso",
+    sw: "Angalia kinachohitajika",
+    ar: "اطّلع على المطلوب",
+    tw: "Hwɛ deɛ ɛhia",
+    zu: "Bona okudingekayo",
   },
   headingVerified: {
     en: "Everything is verified",

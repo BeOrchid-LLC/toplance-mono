@@ -76,8 +76,7 @@ export default async function OpsTenantsPage({
 
   const live = tenants.filter((t) => !t.suspendedAt);
   const suspended = tenants.filter((t) => t.suspendedAt);
-  const seatsUsed = tenants.reduce((sum, t) => sum + t.members, 0);
-  const seatsPurchased = tenants.reduce((sum, t) => sum + t.seatsPurchased, 0);
+  const memberTotal = tenants.reduce((sum, t) => sum + t.members, 0);
   // The same set the rail badge counts — see `OPEN_DEMO_STATUSES`.
   const openEnquiries = demoRequests.filter((r) =>
     (OPEN_DEMO_STATUSES as readonly string[]).includes(r.status)
@@ -104,9 +103,9 @@ export default async function OpsTenantsPage({
       tone: suspended.length ? "warning" : "neutral",
     },
     {
-      label: OPS_TENANTS.counters.seats.label[locale],
-      value: `${seatsUsed} ${OPS_TENANTS.seatsOf[locale]} ${seatsPurchased}`,
-      sub: OPS_TENANTS.counters.seats.sub[locale],
+      label: OPS_TENANTS.counters.members.label[locale],
+      value: String(memberTotal),
+      sub: OPS_TENANTS.counters.members.sub[locale],
       icon: UsersRound,
       tone: "info",
     },

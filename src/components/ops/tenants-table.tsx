@@ -61,7 +61,7 @@ export function TenantsTable({
       sortable: true,
       label: OPS_TENANTS.tableHead.members[locale],
       className: "num",
-      cell: (t) => `${t.members} ${OPS_TENANTS.seatsOf[locale]} ${t.seatsPurchased}`,
+      cell: (t) => String(t.members),
     },
     {
       id: "applications",

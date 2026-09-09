@@ -20,13 +20,15 @@ export const OPS_TENANTS: {
   counters: {
     liveTenants: { label: L; sub: L };
     suspended: { label: L; sub: L };
-    seats: { label: L; sub: L };
+    members: { label: L; sub: L };
     openEnquiries: { label: L; sub: L };
   };
   tenantsPanel: L;
   agenciesWord: L;
   searchPlaceholder: L;
   anyStatus: L;
+  inviteSearchPlaceholder: L;
+  anyKind: L;
   emptyTenants: L;
   tableHead: {
     agency: L;
@@ -38,7 +40,6 @@ export const OPS_TENANTS: {
   };
   live: L;
   suspendedBadge: L;
-  seatsOf: L;
   planLabel: L;
   planUnpaid: L;
   planPaidUntil: L;
@@ -164,18 +165,33 @@ export const OPS_TENANTS: {
         zu: "amandla asusiwe, amarekhodi asele ephelele",
       },
     },
-    seats: {
+    /**
+     * People, not seats.
+     *
+     * This tile read "14 of 25" until 2026-09-09, and the client read
+     * the 25 as a limit — reasonably, because that is what a ratio
+     * means. There is no limit: `seats_purchased` is checked nowhere in
+     * the invitation path, the agency console already calls it "a
+     * placeholder until the client sets them", and the platform bills
+     * per application rather than per seat. A denominator nothing
+     * enforces is a rule the reader invents for us.
+     *
+     * `seats_purchased` is still stored and still editable on an
+     * agency's controls, where it is a plan attribute somebody sets
+     * rather than a cap something enforces.
+     */
+    members: {
       label: {
-        en: "Seats used",
-        ha: "Wuraren zaman da aka yi amfani da su",
-        yo: "Àwọn ìjókòó tí a lò",
-        ig: "Oche ejiri",
-        fr: "Sièges utilisés",
-        pt: "Lugares utilizados",
-        sw: "Viti vilivyotumika",
-        ar: "المقاعد المستخدمة",
-        tw: "Nkonguabea a wɔde adi dwuma",
-        zu: "Izihlalo ezisetshenzisiwe",
+        en: "Team members",
+        ha: "Membobin ƙungiya",
+        yo: "Àwọn ọmọ ẹgbẹ́",
+        ig: "Ndị òtù",
+        fr: "Membres d'équipe",
+        pt: "Membros da equipa",
+        sw: "Wanachama wa timu",
+        ar: "أعضاء الفريق",
+        tw: "Kuo no mufoɔ",
+        zu: "Amalungu ethimba",
       },
       sub: {
         en: "across every agency",
@@ -228,6 +244,30 @@ export const OPS_TENANTS: {
     ar: "كل وكالة",
     tw: "Adwumakuo biara",
     zu: "Yonke i-ejensi",
+  },
+  inviteSearchPlaceholder: {
+    en: "Search by email or name",
+    ha: "Nemo ta imel ko suna",
+    yo: "Wá nípa ímeèlì tàbí orúkọ",
+    ig: "Chọọ site na email ma ọ bụ aha",
+    fr: "Rechercher par e-mail ou nom",
+    pt: "Pesquisar por e-mail ou nome",
+    sw: "Tafuta kwa barua pepe au jina",
+    ar: "ابحث بالبريد الإلكتروني أو الاسم",
+    tw: "Hwehwɛ email anaa din so",
+    zu: "Sesha nge-imeyili noma igama",
+  },
+  anyKind: {
+    en: "Anyone",
+    ha: "Kowa",
+    yo: "Ẹnikẹ́ni",
+    ig: "Onye ọ bụla",
+    fr: "Tout le monde",
+    pt: "Qualquer pessoa",
+    sw: "Yeyote",
+    ar: "أي شخص",
+    tw: "Obiara",
+    zu: "Noma ubani",
   },
   searchPlaceholder: {
     en: "Search by agency or domain",
@@ -420,18 +460,6 @@ export const OPS_TENANTS: {
     ar: "حتى {date}",
     tw: "Kosi {date}",
     zu: "Kuze kube ngu-{date}",
-  },
-  seatsOf: {
-    en: "of",
-    ha: "daga cikin",
-    yo: "nínú",
-    ig: "n'ime",
-    fr: "sur",
-    pt: "de",
-    sw: "kati ya",
-    ar: "من",
-    tw: "mu",
-    zu: "kwa",
   },
   provisionButton: {
     en: "Provision agency",

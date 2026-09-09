@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
@@ -666,9 +666,37 @@ export async function acceptInvitationTx(
       // compiler now that the column is nullable.
       if (!invitation.orgId) return { error: "This invitation link is not valid." };
 
+      /**
+       * Unless there is nobody to keep it away from.
+       *
+       * `provisionTenantTx` creates an agency with no membership rows
+       * and one `kind: "staff"` invitation, so the first person through
+       * the door arrives at an empty agency. As a reviewer they landed
+       * on a console closed for an unpaid plan, were told only a
+       * director could start it, and had no director to ask — an agency
+       * that nobody inside it could ever open, unstickable except by an
+       * operator running `setMemberRole` by hand, which nothing asks
+       * them to do.
+       *
+       * The rule above protects authority that somebody already holds.
+       * Here nobody holds it, and the only way a staff invitation
+       * reaches an empty agency is an operator provisioning one — which
+       * is that operator granting the authority, the same act the
+       * provision dialog describes as making them the director.
+       *
+       * Counted inside the transaction, which already holds the
+       * invitation row's lock: two people accepting into the same empty
+       * agency at once must not both read zero and both become owners.
+       */
+      const [existing] = await tx
+        .select({ n: count() })
+        .from(orgMembers)
+        .where(eq(orgMembers.orgId, invitation.orgId));
+      const role = (existing?.n ?? 0) === 0 ? "owner" : "reviewer";
+
       await tx
         .insert(orgMembers)
-        .values({ orgId: invitation.orgId, userId: travelerId, role: "reviewer" })
+        .values({ orgId: invitation.orgId, userId: travelerId, role })
         .onConflictDoNothing();
 
       // So they read as agency rather than as a traveller everywhere the

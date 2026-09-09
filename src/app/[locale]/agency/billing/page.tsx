@@ -120,8 +120,24 @@ export default async function AgencyBillingPage() {
      * provisioned agency is always the second — telling its first
      * colleague that the plan "has ended" describes an event that never
      * happened. One extra query, on the path that needs it.
+     *
+     * Asked of `describePlanState` rather than of `latestSubscription`
+     * directly. "Nobody ever bought a month" is already a state that
+     * function names, and deciding it a second way here would be the
+     * same duplication the #77 note below warns about: the two answers
+     * agree only for as long as `latestSubscription` keeps filtering to
+     * paid rows with a period end.
+     *
+     * `activeUntil: null` is not a guess. This ternary is only reached
+     * when `subscriptionActive` is false, which is that same question
+     * asked by the resolver — and the branch above has already taken
+     * the running case.
      */
-    const everSubscribed = Boolean(await latestSubscription(orgId));
+    const shutPlan = describePlanState({
+      activeUntil: null,
+      latest: await latestSubscription(orgId),
+      now: new Date(),
+    });
     return (
       <AgencyShell
         profile={profile}
@@ -140,9 +156,9 @@ export default async function AgencyBillingPage() {
             <p className="max-w-[60ch] text-[15px] text-ink-2">
               {subscriptionActive
                 ? BILLING.reviewerNotice[locale]
-                : everSubscribed
-                  ? BILLING.reviewerBlocked[locale]
-                  : BILLING.reviewerNotStarted[locale]}
+                : shutPlan.kind === "never"
+                  ? BILLING.reviewerNotStarted[locale]
+                  : BILLING.reviewerBlocked[locale]}
             </p>
           </PanelBody>
         </Panel>

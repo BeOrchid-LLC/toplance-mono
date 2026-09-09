@@ -837,6 +837,11 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
      * so there is nothing to keep it away from — and the only way a
      * staff invitation reaches an empty agency is an operator
      * provisioning one, which is that operator granting the authority.
+     *
+     * This file is skipped without a `DATABASE_URL`, so this test does
+     * not run in CI. `staff-invite-rank.test.ts` covers the rule itself
+     * there; what is only provable here is that `acceptInvitationTx`
+     * actually applies it.
      */
     it("makes the first person through the door of an empty agency its director", async () => {
       const orgId = await makeOrg("Bootstrap Agency");

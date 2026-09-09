@@ -3,6 +3,7 @@ import "server-only";
 import { and, count, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
+import { staffInviteRank } from "@/lib/domain/staff-invite-rank";
 import {
   applications,
   invitations,
@@ -700,7 +701,7 @@ export async function acceptInvitationTx(
         .select({ n: count() })
         .from(orgMembers)
         .where(eq(orgMembers.orgId, invitation.orgId));
-      const role = (existing?.n ?? 0) === 0 ? "owner" : "reviewer";
+      const role = staffInviteRank(existing?.n ?? 0);
 
       await tx
         .insert(orgMembers)

@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse, type NextRequest } from "next/server";
+import {
+  NextResponse,
+  type NextFetchEvent,
+  type NextRequest,
+} from "next/server";
 
+import { withoutHandshake } from "@/lib/auth/handshake";
 import { authRoutes, signedInDestination, SIGN_IN_DOOR } from "@/lib/auth/routes";
 import type { Locale } from "@/lib/i18n/locales";
 import {
@@ -88,7 +93,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/cron/notification-emails",
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
+const withClerkSession = clerkMiddleware(async (auth, request) => {
   const { userId } = await auth();
   const { pathname, searchParams } = request.nextUrl;
   const { locale, rest: realPathname } = splitLocalePath(pathname);
@@ -185,6 +190,41 @@ function serve(
   const url = request.nextUrl.clone();
   url.pathname = target;
   return NextResponse.rewrite(url, { request: { headers } });
+}
+
+/**
+ * The handshake this instance could not verify, answered as a redirect
+ * rather than a 500.
+ *
+ * The catch has to sit out here, around `clerkMiddleware` itself, rather
+ * than around the `auth()` call inside it. Clerk resolves the request
+ * state — handshake included — before it ever invokes the handler above,
+ * and throws `"handshake status without redirect"` from there when it
+ * decides a handshake is needed but has no location to send the browser
+ * to. By the time `auth()` is called the state is already resolved, so a
+ * `try` around it catches nothing; this was written that way first and
+ * the 500 was still there.
+ *
+ * A refused handshake token is spent, so the request cannot be repeated
+ * as it stands. `withoutHandshake` takes it out of the URL and this asks
+ * for the same page again without it, which is the one thing that can
+ * clear the loop — Clerk starts a fresh handshake if it still wants one.
+ *
+ * Anything else is re-thrown. A proxy that swallows every error is a
+ * product that fails silently, and only this one failure has a known
+ * recovery.
+ */
+export default async function proxy(
+  request: NextRequest,
+  event: NextFetchEvent
+) {
+  try {
+    return await withClerkSession(request, event);
+  } catch (error) {
+    const retry = withoutHandshake(request.nextUrl);
+    if (retry) return NextResponse.redirect(retry);
+    throw error;
+  }
 }
 
 export const config = {

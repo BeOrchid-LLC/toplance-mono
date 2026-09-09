@@ -26,6 +26,7 @@ import {
   SIGN_IN_FALLBACK,
   SIGN_UP_CREATE_FALLBACK,
   SIGN_UP_SEND_FALLBACK,
+  isVerificationAlreadyDone,
   messageForClerkError,
   type ClerkRefusal,
 } from "@/lib/auth/clerk-messages";
@@ -424,7 +425,16 @@ export function AuthForm(props: AuthFormProps) {
           : await signIn?.emailCode.verifyCode({ code });
 
       if (!verified) return;
-      if (verified.error) {
+      // An already-verified refusal is not a refusal: the code landed,
+      // and what is left undone is `finalize()`. Clerk answers 400 for
+      // it, so reading it as a bad code — which this did — leaves the
+      // person verified with no account and no way forward, because the
+      // verification is spent and every resubmission refuses the same
+      // way. Falling through is the only exit that screen has.
+      //
+      // Narrow deliberately: `isVerificationAlreadyDone` matches one
+      // code, so a wrong or expired one still fails here.
+      if (verified.error && !isVerificationAlreadyDone(verified.error)) {
         const message = messageFor(verified.error, badCode);
         setState((s) => ({ ...s, error: message }));
         toast.error(message);

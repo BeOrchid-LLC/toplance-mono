@@ -74,6 +74,7 @@ export default async function AgencyInvitationsPage() {
       actions={<InviteDialog kind="client" />}
     >
       <InvitationRoster
+        label={AGENCY.invitationsLabel[locale]}
         resendAction={resendInvitation}
         revokeAction={revokeInvitation}
         detailLabel={AGENCY.tableHead.destination[locale]}

@@ -88,6 +88,7 @@ export default async function AgencyTeamPage() {
         }
       />
       <InvitationRoster
+        label={AGENCY.teamInvitationsLabel[locale]}
         resendAction={resendInvitation}
         revokeAction={revokeInvitation}
         className="mt-8"

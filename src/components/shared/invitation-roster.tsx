@@ -89,6 +89,7 @@ function invitationTimeline(
 export function InvitationRoster({
   invitations,
   locale,
+  label,
   empty,
   className,
   resendAction,
@@ -97,6 +98,18 @@ export function InvitationRoster({
 }: {
   invitations: ListedInvitation[];
   locale: Locale;
+  /**
+   * The panel's own heading.
+   *
+   * A prop, because this roster is three different lists: an agency's
+   * client invitations, the same agency's colleague invitations, and
+   * BeOrchid's own staff invitations. It used to hardcode
+   * `AGENCY.invitationsLabel`, which on 2026-09-08 became "Client
+   * invitations" — correct on one of the three screens and wrong on
+   * the other two, where the panel then announced clients above a list
+   * of colleagues. `empty` was already a prop for the same reason.
+   */
+  label: string;
   /** What to say when there are none — a client roster and a team say it differently. */
   empty: string;
   /**
@@ -114,7 +127,7 @@ export function InvitationRoster({
   return (
     <Panel className={className}>
       <PanelHeader
-        label={AGENCY.invitationsLabel[locale]}
+        label={label}
         aside={
           <Badge variant="neutral">
             <span className="num">{pending.length}</span>

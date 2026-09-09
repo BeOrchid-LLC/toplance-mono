@@ -52,6 +52,7 @@ export const AGENCY: {
   routeNotSet: L;
   documentsVerified: L;
   invitationsLabel: L;
+  teamInvitationsLabel: L;
   overviewIsAgencyWide: L;
   invitationsPageBody: L;
   pendingWord: L;
@@ -574,6 +575,26 @@ export const AGENCY: {
     ar: "تشمل هذه الأرقام الوكالة بأكملها، وليس حالاتك وحدها.",
     tw: "Saa akontabuo yi fa adwumakuo no nyinaa ho, ɛnyɛ wo deɛ nkoaa.",
     zu: "Lezi zibalo zifaka yonke i-ejensi, hhayi amacala akho kuphela.",
+  },
+  /**
+   * The colleagues an agency has asked to join, on `/agency/team`.
+   *
+   * Its own string rather than the one below: an agency invites two
+   * kinds of person, and the panel over a list of colleagues must not
+   * say clients — which is exactly what it did between renaming that
+   * string and this.
+   */
+  teamInvitationsLabel: {
+    en: "Team invitations",
+    ha: "Gayyatar ƙungiya",
+    yo: "Àwọn ìpè ẹgbẹ́",
+    ig: "Ọkpụkpọ ndị otu",
+    fr: "Invitations de l'équipe",
+    pt: "Convites de equipa",
+    sw: "Mialiko ya timu",
+    ar: "دعوات الفريق",
+    tw: "Kuo no nfrɛ",
+    zu: "Izimemo zethimba",
   },
   /**
    * "Client invitations", not "Invitations".

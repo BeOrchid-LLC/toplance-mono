@@ -574,24 +574,36 @@ export const AGENCY: {
     zu: "Izimemo zethimba",
   },
   /**
-   * "Client invitations", not "Invitations".
+   * The addresses invited to become clients — the rail row and the page.
    *
    * An agency invites two different kinds of person — a colleague onto
    * the team, and a client onto a case — and the bare word named
    * neither. The client asked for the distinction on 8 September, in
    * the nav and on the page the button now sits on.
+   *
+   * It said "Client invitations" until 9 September, when the rail grew a
+   * Clients section heading and the row beneath it read "Clients ·
+   * Client invitations". The qualifier had been doing the section's job
+   * for a rail that had no sections; now that it has one, the word is
+   * said once. The client asked for the shorter row, and the same name
+   * follows the destination to its own page rather than the rail and the
+   * heading disagreeing — `invitationsPageBody` is what says on that
+   * page whose invitations these are, and it always did.
+   *
+   * The team's invitations are not this string and never were: they have
+   * no row of their own, and `/agency/team` labels its roster itself.
    */
   invitationsLabel: {
-    en: "Client invitations",
-    ha: "Gayyatar abokan ciniki",
-    yo: "Àwọn ìpè oníbàárà",
-    ig: "Ọkpụkpọ ndị ahịa",
-    fr: "Invitations clients",
-    pt: "Convites de clientes",
-    sw: "Mialiko ya wateja",
-    ar: "دعوات العملاء",
-    tw: "Adetɔfoɔ nfrɛ",
-    zu: "Izimemo zamakhasimende",
+    en: "Invitations",
+    ha: "Gayyata",
+    yo: "Àwọn ìpè",
+    ig: "Ọkpụkpọ",
+    fr: "Invitations",
+    pt: "Convites",
+    sw: "Mialiko",
+    ar: "الدعوات",
+    tw: "Nfrɛ",
+    zu: "Izimemo",
   },
   /**
    * The lead under the heading on `/agency/clients/invitations`, which

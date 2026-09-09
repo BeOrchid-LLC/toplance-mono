@@ -1,6 +1,5 @@
 import type { AdminIconName } from "@/components/shared/admin-icons";
 import { AGENCY } from "@/lib/i18n/agency";
-import { AGENCY_RULE_SETS } from "@/lib/i18n/agency-rule-sets";
 import { BILLING } from "@/lib/i18n/billing";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
@@ -271,22 +270,12 @@ export function agencyAdminNav({
           : []),
       ],
     },
-    {
-      /* The rules a checklist was built from, under the clients they
-         were built for. Every rank, not only a director: the person who
-         has to explain a required document is whoever is on the phone,
-         and nothing on the screen is writable, so there is no
-         permission to gate. `/ops/corridors` stays the only place a
-         corridor is edited. */
-      items: [
-        {
-          id: "rule-sets",
-          href: "/agency/rule-sets",
-          label: AGENCY_RULE_SETS.nav[locale],
-          icon: "routes" as const,
-        },
-      ],
-    },
+    /* A rule-sets group sat here until 2026-09-09, when the client
+       asked for the tab to come off. The group went whole rather than
+       emptied — a group with no items renders as a bare band of chrome
+       between two real ones. The screen itself is untouched and still
+       reachable at `/agency/rule-sets`; the reasoning, and what to put
+       back, is on the matching item in `agency-nav.ts`. */
     ...(isDirector
       ? [
           {

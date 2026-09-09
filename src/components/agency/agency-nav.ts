@@ -1,7 +1,6 @@
 import type { NavItem } from "@/components/app/app-nav";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { AGENCY } from "@/lib/i18n/agency";
-import { AGENCY_RULE_SETS } from "@/lib/i18n/agency-rule-sets";
 import { BILLING } from "@/lib/i18n/billing";
 import type { Locale } from "@/lib/i18n/locales";
 
@@ -65,17 +64,25 @@ export function agencyNav({
           { href: "/agency/billing", label: BILLING.navBilling[locale] },
         ]
       : []),
-    // The last two are every rank's, unlike the three above them.
+    // Support is every rank's, unlike the three above it: a handler
+    // whose case was claimed by the wrong colleague is the person with
+    // the problem, and making the only channel out a director's tab
+    // would make a dispute wait on somebody else's calendar.
     //
-    // Rule sets, because the person who has to explain why a client was
-    // asked for a bank statement is whoever picked up the phone, and
-    // the screen is read-only — there is no permission to gate.
+    // Rule sets sat here on the same footing until 2026-09-09, when the
+    // client asked for the tab to come off. Only the link went: the
+    // pages, their data layer and their strings are untouched, so
+    // `/agency/rule-sets` still answers to any rank that reaches it by
+    // URL — `requireAgencyConsole` guards it there, as it always did,
+    // because a hidden link was never the guard.
     //
-    // Support, because a handler whose case was claimed by the wrong
-    // colleague is the person with the problem; making the only channel
-    // out a director's tab would make a dispute wait on somebody else's
-    // calendar.
-    { href: "/agency/rule-sets", label: AGENCY_RULE_SETS.nav[locale] },
+    // Unlinked rather than deleted, deliberately. The screen is the
+    // read-only half of the "rules setting" request of 2026-09-07, and
+    // its intended replacement —
+    // `docs/superpowers/specs/2026-09-09-case-level-rule-override.md` —
+    // is still written-not-approved. Putting the tab back is this line
+    // and the matching group in `admin-nav.ts`; the two lists are
+    // pinned to agree by `agency-nav.test.ts`.
     { href: "/agency/support", label: OPS_SUPPORT.agencyHeading[locale] },
   ];
 }

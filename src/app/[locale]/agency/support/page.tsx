@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { ContactSupport } from "@/components/agency/contact-support";
@@ -80,7 +81,12 @@ export default async function AgencySupportPage() {
               {requests.map((r) => (
                 <li key={r.id} className="border-b border-border pb-5 last:border-0 last:pb-0">
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="t-title">{r.subject}</span>
+                    <Link
+                      href={`/agency/support/${r.id}`}
+                      className="t-title font-semibold text-brand-text hover:underline"
+                    >
+                      {r.subject}
+                    </Link>
                     <Badge variant={STATE_VARIANT[r.state]}>
                       {STATE_LABEL[r.state][locale]}
                     </Badge>

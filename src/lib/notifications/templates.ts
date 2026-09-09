@@ -83,6 +83,39 @@ export function checklistCompleteEmail({
  * confirm the time" is a fact the traveller can act on; a silent gap is
  * one they have to ring the agency about.
  */
+/**
+ * → whichever side did not write it.
+ *
+ * The subject carries the request's own subject rather than a generic
+ * "you have a reply", because somebody with three open disputes needs
+ * to know which one moved before they open anything.
+ */
+export function supportRepliedEmail({
+  subject,
+  preview,
+  fromStaff,
+  url,
+}: {
+  subject: string;
+  preview: string;
+  fromStaff: boolean;
+  url: string;
+}): EmailContent {
+  return {
+    subject: fromStaff ? `Re: ${subject}` : `New reply: ${subject}`,
+    ...renderEmail({
+      heading: subject,
+      paragraphs: [
+        fromStaff
+          ? "Somebody on the BeOrchid team has replied to your support request."
+          : "The agency has added to a support request.",
+        preview,
+      ],
+      cta: { href: url, label: "Open the conversation" },
+    }),
+  };
+}
+
 export function attendanceRequestedEmail({
   kind,
   when,

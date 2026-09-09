@@ -102,11 +102,22 @@ export function SupportTable({
       label: OPS_SUPPORT.tableHead.subject[locale],
       cell: (r) => (
         <>
-          <span className="t-title block">{r.subject}</span>
-          {/* The body in full, not a truncation. A dispute is three
-              sentences and an operator answering it needs all three;
-              a "read more" here would be a click between them and the
-              only thing on the row that matters. */}
+          {/* The subject is the way into the conversation. The agency
+              name beside it goes to the tenant, which is where somebody
+              clicking it landed before this page existed — and was the
+              wrong place to end up when what they wanted was the
+              request. */}
+          <Link
+            href={`/ops/support/${r.id}`}
+            className="t-title block font-semibold text-brand-text hover:underline"
+          >
+            {r.subject}
+          </Link>
+          {/* Still the body in full. A dispute is usually three
+              sentences, and an operator scanning the queue for the one
+              they can answer should not have to open each row to find
+              out what it says. The thread page is for replying, not for
+              discovering what was asked. */}
           <span className="t-muted mt-1 block max-w-[74ch] whitespace-pre-wrap">
             {r.body}
           </span>

@@ -308,6 +308,16 @@ export const notificationKind = pgEnum("notification_kind", [
    */
   "attendance_requested",
   /**
+   * → the other side of a support thread. To the agency when we answer,
+   * to the member of staff holding it when the agency writes back —
+   * and to every member of staff when nobody holds it yet.
+   *
+   * The one notification with no application behind it. `notify`'s
+   * `applicationId` is optional and this is why: a support request
+   * belongs to an agency rather than to a case.
+   */
+  "support_replied",
+  /**
    * → traveller: their visa is approaching the expiry date they gave us.
    * Sent at most three times per application (see `EXPIRY_THRESHOLDS`),
    * and never after the date has passed. The `daysOut` in the payload is
@@ -1463,6 +1473,53 @@ export const demoRequests = pgTable("demo_requests", {
 ]);
 
 /**
+ * One message in a support thread — from the agency, or from us.
+ *
+ * A table of its own rather than columns on `support_requests`,
+ * because a dispute is a conversation and not a form: the agency asks,
+ * somebody answers, the agency clarifies. The request's own `subject`
+ * and `body` stay where they are and render as the opening message,
+ * so nothing had to be migrated to make the thread exist.
+ *
+ * Deliberately not the `messages` table. That one threads a traveller
+ * and their handler about one application; this belongs to an agency
+ * rather than a case, and is worked by staff who cannot open cases at
+ * all. Sharing a table would mean an `application_id` that is always
+ * null for half its rows.
+ */
+export const supportMessages = pgTable(
+  "support_messages",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    requestId: uuid()
+      .notNull()
+      .references(() => supportRequests.id, { onDelete: "cascade" }),
+    /**
+     * Who wrote it. `set null` rather than `cascade`: the thread is the
+     * record of how a dispute was handled, and losing half a
+     * conversation because somebody left their agency would destroy the
+     * part worth keeping. The name is joined at read time and falls
+     * back to the side they were on.
+     */
+    authorId: text().references(() => profiles.id, { onDelete: "set null" }),
+    /**
+     * Whether this came from the agency or from us, stored rather than
+     * derived. Deriving it from the author's role would re-label every
+     * message a person had written if that person later joined BeOrchid
+     * — and a thread that rewrites its own history is worse than a
+     * column.
+     */
+    fromStaff: boolean().notNull(),
+    body: text().notNull(),
+    createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    /** The only read: one thread, oldest first. */
+    index("support_messages_request_idx").on(t.requestId, t.createdAt),
+  ]
+);
+
+/**
  * An agency asking BeOrchid for help.
  *
  * The first channel of any kind from a tenant to the operator: until
@@ -1561,6 +1618,7 @@ export type DemoRequestStatus = (typeof demoRequestStatus.enumValues)[number];
 export type AttendanceRequest = typeof attendanceRequests.$inferSelect;
 export type AttendanceKind = (typeof attendanceKind.enumValues)[number];
 export type SupportRequestState = (typeof supportRequestState.enumValues)[number];
+export type SupportMessage = typeof supportMessages.$inferSelect;
 
 export type FlagReason = (typeof flagReason.enumValues)[number];
 

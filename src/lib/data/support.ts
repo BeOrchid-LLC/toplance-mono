@@ -7,7 +7,9 @@ import { db } from "@/lib/db/client";
 import {
   organisations,
   profiles,
+  supportMessages,
   supportRequests,
+  type SupportMessage,
   type SupportRequestState,
 } from "@/lib/db/schema";
 
@@ -176,4 +178,70 @@ export async function listOpenSupportRequests(): Promise<SupportRequestRow[]> {
     .leftJoin(assignee, eq(assignee.id, supportRequests.assigneeId))
     .where(eq(supportRequests.state, "open"))
     .orderBy(asc(supportRequests.createdAt));
+}
+
+/** One request on its own, for the screen that shows its thread. */
+export async function getSupportRequest(id: string): Promise<SupportRequestRow | null> {
+  const [row] = await db
+    .select(columns)
+    .from(supportRequests)
+    .leftJoin(organisations, eq(organisations.id, supportRequests.orgId))
+    .leftJoin(author, eq(author.id, supportRequests.raisedBy))
+    .leftJoin(assignee, eq(assignee.id, supportRequests.assigneeId))
+    .where(eq(supportRequests.id, id));
+  return row ?? null;
+}
+
+export type SupportMessageRow = SupportMessage & { authorName: string | null };
+
+/**
+ * A thread, oldest first — the order a conversation is read in, and the
+ * opposite of every queue in this console, which are worked newest
+ * first.
+ */
+export async function listSupportMessages(
+  requestId: string
+): Promise<SupportMessageRow[]> {
+  return db
+    .select({
+      id: supportMessages.id,
+      requestId: supportMessages.requestId,
+      authorId: supportMessages.authorId,
+      authorName: author.fullName,
+      fromStaff: supportMessages.fromStaff,
+      body: supportMessages.body,
+      createdAt: supportMessages.createdAt,
+    })
+    .from(supportMessages)
+    .leftJoin(author, eq(author.id, supportMessages.authorId))
+    .where(eq(supportMessages.requestId, requestId))
+    .orderBy(asc(supportMessages.createdAt));
+}
+
+/**
+ * Add to a thread.
+ *
+ * A staff reply moves an open request to `claimed` and puts the
+ * replier's name on it when nobody had it: answering somebody is
+ * taking the request, and leaving it in the queue as unclaimed after
+ * you have written to the agency invites a colleague to answer it
+ * twice. It never moves a request that is already claimed — that would
+ * take a row off the person holding it.
+ */
+export async function postSupportMessage(input: {
+  requestId: string;
+  authorId: string;
+  fromStaff: boolean;
+  body: string;
+}): Promise<SupportMessage> {
+  const [row] = await db.insert(supportMessages).values(input).returning();
+
+  if (input.fromStaff) {
+    await db
+      .update(supportRequests)
+      .set({ state: "claimed", assigneeId: input.authorId })
+      .where(and(eq(supportRequests.id, input.requestId), eq(supportRequests.state, "open")));
+  }
+
+  return row;
 }

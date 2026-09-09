@@ -16,6 +16,7 @@ import { emailDueFor } from "@/lib/notifications/email-buffer";
 import {
   advisoryChangedEmail,
   attendanceRequestedEmail,
+  supportRepliedEmail,
   checklistChangedEmail,
   checklistCompleteEmail,
   companionDigestEmail,
@@ -113,6 +114,17 @@ export type NotificationPayload = {
    * fixed a time yet — the copy says "we will confirm" rather than
    * inventing one. `place` is free text because it is an address.
    */
+  /**
+   * `preview` and not the whole message: this is read in a bell menu
+   * and in an inbox, and a support reply can be a page long. The link
+   * is what carries somebody to the rest of it.
+   */
+  support_replied: {
+    subject: string;
+    preview: string;
+    fromStaff: boolean;
+    url: string;
+  };
   attendance_requested: {
     kind: "biometrics" | "interview";
     when: string | null;
@@ -149,6 +161,8 @@ function templateFor<K extends keyof NotificationPayload>(
       return visaExpiringEmail(payload as NotificationPayload["visa_expiring"]);
     case "companion_digest":
       return companionDigestEmail(payload as NotificationPayload["companion_digest"]);
+    case "support_replied":
+      return supportRepliedEmail(payload as NotificationPayload["support_replied"]);
     case "attendance_requested":
       return attendanceRequestedEmail(
         payload as NotificationPayload["attendance_requested"]

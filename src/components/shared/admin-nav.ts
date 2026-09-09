@@ -106,6 +106,25 @@ export function opsAdminNav({
     {
       label: OPS_COMMON.subtitlePrefix[locale],
       items: [
+        /* First, at the client's request on 8 September — and it took
+           two goes. `opsNav` below already listed the dashboard first,
+           which is what made this look done; the rail is a separate
+           list and is the one that renders, and here the dashboard sat
+           sixth. Still owner-gated: a reviewer's rail opens on
+           Agencies, because the dashboard is not theirs to see. */
+        ...(isOwner
+          ? [
+              {
+                // No badge. Every figure on this screen is one a director
+                // goes and reads; none of them is a queue that shortens
+                // because somebody acted on it.
+                id: "business" as const,
+                href: "/ops/dashboard",
+                label: OPS_COMMON.nav.dashboard[locale],
+                icon: "business" as const,
+              },
+            ]
+          : []),
         {
           // No badge. A count of agencies is a fact nobody acts on, and
           // the enquiry count that used to sit here has gone to the row
@@ -150,15 +169,6 @@ export function opsAdminNav({
                 href: "/ops/staff",
                 label: OPS_COMMON.nav.staff[locale],
                 icon: "colleagues" as const,
-              },
-              {
-                // No badge. Every figure on this screen is one a director
-                // goes and reads; none of them is a queue that shortens
-                // because somebody acted on it.
-                id: "business",
-                href: "/ops/dashboard",
-                label: OPS_COMMON.nav.dashboard[locale],
-                icon: "business" as const,
               },
             ]
           : []),

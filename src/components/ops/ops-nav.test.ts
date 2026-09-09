@@ -248,6 +248,23 @@ describe("opsAdminNav", () => {
     expect(hrefs(true)).toContain("/ops/support");
   });
 
+  /**
+   * The client asked for this on 8 September and it was reported done
+   * twice before it was. `opsNav` listed the dashboard first, which is
+   * what made it look done — but the rail is a separate list, and it is
+   * the rail that renders. Assert the thing on screen, not the thing
+   * that resembles it.
+   */
+  it("opens a director's rail on the dashboard", () => {
+    const groups = opsAdminNav({ locale: "en", ...counts, isOwner: true });
+    expect(groups[0].items[0].id).toBe("business");
+  });
+
+  it("opens a reviewer's rail on the agencies, since the dashboard is not theirs", () => {
+    const groups = opsAdminNav({ locale: "en", ...counts, isOwner: false });
+    expect(groups[0].items[0].id).toBe("agencies");
+  });
+
   it("hangs every row on an icon the table actually has", () => {
     for (const group of opsAdminNav({ locale: "en", ...counts, isOwner: true })) {
       for (const item of group.items) {

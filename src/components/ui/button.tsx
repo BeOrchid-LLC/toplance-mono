@@ -11,20 +11,41 @@ import { cn } from "@/lib/utils";
  * is the input: it matches the 36px chrome in the console's working bar
  * from `md` up, and stays at the 44px minimum tap target below that.
  * See the size itself for why the exception is drawn there.
+ *
+ * No focus classes of any kind, on purpose.
+ *
+ * The base rule in `globals.css` draws every focus ring in the product,
+ * and this component is the reason it could not. `outline-none` compiles
+ * into Tailwind's utilities layer, which is declared after the base layer
+ * and therefore beats it everywhere regardless of source order, so the
+ * base outline was switched off on every button in the product and the
+ * `focus-visible:ring-brand` written here painted instead — in the fill's
+ * own colour, 1.000:1 against a primary button and 2.078:1 against a dark
+ * plate. Removing both hands the job back to the one rule that measures.
+ *
+ * `box-shadow` stays in the transition list because `active:` still uses
+ * it for the pressed inset; nothing about focus does.
  */
 const buttonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-semibold outline-none transition-[background,border-color,box-shadow,color] duration-[var(--dur-tap)] ease-[var(--ease-out)] focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-bg disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md text-base font-semibold transition-[background,border-color,box-shadow,color] duration-[var(--dur-tap)] ease-[var(--ease-out)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5",
   {
     variants: {
       variant: {
         primary:
           "bg-brand text-on-brand hover:bg-[color-mix(in_srgb,var(--brand)_88%,#fff)] active:bg-brand-press active:shadow-[inset_0_2px_4px_rgb(0_0_0/0.18)]",
+        /* `border-brand-text`, not `border-brand`. This edge is the only
+           thing that says where the control is — there is no fill behind
+           it — so it takes the boundary floor, and `--brand` is a fill
+           hue that measures 2.078:1 on a dark plate. `--brand-text` is
+           the same #0a4ea3 in light, so nothing moves there, and lifts to
+           #5192e1 in dark, which is 5.171:1 and is already the colour of
+           this button's own label. */
         secondary:
-          "border border-brand bg-transparent text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)] active:bg-[color-mix(in_srgb,var(--brand)_16%,var(--surface))]",
+          "border border-brand-text bg-transparent text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)] active:bg-[color-mix(in_srgb,var(--brand)_16%,var(--surface))]",
         tertiary:
           "bg-transparent text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]",
         neutral:
-          "border border-border-strong bg-surface text-ink hover:border-brand hover:text-brand-text",
+          "border border-border-strong bg-surface text-ink hover:border-brand-text hover:text-brand-text",
         success: "bg-success text-white hover:brightness-110",
         warning: "bg-warning text-white hover:brightness-110",
         danger: "bg-danger text-white hover:brightness-110",

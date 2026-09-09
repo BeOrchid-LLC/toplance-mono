@@ -721,7 +721,7 @@ export function SkipLink({ locale }: { locale: Locale }) {
   return (
     <a
       href="#main"
-      className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:shadow-[var(--shadow)] focus:outline-2 focus:outline-brand"
+      className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-ink focus:shadow-[var(--shadow)] focus:outline-2 focus:outline-ring"
     >
       {ADMIN_CONSOLE.skipToContent[locale]}
     </a>

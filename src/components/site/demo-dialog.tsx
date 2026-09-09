@@ -25,7 +25,7 @@ import { fillTemplate } from "@/lib/i18n/corridor-picker";
 
 /** Matches `Input`, which has no `<select>` sibling in the design system. */
 const selectClass =
-  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
+  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink";
 
 /**
  * The visitor's own zone, and every zone they might pick instead.

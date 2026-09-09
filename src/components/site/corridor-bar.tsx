@@ -46,7 +46,14 @@ function Slot({
            An opaque tint here would punch a solid rectangle through the
            laminate on hover and undo the refraction under that one slot. */
         "has-[select:focus-visible]:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]",
-        "has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-inset has-[select:focus-visible]:ring-brand",
+        /* The <select> below is `opacity-0`, so its own outline is
+           invisible by construction and the slot has to draw the ring —
+           the second permitted deviation on `:focus-visible` in
+           globals.css. Inset rather than offset because the bar is a
+           laminate with `overflow-hidden` and an outward ring on an inner
+           slot would be cut off at the bar's edge. `--ring`, not
+           `--brand`: the fill hue was 2.078:1 against this plate in dark. */
+        "has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-inset has-[select:focus-visible]:ring-ring",
         "hover:bg-[color-mix(in_srgb,var(--surface-2)_60%,transparent)]",
         className
       )}
@@ -60,7 +67,7 @@ function Slot({
         aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0 outline-none"
+        className="absolute inset-0 cursor-pointer opacity-0"
       >
         {options.map((o) => (
           <option key={o.name} value={o.name}>

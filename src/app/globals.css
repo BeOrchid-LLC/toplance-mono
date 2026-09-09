@@ -65,21 +65,50 @@
      itself to the light blue fixes the ring and breaks the button:
      white on #4c8fe0 is 3.327:1.
 
-     So the ring is split out and given a value per theme. Light is the
-     same #0a4ea3 as `--brand`, which already clears every light ground
-     (7.98 on the plate, 7.21 on the secondary plate, 6.638 on the
-     concourse). Dark lifts it — see the note in the dark block.
+     So the ring is split out and given a value per theme. Dark lifts it
+     to a light blue — see the note in the dark block.
+
+     Light leaves the hue axis altogether, and that is the second thing
+     the ring has to do. Clearing the ground is not enough on its own: a
+     ring also has to not merge with the control it is ringing, and light
+     `--ring` used to be the same #0a4ea3 as `--brand`, which on a primary
+     button put the ring and the fill at 1.000:1. In a browser it read as
+     one blue shape with a white pinstripe through it rather than as a
+     button with a ring around it — the offset gap was carrying the whole
+     signal.
+
+     No blue can fix that in light, and the arithmetic is worth writing
+     down because it looks as if a lighter or darker blue ought to work.
+     A ring needs 3:1 against the least contrasty light ground,
+     `--surface-inset`, which caps its luminance at 0.209; being 2:1 from
+     `--brand` on the lighter side needs at least 0.213. The two windows
+     do not overlap. The only way out is downward, past `--brand` rather
+     than around it — which is also what every browser's own light-mode
+     ring does, and why theirs are near-black rather than accent-coloured.
+
+     So light's ring is the signage ink: 16.886 on the plate, 15.257 on
+     the secondary plate, 14.047 on the concourse, 13.363 in an inset
+     well, and 2.116:1 against a primary button's fill — a shade better
+     than the 2.399 dark already manages with its blue. It stays `--ink`'s
+     hex rather than a new one because the ring is the darkest mark in the
+     light theme for the same reason the ink is.
+
+     Dark keeps the route blue, because there it does both jobs: #4c8fe0
+     is 4.985 on the plate and 2.399 from the fill. The asymmetry is not
+     an accident of two decisions — it is the same rule resolved twice.
+     Use the route colour where it clears both floors; drop to the end of
+     the value scale where it cannot.
 
      This deviates from the spec's §1 and §7, which name `--route` alone
      for the ring, on the reading that one route colour does both jobs.
-     It does in light and does not in dark, and the deviation is recorded
+     It does neither in light nor in dark, and the deviation is recorded
      here rather than left for the next audit to rediscover.
 
      Declared per theme rather than per brand, so a BeOrchid console
-     focuses in Toplance blue for now. That is the deferral the spec
-     already takes on `--way`, and it ends the same way: when BeOrchid
-     gets its own route pair, this gets a value in that block. */
-  --ring: #0a4ea3;
+     focuses the same way for now. That is the deferral the spec already
+     takes on `--way`, and it ends the same way: when BeOrchid gets its
+     own route pair, this gets a value in that block. */
+  --ring: #0b1f2a;
 
   /* Plates sit ON the concourse; they do not float above it. What
      separates a plate from its ground is the ground being darker and
@@ -241,9 +270,13 @@
   --ink-3: #829299;
 
   /* Lifted off `--brand`, which stays #0a4ea3 because it is the button
-     fill and carries white. 4.985:1 on this plate and 5.592:1 on this
-     concourse, against a 3:1 boundary floor that #0a4ea3 misses here at
-     2.078 and 2.331. The full argument is on the light `--ring`. */
+     fill and carries white. 4.985 on this plate, 5.592 on this concourse,
+     4.367 under a table's band and 5.307 in an inset well, against a 3:1
+     boundary floor that #0a4ea3 misses here at 2.078 / 2.331 / 1.821 /
+     2.212. It is also 2.399:1 from that fill, so unlike the light block
+     the route colour can stay: a ring on a primary button reads as a ring
+     here rather than as a wider button. The full argument, including why
+     light cannot do the same, is on the light `--ring`. */
   --ring: #4c8fe0;
 
   --shadow-sm: 0 1px 0 rgb(0 0 0 / 0.4);
@@ -697,11 +730,58 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* `--ring` rather than `--brand`. This outline is the single most
-     important boundary in the product — it is the only thing telling a
-     keyboard user where they are — and on the dark concourse the fill
-     hue put it at 2.331:1, which is below the floor for a boundary and
-     worse than the 2.973 the pre-repaint palette managed. */
+  /* The product's focus indicator, and deliberately the whole of it.
+
+     It used to be one of two. This rule was here, and sixteen component
+     files also carried `outline-none` plus a `focus-visible:ring-2
+     ring-brand ring-offset-2 ring-offset-bg` box-shadow ring of their
+     own. The second one is the one that painted, and not because it was
+     written later: Tailwind v4 emits `@layer theme, base, components,
+     utilities;` at the top of the compiled sheet, and layers cascade in
+     DECLARATION order rather than source order, so `.outline-none {
+     outline-style: none }` in the utilities layer beat this rule in the
+     base layer wherever a component carried the class. The base outline
+     was live only on the elements nobody had styled — which is why, in a
+     real browser, a plain <a> reported `outlineStyle: "solid"` while a
+     Button two nodes away reported "none".
+
+     The one that painted was the wrong colour. It was drawn in
+     `--brand`, which is the button FILL and stays dark so it can carry
+     white at 7.98:1; as a boundary on the dark palette that same hue is
+     2.078:1 on a plate, 2.331:1 on the concourse, 1.821 on the secondary
+     plate and 2.212 in an inset well, against the 3:1 a boundary
+     somebody has to see. On a primary button it was also the fill's own
+     colour: a ring at 1.000:1 against the thing it was ringing.
+
+     So there is one ring now, it is `--ring`, and nothing suppresses or
+     repaints it. `--ring` clears the boundary floor on all four grounds
+     in both themes — 7.980 / 6.638 / 7.210 / 6.316 light, 4.985 / 5.592
+     / 4.367 / 5.307 dark — and `tokens.test.ts` holds all eight.
+
+     `outline-offset` is what makes one ring enough on a filled control.
+     The gap it leaves is TRANSPARENT, so the colour immediately either
+     side of the ring is whatever ground the control sits on and never
+     the control's own fill. That is the whole difference from the ring
+     this replaces, which painted its gap `ring-offset-bg`: an opaque
+     `--bg` band between a `--brand` ring and a `--brand` fill, on a
+     `--surface` plate, no two of which were 3:1 apart in dark. Nothing
+     in the product fills a ground with `--brand` — every `bg-brand` is a
+     dot, a 2px rule, a count badge or a button — so the four grounds the
+     test asserts are the only ones the gap can show.
+
+     Two deviations are allowed and there are no others. Both keep the
+     colour and the width and change only where the ring is drawn:
+
+       - inward, `-outline-offset-2`, where an ancestor's
+         `overflow-hidden` would clip an outward ring away;
+       - onto the visible shell, `has-[…:focus-visible]:outline-2
+         outline-offset-2 outline-ring`, where the element that takes
+         focus is not the element a person sees — an `opacity-0` <select>
+         laid over a styled slot, an `sr-only` file input behind a
+         <label>, an <input> sitting flush inside a clipped wrapper.
+
+     Each of those sites says so in a comment where it is written, and
+     `focus.test.ts` fails the suite if a third mechanism appears. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;

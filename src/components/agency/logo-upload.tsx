@@ -55,7 +55,7 @@ export function LogoUpload({
   return (
     <label
       className={
-        "group relative flex h-20 w-full max-w-[280px] cursor-pointer items-center justify-center overflow-hidden rounded-[var(--radius-sm)] border border-border-strong bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] px-4 text-center shadow-[inset_0_1px_3px_rgb(16_19_28/0.08)] focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]" +
+        "group relative flex h-20 w-full max-w-[280px] cursor-pointer items-center justify-center overflow-hidden rounded-[var(--radius-sm)] border border-border-strong bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] px-4 text-center shadow-[inset_0_1px_3px_rgb(16_19_28/0.08)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring" +
         (pending ? " opacity-60" : "")
       }
     >

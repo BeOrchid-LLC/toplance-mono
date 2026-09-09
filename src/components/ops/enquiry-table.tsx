@@ -33,7 +33,7 @@ import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
  * share the row's height.
  */
 const inputClass =
-  "h-[var(--row-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
+  "h-[var(--row-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink";
 
 /**
  * The enquiries that have not become an agency yet.

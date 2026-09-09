@@ -45,14 +45,18 @@ export function CorridorBoard() {
     <div>
       <div className="flex flex-wrap items-center gap-3">
         <span className="tag">{t(CORRIDOR_PICKER.travelingFrom)}</span>
-        <div className="relative inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-border-strong bg-surface py-2 ps-4 pe-3 transition-colors hover:border-brand has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-brand">
+        {/* Same shape as the corridor bar's slots: an `opacity-0` <select>
+            over a styled pill, so the pill draws the ring. Nothing clips
+            this one, so it takes the standard outward outline rather than
+            the bar's inset ring. */}
+        <div className="relative inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-border-strong bg-surface py-2 ps-4 pe-3 transition-colors hover:border-brand-text has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-ring">
           <span className="d-sm text-ink">{origin}</span>
           <ChevronDown className="size-4 text-ink-3" aria-hidden />
           <select
             aria-label={t(CORRIDOR_PICKER.travelingFrom)}
             value={origin}
             onChange={(e) => set({ origin: e.target.value })}
-            className="absolute inset-0 cursor-pointer opacity-0 outline-none"
+            className="absolute inset-0 cursor-pointer opacity-0"
           >
             {ORIGINS.map((o) => (
               <option key={o.name} value={o.name}>

@@ -56,7 +56,12 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("outline-none", className)}
+      // Radix gives the active panel `tabIndex={0}` so a keyboard user can
+      // step off the tab strip into the content, which makes the panel a
+      // focus stop like any other — and `outline-none` here was hiding the
+      // one indicator that says so. The panel is inset from anything that
+      // clips, so the base outline lands with room around it.
+      className={cn(className)}
       {...props}
     />
   );

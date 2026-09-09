@@ -50,7 +50,7 @@ export function AppNavMenu({ nav }: { nav: NavItem[] }) {
                 // tinted fill the bar itself no longer uses.
                 className={cn(
                   "nav-label border-s-2 border-transparent",
-                  active && "border-brand font-semibold text-ink",
+                  active && "border-brand-text font-semibold text-ink",
                   item.locked && "pointer-events-none text-ink-3",
                 )}
               >

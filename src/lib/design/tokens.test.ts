@@ -102,6 +102,7 @@ const PAIRS: [string, string, number, string][] = [
   ["--brand-text", "--surface", 4.5, "route on plate"],
   ["--brand-text", "--bg", 4.5, "route on concourse"],
   ["--brand-text", "--surface-2", 4.5, "footer links on their band"],
+  ["--brand-text", "--surface-inset", 4.5, "route in an inset well"],
   /* The fill's other half, and the pair the split above exists to
      protect. Nothing asserted it until now, which is exactly why lifting
      `--brand` to clear the ring floor looked free. */
@@ -113,10 +114,61 @@ const PAIRS: [string, string, number, string][] = [
   ["--border-strong", "--surface-2", 3.0, "strong edge on secondary plate"],
   ["--border-strong", "--bg", 3.0, "rule ruled across the concourse"],
   /* 3.0, not 4.5: the focus ring is a boundary against a ground, not
-     type, so it takes the non-text floor. */
+     type, so it takes the non-text floor.
+
+     All four grounds, not the two it had. The ring is drawn wherever a
+     control can be, and a control can be on a plate, on the concourse,
+     under a table's header band or in an inset well; two of four is the
+     same sampling mistake that let `--ink-3` ship failing on three
+     grounds while passing on the one it was picked against.
+
+     The four also do a second job, which is why `--surface-2` and
+     `--surface-inset` matter more than they look. `outline-offset` leaves
+     a TRANSPARENT gap, so the colour immediately inside the ring is the
+     ground the control sits on rather than the control's own fill — these
+     four assertions are what say that gap is legible on both sides, and
+     therefore what stops a primary button drawing a ring that touches its
+     own `--brand` fill at 1.000:1. */
   ["--ring", "--surface", 3.0, "focus ring on plate"],
   ["--ring", "--bg", 3.0, "focus ring on concourse"],
+  ["--ring", "--surface-2", 3.0, "focus ring under a table's band"],
+  ["--ring", "--surface-inset", 3.0, "focus ring in an inset well"],
 ];
+
+/**
+ * Why there is no `["--brand", "--surface", 3.0]` here.
+ *
+ * There was, in c5fdc60, and 99a9da0 rewrote it to `--brand-text` in the
+ * same commit as the repaint it was guarding — which is the mistake the
+ * rule above the list was written about. So this absence is deliberate
+ * and is recorded rather than left to be rediscovered as an oversight.
+ *
+ * The pair belonged here for as long as `--brand` was drawn as an edge:
+ * it was the focus ring on every button and input, the border of the
+ * secondary button, the marker on the current page in the app nav, the
+ * active slot of the OTP field. On the dark palette it measures 2.078 on
+ * a plate, 2.331 on the concourse, 1.821 on the secondary plate and 2.212
+ * in an inset well, so every one of those was under the 3:1 floor.
+ *
+ * It is not drawn as an edge any more. Focus reads `--ring`, and the
+ * handful of resting and hover edges that read the route colour now read
+ * `--brand-text`, which is byte-identical in light and lifts to #5192e1
+ * in dark. `--brand` is a fill and only a fill — asserted as one by
+ * `["--on-brand", "--brand"]` above.
+ *
+ * Which leaves the obvious question: why not assert it anyway, as
+ * insurance? Because it cannot pass and be true at the same time. Making
+ * `--brand` clear 3:1 on the dark grounds means lifting it to something
+ * like the #4c8fe0 the ring uses, and white on that is 3.327:1 — so the
+ * assertion above it fails instead. One hex cannot be both a fill that
+ * carries white and an edge that reads against a near-black ground; that
+ * is the whole reason `--ring` was split out.
+ *
+ * So the guarantee is enforced in the other direction, by
+ * `focus.test.ts`, which fails if `ring-brand`, `border-brand` or
+ * `outline-brand` reappears anywhere in `src/`. A comment saying "--brand
+ * is a fill" is what the last two rounds had.
+ */
 
 describe.each([
   ["light", light],
@@ -130,6 +182,33 @@ describe.each([
   it.each(PAIRS)("%s on %s clears %s:1 — %s", (fg, bg, floor) => {
     const ratio = contrast(tokens[fg], tokens[bg]);
     expect(ratio).toBeGreaterThanOrEqual(floor);
+  });
+
+  /**
+   * The ring's second job, which has no WCAG number and needs one anyway.
+   *
+   * A ring that clears 3:1 against the ground can still be useless, and
+   * the light palette shipped exactly that: `--ring` was `--brand`'s own
+   * hex, so on a primary button the ring and the fill were 1.000:1. Every
+   * floor in PAIRS passed. In a browser it read as one blue shape with a
+   * white pinstripe through it — the 2px offset gap was carrying the
+   * entire signal, and a gap is not an indicator.
+   *
+   * 2.0 is not a contrast floor, because there is no contrast floor for
+   * this: 1.4.11 measures the ring against what is adjacent to it, and
+   * what is adjacent to it is the gap, which is the ground. This is the
+   * weaker claim that the two are not the same colour, and the number is
+   * the one the palette already meets rather than an invented target —
+   * 2.116 in light, 2.399 in dark.
+   *
+   * `--brand` alone, because it is the only fill a ring has to sit beside
+   * that is dark in BOTH themes. The signage fills flip with the theme
+   * and the gap does the separating there: `--way` is 9.344 from the dark
+   * plate and 1.775 from the light one, so the ratio that matters for it
+   * moves between the two boundaries rather than staying on one.
+   */
+  it("does not ring a primary button in the button's own colour", () => {
+    expect(contrast(tokens["--ring"], tokens["--brand"])).toBeGreaterThanOrEqual(2.0);
   });
 
   /**

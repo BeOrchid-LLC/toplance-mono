@@ -138,7 +138,7 @@ export function Chips({
           type="button"
           disabled={disabled}
           onClick={() => onPick(chip)}
-          className="min-h-[var(--row-h)] shrink-0 whitespace-nowrap rounded-[var(--radius-pill)] border border-border bg-surface px-4 text-base font-medium text-ink-2 transition-colors duration-[var(--dur-tap)] hover:border-brand hover:text-brand-text disabled:opacity-50 disabled:hover:border-border disabled:hover:text-ink-2"
+          className="min-h-[var(--row-h)] shrink-0 whitespace-nowrap rounded-[var(--radius-pill)] border border-border bg-surface px-4 text-base font-medium text-ink-2 transition-colors duration-[var(--dur-tap)] hover:border-brand-text hover:text-brand-text disabled:opacity-50 disabled:hover:border-border disabled:hover:text-ink-2"
         >
           {chip.label[locale] ?? chip.label.en}
         </button>
@@ -189,7 +189,14 @@ export function Composer({
       // stacking put 40px of empty box under every one of them. The
       // field still grows to six lines when someone writes a paragraph,
       // and the buttons stay pinned to the last line.
-      className="flex items-end gap-1 rounded-[26px] border border-border-strong bg-surface p-1.5 transition-[border-color,box-shadow] duration-[var(--dur-tap)] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--brand)_20%,transparent)]"
+      // The composer's ring is drawn on the shell rather than on the
+      // field, which is the second permitted deviation on `:focus-visible`
+      // in globals.css: the <textarea> is inset 6px inside this border, so
+      // its own outline would be a second ring drawn inside the first.
+      // Scoped to `textarea` and not `focus-within`, so the two 44px
+      // buttons sharing this row keep their own rings instead of lighting
+      // the whole composer up.
+      className="flex items-end gap-1 rounded-[26px] border border-border-strong bg-surface p-1.5 transition-[border-color,box-shadow] duration-[var(--dur-tap)] has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-offset-2 has-[textarea:focus-visible]:outline-ring"
     >
       <VoiceButton voice={voice} />
       <textarea
@@ -216,6 +223,10 @@ export function Composer({
         aria-label={t(INTAKE_UI.ariaYourAnswer)}
         // Padded to sit on the same optical line as the two 44px buttons
         // beside it while a single line of text is in the box.
+        //
+        // `outline-none` is deliberate here and is one of the two places
+        // the shell takes the ring over: see the composer's own className
+        // above. Everywhere else in the product this class is a bug.
         className="block max-h-40 min-w-0 flex-1 resize-none self-center bg-transparent px-2 py-2 text-base leading-[1.6] outline-none placeholder:text-ink-3 disabled:opacity-50"
       />
       <button

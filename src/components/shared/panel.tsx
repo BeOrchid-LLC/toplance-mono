@@ -116,7 +116,16 @@ export function DisclosurePanel({
           // `list-none` above covers most engines; WebKit needs its own
           // marker turned off, or the chevron below is the second
           // disclosure mark on the row.
-          "[&::-webkit-details-marker]:hidden"
+          "[&::-webkit-details-marker]:hidden",
+          // The ring turns inward here — the first of the two deviations
+          // `:focus-visible` in globals.css permits. This summary is the
+          // whole top edge of an `overflow-hidden` <details>, so an
+          // outward 2px ring is cut off on three sides and what a
+          // keyboard user gets is a line under the label. Measured in a
+          // browser rather than reasoned about: the fold reported
+          // `clipped by an overflow ancestor: true` at 2px out and false
+          // at 2px in. Same token, same width, drawn on the inside.
+          "focus-visible:-outline-offset-2"
         )}
       >
         <ChevronRight

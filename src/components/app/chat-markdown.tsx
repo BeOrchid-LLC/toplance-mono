@@ -56,7 +56,7 @@ export function ChatMarkdown({ children }: { children: string }) {
           );
         },
         blockquote: ({ children: quoteChildren }) => (
-          <blockquote className="mt-3 border-s-2 border-brand ps-4 text-ink-2">
+          <blockquote className="mt-3 border-s-2 border-brand-text ps-4 text-ink-2">
             {quoteChildren}
           </blockquote>
         ),

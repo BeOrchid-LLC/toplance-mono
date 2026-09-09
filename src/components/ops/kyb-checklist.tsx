@@ -592,7 +592,11 @@ function RequirementRow({
                       value={state}
                       disabled={pending}
                       onChange={(event) => setState(event.target.value as KybState)}
-                      className="h-9 w-full appearance-none rounded-lg border border-border-strong bg-surface px-3 pe-8 text-sm font-semibold text-ink shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                      // Focus is the base rule's. What stood here was `focus:` rather
+                      // than `focus-visible:`, so it also fired on every mouse
+                      // click, and it spent its ring on `--brand/20` — a fifth
+                      // of the fill hue, under 1.2:1 on either plate.
+                      className="h-9 w-full appearance-none rounded-lg border border-border-strong bg-surface px-3 pe-8 text-sm font-semibold text-ink shadow-sm"
                     >
                       {(Object.keys(STATE) as KybState[]).map((value) => (
                         <option key={value} value={value}>

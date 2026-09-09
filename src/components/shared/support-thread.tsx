@@ -48,7 +48,7 @@ export function SupportThread({
             // A conversation with two participants needs the eye to
             // separate them before the reader has parsed a single name.
             m.fromStaff
-              ? "border-brand/40 bg-[color-mix(in_srgb,var(--brand)_7%,var(--mix))]"
+              ? "border-brand-text/40 bg-[color-mix(in_srgb,var(--brand)_7%,var(--mix))]"
               : "border-border bg-surface"
           )}
         >

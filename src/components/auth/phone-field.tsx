@@ -19,8 +19,8 @@ import { cn } from "@/lib/utils";
  * The anatomy of react-phone-input-2 — flag button inside a single
  * bordered control, searchable country list, dial code shown in the
  * field, per-country auto-formatting — rebuilt on our own primitives so
- * it inherits the 52px control height, 12px radius and brand focus ring
- * instead of fighting a third-party stylesheet.
+ * it inherits the 52px control height, 12px radius and the one focus
+ * ring instead of fighting a third-party stylesheet.
  *
  * We chose not to take the dependency: react-phone-input-2 has had no
  * release since v2.15.1 in July 2022. The UI it renders is the one we
@@ -121,7 +121,15 @@ export function PhoneField({
       <Label htmlFor={`${name}-input`}>{resolvedLabel}</Label>
 
       <div ref={wrapRef} className="relative">
-        <div className="flex h-[var(--control-h)] items-stretch overflow-hidden rounded-md border border-border-strong bg-surface focus-within:border-brand focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]">
+        {/* The shell takes the ring, which is the second permitted
+            deviation on `:focus-visible` in globals.css. Both children sit
+            flush inside this `overflow-hidden` box — the country button
+            against three of its edges, the number field against the other
+            three — so an outline on either is clipped away entirely rather
+            than merely cropped. `has-[:focus-visible]` and not
+            `focus-within`, so it answers to the same rule as every other
+            ring rather than also firing on a mouse click. */}
+        <div className="flex h-[var(--control-h)] items-stretch overflow-hidden rounded-md border border-border-strong bg-surface has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -130,7 +138,13 @@ export function PhoneField({
             aria-label={t(PHONE_FIELD.countryCodeAriaLabel)
               .replace("{name}", country.name)
               .replace("{dial}", country.dial)}
-            className="flex shrink-0 items-center gap-1 border-e border-border px-3 text-xl transition-colors hover:bg-surface-2"
+            // Suppressed for the same reason as the number field beside
+            // it, and found the same way — in a browser rather than by
+            // reading. Three of this button's edges are the shell's, so
+            // an outward ring on those is clipped; the fourth is
+            // interior, so the same ring paints a stray 2px bar down the
+            // middle of the control. The shell rings for both children.
+            className="flex shrink-0 items-center gap-1 border-e border-border px-3 text-xl outline-none transition-colors hover:bg-surface-2"
           >
             <span aria-hidden>{country.flag}</span>
             <ChevronDown className="size-4 text-ink-3" />
@@ -143,6 +157,8 @@ export function PhoneField({
             autoComplete="tel"
             aria-invalid={touched && message ? true : undefined}
             aria-describedby={touched && message ? errorId : undefined}
+            // Suppressed because the shell above draws this field's ring;
+            // an outline here would be eaten by the shell's clip.
             className="min-w-0 flex-1 bg-transparent px-4 text-base text-ink outline-none placeholder:text-ink-3"
             value={digits ? `${country.dial} ${applyMask(digits, country.mask)}` : country.dial}
             onChange={(e) => {
@@ -176,7 +192,11 @@ export function PhoneField({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t(PHONE_FIELD.searchPlaceholder)}
-                className="h-[var(--row-h)] w-full bg-transparent text-base outline-none placeholder:text-ink-3"
+                // The country search sits flush against the top edge of an
+                // `overflow-hidden` panel, so its ring turns inward — the
+                // first permitted deviation on `:focus-visible`, same
+                // colour and width, drawn 2px inside instead of 2px out.
+                className="h-[var(--row-h)] w-full bg-transparent text-base -outline-offset-2 placeholder:text-ink-3"
               />
             </div>
             <div role="listbox" className="max-h-64 overflow-y-auto p-2">

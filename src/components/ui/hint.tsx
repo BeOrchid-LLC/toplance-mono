@@ -32,7 +32,14 @@ export function Hint({ label }: { label: string }) {
         onMouseLeave={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
-        className="inline-grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:text-ink-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        // The three outline classes that stood here restated the base
+        // rule's width and offset exactly and then repainted its colour
+        // from `--ring` to `--brand` — the one call site in the product
+        // that kept the base outline and still managed to break it, at
+        // 2.078:1 on a dark plate. Restating a rule in order to change one
+        // declaration of it is how a system ends up with two; the rule is
+        // right, so this trigger simply lets it draw.
+        className="inline-grid size-5 shrink-0 place-items-center rounded-full text-ink-3 transition-colors hover:text-ink-2"
       >
         <Info className="size-4" aria-hidden />
       </Popover.Trigger>

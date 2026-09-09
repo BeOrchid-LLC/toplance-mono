@@ -273,7 +273,7 @@ export default async function InvitePage({
               </Link>
               <Link
                 href={`/sign-in?next=${encodeURIComponent(next)}`}
-                className="flex h-[var(--control-h)] flex-1 items-center justify-center rounded-md border border-brand px-[22px] text-base font-semibold text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]"
+                className="flex h-[var(--control-h)] flex-1 items-center justify-center rounded-md border border-brand-text px-[22px] text-base font-semibold text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]"
               >
                 {INVITE_PAGE.signIn[locale]}
               </Link>

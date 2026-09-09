@@ -8,6 +8,29 @@ import { cn } from "@/lib/utils";
  * wordmark text in black, and here it can sit on currentColor so it stays
  * legible in dark mode; and the text lives in its own <svg> carrying the
  * `wordmark-label` class, so callers can keep hiding it on small screens.
+ *
+ * Being inline buys a third thing, which the shipped assets cannot have:
+ * the pin reads `var(--brand)` straight off the token layer, so it moves
+ * with the palette instead of holding a hue of its own. It was a literal
+ * #2450D8 until 2026-09-09, and when the repaint took `--brand` to the
+ * signage blue this component kept painting the retired indigo — in every
+ * chrome bar in the product at once, because the twenty files that render
+ * it include the app bar, the site nav, the site footer, the ops rail and
+ * the auth layout. A hue nothing owns is a hue nothing repaints.
+ *
+ * The five shipped assets are the copies that must be changed by hand when
+ * the brand hue moves, because an <img> is a separate document and no
+ * custom property set on the page that embeds it reaches inside:
+ *
+ *   public/icon/toplance-icon.svg               1 fill
+ *   public/horizontal/toplance-horizontal.svg   1 fill
+ *   public/vertical/toplance-vertical.svg       1 fill
+ *   public/hero/travel-everywhere.svg           7 fills
+ *   public/hero/travel-everywhere-dark.svg      7 fills
+ *
+ * They carry the hue as literal hex — currently #0a4ea3 — and a literal is
+ * a copy that goes stale in silence. They move in the same commit as the
+ * token, or they are wrong until somebody happens to look.
  */
 /** The "Toplance" letterforms, chunked only to keep line length sane. */
 const WORDMARK_TEXT_PATH =
@@ -113,7 +136,7 @@ export function Wordmark({
       >
         <path
           d="M54.8382 20.1835C54.8382 31.3305 30.3309 66 27.4191 66C24.5074 66 0 31.3305 0 20.1835C0 9.03645 12.276 0 27.4191 0C42.5623 0 54.8382 9.03645 54.8382 20.1835Z"
-          fill="#2450D8"
+          fill="var(--brand)"
         />
         <rect
           x="16.0147"

@@ -878,6 +878,115 @@ git commit -m "Re-derive the funnel ramp on the route hue"
 
 ---
 
+### Task 9: The things no token owns
+
+**Done — written after the fact, because nothing in this plan owned any of it.**
+
+This plan's Architecture paragraph opens with "nothing hard-codes a hue —
+every component reads `--bg`, `--surface`, `--ink`, `--brand` from the token
+layer", and every task from 2 onward is built on that being true. It was not
+quite true, and the three places it was false are the three places the
+repaint could not reach. A grep of this plan and of the spec returns nothing
+for any of them: they were not descoped, they were never seen. They are
+recorded here so the same claim is not made again without this list beside
+it.
+
+What they have in common is that each one is a copy of a token rather than a
+read of it, and no copy fails a build when the original moves. The palette
+guard rail in Task 1 parses `globals.css` and checks the values *against each
+other*; it cannot know that a fill somewhere else was once equal to one of
+them. That is the shape of the gap, and it is worth stating plainly: **this
+plan's safety net only covers the values that live in the token layer.** Two
+of the three below are in files CSS cannot reach at all.
+
+- [x] **Step 1: Give the wordmark's pin the token instead of a copy of it**
+
+`src/components/shared/wordmark.tsx` painted the pin `fill="#2450D8"` — the
+retired indigo, as a literal. This component is inline SVG in twenty files,
+among them the app bar, the site nav, the site footer, the ops rail and the
+auth layout, so after Task 2 the old indigo sat in every chrome bar in the
+product, a hand's breadth from the new blue.
+
+Being inline is what makes this one fixable properly: the pin now reads
+`fill="var(--brand)"` and cannot drift again. The docblock says why, and
+names the five assets that have to be changed by hand.
+
+- [x] **Step 2: Repaint the five shipped SVGs by hand**
+
+Five binary-ish assets carried the same literal, seventeen fills between
+them:
+
+| File | Fills |
+|---|---|
+| `public/icon/toplance-icon.svg` | 1 |
+| `public/horizontal/toplance-horizontal.svg` | 1 |
+| `public/vertical/toplance-vertical.svg` | 1 |
+| `public/hero/travel-everywhere.svg` | 7 |
+| `public/hero/travel-everywhere-dark.svg` | 7 |
+
+Here a literal is unavoidable rather than sloppy: an `<img>` is a separate
+document and no custom property set on the embedding page reaches inside it,
+so `var(--brand)` would resolve to nothing. All seventeen are now `#0a4ea3`.
+The comment in `src/app/[locale]/(site)/page.tsx` that claimed the unDraw art
+was "recoloured to `--brand`" said something the file could not do; it now
+says what is actually true, and says who has to move these when the hue moves
+again.
+
+- [x] **Step 3: Repaint the email shell, and give it a docblock it can keep**
+
+`src/lib/notifications/layout.ts` is the one shell every outbound email
+renders through, and its docblock asserted "Colours are the design tokens
+from `globals.css`". After Task 2 that sentence was false in eight values at
+once, and the file went on rendering the pre-redesign palette — including a
+muted `#7b8296` that measured 3.835:1 on white and had never cleared AA for
+body text in the first place — and the pre-redesign 14px/10px radii against
+the 3/4/6/10 scale from Task 3.
+
+Email has no custom properties, so the literals stay literals. Every one is
+now its wayfinding value and both radii are on the new scale. The docblock no
+longer claims a relationship the file cannot have: it says the palette is
+hand-copied from `globals.css` and must be updated with it, which is a claim
+this file can actually keep.
+
+- [x] **Step 4: Put the reachable amber CTA back over the floor**
+
+`src/components/site/corridor-bar.tsx` painted the "Request this route"
+button `bg-brand-accent text-ink`. Task 2 pointed `--brand-accent` at `--way`,
+the directional yellow, and `--ink` is near-white in dark — so a button
+anybody can reach and press was setting its own label at 1.501:1 on its own
+fill, 1.376:1 on hover. This one is the counter-example to the Global
+Constraint that `--way` "is a fill, never type": the constraint was written
+about type on a plate and says nothing about the ink that goes on the fill,
+which is what `--way-ink` is for and which nothing had used.
+
+The pairing is now `bg-way text-way-ink`, named on both halves so a later
+edit cannot separate them: 9.515:1 at rest and 10.379:1 on hover, identical
+in both themes because `--way` and `--way-ink` are byte-identical in both
+blocks. Worth recording that this was not a regression to undo — the same
+`text-ink` pairing measured 2.077:1 on the old amber before the repaint, so
+it had never cleared any floor; Task 2 only made a standing failure worse.
+
+- [x] **Step 5: Verify**
+
+Run: `npm run typecheck && npm run lint && npm test`
+Expected: typecheck clean, lint clean apart from the pre-existing
+unused-`Progress` warning, all suites green. `src/app/globals.css` and
+`src/lib/design/` are untouched by this task — every fix is a copy being
+brought back into line with the token layer, never a change to the token
+layer itself.
+
+- [x] **Step 6: Commit**
+
+```bash
+git add src/components/shared/wordmark.tsx src/components/site/corridor-bar.tsx
+git add "src/app/[locale]/(site)/page.tsx" src/lib/notifications/layout.ts
+git add public/icon public/horizontal public/vertical public/hero
+git add docs/superpowers/plans/2026-09-09-wayfinding-foundation.md
+git commit -m "Repaint the three places the token layer could not reach"
+```
+
+---
+
 ## Self-review
 
 **Spec coverage.** §1 colour → Tasks 1, 2, 8. §2 type → Task 5; the fence is explicitly *not* moved, per the Global Constraints, and the spec flags it as needing the client. §3 layout → deferred to plans 2–4 by design; this plan supplies the geometry (Task 3) those plans lay out with. §4 principles → encoded as the `way` variant (Task 6) and the removal of the material vocabulary (Task 4); the ban on caps eyebrows and ` · ` meta strings belongs to the surface plans, where the call sites are. §5 motion → Task 4 removes `laminate-tilt` and the sheen; the route diagram's advance belongs to plan 2. §6 hardening → Task 7. §7 quality floor → enforced per-task in the verification steps. §8 reversals → Tasks 2, 3, 4, 5, 8 each name the decision they overturn in the commit message.

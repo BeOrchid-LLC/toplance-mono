@@ -353,11 +353,21 @@ export default async function HomePage() {
 
                 unDraw art, with one edit on the way in: its stock accent
                 is #6c63ff, and shipping that violet on a page whose
-                brand is #2450d8 is the clearest single tell that a
-                library illustration was dropped in untouched. All seven
-                occurrences are recoloured to `--brand` in
-                `public/hero/travel-everywhere.svg`. Its greys are left
-                alone — those are the drawing, not the branding.
+                brand is the signage blue is the clearest single tell
+                that a library illustration was dropped in untouched.
+                All seven occurrences in
+                `public/hero/travel-everywhere.svg` are painted #0a4ea3
+                instead — a literal, not `--brand`, and this line used to
+                claim otherwise. An <img> is a separate document: no
+                custom property set on this page reaches inside it, so
+                the file cannot track the token and is hand-copied from
+                it instead. That is what went wrong on 2026-09-09, when
+                the repaint moved `--brand` off the indigo and left this
+                comment describing a recolour the file had never had.
+                When the hue moves again, this drawing and its dark twin
+                move in the same commit, along with the three logo assets
+                `wordmark.tsx` lists. Its greys are left alone — those
+                are the drawing, not the branding.
 
                 The ground is genuinely transparent, so in light mode
                 `security-paper` rules straight through the artwork and
@@ -374,7 +384,7 @@ export default async function HomePage() {
                 on the dark page the way it sits on the light one.
 
                 Two `<Image>`s rather than one with a filter: a CSS
-                invert would take the brand blue with it, and #2450d8 is
+                invert would take the brand blue with it, and #0a4ea3 is
                 the one colour in here that must survive both grounds.
                 Swapped with `dark:` classes rather than by reading the
                 theme in JS, so the right one is in the first paint and

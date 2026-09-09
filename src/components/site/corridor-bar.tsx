@@ -200,13 +200,28 @@ export function CorridorBar({
                 the 18%-tinted panel the slab used. At button size a tint
                 that faint stops reading as a state at all — and "request"
                 and "start" being visibly different actions is the whole
-                point of the distinction. */}
+                point of the distinction.
+
+                The label is `--way-ink` and the fill is `--way`, named
+                as a pair on both halves so no later edit can move one
+                without the other. It read `bg-brand-accent text-ink`
+                until now, which was two tokens that happened to look
+                right together on the old amber and stopped: `--ink` is
+                near-white in dark, so a button anybody can reach and
+                press was setting its own label at 1.501:1 on the fill,
+                and 1.376:1 while the pointer was on it. Nor is this a
+                regression to undo — the same pairing measured 2.077:1
+                before the repaint and had never cleared the 3:1 a
+                boundary owes, let alone the 4.5:1 a label does. `--way`
+                is a light fill in both themes and `--way-ink` is the ink
+                that belongs on it in both, so the pair holds at 9.515:1
+                at rest and 10.379:1 on hover, light and dark alike. */}
             <Button
               asChild
               className={cn(
                 "group shrink-0 max-lg:w-full",
                 soon &&
-                  "bg-brand-accent text-ink hover:bg-[color-mix(in_srgb,var(--brand-accent)_85%,#fff)]"
+                  "bg-way text-way-ink hover:bg-[color-mix(in_srgb,var(--way)_85%,#fff)]"
               )}
             >
               <Link href="/agency/sign-up">

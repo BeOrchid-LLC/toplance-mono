@@ -4,7 +4,15 @@
 
 **Goal:** Replace the token layer, type faces and shared primitives with the wayfinding system, so every screen in the product repaints at once and stays green.
 
-**Architecture:** This codebase was built so that nothing hard-codes a hue — every component reads `--bg`, `--surface`, `--ink`, `--brand` from the token layer. That means a values-only swap behind the existing token names repaints all 46 routes without touching a single component file. We exploit that: the palette lands first as a repaint, then the plate geometry, then the faces, then the primitives. Each step is independently reviewable and leaves the product working.
+**Architecture:** Almost every component in this codebase reads its hue from the token layer — `--bg`, `--surface`, `--ink`, `--brand` — so a values-only swap behind the existing token names repaints most of the 46 routes at once. That is what this plan exploits, and the order follows from it: the palette lands first as a repaint, then the plate geometry, then the faces, then the primitives. Each step is independently reviewable and leaves the product working.
+
+"Almost" is doing real work in that sentence. It read "nothing hard-codes a hue … without touching a single component file" until two rounds of verification found the places that do. They are named here so the claim is never made bare again:
+
+- **A component literal.** `wordmark.tsx` painted its pin `fill="#2450D8"`, and it is inline SVG in twenty files, so the retired indigo outlived the repaint in every chrome bar in the product at once. Task 9 made it `var(--brand)`. The same species is still live in `button.tsx`, whose three semantic variants set `text-white` rather than a token — Task 6 owns that one.
+- **Six shipped assets.** Three logo SVGs, two hero drawings and `src/app/favicon.ico`. An `<img>` is a separate document that no custom property on the embedding page reaches into, and the favicon has no embedding page at all — the browser fetches it by file-system convention and paints it in the tab. All six hold the hue as literal hex and are hand-copied from the token; `wordmark.tsx` carries the list.
+- **The email shell.** `src/lib/notifications/layout.ts` is the one shell every outbound message renders through, and email has no custom properties at all, so its palette can only ever be a hand-copy of `globals.css`.
+
+What the three have in common is that each is a copy of a token rather than a read of it, and no copy fails a build when the original moves. Task 1's guard rail parses `globals.css` and checks its values against each other; it cannot know that a fill somewhere else was once equal to one of them. **The net covers the token layer and nothing outside it** — which is why Tasks 6 and 9 verify by measuring rendered colour rather than by reading the diff.
 
 **Tech Stack:** Next.js 16.3.2 (App Router, Turbopack), Tailwind v4 (`@theme inline`, `@utility`), React 19.2, Vitest (node environment), Playwright, `next/font/local` with vendored woff2.
 
@@ -626,17 +634,202 @@ git commit -m "Set the product in Plex, and give Arabic a face at last"
 
 ### Task 6: The primitives
 
+This task's file list said four files for as long as it described four edits.
+It owns more than that. `1c3d03f` split the focus ring out of `--brand` and
+ended its message with "Task 6 owns the primitives and repoints them" — a
+deferral to a task that, at the time, contained no step about focus, no
+mention of `ring`, `focus` or `outline`, and none of the files where the
+problem lived. The repoint is step 1 below, the list is what it actually
+touched, and the semantic button labels in step 2 are the other thing
+`button.tsx` was carrying that nobody had measured.
+
 **Files:**
-- Modify: `src/components/ui/button.tsx`
+
+The four this task was written for, and the two the semantic fix in step 2
+needs beside them:
+
+- Modify: `src/components/ui/button.tsx` — the `way` variant, the semantic label inks, and the `outline-none` it used to carry
 - Modify: `src/components/ui/badge.tsx`
 - Modify: `src/components/shared/status-badge.tsx`
-- Modify: `src/components/shared/panel.tsx`
+- Modify: `src/components/shared/panel.tsx` — the plate doc comment, and the one inward-ring deviation
+- Modify: `src/app/globals.css` — three `--on-*` label tokens for step 2, values only
+- Modify: `src/lib/design/tokens.test.ts` — the three assertions that hold them
+
+Plus the focus repoint's footprint, listed so the task's real size is on the
+page. Sixteen files suppressed the base ring with `outline-none`:
+
+`app/intake-dock.tsx`, `app/profile-fields.tsx`, `app/travel-history.tsx`,
+`app/visa-expiry-field.tsx`, `auth/phone-field.tsx`, `ops/enquiry-table.tsx`,
+`ops/kyb-checklist.tsx`, `site/corridor-bar.tsx`, `site/corridor-board.tsx`,
+`site/demo-dialog.tsx`, `ui/accordion.tsx`, `ui/button.tsx`,
+`ui/dropdown-menu.tsx`, `ui/input.tsx`, `ui/tabs.tsx`, `ui/textarea.tsx`.
+
+Seven more painted an edge out of `--brand` — a focus ring, a resting border
+or a hover state — and had to move to `--brand-text`:
+
+`src/app/[locale]/invite/[token]/page.tsx`, `app/app-nav-menu.tsx`,
+`app/chat-markdown.tsx`, `shared/locale-menu.tsx`,
+`shared/support-thread.tsx`, `ui/hint.tsx`, `ui/input-otp.tsx`.
+
+And three are where the ring has to be drawn somewhere other than on the
+element that takes focus: `agency/logo-upload.tsx` and `app/avatar-upload.tsx`
+(an `sr-only` file input inside a visible shell) and `shared/panel.tsx` (a
+`<summary>` whose outward ring an `overflow-hidden` ancestor clips).
+
+Twenty-nine files, not four.
 
 **Interfaces:**
-- Consumes: `--way`, `--way-ink`, `--brand`, `--clear`/`--stop` via `--success`/`--danger`, and the new radii.
-- Produces: a `way` variant on `Button` — `variant="way"` — that later plans use for the single next action on a screen.
+- Consumes: `--way`, `--way-ink`, `--brand`, `--brand-text`, `--ring`, `--clear`/`--stop` via `--success`/`--danger`, and the new radii.
+- Produces: a `way` variant on `Button` — `variant="way"` — that later plans use for the single next action on a screen. Also `--on-success`, `--on-warning` and `--on-danger`, which are the semantic equivalents of `--on-brand` and did not exist.
 
-- [ ] **Step 1: Add the `way` variant to Button**
+- [x] **Step 1: The focus repoint — landed early, verify it**
+
+Checked because it is already on disk, in `65a4498`. It jumped the queue
+because it was a blocker rather than a primitive: from the moment `1c3d03f`
+gave the ring its own `--ring` token, the product went on painting the old
+one, so every keyboard user on every screen had either an invisible focus
+indicator or none. That is not something to hold behind Task 4's material
+removal.
+
+The mechanism is worth carrying into the verification, because it is why the
+bug survived a review of the diff. Tailwind v4 emits
+`@layer theme, base, components, utilities;`, and layers cascade in
+*declaration* order, not source order. So `outline-none` in a component file
+compiles into the utilities layer and beats
+`:focus-visible { outline: 2px solid var(--ring) }` in the base layer
+everywhere it appears, no matter which file is read first. What painted
+instead was the `focus-visible:ring-brand` box-shadow those same files wrote
+— the fill hue, 1.000:1 against a primary button's own fill and 2.078:1 on a
+dark plate.
+
+Nothing is left to do here. What follows is how a reader confirms it, since
+this is the half of the task the diff does not show.
+
+Run both guard rails:
+
+```bash
+npx vitest run src/lib/design/focus.test.ts src/lib/design/tokens.test.ts
+```
+
+`focus.test.ts` is the new one. It fails, naming the file, if `ring-brand`,
+`border-brand` or `outline-brand` reappears anywhere in `src/`; if a focus
+variant builds an edge out of `var(--brand)` through an arbitrary value; if
+the base rule stops reading `--ring`; or if a seventeenth file suppresses the
+outline. `tokens.test.ts` measures `--ring` on all four grounds at the 3:1
+boundary floor — plate, concourse, a table's band, an inset well — and
+asserts the ring is not the fill it rings.
+
+Then check by hand what the tests cannot: that the two remaining suppressions
+are the documented ones and nothing else.
+
+```bash
+grep -rn "outline-none" src/components
+grep -rn "ring-brand\|border-brand\|outline-brand" src/
+```
+
+Expected from the first: `outline-none` as an actual class in two files only,
+`app/intake-dock.tsx` and `auth/phone-field.tsx` — three suppressions between
+them, each with a comment above it saying which deviation it is and how it was
+found. The remaining hits are the word inside comments in `ui/tabs.tsx`,
+`ui/input.tsx`, `ui/button.tsx` and `ui/dropdown-menu.tsx`, recording what
+those files used to carry. Expected from the second: prose in comments and
+tests only, never a class. `focus.test.ts` asserts the same two-file list by
+name rather than by count, so a seventeenth file fails with its path printed.
+
+Then in a browser, both themes, with a real Tab press — the layer-order bug
+was invisible in the diff and obvious in one keystroke. `npx next dev -p 3400`,
+open `/en/agency`, Tab onto a primary button, and read the painted pixels
+rather than the class list. A focused primary button on a light plate paints
+`#ffffff | #0b1f2a ×2 | #ffffff ×2 | #0a4ea3`: the ring in `--ring`, then the
+transparent 2px offset gap, then the fill. `--ring` is `#0b1f2a` in light and
+`#4c8fe0` in dark; if what you read back is `--brand`'s own `#0a4ea3` twice
+with the gap doing all the work, the repoint has been undone.
+
+Two deviations from the base rule are permitted, and each names itself where
+it is written: the ring turns inward where an `overflow-hidden` ancestor
+would clip an outward one, and it moves onto the visible shell where the
+element that takes focus is not the element a person sees. A third appearing
+without a comment beside it is a regression, and `focus.test.ts` will say so.
+
+- [ ] **Step 2: Put the semantic button labels over the contrast floor**
+
+`button.tsx` sets its three semantic variants as `bg-<semantic> text-white`.
+That `text-white` is the hard-coded hue the Architecture note names: one
+value serving two themes that need different ones.
+
+These are pre-existing and the repaint *improved* them — but improved is not
+fixed. Light now clears the floor. Dark does not, and `hover:brightness-110`
+walks it further down, because lightening a fill under a white label is the
+wrong direction. Measured against white, at `99a9da0^` and at HEAD:
+
+| Variant | Light before | Light now | Dark before | Dark now | Dark on hover |
+|---|---|---|---|---|---|
+| `warning` | 3.858:1 | 5.980:1 | 2.100:1 | 2.100:1 | 1.727:1 |
+| `success` | 3.918:1 | 6.127:1 | 2.215:1 | 3.002:1 | 2.496:1 |
+| `danger` | 5.438:1 | 5.883:1 | 3.179:1 | 3.642:1 | 3.042:1 |
+
+The floor is 4.5:1, because these render as real labelled buttons and not as
+decoration: `src/components/agency/review-row.tsx:147` and `:199` are "Flag"
+and "Flag for the traveler" at `variant="warning"`, and
+`src/components/app/submit-button.tsx:17` is "Submit my application" at
+`variant="success"`. All three are 16px semibold, which is under the 18.66px
+bold that would relax the floor to 3:1, so 4.5 is the number for every one of
+them. Dark `--warning` is byte-identical either side of the repaint, so that
+row has never cleared anything in this product's history.
+
+**Do not fix this by darkening the fills.** `--success` and `--danger` are
+also *text* on the plate, and `tokens.test.ts` asserts both at 4.5:1 there;
+taking them dark enough to carry white breaks the assertion that keeps a
+status word readable. It is the trap `--brand` fell into, where lifting the
+hue to fix the ring failed `--on-brand` at 3.327:1, and the answer is the
+same shape: give the fill its own label ink, per theme, the way `--brand` has
+`--on-brand` and `--way` has `--way-ink`.
+
+```css
+  /* light */
+  --on-success: #ffffff;
+  --on-warning: #ffffff;
+  --on-danger: #ffffff;
+
+  /* dark */
+  --on-success: #0b1f2a;
+  --on-warning: #0b1f2a;
+  --on-danger: #0b1f2a;
+```
+
+Surface them in `@theme inline` beside `--color-way-ink`, then swap
+`text-white` for `text-on-success` / `text-on-warning` / `text-on-danger`.
+The dark value is the signage ink, the same `#0b1f2a` `--way-ink` uses and
+for the same reason: these three are light fills on a dark ground, so what
+reads on them is dark.
+
+Targets, measured against the fills exactly as they stand — no fill moves:
+
+| Variant | Dark now (white) | Dark target (`#0b1f2a`) | Dark target on hover |
+|---|---|---|---|
+| `warning` | 2.100:1 | **8.039:1** | 9.775:1 |
+| `success` | 3.002:1 | **5.625:1** | 6.764:1 |
+| `danger` | 3.642:1 | **4.637:1** | 5.551:1 |
+
+Light is untouched and stays on white: 5.980 / 6.127 / 5.883 at rest and
+5.141 / 5.301 / 5.027 on hover, all clear. `danger` at 4.637:1 is the tight
+one, and note which way hover moves it — toward the floor's safe side, which
+is the property the white label never had.
+
+Add the three pairs to `PAIRS` in `tokens.test.ts` so a later palette edit
+cannot quietly undo it.
+
+Two non-buttons carry the identical pairing and either move with this step or
+get argued for in the review. `src/components/app/intake-agent.tsx:925` puts
+`bg-success text-white` on an `aria-hidden` check glyph, which is a graphic at
+the 3:1 floor rather than text at 4.5 — dark `--success` is already at 3.002
+there, so it passes by 0.002 and is worth moving anyway. The other is
+`src/components/app/notifications-menu.tsx:114`, `bg-danger text-white` on the
+unread count in the bell. That one is genuinely text — a numeral a person
+reads — at 10px, which is small text with nothing to relax the floor, and it
+sits at 3.642:1 in dark.
+
+- [ ] **Step 3: Add the `way` variant to Button**
 
 In `buttonVariants`, add to `variants.variant`, after `primary`:
 
@@ -649,15 +842,15 @@ In `buttonVariants`, add to `variants.variant`, after `primary`:
         way: "bg-way text-way-ink hover:bg-[color-mix(in_srgb,var(--way)_88%,#fff)] active:bg-[color-mix(in_srgb,var(--way)_88%,#000)]",
 ```
 
-- [ ] **Step 2: Drop the glass from Badge**
+- [ ] **Step 4: Drop the glass from Badge**
 
 `src/components/ui/badge.tsx` carries `laminate` — Task 4 removed it. Confirm the class is gone and the badge reads `bg-surface-2 border border-border`.
 
-- [ ] **Step 3: Repoint StatusBadge onto the signage vocabulary**
+- [ ] **Step 5: Repoint StatusBadge onto the signage vocabulary**
 
 `src/components/shared/status-badge.tsx` maps states to tokens. Guideline §8's vocabulary survives with new colours: live/verified/complete → `--success`; pending/needs action → `--way` as a fill with `--way-ink`; rejected/expired → `--danger`; draft/not started → `--ink-3` on `--surface-2`. Keep every state's icon and label — status is never colour alone.
 
-- [ ] **Step 4: Turn Panel into a plate**
+- [ ] **Step 6: Turn Panel into a plate**
 
 In `src/components/shared/panel.tsx`, both `Panel` and `DisclosurePanel` carry `rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]`. The radius token already changed under them, so the only edit is the doc comment — the "matte on purpose … the laminate in the corridor header is the only glass on any screen" paragraph describes a system that no longer exists. Replace it:
 
@@ -668,18 +861,26 @@ In `src/components/shared/panel.tsx`, both `Panel` and `DisclosurePanel` carry `
  * which is why the elevation is a 1px contact shadow and not a blur.
 ```
 
-- [ ] **Step 5: Verify**
+- [ ] **Step 7: Verify**
 
 Run: `npm run typecheck && npm run lint && npm test`
 
-- [ ] **Step 6: Look at every primitive at once**
+`npm test` now includes `focus.test.ts` and the three semantic pairs added to
+`tokens.test.ts` in step 2, so the two things this task fixed that cannot be
+seen in a screenshot are both covered by the same command.
+
+- [ ] **Step 8: Look at every primitive at once**
 
 `npx next dev -p 3400`, then open `/en/agency` and `/en/ops/dashboard` in both themes. Confirm buttons, badges, status pills and panels all read as one family.
 
-- [ ] **Step 7: Commit**
+Tab through each screen as well as looking at it. Buttons, badges, status
+pills and panels reading as one family is the easy half; the ring being the
+same ring on all of them, in both themes, is the half step 1 exists for.
+
+- [ ] **Step 9: Commit**
 
 ```bash
-git add src/components
+git add src/components src/app/globals.css src/lib/design/tokens.test.ts
 git commit -m "Give the shared primitives the signage vocabulary"
 ```
 
@@ -966,7 +1167,46 @@ blocks. Worth recording that this was not a regression to undo — the same
 `text-ink` pairing measured 2.077:1 on the old amber before the repaint, so
 it had never cleared any floor; Task 2 only made a standing failure worse.
 
-- [x] **Step 5: Verify**
+- [x] **Step 5: Regenerate the favicon, which step 2 missed**
+
+Step 2 swept the shipped assets and stopped at five. The sixth was
+`src/app/favicon.ico`: `#2450d8` in the 48×48 and 32×32 frames and `#2655e5`
+at 16×16, with no `icons` metadata override anywhere in `src` and no other
+icon convention file under `src/app`, so Next served the retired indigo in
+the browser tab of every page of every surface — the most-seen thing the
+product has, and the last one repainted.
+
+Recording why it was missed, because the reason generalises past this asset:
+it is the only one of the six that nothing in the repo names. Next picks it
+up by file-system convention, so grepping for it returns a single hit, a
+routing exclusion in `proxy.ts`, and a sweep that works outwards from call
+sites never arrives. Being the most visible asset and the least referenced
+one is not a coincidence — a file nobody has to name is a file nobody has to
+maintain.
+
+It is also the only one of the six that is not text, so it took a script
+rather than a find-and-replace. Each pixel was projected onto the line
+between the old brand and white to recover how white it is, and the shift
+from `#2450d8` to `#0a4ea3` applied in full at the indigo end and not at all
+at the white end. That keeps the two white bars of the pin exactly white,
+carries the antialiasing across as an exact blend of the *new* hue rather
+than a flattened one, and leaves alpha untouched, so the teardrop's edge
+keeps the coverage it was rendered with.
+
+Verified by sampling rather than by eye: all three frames still present at
+16/32/48, alpha byte-identical for every pixel in every frame, all 24 fully
+white pixels still fully white, zero pixels left within 10 of either retired
+hue at any alpha, and a clean 1:1 byte swap — 695 occurrences of the old
+BGRA triple in, 695 of the new one out.
+
+The twenty PNG exports under `public/` bake the old indigo too and are
+deliberately left. `grep` over `src/` and `e2e/` returns no reference to any
+of them; they are brand-kit exports rather than a shipped surface, and
+repainting twenty unused files would put twenty more copies of the hue into
+the maintenance set for nothing. If one is ever put on a page, it gets
+repainted then and joins `wordmark.tsx`'s list.
+
+- [x] **Step 6: Verify**
 
 Run: `npm run typecheck && npm run lint && npm test`
 Expected: typecheck clean, lint clean apart from the pre-existing
@@ -975,7 +1215,7 @@ unused-`Progress` warning, all suites green. `src/app/globals.css` and
 brought back into line with the token layer, never a change to the token
 layer itself.
 
-- [x] **Step 6: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/components/shared/wordmark.tsx src/components/site/corridor-bar.tsx
@@ -984,6 +1224,9 @@ git add public/icon public/horizontal public/vertical public/hero
 git add docs/superpowers/plans/2026-09-09-wayfinding-foundation.md
 git commit -m "Repaint the three places the token layer could not reach"
 ```
+
+The favicon in step 5 landed later, in its own commit, for the reason above:
+it was not found until after this one.
 
 ---
 
@@ -995,6 +1238,6 @@ git commit -m "Repaint the three places the token layer could not reach"
 
 **Gap found and left open deliberately:** `LIVE_CORRIDORS` is listed in the spec's §6 table and marked out of scope there. It stays out of scope here. It is a product bug and needs its own plan.
 
-**Type consistency.** `contrast(a, b)` is defined in Task 1 and used only there. `--way` / `--way-ink` are introduced in Task 2 step 2, surfaced as utilities in step 5, and consumed by name in Task 6 step 1 (`bg-way text-way-ink`) and Task 6 step 3. `SkipLink({ locale })` is defined and mounted in Task 7 steps 1–2. `ADMIN_CONSOLE.skipToContent` is added in Task 7 step 1 and read in the same file.
+**Type consistency.** `contrast(a, b)` is defined in Task 1 and used only there. `--way` / `--way-ink` are introduced in Task 2 step 2, surfaced as utilities in step 5, and consumed by name in Task 6 step 3 (`bg-way text-way-ink`) and Task 6 step 5. `--ring` is introduced by `1c3d03f` alongside Task 3 step 3 and consumed by the base rule and by Task 7's skip link. `--on-success` / `--on-warning` / `--on-danger` are introduced in Task 6 step 2 and consumed in the same step; they are the semantic siblings of `--on-brand`, which Task 2 step 4 already sets. `SkipLink({ locale })` is defined and mounted in Task 7 steps 1–2. `ADMIN_CONSOLE.skipToContent` is added in Task 7 step 1 and read in the same file.
 
 **Placeholder scan.** No TBD, no "add appropriate error handling", no "similar to Task N". Task 5 step 1 carries a conditional ("if a filename does not exist, list the directory") because Fontsource's file naming genuinely varies between variable and static packages; the fallback instruction is specific rather than vague.

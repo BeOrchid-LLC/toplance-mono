@@ -18,19 +18,32 @@ import { cn } from "@/lib/utils";
  * it include the app bar, the site nav, the site footer, the ops rail and
  * the auth layout. A hue nothing owns is a hue nothing repaints.
  *
- * The five shipped assets are the copies that must be changed by hand when
- * the brand hue moves, because an <img> is a separate document and no
- * custom property set on the page that embeds it reaches inside:
+ * The six shipped assets are the copies that must be changed by hand when
+ * the brand hue moves, because each is its own document and no custom
+ * property set on the page that embeds it reaches inside:
  *
  *   public/icon/toplance-icon.svg               1 fill
  *   public/horizontal/toplance-horizontal.svg   1 fill
  *   public/vertical/toplance-vertical.svg       1 fill
  *   public/hero/travel-everywhere.svg           7 fills
  *   public/hero/travel-everywhere-dark.svg      7 fills
+ *   src/app/favicon.ico                         3 raster frames
  *
  * They carry the hue as literal hex — currently #0a4ea3 — and a literal is
  * a copy that goes stale in silence. They move in the same commit as the
  * token, or they are wrong until somebody happens to look.
+ *
+ * The favicon is the sixth because it was missed when the other five were
+ * repainted, and the reason it was missed generalises. It is the only one of
+ * the six that nothing in this repo names: Next picks it up by file-system
+ * convention from src/app, so grepping for it returns a single hit — a
+ * routing exclusion in proxy.ts — and a sweep that works outwards from call
+ * sites never arrives at it. It is also the only one that is not text. Three
+ * raster frames at 16, 32 and 48 mean moving its hue is a re-rasterising job
+ * rather than an edit, which is why it wants a script and a pixel sample
+ * rather than a find-and-replace. And it is the most-seen thing the product
+ * has, in the browser tab of every page of every surface, which sits badly
+ * with being the hardest of the six to notice.
  */
 /** The "Toplance" letterforms, chunked only to keep line length sane. */
 const WORDMARK_TEXT_PATH =

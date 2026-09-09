@@ -46,9 +46,21 @@ const buttonVariants = cva(
           "bg-transparent text-brand-text hover:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]",
         neutral:
           "border border-border-strong bg-surface text-ink hover:border-brand-text hover:text-brand-text",
-        success: "bg-success text-white hover:brightness-110",
-        warning: "bg-warning text-white hover:brightness-110",
-        danger: "bg-danger text-white hover:brightness-110",
+        /* `text-on-*`, not `text-white`. Each fill carries its own label
+           ink per theme, because these three are dark fills in light and
+           light fills in dark — white held on one side and failed on the
+           other at 2.100 / 3.002 / 3.642 against a 4.5 floor. The fills
+           themselves do not move: --success and --danger are also type
+           on the plate and are asserted there. */
+        success: "bg-success text-on-success hover:brightness-110",
+        warning: "bg-warning text-on-warning hover:brightness-110",
+        danger: "bg-danger text-on-danger hover:brightness-110",
+        /**
+         * Direction. The single next step on a screen, and never more
+         * than one — see `--way` in globals.css. Its ink is fixed rather
+         * than themed because yellow is a light fill in both modes.
+         */
+        way: "bg-way text-way-ink hover:bg-[color-mix(in_srgb,var(--way)_88%,#fff)] active:bg-[color-mix(in_srgb,var(--way)_88%,#000)]",
         ghost: "hover:bg-surface-2 hover:text-ink",
         link: "text-brand-text underline-offset-4 hover:underline",
       },

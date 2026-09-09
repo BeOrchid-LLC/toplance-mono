@@ -30,7 +30,7 @@ const badgeVariants = cva(
       variant: {
         neutral: "bg-surface-2 text-ink-2 border border-border",
         brand:
-          "border border-[color-mix(in_srgb,var(--brand)_28%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-brand-text",
+          "border border-[color-mix(in_srgb,var(--brand)_28%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-brand-ink",
         info: "border border-[color-mix(in_srgb,var(--info)_28%,transparent)] bg-[color-mix(in_srgb,var(--info)_13%,transparent)] text-info-ink",
         success:
           "border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-success-ink",

@@ -131,6 +131,20 @@
   --info: #0a4ea3;
   --info-ink: #083f83;
 
+  /* The label ink each fill carries, the way --brand carries --on-brand
+     and --way carries --way-ink. It exists because `text-white` is one
+     value serving two themes that need different ones: these three are
+     dark fills in light and light fills in dark, so what reads on them
+     inverts and a single hue cannot follow.
+
+     Do NOT close the gap by darkening the fills instead. --success and
+     --danger are also type on the plate, asserted at 4.5:1 there, and
+     taking them dark enough to carry white breaks the assertion that
+     keeps a status word readable. That is the trap --brand fell into. */
+  --on-success: #ffffff;
+  --on-warning: #ffffff;
+  --on-danger: #ffffff;
+
   /* Direction — the one genuinely new role in the wayfinding system,
      and the reason it gets a new name rather than reusing
      --brand-accent, which was an amber used decoratively.
@@ -298,6 +312,18 @@
   --info: #4c8fe0;
   --info-ink: #9dbaf6;
 
+  /* The signage ink, the same #0b1f2a --way-ink uses and for the same
+     reason: in dark these three are light fills, so what reads on them
+     is dark. White on them was 2.100 / 3.002 / 3.642 against a 4.5
+     floor — and dark --warning is byte-identical either side of the
+     repaint, so that one had never cleared anything in this product's
+     history. Note which way `hover:brightness-110` moves them now: 
+     lightening the fill under a dark label walks toward the floor's
+     safe side, where under a white label it walked away from it. */
+  --on-success: #0b1f2a;
+  --on-warning: #0b1f2a;
+  --on-danger: #0b1f2a;
+
   /* Holds. Yellow is a light fill on either ground, and so is the ink
      that sits on it. */
   --way: #f5b915;
@@ -351,6 +377,16 @@
   --brand-text: #0a4ea3;
   --brand-accent: var(--way);
   --on-brand: #ffffff;
+  /* The route's pill ink, and the last fill in the system to get one.
+     --success, --warning, --danger and --info each carry a `-ink` half
+     for the tinted pill they sit behind; --brand carried none, so
+     `badge.tsx` borrowed --brand-text. That token is tuned to land on a
+     PLATE, and a pill's ground is not the plate — it is --brand mixed
+     12% into whichever surface the pill fell on, which is lighter than
+     the plate in dark and takes the ratio down with it. Measured at
+     4.283:1 on --surface-2, under the 4.5 a 13px label needs. Light is
+     --brand-text's own value, so nothing moves there. */
+  --brand-ink: #0a4ea3;
   --brand-grad: linear-gradient(150deg, #0a4ea3, #4c8fe0);
 }
 
@@ -361,6 +397,7 @@
   --brand-text: #0b7f78;
   --brand-accent: #e0a100;
   --on-brand: #ffffff;
+  --brand-ink: #0b7f78;
   --brand-grad: linear-gradient(150deg, #0b7f78, #3fbfb4);
 }
 
@@ -375,10 +412,17 @@
 .dark,
 .dark [data-brand="toplance"] {
   --brand-text: #5192e1;
+  /* Lifted past --brand-text rather than sharing it: on the pill's
+     mixed ground #5192e1 is 4.283 and this is 5.746. Kept clear of
+     --info-ink's #9dbaf6 so "Processing" and "Submitted" stay two
+     different pills rather than one blue shape read twice. */
+  --brand-ink: #7fa8f2;
 }
 :root[data-theme="dark"] [data-brand="beorchid"],
 .dark [data-brand="beorchid"] {
   --brand-text: #35d3c3;
+  /* Already 6.948 on its own mixed ground, so this one shares. */
+  --brand-ink: #35d3c3;
 }
 
 /* Wayfinding labels. Archivo was already loaded and already paid for —
@@ -416,11 +460,16 @@
   --color-brand-press: var(--brand-press);
   --color-brand-2: var(--brand-2);
   --color-brand-text: var(--brand-text);
+  --color-brand-ink: var(--brand-ink);
   --color-brand-accent: var(--brand-accent);
   --color-on-brand: var(--on-brand);
 
   --color-way: var(--way);
   --color-way-ink: var(--way-ink);
+
+  --color-on-success: var(--on-success);
+  --color-on-warning: var(--on-warning);
+  --color-on-danger: var(--on-danger);
 
   --color-success: var(--success);
   --color-success-ink: var(--success-ink);

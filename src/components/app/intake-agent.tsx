@@ -912,7 +912,7 @@ function CompletionBar({
       <div className="mx-auto grid w-full max-w-[720px] border border-border grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:grid-cols-[auto_1fr_auto] sm:gap-y-1.5 sm:px-7 sm:py-5">
         <span
           aria-hidden
-          className="grid size-8 place-items-center rounded-full bg-success text-white ring-4 ring-[color-mix(in_srgb,var(--success)_16%,transparent)]"
+          className="grid size-8 place-items-center rounded-full bg-success text-on-success ring-4 ring-[color-mix(in_srgb,var(--success)_16%,transparent)]"
         >
           <Check className="size-4" />
         </span>

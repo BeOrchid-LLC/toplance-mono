@@ -37,6 +37,25 @@ function tokensIn(startSelector: string): Record<string, string> {
 }
 
 /**
+ * `color-mix(in srgb, a p%, b)` in the two lines of arithmetic it is.
+ *
+ * sRGB rather than OKLab because that is the space `badge.tsx` names,
+ * and a mix computed in a different space is a different colour.
+ */
+function mix(a: string, b: string, p: number): string {
+  const parse = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [ar, ag, ab] = parse(a);
+  const [br, bg, bb] = parse(b);
+  const chan = (x: number, y: number) => Math.round(x * p + y * (1 - p));
+  return (
+    "#" +
+    [chan(ar, br), chan(ag, bg), chan(ab, bb)]
+      .map((v) => v.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}
+
+/**
  * A mode's palette is not one block. The neutrals and semantics are set
  * per theme, but the route colour is set per *brand* — `--brand` and
  * `--brand-text` live on the brand axis, and dark lifts only
@@ -82,6 +101,25 @@ const dark = { ...brand, ...brandDark, ...tokensIn(':root[data-theme="dark"],') 
  * same commit as the values it guards. If a pair has to move, the pair
  * it moves to goes in first, and the old one comes out afterwards.
  */
+/**
+ * Each pill variant's tint strength, taken from `badge.tsx` itself.
+ *
+ * `bg-[color-mix(in_srgb,var(--success)_14%,transparent)]` -> ["success", 0.14].
+ * A variant that stops mixing toward `transparent` — mixing toward a
+ * single ground instead, which guideline §3 forbids because a pill lands
+ * on four — simply stops matching and drops out of the list, so the
+ * count is asserted too.
+ */
+const BADGE = readFileSync(
+  fileURLToPath(new URL("../../components/ui/badge.tsx", import.meta.url)),
+  "utf8"
+);
+const PILLS: [string, number][] = [
+  ...BADGE.matchAll(
+    /bg-\[color-mix\(in_srgb,var\(--([a-z-]+)\)_(\d+)%,transparent\)\]/g
+  ),
+].map(([, name, pct]) => [name, Number(pct) / 100]);
+
 const PAIRS: [string, string, number, string][] = [
   ["--ink", "--surface", 4.5, "body on plate"],
   ["--ink", "--bg", 4.5, "body on concourse"],
@@ -107,6 +145,15 @@ const PAIRS: [string, string, number, string][] = [
      protect. Nothing asserted it until now, which is exactly why lifting
      `--brand` to clear the ring floor looked free. */
   ["--on-brand", "--brand", 4.5, "primary button label on its fill"],
+  /* The semantic fills' own label inks, the same split one step further
+     out. These three render as real labelled buttons — "Flag", "Flag for
+     the traveler", "Submit my application" — at 16px semibold, which is
+     under the 18.66px bold that would relax the floor, so 4.5 is the
+     number for every one of them. They carried `text-white` until now,
+     which held in light and failed in dark at 2.100 / 3.002 / 3.642. */
+  ["--on-success", "--success", 4.5, "success button label on its fill"],
+  ["--on-warning", "--warning", 4.5, "warning button label on its fill"],
+  ["--on-danger", "--danger", 4.5, "danger button label on its fill"],
   ["--success", "--surface", 4.5, "granted on plate"],
   ["--danger", "--surface", 4.5, "refused on plate"],
   ["--border", "--surface", 1.4, "hairline on plate"],
@@ -182,6 +229,49 @@ describe.each([
   it.each(PAIRS)("%s on %s clears %s:1 — %s", (fg, bg, floor) => {
     const ratio = contrast(tokens[fg], tokens[bg]);
     expect(ratio).toBeGreaterThanOrEqual(floor);
+  });
+
+  /**
+   * The status pills, which no pair above can reach.
+   *
+   * A pill's fill is not a token — it is `color-mix(in srgb, var(--x) N%,
+   * transparent)`, so what sits behind the label is the token diluted
+   * into whichever ground the pill landed on. That ground varies: the
+   * corridor header's plate, a table row, the inset beneath it, the
+   * concourse. PAIRS compares two tokens and cannot see any of it, so
+   * these four variants have never been measured in this repo — through
+   * a full palette repaint that moved every one of the tokens they mix.
+   *
+   * The percentages are read out of `badge.tsx` rather than copied
+   * here, for the same reason the palette is read out of `globals.css`:
+   * a number typed in two places is a number that will disagree with
+   * itself. Retinting a pill in the component re-runs this assertion at
+   * the new strength automatically.
+   *
+   * The ink is the `-ink`
+   * half of each pair rather than the fill, because that is what the
+   * component sets. 4.5:1 because a pill is a written word: 13px, which
+   * is small text, with nothing to relax the floor.
+   */
+  it("found every pill variant in badge.tsx", () => {
+    expect(PILLS.map(([n]) => n).sort()).toEqual([
+      "brand",
+      "danger",
+      "info",
+      "success",
+      "warning",
+    ]);
+  });
+
+  it.each(PILLS)("the %s pill's label clears 4.5:1 on every ground", (variant, strength) => {
+    for (const ground of ["--surface", "--surface-2", "--surface-inset", "--bg"]) {
+      const fill = mix(tokens[`--${variant}`], tokens[ground], strength);
+      const ratio = contrast(tokens[`--${variant}-ink`], fill);
+      expect(
+        ratio,
+        `${variant} pill on ${ground} in ${mode}: ${ratio.toFixed(3)}:1`
+      ).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   /**

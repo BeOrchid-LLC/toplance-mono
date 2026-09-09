@@ -267,6 +267,20 @@
       "when": 1788924771546,
       "tag": "0037_dazzling_shinko_yamashiro",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1788932769002,
+      "tag": "0038_hot_hex",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1788932822924,
+      "tag": "0039_pale_preak",
+      "breakpoints": true
     }
   ]
 }

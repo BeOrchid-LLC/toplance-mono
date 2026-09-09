@@ -312,6 +312,9 @@ export const EVENT_NAMES = [
 
   /** A support request was closed. */
   "toplance.support_resolved",
+
+  /** Somebody added to a support thread. `fromStaff` says which side. */
+  "toplance.support_replied",
 ] as const;
 
 export type AnalyticsEvent = (typeof EVENT_NAMES)[number];

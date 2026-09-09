@@ -41,6 +41,18 @@ export const OPS_SUPPORT: {
   noneYet: L;
   needsSubject: L;
   needsBody: L;
+  threadClosed: L;
+  threadLabel: L;
+  replyLabel: L;
+  replyPlaceholder: L;
+  replySend: L;
+  replySent: L;
+  fromUs: L;
+  fromAgency: L;
+  openRequest: L;
+  backToQueue: L;
+  backToSupport: L;
+  resolvedNote: L;
 } = {
   heading: {
     en: "Support",
@@ -272,5 +284,88 @@ export const OPS_SUPPORT: {
     ar: "أخبرنا بما حدث كي يتمكن أحدهم من التصرف.",
     tw: "Ka deɛ ɛsiiɛ kyerɛ yɛn, na obi atumi ayɛ ho biribi.",
     zu: "Sitshele ukuthi kwenzekeni, ukuze othile athathe isinyathelo.",
+  },
+  threadClosed: {
+    en: "This conversation is closed.",
+    ha: "An rufe wannan tattaunawar.",
+    yo: "Ìjíròrò yìí ti wà ní pipade.",
+    ig: "Emechiela mkparịta ụka a.",
+    fr: "Cette conversation est close.",
+    pt: "Esta conversa está encerrada.",
+    sw: "Mazungumzo haya yamefungwa.",
+    ar: "هذه المحادثة مغلقة.",
+    tw: "Wɔato saa nkɔmmɔ yi mu.",
+    zu: "Le ngxoxo ivaliwe.",
+  },
+  threadLabel: {
+    en: "Conversation", ha: "Tattaunawa", yo: "Ìjíròrò", ig: "Mkparịta ụka",
+    fr: "Conversation", pt: "Conversa", sw: "Mazungumzo", ar: "المحادثة",
+    tw: "Nkɔmmɔ", zu: "Ingxoxo",
+  },
+  replyLabel: {
+    en: "Your reply", ha: "Amsarka", yo: "Ìdáhùn rẹ", ig: "Azịza gị",
+    fr: "Votre réponse", pt: "A sua resposta", sw: "Jibu lako", ar: "ردك",
+    tw: "Wo mmuaeɛ", zu: "Impendulo yakho",
+  },
+  replyPlaceholder: {
+    en: "Write back. They are told as soon as you send.",
+    ha: "Ka mayar da amsa. Za a sanar da su da zarar ka aika.",
+    yo: "Dáhùn. A ó sọ fún wọn ní kété tí o bá fi ránṣẹ́.",
+    ig: "Zaghachi. A ga-agwa ha ozugbo i zipụrụ ya.",
+    fr: "Répondez. Ils sont prévenus dès l'envoi.",
+    pt: "Responda. São avisados assim que enviar.",
+    sw: "Jibu. Wataarifiwa mara tu utakapotuma.",
+    ar: "اكتب ردك. سيُبلَّغون فور الإرسال.",
+    tw: "Bua. Wɔbɛbɔ wɔn amaneɛ ntɛm ara sɛ wode kɔ.",
+    zu: "Phendula. Baziswa ngokushesha uma uthumela.",
+  },
+  replySend: {
+    en: "Send reply", ha: "Aika amsa", yo: "Fi ìdáhùn ránṣẹ́", ig: "Ziga azịza",
+    fr: "Envoyer la réponse", pt: "Enviar resposta", sw: "Tuma jibu",
+    ar: "إرسال الرد", tw: "Fa mmuaeɛ kɔ", zu: "Thumela impendulo",
+  },
+  replySent: {
+    en: "Reply sent", ha: "An aika amsa", yo: "A fi ìdáhùn ránṣẹ́",
+    ig: "Ezigara azịza", fr: "Réponse envoyée", pt: "Resposta enviada",
+    sw: "Jibu limetumwa", ar: "أُرسل الرد", tw: "Wɔde mmuaeɛ kɔeɛ",
+    zu: "Impendulo ithunyelwe",
+  },
+  fromUs: {
+    en: "BeOrchid", ha: "BeOrchid", yo: "BeOrchid", ig: "BeOrchid",
+    fr: "BeOrchid", pt: "BeOrchid", sw: "BeOrchid", ar: "BeOrchid",
+    tw: "BeOrchid", zu: "BeOrchid",
+  },
+  fromAgency: {
+    en: "The agency", ha: "Hukumar", yo: "Ilé-iṣẹ́ náà", ig: "Ụlọ ọrụ ahụ",
+    fr: "L'agence", pt: "A agência", sw: "Wakala", ar: "الوكالة",
+    tw: "Adwumakuo no", zu: "I-ejensi",
+  },
+  openRequest: {
+    en: "Open", ha: "Buɗe", yo: "Ṣí", ig: "Mepee", fr: "Ouvrir",
+    pt: "Abrir", sw: "Fungua", ar: "فتح", tw: "Bue", zu: "Vula",
+  },
+  backToQueue: {
+    en: "All support requests", ha: "Duk buƙatun tallafi",
+    yo: "Gbogbo àwọn ìbéèrè ìrànlọ́wọ́", ig: "Arịrịọ nkwado niile",
+    fr: "Toutes les demandes", pt: "Todos os pedidos", sw: "Maombi yote",
+    ar: "كل طلبات الدعم", tw: "Mmoa abisadeɛ nyinaa", zu: "Zonke izicelo",
+  },
+  backToSupport: {
+    en: "Back to support", ha: "Koma tallafi", yo: "Padà sí ìrànlọ́wọ́",
+    ig: "Laghachi na nkwado", fr: "Retour à l'assistance", pt: "Voltar ao apoio",
+    sw: "Rudi kwa msaada", ar: "العودة إلى الدعم", tw: "San kɔ mmoa",
+    zu: "Buyela osekelweni",
+  },
+  resolvedNote: {
+    en: "This request is resolved, so nobody can add to it. Raise a new one if something is still wrong.",
+    ha: "An warware wannan buƙatar, don haka ba wanda zai ƙara. Ka ɗaga sabuwa idan har yanzu akwai matsala.",
+    yo: "A ti yanjú ìbéèrè yìí, nítorí náà kò sí ẹni tí ó lè fi kún un. Gbé tuntun dìde bí nǹkan kan ṣì burú.",
+    ig: "Edoziela arịrịọ a, ya mere ọ dịghị onye nwere ike itinye na ya. Welite nke ọhụrụ ma ọ bụrụ na ihe ka na-adị njọ.",
+    fr: "Cette demande est résolue, personne ne peut donc y ajouter. Ouvrez-en une nouvelle si quelque chose ne va toujours pas.",
+    pt: "Este pedido está resolvido, por isso ninguém lhe pode acrescentar nada. Abra um novo se algo continuar mal.",
+    sw: "Ombi hili limetatuliwa, hivyo hakuna anayeweza kuongeza. Anzisha jipya kama bado kuna tatizo.",
+    ar: "تم حل هذا الطلب، فلا يمكن لأحد الإضافة إليه. افتح طلبًا جديدًا إن بقيت مشكلة.",
+    tw: "Wɔasiesie saa abisadeɛ yi, enti obiara ntumi mfa nka ho. Fa foforɔ bra sɛ biribi da so yɛ bɔne a.",
+    zu: "Lesi sicelo sixazululiwe, ngakho akekho ongangeza kuso. Vula esisha uma kusekhona okungahambi kahle.",
   },
 };

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."notification_kind" ADD VALUE 'support_replied' BEFORE 'visa_expiring';

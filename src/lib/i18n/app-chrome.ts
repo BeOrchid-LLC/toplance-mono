@@ -37,7 +37,8 @@ type NotificationKindKey =
   | "checklist_changed"
   | "visa_expiring"
   | "advisory_changed"
-  | "attendance_requested";
+  | "attendance_requested"
+  | "support_replied";
 
 /**
  * Chrome for the notifications bell (`notifications-menu.tsx`) — the
@@ -203,6 +204,18 @@ export const NOTIFICATIONS: {
       ar: "ملخصك الأسبوعي جاهز",
       tw: "Wo dapɛn nhyehyɛeɛ tiawa awie",
       zu: "Isifinyezo sakho sesonto sesilungile",
+    },
+    support_replied: {
+      en: "There is a reply on your support request",
+      ha: "Akwai amsa kan buƙatar tallafinka",
+      yo: "Ìdáhùn wà lórí ìbéèrè ìrànlọ́wọ́ rẹ",
+      ig: "Enwere azịza na arịrịọ nkwado gị",
+      fr: "Il y a une réponse à votre demande d'assistance",
+      pt: "Há uma resposta ao seu pedido de apoio",
+      sw: "Kuna jibu kwa ombi lako la msaada",
+      ar: "هناك رد على طلب الدعم الخاص بك",
+      tw: "Mmuaeɛ bi wɔ wo mmoa abisadeɛ so",
+      zu: "Kunempendulo esicelweni sakho sosekelo",
     },
     attendance_requested: {
       en: "Your agency has asked you to come in",

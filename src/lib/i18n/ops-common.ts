@@ -333,17 +333,22 @@ export const OPS_COMMON: {
       tw: "Nhwɛso",
       zu: "Ideshibhodi",
     },
+    /**
+     * "Team", the client's own choice of the two offered on
+     * 8 September. Same word the agency console uses for the same
+     * idea, so the two consoles stop naming one thing twice.
+     */
     staff: {
-      en: "Colleagues",
-      ha: "Abokan aiki",
-      yo: "Àwọn ẹlẹgbẹ́",
-      ig: "Ndị ọrụ ibe",
-      fr: "Collègues",
-      pt: "Colegas",
-      sw: "Wenzetu",
-      ar: "الزملاء",
-      tw: "Nnwumayɛfo",
-      zu: "Ozakwethu",
+      en: "Team",
+      ha: "Ƙungiya",
+      yo: "Ẹgbẹ́",
+      ig: "Ndị otu",
+      fr: "Équipe",
+      pt: "Equipa",
+      sw: "Timu",
+      ar: "الفريق",
+      tw: "Kuo",
+      zu: "Ithimba",
     },
     caseQueue: {
       en: "Case queue",
@@ -375,17 +380,27 @@ export const OPS_COMMON: {
      * the one they would use out loud. The form on the marketing site
      * still books a demo — this is the queue that form fills.
      */
+    /**
+     * "Demo requests", not "Enquiries".
+     *
+     * The client read the old label as customer support on
+     * 8 September — the queue holds neither, only people asking to be
+     * shown the product. Support has no home in the console yet, so a
+     * word that could mean either sends an operator looking for a
+     * screen that does not exist. Same wording as the panel inside,
+     * which has said this since it was built.
+     */
     enquiries: {
-      en: "Enquiries",
-      ha: "Tambayoyi",
-      yo: "Àwọn ìbéèrè",
-      ig: "Ajụjụ",
-      fr: "Demandes",
-      pt: "Pedidos",
-      sw: "Maulizo",
-      ar: "الاستفسارات",
-      tw: "Nsɛmmisa",
-      zu: "Imibuzo",
+      en: "Demo requests",
+      ha: "Bukatun nuni",
+      yo: "Àwọn ìbéèrè àfihàn",
+      ig: "Arịrịọ ngosi",
+      fr: "Demandes de démonstration",
+      pt: "Pedidos de demonstração",
+      sw: "Maombi ya onyesho",
+      ar: "طلبات العرض التوضيحي",
+      tw: "Yɛkyerɛ abisadeɛ",
+      zu: "Izicelo zomboniso",
     },
     tenants: {
       en: "Agencies",

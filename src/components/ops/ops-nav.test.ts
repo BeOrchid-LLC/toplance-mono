@@ -110,13 +110,14 @@ describe("the colleagues entry", () => {
     expect(localizedOpsNav("en", false).map((i) => i.href)).toEqual([
       "/ops/tenants",
       "/ops/enquiries",
+      "/ops/support",
       "/ops/corridors",
     ]);
   });
 });
 
 describe("opsAdminNav", () => {
-  const counts = { pendingRoutes: 0, openDemoRequests: 0 };
+  const counts = { pendingRoutes: 0, openDemoRequests: 0, openSupport: 0 };
   const hrefs = (isOwner: boolean) =>
     opsAdminNav({ locale: "en", ...counts, isOwner }).flatMap((g) =>
       g.items.map((i) => i.href)
@@ -171,11 +172,34 @@ describe("opsAdminNav", () => {
       locale: "en",
       pendingRoutes: 0,
       openDemoRequests: 4,
+      openSupport: 0,
       isOwner: true,
     }).flatMap((g) => g.items);
 
     expect(rows.find((i) => i.id === "enquiries")?.badge).toBe(4);
     expect(rows.find((i) => i.id === "agencies")?.badge).toBeUndefined();
+  });
+
+  /**
+   * The same test for support, which arrives from outside and shortens
+   * when somebody acts on it — the two properties that earn a badge.
+   */
+  it("hangs the unclaimed-support count on the support row", () => {
+    const rows = opsAdminNav({
+      locale: "en",
+      pendingRoutes: 0,
+      openDemoRequests: 0,
+      openSupport: 3,
+      isOwner: false,
+    }).flatMap((g) => g.items);
+
+    expect(rows.find((i) => i.id === "support")?.badge).toBe(3);
+  });
+
+  /** Every rank, like the enquiry queue: a dispute should not wait. */
+  it("shows support to a reviewer as well as a director", () => {
+    expect(hrefs(false)).toContain("/ops/support");
+    expect(hrefs(true)).toContain("/ops/support");
   });
 
   it("hangs every row on an icon the table actually has", () => {

@@ -3,7 +3,7 @@ import "server-only";
 import { count, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { corridors, demoRequests } from "@/lib/db/schema";
+import { corridors, demoRequests, supportRequests } from "@/lib/db/schema";
 
 /**
  * A demo enquiry somebody still has to do something about — the
@@ -22,10 +22,18 @@ export type OpsCounts = {
   pendingRoutes: number;
   /** Demo enquiries still open, worked from `/ops/tenants`. */
   openDemoRequests: number;
+  /**
+   * Support requests nobody has picked up.
+   *
+   * Open only, not open-plus-claimed: a claimed request has somebody on
+   * it, and a badge that keeps counting it would ask the whole team to
+   * look at work that is already being done.
+   */
+  openSupport: number;
 };
 
 /**
- * The two figures the platform rail's badges carry.
+ * The three figures the platform rail's badges carry.
  *
  * Its own query rather than counting rows a page already fetched,
  * because the pages showing the rail do not all fetch them: the corridor
@@ -45,7 +53,7 @@ export type OpsCounts = {
  * exists to prevent.
  */
 export async function getOpsCounts(): Promise<OpsCounts> {
-  const [[routes], [demos]] = await Promise.all([
+  const [[routes], [demos], [support]] = await Promise.all([
     db
       .select({ n: count() })
       .from(corridors)
@@ -54,10 +62,15 @@ export async function getOpsCounts(): Promise<OpsCounts> {
       .select({ n: count() })
       .from(demoRequests)
       .where(inArray(demoRequests.status, [...OPEN_DEMO_STATUSES])),
+    db
+      .select({ n: count() })
+      .from(supportRequests)
+      .where(eq(supportRequests.state, "open")),
   ]);
 
   return {
     pendingRoutes: routes?.n ?? 0,
     openDemoRequests: demos?.n ?? 0,
+    openSupport: support?.n ?? 0,
   };
 }

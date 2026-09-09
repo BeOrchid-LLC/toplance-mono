@@ -22,7 +22,20 @@ export type DashboardTab = {
   panel: React.ReactNode;
 };
 
-export function DashboardTabs({ tabs }: { tabs: DashboardTab[] }) {
+export function DashboardTabs({
+  tabs,
+  open,
+}: {
+  tabs: DashboardTab[];
+  /**
+   * Which tab to open on, decided by the page from `?tab=`.
+   *
+   * Needed since the agencies panel gained a search box: the toolbar
+   * writes its query to the URL, so the server re-renders, and without
+   * this the reader who typed a search landed back on Overview.
+   */
+  open?: string;
+}) {
   return (
     /* `mt-8` for the same reason `CounterRow` carries one: `AdminShell`
        stacks a page's blocks with no gap of its own, so each block owns
@@ -30,7 +43,7 @@ export function DashboardTabs({ tabs }: { tabs: DashboardTab[] }) {
        counter row's bottom edge — two separate things reading as one
        control. `gap-8` is the space *inside*, between the strip and the
        panel it switches. */
-    <Tabs defaultValue={tabs[0].value} className="mt-8 gap-8">
+    <Tabs defaultValue={open ?? tabs[0].value} className="mt-8 gap-8">
       {/* Its own scroller: four labels fit a laptop and do not fit a
           phone, and the page body must never scroll sideways. */}
       <div className="-mx-1 overflow-x-auto px-1">

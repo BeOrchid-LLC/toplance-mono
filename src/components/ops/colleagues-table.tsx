@@ -42,10 +42,19 @@ export function ColleaguesTable({
   rows,
   locale,
   className,
+  params,
+  total,
+  unfilteredTotal,
+  filteredLabel,
 }: {
+  /** The colleagues left after the toolbar, already filtered. */
   rows: StaffColleague[];
   locale: Locale;
   className?: string;
+  params?: Record<string, string | undefined>;
+  total?: number;
+  unfilteredTotal?: number;
+  filteredLabel?: string;
 }) {
   const columns: DataColumn<StaffColleague>[] = [
     {
@@ -93,9 +102,28 @@ export function ColleaguesTable({
       numbered
       columns={columns}
       label={OPS_STAFF.colleaguesPanel[locale]}
+      filteredLabel={filteredLabel}
       locale={locale}
-      total={rows.length}
-      unfilteredTotal={rows.length}
+      total={total ?? rows.length}
+      unfilteredTotal={unfilteredTotal ?? rows.length}
+      basePath="/ops/staff"
+      params={params}
+      toolbar={{
+        placeholder: OPS_STAFF.colleagueSearchPlaceholder[locale],
+        filters: [
+          {
+            /* `crank`, not `rank`: the invitations table below this one
+               already owns `rank` on the same page, and two toolbars
+               sharing a parameter would filter each other. */
+            param: "crank",
+            label: OPS_STAFF.anyRank[locale],
+            options: [
+              { value: "owner", label: OPS_COMMON.staffRole.owner[locale] },
+              { value: "reviewer", label: OPS_COMMON.staffRole.reviewer[locale] },
+            ],
+          },
+        ],
+      }}
       action={<InviteStaff />}
       empty={<p className="t-muted max-w-[62ch]">{OPS_STAFF.colleaguesEmpty[locale]}</p>}
     />

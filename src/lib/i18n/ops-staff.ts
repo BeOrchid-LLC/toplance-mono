@@ -28,6 +28,7 @@ export const OPS_STAFF: {
   anyStatus: L;
   anyRank: L;
   colleaguesPanel: L;
+  colleagueSearchPlaceholder: L;
   invitesPanel: L;
   colleaguesEmpty: L;
   tableHead: { person: L; rank: L; status: L; invited: L; joined: L; actions: L };
@@ -256,6 +257,18 @@ export const OPS_STAFF: {
    * been accepted a month ago still read as an invitation, and there was
    * nowhere at all to see who actually holds a console account.
    */
+  colleagueSearchPlaceholder: {
+    en: "Search by name or email",
+    ha: "Nemo ta suna ko imel",
+    yo: "Wá nípa orúkọ tàbí ímeèlì",
+    ig: "Chọọ site na aha ma ọ bụ email",
+    fr: "Rechercher par nom ou e-mail",
+    pt: "Pesquisar por nome ou e-mail",
+    sw: "Tafuta kwa jina au barua pepe",
+    ar: "ابحث بالاسم أو البريد الإلكتروني",
+    tw: "Hwehwɛ din anaa email so",
+    zu: "Sesha ngegama noma i-imeyili",
+  },
   colleaguesPanel: {
     en: "Colleagues",
     ha: "Abokan aiki",

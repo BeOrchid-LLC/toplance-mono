@@ -41,16 +41,16 @@ export const OPS_ENQUIRIES: {
   searchPlaceholder: L;
 } = {
   heading: {
-    en: "Enquiries",
-    ha: "Tambayoyi",
-    yo: "Àwọn ìbéèrè",
-    ig: "Ajụjụ",
-    fr: "Demandes",
-    pt: "Pedidos",
-    sw: "Maulizo",
-    ar: "الاستفسارات",
-    tw: "Nsɛmmisa",
-    zu: "Imibuzo",
+    en: "Demo requests",
+    ha: "Bukatun nuni",
+    yo: "Àwọn ìbéèrè àfihàn",
+    ig: "Arịrịọ ngosi",
+    fr: "Demandes de démonstration",
+    pt: "Pedidos de demonstração",
+    sw: "Maombi ya onyesho",
+    ar: "طلبات العرض التوضيحي",
+    tw: "Yɛkyerɛ abisadeɛ",
+    zu: "Izicelo zomboniso",
   },
   intro: {
     en: "Everyone who has asked for a demo, and who is looking after them.",

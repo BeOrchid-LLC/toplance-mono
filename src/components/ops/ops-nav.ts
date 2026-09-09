@@ -1,4 +1,5 @@
 import type { NavItem } from "@/components/app/app-nav";
+import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import type { Locale } from "@/lib/i18n/locales";
 
@@ -48,8 +49,9 @@ import type { Locale } from "@/lib/i18n/locales";
 export const opsNav: NavItem[] = [
   { href: "/ops/dashboard", label: "Dashboard" },
   { href: "/ops/tenants", label: "Agencies" },
-  { href: "/ops/enquiries", label: "Enquiries" },
-  { href: "/ops/staff", label: "Colleagues" },
+  { href: "/ops/enquiries", label: "Demo requests" },
+  { href: "/ops/staff", label: "Team" },
+  { href: "/ops/support", label: "Support" },
   { href: "/ops/corridors", label: "Routes" },
 ];
 
@@ -75,6 +77,10 @@ export function localizedOpsNav(locale: Locale, isOwner = false): NavItem[] {
     // one of these rows along.
     { ...opsNav[2], label: OPS_COMMON.nav.enquiries[locale] },
     ...(isOwner ? [{ ...opsNav[3], label: OPS_COMMON.nav.staff[locale] }] : []),
-    { ...opsNav[4], label: OPS_COMMON.nav.routes[locale] },
+    // Every rank, for the reason the enquiry queue gives one line up: an
+    // agency in dispute should not wait on one person being at their
+    // desk.
+    { ...opsNav[4], label: OPS_SUPPORT.heading[locale] },
+    { ...opsNav[5], label: OPS_COMMON.nav.routes[locale] },
   ];
 }

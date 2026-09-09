@@ -4,6 +4,7 @@ import { ShieldCheck } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { ColleaguesTable } from "@/components/ops/colleagues-table";
+import { colleagueMatches } from "@/lib/domain/colleague-table";
 import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -59,6 +60,9 @@ export default async function OpsStaffPage({
     q?: string;
     status?: string;
     rank?: string;
+    /** The colleagues table's own search and rank — see its toolbar. */
+    cq?: string;
+    crank?: string;
     sort?: string;
     dir?: string;
     page?: string;
@@ -90,6 +94,15 @@ export default async function OpsStaffPage({
   const counts = await getOpsCounts();
 
   const params = await searchParams;
+
+  // The colleagues panel filters on its own parameters, so the two
+  // toolbars on this page cannot narrow each other.
+  const colleagueSearch = (params.cq ?? "").trim();
+  const colleagueRank = params.crank ?? "";
+  const colleaguesVisible = colleagues.filter((c) =>
+    colleagueMatches(c, colleagueSearch, colleagueRank)
+  );
+  const colleaguesNarrowed = Boolean(colleagueSearch || colleagueRank);
   const search = (params.q ?? "").trim().toLowerCase();
   const sort = readSort(params.sort, STAFF_SORTS, "invited");
   // Newest first. An invitation roster is read to find out who was asked
@@ -143,7 +156,21 @@ export default async function OpsStaffPage({
           above them reads in, and the order of consequence: who holds a
           console account today is the fact, and who has been asked to is
           the outstanding work. */}
-      <ColleaguesTable rows={colleagues} locale={locale} className="mt-8" />
+      <ColleaguesTable
+        rows={colleaguesVisible}
+        locale={locale}
+        className="mt-8"
+        params={{ cq: params.cq, crank: params.crank }}
+        total={colleaguesVisible.length}
+        unfilteredTotal={colleagues.length}
+        filteredLabel={
+          colleaguesNarrowed
+            ? ADMIN_CONSOLE.showingTemplate[locale]
+                .replace("{shown}", String(colleaguesVisible.length))
+                .replace("{total}", String(colleagues.length))
+            : undefined
+        }
+      />
 
       <InvitationTable
         rows={sorted.slice(start, end)}

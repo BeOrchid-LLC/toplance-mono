@@ -25,6 +25,8 @@ export const OPS_TENANTS: {
   };
   tenantsPanel: L;
   agenciesWord: L;
+  searchPlaceholder: L;
+  anyStatus: L;
   emptyTenants: L;
   tableHead: {
     agency: L;
@@ -227,6 +229,30 @@ export const OPS_TENANTS: {
     tw: "Adwumakuo biara",
     zu: "Yonke i-ejensi",
   },
+  searchPlaceholder: {
+    en: "Search by agency or domain",
+    ha: "Nemo ta hukuma ko yanki",
+    yo: "Wá nípa ilé-iṣẹ́ tàbí ìkápá",
+    ig: "Chọọ site na ụlọ ọrụ ma ọ bụ ngalaba",
+    fr: "Rechercher par agence ou domaine",
+    pt: "Pesquisar por agência ou domínio",
+    sw: "Tafuta kwa wakala au kikoa",
+    ar: "ابحث حسب الوكالة أو النطاق",
+    tw: "Hwehwɛ adwumakuo anaa domain so",
+    zu: "Sesha nge-ejensi noma isizinda",
+  },
+  anyStatus: {
+    en: "Any status",
+    ha: "Kowane matsayi",
+    yo: "Ipò yòówù",
+    ig: "Ọnọdụ ọ bụla",
+    fr: "Tout statut",
+    pt: "Qualquer estado",
+    sw: "Hali yoyote",
+    ar: "أي حالة",
+    tw: "Tebea biara",
+    zu: "Noma isiphi isimo",
+  },
   agenciesWord: {
     en: "agencies",
     ha: "hukumomi",
@@ -300,12 +326,22 @@ export const OPS_TENANTS: {
       tw: "Nkɔso",
       zu: "Inqubekelaphambili",
     },
+    /**
+     * "Status" over the live/suspended pill, at the client's request on
+     * 8 September. The key stays `state`, and so does the `?state=`
+     * filter it labels: those are a URL contract an operator can have
+     * bookmarked, and renaming a query parameter to match a heading
+     * breaks the link without improving the page.
+     *
+     * Only `en` and `fr` move. Every other locale already used its word
+     * for status here, which is how the English drifted unnoticed.
+     */
     state: {
-      en: "State",
+      en: "Status",
       ha: "Matsayi",
       yo: "Ipò",
       ig: "Ọnọdụ",
-      fr: "État",
+      fr: "Statut",
       pt: "Estado",
       sw: "Hali",
       ar: "الحالة",

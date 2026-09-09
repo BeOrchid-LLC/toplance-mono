@@ -43,6 +43,14 @@ export function ClientsTable({
   locale,
   totalClients,
   dormant,
+  params,
+  sort,
+  dir,
+  total,
+  unfilteredTotal,
+  pagination,
+  filteredLabel,
+  searchPlaceholder,
 }: {
   /** The clients with activity. The dormant tail is counted, not listed. */
   rows: ClientRow[];
@@ -53,6 +61,14 @@ export function ClientsTable({
   /** Every client, dormant ones included — the badge's figure. */
   totalClients: number;
   dormant: number;
+  params?: Record<string, string | undefined>;
+  sort?: string;
+  dir?: "asc" | "desc";
+  total?: number;
+  unfilteredTotal?: number;
+  pagination?: { page: number; pageCount: number; size: number };
+  filteredLabel?: string;
+  searchPlaceholder?: string;
 }) {
   const columns: DataColumn<ClientRow>[] = [
     {
@@ -161,15 +177,24 @@ export function ClientsTable({
       rowKey={(client) => client.orgId}
       numbered
       columns={columns}
-      label="Every client, busiest first"
+      label="Every agency, busiest first"
+      filteredLabel={filteredLabel}
       count={totalClients}
-      countLabel="clients"
+      countLabel="agencies"
       locale={locale}
-      total={rows.length}
-      unfilteredTotal={rows.length}
+      total={total ?? rows.length}
+      unfilteredTotal={unfilteredTotal ?? rows.length}
+      basePath="/ops/dashboard"
+      params={params}
+      sort={sort}
+      dir={dir}
+      pagination={pagination}
+      toolbar={
+        searchPlaceholder ? { placeholder: searchPlaceholder, filters: [] } : undefined
+      }
       empty={
         <p className="t-muted max-w-[62ch]">
-          No client has invited anybody yet. A row appears here as soon as one
+          No agency has invited anybody yet. A row appears here as soon as one
           sends its first invitation.
         </p>
       }

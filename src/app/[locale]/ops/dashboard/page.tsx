@@ -11,6 +11,10 @@ import {
 } from "@/components/ops/refusal";
 import { ClientsTable } from "@/components/ops/clients-table";
 import { DashboardTabs } from "@/components/ops/dashboard-tabs";
+import { openTabOf, opsClientMatches } from "@/lib/domain/ops-client-table";
+import { readPageSize, resolvePage } from "@/lib/domain/sorting";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
+import { fill } from "@/lib/i18n/fill";
 import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -77,7 +81,18 @@ function cycleName(cycle: string): string {
  * business doing" — and a director who has to navigate between revenue
  * and the review desk cannot see that they are the same story.
  */
-export default async function OpsDashboardPage() {
+const DASHBOARD_TABS = ["overview", "clients", "operations", "demand"] as const;
+
+export default async function OpsDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    tab?: string;
+    q?: string;
+    page?: string;
+    size?: string;
+  }>;
+}) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
   const locale = await getLocale();
@@ -103,6 +118,9 @@ export default async function OpsDashboardPage() {
 
   const account = await opsAccount(profile, actor, locale);
 
+  const params = await searchParams;
+  const openTab = openTabOf(params.tab, DASHBOARD_TABS);
+
   return (
     <AdminShell
       groups={opsAdminNav({ locale, ...counts, isOwner: true })}
@@ -112,7 +130,7 @@ export default async function OpsDashboardPage() {
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_COMMON.nav.dashboard[locale]}
-      lead="The state of the business — clients, revenue, the review desk and where demand is going."
+      lead="The state of the business — agencies, revenue, the review desk and where demand is going."
       actions={
         <NotificationsMenu
           notifications={notifications}
@@ -125,14 +143,18 @@ export default async function OpsDashboardPage() {
         className="mt-0"
         counters={[
           {
-            label: "Clients",
+            label: "Agencies",
             value: data.totals.clients,
             sub: "organisations on the platform",
           },
           {
-            label: "Seats bought",
-            value: data.totals.seatsPurchased,
-            sub: `${data.totals.applicants} applicants so far`,
+            // Per application, not per seat. Seats stay on the
+            // per-agency table, where they mean team members and a cap
+            // is a real thing; up here they were the wrong unit for a
+            // business that bills on throughput.
+            label: "Applications processed",
+            value: data.totals.applicationsProcessed,
+            sub: `${data.totals.applicants} started, drafts included`,
           },
           {
             label: "Travellers",
@@ -149,12 +171,13 @@ export default async function OpsDashboardPage() {
       />
 
       <DashboardTabs
+        open={openTab}
         tabs={[
           { value: "overview", label: "Overview", panel: <Overview data={data} /> },
           {
             value: "clients",
-            label: "Clients",
-            panel: <Clients data={data} locale={locale} />,
+            label: "Agencies",
+            panel: <Clients data={data} locale={locale} params={params} />,
           },
           {
             value: "operations",
@@ -290,7 +313,15 @@ function Exceptions({
   );
 }
 
-function Clients({ data, locale }: { data: DashboardData; locale: Locale }) {
+function Clients({
+  data,
+  locale,
+  params,
+}: {
+  data: DashboardData;
+  locale: Locale;
+  params: { tab?: string; q?: string; page?: string; size?: string };
+}) {
   // Money per client, so the table can show what each one is worth
   // without a second pass over the invoice list per row.
   const billed: Record<string, { billedMinor: number; paidMinor: number }> = {};
@@ -307,16 +338,40 @@ function Clients({ data, locale }: { data: DashboardData; locale: Locale }) {
   // dormant tail is counted rather than listed.
   const active = data.clients.filter((c) => c.invited > 0 || c.applicants > 0);
 
+  const search = (params.q ?? "").trim();
+  const visible = active.filter((c) => opsClientMatches(c, search));
+  const size = readPageSize(params.size);
+  const { page, pageCount, start, end } = resolvePage(params.page, visible.length, size);
+
   return (
     <ClientsTable
-      rows={active}
+      rows={visible.slice(start, end)}
       // A plain object rather than a `Map`: this crosses the boundary
       // into a client component, and React cannot serialise a `Map`.
       money={billed}
       currency={data.payments.currency}
       locale={locale}
       totalClients={data.clients.length}
+      // The dormant tail is a fact about every client, not about the
+      // rows a search left behind, so it does not move when the reader
+      // narrows the table. A footer that shrank with the search would
+      // be answering a question nobody asked.
       dormant={data.clients.length - active.length}
+      searchPlaceholder="Search by agency"
+      // `tab` rides along so the toolbar's own links come back to this
+      // panel instead of dropping the reader on Overview.
+      params={{ tab: "clients", q: params.q, size: params.size }}
+      total={visible.length}
+      unfilteredTotal={active.length}
+      pagination={{ page, pageCount, size }}
+      filteredLabel={
+        search
+          ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
+              shown: visible.length,
+              total: active.length,
+            })
+          : undefined
+      }
     />
   );
 }

@@ -93,15 +93,27 @@ describe("the focus system", () => {
    * route colour's edge-and-ink half is `--brand-text`, which is the same
    * hex in light and lifts in dark; the focus ring is `--ring`.
    *
-   * `border-brand-text` and `bg-brand` are both fine and neither matches:
-   * the check is for the bare token, so a trailing `-` excludes it and a
-   * fill utility is a different word.
+   * The match is by exception rather than by exact word, and that is the
+   * repair of a hole this test shipped with. It used to read
+   * `-brand(?![\w-])`, which matched the bare token and nothing else — so
+   * it caught `ring-brand` and was blind to every other step on the brand
+   * axis. `--brand-2` is the sharpest of those: it is `#4c8fe0`, the same
+   * hex the DARK ring uses, which is why it reads as a safe blue. In light
+   * it is 2.767:1 on `--bg` and 3.006 on the secondary plate — under, or
+   * on, the 3:1 floor. `ring-brand-2` is therefore the shipped bug in the
+   * other theme, and had no call site to catch it by.
+   *
+   * So everything on the axis is an edge offence except the two tokens
+   * that exist to be drawn as one: `--brand-text` and `--brand-ink`, which
+   * are the same #0a4ea3 in light and lift in dark. `border-brand-text` is
+   * the secondary button's whole boundary and is fine. `bg-brand` is fine
+   * too and does not match — a fill utility is a different word.
    */
   it("never draws --brand as an edge", () => {
     const offenders: string[] = [];
     for (const { path, body } of FILES) {
       for (const token of classTokens(body)) {
-        if (/^(?:ring|border|outline)-brand(?![\w-])/.test(utilityOf(token))) {
+        if (/^(?:ring|border|outline)-brand(?!-(?:text|ink)\b)/.test(utilityOf(token))) {
           offenders.push(`${path}: ${token}`);
         }
       }
@@ -148,20 +160,81 @@ describe("the focus system", () => {
   });
 
   /**
-   * The two suppressions that are allowed, named individually.
+   * Every spelling of "draw no outline", because Tailwind has three.
    *
-   * Both are places where the element that takes focus is not the element
-   * a person sees, and where the visible shell draws the ring instead —
-   * the deviation `:focus-visible` in globals.css permits and describes.
-   * Listing them here rather than counting them means adding a
-   * seventeenth `outline-none` fails this test with the file named, which
-   * is the only way an exception stays an exception.
+   * This check used to be `utilityOf(token) === "outline-none"`, one
+   * literal, and it was blind to the other two for as long as it existed.
+   * Compiled through tailwindcss 4.3.3's own node API, `.outline-none` and
+   * `.outline-hidden` emit the same two declarations —
+   * `--tw-outline-style: none; outline-style: none` — and `outline-hidden`
+   * adds only a `forced-colors` fallback that paints nothing in a normal
+   * render. `.outline-0` gets there by a different route,
+   * `outline-width: 0px`, and arrives at the same place: no ring.
+   *
+   * The cost of the narrow match was three `outline-hidden` sitting in
+   * `chart.tsx` while this test reported "exactly two suppressors" and
+   * passed. One of them was switching off the focus indicator on the
+   * largest tab stop in the console.
    */
-  it("suppresses the outline in exactly two places, both documented", () => {
-    const allowed = ["components/app/intake-dock.tsx", "components/auth/phone-field.tsx"];
-    const suppressing = FILES.filter(({ body }) =>
-      classTokens(body).some((token) => utilityOf(token) === "outline-none")
-    ).map(({ path }) => path);
-    expect(suppressing.sort()).toEqual(allowed.sort());
+  const SUPPRESSES = /^outline-(?:none|hidden|0)$/;
+
+  /**
+   * The suppressions that are allowed, keyed to the exact class that does
+   * the suppressing and carrying its reason here.
+   *
+   * The key is the whole token, variants and all, not the file. That is
+   * deliberate and `chart.tsx` is why: its three suppressions were three
+   * different decisions written into one `cn()` string, and a file-level
+   * allowlist would have waved all three through on the strength of the
+   * best one. Keying on `[&_.recharts-layer]:outline-hidden` means the
+   * exception covers that selector and no other — a fourth suppression
+   * appearing in the same string fails the suite with the class named.
+   *
+   * The bar for adding a row: the element that takes focus is not the
+   * element a person sees and something else draws its ring, or the
+   * element takes focus from nothing at all. Neither is "the ring looked
+   * wrong here". A row with no reason beside it is the same as no row.
+   */
+  const ALLOWED_SUPPRESSIONS: Record<string, string> = {
+    "components/app/intake-dock.tsx: outline-none":
+      "The composer's <textarea>. Its shell carries the ring for it — the deviation :focus-visible in globals.css permits and describes, for an element flush inside a clipped wrapper.",
+    "components/auth/phone-field.tsx: outline-none":
+      "The dial-code button and the number field. Three of each one's edges are the shell's, so an outward ring is clipped there and the fourth edge paints a stray 2px bar down the middle of the control. The shell rings for both children.",
+    "components/ui/chart.tsx: [&_.recharts-layer]:outline-hidden":
+      "The <g> grouping inside the chart svg, measured on /ops/dashboard with no tabindex attribute at all. Nothing tabs to it; the class suppresses only the stray outline a browser can hang on an SVG child it decides a click focused.",
+    "components/ui/chart.tsx: [&_.recharts-sector]:outline-hidden":
+      "The pie and radial-bar wedge, which this product never renders — every chart here is a BarChart, so the selector matches no element on any screen. Dormant rather than justified, and left as stock ships it.",
+  };
+
+  /**
+   * `.recharts-surface` is the row that is NOT here, and the reason this
+   * test was widened before the class was removed rather than after.
+   *
+   * That svg is `role="application" tabindex="0"` — a keyboard tab stop
+   * 280px tall and as wide as its panel — 1094×280 as measured on
+   * /ops/dashboard at a 1440 viewport. Stock shadcn suppressed its
+   * outline in the same string as the two decorative selectors above, as
+   * if the three were one decision. A probe 0–7px out from all four edges read
+   * byte-identical focused and blurred, in both themes: a person tabbed
+   * onto the largest control on the page and got nothing back. With the
+   * class gone the ring lands 2px out on all four edges, 16.886:1 light and
+   * 4.985:1 dark.
+   *
+   * Widening this matcher first is what turned that from a thing somebody
+   * had to notice into a named failure — and it is the order to keep. The
+   * stricter check lands before the thing it catches is removed, or the
+   * removal is the only evidence the check works.
+   */
+  it("suppresses the outline only where a row here says why", () => {
+    const suppressing = new Set<string>();
+    for (const { path, body } of FILES) {
+      for (const token of classTokens(body)) {
+        if (SUPPRESSES.test(utilityOf(token))) suppressing.add(`${path}: ${token}`);
+      }
+    }
+    expect([...suppressing].sort()).toEqual(Object.keys(ALLOWED_SUPPRESSIONS).sort());
+    for (const reason of Object.values(ALLOWED_SUPPRESSIONS)) {
+      expect(reason.length).toBeGreaterThan(40);
+    }
   });
 });

@@ -303,10 +303,27 @@ describe.each([
 
   /**
    * `--way` is a fill and never type, so it is checked the other way
-   * round: the ink that sits ON it, which is the light ink in both
-   * modes because yellow is a light fill in both.
+   * round: the ink that sits ON it. That ink is `--way-ink`.
+   *
+   * Which is not what this assertion read. It read `light["--ink"]`, the
+   * light neutral — and `--ink` in light is #0b1f2a, byte-identical to
+   * `--way-ink` in both blocks, so the ratio it printed was the right
+   * number arrived at from the wrong token. Setting dark `--way-ink` to
+   * white takes the pair a person actually sees to 1.775:1 on the yellow,
+   * and the old assertion stayed green through it, because nothing in
+   * this file named the token the call sites render: `button.tsx`'s `way`
+   * variant is `bg-way text-way-ink`, and `corridor-bar.tsx:227` is the
+   * same pair on the "soon" corridor's button.
+   *
+   * Read out of `tokens` per mode rather than pinned to `light`, even
+   * though the two blocks are byte-identical today and the comment in
+   * globals.css says they are meant to stay that way. Pinning is exactly
+   * what hid this: an assertion that reaches past the mode under test
+   * cannot fail when that mode moves, which is the only event it is here
+   * to catch. If the two blocks ever diverge, this fails in the mode that
+   * diverged and names it.
    */
   it("carries readable ink on the way plate", () => {
-    expect(contrast(light["--ink"], tokens["--way"])).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(tokens["--way-ink"], tokens["--way"])).toBeGreaterThanOrEqual(4.5);
   });
 });

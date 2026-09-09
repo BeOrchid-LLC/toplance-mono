@@ -63,8 +63,42 @@ function ChartContainer({
       <div
         data-slot="chart"
         data-chart={chartId}
+        /* Stock shadcn ships three `outline-hidden` suppressions in this
+           string, as if they were one decision. They are not, and only two
+           of them survive.
+
+           `[&_.recharts-surface]:outline-hidden` is gone. `.recharts-surface`
+           is the chart's own <svg>, and recharts renders it
+           `role="application" tabindex="0"` — a real tab stop, 280px tall and
+           as wide as the panel it sits in (1094×280 on /ops/dashboard at a
+           1440 viewport). With the class on, a keyboard user landed on the
+           largest control on the page and got nothing back: tabbed to,
+           `:focus-visible` true, `outline-style: none`, `box-shadow: none`,
+           and a four-side pixel probe 0–7px out reading byte-identical
+           focused and blurred in both themes. Without it the base
+           `:focus-visible` rule in globals.css reaches the svg like it
+           reaches every other control, and the ring lands 2px out on all
+           four edges — 16.886:1 in light, 4.985:1 in dark, against a 3:1
+           floor.
+
+           `[&_.recharts-layer]` and `[&_.recharts-sector]` stay, and they
+           are a different case: neither is a tab stop. `.recharts-layer` is
+           the <g> grouping — measured on the same page with no `tabindex`
+           attribute at all — so the class suppresses only the stray outline
+           a browser can hang on an SVG child it decides a click focused.
+           `.recharts-sector` is the pie and radial-bar wedge, which this
+           product never renders; the selector matches nothing here and is
+           left alone rather than trimmed, since stock lines that match
+           nothing are what the CLI will put back anyway. Both are named
+           individually in `focus.test.ts`, so a third suppression appearing
+           in this string fails the suite instead of hiding in it.
+
+           This file is stock shadcn and `shadcn add chart` rewrites it
+           wholesale — the CLI has clobbered customised files under `ui/` in
+           this repo before, silently. If a chart ever stops painting a ring
+           on Tab, look here first: the regression is one class long. */
         className={cn(
-          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-surface]:outline-hidden",
+          "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-transparent",
           className
         )}
         {...props}

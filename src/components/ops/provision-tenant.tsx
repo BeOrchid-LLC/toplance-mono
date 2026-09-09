@@ -18,6 +18,7 @@ import {
 import { provisionTenant } from "@/app/[locale]/ops/tenants/actions";
 import type { DemoRequestRow } from "@/lib/data/demo-requests";
 import { useT } from "@/components/locale-provider";
+import { fill } from "@/lib/i18n/fill";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 
 /**
@@ -56,6 +57,10 @@ export function ProvisionTenant({
   const [open, setOpen] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
+  // Who the invitation went to, so the success screen can name them
+  // instead of showing the link. Read off the submitted form, because
+  // the action returns the link and not the address.
+  const [sentTo, setSentTo] = React.useState("");
   // Whether the invitation actually left. `sendEmail` returns false
   // rather than throwing (no `RESEND_API_KEY`, a 403 from Resend), and an
   // operator who is not told that will close this dialog believing the
@@ -105,6 +110,9 @@ export function ProvisionTenant({
 
   function submit(formData: FormData) {
     if (demoRequest) formData.set("demo_request_id", demoRequest.id);
+    // Read before the await: the success screen names the address, and
+    // the form is remounted out from under it on close.
+    const ownerEmail = String(formData.get("owner_email") ?? "");
 
     startTransition(async () => {
       const result = await provisionTenant(formData);
@@ -114,12 +122,11 @@ export function ProvisionTenant({
         return;
       }
 
-      // The link stays on screen after the dialog's work is done: the
-      // email can fail and this is the only other copy — the roster
-      // never selects `token`, and nothing in the product can resend or
-      // revoke an invitation.
+      // Kept in state either way, but only put on screen when the email
+      // did not go — see the render below.
       setInviteUrl(result.inviteUrl);
       setEmailSent(result.emailSent);
+      setSentTo(ownerEmail);
       // The agency exists either way, so this stays a success — the
       // hand-off is what failed, and the notice beside the link says so.
       toast.success(t(OPS_TENANTS.toastProvisioned));
@@ -147,19 +154,40 @@ export function ProvisionTenant({
         <p className="t-muted max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
 
         {inviteUrl ? (
+          /*
+            The link is shown only when the email did not go.
+            It is a 30-day bearer credential for somebody else's
+            console, and on the happy path putting it on screen earns
+            nothing: the person who needs it has it in their inbox, and
+            the operator reading this dialog is not the person it lets
+            in. It survives in screenshots and over shoulders, which is
+            why `invitePlatformStaff` deliberately never returns its
+            equivalent.
+
+            When `sendEmail` returns false it is the opposite: nothing
+            in the product can resend or revoke a tenant invitation and
+            the roster never selects `token`, so this is the only copy
+            that will ever exist and losing it strands the agency.
+          */
           <div className="flex flex-col gap-2">
-            {!emailSent && (
-              <p role="alert" className="max-w-[52ch] text-danger-ink">
-                {t(OPS_TENANTS.provisionEmailFailed)}
+            {emailSent ? (
+              <p className="max-w-[52ch]">
+                {fill(t(OPS_TENANTS.provisionSentTo), { email: sentTo })}
               </p>
+            ) : (
+              <>
+                <p role="alert" className="max-w-[52ch] text-danger-ink">
+                  {t(OPS_TENANTS.provisionEmailFailed)}
+                </p>
+                <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
+                <Input
+                  id="invite-url"
+                  readOnly
+                  value={inviteUrl}
+                  onFocus={(e) => e.currentTarget.select()}
+                />
+              </>
             )}
-            <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
-            <Input
-              id="invite-url"
-              readOnly
-              value={inviteUrl}
-              onFocus={(e) => e.currentTarget.select()}
-            />
           </div>
         ) : (
           <form key={formKey} action={submit} className="flex flex-col gap-4">

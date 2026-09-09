@@ -55,6 +55,7 @@ export const OPS_TENANTS: {
   cancelButton: L;
   toastProvisioned: L;
   inviteLinkLabel: L;
+  provisionSentTo: L;
   provisionEmailFailed: L;
   detailBackToList: L;
   rosterPanel: L;
@@ -576,6 +577,18 @@ export const OPS_TENANTS: {
     ar: "تم إنشاء الوكالة والدعوة في طريقها.",
     tw: "Wɔabɔ adwumakuo no na frɛ no rekɔ.",
     zu: "I-ejensi idaliwe futhi isimemo sisendleleni.",
+  },
+  provisionSentTo: {
+    en: "The agency is set up and we have emailed the invitation to {email}.",
+    ha: "An kafa hukumar kuma mun aika gayyatar zuwa {email}.",
+    yo: "A ti ṣètò ilé-iṣẹ́ náà, a sì ti fi ìpè ránṣẹ́ sí {email}.",
+    ig: "E hiwela ụlọ ọrụ ahụ, anyị ezigakwala ọkpụkpọ ahụ na {email}.",
+    fr: "L'agence est créée et l'invitation a été envoyée à {email}.",
+    pt: "A agência está criada e enviámos o convite para {email}.",
+    sw: "Wakala ameanzishwa na tumetuma mwaliko kwa {email}.",
+    ar: "تم إنشاء الوكالة وأرسلنا الدعوة إلى {email}.",
+    tw: "Wɔasi adwumakuo no na yɛde nsato no akɔma {email}.",
+    zu: "I-ejensi isunguliwe futhi sithumele isimemo ku-{email}.",
   },
   inviteLinkLabel: {
     en: "Invitation link",

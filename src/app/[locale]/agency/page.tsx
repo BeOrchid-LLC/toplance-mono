@@ -417,6 +417,11 @@ export default async function EmployerConsolePage() {
             having chosen it is the kind of thing that reads as the
             product knowing something about you that you don't. */}
         <p className="t-muted mt-2 max-w-[68ch]">{ROLE_REASON[org.role][locale]}</p>
+        {/* Every figure below is the agency's, for a director and a
+            handler alike. Until the role-based split lands, the page
+            has to say so — otherwise a handler reads the agency's
+            forty open cases as their own. */}
+        <p className="t-muted mt-2">{AGENCY.overviewIsAgencyWide[locale]}</p>
         {summary && seats > 0 && (
           <Progress value={(used / seats) * 100} className="mt-4 max-w-[320px]" />
         )}
@@ -450,19 +455,30 @@ export default async function EmployerConsolePage() {
           No MRZ. The mark carries a corridor, and this screen is a
           roster of many — there is no one corridor here to encode.
         */}
-        <div className="laminate overflow-hidden rounded-lg">
+        {/* Collapsible, and the paragraph takes the width it has.
+            The client asked for both on 8 September: the strip is the
+            first thing on the page every visit, it says the same thing
+            every visit, and capped at 74ch it wrapped into a tall
+            column that pushed the figures below the fold.
+
+            A `<details>` rather than state, so it works before any
+            JavaScript arrives and so the heading — the half worth
+            re-reading — is what stays visible when it is shut. Open by
+            default: a promise about somebody's passport should be read
+            once before it can be put away. */}
+        <details open className="laminate group overflow-hidden rounded-lg">
           <span aria-hidden className="laminate-sheen" />
-          <div className="relative z-[1] flex items-start gap-4 p-6">
+          <summary className="relative z-[1] flex cursor-pointer list-none items-start gap-4 p-6">
             <Shield className="mt-0.5 size-6 shrink-0 text-brand-text" aria-hidden />
             <div className="min-w-0">
               <p className="tag">{AGENCY.privacyTag[locale]}</p>
               <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
-              <p className="t-muted mt-2 max-w-[74ch]">
-                {AGENCY.privacyBody[locale]}
-              </p>
             </div>
+          </summary>
+          <div className="relative z-[1] px-6 pb-6 ps-16">
+            <p className="t-muted">{AGENCY.privacyBody[locale]}</p>
           </div>
-        </div>
+        </details>
 
         {/* Doors, not decoration. Three of the four open the roster
             already filtered to exactly the rows the figure counted, which

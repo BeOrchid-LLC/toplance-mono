@@ -36,6 +36,8 @@ import { orgLogoKey, validateLogoFile } from "@/lib/domain/org-logo";
 import { isApplicationStatus } from "@/lib/domain/status";
 import { STATUS_COPY } from "@/lib/i18n/status";
 import { isFlagReason } from "@/lib/domain/flag-reason";
+import { readAttendanceKind } from "@/lib/domain/attendance";
+import { createAttendanceRequest } from "@/lib/data/attendance";
 import { sendEmail } from "@/lib/notifications/email";
 import { appUrl, notify } from "@/lib/notifications/notify";
 import { deleteDocument, putDocument } from "@/lib/storage/documents";
@@ -578,6 +580,102 @@ export async function uploadOrgLogo(formData: FormData) {
   } catch (error) {
     const message = toActionError(error);
     if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Ask a traveller to come in for biometrics or an interview.
+ *
+ * The one step in the whole flow this product cannot perform. Biometric
+ * capture happens on the destination government's own portal and an
+ * interview happens at a consulate; neither offers an API, and no
+ * amount of building here changes that. What was missing was the
+ * summons: a handler who had finished a review and needed the traveller
+ * in the office on Tuesday had no way to say so, which the client
+ * raised on 8 September.
+ *
+ * Not a destructive control, so no confirmation dialog — it books an
+ * appointment and takes nothing away. `canDecideCase` gates it for the
+ * same reason `changeCaseStatus` uses it: telling somebody to travel to
+ * an office is a decision about their case, not a note on it.
+ *
+ * The row and the notification are both written. The row is what the
+ * traveller's page reads its standing notice from, because a
+ * notification stops being a good source the moment somebody marks it
+ * read — and a banner that vanished because the traveller opened their
+ * bell would be the worst possible behaviour for the one message that
+ * says where to be.
+ */
+export async function inviteToAttend(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const kindRaw = String(formData.get("kind") ?? "");
+  const place = String(formData.get("place") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim();
+  const whenRaw = String(formData.get("when") ?? "").trim();
+
+  try {
+    const { actor, application } = await requireApplicationAccess(
+      applicationId,
+      canDecideCase
+    );
+    const locale = await getActionLocale();
+
+    const kind = readAttendanceKind(kindRaw);
+    if (!kind) return { error: AGENCY_ACTIONS.chooseAttendanceKind[locale] };
+    if (!place) return { error: AGENCY_ACTIONS.attendanceNeedsPlace[locale] };
+
+    /**
+     * An unparseable date is treated as no date rather than refused.
+     * The time is optional by design — an agency often has the office
+     * before it has the slot — so a browser that hands back something
+     * this cannot read should still send the traveller an address.
+     */
+    const parsed = whenRaw ? new Date(whenRaw) : null;
+    const scheduledFor = parsed && !Number.isNaN(parsed.getTime()) ? parsed : null;
+
+    await createAttendanceRequest({
+      applicationId,
+      kind,
+      scheduledFor,
+      place,
+      note: note || null,
+      requestedBy: actor.userId,
+    });
+
+    await audit(actor.userId, "application.attendance_requested", "application", applicationId, {
+      kind,
+      scheduledFor: scheduledFor?.toISOString() ?? null,
+    });
+    void track("toplance.attendance_requested", { applicationId, kind }, actor.userId);
+
+    await notify(
+      application.travelerId,
+      "attendance_requested",
+      {
+        kind,
+        // Formatted here and stored, the same compromise
+        // `changeCaseStatus` documents: this is persisted into
+        // `notifications.payload` and read back by an English template,
+        // and `locale` here is the *handler's* rather than the
+        // traveller's. Localising it means reading the recipient's own
+        // `profiles.locale` at render time, together with the template
+        // around it.
+        when: scheduledFor
+          ? scheduledFor.toISOString().replace("T", " ").slice(0, 16)
+          : null,
+        place,
+        note: note || null,
+        url: appUrl("/app"),
+      },
+      applicationId
+    );
+
+    revalidateCase();
+    return { ok: true };
+  } catch (error) {
+    const message_ = toActionError(error);
+    if (message_) return { error: message_ };
     throw error;
   }
 }

@@ -267,6 +267,17 @@ export const EVENT_NAMES = [
   "toplance.dashboard_viewed",
 
   /**
+   * A handler asked a traveller to come in for biometrics or an
+   * interview.
+   *
+   * The product cannot perform either step — both happen on a
+   * government portal or at a consulate — so this counts the one part
+   * of them it owns. If it turns out nobody uses it, the end-to-end
+   * flow has a gap somewhere else.
+   */
+  "toplance.attendance_requested",
+
+  /**
    * An agency asked BeOrchid for help.
    *
    * The first event a tenant can emit that is not about a traveller.

@@ -19,7 +19,7 @@ export const CASE_REVIEW: {
   completion: { of: L; verified: L; uploaded: L };
   caseNotesPanel: L;
   travelerReadsThese: L;
-  docSets: { awaitingReview: L; alreadyJudged: L; notUploadedYet: L };
+  docSets: { awaitingReview: L; alreadyReviewed: L; notUploadedYet: L };
   noChecklistYet: L;
   decisionPanel: L;
   travelHistoryPanel: L;
@@ -150,17 +150,28 @@ export const CASE_REVIEW: {
       tw: "Ɛretwɛn nhwehwɛmu",
       zu: "Ilinde ukubuyekezwa",
     },
-    alreadyJudged: {
-      en: "Already judged",
-      ha: "An riga an yanke hukunci",
-      yo: "A ti ṣèdájọ́ rẹ̀ tẹ́lẹ̀",
-      ig: "Ekpebiela ihe banyere ya",
-      fr: "Déjà traités",
-      pt: "Já avaliados",
-      sw: "Tayari yamehukumiwa",
-      ar: "تم البتّ فيها بالفعل",
-      tw: "Wɔasi gyinaeɛ dedaw",
-      zu: "Sekwenziwe isinqumo",
+    /**
+     * "Reviewed", not "judged" — the client's words on 8 September:
+     * judged is quite the strong word. A handler checking a passport
+     * scan against a checklist is reviewing it; the sentence a
+     * traveller reads about their own documents should not sound like
+     * a verdict on them.
+     *
+     * The key moved with the string. Leaving `alreadyJudged` over
+     * "Already reviewed" is how the next person to open this file
+     * learns the wrong word.
+     */
+    alreadyReviewed: {
+      en: "Already reviewed",
+      ha: "An riga an duba",
+      yo: "A ti ṣàyẹ̀wò rẹ̀ tẹ́lẹ̀",
+      ig: "Enyochala ya",
+      fr: "Déjà examinés",
+      pt: "Já revistos",
+      sw: "Tayari yamekaguliwa",
+      ar: "تمت مراجعتها بالفعل",
+      tw: "Wɔahwɛ mu dedaw",
+      zu: "Sekubuyekeziwe",
     },
     notUploadedYet: {
       en: "Not uploaded yet",

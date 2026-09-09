@@ -115,19 +115,86 @@ export default async function OpsKybAgencyPage({
     >
       <Link
         href="/ops/kyb"
-        className="t-muted inline-flex items-center gap-2 hover:underline"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
       >
-        <ArrowLeft className="size-4" /> {OPS_KYB.backToQueue[locale]}
+        <ArrowLeft className="size-3.5" /> {OPS_KYB.backToQueue[locale]}
       </Link>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <h1 className="t-h2">{agency.name}</h1>
-        <Badge variant={standing.variant}>
-          {OPS_KYB.standing[standing.key][locale]}
-        </Badge>
+      {/* Dossier header — the consular sheet: name, standing, and the queue context in one line */}
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-surface shadow-sm ovi-edge">
+        <div className="relative px-5 py-5 sm:px-6 sm:py-6">
+          {/* faint ruled paper — the same ground official documents are printed on */}
+          <div className="pointer-events-none absolute inset-0 opacity-[0.55] security-paper" aria-hidden />
+          <div className="relative flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="tag">Verification dossier</p>
+              <h1 className="mt-1.5 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[30px]">
+                {agency.name}
+              </h1>
+              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm leading-5 text-ink-2">
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className={
+                      agency.standing === "activated"
+                        ? "size-1.5 rounded-full bg-success"
+                        : agency.standing === "ready"
+                          ? "size-1.5 rounded-full bg-info"
+                          : agency.standing === "in_review"
+                            ? "size-1.5 rounded-full bg-brand"
+                            : "size-1.5 rounded-full bg-border-strong"
+                    }
+                    aria-hidden
+                  />
+                  {OPS_KYB.standing[standing.key][locale]}
+                </span>
+                <span className="text-border-strong">·</span>
+                <span className="num text-[13px] font-semibold tabular-nums">
+                  {agency.progress.verified} of {agency.progress.total} verified
+                </span>
+                <span className="text-border-strong">·</span>
+                <span className="hidden sm:inline">Each file is private to this dossier</span>
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <Badge variant={standing.variant} className="px-3 py-1 text-xs">
+                {OPS_KYB.standing[standing.key][locale]}
+              </Badge>
+              <span className="special hidden sm:block">
+                {agency.activatedAt
+                  ? `Activated ${agency.activatedAt.toISOString().slice(0, 10)}`
+                  : agency.progress.canActivate
+                    ? "Ready — gate is open"
+                    : `${agency.progress.total - agency.progress.verified} to verify`}
+              </span>
+            </div>
+          </div>
+
+          {/* thin progress rule — 6 ticks, one per requirement */}
+          <div className="relative mt-5 flex gap-1">
+            {agency.requirements.map((r) => (
+              <div
+                key={r.id}
+                className="h-1 flex-1 overflow-hidden rounded-full bg-surface-inset"
+                aria-hidden
+              >
+                <div
+                  className={
+                    r.state === "verified"
+                      ? "h-full w-full rounded-full bg-success"
+                      : r.state === "rejected"
+                        ? "h-full w-full rounded-full bg-danger"
+                        : r.state === "in_review"
+                          ? "h-full w-full rounded-full bg-info"
+                          : "h-full w-0 bg-transparent"
+                  }
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-8 mb-16">
+      <div className="mt-6 mb-16">
         <KybChecklist agency={agency} />
       </div>
     </AdminShell>

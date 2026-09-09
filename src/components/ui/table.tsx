@@ -18,6 +18,13 @@ import { cn } from "@/lib/utils";
  * promotes the other one out of `visible` anyway, so asking for both is
  * the honest spelling — and on desktop the columns fit, so no
  * horizontal bar appears.
+ *
+ * That scroll box also clips anything painted outside it, which is why
+ * `SortHead` draws its focus ring inward. A header sitting at the top of
+ * this wrapper has no room outside itself for a 2px ring, so widening
+ * the cap or dropping `overflow-auto` here is a change to how the
+ * console's 15 sort headers indicate focus — the reasoning, and what was
+ * measured, is in `shared/sort-head.tsx`.
  */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -74,6 +81,15 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
         // The rule under the band is an inset shadow rather than a
         // border because `border-collapse: collapse` hands the row
         // border to the `tr`, which scrolls away with its row.
+        //
+        // `bg-surface-2` has to be opaque for that to work — rows would
+        // otherwise read straight through the band as they pass under
+        // it — and the opacity has one consequence worth knowing about
+        // here. Every header carries the same `z-10`, so they paint in
+        // document order and each one's background lands on top of its
+        // left-hand neighbour's outward edge. `SortHead` therefore draws
+        // its focus ring inside its own box; see the note there before
+        // changing this fill or this stacking.
         "sticky top-0 z-10 shadow-[inset_0_-1px_0_var(--border)]",
         className
       )}

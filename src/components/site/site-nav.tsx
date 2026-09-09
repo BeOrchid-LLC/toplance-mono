@@ -179,6 +179,23 @@ export function SiteNav() {
                 aria-current={active ? "location" : undefined}
                 className={cn(
                   "nav-label relative flex h-full items-center whitespace-nowrap px-3.5 text-[15px] font-semibold transition-colors",
+                  // The ring turns inward — the first of the two
+                  // deviations `:focus-visible` in globals.css permits,
+                  // and here for the reason it exists. `h-full` puts
+                  // this link's top and bottom flush against the strip
+                  // above, which is `overflow-hidden` so a long label
+                  // cannot spill out of a 64px bar; an outward 2px ring
+                  // is therefore cut off top and bottom, and cut off
+                  // again on whichever side faces the end of the strip.
+                  // Measured on /travelers rather than reasoned about:
+                  // "How it works" painted its right edge only, "Where
+                  // we work" left and right, "Pricing" left only — so
+                  // the two end links each answered a Tab with one 2px
+                  // bar sitting in the gap beside a neighbour, which
+                  // reads as marking the neighbour. Same token, same
+                  // width, drawn on the inside: all four edges land,
+                  // 14.05:1 light and 5.59:1 dark.
+                  "focus-visible:-outline-offset-2",
                   "after:absolute after:inset-x-2 after:bottom-0 after:z-10 after:rounded-full after:transition-colors after:duration-[var(--dur-toggle)] after:ease-[var(--ease-out)]",
                   active
                     ? "text-ink after:h-0.5 after:bg-brand"

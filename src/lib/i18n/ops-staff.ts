@@ -1,3 +1,4 @@
+import type { ColleagueRefusal } from "@/lib/domain/colleague-actions";
 import type { Locale } from "@/lib/i18n/locales";
 
 type L = Record<Locale, string>;
@@ -32,6 +33,33 @@ export const OPS_STAFF: {
   invitesPanel: L;
   colleaguesEmpty: L;
   tableHead: { person: L; rank: L; status: L; invited: L; joined: L; actions: L };
+  /** The three acts in a colleague's row, and the badge one of them leaves. */
+  colleagueRemove: L;
+  colleagueSuspend: L;
+  colleagueRestore: L;
+  colleagueResetTwoFactor: L;
+  suspendedBadge: L;
+  removeConfirmTitle: L;
+  removeConfirmBody: L;
+  removeCancel: L;
+  suspendConfirmTitle: L;
+  suspendConfirmBody: L;
+  suspendCancel: L;
+  resetTwoFactorConfirmTitle: L;
+  resetTwoFactorConfirmBody: L;
+  resetTwoFactorCancel: L;
+  toastColleagueRemoved: L;
+  toastColleagueSuspended: L;
+  toastColleagueRestored: L;
+  toastTwoFactorReset: L;
+  /**
+   * Every way one of these acts can be refused, keyed on the whole
+   * union — so a code added to `ColleagueRefusal` without a sentence
+   * here is a compile error rather than a blank toast in ten languages.
+   */
+  colleagueRefusal: Record<ColleagueRefusal, L>;
+  /** Clerk did not answer. Its own case: nothing of ours went wrong. */
+  accountServiceUnavailable: L;
 } = {
   heading: {
     en: "Colleagues",
@@ -310,6 +338,301 @@ export const OPS_STAFF: {
     ar: "لا أحد يملك حساب وحدة التحكم بعد.",
     tw: "Obiara nni console akawnt ɛ.",
     zu: "Akekho onalo i-akhawunti yekhonsoli okwamanje.",
+  },
+  colleagueRemove: {
+    en: "Remove",
+    ha: "Cire",
+    yo: "Yọ kúrò",
+    ig: "Wepụ",
+    fr: "Retirer",
+    pt: "Remover",
+    sw: "Ondoa",
+    ar: "إزالة",
+    tw: "Yi firi hɔ",
+    zu: "Susa",
+  },
+  colleagueSuspend: {
+    en: "Suspend",
+    ha: "Dakatar",
+    yo: "Dá dúró",
+    ig: "Kwụsịtụ",
+    fr: "Suspendre",
+    pt: "Suspender",
+    sw: "Simamisha",
+    ar: "تعليق",
+    tw: "Gyae kakra",
+    zu: "Misa",
+  },
+  colleagueRestore: {
+    en: "Restore",
+    ha: "Mayar",
+    yo: "Padà bọ̀",
+    ig: "Weghachi",
+    fr: "Rétablir",
+    pt: "Restaurar",
+    sw: "Rejesha",
+    ar: "استعادة",
+    tw: "San fa ba",
+    zu: "Buyisela",
+  },
+  colleagueResetTwoFactor: {
+    en: "Reset 2FA",
+    ha: "Sake saita 2FA",
+    yo: "Tún 2FA ṣe",
+    ig: "Tọghata 2FA",
+    fr: "Réinitialiser la 2FA",
+    pt: "Repor a 2FA",
+    sw: "Weka upya 2FA",
+    ar: "إعادة ضبط التحقق بخطوتين",
+    tw: "San hyehyɛ 2FA",
+    zu: "Setha kabusha i-2FA",
+  },
+  /**
+   * On the row rather than in a filter. A suspension taken on this
+   * screen has to be visible on this screen, or the only sign of it is
+   * a colleague saying they cannot sign in.
+   */
+  suspendedBadge: {
+    en: "Suspended",
+    ha: "An dakatar",
+    yo: "Dídádúró",
+    ig: "Akwụsịtụrụ",
+    fr: "Suspendu",
+    pt: "Suspenso",
+    sw: "Amesimamishwa",
+    ar: "معلَّق",
+    tw: "Wɔagyae",
+    zu: "Umisiwe",
+  },
+  removeConfirmTitle: {
+    en: "Remove {name} from BeOrchid?",
+    ha: "A cire {name} daga BeOrchid?",
+    yo: "Yọ {name} kúrò ní BeOrchid?",
+    ig: "Wepụ {name} na BeOrchid?",
+    fr: "Retirer {name} de BeOrchid ?",
+    pt: "Remover {name} da BeOrchid?",
+    sw: "Uondoe {name} kutoka BeOrchid?",
+    ar: "إزالة {name} من BeOrchid؟",
+    tw: "Yi {name} firi BeOrchid mu?",
+    zu: "Susa u-{name} ku-BeOrchid?",
+  },
+  removeConfirmBody: {
+    en: "The console closes on {name} the moment you confirm. Their account stays and every case they have reviewed keeps their name on it — but getting them back in takes a fresh invitation.",
+    ha: "Na'urar za ta rufe wa {name} nan take idan ka tabbatar. Asusun nasu zai kasance kuma kowane shari'ar da suka duba zai riƙe sunansu — amma dawo da su yana buƙatar sabuwar gayyata.",
+    yo: "Kọ́ńsólù yóò tì mọ́ {name} lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́ sí i. Àkàǹtì wọn yóò wà, gbogbo ẹjọ́ tí wọ́n ti yẹ̀wò yóò sì tọ́jú orúkọ wọn — ṣùgbọ́n mímú wọn padà wá nílò ìkésíni tuntun.",
+    ig: "Console ga-emechi {name} ozugbo ị kwadoro. Akaụntụ ha ga-adịgide, ikpe ọ bụla ha nyochara ga-ejigidekwa aha ha — mana iweghachi ha chọrọ ọkpụkpọ òkù ọhụrụ.",
+    fr: "La console se ferme pour {name} dès la confirmation. Son compte reste, et chaque dossier qu'elle a examiné garde son nom — mais la faire revenir demande une nouvelle invitation.",
+    pt: "A consola fecha-se para {name} no momento em que confirmar. A conta permanece e cada processo que reviu mantém o nome — mas trazê-la de volta exige um novo convite.",
+    sw: "Konsoli itafungwa kwa {name} mara tu utakapothibitisha. Akaunti yao itabaki na kila kesi waliyoipitia itabaki na jina lao — lakini kuwarudisha kunahitaji mwaliko mpya.",
+    ar: "تُغلق وحدة التحكم أمام {name} فور التأكيد. يبقى حسابهم وتحتفظ كل حالة راجعوها باسمهم، لكن عودتهم تتطلب دعوة جديدة.",
+    tw: "Console no bɛto mu ama {name} ntɛm ara sɛ wopene so. Wɔn akawnt no bɛtena hɔ na asɛm biara a wɔahwɛ no bɛkora wɔn din — nanso sɛ wɔbɛsan aba a, ɛhia nsato foforo.",
+    zu: "Ikhonsoli ivalwa ku-{name} ngokushesha lapho uqinisekisa. I-akhawunti yabo ihlala, futhi wonke amacala abawabuyekezile agcina igama labo — kodwa ukubabuyisa kudinga isimemo esisha.",
+  },
+  removeCancel: {
+    en: "Keep their access",
+    ha: "Bar musu damar shiga",
+    yo: "Fi ìwọlé wọn sílẹ̀",
+    ig: "Hapụ ohere ha",
+    fr: "Conserver son accès",
+    pt: "Manter o acesso",
+    sw: "Acha ufikiaji wao",
+    ar: "الإبقاء على وصولهم",
+    tw: "Gyaw wɔn kwan no",
+    zu: "Gcina ukufinyelela kwabo",
+  },
+  suspendConfirmTitle: {
+    en: "Suspend {name}?",
+    ha: "A dakatar da {name}?",
+    yo: "Dá {name} dúró?",
+    ig: "Kwụsịtụ {name}?",
+    fr: "Suspendre {name} ?",
+    pt: "Suspender {name}?",
+    sw: "Umsimamishe {name}?",
+    ar: "تعليق حساب {name}؟",
+    tw: "Gyae {name} kakra?",
+    zu: "Misa u-{name}?",
+  },
+  suspendConfirmBody: {
+    en: "{name} is shut out of the console until a director restores them. Nothing they have worked on moves: the cases assigned to them stay assigned, and nobody else picks them up.",
+    ha: "Za a hana {name} shiga na'urar har sai wani darakta ya mayar da su. Babu abin da suka yi da zai motsa: shari'o'in da aka ba su za su kasance nasu, kuma babu wanda zai ɗauke su.",
+    yo: "A ó tì {name} kúrò nínú kọ́ńsólù títí olùdarí yóò fi dá wọn padà. Kò sí ohun tí wọ́n ti ń ṣe tí yóò yí: àwọn ẹjọ́ tí a fún wọn yóò wà lọ́wọ́ wọn, kò sì sí ẹni tí yóò gbà wọ́n.",
+    ig: "A ga-egbochi {name} ịbanye na console ruo mgbe onye nduzi weghachiri ha. Ọ dịghị ihe ha rụrụ ga-agbanwe: ikpe e kenyere ha ga-anọgide, ọ dịghịkwa onye ọzọ ga-ewere ha.",
+    fr: "{name} n'a plus accès à la console jusqu'à ce qu'un directeur la rétablisse. Rien de son travail ne bouge : les dossiers qui lui sont attribués le restent, et personne d'autre ne les reprend.",
+    pt: "{name} fica fora da consola até um diretor a restaurar. Nada do seu trabalho se move: os processos atribuídos continuam atribuídos e mais ninguém os assume.",
+    sw: "{name} atazuiwa kuingia konsoli hadi mkurugenzi amrejeshe. Hakuna kazi yake itakayohamishwa: kesi alizopewa zitabaki kwake, na hakuna mwingine atakayezichukua.",
+    ar: "يُمنع {name} من وحدة التحكم حتى يعيده أحد المديرين. لا يتحرك شيء من عمله: تبقى الحالات المسندة إليه كما هي، ولا يستلمها أحد غيره.",
+    tw: "Wɔbɛsi {name} kwan wɔ console no mu kosi sɛ ɔpanyin bi bɛsan de no aba. Biribiara a wayɛ no rensesa: nsɛm a wɔde ama no no bɛtena ne nsa, na obiara mfa.",
+    zu: "U-{name} uvalelwa ngaphandle kwekhonsoli kuze kube yilapho umqondisi embuyisela. Akukho lutho asebenze kulo olushintshayo: amacala awabelwe ahlala enguwakhe, akekho omunye owathathayo.",
+  },
+  suspendCancel: {
+    en: "Leave it open",
+    ha: "Bar shi a buɗe",
+    yo: "Fi sílẹ̀ ní ṣíṣí",
+    ig: "Hapụ ya ka ọ ghere oghe",
+    fr: "Laisser ouvert",
+    pt: "Deixar aberto",
+    sw: "Iache wazi",
+    ar: "اتركه مفتوحًا",
+    tw: "Gyaw no kwan so",
+    zu: "Kuyeke kuvulekile",
+  },
+  resetTwoFactorConfirmTitle: {
+    en: "Reset the second factor on {name}'s account?",
+    ha: "A sake saita mataki na biyu a asusun {name}?",
+    yo: "Tún ìdánimọ̀ kejì ṣe lórí àkàǹtì {name}?",
+    ig: "Tọghata usoro nke abụọ n'akaụntụ {name}?",
+    fr: "Réinitialiser le second facteur du compte de {name} ?",
+    pt: "Repor o segundo fator na conta de {name}?",
+    sw: "Uweke upya kipengele cha pili kwenye akaunti ya {name}?",
+    ar: "إعادة ضبط العامل الثاني في حساب {name}؟",
+    tw: "San hyehyɛ ade a ɛtɔ so mmienu wɔ {name} akawnt so?",
+    zu: "Setha kabusha isici sesibili ku-akhawunti ka-{name}?",
+  },
+  resetTwoFactorConfirmBody: {
+    en: "{name}'s authenticator app and backup codes stop working now, and every session they have open ends. They cannot reach the console again until they enrol a new device.",
+    ha: "Manhajar tantancewa da lambobin ajiya na {name} za su daina aiki yanzu, kuma duk zaman da suke da shi zai ƙare. Ba za su iya shiga na'urar ba har sai sun yi rajistar sabon na'ura.",
+    yo: "Áàpù ìjẹ́rìísí àti àwọn kóòdù ìpamọ́ {name} yóò dáwọ́ dúró báyìí, gbogbo ìjókòó tí wọ́n ṣí sì parí. Wọn kò lè dé kọ́ńsólù mọ́ títí wọn yóò fi forúkọ ẹ̀rọ tuntun sílẹ̀.",
+    ig: "Ngwa nyocha na koodu ndabere nke {name} ga-akwụsị ịrụ ọrụ ugbu a, nnọkọ ọ bụla ha meghere ga-akwụsịkwa. Ha enweghị ike ịbanye na console ruo mgbe ha debanyere ngwaọrụ ọhụrụ.",
+    fr: "L'application d'authentification et les codes de secours de {name} cessent de fonctionner immédiatement, et toutes ses sessions ouvertes se terminent. Elle ne pourra revenir sur la console qu'après avoir enregistré un nouvel appareil.",
+    pt: "A aplicação de autenticação e os códigos de recuperação de {name} deixam de funcionar agora, e todas as sessões abertas terminam. Só voltará à consola depois de registar um novo dispositivo.",
+    sw: "Programu ya uthibitishaji na misimbo ya akiba ya {name} vitaacha kufanya kazi sasa, na kila kipindi alichofungua kitaisha. Hataweza kufikia konsoli tena hadi asajili kifaa kipya.",
+    ar: "يتوقف تطبيق المصادقة ورموز النسخ الاحتياطي الخاصة بـ {name} الآن، وتنتهي كل جلسة مفتوحة لديه. لن يتمكن من الوصول إلى وحدة التحكم حتى يسجّل جهازًا جديدًا.",
+    tw: "{name} authenticator app ne ne backup nkyerɛwde no begyae adwuma seesei, na nhyiam biara a wabue no bɛba awiei. Ɔrentumi nkɔ console no so bio kosi sɛ ɔbɛkyerɛw afidie foforo.",
+    zu: "Uhlelo lokuqinisekisa lika-{name} namakhodi asekelayo ayeka ukusebenza manje, futhi wonke amaseshini awavulile ayaphela. Ngeke aphinde afinyelele ikhonsoli aze abhalise idivayisi entsha.",
+  },
+  resetTwoFactorCancel: {
+    en: "Leave it alone",
+    ha: "Kada a taɓa shi",
+    yo: "Fi sílẹ̀ bẹ́ẹ̀",
+    ig: "Hapụ ya",
+    fr: "Ne rien changer",
+    pt: "Não mexer",
+    sw: "Usiiguse",
+    ar: "لا تغيّر شيئًا",
+    tw: "Nnyɛ ho hwee",
+    zu: "Kuyeke kunjalo",
+  },
+  toastColleagueRemoved: {
+    en: "{name} no longer has console access.",
+    ha: "{name} ba shi da damar shiga na'urar kuma.",
+    yo: "{name} kò ní ìwọlé kọ́ńsólù mọ́.",
+    ig: "{name} enwekwaghị ohere console.",
+    fr: "{name} n'a plus accès à la console.",
+    pt: "{name} já não tem acesso à consola.",
+    sw: "{name} hana tena ufikiaji wa konsoli.",
+    ar: "لم يعد لدى {name} وصول إلى وحدة التحكم.",
+    tw: "{name} nni console no ho kwan bio.",
+    zu: "U-{name} akasenakho ukufinyelela ikhonsoli.",
+  },
+  toastColleagueSuspended: {
+    en: "{name} is suspended.",
+    ha: "An dakatar da {name}.",
+    yo: "A ti dá {name} dúró.",
+    ig: "Akwụsịtụrụ {name}.",
+    fr: "{name} est suspendu.",
+    pt: "{name} está suspenso.",
+    sw: "{name} amesimamishwa.",
+    ar: "تم تعليق حساب {name}.",
+    tw: "Wɔagyae {name} kakra.",
+    zu: "U-{name} umisiwe.",
+  },
+  toastColleagueRestored: {
+    en: "{name} is back in the console.",
+    ha: "{name} ya dawo cikin na'urar.",
+    yo: "{name} ti padà sínú kọ́ńsólù.",
+    ig: "{name} alaghachila na console.",
+    fr: "{name} a de nouveau accès à la console.",
+    pt: "{name} voltou à consola.",
+    sw: "{name} amerudi kwenye konsoli.",
+    ar: "عاد {name} إلى وحدة التحكم.",
+    tw: "{name} asan aba console no mu.",
+    zu: "U-{name} usebuyele ekhonsolini.",
+  },
+  toastTwoFactorReset: {
+    en: "{name} will be asked to enrol a new device.",
+    ha: "Za a nemi {name} ya yi rajistar sabuwar na'ura.",
+    yo: "A ó bèèrè lọ́wọ́ {name} láti forúkọ ẹ̀rọ tuntun sílẹ̀.",
+    ig: "A ga-arịọ {name} ka o debanye ngwaọrụ ọhụrụ.",
+    fr: "{name} devra enregistrer un nouvel appareil.",
+    pt: "Será pedido a {name} que registe um novo dispositivo.",
+    sw: "{name} ataombwa kusajili kifaa kipya.",
+    ar: "سيُطلب من {name} تسجيل جهاز جديد.",
+    tw: "Wɔbɛka akyerɛ {name} sɛ ɔnkyerɛw afidie foforo.",
+    zu: "U-{name} uzocelwa ukuthi abhalise idivayisi entsha.",
+  },
+  colleagueRefusal: {
+    self: {
+      en: "You cannot do that to your own account.",
+      ha: "Ba za ka iya yin haka ga asusunka ba.",
+      yo: "O kò lè ṣe bẹ́ẹ̀ sí àkàǹtì ara rẹ.",
+      ig: "Ị nweghị ike ime nke ahụ n'akaụntụ nke gị.",
+      fr: "Vous ne pouvez pas faire cela sur votre propre compte.",
+      pt: "Não pode fazer isso à sua própria conta.",
+      sw: "Huwezi kufanya hivyo kwenye akaunti yako mwenyewe.",
+      ar: "لا يمكنك فعل ذلك بحسابك الخاص.",
+      tw: "Worentumi nyɛ saa wɔ w'ankasa akawnt so.",
+      zu: "Awukwazi ukwenza lokho ku-akhawunti yakho.",
+    },
+    last_director: {
+      en: "This is the last director who can still open the console.",
+      ha: "Wannan shi ne darakta na ƙarshe da zai iya buɗe na'urar.",
+      yo: "Èyí ni olùdarí ìkẹyìn tí ó ṣì lè ṣí kọ́ńsólù.",
+      ig: "Nke a bụ onye nduzi ikpeazụ nwere ike imepe console.",
+      fr: "C'est le dernier directeur encore capable d'ouvrir la console.",
+      pt: "Este é o último diretor que ainda consegue abrir a consola.",
+      sw: "Huyu ndiye mkurugenzi wa mwisho anayeweza kufungua konsoli.",
+      ar: "هذا آخر مدير ما زال بإمكانه فتح وحدة التحكم.",
+      tw: "Ɔpanyin a otwa toɔ a ɔtumi bue console no nie.",
+      zu: "Lo ngumqondisi wokugcina osakwazi ukuvula ikhonsoli.",
+    },
+    unknown_colleague: {
+      en: "That colleague is no longer on the roster.",
+      ha: "Wannan abokin aikin ba ya cikin jerin kuma.",
+      yo: "Ẹgbẹ́ iṣẹ́ yẹn kò sí lórí àkọsílẹ̀ mọ́.",
+      ig: "Onye ọrụ ibe ahụ anọkwaghị na ndepụta ahụ.",
+      fr: "Ce collègue ne figure plus sur la liste.",
+      pt: "Esse colega já não consta da lista.",
+      sw: "Mfanyakazi mwenzako huyo hayupo tena kwenye orodha.",
+      ar: "لم يعد هذا الزميل ضمن القائمة.",
+      tw: "Saa adwumayɛfoɔ no nni nkrataa no so bio.",
+      zu: "Lowo ozakwenu akasekho ohlwini.",
+    },
+    already_suspended: {
+      en: "That account is already suspended.",
+      ha: "An riga an dakatar da wannan asusun.",
+      yo: "A ti dá àkàǹtì yẹn dúró tẹ́lẹ̀.",
+      ig: "Akwụsịtụrụlarị akaụntụ ahụ.",
+      fr: "Ce compte est déjà suspendu.",
+      pt: "Essa conta já está suspensa.",
+      sw: "Akaunti hiyo tayari imesimamishwa.",
+      ar: "هذا الحساب معلَّق بالفعل.",
+      tw: "Wɔagyae saa akawnt no dedaw.",
+      zu: "Leyo akhawunti isivele imisiwe.",
+    },
+    not_suspended: {
+      en: "That account is not suspended.",
+      ha: "Ba a dakatar da wannan asusun ba.",
+      yo: "A kò dá àkàǹtì yẹn dúró.",
+      ig: "Akwụsịtụghị akaụntụ ahụ.",
+      fr: "Ce compte n'est pas suspendu.",
+      pt: "Essa conta não está suspensa.",
+      sw: "Akaunti hiyo haijasimamishwa.",
+      ar: "هذا الحساب غير معلَّق.",
+      tw: "Wɔnnyaee saa akawnt no.",
+      zu: "Leyo akhawunti ayimisiwe.",
+    },
+  },
+  accountServiceUnavailable: {
+    en: "The account service did not answer. Check the account before trying again.",
+    ha: "Sabis ɗin asusun bai amsa ba. Duba asusun kafin sake gwadawa.",
+    yo: "Iṣẹ́ àkàǹtì kò dáhùn. Ṣàyẹ̀wò àkàǹtì náà kí o tó tún gbìyànjú.",
+    ig: "Ọrụ akaụntụ azaghị. Lelee akaụntụ ahụ tupu ị nwaa ọzọ.",
+    fr: "Le service de comptes n'a pas répondu. Vérifiez le compte avant de réessayer.",
+    pt: "O serviço de contas não respondeu. Verifique a conta antes de tentar de novo.",
+    sw: "Huduma ya akaunti haikujibu. Angalia akaunti kabla ya kujaribu tena.",
+    ar: "لم تستجب خدمة الحسابات. تحقق من الحساب قبل المحاولة مرة أخرى.",
+    tw: "Akawnt som no annye so. Hwɛ akawnt no ansa na woasan asɔ.",
+    zu: "Insizakalo ye-akhawunti ayiphendulanga. Hlola i-akhawunti ngaphambi kokuzama futhi.",
   },
   tableHead: {
     person: {

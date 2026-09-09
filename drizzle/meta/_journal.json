@@ -288,6 +288,13 @@
       "when": 1788934383967,
       "tag": "0040_hesitant_prodigy",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1788945534236,
+      "tag": "0041_absurd_serpent_society",
+      "breakpoints": true
     }
   ]
 }

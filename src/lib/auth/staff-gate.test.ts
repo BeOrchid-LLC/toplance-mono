@@ -4,43 +4,84 @@ import { decideStaffGate, requireStaffAction } from "@/lib/auth/staff-gate";
 import type { Actor } from "@/lib/auth/policy";
 
 /**
- * The one seam: `twoFactorEnabled` is a fact only Clerk's backend holds,
- * and no test process has a Clerk session. Everything else below —
- * the decision, the seam, the messages — is the real module.
+ * Two seams, and only two. `twoFactorEnabled` is a fact only Clerk's
+ * backend holds and no test process has a Clerk session; `suspendedAt`
+ * is a column, and no test process has a database. Everything else below
+ * — the decision, the ordering, the messages — is the real module.
  */
 let twoFactorEnabled = false;
+let suspended = false;
 
 vi.mock("@clerk/nextjs/server", () => ({
   currentUser: async () => ({ twoFactorEnabled }),
   auth: async () => ({ userId: null }),
 }));
 
+vi.mock("@/lib/data/staff", () => ({
+  isSuspendedColleague: async () => suspended,
+}));
+
 /**
  * The pure decision `requireStaffConsole` is built around: given who
- * someone is and whether Clerk says they have a second factor enrolled,
- * which of the three screens do they see. No Clerk network call, no
- * database — plain objects in, one of three strings out.
+ * someone is, whether a director has closed their account, and whether
+ * Clerk says they have a second factor enrolled, which screen do they
+ * see. No Clerk network call, no database — plain objects in, one of
+ * five strings out.
  */
 describe("decideStaffGate", () => {
   it("refuses a non-staff account, whatever its 2FA state", () => {
-    expect(decideStaffGate({ isStaff: false, twoFactorEnabled: false })).toBe(
+    expect(decideStaffGate({ isStaff: false, suspended: false, twoFactorEnabled: false })).toBe(
       "refuse"
     );
-    expect(decideStaffGate({ isStaff: false, twoFactorEnabled: true })).toBe(
+    expect(decideStaffGate({ isStaff: false, suspended: false, twoFactorEnabled: true })).toBe(
       "refuse"
     );
   });
 
   it("blocks a staff account with no second factor enrolled", () => {
-    expect(decideStaffGate({ isStaff: true, twoFactorEnabled: false })).toBe(
+    expect(decideStaffGate({ isStaff: true, suspended: false, twoFactorEnabled: false })).toBe(
       "enroll"
     );
   });
 
   it("lets a staff account with a second factor through", () => {
-    expect(decideStaffGate({ isStaff: true, twoFactorEnabled: true })).toBe(
+    expect(decideStaffGate({ isStaff: true, suspended: false, twoFactorEnabled: true })).toBe(
       "ok"
     );
+  });
+
+  /**
+   * A suspension outranks both checks below it. Neither of them is the
+   * answer a suspended colleague needs, and one of them would send them
+   * off to enrol an authenticator app that changes nothing.
+   */
+  describe("on a suspended account", () => {
+    it("says so, rather than reporting a missing second factor", () => {
+      expect(
+        decideStaffGate({ isStaff: true, suspended: true, twoFactorEnabled: false })
+      ).toBe("suspended");
+    });
+
+    it("says so even where the rank would also have refused", () => {
+      expect(
+        decideStaffGate({
+          isStaff: true,
+          suspended: true,
+          twoFactorEnabled: true,
+          staffRole: "reviewer",
+          requireRole: "owner",
+        })
+      ).toBe("suspended");
+    });
+
+    it("still refuses a non-staff account as not staff", () => {
+      // Suspension is a staff column; a traveller carrying one is a row
+      // the check constraint forbids, and the honest answer is the one
+      // about their role.
+      expect(
+        decideStaffGate({ isStaff: false, suspended: true, twoFactorEnabled: true })
+      ).toBe("refuse");
+    });
   });
 
   /**
@@ -54,6 +95,7 @@ describe("decideStaffGate", () => {
       expect(
         decideStaffGate({
           isStaff: true,
+          suspended: false,
           twoFactorEnabled: true,
           staffRole: "reviewer",
           requireRole: "owner",
@@ -65,6 +107,7 @@ describe("decideStaffGate", () => {
       expect(
         decideStaffGate({
           isStaff: true,
+          suspended: false,
           twoFactorEnabled: true,
           staffRole: "owner",
           requireRole: "owner",
@@ -78,6 +121,7 @@ describe("decideStaffGate", () => {
       expect(
         decideStaffGate({
           isStaff: true,
+          suspended: false,
           twoFactorEnabled: false,
           staffRole: "reviewer",
           requireRole: "owner",
@@ -89,6 +133,7 @@ describe("decideStaffGate", () => {
       expect(
         decideStaffGate({
           isStaff: true,
+          suspended: false,
           twoFactorEnabled: true,
           staffRole: "reviewer",
         })
@@ -122,6 +167,7 @@ describe("requireStaffAction", () => {
 
   afterEach(() => {
     twoFactorEnabled = false;
+    suspended = false;
     vi.unstubAllEnvs();
   });
 
@@ -146,6 +192,38 @@ describe("requireStaffAction", () => {
   it("lets a staff account with a second factor act", async () => {
     twoFactorEnabled = true;
     expect(await requireStaffAction(staff)).toEqual({ actor: staff });
+  });
+
+  /**
+   * The half of a suspension that closes the writes. The console
+   * redirect handles somebody who reloads; this handles the tab they
+   * already had open, whose buttons still post.
+   */
+  it("closes every ops write to a suspended colleague", async () => {
+    twoFactorEnabled = true;
+    suspended = true;
+    const result = await requireStaffAction(staff);
+    expect(result).toHaveProperty("error");
+    expect("error" in result && result.error).toMatch(/suspended/);
+  });
+
+  it("does not cost a traveller the suspension read", async () => {
+    // Nothing to assert about the query itself; what matters is that a
+    // suspended flag on a non-staff account cannot change the answer.
+    suspended = true;
+    expect(await requireStaffAction(traveller)).toEqual({
+      error: "You do not have access to that.",
+    });
+  });
+
+  it("keeps the e2e seam from standing a suspension down", async () => {
+    // The seam exists so the suite need not enrol an authenticator app.
+    // A suspension is not a second factor, and skipping it would make
+    // the e2e environment the one place this act does nothing.
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("E2E_SKIP_STAFF_2FA", "1");
+    suspended = true;
+    expect(await requireStaffAction(staff)).toHaveProperty("error");
   });
 
   it("honours the e2e seam outside production — the suite cannot enrol an app", async () => {

@@ -51,6 +51,34 @@ export function OwnerAccessRefused() {
 }
 
 /**
+ * Staff, and a rank, and a second factor — and a director has closed
+ * the account anyway.
+ *
+ * Its own screen rather than `StaffAccessRefused`, for the reason
+ * `OwnerAccessRefused` is its own screen: this person works here, and
+ * telling them the console is for Toplance staff sends them to ask for
+ * something they already have.
+ *
+ * No way out on the page, because there is not one from here — a
+ * suspension is lifted by another director from `/ops/staff`, and a
+ * button offering anything else would be a button that does nothing.
+ */
+export function StaffSuspended() {
+  return (
+    <div className="grid min-h-dvh place-items-center px-6">
+      <div className="max-w-[440px] text-center">
+        <h1 className="t-h2">Your operations account is suspended</h1>
+        <p className="t-muted mt-3">
+          Nothing you were working on has moved — the cases assigned to you are
+          still yours. A Director can restore your access from the colleagues
+          screen.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Staff, but not staff who can be trusted with a passport scan yet — no
  * authenticator app is enrolled, so Clerk has only ever asked this
  * session for one factor. `accountsUrl` is this instance's own Account

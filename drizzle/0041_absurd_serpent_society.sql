@@ -1,0 +1,2 @@
+ALTER TABLE "profiles" ADD COLUMN "suspended_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "profiles" ADD CONSTRAINT "suspended_at_only_for_staff" CHECK ("profiles"."suspended_at" is null or "profiles"."role" = 'staff');

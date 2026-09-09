@@ -248,6 +248,23 @@ export const EVENT_NAMES = [
 
   "toplance.tenant_suspended",
   "toplance.tenant_restored",
+
+  /**
+   * What a director did to a BeOrchid console account from
+   * `/ops/staff`. Four names rather than one `staff_access_changed`
+   * carrying a verb, because these answer different questions and get
+   * read at different rates: removals and suspensions are the shape of
+   * staff turnover, and a second-factor reset is an ordinary support
+   * act that happens every time somebody buys a phone.
+   *
+   * `staff_suspended` and `staff_restored` are the pair
+   * `tenant_suspended` / `tenant_restored` above are, deliberately —
+   * the same question asked of a person rather than of an agency.
+   */
+  "toplance.staff_removed",
+  "toplance.staff_suspended",
+  "toplance.staff_restored",
+  "toplance.staff_two_factor_reset",
   "toplance.tenant_seats_changed",
   "toplance.tenant_member_role_changed",
   "toplance.demo_request_status_changed",

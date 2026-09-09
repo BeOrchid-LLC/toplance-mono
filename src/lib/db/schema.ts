@@ -380,6 +380,24 @@ export const profiles = pgTable(
     locale: text().notNull().default("en"),
     role: appRole().notNull().default("traveler"),
     staffRole: staffRole(),
+    /**
+     * When a director suspended this colleague's console account, or
+     * null while it is live. The staff equivalent of
+     * `organisations.suspended_at`, and it works the same way: the row
+     * is never deleted, so everything the person has already reviewed
+     * keeps their name on it and the decision is reversible in one
+     * click.
+     *
+     * Read by `decideStaffGate`, which is the whole of its reach — a
+     * suspended colleague is refused at the console door and by every
+     * ops server action, and nothing else in the product consults it.
+     *
+     * Distinct from removal, which is `role = 'traveler'` and no rank:
+     * suspension is the pause, removal is the end, and collapsing them
+     * into one column is how "restore" stops saying which of the two it
+     * undoes.
+     */
+    suspendedAt: timestamp({ withTimezone: true }),
     /** Per-person notification switches, e.g. `{ "companionDigest": "weekly" | "off" }`. */
     notificationPrefs: jsonb().notNull().default({}),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
@@ -405,6 +423,18 @@ export const profiles = pgTable(
     check(
       "staff_role_only_for_staff",
       sql`${t.staffRole} is null or ${t.role} = 'staff'`
+    ),
+    /**
+     * Same shape as the rank constraint above, and for the same reason:
+     * only `decideStaffGate` reads this column, so a suspension left on
+     * a traveller row would be a fact nothing in the product acts on.
+     * `removeColleague` clears it in the same statement that writes
+     * `role = 'traveler'`, which is the only path from staff back to
+     * traveller — so this holds by construction and exists to say so.
+     */
+    check(
+      "suspended_at_only_for_staff",
+      sql`${t.suspendedAt} is null or ${t.role} = 'staff'`
     ),
   ]
 );

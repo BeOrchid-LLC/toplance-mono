@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 
 import { getActor, getProfile, type Profile } from "@/lib/data/applications";
+import { isSuspendedColleague } from "@/lib/data/staff";
 import { isStaff } from "@/lib/auth/policy";
 import type { Actor, StaffRole } from "@/lib/auth/policy";
 import { buildAccountsBaseUrl } from "@clerk/shared/buildAccountsBaseUrl";
@@ -15,22 +16,42 @@ import { buildAccountsBaseUrl } from "@clerk/shared/buildAccountsBaseUrl";
  * network call — `requireStaffConsole` below is the only thing that
  * knows how to ask Clerk for the two facts this needs.
  */
-export type StaffGateDecision = "ok" | "refuse" | "refuse-role" | "enroll";
+export type StaffGateDecision =
+  | "ok"
+  | "refuse"
+  | "refuse-role"
+  | "suspended"
+  | "enroll";
 
 /**
- * `refuse` and `refuse-role` are both a closed door, kept apart so the
- * screen can say which one it is. Telling a reviewer "this console is
- * for Toplance staff" when they *are* staff reads as a bug in their
- * account rather than the boundary it actually is.
+ * `refuse`, `refuse-role` and `suspended` are all a closed door, kept
+ * apart so the screen can say which one it is. Telling a reviewer "this
+ * console is for Toplance staff" when they *are* staff reads as a bug in
+ * their account rather than the boundary it actually is, and telling a
+ * suspended director the same thing sends them to ask for a rank they
+ * already hold.
  */
 export function decideStaffGate(input: {
   isStaff: boolean;
   twoFactorEnabled: boolean;
+  /**
+   * `profiles.suspended_at` is set. Required rather than optional,
+   * unlike the two below it: the permissive reading of a missing value
+   * is "not suspended", so a caller that forgot to pass it would open
+   * the console to an account a director has closed. The other two
+   * default the restrictive way and can afford to be omitted.
+   */
+  suspended: boolean;
   staffRole?: StaffRole | null;
   /** Set by screens only some staff may open, e.g. the director's dashboard. */
   requireRole?: StaffRole;
 }): StaffGateDecision {
   if (!input.isStaff) return "refuse";
+
+  // Ahead of both checks below, for the reason each of them gives in
+  // turn: a suspended account is not a reviewer who needs a rank, and it
+  // is not somebody an authenticator app would let in.
+  if (input.suspended) return "suspended";
 
   // Before the second factor, deliberately. Enrolling an authenticator
   // app would not get a reviewer into an owner-only screen, so asking
@@ -133,6 +154,15 @@ const staffGate = cache(async function staffGate(
 
   if (!isStaff(actor)) return { decision: "refuse" };
 
+  /**
+   * Before the Clerk round trip below, and before the role check, so a
+   * suspended colleague never pays for either. `redirect()` throws, so
+   * the fourteen screens that branch on this union never see a fifth
+   * case — the same trick the missing-profile redirect above plays, and
+   * the reason a suspension needed no edit on any ops page.
+   */
+  if (profile.suspendedAt) redirect("/ops/suspended");
+
   // Role first, so a reviewer opening an owner-only screen is never sent
   // off to enrol an authenticator app that would not let them in. It
   // also saves the Clerk round-trip below on a request that cannot
@@ -148,6 +178,9 @@ const staffGate = cache(async function staffGate(
 
   const decision = decideStaffGate({
     isStaff: true,
+    // Already handled by the redirect above; passed so the call site
+    // states the fact rather than relying on a check further up.
+    suspended: false,
     twoFactorEnabled: staffTwoFactorSkipped() || (user?.twoFactorEnabled ?? false),
     staffRole: actor.staffRole,
     requireRole,
@@ -181,6 +214,14 @@ export type StaffActionResult = { actor: Actor } | { error: string };
 const NOT_STAFF = "You do not have access to that.";
 const NEEDS_SECOND_FACTOR =
   "Turn on two-step verification on your Toplance account before you can act on a case.";
+/**
+ * Said rather than hidden. A suspended colleague clicking a button they
+ * still have on screen — an open tab from before the suspension — is
+ * owed the reason, and "you do not have access to that" would read as
+ * the account being broken.
+ */
+const SUSPENDED =
+  "Your operations account is suspended. A Director can restore it from the colleagues screen.";
 
 /**
  * The same gate as `requireStaffConsole`, for the writes rather than the
@@ -204,15 +245,26 @@ export async function requireStaffAction(
   if (!actor) return { error: NOT_STAFF };
 
   // Only asked of staff: a traveller is refused on the role alone, and
-  // has no reason to cost a Clerk backend call.
-  const user = isStaff(actor) ? await currentUser() : null;
+  // has no reason to cost a Clerk backend call — or the suspension read
+  // beside it, which is a staff-only column.
+  //
+  // `Actor` deliberately does not carry the suspension. It is the input
+  // to every policy in `policy.ts`, and a fact only this gate consults
+  // would sit there inviting each of them to consult it differently;
+  // one indexed primary-key lookup, made in parallel with a Clerk round
+  // trip that was happening anyway, is the cheaper half of that trade.
+  const [user, suspended] = isStaff(actor)
+    ? await Promise.all([currentUser(), isSuspendedColleague(actor.userId)])
+    : [null, false];
 
   const decision = decideStaffGate({
     isStaff: isStaff(actor),
+    suspended,
     twoFactorEnabled: staffTwoFactorSkipped() || (user?.twoFactorEnabled ?? false),
   });
 
   if (decision === "refuse") return { error: NOT_STAFF };
+  if (decision === "suspended") return { error: SUSPENDED };
   if (decision === "enroll") return { error: NEEDS_SECOND_FACTOR };
   return { actor };
 }

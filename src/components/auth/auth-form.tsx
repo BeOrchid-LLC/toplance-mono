@@ -434,7 +434,19 @@ export function AuthForm(props: AuthFormProps) {
       //
       // Narrow deliberately: `isVerificationAlreadyDone` matches one
       // code, so a wrong or expired one still fails here.
-      if (verified.error && !isVerificationAlreadyDone(verified.error)) {
+      //
+      // Sign-up only. The refusal was observed there and `finalize()`
+      // is genuinely all that is left there, because a brand-new
+      // account has no second factor to satisfy. On sign-in the same
+      // fall-through is not safe: Clerk does not refresh the `signIn`
+      // resource on a 400, so `status` below still reads whatever it
+      // was before the call, and a staff account with TOTP enrolled
+      // would miss the `needs_second_factor` branch and reach a
+      // `finalize()` that cannot succeed.
+      if (
+        verified.error &&
+        !(mode === "sign-up" && isVerificationAlreadyDone(verified.error))
+      ) {
         const message = messageFor(verified.error, badCode);
         setState((s) => ({ ...s, error: message }));
         toast.error(message);

@@ -176,18 +176,24 @@
      which makes lightness a second, redundant encoding of the same
      magnitude the bar width already shows, running the same direction.
 
-     One hue at 264.5°, L 0.36 → 0.68 in even 0.08 steps, chroma held
-     at 0.20 until the gamut takes it. Validated as an ordinal ramp
-     against --surface: monotone L, every adjacent gap over the 0.06
-     floor, and the pale end at 2.94:1, clear of the 2:1 an ordinal
-     light end has to hold. Brand-neutral like the three above — a
-     chart fill is never a brand accent, so this stays put when
-     --brand does not. */
-  --chart-funnel-1: #0525a3;
-  --chart-funnel-2: #1742be;
-  --chart-funnel-3: #2c5cda;
-  --chart-funnel-4: #4276f6;
-  --chart-funnel-5: #6493fd;
+     One hue at 258°, L 0.36 → 0.68 in even 0.08 steps, chroma held
+     near 0.16 until the gamut takes it — the deep end clips to 0.133.
+     Validated as an ordinal ramp against --surface: monotone L, every
+     adjacent gap over the 0.06 floor, and the pale end at 2.90:1,
+     clear of the 2:1 an ordinal light end has to hold.
+
+     258° is --brand's own hue, measured: #0a4ea3 is OKLCH 257.6°. The
+     earlier note here called the ramp brand-neutral and said it would
+     stay put when --brand moved — it did not, because a ramp derived
+     off the old 264.5° brand read as a second, disagreeing blue beside
+     the new one. Sharing the hue is the point: the funnel is the same
+     product speaking, in lightness rather than in hue. If --brand's
+     hue moves again, this ramp moves with it. */
+  --chart-funnel-1: #003981;
+  --chart-funnel-2: #034da8;
+  --chart-funnel-3: #2466c3;
+  --chart-funnel-4: #3d7ede;
+  --chart-funnel-5: #5598f9;
 
   /* what tints blend into */
   --mix: #ffffff;
@@ -308,19 +314,20 @@
   --chart-outstanding: #c08829;
 
   /* The funnel ramp re-anchored for dark, not inverted into it. Same
-     hue and the same 0.08 lightness steps, but the ends swap jobs:
+     hue — 258°, --brand's own — and the same 0.08 lightness steps,
+     but the ends swap jobs:
      on a near-black ground the *bright* step is the emphatic one, so
      the wide end of the funnel is the lightest and the ramp darkens
      as the funnel narrows — the reverse of the light-mode hexes and
      the same reading. L 0.78 → 0.46. Re-validated against --surface
-     rather than assumed: the narrow end lands at 2.38:1, which is the
+     rather than assumed: the narrow end lands at 2.27:1, which is the
      end that would have gone invisible had these been a straight flip
      of the light steps. */
-  --chart-funnel-1: #94b6fe;
-  --chart-funnel-2: #6d9afe;
-  --chart-funnel-3: #4e7ff1;
-  --chart-funnel-4: #3865d6;
-  --chart-funnel-5: #234cba;
+  --chart-funnel-1: #8ab9ff;
+  --chart-funnel-2: #5c9eff;
+  --chart-funnel-3: #4385e4;
+  --chart-funnel-4: #2a6cc9;
+  --chart-funnel-5: #0d53af;
 
   /* What the tinted fills blend toward, so a 12%-brand wash reads as a
      wash on the plate rather than as a hole in it. It has to BE the dark

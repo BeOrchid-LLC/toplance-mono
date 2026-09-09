@@ -56,6 +56,13 @@ type NotificationKindKey =
 export const NOTIFICATIONS: {
   title: L;
   empty: L;
+  /**
+   * Clears the badge, deliberately by hand. The bell used to mark
+   * everything read the moment it opened, which meant the bold on an
+   * unread row was destroyed by the act of looking at it — the styling
+   * existed and nobody had ever seen it.
+   */
+  readAll: L;
   ariaUnread: L;
   ariaNoUnread: L;
   kind: Record<NotificationKindKey, L>;
@@ -83,6 +90,18 @@ export const NOTIFICATIONS: {
     ar: "لا شيء بعد.",
     tw: "Hwee nnya nsi.",
     zu: "Akukho lutho okwamanje.",
+  },
+  readAll: {
+    en: "Read all",
+    ha: "Karanta duka",
+    yo: "Kà gbogbo rẹ̀",
+    ig: "Gụọ ha niile",
+    fr: "Tout marquer comme lu",
+    pt: "Marcar todas como lidas",
+    sw: "Soma zote",
+    ar: "تعليم الكل كمقروء",
+    tw: "Kenkan ne nyinaa",
+    zu: "Funda konke",
   },
   ariaUnread: {
     en: "Notifications, {n} unread",

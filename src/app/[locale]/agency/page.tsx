@@ -415,13 +415,22 @@ export default async function EmployerConsolePage() {
         {/* The rail names your role; this says how you got it.
             Seeing "Director" appended to your account without ever
             having chosen it is the kind of thing that reads as the
-            product knowing something about you that you don't. */}
-        <p className="t-muted mt-2 max-w-[68ch]">{ROLE_REASON[org.role][locale]}</p>
+            product knowing something about you that you don't.
+
+            No 68ch cap. This is the block under the page title, read
+            once on the way past, and capped it wrapped into three lines
+            of a narrow column with the page empty to its right —
+            pushing the figures down for no reading benefit. Same
+            complaint the client made about headers on 8 September, in
+            the one place the fix had not reached. `text-pretty` so the
+            lines it does take break evenly rather than leaving one word
+            alone. */}
+        <p className="t-muted mt-2 text-pretty">{ROLE_REASON[org.role][locale]}</p>
         {/* Every figure below is the agency's, for a director and a
             handler alike. Until the role-based split lands, the page
             has to say so — otherwise a handler reads the agency's
             forty open cases as their own. */}
-        <p className="t-muted mt-2">{AGENCY.overviewIsAgencyWide[locale]}</p>
+        <p className="t-muted mt-2 text-pretty">{AGENCY.overviewIsAgencyWide[locale]}</p>
         {summary && seats > 0 && (
           <Progress value={(used / seats) * 100} className="mt-4 max-w-[320px]" />
         )}

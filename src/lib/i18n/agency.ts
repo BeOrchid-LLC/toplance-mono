@@ -52,6 +52,7 @@ export const AGENCY: {
   routeNotSet: L;
   documentsVerified: L;
   invitationsLabel: L;
+  overviewIsAgencyWide: L;
   invitationsPageBody: L;
   pendingWord: L;
   invitationsEmpty: L;
@@ -552,17 +553,47 @@ export const AGENCY: {
     tw: "{total} mu {verified} na wɔahwɛ mu ahu sɛ ɛyɛ nokware",
     zu: "{verified} kwezingu-{total} eziqinisekisiwe",
   },
+  /**
+   * That these figures are the whole agency's, not the reader's own.
+   *
+   * Needed because the dashboard is agency-wide for everybody who opens
+   * it: a handler with four cases sees the agency's forty and has no
+   * way to tell from the numbers alone. Role-based overviews were
+   * deferred to the next iteration on 8 September, and this sentence is
+   * what makes the deferral safe rather than misleading in the
+   * meantime. It comes out when the split lands.
+   */
+  overviewIsAgencyWide: {
+    en: "These figures cover the whole agency, not only your own cases.",
+    ha: "Waɗannan lambobin sun shafi dukan hukumar, ba naka kaɗai ba.",
+    yo: "Àwọn nọ́mbà wọ̀nyí kan gbogbo ilé-iṣẹ́ náà, kì í ṣe tìrẹ nìkan.",
+    ig: "Ọnụọgụ ndị a metụtara ụlọ ọrụ dum, ọ bụghị naanị nke gị.",
+    fr: "Ces chiffres couvrent toute l'agence, pas seulement vos dossiers.",
+    pt: "Estes números abrangem toda a agência, não apenas os seus casos.",
+    sw: "Takwimu hizi zinahusu wakala mzima, si kesi zako pekee.",
+    ar: "تشمل هذه الأرقام الوكالة بأكملها، وليس حالاتك وحدها.",
+    tw: "Saa akontabuo yi fa adwumakuo no nyinaa ho, ɛnyɛ wo deɛ nkoaa.",
+    zu: "Lezi zibalo zifaka yonke i-ejensi, hhayi amacala akho kuphela.",
+  },
+  /**
+   * "Client invitations", not "Invitations".
+   *
+   * An agency invites two different kinds of person — a colleague onto
+   * the team, and a client onto a case — and the bare word named
+   * neither. The client asked for the distinction on 8 September, in
+   * the nav and on the page the button now sits on.
+   */
   invitationsLabel: {
-    en: "Invitations",
-    ha: "Gayyata",
-    yo: "Àwọn ìpè",
-    ig: "Ọkpụkpọ",
-    fr: "Invitations",
-    pt: "Convites",
-    sw: "Mialiko",
-    ar: "الدعوات",
-    tw: "Nfrɛ",
-    zu: "Izimemo",
+    en: "Client invitations",
+    ha: "Gayyatar abokan ciniki",
+    yo: "Àwọn ìpè oníbàárà",
+    ig: "Ọkpụkpọ ndị ahịa",
+    fr: "Invitations clients",
+    pt: "Convites de clientes",
+    sw: "Mialiko ya wateja",
+    ar: "دعوات العملاء",
+    tw: "Adetɔfoɔ nfrɛ",
+    zu: "Izimemo zamakhasimende",
   },
   /**
    * The lead under the heading on `/agency/clients/invitations`, which

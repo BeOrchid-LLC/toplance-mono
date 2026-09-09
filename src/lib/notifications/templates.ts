@@ -71,6 +71,51 @@ export function checklistCompleteEmail({
 }
 
 /** → traveller. `message` is staff-authored free text. */
+/**
+ * → traveller: come to the office.
+ *
+ * The subject names the appointment rather than the case, because this
+ * is the one email in the set that asks the reader to be somewhere on a
+ * day. A subject reading "an update on your application" would be true
+ * and would get opened on Thursday for a Tuesday appointment.
+ *
+ * A missing time is said out loud rather than left blank. "We will
+ * confirm the time" is a fact the traveller can act on; a silent gap is
+ * one they have to ring the agency about.
+ */
+export function attendanceRequestedEmail({
+  kind,
+  when,
+  place,
+  note,
+  url,
+}: {
+  kind: "biometrics" | "interview";
+  when: string | null;
+  place: string;
+  note: string | null;
+  url: string;
+}): EmailContent {
+  const what = kind === "biometrics" ? "biometrics appointment" : "interview";
+  const paragraphs = [
+    `Your agency has asked you to attend ${
+      kind === "biometrics" ? "a biometrics appointment" : "an interview"
+    }.`,
+    when ? `When: ${when}` : "When: your agency will confirm the time with you.",
+    `Where: ${place}`,
+  ];
+  if (note) paragraphs.push(note);
+
+  return {
+    subject: `Please come in for your ${what}`,
+    ...renderEmail({
+      heading: kind === "biometrics" ? "Biometrics appointment" : "Interview",
+      paragraphs,
+      cta: { href: url, label: "See your application" },
+    }),
+  };
+}
+
 export function statusChangedEmail({
   statusLabel,
   message,

@@ -38,6 +38,28 @@ describe("completionOf", () => {
     expect(verified).toBe(0);
   });
 
+  it("reports a flagged document separately, so the page can say so", () => {
+    // The ring still reads 100% — see the test above, and the reason
+    // it gives. What this adds is the count the headline needs, so
+    // that "100%" and "a document is needed" stop being printed side
+    // by side with nothing to reconcile them. The client called that
+    // contradiction out on 8 September.
+    const { pct, flagged } = completionOf([doc("flagged"), doc("verified")]);
+    expect(pct).toBe(100);
+    expect(flagged).toBe(1);
+  });
+
+  it("reports nothing flagged when nothing was sent back", () => {
+    expect(completionOf([doc("verified"), doc("checking")]).flagged).toBe(0);
+  });
+
+  it("does not count an optional flagged document against the traveller", () => {
+    // `flagged` counts required documents only, like every other
+    // figure here: an optional extra somebody was asked to redo is not
+    // a thing standing between them and submitting.
+    expect(completionOf([doc("flagged", false), doc("verified")]).flagged).toBe(0);
+  });
+
   it("does not count a failed document — nothing was stored", () => {
     // `failed` is an upload that never landed, not a verdict on one.
     const { pct } = completionOf([doc("failed"), doc("checking")]);

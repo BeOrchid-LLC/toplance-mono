@@ -29,8 +29,8 @@ export type Counter = {
 };
 
 /**
- * The laminated headline strip at the top of an ops screen: a row of
- * counters on the same glass surface across every screen that has one.
+ * The headline strip at the top of an ops screen: a row of counters on
+ * the same plate across every screen that has one.
  * Lifted out of `/ops/corridors/page.tsx`, which keeps its own inline
  * copy — this component is for the screens built after it.
  *
@@ -48,8 +48,7 @@ export function CounterRow({
   className?: string;
 }) {
   return (
-    <div className={cn("laminate mt-8 overflow-hidden rounded-lg", className)}>
-      <span aria-hidden className="laminate-sheen" />
+    <div className={cn("mt-8 overflow-hidden rounded-lg border border-border bg-surface", className)}>
       <dl
         className={cn(
           "relative z-[1] grid sm:grid-cols-2",

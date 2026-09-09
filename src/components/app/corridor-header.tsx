@@ -9,13 +9,12 @@ import { CORRIDOR_HEADER } from "@/lib/i18n/corridor-header";
 /**
  * The `(app)` signature moment: the corridor a traveller is actually on,
  * carried the same way the landing page carries the one they were
- * choosing. The laminate is honest here for the same reason it is on the
- * sign-up form — the sheet is over the record being built, not over a
- * dashboard widget.
+ * choosing. It is a plate: the record being built, on its own surface,
+ * not a dashboard widget.
  *
  * One per screen and at the top, per guideline §4. It is rendered by
  * `(app)/layout.tsx`, which means no page underneath it may add a second
- * one, and `backdrop-filter` stays at one element per route.
+ * one.
  *
  * The mark is only drawn when the corridor row resolves to two countries
  * this build knows. A corridor whose codes we cannot read still gets the
@@ -44,11 +43,7 @@ export async function CorridorHeader({
   );
 
   return (
-    <div className="laminate overflow-hidden rounded-lg">
-      {/* Fires once on load. There is no slot to change here, so the
-          corridor is the key it would be keyed on anyway. */}
-      <span aria-hidden className="laminate-sheen" />
-
+    <div className="overflow-hidden rounded-lg border border-border bg-surface">
       <div className="relative z-[1]">
         <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-3 px-5 py-4 sm:px-6">
           <div className="min-w-0">

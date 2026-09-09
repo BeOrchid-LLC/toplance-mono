@@ -43,15 +43,15 @@ function Slot({
       className={cn(
         "relative flex min-w-0 flex-col justify-center gap-1.5 px-5 py-4 transition-colors",
         /* Both states mix toward `transparent`, not toward `--surface`.
-           An opaque tint here would punch a solid rectangle through the
-           laminate on hover and undo the refraction under that one slot. */
+           The slots sit on the card's own plate, and a tint mixed toward
+           a ground they do not share would step out of it on hover. */
         "has-[select:focus-visible]:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]",
         /* The <select> below is `opacity-0`, so its own outline is
            invisible by construction and the slot has to draw the ring —
            the second permitted deviation on `:focus-visible` in
-           globals.css. Inset rather than offset because the bar is a
-           laminate with `overflow-hidden` and an outward ring on an inner
-           slot would be cut off at the bar's edge. `--ring`, not
+           globals.css. Inset rather than offset because the card is
+           `overflow-hidden` and an outward ring on an inner slot would
+           be cut off at its edge. `--ring`, not
            `--brand`: the fill hue was 2.078:1 against this plate in dark. */
         "has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-inset has-[select:focus-visible]:ring-ring",
         "hover:bg-[color-mix(in_srgb,var(--surface-2)_60%,transparent)]",
@@ -113,14 +113,11 @@ export function CorridorBar({
 
   return (
     <div>
-      {/* One laminated card, not a card plus two loose lines beneath it.
-          The slots, the machine-readable band and the status all sit under
-          the same sheet, which is the arrangement a data page actually
-          has — and it means the specular sweep crosses the whole object
-          rather than a fragment of it. */}
-      <div className="laminate overflow-hidden rounded-lg">
-        {/* Keyed on the corridor, so choosing a slot tilts the card. */}
-        <span key={code} aria-hidden className="laminate-sheen" />
+      {/* One plate, not a plate plus two loose lines beneath it. The
+          slots, the machine-readable band and the status all sit on the
+          same surface, which is the arrangement a data page actually
+          has. */}
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
 
         {/* Two full-width rows: the question on top, the answer and what
             to do about it underneath.
@@ -132,14 +129,13 @@ export function CorridorBar({
             a second primary on the first screen, competing with the
             first. Its label sat centred in a block tall enough to leave
             most of the blue empty, so the weight it carried was
-            decoration rather than content. And it interrupted the
-            specular sweep, which is the one effect that makes this card
-            read as a laminated document rather than a form.
+            decoration rather than content. And it cut the card in two,
+            so the slots and the band beside it read as a fragment
+            rather than as one object.
 
             As a normal control on the readout row it keeps its job —
-            nothing about the interaction changed — and gives the sweep,
-            the three slots and the machine-readable band the full width
-            back. Separators are still drawn per cell rather than with
+            nothing about the interaction changed — and gives the three
+            slots and the machine-readable band the full width back. Separators are still drawn per cell rather than with
             `divide-*`, so the last slot can close without one. */}
         <div className="relative z-[1]">
           <div className="grid lg:grid-cols-[1fr_1.15fr_0.85fr]">

@@ -12,21 +12,17 @@ export const metadata = { title: "Page not found" };
  * Next's own black-on-white default — a page from a different product,
  * with no way back into this one.
  *
- * No laminate. §4 keeps it for a surface whose subject is a corridor, a
+ * No plate. §4 keeps one for a surface whose subject is a corridor, a
  * case or a person's standing in one, and this page has no subject at
- * all; glass here would be decoration with nothing underneath it. The
- * ruled ground and the type scale are the whole treatment, which is §2's
- * point about matching through tokens rather than through devices.
+ * all; a sheet here would be decoration with nothing on it. The ground
+ * and the type scale are the whole treatment, which is §2's point about
+ * matching through tokens rather than through devices.
  */
 export default function NotFound() {
   return (
     <div className="min-h-dvh">
       <SiteNav />
       <main className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px]"
-        />
         <Shell className="py-24 md:py-32">
           <p className="kicker">Error 404</p>
           <h1 className="t-h1 mt-4 max-w-[26ch]">

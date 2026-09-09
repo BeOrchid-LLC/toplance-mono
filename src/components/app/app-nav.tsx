@@ -66,15 +66,12 @@ export function AppNav({
               // Full bar height, so the mark below lands on the bar's own
               // bottom edge rather than on the bottom of a pill floating
               // inside it. That is the whole idea: the current page marks
-              // the laminate hairline the bar closes on.
+              // the hairline the bar closes on.
               "nav-label relative flex h-full shrink-0 items-center px-3.5 text-[15px] font-semibold transition-colors",
-              // `z-10` because `.bar-edge::after` is a pseudo-element of
-              // the header and therefore paints after its children in DOM
-              // order — at auto z-index the 1px edge would draw over the
-              // 2px mark. Colour is the only thing that animates; the
-              // mark holds its box whether lit or not, so nothing reflows
-              // and nothing grows on hover.
-              "after:absolute after:inset-x-2 after:bottom-0 after:z-10 after:rounded-full after:transition-colors after:duration-[var(--dur-toggle)] after:ease-[var(--ease-out)]",
+              // Colour is the only thing that animates; the mark holds
+              // its box whether lit or not, so nothing reflows and
+              // nothing grows on hover.
+              "after:absolute after:inset-x-2 after:bottom-0 after:rounded-full after:transition-colors after:duration-[var(--dur-toggle)] after:ease-[var(--ease-out)]",
               active
                 ? // Text goes to full --ink rather than brand. Brand-coloured
                   // labels plus a brand-tinted pill said the same thing
@@ -97,8 +94,8 @@ export function AppNav({
             {item.badge !== undefined && (
               /* Beside the label rather than floating over it. The bar
                  items are full-bar-height text, not icons, so an
-                 overlapping dot would land on the laminate edge the
-                 active mark owns; a pill in the flow keeps both
+                 overlapping dot would land on the edge the active
+                 mark owns; a pill in the flow keeps both
                  legible and keeps the row from reflowing when a
                  message arrives. `aria-label` because "3" on its own
                  is not what a screen reader should read out. */

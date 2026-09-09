@@ -59,7 +59,7 @@ export function AgentDock({
     // there, a white record ends flush against a white dock and reads as
     // a card with its bottom torn off rather than as a page that scrolls.
     <div className="shrink-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-7">
-      <div className="ovi-edge mx-auto flex w-full max-w-[720px] flex-col gap-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5">
+      <div className="mx-auto flex w-full max-w-[720px] border border-border flex-col gap-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-3">
             {/* The agent's mark. The transcript gave its turns no anchor

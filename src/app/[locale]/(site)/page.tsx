@@ -293,7 +293,6 @@ export default async function HomePage() {
           locales, the same as `/travelers`. The only client-side boundary
           left in the hero is `CorridorBar` itself. */}
       <header className="relative isolate overflow-hidden">
-        <div aria-hidden className="security-paper pointer-events-none absolute inset-0 -z-10" />
         <Shell className="pb-20 pt-12 md:pb-28 md:pt-16">
           {/* Two columns from `lg`, one below it. The text keeps the
               left, and the image takes the space the copy was never
@@ -370,7 +369,7 @@ export default async function HomePage() {
                 are the drawing, not the branding.
 
                 The ground is genuinely transparent, so in light mode
-                `security-paper` rules straight through the artwork and
+                the page ground runs straight through the artwork and
                 there is nothing to frame, tint or blend.
 
                 Dark mode used to sit the drawing on a light panel,

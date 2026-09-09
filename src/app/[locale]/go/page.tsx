@@ -55,10 +55,6 @@ export default async function GoPage() {
 
   return (
     <main className="relative isolate grid min-h-dvh place-items-center px-6 py-14">
-      <div
-        aria-hidden
-        className="security-paper pointer-events-none absolute inset-0 -z-10"
-      />
       <Shell className="max-w-[560px]">
         <Panel>
           <PanelBody>

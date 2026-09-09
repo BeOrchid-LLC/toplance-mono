@@ -148,8 +148,9 @@ export function DocumentRow({
            to the card's edge, and a padded wrapper would inset it. */
         "border-b border-border px-5 py-5 last:border-b-0 sm:px-6",
         /* The tint mixes toward `transparent`, not toward `--mix`. These
-           rows sit on the ruled ground the laminate above them refracts;
-           an opaque tint would punch a solid rectangle through it. */
+           rows sit on a plate, and the same tint has to read correctly
+           there and on the inset below it; mixing toward one ground
+           would go wrong on the other. */
         needsAttention && "border-s-2",
         needsAttention &&
           (doc.state === "failed"

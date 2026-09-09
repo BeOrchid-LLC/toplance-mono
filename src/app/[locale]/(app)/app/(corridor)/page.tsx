@@ -99,7 +99,7 @@ export default async function DashboardPage() {
         <AttendanceNotice request={attendance} locale={locale} />
         {/*
           The lead card is the next action, not a greeting. The corridor,
-          the status and the case reference are all on the laminate above
+          the status and the case reference are all on the header above
           this, so the dashboard's own job is the one sentence about what
           happens next.
         */}

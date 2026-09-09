@@ -46,17 +46,13 @@ function purposeLabel(purpose: string): string {
 function InviteChrome({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="bar-edge flex h-[var(--bar-h)] items-center gap-4 px-[max(16px,calc((100%-1140px)/2))]">
+      <header className="flex h-[var(--bar-h)] border-b border-border items-center gap-4 px-[max(16px,calc((100%-1140px)/2))]">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
         <div className="ms-auto flex items-center gap-2">
           <SettingsCluster />
         </div>
       </header>
       <main className="relative isolate flex-1 px-6 py-14 md:py-20">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-0 -z-10"
-        />
         <Shell className="max-w-[560px]">{children}</Shell>
       </main>
     </div>

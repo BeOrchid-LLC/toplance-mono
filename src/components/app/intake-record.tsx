@@ -104,7 +104,7 @@ export function RecordDocument({
     // `aria-controls` — needs to say which surface it means.
     <div
       id="intake-record"
-      className="ovi-edge mx-auto w-full max-w-[720px] rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5"
+      className="mx-auto w-full max-w-[720px] border border-border rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5"
     >
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
         <p className="special-caps truncate">{t(INTAKE_UI.recordHeading)}</p>

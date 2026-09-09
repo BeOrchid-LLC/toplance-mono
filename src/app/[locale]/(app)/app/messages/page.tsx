@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * The traveller's side of the thread — outside the `(corridor)` route
  * group for the same reason `/app/profile` is: this is a conversation,
  * not a step in the application journey, so it does not open with the
- * corridor laminate.
+ * corridor header.
  */
 export default async function MessagesPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;

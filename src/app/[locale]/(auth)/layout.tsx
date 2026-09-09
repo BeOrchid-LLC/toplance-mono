@@ -16,10 +16,6 @@ import { getLocale } from "@/lib/i18n/server";
  * strip off the top of the page — and it made signing up look like a
  * different product from the one that just argued for itself. The chrome
  * now matches `site-nav`: one bar, one rule, the ground doing the work.
- *
- * `security-paper` on the ground is what the laminate on the form panel
- * refracts. Without it the glass has nothing to bend and reads as a flat
- * translucent rectangle.
  */
 export default async function AuthLayout({
   children,
@@ -28,7 +24,7 @@ export default async function AuthLayout({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="bar-edge sticky top-0 z-90 flex h-[var(--bar-h)] items-center gap-4 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-[max(16px,calc((100%-1140px)/2))] backdrop-blur-md">
+      <header className="sticky top-0 z-90 flex border-b border-border h-[var(--bar-h)] items-center gap-4 bg-[color-mix(in_srgb,var(--surface)_92%,transparent)] px-[max(16px,calc((100%-1140px)/2))] backdrop-blur-md">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
         <div className="ms-auto flex items-center gap-2 sm:gap-3">
           <SettingsCluster />
@@ -36,10 +32,6 @@ export default async function AuthLayout({
       </header>
 
       <main className="relative isolate flex-1 px-6 py-14 md:py-20">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-0 -z-10"
-        />
         {children}
       </main>
 

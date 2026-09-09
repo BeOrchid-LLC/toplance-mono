@@ -176,7 +176,7 @@ export default async function EmployerConsolePage() {
 
   // No org row for this person yet — sign-up created the account but
   // not the organisation, or seed data never ran. The roster, seat
-  // count and privacy laminate below all assume an organisation exists;
+  // count and privacy panel below all assume an organisation exists;
   // rendering them here would either crash on `org.name` or show a
   // "0 people" roster for an org that was never created. This is the
   // only door in: name one, then the branch below takes over.
@@ -424,8 +424,8 @@ export default async function EmployerConsolePage() {
 
       {/*
         One rhythm for the whole page, rather than an `mt-8` on some
-        blocks and nothing on others. The laminate and the figure cards
-        used to be adjacent siblings with no margin between them, so the
+        blocks and nothing on others. The privacy panel and the figure
+        cards used to be adjacent siblings with no margin between them, so the
         console's most emphatic panel ran straight into the first row of
         numbers with no air at all — and every block below it set its own
         spacing, which is how that gap survived three screens' worth of
@@ -442,7 +442,7 @@ export default async function EmployerConsolePage() {
           believe is therefore no longer "not me" but "not anyone
           else": nobody at BeOrchid can open these documents, and
           inside their own agency a claimed case narrows to its handler
-          and to them. One laminate, on the page you land on, and none
+          and to them. One such panel, on the page you land on, and none
           below it — which is also why the two roster pages do not
           repeat it.
 
@@ -460,8 +460,7 @@ export default async function EmployerConsolePage() {
             re-reading — is what stays visible when it is shut. Open by
             default: a promise about somebody's passport should be read
             once before it can be put away. */}
-        <details open className="laminate group overflow-hidden rounded-lg">
-          <span aria-hidden className="laminate-sheen" />
+        <details open className="group overflow-hidden rounded-lg border border-border bg-surface">
           {/* `list-none` covers most engines; WebKit needs its own marker
               turned off too, or the chevron below is the second
               disclosure mark on the row. */}

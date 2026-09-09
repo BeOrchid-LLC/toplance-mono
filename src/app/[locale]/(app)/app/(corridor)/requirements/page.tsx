@@ -389,7 +389,7 @@ export default async function RequirementsPage() {
   return (
     <main>
       <Shell className="py-8 md:py-10">
-        {/* The corridor is named on the laminate above this screen, so
+        {/* The corridor is named on the header above this screen, so
             the heading is what the rule set *is* rather than a second
             printing of the same three facts. */}
         <h1 className="t-h2 max-w-[26ch]">{ruleSet.visaName}</h1>

@@ -124,8 +124,6 @@ export default async function OpsKybAgencyPage({
       {/* Dossier header — the consular sheet: name, standing, and the queue context in one line */}
       <Panel className="mt-4">
         <div className="relative px-5 py-5 sm:px-6 sm:py-6">
-          {/* faint ruled paper — the same ground official documents are printed on */}
-          <div className="pointer-events-none absolute inset-0 opacity-[0.55] security-paper" aria-hidden />
           <div className="relative flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="special-caps">Verification dossier</p>

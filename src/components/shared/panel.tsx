@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 
 /**
  * The case-file card. One sheet in the traveller's dossier: a matte
- * surface with a hairline edge and real (small) elevation. Matte on
- * purpose — the laminate in the corridor header is the only glass on any
- * screen, and these cards are the ground it reads against.
+ * surface with a hairline edge and real (small) elevation. Every surface
+ * in the product is matte now — there is no glass left for one to read
+ * against.
  *
  * The header pairs a quiet caps label with one right-aligned datum
  * (a badge, a count, an action). The label names the sheet; the datum is

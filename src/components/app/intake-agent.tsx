@@ -36,7 +36,7 @@ type Answers = Record<string, string>;
  * Intake is a conversation, not a 40-field form: one question at a time,
  * in the traveller's own language, with every answer editable in place.
  *
- * This is the one `(app)` route with no laminate above it. The corridor
+ * This is the one `(app)` route with no corridor header above it. The
  * header in the layout only renders once a corridor exists, and finding
  * out what the corridor *is* is precisely this screen's job — a card
  * announcing the corridor is unknown, sitting directly on top of the
@@ -730,21 +730,11 @@ function AgentLayout({
   return (
     <div className="mx-auto flex h-[calc(100dvh-var(--bar-h))] w-full max-w-[1240px] flex-col">
       <div className="relative isolate flex min-h-0 flex-1 flex-col">
-        {/* Ruled security stock. Official documents are printed on a
-            ground, never on blank white, and the document above it is
-            now literally a data page — so the stock is doing the job it
-            was written for rather than showing in a 20px gutter beside a
-            white sheet that covered it. */}
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-0 -z-10"
-        />
-
         {/* Centred in whatever room is left, which is safe precisely
             because the document does not grow: all ten fields render
             from the first paint, so its height only moves when a value
             wraps. Top-aligning it instead left several hundred pixels of
-            ruled nothing between the record and the dock — the same void
+            nothing between the record and the dock — the same void
             this layout replaced, one surface further along.
 
             `min-h-full` on the inner box rather than centring the
@@ -919,7 +909,7 @@ function CompletionBar({
           whatever they leave. Laid out flat it wrapped into a ~210px
           column with half the bar empty beside it, which reads as text
           that did not fit rather than as a line anybody chose. */}
-      <div className="ovi-edge mx-auto grid w-full max-w-[720px] grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:grid-cols-[auto_1fr_auto] sm:gap-y-1.5 sm:px-7 sm:py-5">
+      <div className="mx-auto grid w-full max-w-[720px] border border-border grid-cols-[auto_1fr] items-center gap-x-4 gap-y-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:grid-cols-[auto_1fr_auto] sm:gap-y-1.5 sm:px-7 sm:py-5">
         <span
           aria-hidden
           className="grid size-8 place-items-center rounded-full bg-success text-white ring-4 ring-[color-mix(in_srgb,var(--success)_16%,transparent)]"

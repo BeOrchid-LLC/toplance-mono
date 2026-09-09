@@ -36,8 +36,19 @@ function tokensIn(startSelector: string): Record<string, string> {
   return out;
 }
 
-const light = tokensIn(":root {");
-const dark = tokensIn(':root[data-theme="dark"],');
+/**
+ * A mode's palette is not one block. The neutrals and semantics are set
+ * per theme, but the route colour is set per *brand* — `--brand` and
+ * `--brand-text` live on the brand axis, and dark lifts only
+ * `--brand-text`. Layering the blocks in cascade order is what the
+ * browser resolves at runtime, so it is what the floors are checked
+ * against.
+ */
+const brand = tokensIn('[data-brand="toplance"] {');
+const brandDark = tokensIn('.dark [data-brand="toplance"] {');
+
+const light = { ...brand, ...tokensIn(":root {") };
+const dark = { ...brand, ...brandDark, ...tokensIn(':root[data-theme="dark"],') };
 
 /** [foreground, background, floor, what it is] */
 const PAIRS: [string, string, number, string][] = [
@@ -47,8 +58,13 @@ const PAIRS: [string, string, number, string][] = [
   ["--ink-2", "--surface", 4.5, "secondary text on plate"],
   ["--ink-2", "--bg", 4.5, "secondary text on concourse"],
   ["--ink-3", "--surface", 4.5, "muted text on plate"],
-  ["--brand", "--surface", 4.5, "route on plate"],
-  ["--brand", "--bg", 4.5, "route on concourse"],
+  /* `--brand-text`, not `--brand`: the route colour has two jobs and
+     only one of them is type. `--brand` is a fill and carries
+     `--on-brand` on it, which is why it stays the deep blue in dark;
+     `--brand-text` is the one that lands on a plate as a link or a
+     label, and it is the one dark lifts. */
+  ["--brand-text", "--surface", 4.5, "route on plate"],
+  ["--brand-text", "--bg", 4.5, "route on concourse"],
   ["--success", "--surface", 4.5, "granted on plate"],
   ["--danger", "--surface", 4.5, "refused on plate"],
   ["--border", "--surface", 1.4, "hairline on plate"],

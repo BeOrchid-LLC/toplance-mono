@@ -11,42 +11,25 @@
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
 :root {
-  /* neutrals — light.
-     One ramp, one hue. Every step carries the same cool blue-grey cast,
-     so text does not drift warm as it lightens. The previous ramp mixed
-     a cool --ink with warm mid-tones, which read as muddy rather than
-     as a deliberate temperature.
-
-     The ground is a step deeper than the near-white it was (#f6f7fa),
-     which was close enough to --surface that a white panel on it read
-     as flush rather than as a sheet laid on a page. Client's call,
-     2026-09-08. It stays on the same hue: the separation this buys is
-     in lightness, not in a second temperature the paragraph above
-     argues against.
-
-     Everything below it is untouched, which costs --surface-2 most of
-     its contrast against the ground — ~1.5 L* now, down from ~2.6.
-     Nearly every use of --surface-2 is on a white surface (table
-     headers, code blocks, badges, hover states), where the step it has
-     to clear is --surface and nothing changed. The exception is a
-     --surface-2 fill sitting directly on the page, and there is one:
-     TabsList, which DashboardTabs renders on the ground. That call site
-     carries a border rather than relying on a fill difference that is
-     now too small to see. Lifting --surface-2 to suit it is the wrong
-     trade — it would have to clear the ground *and* stay under white,
-     and it is on white far more often than on the page.
-
-     Skeleton is the same shape of risk and has no instance on the
-     ground today. Put one there and it needs the same border. */
-  --bg: #f1f4fa;
+  /* The concourse. A cool grey with a faint green cast — the colour of
+     a terminal floor and of the backing a sign is mounted on. Replaces
+     the blue-grey #f1f4fa set on 2026-09-08; that decision was about
+     separating the ground from a white sheet, and this keeps the
+     separation while changing the temperature. */
+  --bg: #e7ebea;
   --surface: #ffffff;
-  --surface-2: #eef0f5;
-  --surface-inset: #e7eaf1;
-  --border: #e1e5ed;
-  --border-strong: #ccd2de;
-  --ink: #10131c;
-  --ink-2: #4a5163;
-  --ink-3: #7b8296;
+  --surface-2: #f1f4f3;
+  --surface-inset: #e0e6e5;
+  --border: #d3dad9;
+  /* Lifted from #ccd2de, which was 1.35:1 on white — invisible as the
+     edge of a control. 3.02:1 is the WCAG floor for a non-text boundary
+     somebody has to see. `tokens.test.ts` holds it there. */
+  --border-strong: #8e9695;
+  --ink: #0b1f2a;
+  --ink-2: #44565f;
+  /* 4.52:1 on white. The old #7b8296 was 4.16:1 and failed AA for body
+     text, which `.special` and `.t-muted` both use. */
+  --ink-3: #697980;
 
   /* Elevation is a real tool now. At 6% on a near-white ground the old
      values were invisible, so every card had to fall back to a 1px
@@ -55,15 +38,30 @@
   --shadow: 0 1px 3px rgb(16 19 28 / 0.08), 0 12px 28px -8px rgb(16 19 28 / 0.10);
   --shadow-lg: 0 2px 8px rgb(16 19 28 / 0.10), 0 24px 56px -12px rgb(16 19 28 / 0.18);
 
-  /* semantics — shared across brands, never a brand accent */
-  --success: #18935a;
-  --success-ink: #0e6b3e;
-  --warning: #b4740a;
-  --warning-ink: #8a5905;
-  --danger: #c0392b;
-  --danger-ink: #9a2c20;
-  --info: #2f6be0;
-  --info-ink: #1f4eaf;
+  /* Signage green and red, not the old semantic pair. Both are read at
+     a glance next to a status word, never alone. */
+  --success: #00713c;
+  --success-ink: #005c31;
+  --warning: #8a5905;
+  --warning-ink: #6f4704;
+  --danger: #c8102e;
+  --danger-ink: #a30d25;
+  --info: #0a4ea3;
+  --info-ink: #083f83;
+
+  /* Direction — the one genuinely new role in the wayfinding system,
+     and the reason it gets a new name rather than reusing
+     --brand-accent, which was an amber used decoratively.
+
+     `--way` marks the next step and nothing else. Exactly one thing per
+     screen wears it; two means one is wrong. It is always a FILL with
+     `--way-ink` on it, never type on a plate — as type it cannot clear
+     4.5:1 on white, and using it as a field is what real signage does.
+
+     The ink on it is the light-mode ink in BOTH themes, because yellow
+     is a light fill in both. 9.51:1 light, 10.48:1 dark. */
+  --way: #f5b915;
+  --way-ink: #0b1f2a;
 
   /* chart fills — the same three hues as the semantics above, stepped
      to pass the categorical-palette checks rather than reused verbatim.
@@ -162,28 +160,36 @@
    the .dark class next-themes toggles, and the un-stamped system default. */
 :root[data-theme="dark"],
 .dark {
-  --bg: #0b0d13;
-  --surface: #141822;
-  --surface-2: #1d222e;
-  --surface-inset: #101420;
-  --border: #262c3a;
-  --border-strong: #38404f;
-  --ink: #f3f5fa;
-  --ink-2: #aab2c4;
-  --ink-3: #767e91;
+  /* The night concourse. Selected against this ground, not flipped out
+     of the light steps — a flip puts the hairline at 1.29:1 and the
+     strong edge at 1.86:1, both invisible. */
+  --bg: #0a141b;
+  --surface: #132029;
+  --surface-2: #1b2b36;
+  --surface-inset: #0e1a22;
+  --border: #2b3a44;
+  --border-strong: #5d6c75;
+  --ink: #e8edec;
+  --ink-2: #a3b1b8;
+  --ink-3: #7a8b93;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
   --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 12px 28px -8px rgb(0 0 0 / 0.45);
   --shadow-lg: 0 2px 8px rgb(0 0 0 / 0.55), 0 24px 56px -12px rgb(0 0 0 / 0.55);
 
-  --success: #3cc57e;
+  --success: #2fa968;
   --success-ink: #7fe0ac;
   --warning: #e5a83c;
   --warning-ink: #f3c77e;
-  --danger: #e8695c;
+  --danger: #e4574c;
   --danger-ink: #f2a199;
-  --info: #5e90f0;
+  --info: #4c8fe0;
   --info-ink: #9dbaf6;
+
+  /* Holds. Yellow is a light fill on either ground, and so is the ink
+     that sits on it. */
+  --way: #f5b915;
+  --way-ink: #0b1f2a;
 
   /* Chosen for dark, not flipped into it. The dark semantics above are
      deliberately bright — they carry small marks on a near-black
@@ -216,13 +222,17 @@
 /* ---------- brand axis ---------- */
 :root,
 [data-brand="toplance"] {
-  --brand: #2450d8;
-  --brand-press: #1b3eae;
-  --brand-2: #57a9f2;
-  --brand-text: #2450d8;
-  --brand-accent: #f4a521;
+  /* A motorway-sign blue, not the indigo #2450d8 it replaces. The old
+     hue was a SaaS default; this one is the institutional register the
+     rest of the system is written in. 7.98:1 on white, 6.64:1 on the
+     concourse. */
+  --brand: #0a4ea3;
+  --brand-press: #083f83;
+  --brand-2: #4c8fe0;
+  --brand-text: #0a4ea3;
+  --brand-accent: var(--way);
   --on-brand: #ffffff;
-  --brand-grad: linear-gradient(150deg, #2450d8, #57a9f2);
+  --brand-grad: linear-gradient(150deg, #0a4ea3, #4c8fe0);
 }
 
 [data-brand="beorchid"] {
@@ -240,7 +250,7 @@
 :root[data-theme="dark"] [data-brand="toplance"],
 .dark,
 .dark [data-brand="toplance"] {
-  --brand-text: #5e90f0;
+  --brand-text: #4c8fe0;
 }
 :root[data-theme="dark"] [data-brand="beorchid"],
 .dark [data-brand="beorchid"] {
@@ -500,6 +510,9 @@
   --color-brand-text: var(--brand-text);
   --color-brand-accent: var(--brand-accent);
   --color-on-brand: var(--on-brand);
+
+  --color-way: var(--way);
+  --color-way-ink: var(--way-ink);
 
   --color-success: var(--success);
   --color-success-ink: var(--success-ink);

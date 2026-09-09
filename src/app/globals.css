@@ -21,15 +21,65 @@
   --surface-2: #f1f4f3;
   --surface-inset: #e0e6e5;
   --border: #d3dad9;
-  /* Lifted from #ccd2de, which was 1.35:1 on white — invisible as the
-     edge of a control. 3.02:1 is the WCAG floor for a non-text boundary
-     somebody has to see. `tokens.test.ts` holds it there. */
-  --border-strong: #8e9695;
+  /* Lifted from #ccd2de, which was 1.517:1 on white — invisible as the
+     edge of a control. 3:1 is the WCAG floor for a non-text boundary
+     somebody has to see, and this token has to clear it on every ground
+     it is ruled across, not only on a plate: `border-t
+     border-border-strong` puts it straight onto the concourse in the
+     marketing pages, and `bg-surface-2` puts it under a table's header
+     band. The #8e9695 that stood here cleared white alone, at 3.023:1,
+     and fell to 2.731 on the secondary plate and 2.515 on the ground.
+     This one is 3.666:1 / 3.313:1 / 3.05:1, and `tokens.test.ts` now
+     holds all three rather than the first. */
+  --border-strong: #808786;
   --ink: #0b1f2a;
   --ink-2: #44565f;
-  /* 4.52:1 on white. The old #7b8296 was 4.16:1 and failed AA for body
-     text, which `.special` and `.t-muted` both use. */
-  --ink-3: #697980;
+  /* 5.769:1 on the plate, 5.213:1 on the secondary plate, 4.799:1 on the
+     concourse, 4.566:1 in an inset well — AA on all four, which is what
+     this role needs, because it is the muted colour and it lands on
+     every ground the product has. `.special-caps` sets a table's column
+     heads in it on `--surface-2`; the marketing comparison rows set 17px
+     body copy in it straight onto `--bg`.
+
+     Both of those were failing. The #697980 that stood here was picked
+     against white and cleared white alone (4.519:1, by 0.019), landing
+     at 4.083 / 3.759 / 3.576 on the other three. The #7b8296 before it
+     was 3.835:1 even on white.
+
+     `.t-muted` is not one of the consumers this token is chosen for —
+     it sets `--ink-2`. The real ones are `.special`, `.special-caps`,
+     `.tag`, `.mrz` and the `text-ink-3` / `placeholder:text-ink-3`
+     call sites. */
+  --ink-3: #5a686e;
+
+  /* The focus ring — the one token in this block that is not a neutral,
+     and it is here rather than on the brand axis because a fill and a
+     boundary have different floors and one hex cannot serve both.
+
+     `--brand` is a fill. It carries `--on-brand` white on it as a
+     primary button label, so it has to stay dark enough for 4.5:1
+     against that label: #0a4ea3 gives 7.98:1. The ring is the opposite
+     job — a boundary drawn against the ground — and in dark that same
+     #0a4ea3 measures 2.078:1 on the plate and 2.331:1 on the concourse,
+     under the 3:1 a boundary somebody has to see. Lifting `--brand`
+     itself to the light blue fixes the ring and breaks the button:
+     white on #4c8fe0 is 3.327:1.
+
+     So the ring is split out and given a value per theme. Light is the
+     same #0a4ea3 as `--brand`, which already clears every light ground
+     (7.98 on the plate, 7.21 on the secondary plate, 6.638 on the
+     concourse). Dark lifts it — see the note in the dark block.
+
+     This deviates from the spec's §1 and §7, which name `--route` alone
+     for the ring, on the reading that one route colour does both jobs.
+     It does in light and does not in dark, and the deviation is recorded
+     here rather than left for the next audit to rediscover.
+
+     Declared per theme rather than per brand, so a BeOrchid console
+     focuses in Toplance blue for now. That is the deferral the spec
+     already takes on `--way`, and it ends the same way: when BeOrchid
+     gets its own route pair, this gets a value in that block. */
+  --ring: #0a4ea3;
 
   /* Plates sit ON the concourse; they do not float above it. What
      separates a plate from its ground is the ground being darker and
@@ -62,7 +112,11 @@
      4.5:1 on white, and using it as a field is what real signage does.
 
      The ink on it is the light-mode ink in BOTH themes, because yellow
-     is a light fill in both. 9.51:1 light, 10.48:1 dark. */
+     is a light fill in both. There is therefore ONE ratio, not two:
+     `--way` and `--way-ink` are byte-identical in the two blocks, so the
+     pair measures 9.515:1 whichever theme is resolved. The 10.48 that
+     used to be quoted here as the dark figure was dark `--warning-ink`
+     on the dark plate, copied across by mistake. */
   --way: #f5b915;
   --way-ink: #0b1f2a;
 
@@ -173,10 +227,24 @@
   --surface-2: #1b2b36;
   --surface-inset: #0e1a22;
   --border: #2b3a44;
-  --border-strong: #5d6c75;
+  /* 3.488 / 3.056 / 3.913 on the plate, the secondary plate and the
+     concourse. The #5d6c75 it replaces cleared the plate at 3.054 and
+     then dropped to 2.676 under a table's header band — the same
+     one-ground selection the light step had. */
+  --border-strong: #67757d;
   --ink: #e8edec;
   --ink-2: #a3b1b8;
-  --ink-3: #7a8b93;
+  /* 5.149 / 4.511 / 5.777 / 5.482 — AA on the plate, the secondary
+     plate, the concourse and an inset well. #7a8b93 was 4.111 under a
+     table's header band, which is where most of the muted type in the
+     consoles actually sits. */
+  --ink-3: #829299;
+
+  /* Lifted off `--brand`, which stays #0a4ea3 because it is the button
+     fill and carries white. 4.985:1 on this plate and 5.592:1 on this
+     concourse, against a 3:1 boundary floor that #0a4ea3 misses here at
+     2.078 and 2.331. The full argument is on the light `--ring`. */
+  --ring: #4c8fe0;
 
   --shadow-sm: 0 1px 0 rgb(0 0 0 / 0.4);
   --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 20px -10px rgb(0 0 0 / 0.45);
@@ -221,7 +289,13 @@
   --chart-funnel-4: #3865d6;
   --chart-funnel-5: #234cba;
 
-  --mix: #141822;
+  /* What the tinted fills blend toward, so a 12%-brand wash reads as a
+     wash on the plate rather than as a hole in it. It has to BE the dark
+     plate: eleven `color-mix(… var(--mix))` call sites paint onto one.
+     It was still #141822 — the plate colour from before the repaint —
+     which put every one of those tints on a ground the product no longer
+     has. */
+  --mix: #132029;
 }
 
 /* ---------- brand axis ---------- */
@@ -250,12 +324,17 @@
   --brand-grad: linear-gradient(150deg, #0b7f78, #3fbfb4);
 }
 
-/* Brand text lifts in dark so it clears AA on the dark ground. */
+/* Brand text lifts in dark so it clears AA on every dark ground, not
+   only on the plate. The #4c8fe0 that stood here was 4.985 on the plate
+   and 5.592 on the concourse but 4.367 on `--surface-2` — and the site
+   footer is a `bg-surface-2` band full of underlined 16px links set in
+   this token, so the one ground it failed on is the one it is most
+   visibly used on. 5.171 / 4.531 / 5.801 / 5.505. */
 :root[data-theme="dark"],
 :root[data-theme="dark"] [data-brand="toplance"],
 .dark,
 .dark [data-brand="toplance"] {
-  --brand-text: #4c8fe0;
+  --brand-text: #5192e1;
 }
 :root[data-theme="dark"] [data-brand="beorchid"],
 .dark [data-brand="beorchid"] {
@@ -561,7 +640,11 @@
   --color-destructive: var(--danger);
   --color-destructive-foreground: #ffffff;
   --color-input: var(--border-strong);
-  --color-ring: var(--brand);
+  /* `--ring`, not `--brand`. Everything generated off this name is a
+     boundary drawn against a ground, and the fill hue does not clear the
+     boundary floor in dark. See the note on `--ring` in the light
+     block. */
+  --color-ring: var(--ring);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -614,8 +697,13 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* `--ring` rather than `--brand`. This outline is the single most
+     important boundary in the product — it is the only thing telling a
+     keyboard user where they are — and on the dark concourse the fill
+     hue put it at 2.331:1, which is below the floor for a boundary and
+     worse than the 2.973 the pre-repaint palette managed. */
   :focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
     border-radius: 3px;
   }

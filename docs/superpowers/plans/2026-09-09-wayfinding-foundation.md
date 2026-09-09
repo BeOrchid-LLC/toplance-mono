@@ -64,7 +64,7 @@ The redesign has no unit-test surface — there is no component testing here. Wh
 - Consumes: nothing.
 - Produces: `contrast(a: string, b: string): number` — WCAG contrast ratio between two `#rrggbb` strings, 1–21. `relativeLuminance(hex: string): number`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `src/lib/design/tokens.test.ts`:
 
@@ -151,12 +151,12 @@ describe.each([
 });
 ```
 
-- [ ] **Step 2: Run it to confirm it fails**
+- [x] **Step 2: Run it to confirm it fails**
 
 Run: `npx vitest run src/lib/design/tokens.test.ts`
 Expected: FAIL — `Cannot find module './contrast'`.
 
-- [ ] **Step 3: Write the contrast helper**
+- [x] **Step 3: Write the contrast helper**
 
 Create `src/lib/design/contrast.ts`:
 
@@ -192,12 +192,12 @@ export function contrast(a: string, b: string): number {
 }
 ```
 
-- [ ] **Step 4: Run it again**
+- [x] **Step 4: Run it again**
 
 Run: `npx vitest run src/lib/design/tokens.test.ts`
 Expected: FAIL, but now on the assertions — the current palette has no `--way`, and `--border-strong: #ccd2de` is 1.35:1 on white against a 3.0 floor. This is the failing test that Task 2 makes pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/design/contrast.ts src/lib/design/tokens.test.ts
@@ -217,7 +217,7 @@ git commit -m "Make the palette's contrast floors a test, not a promise"
 
 **Naming decision — read this before starting.** The spec names the roles `--concourse`, `--plate`, `--ink`, `--route`, `--way`. We keep the *existing identifiers* (`--bg`, `--surface`, `--ink`, `--brand`) and change their values, because 46 routes and ~130 component files already read them; renaming would be a mechanical diff across the whole repo with a high chance of a missed call site, for no behavioural gain. The one genuinely new role — the directional colour, which has no existing equivalent — gets the new name `--way`. Record this in the CSS comment so the spec and the code agree.
 
-- [ ] **Step 1: Replace the light neutrals and semantics**
+- [x] **Step 1: Replace the light neutrals and semantics**
 
 In `src/app/globals.css`, inside the light `:root {` block, replace the neutral ramp and semantic values with:
 
@@ -254,7 +254,7 @@ In `src/app/globals.css`, inside the light `:root {` block, replace the neutral 
   --info-ink: #083f83;
 ```
 
-- [ ] **Step 2: Add the directional colour**
+- [x] **Step 2: Add the directional colour**
 
 Immediately after the semantics in the light `:root` block:
 
@@ -274,7 +274,7 @@ Immediately after the semantics in the light `:root` block:
   --way-ink: #0b1f2a;
 ```
 
-- [ ] **Step 3: Replace the dark neutrals and semantics**
+- [x] **Step 3: Replace the dark neutrals and semantics**
 
 Inside the `:root[data-theme="dark"], .dark {` block:
 
@@ -307,7 +307,7 @@ Inside the `:root[data-theme="dark"], .dark {` block:
   --way-ink: #0b1f2a;
 ```
 
-- [ ] **Step 4: Move the brand hue to the signage blue**
+- [x] **Step 4: Move the brand hue to the signage blue**
 
 In the brand axis block (`:root, [data-brand="toplance"]`):
 
@@ -332,7 +332,7 @@ Leave `[data-brand="beorchid"]` as it is — the spec defers BeOrchid's own rout
 
 In the dark brand-text lift block, change the toplance value to `#4c8fe0`.
 
-- [ ] **Step 5: Surface `--way` as a utility**
+- [x] **Step 5: Surface `--way` as a utility**
 
 In the `@theme inline` block, beside the other colour aliases:
 
@@ -341,17 +341,17 @@ In the `@theme inline` block, beside the other colour aliases:
   --color-way-ink: var(--way-ink);
 ```
 
-- [ ] **Step 6: Run the guard rail**
+- [x] **Step 6: Run the guard rail**
 
 Run: `npx vitest run src/lib/design/tokens.test.ts`
 Expected: PASS — 26 pair assertions across both modes, plus the two parse checks and the two way-ink checks.
 
-- [ ] **Step 7: Verify nothing else broke**
+- [x] **Step 7: Verify nothing else broke**
 
 Run: `npm run typecheck && npm run lint && npm test`
 Expected: typecheck clean, lint clean apart from the pre-existing unused-`Progress` warning in `src/app/[locale]/agency/page.tsx`, and all 129 suites green.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/app/globals.css
@@ -371,7 +371,7 @@ Reverses `--radius: 14px` and the soft-shadow elevation. A plate reads as an obj
 - Consumes: `--border`, `--border-strong`, `--surface` from Task 2.
 - Produces: `--radius-*` and `--shadow-*` values every component reads.
 
-- [ ] **Step 1: Cut the radii to signage geometry**
+- [x] **Step 1: Cut the radii to signage geometry**
 
 ```css
   /* Signage geometry. A sign is a plate with a machined edge, so the
@@ -387,7 +387,7 @@ Reverses `--radius: 14px` and the soft-shadow elevation. A plate reads as an obj
   --radius: var(--radius-md);
 ```
 
-- [ ] **Step 2: Retire the soft elevation**
+- [x] **Step 2: Retire the soft elevation**
 
 ```css
   /* Plates sit ON the concourse; they do not float above it. What
@@ -409,7 +409,7 @@ And in the dark block:
   --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.55), 0 20px 44px -14px rgb(0 0 0 / 0.55);
 ```
 
-- [ ] **Step 3: Move the focus ring onto the route colour**
+- [x] **Step 3: Move the focus ring onto the route colour**
 
 In `@layer base`, the `:focus-visible` rule already reads `var(--brand)`, which Task 2 repointed. Change only the radius so the ring matches the new geometry:
 
@@ -421,12 +421,17 @@ In `@layer base`, the `:focus-visible` rule already reads `var(--brand)`, which 
   }
 ```
 
-- [ ] **Step 4: Verify**
+Superseded after this landed: `var(--brand)` measured 2.078:1 on the dark
+plate and 2.331:1 on the dark concourse, under the 3:1 floor for a boundary.
+The ring is now its own `--ring` token, per theme. The reasoning is on the
+token in `globals.css`; the ring itself is still one line in this rule.
+
+- [x] **Step 4: Verify**
 
 Run: `npm run typecheck && npm run lint && npx vitest run src/lib/design/tokens.test.ts`
 Expected: all clean.
 
-- [ ] **Step 5: Look at it**
+- [x] **Step 5: Look at it**
 
 Start the app on a free port (3000 and 3100 are taken by other projects):
 
@@ -436,7 +441,7 @@ npx next dev -p 3400
 
 Open `http://localhost:3400/en` and confirm the landing page renders on the concourse with plate geometry, in both themes. Screenshot both.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/app/globals.css

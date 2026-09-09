@@ -684,9 +684,17 @@ export async function acceptInvitationTx(
        * is that operator granting the authority, the same act the
        * provision dialog describes as making them the director.
        *
-       * Counted inside the transaction, which already holds the
-       * invitation row's lock: two people accepting into the same empty
-       * agency at once must not both read zero and both become owners.
+       * Counted inside the transaction, so the read and the insert
+       * cannot be separated by another commit. Note what the lock this
+       * transaction holds is: the *invitation* row, not the agency. Two
+       * accepts of the same invitation are therefore serialised, and
+       * the second sees a member; two accepts of two different
+       * invitations into one empty agency would not be, and would both
+       * read zero. That cannot happen today — `provisionTenantTx` mints
+       * exactly one, and every other staff invitation is created by
+       * somebody who is already a member — but a second provisioning
+       * invitation would need a lock on the organisation here, not this
+       * comment's assurance.
        */
       const [existing] = await tx
         .select({ n: count() })

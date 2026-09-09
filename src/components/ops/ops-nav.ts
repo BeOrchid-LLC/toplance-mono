@@ -10,7 +10,7 @@ import type { Locale } from "@/lib/i18n/locales";
  * the list was pasted per page and drifted. One answer here means the
  * screens cannot disagree.
  *
- * Five entries. `/ops/dashboard` leads, because the client asked on
+ * Seven entries. `/ops/dashboard` leads, because the client asked on
  * 2026-09-08 for the overview to be the console's front door and
  * `AppNav.isActive` matches item 0 exactly as the section root. Route
  * curation now closes the list rather than opening it — same request,
@@ -23,6 +23,14 @@ import type { Locale } from "@/lib/i18n/locales";
  * people — before it, `profiles.staff_role` was written by hand in SQL
  * and by nothing else in the product. An audit-log reader still belongs
  * here when it is built.
+ *
+ * `/ops/kyb` is the third, added on 2026-09-08 — and it is an addition
+ * to a list whose own comment says curation closes it. The exception is
+ * argued rather than assumed: KYB is a *queue*, and "who is waiting on
+ * us" is a question a panel on one agency's page cannot answer however
+ * well it is built. A queue with no front door is a queue nobody works.
+ * It sits beside the screen it is about, before the screen that feeds
+ * it.
  *
  * The dashboard and the colleagues roster render only for a director,
  * and both pages turn anyone else away: who works at BeOrchid and at
@@ -49,6 +57,7 @@ import type { Locale } from "@/lib/i18n/locales";
 export const opsNav: NavItem[] = [
   { href: "/ops/dashboard", label: "Dashboard" },
   { href: "/ops/tenants", label: "Agencies" },
+  { href: "/ops/kyb", label: "KYB" },
   { href: "/ops/enquiries", label: "Demo requests" },
   { href: "/ops/staff", label: "Team" },
   { href: "/ops/support", label: "Support" },
@@ -64,7 +73,7 @@ export const opsNav: NavItem[] = [
  * hidden link is a courtesy and a typed URL is not an exception.
  *
  * Route curation stays last for both ranks. A reviewer's list is the
- * three screens that are theirs, in the order a director sees them —
+ * four screens that are theirs, in the order a director sees them —
  * the tabs a rank cannot open are removed from the row, never
  * reshuffled into a different one.
  */
@@ -72,15 +81,21 @@ export function localizedOpsNav(locale: Locale, isOwner = false): NavItem[] {
   return [
     ...(isOwner ? [{ ...opsNav[0], label: OPS_COMMON.nav.dashboard[locale] }] : []),
     { ...opsNav[1], label: OPS_COMMON.nav.tenants[locale] },
+    // Every rank, like the enquiry queue below it and for the same
+    // reason: `/ops/kyb` refuses nobody who is staff, so hiding it from
+    // a reviewer would hide a screen they may actually open. Verifying
+    // a business is the platform team's shared work, not a director's
+    // private one.
+    { ...opsNav[2], label: OPS_COMMON.nav.kyb[locale] },
     // Every rank, not just a director: the enquiry queue is the console's
     // shared work, and `/ops/tenants` has always let any reviewer move
     // one of these rows along.
-    { ...opsNav[2], label: OPS_COMMON.nav.enquiries[locale] },
-    ...(isOwner ? [{ ...opsNav[3], label: OPS_COMMON.nav.staff[locale] }] : []),
+    { ...opsNav[3], label: OPS_COMMON.nav.enquiries[locale] },
+    ...(isOwner ? [{ ...opsNav[4], label: OPS_COMMON.nav.staff[locale] }] : []),
     // Every rank, for the reason the enquiry queue gives one line up: an
     // agency in dispute should not wait on one person being at their
     // desk.
-    { ...opsNav[4], label: OPS_SUPPORT.heading[locale] },
-    { ...opsNav[5], label: OPS_COMMON.nav.routes[locale] },
+    { ...opsNav[5], label: OPS_SUPPORT.heading[locale] },
+    { ...opsNav[6], label: OPS_COMMON.nav.routes[locale] },
   ];
 }

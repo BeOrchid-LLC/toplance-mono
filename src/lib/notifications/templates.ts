@@ -373,6 +373,50 @@ export function platformInvitationEmail({
   };
 }
 
+/**
+ * → an agency director: BeOrchid has finished KYB and the console is
+ * open.
+ *
+ * Sent directly by `activateAgency`'s caller through `sendEmail` rather
+ * than through `notify`, the path `invitationEmail` and
+ * `demoRequestEmail` already take: `notifications.application_id` is the
+ * wrong hook for a letter about a business, and there is no traveller
+ * anywhere in this message.
+ *
+ * Says what was verified and what happens next, in that order, because
+ * the reader has been waiting on the first and is about to be asked for
+ * the second. It names no document: the checklist is internal, and a
+ * letter listing what BeOrchid looked at would invite a reply about the
+ * one thing it did not.
+ *
+ * The CTA lands on `/agency/billing` — the flow that already exists,
+ * which is the whole point of holding them short of it rather than
+ * building a second way in.
+ */
+export function kybActivatedEmail({
+  orgName,
+  billingUrl,
+  fullName,
+}: {
+  orgName: string;
+  billingUrl: string;
+  fullName?: string | null;
+}): EmailContent {
+  const greeting = fullName ? `${fullName}, w` : "W";
+
+  return {
+    subject: `${orgName} is verified — your Toplance console is ready`,
+    ...renderEmail({
+      heading: `${orgName} is verified`,
+      paragraphs: [
+        `${greeting}e have finished verifying ${orgName} and your Toplance console is ready to open.`,
+        "Start your subscription and the console opens on the same click. From there you can invite your colleagues and begin taking cases.",
+      ],
+      cta: { href: billingUrl, label: "Start your subscription" },
+    }),
+  };
+}
+
 /** → traveller: weekly post-arrival digest. */
 export function companionDigestEmail({
   url,

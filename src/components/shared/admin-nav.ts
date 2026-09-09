@@ -77,6 +77,7 @@ export function opsAdminNav({
   pendingRoutes,
   openDemoRequests,
   openSupport,
+  agenciesAwaitingKyb,
   isOwner = false,
 }: {
   locale: Locale;
@@ -89,13 +90,15 @@ export function opsAdminNav({
    * number happens.
    */
   openDemoRequests: number;
+  /** Support requests nobody has claimed — see `OpsCounts`. */
+  openSupport: number;
+  /** Agencies with no `activated_at` — the KYB queue's own to-do list. */
+  agenciesAwaitingKyb: number;
   /**
    * Drops the colleagues and dashboard rows for a reviewer. Not the
    * guard — both pages turn them away themselves, because a hidden link
    * is a courtesy and a typed URL is not an exception.
    */
-  /** Support requests nobody has claimed — see `OpsCounts`. */
-  openSupport: number;
   isOwner?: boolean;
 }): AdminNavGroup[] {
   return [
@@ -110,6 +113,16 @@ export function opsAdminNav({
           href: "/ops/tenants",
           label: OPS_COMMON.nav.tenants[locale],
           icon: "agencies",
+        },
+        {
+          // Badged with the agencies BeOrchid has not let in yet: the
+          // one number on this rail that shortens because somebody did
+          // the work behind it, which is what a badge is for.
+          id: "kyb",
+          href: "/ops/kyb",
+          label: OPS_COMMON.nav.kyb[locale],
+          icon: "kyb",
+          badge: agenciesAwaitingKyb,
         },
         {
           id: "enquiries",

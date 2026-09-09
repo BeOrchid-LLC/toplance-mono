@@ -226,6 +226,26 @@ export const EVENT_NAMES = [
    * five.
    */
   "toplance.tenant_provisioned",
+
+  /**
+   * The manual KYB pass, as three events rather than one.
+   *
+   * `kyb_document_filed` is an admin putting a document that arrived by
+   * email against a requirement; `kyb_document_reviewed` is the verdict
+   * on it, carrying `state` so verified and rejected are one funnel
+   * rather than two names. `agency_activated` is the moment the console
+   * opens, which is the number the business actually reads: it is the
+   * end of the funnel that starts at `demo_requested`.
+   *
+   * The gap between the first two is how long BeOrchid takes to judge a
+   * document, and the gap between the second and the third is how long
+   * a fully-verified agency waits for somebody to press the button.
+   * Neither is answerable from one combined event.
+   */
+  "toplance.kyb_document_filed",
+  "toplance.kyb_document_reviewed",
+  "toplance.agency_activated",
+
   "toplance.tenant_suspended",
   "toplance.tenant_restored",
   "toplance.tenant_seats_changed",

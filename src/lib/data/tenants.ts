@@ -15,6 +15,7 @@ import {
 import type { ApplicationStatus } from "@/lib/domain/status";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import { isUuid } from "@/lib/domain/uuid";
+import { seedKybRequirements } from "@/lib/data/kyb";
 
 /**
  * What BeOrchid is allowed to know about the agencies on the platform.
@@ -504,6 +505,12 @@ export async function provisionTenantTx(
         billingContact,
       })
       .returning({ id: organisations.id });
+
+    // The checklist is written with the agency, in the same
+    // transaction. An agency that exists without one is an agency with
+    // no way to ever be verified, and `decideAgencyBilling` would park
+    // its director on a holding screen forever.
+    await seedKybRequirements(tx, org.id);
 
     const [invitation] = await tx
       .insert(invitations)

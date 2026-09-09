@@ -11,6 +11,7 @@ import {
   profiles,
 } from "@/lib/db/schema";
 import type { Actor } from "@/lib/auth/policy";
+import { seedKybRequirements } from "@/lib/data/kyb";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import type { ApplicationStatus } from "@/lib/domain/status";
 import {
@@ -136,6 +137,12 @@ export async function createOrganisationTx(
       .returning({ id: organisations.id });
 
     await tx.insert(orgMembers).values({ orgId: org.id, userId, role: "owner" });
+
+    // The other door into an `organisations` row, seeded the same way
+    // and for the same reason — see `seedKybRequirements`. A director
+    // who signs themselves up is verified exactly as one BeOrchid
+    // provisioned is.
+    await seedKybRequirements(tx, org.id);
 
     // Flip ONLY traveler → org_member, keyed on this session's userId.
     // Since travellers became invite-only (2026-08-31) the common case

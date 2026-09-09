@@ -39,6 +39,11 @@ export const OPS_ACTIONS: {
   billingEmailInvalid: L;
   notAMember: L;
   lastOwner: L;
+  requirementNotFound: L;
+  kybIncomplete: L;
+  noActivationRecipient: L;
+  chooseAKybState: L;
+  verifyNeedsDocument: L;
 } = {
   onlyOwnerApprove: {
     en: "Only a super admin can approve a route.",
@@ -310,5 +315,65 @@ export const OPS_ACTIONS: {
     ar: "هذه الوكالة لديها مدير واحد فقط. رقِّ شخصًا آخر قبل إزالة هذا المدير.",
     tw: "Saa adwumakuo yi wɔ ɔpanyin biako pɛ. Ma obi foforo so ansa na woayi oyi afiri hɔ.",
     zu: "Le ejensi inomqondisi oyedwa kuphela. Khuphula omunye umuntu ngaphambi kokususa lo.",
+  },
+  requirementNotFound: {
+    en: "We could not find that requirement.",
+    ha: "Ba mu sami wannan buƙata ba.",
+    yo: "A kò rí ìbéèrè yẹn.",
+    ig: "Anyị ahụghị ihe achọrọ ahụ.",
+    fr: "Nous n'avons pas trouvé cette exigence.",
+    pt: "Não encontrámos esse requisito.",
+    sw: "Hatukupata hitaji hilo.",
+    ar: "لم نعثر على ذلك المتطلب.",
+    tw: "Yɛanhu saa ahwehwɛdeɛ no.",
+    zu: "Asisitholanga leso sidingo.",
+  },
+  kybIncomplete: {
+    en: "Every requirement has to be verified before this agency can be activated.",
+    ha: "Dole ne a tabbatar da kowace buƙata kafin a kunna wannan hukuma.",
+    yo: "Gbogbo ìbéèrè ni a gbọ́dọ̀ jẹ́rìísí kí a tó lè mú ilé-iṣẹ́ yìí ṣiṣẹ́.",
+    ig: "A ghaghị ịkwado ihe achọrọ niile tupu e nwee ike ịkwalite ụlọ ọrụ a.",
+    fr: "Toutes les exigences doivent être vérifiées avant d'activer cette agence.",
+    pt: "Todos os requisitos têm de estar verificados antes de ativar esta agência.",
+    sw: "Kila hitaji lazima lithibitishwe kabla wakala huyu hajawashwa.",
+    ar: "يجب التحقق من كل متطلب قبل تفعيل هذه الوكالة.",
+    tw: "Ɛsɛ sɛ wɔsɔ ahwehwɛdeɛ biara ano ansa na wɔabue adwumakuo yi.",
+    zu: "Zonke izidingo kumele ziqinisekiswe ngaphambi kokuba le-ejensi ivulwe.",
+  },
+  noActivationRecipient: {
+    en: "This agency has no director to write to. Seat an owner on its page under Agencies first.",
+    ha: "Wannan hukuma ba ta da darakta da za a rubuta wa. Ku fara naɗa mai shi a shafinta a ƙarƙashin Hukumomi.",
+    yo: "Ilé-iṣẹ́ yìí kò ní olùdarí tí a lè kọ̀wé sí. Ẹ kọ́kọ́ fi ẹnì kan sí ipò olówó rẹ̀ ní ojú-ìwé rẹ̀ lábẹ́ Àwọn ilé-iṣẹ́.",
+    ig: "Ụlọ ọrụ a enweghị onye ntụzịaka a ga-edegara ozi. Buru ụzọ tinye onye nwe ya na ibe ya n'okpuru Ụlọ ọrụ.",
+    fr: "Cette agence n'a aucun directeur à qui écrire. Nommez d'abord un propriétaire sur sa page sous Agences.",
+    pt: "Esta agência não tem diretor a quem escrever. Nomeie primeiro um proprietário na sua página em Agências.",
+    sw: "Wakala huyu hana mkurugenzi wa kuandikiwa. Kwanza mteue mmiliki kwenye ukurasa wake chini ya Mawakala.",
+    ar: "لا يوجد لهذه الوكالة مدير للمراسلة. عيّن مالكًا أولًا من صفحتها ضمن الوكالات.",
+    tw: "Adwumakuo yi nni ɔhwɛfoɔ a wɔbɛtwerɛ akɔma no. Di kan si owura bi wɔ ne krataafa a ɛwɔ Adwumakuo ase.",
+    zu: "Le-ejensi ayinaye umqondisi ongabhalelwa. Qala ubeke umnikazi ekhasini layo ngaphansi kwama-Ejensi.",
+  },
+  chooseAKybState: {
+    en: "Choose a state for this requirement.",
+    ha: "Ku zaɓi matsayi don wannan buƙata.",
+    yo: "Ẹ yan ipò fún ìbéèrè yìí.",
+    ig: "Họrọ ọnọdụ maka ihe achọrọ a.",
+    fr: "Choisissez un état pour cette exigence.",
+    pt: "Escolha um estado para este requisito.",
+    sw: "Chagua hali ya hitaji hili.",
+    ar: "اختر حالة لهذا المتطلب.",
+    tw: "Yi tebea ma saa ahwehwɛdeɛ yi.",
+    zu: "Khetha isimo salesi sidingo.",
+  },
+  verifyNeedsDocument: {
+    en: "File the document before verifying this requirement.",
+    ha: "Ku shigar da takardar kafin tabbatar da wannan buƙata.",
+    yo: "Ẹ fi ìwé náà sílẹ̀ kí ẹ tó jẹ́rìísí ìbéèrè yìí.",
+    ig: "Depụta akwụkwọ ahụ tupu ị kwado ihe achọrọ a.",
+    fr: "Déposez le document avant de vérifier cette exigence.",
+    pt: "Arquive o documento antes de verificar este requisito.",
+    sw: "Wasilisha hati kabla ya kuthibitisha hitaji hili.",
+    ar: "أودِع المستند قبل التحقق من هذا المتطلب.",
+    tw: "Fa krataa no si hɔ ansa na woasɔ saa ahwehwɛdeɛ yi ano.",
+    zu: "Faka idokhumenti ngaphambi kokuqinisekisa lesi sidingo.",
   },
 };

@@ -53,12 +53,31 @@ vi.mock("next/navigation", () => ({
 const SUSPENDED_MEMBER = "test_console_suspended";
 const LIVE_MEMBER = "test_console_live";
 const CANCELLED_MEMBER = "test_console_cancelled";
-const USER_IDS = [SUSPENDED_MEMBER, LIVE_MEMBER, CANCELLED_MEMBER];
+const PENDING_MEMBER = "test_console_pending";
+const TWO_ORG_MEMBER = "test_console_two_orgs";
+const USER_IDS = [
+  SUSPENDED_MEMBER,
+  LIVE_MEMBER,
+  CANCELLED_MEMBER,
+  PENDING_MEMBER,
+  TWO_ORG_MEMBER,
+];
 
 const SUSPENDED_ORG = "00000000-0000-4000-8000-00000000c001";
 const LIVE_ORG = "00000000-0000-4000-8000-00000000c002";
 const CANCELLED_ORG = "00000000-0000-4000-8000-00000000c003";
-const ORG_IDS = [SUSPENDED_ORG, LIVE_ORG, CANCELLED_ORG];
+const PENDING_ORG = "00000000-0000-4000-8000-00000000c004";
+/** Inserted first, so an uncorrelated `limit(1)` is likely to find it. */
+const STALE_ORG = "00000000-0000-4000-8000-00000000c005";
+const SECOND_ORG = "00000000-0000-4000-8000-00000000c006";
+const ORG_IDS = [
+  STALE_ORG,
+  SUSPENDED_ORG,
+  LIVE_ORG,
+  CANCELLED_ORG,
+  PENDING_ORG,
+  SECOND_ORG,
+];
 
 describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
   const { db } = await import("@/lib/db/client");
@@ -73,10 +92,27 @@ describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
   );
 
   beforeAll(async () => {
+    // Three of these are activated, because they are fixtures about the
+    // *paywall* — an agency BeOrchid has not let in never reaches the
+    // question of whether it has paid, so leaving `activated_at` null
+    // here would test the KYB gate three times and the paywall never.
+    // `PENDING_ORG` is the one that has not been let in.
     await db.insert(organisations).values([
-      { id: SUSPENDED_ORG, name: "Suspended Agency", suspendedAt: new Date() },
-      { id: LIVE_ORG, name: "Live Agency" },
-      { id: CANCELLED_ORG, name: "Departed Agency" },
+      // First in, so a `limit(1)` that does not say which agency it
+      // means is likely to return this one — see the two-org test.
+      // Suspended and never activated: the worst row to decide a KYB
+      // redirect from.
+      { id: STALE_ORG, name: "Stale Agency", suspendedAt: new Date() },
+      { id: SECOND_ORG, name: "Second Agency", activatedAt: new Date() },
+      {
+        id: SUSPENDED_ORG,
+        name: "Suspended Agency",
+        suspendedAt: new Date(),
+        activatedAt: new Date(),
+      },
+      { id: LIVE_ORG, name: "Live Agency", activatedAt: new Date() },
+      { id: CANCELLED_ORG, name: "Departed Agency", activatedAt: new Date() },
+      { id: PENDING_ORG, name: "Unverified Agency" },
     ]);
 
     await db.insert(profiles).values([
@@ -98,12 +134,27 @@ describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
         fullName: "Departed Owner",
         role: "org_member",
       },
+      {
+        id: PENDING_MEMBER,
+        email: "pending@test.invalid",
+        fullName: "Waiting Owner",
+        role: "org_member",
+      },
+      {
+        id: TWO_ORG_MEMBER,
+        email: "two@test.invalid",
+        fullName: "Two Orgs Owner",
+        role: "org_member",
+      },
     ]);
 
     await db.insert(orgMembers).values([
       { orgId: SUSPENDED_ORG, userId: SUSPENDED_MEMBER, role: "owner" },
       { orgId: LIVE_ORG, userId: LIVE_MEMBER, role: "owner" },
       { orgId: CANCELLED_ORG, userId: CANCELLED_MEMBER, role: "owner" },
+      { orgId: PENDING_ORG, userId: PENDING_MEMBER, role: "owner" },
+      { orgId: STALE_ORG, userId: TWO_ORG_MEMBER, role: "owner" },
+      { orgId: SECOND_ORG, userId: TWO_ORG_MEMBER, role: "owner" },
     ]);
 
     // A month bought and then given up: paid, still inside its period,
@@ -190,6 +241,71 @@ describe.skipIf(!hasDb)("resolveAgencyConsole", async () => {
     await expect(resolveAgencyConsole()).rejects.toThrow(
       "redirect(/agency/billing)"
     );
+  });
+
+  it("reads the KYB state of the agency the visitor is actually in", async () => {
+    // Two memberships: a stale one in a suspended, never-activated
+    // agency, and a live one in an activated agency. `actor.orgIds`
+    // carries only the live one, so that is the agency every other part
+    // of the decision is about.
+    //
+    // The membership select used to be `where(userId)` with a bare
+    // `limit(1)` — an unordered pick. That was survivable while the row
+    // only put a name in the bar; with `activated_at` in the select it
+    // decides a redirect, and picking the stale row parks this director
+    // on the holding screen forever for an agency that *is* activated.
+    await signIn(TWO_ORG_MEMBER, [SECOND_ORG]);
+
+    const console_ = await resolveAgencyConsole({ allowUnpaid: true });
+
+    expect(console_.orgId).toBe(SECOND_ORG);
+    expect(console_.kybActivated).toBe(true);
+    expect(console_.membership?.name).toBe("Second Agency");
+  });
+
+  it("holds an unverified agency short of the paywall", async () => {
+    // KYB before money, the order `decideAgencyBilling` puts them in.
+    // An agency BeOrchid has not let in has nothing to buy yet.
+    await signIn(PENDING_MEMBER, [PENDING_ORG]);
+
+    await expect(resolveAgencyConsole()).rejects.toThrow(
+      "redirect(/agency/verification)"
+    );
+  });
+
+  it("does not let the paywall's own exemption open the KYB gate", async () => {
+    // The one that matters. `/agency/billing` passes `allowUnpaid` so it
+    // can render for an agency that owes money — and if the KYB check
+    // sat inside that exemption, typing the billing URL would hand an
+    // unverified business a Pay button. The two flags are independent
+    // checks for exactly this reason.
+    await signIn(PENDING_MEMBER, [PENDING_ORG]);
+
+    await expect(
+      resolveAgencyConsole({ allowUnpaid: true })
+    ).rejects.toThrow("redirect(/agency/verification)");
+  });
+
+  it("lets the holding screen itself resolve without redirecting", async () => {
+    await signIn(PENDING_MEMBER, [PENDING_ORG]);
+
+    const console_ = await resolveAgencyConsole({ allowPending: true });
+
+    expect(console_.orgId).toBe(PENDING_ORG);
+    expect(console_.kybActivated).toBe(false);
+    expect(console_.membership?.name).toBe("Unverified Agency");
+  });
+
+  it("still applies the paywall on the holding screen", async () => {
+    // `/agency/verification` passes `allowPending` and not `allowUnpaid`,
+    // so an agency that gets activated while sitting on that screen is
+    // walked to the till rather than left waiting on a page about a
+    // decision that has already been taken.
+    await signIn(LIVE_MEMBER, [LIVE_ORG]);
+
+    await expect(
+      resolveAgencyConsole({ allowPending: true })
+    ).rejects.toThrow("redirect(/agency/billing)");
   });
 
   it("lets that agency open the till it was just sent to", async () => {

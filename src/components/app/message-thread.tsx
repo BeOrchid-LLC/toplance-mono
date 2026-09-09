@@ -11,7 +11,7 @@ import { RELATIVE_TIME } from "@/lib/i18n/relative-time";
  * shared utility for two small call sites. Only the strings underneath it
  * are shared, via `RELATIVE_TIME`.
  */
-function relativeTime(date: Date, locale: Locale): string {
+export function relativeTime(date: Date, locale: Locale): string {
   const minutes = Math.floor((Date.now() - date.getTime()) / 60_000);
   if (minutes < 1) return RELATIVE_TIME.justNow[locale];
   if (minutes < 60) {
@@ -22,6 +22,22 @@ function relativeTime(date: Date, locale: Locale): string {
   const days = Math.floor(hours / 24);
   if (days < 7) return RELATIVE_TIME.daysAgo[locale].replace("{n}", String(days));
   return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+/**
+ * What a message's author is called.
+ *
+ * Exported beside `relativeTime` above so the case rail can print the
+ * last line of the thread in its panel header without a second opinion
+ * about who wrote it — the fallback is the interesting part, and one
+ * copy of it means the header and the message underneath can never
+ * disagree.
+ */
+export function senderLabel(m: MessageView, locale: Locale): string {
+  if (m.senderName) return m.senderName;
+  return m.side === "agency"
+    ? MESSAGES.senderAgency[locale]
+    : MESSAGES.senderTraveler[locale];
 }
 
 /**
@@ -48,11 +64,7 @@ export async function MessageThread({ messages }: { messages: MessageView[] }) {
       {messages.map((m) => (
         <li key={m.id} className="border-b border-border py-3 last:border-b-0">
           <p className="special">
-            {m.senderName ??
-              (m.side === "agency"
-                ? MESSAGES.senderAgency[locale]
-                : MESSAGES.senderTraveler[locale])}{" "}
-            · {relativeTime(m.createdAt, locale)}
+            {senderLabel(m, locale)} · {relativeTime(m.createdAt, locale)}
           </p>
           <p className="t-body mt-1 max-w-[62ch] whitespace-pre-wrap">{m.body}</p>
         </li>

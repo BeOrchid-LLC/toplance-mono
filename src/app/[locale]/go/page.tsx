@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { Panel, PanelBody } from "@/components/shared/panel";
@@ -12,6 +13,17 @@ import { getLocale } from "@/lib/i18n/server";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
+
+/**
+ * Static and English, like every other title in the product — the page
+ * itself is translated, but `metadata` is resolved once per route rather
+ * than per reader, and the root layout's template appends the product
+ * name to it.
+ *
+ * Only the branch below carries a title at all: when `goDestination`
+ * answers, this page redirects and never paints.
+ */
+export const metadata: Metadata = { title: "Your account" };
 
 /**
  * The role dispatcher. Roles live in Postgres, so neither the proxy nor

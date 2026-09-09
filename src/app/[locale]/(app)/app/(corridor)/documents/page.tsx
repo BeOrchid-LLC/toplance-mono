@@ -104,7 +104,7 @@ export default async function DocumentsPage() {
   ];
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
           <div>

@@ -56,7 +56,7 @@ export default async function MessagesPage() {
   after(() => markNotificationsRead(profile.id, ["message_received"]));
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         <Panel>
           <PanelHeader label={MESSAGES.panelLabel[locale]} />

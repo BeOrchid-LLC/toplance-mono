@@ -7,6 +7,7 @@ import { AdminMobileNav } from "@/components/shared/admin-mobile-nav";
 import { AdminRail, RailProvider, RailToggle } from "@/components/shared/admin-rail";
 import { RAIL_COOKIE } from "@/components/shared/admin-rail-cookie";
 import { AdminSidebar } from "@/components/shared/admin-sidebar";
+import { SkipLink } from "@/components/shared/skip-link";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { getLocale } from "@/lib/i18n/server";
 import { SettingsCluster } from "@/components/shared/settings-cluster";
@@ -106,6 +107,7 @@ export async function AdminShell({
   return (
     <RailProvider defaultCollapsed={collapsed}>
       <div className="flex min-h-dvh bg-bg">
+        <SkipLink locale={locale} />
         <AdminRail>
           <AdminSidebar
             groups={groups}
@@ -152,7 +154,7 @@ export async function AdminShell({
             </div>
           </header>
 
-          <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">
+          <main id="main" className="min-w-0 flex-1 px-4 py-8 sm:px-6">
             {/* One wrapper over the heading and the page, so a centred
                 page keeps its title on the same vertical as its panel.
                 Centring the children alone would leave the h1 at the

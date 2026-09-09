@@ -90,7 +90,7 @@ export default async function CompanionPage() {
   await track("toplance.companion_viewed", { applicationId: application.id }, profile.id);
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         <h1 className="d-lg text-ink">{t.heading[locale]}</h1>
         <p className="t-body-lg mt-2 max-w-[62ch] text-ink-2">{t.intro[locale]}</p>

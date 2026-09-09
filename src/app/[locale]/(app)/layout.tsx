@@ -4,8 +4,10 @@ import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { travellerNav } from "@/components/app/traveller-nav";
 import { SetupNotice } from "@/components/shared/setup-notice";
+import { SkipLink } from "@/components/shared/skip-link";
 import { homeFor } from "@/lib/auth/routes";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { getLocale } from "@/lib/i18n/server";
 import {
   getApplication,
   getProfile,
@@ -24,6 +26,7 @@ export default async function AppLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
   const profile = await getProfile();
   // `/go`, not `/sign-in`. The proxy walks a signed-in visitor off the
   // auth pages, so sending a session that has no profile row back there
@@ -84,6 +87,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-dvh bg-bg">
+      <SkipLink locale={locale} />
       <AppBar
         nav={nav}
         name={profile.fullName}

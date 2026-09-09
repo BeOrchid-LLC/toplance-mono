@@ -244,7 +244,7 @@ export default async function ProfilePage() {
     : null;
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         {/* ---- identity ---- */}
         <Panel className="relative">

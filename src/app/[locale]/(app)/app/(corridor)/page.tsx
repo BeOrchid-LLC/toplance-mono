@@ -90,7 +90,7 @@ export default async function DashboardPage() {
   const sentBackNames = sentBack.map((d) => d.name).join(", ");
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         {/* Above the completion ring, deliberately. Every other thing
             on this page is about a document; this one asks the reader

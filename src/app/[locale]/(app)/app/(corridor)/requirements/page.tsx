@@ -131,7 +131,7 @@ function CorridorGap({
   const answered = gap.kind === "answer";
 
   return (
-    <main>
+    <main id="main">
       <Shell className="max-w-[720px] py-16">
         <span
           className={
@@ -387,7 +387,7 @@ export default async function RequirementsPage() {
   });
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         {/* The corridor is named on the header above this screen, so
             the heading is what the rule set *is* rather than a second

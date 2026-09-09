@@ -17,6 +17,7 @@ type L = Record<Locale, string>;
  * English, the same way `hero.ts` and `ops-common.ts` were.
  */
 export const ADMIN_CONSOLE: {
+  skipToContent: L;
   collapseMenu: L;
   expandMenu: L;
   openMenu: L;
@@ -32,6 +33,24 @@ export const ADMIN_CONSOLE: {
   previousPage: L;
   nextPage: L;
 } = {
+  /**
+   * The skip link's own label. It belongs here rather than in either
+   * console's dictionary for the same reason the rail's controls do:
+   * `SkipLink` renders on every surface in the product, and a copy per
+   * console is the drift this file exists to prevent.
+   */
+  skipToContent: {
+    en: "Skip to content",
+    ha: "Tsallake zuwa abun ciki",
+    yo: "Fò sí àkóónú",
+    ig: "Wụga na ọdịnaya",
+    fr: "Aller au contenu",
+    pt: "Ir para o conteúdo",
+    sw: "Rukia hadi maudhui",
+    ar: "تخطَّ إلى المحتوى",
+    tw: "Tra kɔ emu nsɛm no so",
+    zu: "Yeqela kokuqukethwe",
+  },
   collapseMenu: {
     en: "Collapse the menu",
     ha: "Rufe menu",

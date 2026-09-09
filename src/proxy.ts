@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse, type NextRequest } from "next/server";
+import {
+  NextResponse,
+  type NextFetchEvent,
+  type NextRequest,
+} from "next/server";
 
+import { withoutHandshake } from "@/lib/auth/handshake";
 import { authRoutes, signedInDestination, SIGN_IN_DOOR } from "@/lib/auth/routes";
 import type { Locale } from "@/lib/i18n/locales";
 import {
@@ -88,7 +93,7 @@ const isPublicRoute = createRouteMatcher([
   "/api/cron/notification-emails",
 ]);
 
-export default clerkMiddleware(async (auth, request) => {
+const withClerkSession = clerkMiddleware(async (auth, request) => {
   const { userId } = await auth();
   const { pathname, searchParams } = request.nextUrl;
   const { locale, rest: realPathname } = splitLocalePath(pathname);
@@ -185,6 +190,120 @@ function serve(
   const url = request.nextUrl.clone();
   url.pathname = target;
   return NextResponse.rewrite(url, { request: { headers } });
+}
+
+/**
+ * Whether this is the refusal we know how to recover from.
+ *
+ * Clerk throws a plain `Error` reading `"handshake status without
+ * redirect"`; there is no typed class exported to test against, so the
+ * message is what there is. Matching the word rather than the whole
+ * sentence survives a rewording, and everything that does not match is
+ * re-thrown untouched.
+ */
+function isHandshakeRefusal(error: unknown): boolean {
+  return error instanceof Error && /handshake/i.test(error.message);
+}
+
+/**
+ * Set on the redirect that strips a refused handshake, and read on the
+ * way back in.
+ *
+ * A handshake refused because the token was stale clears on one retry.
+ * One refused because the instance is misconfigured does not, and from
+ * inside a single request the two look identical: strip, redirect,
+ * Clerk starts a fresh handshake, that one is refused too, strip again
+ * — until the browser stops with ERR_TOO_MANY_REDIRECTS, which is a
+ * worse answer than the 500 this replaced. The cookie is what tells
+ * the second attempt apart from the first.
+ *
+ * Thirty seconds covers one round trip through Clerk's frontend API
+ * and little else. It is deliberately not cleared on the success path:
+ * doing that would mean wrapping every response in this proxy to reach
+ * one cookie, and the cost of leaving it is that a second, unrelated
+ * stale handshake inside the same half minute goes straight to the
+ * door instead of getting its own retry.
+ *
+ * `sameSite: "lax"` because the trip that sets it and the trip that
+ * reads it are separated by a top-level navigation to Clerk's own
+ * domain and back; `strict` would not come back.
+ */
+const HANDSHAKE_RETRY_COOKIE = "__toplance_handshake_retried";
+
+/**
+ * The handshake this instance could not verify, answered as a redirect
+ * rather than a 500.
+ *
+ * The catch has to sit out here, around `clerkMiddleware` itself, rather
+ * than around the `auth()` call inside it. Clerk resolves the request
+ * state — handshake included — before it ever invokes the handler above,
+ * and throws `"handshake status without redirect"` from there when it
+ * decides a handshake is needed but has no location to send the browser
+ * to. By the time `auth()` is called the state is already resolved, so a
+ * `try` around it catches nothing; this was written that way first and
+ * the 500 was still there.
+ *
+ * A refused handshake token is spent, so the request cannot be repeated
+ * as it stands. `withoutHandshake` takes it out of the URL and this asks
+ * for the same page again without it, which is the one thing that can
+ * clear the loop — Clerk starts a fresh handshake if it still wants one.
+ *
+ * What is recovered from is decided by the error, not by the URL. An
+ * earlier version asked only whether the address carried a handshake
+ * parameter, which meant any unrelated failure on such a request — a
+ * throw from `serve`, from `signedInDestination`, from anything below —
+ * was silently answered with a redirect and its error discarded. Only a
+ * handshake refusal is caught here; everything else is re-thrown, and a
+ * proxy that swallows every error is a product that fails silently.
+ */
+export default async function proxy(
+  request: NextRequest,
+  event: NextFetchEvent
+) {
+  try {
+    return await withClerkSession(request, event);
+  } catch (error) {
+    if (!isHandshakeRefusal(error)) throw error;
+
+    const retry = withoutHandshake(request.nextUrl);
+    if (!retry) throw error;
+
+    // Said out loud, not swallowed. This branch exists so that a
+    // refused handshake stops being invisible to the person hitting
+    // it; it must not become invisible to us instead. The bracketed
+    // prefix is the shape `[audit]` and `[clerk-admin]` already use
+    // where they absorb a failure.
+    console.error("[auth] handshake refused — retrying without it", error);
+
+    if (request.cookies.has(HANDSHAKE_RETRY_COOKIE)) {
+      console.error(
+        "[auth] handshake refused twice inside the retry window — " +
+          "sending to the sign-in door rather than looping"
+      );
+      const { locale } = splitLocalePath(request.nextUrl.pathname);
+      const door = NextResponse.redirect(
+        new URL(withLocalePrefix(SIGN_IN_DOOR, locale), request.url)
+      );
+      door.cookies.delete(HANDSHAKE_RETRY_COOKIE);
+      return door;
+    }
+
+    // Rebuilt against `request.url`, like every other redirect in this
+    // file. `nextUrl` carries whatever protocol the origin was reached
+    // on, and this one sits behind a CDN that terminates TLS — taking
+    // the address from it can answer an https request with an http
+    // Location.
+    const response = NextResponse.redirect(
+      new URL(`${retry.pathname}${retry.search}`, request.url)
+    );
+    response.cookies.set(HANDSHAKE_RETRY_COOKIE, "1", {
+      maxAge: 30,
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+    });
+    return response;
+  }
 }
 
 export const config = {

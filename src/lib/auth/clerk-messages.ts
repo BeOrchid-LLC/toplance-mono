@@ -90,6 +90,21 @@ const OUR_WORDS: Record<string, string> = {
     "That email address cannot be used to open an account.",
   not_allowed_access:
     "That email address cannot be used to open an account.",
+
+  // Bot protection. Neither of these is about what the person typed, and
+  // the generic fallback said it was — "check them and try again" over a
+  // form whose every field is already correct, which is a loop with
+  // nothing in it to fix. What actually clears a refused challenge is a
+  // fresh page, so that is what the sentence asks for.
+  captcha_invalid:
+    "We could not complete the security check. Refresh the page and try again.",
+
+  // Not the visitor's to fix at all: the instance is asking for a
+  // challenge it has not switched on. Saying so is more use than sending
+  // them back to the fields, and stops a support thread about an address
+  // that was never the problem.
+  captcha_not_enabled:
+    "We could not run the security check. That is a fault at our end — try again in a few minutes.",
 };
 
 /**
@@ -101,4 +116,30 @@ export function messageForClerkError(
   fallback: string
 ): string {
   return OUR_WORDS[error.code] ?? error.longMessage ?? fallback;
+}
+
+/**
+ * Whether a refused verification is refusing because it is already done.
+ *
+ * Clerk answers a code submitted against a verification it has already
+ * accepted with `verification_already_verified` and a 400, which reads
+ * as a failure and is the opposite of one: the email is verified, and
+ * the only thing left is to finalize the attempt.
+ *
+ * Taking it at face value strands the person. `attempt_verification`
+ * moves the verification to a terminal state, so once it is there every
+ * later submission of that code refuses identically — a sign-up that
+ * treats the refusal as a bad code can never reach `finalize()`, and the
+ * screen has nothing else to offer. Staging produced exactly that on
+ * 2026-09-09: `status: verified`, `created_user_id: null`, three times.
+ *
+ * So it is reported as a state, not worded as a refusal — the caller
+ * carries on rather than saying anything, which is why the code is
+ * deliberately absent from `OUR_WORDS`. Narrow on purpose: every other
+ * refusal, a wrong code and an expired one included, still fails.
+ */
+export function isVerificationAlreadyDone(
+  error: ClerkRefusal | null | undefined
+): boolean {
+  return error?.code === "verification_already_verified";
 }

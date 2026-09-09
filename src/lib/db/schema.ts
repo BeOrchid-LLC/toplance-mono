@@ -1551,6 +1551,22 @@ export const supportRequests = pgTable(
      * destroy the record of a dispute.
      */
     raisedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+    /**
+     * The case this is about, when it is about one.
+     *
+     * Nullable because most requests are not — a suspension or a bill
+     * belongs to the agency rather than to any traveller. When it is
+     * set, the operator sees which application without the agency
+     * having to describe it in prose, and without BeOrchid gaining any
+     * reach into the case itself: the thread shows the reference and
+     * nothing else, because Decision 5 of 6 September removed every
+     * path from this console to a traveller's documents.
+     *
+     * `set null` rather than `cascade`: the record of a dispute
+     * outlives the case it was about, and is most useful precisely
+     * when something went wrong with that case.
+     */
+    applicationId: uuid().references(() => applications.id, { onDelete: "set null" }),
     subject: text().notNull(),
     body: text().notNull(),
     state: supportRequestState().notNull().default("open"),

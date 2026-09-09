@@ -136,3 +136,47 @@ describe.skipIf(!process.env.DATABASE_URL)("support threads", async () => {
     expect(row.assigneeId).toBeNull();
   });
 });
+
+/**
+ * The check that stops one agency naming another's traveller on a
+ * support request. Database-gated, because ownership is a row.
+ */
+describe.skipIf(!process.env.DATABASE_URL)("applicationBelongsToOrg", async () => {
+  const { db } = await import("@/lib/db/client");
+  const { applications, organisations, profiles } = await import("@/lib/db/schema");
+  const { applicationBelongsToOrg } = await import("@/lib/data/support");
+
+  it("says yes only for the agency that holds the case", async () => {
+    const [mine] = await db
+      .insert(organisations)
+      .values({ name: "Case Owner Agency" })
+      .returning({ id: organisations.id });
+    const [theirs] = await db
+      .insert(organisations)
+      .values({ name: "Other Agency" })
+      .returning({ id: organisations.id });
+
+    await db
+      .insert(profiles)
+      .values({
+        id: "test_case_traveller",
+        email: "case@test.invalid",
+        fullName: "Case Traveller",
+      })
+      .onConflictDoNothing();
+
+    const [app] = await db
+      .insert(applications)
+      .values({ travelerId: "test_case_traveller", orgId: mine.id })
+      .returning({ id: applications.id });
+
+    expect(await applicationBelongsToOrg(app.id, mine.id)).toBe(true);
+    expect(await applicationBelongsToOrg(app.id, theirs.id)).toBe(false);
+
+    await db.delete(applications).where(eq(applications.id, app.id));
+    await db.delete(profiles).where(eq(profiles.id, "test_case_traveller"));
+    await db
+      .delete(organisations)
+      .where(inArray(organisations.id, [mine.id, theirs.id]));
+  });
+});

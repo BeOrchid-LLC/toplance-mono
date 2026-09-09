@@ -49,10 +49,15 @@ export const OPS_SUPPORT: {
   replySent: L;
   fromUs: L;
   fromAgency: L;
-  openRequest: L;
+  chatAction: L;
   backToQueue: L;
   backToSupport: L;
   resolvedNote: L;
+  aboutCase: L;
+  askAboutCase: L;
+  askAboutCaseLead: L;
+  markResolved: L;
+  resolvedToast: L;
 } = {
   heading: {
     en: "Support",
@@ -340,9 +345,24 @@ export const OPS_SUPPORT: {
     fr: "L'agence", pt: "A agência", sw: "Wakala", ar: "الوكالة",
     tw: "Adwumakuo no", zu: "I-ejensi",
   },
-  openRequest: {
-    en: "Open", ha: "Buɗe", yo: "Ṣí", ig: "Mepee", fr: "Ouvrir",
-    pt: "Abrir", sw: "Fungua", ar: "فتح", tw: "Bue", zu: "Vula",
+  /**
+   * The button that opens a request's conversation.
+   *
+   * "Chat", not "Open" — the client's word on 9 September. "Open" also
+   * collides with the `open` state in the same row, which is a poor
+   * thing for a control and a status to share.
+   */
+  chatAction: {
+    en: "Chat",
+    ha: "Hira",
+    yo: "Ìjíròrò",
+    ig: "Nkata",
+    fr: "Discussion",
+    pt: "Conversa",
+    sw: "Gumzo",
+    ar: "محادثة",
+    tw: "Nkɔmmɔ",
+    zu: "Ingxoxo",
   },
   backToQueue: {
     en: "All support requests", ha: "Duk buƙatun tallafi",
@@ -367,5 +387,46 @@ export const OPS_SUPPORT: {
     ar: "تم حل هذا الطلب، فلا يمكن لأحد الإضافة إليه. افتح طلبًا جديدًا إن بقيت مشكلة.",
     tw: "Wɔasiesie saa abisadeɛ yi, enti obiara ntumi mfa nka ho. Fa foforɔ bra sɛ biribi da so yɛ bɔne a.",
     zu: "Lesi sicelo sixazululiwe, ngakho akekho ongangeza kuso. Vula esisha uma kusekhona okungahambi kahle.",
+  },
+  aboutCase: {
+    en: "About case", ha: "Game da shari'ar", yo: "Nípa ẹjọ́", ig: "Gbasara ikpe",
+    fr: "Au sujet du dossier", pt: "Sobre o processo", sw: "Kuhusu kesi",
+    ar: "بخصوص الحالة", tw: "Ɛfa asɛm", zu: "Mayelana necala",
+  },
+  askAboutCase: {
+    en: "Ask BeOrchid about this case",
+    ha: "Tambayi BeOrchid game da wannan shari'ar",
+    yo: "Bi BeOrchid nípa ẹjọ́ yìí",
+    ig: "Jụọ BeOrchid gbasara ikpe a",
+    fr: "Interroger BeOrchid sur ce dossier",
+    pt: "Perguntar à BeOrchid sobre este processo",
+    sw: "Uliza BeOrchid kuhusu kesi hii",
+    ar: "اسأل BeOrchid عن هذه الحالة",
+    tw: "Bisa BeOrchid saa asɛm yi ho",
+    zu: "Buza i-BeOrchid ngaleli cala",
+  },
+  askAboutCaseLead: {
+    en: "This opens a support conversation with the case reference attached, so nobody has to describe which traveller you mean.",
+    ha: "Wannan yana buɗe tattaunawar tallafi tare da lambar shari'ar, don kada kowa ya bayyana wane matafiyi kake nufi.",
+    yo: "Èyí ń ṣí ìjíròrò ìrànlọ́wọ́ pẹ̀lú ìtọ́kasí ẹjọ́, kí ẹnikẹ́ni má bàa ṣàlàyé arìnrìn-àjò tí o ń tọ́ka sí.",
+    ig: "Nke a na-emepe mkparịta ụka nkwado nwere nrụtụaka ikpe, ka onye ọ bụla ghara ịkọwa onye njem ị na-ekwu.",
+    fr: "Ceci ouvre une conversation d'assistance avec la référence du dossier jointe, pour que personne n'ait à décrire de quel voyageur il s'agit.",
+    pt: "Isto abre uma conversa de apoio com a referência do processo anexada, para ninguém ter de descrever de que viajante se trata.",
+    sw: "Hii inafungua mazungumzo ya msaada na kumbukumbu ya kesi, ili hakuna anayehitaji kueleza unamaanisha msafiri gani.",
+    ar: "يفتح هذا محادثة دعم مع مرجع الحالة، فلا يحتاج أحد إلى وصف المسافر المقصود.",
+    tw: "Yei bue mmoa nkɔmmɔ a asɛm no nsɛnkyerɛnne ka ho, na obiara nnkyerɛ ɔkwantufoɔ a wopɛ.",
+    zu: "Lokhu kuvula ingxoxo yosekelo nenkomba yecala, ukuze kungabikho odinga ukuchaza ukuthi umuphi umhambi.",
+  },
+  markResolved: {
+    en: "Mark resolved", ha: "Yiwa alama an warware", yo: "Sàmì pé a yanjú",
+    ig: "Kaa ya edoziela", fr: "Marquer comme résolue", pt: "Marcar como resolvido",
+    sw: "Weka kuwa imetatuliwa", ar: "وضع علامة تم الحل",
+    tw: "Hyɛ no sɛ wɔasiesie", zu: "Maka njengexazululiwe",
+  },
+  resolvedToast: {
+    en: "Marked resolved", ha: "An yiwa alama an warware", yo: "A sàmì pé a yanjú",
+    ig: "Akara ya edoziela", fr: "Marquée comme résolue", pt: "Marcado como resolvido",
+    sw: "Imewekwa kuwa imetatuliwa", ar: "وُضعت علامة تم الحل",
+    tw: "Wɔahyɛ no sɛ wɔasiesie", zu: "Kumakwe njengexazululiwe",
   },
 };

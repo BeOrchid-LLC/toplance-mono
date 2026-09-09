@@ -10,6 +10,7 @@ import { opsAdminNav } from "@/components/shared/admin-nav";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { SupportReply } from "@/components/shared/support-reply";
+import { SupportResolve } from "@/components/shared/support-resolve";
 import { SupportThread } from "@/components/shared/support-thread";
 import { Badge } from "@/components/ui/badge";
 import { isOwner } from "@/lib/auth/policy";
@@ -23,7 +24,7 @@ import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { getLocale } from "@/lib/i18n/server";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { opsAccount } from "@/app/[locale]/ops/account";
-import { replyToSupport } from "@/app/[locale]/ops/support/actions";
+import { replyToSupport, resolveSupport } from "@/app/[locale]/ops/support/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +111,14 @@ export default async function OpsSupportRequestPage({
         <Badge variant={STATE_VARIANT[request.state]}>
           {STATE_LABEL[request.state][locale]}
         </Badge>
+        {/* The reference only. This console has no path into a case and
+            must not grow one — the join behind this stops at
+            `case_ref`. */}
+        {request.caseRef && (
+          <span className="t-muted num">
+            {OPS_SUPPORT.aboutCase[locale]} {request.caseRef}
+          </span>
+        )}
         {request.orgName && (
           <Link
             href={`/ops/tenants/${request.orgId}`}
@@ -138,7 +147,12 @@ export default async function OpsSupportRequestPage({
       <Panel className="mt-8 mb-16">
         <PanelBody>
           {open ? (
-            <SupportReply requestId={request.id} action={replyToSupport} />
+            <div className="flex flex-col gap-6">
+              <SupportReply requestId={request.id} action={replyToSupport} />
+              <div className="border-t border-border pt-6">
+                <SupportResolve requestId={request.id} action={resolveSupport} />
+              </div>
+            </div>
           ) : (
             <p className="t-muted max-w-[62ch]">{OPS_SUPPORT.resolvedNote[locale]}</p>
           )}

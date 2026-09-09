@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { CaseHandlerControl } from "@/components/agency/case-handler-control";
 import { ReviewRow } from "@/components/agency/review-row";
+import { AskAboutCase } from "@/components/agency/ask-about-case";
 import { InviteAttendance } from "@/components/agency/invite-attendance";
 import { StatusControl } from "@/components/agency/status-control";
 import { MessageComposer } from "@/components/app/message-composer";
@@ -13,6 +14,7 @@ import { MessageThread } from "@/components/app/message-thread";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { ATTENDANCE } from "@/lib/i18n/attendance";
+import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { DownloadDocuments } from "@/components/shared/download-documents";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -250,6 +252,18 @@ export default async function AgencyCasePage({
               thing as a decision: something the desk does to move the
               case along, so it belongs in the same rail and in view as
               the reviewer scrolls the checklist. */}
+          {/* Asking BeOrchid about this case, from the case. The
+              Contact support page takes a subject and a body and
+              nothing else, so a question about one traveller had to
+              describe which one in prose and an operator had to read it
+              back. Started here it carries the case reference. */}
+          <Panel>
+            <PanelBody className="flex flex-wrap items-center justify-between gap-4">
+              <p className="t-muted max-w-[46ch]">{OPS_SUPPORT.askAboutCaseLead[locale]}</p>
+              <AskAboutCase applicationId={row.id} />
+            </PanelBody>
+          </Panel>
+
           <Panel>
             <PanelHeader label={ATTENDANCE.panelTitle[locale]} />
             <PanelBody>

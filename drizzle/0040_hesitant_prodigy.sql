@@ -1,0 +1,2 @@
+ALTER TABLE "support_requests" ADD COLUMN "application_id" uuid;--> statement-breakpoint
+ALTER TABLE "support_requests" ADD CONSTRAINT "support_requests_application_id_applications_id_fk" FOREIGN KEY ("application_id") REFERENCES "public"."applications"("id") ON DELETE set null ON UPDATE no action;

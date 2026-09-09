@@ -6,6 +6,7 @@ import { AgencyShell } from "@/components/agency/agency-shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { SupportReply } from "@/components/shared/support-reply";
+import { SupportResolve } from "@/components/shared/support-resolve";
 import { SupportThread } from "@/components/shared/support-thread";
 import { Badge } from "@/components/ui/badge";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -15,7 +16,7 @@ import { isUuid } from "@/lib/domain/uuid";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { getLocale } from "@/lib/i18n/server";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
-import { replyAsAgency } from "@/app/[locale]/agency/support/actions";
+import { replyAsAgency, resolveAsAgency } from "@/app/[locale]/agency/support/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +101,16 @@ export default async function AgencySupportRequestPage({
       <Panel className="mt-8 mb-16">
         <PanelBody>
           {open ? (
-            <SupportReply requestId={request.id} action={replyAsAgency} />
+            <div className="flex flex-col gap-6">
+              <SupportReply requestId={request.id} action={replyAsAgency} />
+              {/* The agency closes its own request. They usually know
+                  first that it is sorted, and leaving that to an
+                  operator keeps a settled dispute sitting in the queue
+                  as work. */}
+              <div className="border-t border-border pt-6">
+                <SupportResolve requestId={request.id} action={resolveAsAgency} />
+              </div>
+            </div>
           ) : (
             <p className="t-muted max-w-[62ch]">{OPS_SUPPORT.resolvedNote[locale]}</p>
           )}

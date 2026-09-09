@@ -5,6 +5,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import {
+  applications,
   organisations,
   profiles,
   supportMessages,
@@ -38,6 +39,9 @@ export type SupportRequestRow = {
   assigneeName: string | null;
   createdAt: Date;
   resolvedAt: Date | null;
+  /** The case this is about, when it is about one — reference only. */
+  applicationId: string | null;
+  caseRef: string | null;
 };
 
 const columns = {
@@ -53,6 +57,13 @@ const columns = {
   assigneeName: assignee.fullName,
   createdAt: supportRequests.createdAt,
   resolvedAt: supportRequests.resolvedAt,
+  applicationId: supportRequests.applicationId,
+  /**
+   * The reference and nothing more. This console cannot open a case,
+   * and joining anything else from `applications` here would be the
+   * first step towards it being able to.
+   */
+  caseRef: applications.caseRef,
 };
 
 /**
@@ -70,6 +81,7 @@ export async function listSupportRequests(): Promise<SupportRequestRow[]> {
     .leftJoin(organisations, eq(organisations.id, supportRequests.orgId))
     .leftJoin(author, eq(author.id, supportRequests.raisedBy))
     .leftJoin(assignee, eq(assignee.id, supportRequests.assigneeId))
+    .leftJoin(applications, eq(applications.id, supportRequests.applicationId))
     .orderBy(desc(supportRequests.createdAt));
 }
 
@@ -92,6 +104,7 @@ export async function listSupportRequestsForOrg(
     .leftJoin(organisations, eq(organisations.id, supportRequests.orgId))
     .leftJoin(author, eq(author.id, supportRequests.raisedBy))
     .leftJoin(assignee, eq(assignee.id, supportRequests.assigneeId))
+    .leftJoin(applications, eq(applications.id, supportRequests.applicationId))
     .where(eq(supportRequests.orgId, orgId))
     .orderBy(desc(supportRequests.createdAt));
 }
@@ -160,6 +173,8 @@ export async function raiseSupportRequest(input: {
   raisedBy: string;
   subject: string;
   body: string;
+  /** Set only when the caller has checked the case belongs to `orgId`. */
+  applicationId?: string | null;
 }): Promise<string> {
   const [row] = await db
     .insert(supportRequests)
@@ -176,6 +191,7 @@ export async function listOpenSupportRequests(): Promise<SupportRequestRow[]> {
     .leftJoin(organisations, eq(organisations.id, supportRequests.orgId))
     .leftJoin(author, eq(author.id, supportRequests.raisedBy))
     .leftJoin(assignee, eq(assignee.id, supportRequests.assigneeId))
+    .leftJoin(applications, eq(applications.id, supportRequests.applicationId))
     .where(eq(supportRequests.state, "open"))
     .orderBy(asc(supportRequests.createdAt));
 }
@@ -188,6 +204,7 @@ export async function getSupportRequest(id: string): Promise<SupportRequestRow |
     .leftJoin(organisations, eq(organisations.id, supportRequests.orgId))
     .leftJoin(author, eq(author.id, supportRequests.raisedBy))
     .leftJoin(assignee, eq(assignee.id, supportRequests.assigneeId))
+    .leftJoin(applications, eq(applications.id, supportRequests.applicationId))
     .where(eq(supportRequests.id, id));
   return row ?? null;
 }
@@ -244,4 +261,23 @@ export async function postSupportMessage(input: {
   }
 
   return row;
+}
+
+/**
+ * Whether one application belongs to one agency.
+ *
+ * Asked before a support request is allowed to name it. Without this,
+ * a posted `application_id` would let an agency attach — and then see
+ * in its own thread — the case reference of a traveller at another
+ * agency.
+ */
+export async function applicationBelongsToOrg(
+  applicationId: string,
+  orgId: string
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: applications.id })
+    .from(applications)
+    .where(and(eq(applications.id, applicationId), eq(applications.orgId, orgId)));
+  return Boolean(row);
 }

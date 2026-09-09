@@ -281,6 +281,13 @@
       "when": 1788932822924,
       "tag": "0039_pale_preak",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1788934383967,
+      "tag": "0040_hesitant_prodigy",
+      "breakpoints": true
     }
   ]
 }

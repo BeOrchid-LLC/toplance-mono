@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -151,6 +152,18 @@ export function SupportTable({
       align: "end",
       cell: (r) => (
         <div className="flex justify-end gap-2">
+          {/* Always first, and always present — including on a resolved
+              request, where every other control is hidden and the row
+              would otherwise have no way into the conversation at all.
+              The subject is a link too, but a link styled as a title in
+              a row whose other affordances are buttons is not somewhere
+              anybody looks. */}
+          <Button asChild variant="neutral" size="sm">
+            <Link href={`/ops/support/${r.id}`}>
+              <MessagesSquare className="size-4" aria-hidden />
+              {OPS_SUPPORT.chatAction[locale]}
+            </Link>
+          </Button>
           {r.state !== "resolved" && (
             <Button
               type="button"

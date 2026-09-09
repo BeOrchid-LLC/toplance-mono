@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MessagesSquare } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { ContactSupport } from "@/components/agency/contact-support";
@@ -93,6 +96,14 @@ export default async function AgencySupportPage() {
                     <span className="t-muted num">
                       {r.createdAt.toISOString().slice(0, 10)}
                     </span>
+                    {/* The way into the conversation, as a control
+                        rather than a title that happens to be a link. */}
+                    <Button asChild variant="neutral" size="sm" className="ms-auto">
+                      <Link href={`/agency/support/${r.id}`}>
+                        <MessagesSquare className="size-4" aria-hidden />
+                        {OPS_SUPPORT.chatAction[locale]}
+                      </Link>
+                    </Button>
                   </div>
                   <p className="t-muted mt-2 whitespace-pre-wrap">{r.body}</p>
                 </li>

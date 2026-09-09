@@ -37,11 +37,8 @@ export const AGENCY: {
   nameOrgLabel: L;
   nameOrgBody: L;
   yourOrganisationFallback: L;
-  seatsInUse: L;
-  seatCountNotSetOne: L;
-  seatCountNotSetOther: L;
-  pendingSuffixOne: L;
-  pendingSuffixOther: L;
+  teamSizeOne: L;
+  teamSizeOther: L;
   privacyTag: L;
   privacyHeading: L;
   privacyBody: L;
@@ -370,65 +367,45 @@ export const AGENCY: {
     tw: "Wo akuo",
     zu: "Inhlangano yakho",
   },
-  seatsInUse: {
-    en: "{used} of {seats} seats in use",
-    ha: "{used} daga cikin {seats} wurare ana amfani da su",
-    yo: "{used} nínú {seats} ipò tí à ń lò",
-    ig: "{used} n'ime {seats} ọnọdụ ka a na-eji",
-    fr: "{used} places sur {seats} utilisées",
-    pt: "{used} de {seats} vagas em uso",
-    sw: "{used} kati ya {seats} nafasi zinatumika",
-    ar: "{used} من أصل {seats} مقعد قيد الاستخدام",
-    tw: "{seats} mu {used} na wɔde redi dwuma",
-    zu: "{used} kwezingu-{seats} izikhala ezisetshenzisiwe",
+  /**
+   * How many people work at this agency — the one fact on the dashboard
+   * that appears nowhere else.
+   *
+   * It replaced "{n} people · seat count not set yet · {n} invitation
+   * pending" on 9 September, a line whose three clauses were each
+   * wrong or redundant. "People" counted `countOrgClients`, which
+   * counts applications — so it said two people and meant two
+   * travellers, next to a Clients card saying 2. The seat clause named
+   * a cap nothing enforces. The invitation clause repeated the
+   * Outstanding invitations card directly below it.
+   *
+   * The rail's Team badge is pending team invitations, not size, so
+   * without this the number of colleagues is on no screen but the
+   * roster itself.
+   */
+  teamSizeOne: {
+    en: "1 person on your team",
+    ha: "Mutum 1 a ƙungiyarku",
+    yo: "Ènìyàn 1 nínú ẹgbẹ́ yín",
+    ig: "Mmadụ 1 nʼotu gị",
+    fr: "1 personne dans votre équipe",
+    pt: "1 pessoa na sua equipa",
+    sw: "Mtu 1 katika timu yako",
+    ar: "شخص واحد في فريقك",
+    tw: "Onipa 1 wɔ wo kuo no mu",
+    zu: "Umuntu 1 ethimbeni lakho",
   },
-  seatCountNotSetOne: {
-    en: "{used} person · seat count not set yet",
-    ha: "Mutum {used} · ba a saita adadin wurare ba tukuna",
-    yo: "Ènìyàn {used} · a kò tíì ṣètò iye ipò",
-    ig: "Mmadụ {used} · edobebeghị ọnụọgụ ọnọdụ",
-    fr: "{used} personne · nombre de places non encore défini",
-    pt: "{used} pessoa · número de vagas ainda não definido",
-    sw: "Mtu {used} · idadi ya nafasi bado haijawekwa",
-    ar: "{used} شخص · لم يُحدَّد عدد المقاعد بعد",
-    tw: "Onipa {used} · wɔnhyehyɛɛ beaeɛ dodoɔ ɛnora",
-    zu: "Umuntu {used} · inani lezikhala alikasethwa",
-  },
-  seatCountNotSetOther: {
-    en: "{used} people · seat count not set yet",
-    ha: "Mutane {used} · ba a saita adadin wurare ba tukuna",
-    yo: "Àwọn ènìyàn {used} · a kò tíì ṣètò iye ipò",
-    ig: "Ndị mmadụ {used} · edobebeghị ọnụọgụ ọnọdụ",
-    fr: "{used} personnes · nombre de places non encore défini",
-    pt: "{used} pessoas · número de vagas ainda não definido",
-    sw: "Watu {used} · idadi ya nafasi bado haijawekwa",
-    ar: "{used} أشخاص · لم يُحدَّد عدد المقاعد بعد",
-    tw: "Nnipa {used} · wɔnhyehyɛɛ beaeɛ dodoɔ ɛnora",
-    zu: "Abantu {used} · inani lezikhala alikasethwa",
-  },
-  pendingSuffixOne: {
-    en: " · {n} invitation pending",
-    ha: " · gayyata {n} tana jira",
-    yo: " · ìpè {n} kan ń dúró",
-    ig: " · ọkpụkpọ {n} nọ na-eche",
-    fr: " · {n} invitation en attente",
-    pt: " · {n} convite pendente",
-    sw: " · mwaliko {n} unasubiri",
-    ar: " · دعوة {n} قيد الانتظار",
-    tw: " · frɛ {n} retwɛn",
-    zu: " · isimemo {n} silindile",
-  },
-  pendingSuffixOther: {
-    en: " · {n} invitations pending",
-    ha: " · gayyata {n} suna jira",
-    yo: " · ìpè {n} ń dúró",
-    ig: " · ọkpụkpọ {n} na-eche",
-    fr: " · {n} invitations en attente",
-    pt: " · {n} convites pendentes",
-    sw: " · mialiko {n} inasubiri",
-    ar: " · {n} دعوات قيد الانتظار",
-    tw: " · frɛ {n} retwɛn",
-    zu: " · izimemo {n} zilindile",
+  teamSizeOther: {
+    en: "{n} people on your team",
+    ha: "Mutane {n} a ƙungiyarku",
+    yo: "Ènìyàn {n} nínú ẹgbẹ́ yín",
+    ig: "Mmadụ {n} nʼotu gị",
+    fr: "{n} personnes dans votre équipe",
+    pt: "{n} pessoas na sua equipa",
+    sw: "Watu {n} katika timu yako",
+    ar: "{n} أشخاص في فريقك",
+    tw: "Nnipa {n} wɔ wo kuo no mu",
+    zu: "Abantu abangu-{n} ethimbeni lakho",
   },
   privacyTag: {
     en: "The privacy boundary",

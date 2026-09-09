@@ -31,12 +31,15 @@
      text, which `.special` and `.t-muted` both use. */
   --ink-3: #697980;
 
-  /* Elevation is a real tool now. At 6% on a near-white ground the old
-     values were invisible, so every card had to fall back to a 1px
-     border — which is what turned the page into a grid of boxes. */
-  --shadow-sm: 0 1px 2px rgb(16 19 28 / 0.06);
-  --shadow: 0 1px 3px rgb(16 19 28 / 0.08), 0 12px 28px -8px rgb(16 19 28 / 0.10);
-  --shadow-lg: 0 2px 8px rgb(16 19 28 / 0.10), 0 24px 56px -12px rgb(16 19 28 / 0.18);
+  /* Plates sit ON the concourse; they do not float above it. What
+     separates a plate from its ground is the ground being darker and
+     the plate having a real edge — not a blur. `--shadow-sm` survives
+     as a hairline-thin contact shadow for a plate that genuinely
+     overlaps another (menus, dialogs, the mobile nav sheet); the two
+     larger steps are for those and nothing else. */
+  --shadow-sm: 0 1px 0 rgb(11 31 42 / 0.06);
+  --shadow: 0 1px 2px rgb(11 31 42 / 0.10), 0 8px 20px -10px rgb(11 31 42 / 0.16);
+  --shadow-lg: 0 2px 6px rgb(11 31 42 / 0.14), 0 20px 44px -14px rgb(11 31 42 / 0.24);
 
   /* Signage green and red, not the old semantic pair. Both are read at
      a glance next to a status word, never alone. */
@@ -117,13 +120,15 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* radius — 14px is the system default.
-     Softened across the board. Paired with real elevation this lets a
-     card read as a surface rather than as an outlined box. */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  /* Signage geometry. A sign is a plate with a machined edge, so the
+     radius is the smallest one that still reads as manufactured rather
+     than as a cut corner. 14px read as a SaaS card, which is what it
+     was chosen to be on the previous system; that decision goes with
+     the system it belonged to. */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 10px;
   --radius-pill: 999px;
   --radius: var(--radius-md);
 
@@ -173,9 +178,9 @@
   --ink-2: #a3b1b8;
   --ink-3: #7a8b93;
 
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
-  --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 12px 28px -8px rgb(0 0 0 / 0.45);
-  --shadow-lg: 0 2px 8px rgb(0 0 0 / 0.55), 0 24px 56px -12px rgb(0 0 0 / 0.55);
+  --shadow-sm: 0 1px 0 rgb(0 0 0 / 0.4);
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 20px -10px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.55), 0 20px 44px -14px rgb(0 0 0 / 0.55);
 
   --success: #2fa968;
   --success-ink: #7fe0ac;
@@ -612,7 +617,7 @@
   :focus-visible {
     outline: 2px solid var(--brand);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 3px;
   }
 
   @media (prefers-reduced-motion: reduce) {

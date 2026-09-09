@@ -89,6 +89,7 @@ export function TenantsTable({
       className={className}
       rows={rows}
       rowKey={(t) => t.id}
+      numbered
       columns={columns}
       locale={locale}
       total={rows.length}

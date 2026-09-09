@@ -106,6 +106,7 @@ export function EnquiryTable({
 
   return (
     <DataTable
+      numbered
       className={className}
       rows={rows}
       rowKey={(r) => r.id}

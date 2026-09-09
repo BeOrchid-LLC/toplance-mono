@@ -130,6 +130,7 @@ export function InvitationTable({
       className="mt-8 mb-16"
       rows={rows}
       rowKey={(invite) => invite.id}
+      numbered
       columns={columns}
       label={OPS_STAFF.invitesPanel[locale]}
       filteredLabel={filteredLabel}

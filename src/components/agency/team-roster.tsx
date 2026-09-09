@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { OrgMemberRow } from "@/lib/data/organisations";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
@@ -94,14 +95,16 @@ export function TeamRoster({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-12 text-end">{ADMIN_CONSOLE.ordinalHeading[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.colleague[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.joined[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.rank[locale]}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((member) => (
+            {members.map((member, i) => (
               <TableRow key={member.userId}>
+                <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                 <TableCell>
                   <span
                     className="block truncate font-semibold"

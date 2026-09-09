@@ -159,6 +159,7 @@ export function ClientsTable({
     <DataTable
       rows={rows}
       rowKey={(client) => client.orgId}
+      numbered
       columns={columns}
       label="Every client, busiest first"
       count={totalClients}

@@ -23,6 +23,7 @@ export const ADMIN_CONSOLE: {
   menuTitle: L;
   showingTemplate: L;
   rowsWord: L;
+  ordinalHeading: L;
   noMatch: L;
   clearFilters: L;
   pagesLabel: L;
@@ -91,6 +92,25 @@ export const ADMIN_CONSOLE: {
     ar: "عرض {shown} من {total}",
     tw: "Ɛreda {shown} wɔ {total} mu adi",
     zu: "Kukhonjiswa {shown} kwangu-{total}",
+  },
+  /**
+   * The ordinal column's heading.
+   *
+   * A bare "#" in every locale. It is a symbol rather than a word, and
+   * the column beneath it is digits — translating the heading would
+   * make it strange without making it clearer.
+   */
+  ordinalHeading: {
+    en: "#",
+    ha: "#",
+    yo: "#",
+    ig: "#",
+    fr: "#",
+    pt: "#",
+    sw: "#",
+    ar: "#",
+    tw: "#",
+    zu: "#",
   },
   rowsWord: {
     en: "rows",

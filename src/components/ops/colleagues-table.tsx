@@ -90,6 +90,7 @@ export function ColleaguesTable({
       className={className}
       rows={rows}
       rowKey={(person) => person.id}
+      numbered
       columns={columns}
       label={OPS_STAFF.colleaguesPanel[locale]}
       locale={locale}

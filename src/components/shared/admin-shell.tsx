@@ -160,8 +160,18 @@ export async function AdminShell({
             <div className={cn("min-w-0", centred && "mx-auto w-full max-w-[720px]")}>
               {title && (
                 <div className="mb-8 min-w-0">
-                  <h1 className="t-h2">{title}</h1>
-                  {lead && <p className="t-muted mt-2 max-w-[62ch]">{lead}</p>}
+                  <h1 className="t-h2 text-balance">{title}</h1>
+                  {/* No reading measure on the lead.
+                      62ch is the right cap for prose somebody settles
+                      into, and the wrong one for the single sentence
+                      under a page title: capped, it wrapped into a
+                      narrow column and pushed the table below the fold
+                      on a wide screen, which is what the client saw on
+                      8 September. A page lead is scanned once, so it
+                      takes the width the page has. The measure stays on
+                      empty states and body copy, where it earns its
+                      keep. */}
+                  {lead && <p className="t-muted mt-2 text-pretty">{lead}</p>}
                 </div>
               )}
               {children}

@@ -66,6 +66,7 @@ export function TenantInvitesTable({
       className={className}
       rows={rows}
       rowKey={(i) => i.id}
+      numbered
       columns={columns}
       locale={locale}
       total={rows.length}

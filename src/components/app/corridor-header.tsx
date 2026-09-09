@@ -50,8 +50,12 @@ export async function CorridorHeader({
             {/* "Route", not "corridor". A traveller runs several trips
                 through this product over time, so the word that reads as
                 one of many is the right one on their own screen; the
-                record underneath is still a corridor everywhere else. */}
-            <p className="tag">{CORRIDOR_HEADER.route[locale]}</p>
+                record underneath is still a corridor everywhere else.
+
+                Sentence case, not `.tag`: §4.6 bans the tracked-out caps
+                eyebrow outright, and this is the label it was reaching
+                for. */}
+            <p className="t-muted">{CORRIDOR_HEADER.route[locale]}</p>
             {/* Archivo crossing into a product screen, which §2 allows
                 only inside a signature moment. It stops at this card —
                 everything below is back on the `.t-*` scale. */}
@@ -60,11 +64,12 @@ export async function CorridorHeader({
               <span className="text-ink-3"> → </span>
               {to?.name ?? corridor.destinationIso.toUpperCase()}
             </p>
-            <p className="t-muted mt-1">
-              {corridor.visaName}
-              <span className="text-ink-3"> · </span>
-              <span className="capitalize">{corridor.purpose}</span>
-            </p>
+            {/* The visa and the purpose used to be joined by " · ",
+                which §4.6 bans. They are two facts, so they are two
+                elements — the separation is structural now rather than
+                punctuation standing in for structure. */}
+            <p className="t-muted mt-1">{corridor.visaName}</p>
+            <p className="t-muted capitalize">{corridor.purpose}</p>
           </div>
 
           <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
@@ -80,8 +85,14 @@ export async function CorridorHeader({
             <MrzBand code={code} />
             {/* The band is aria-hidden, so this line is the only reading
                 of the code assistive tech gets. */}
-            <p className="num mt-2.5 text-[13px] font-semibold text-ink-2">
-              {from?.iso3} → {to?.iso3} · {corridor.purpose.toUpperCase()}
+            <p className="num mt-2.5 flex flex-wrap gap-x-5 text-[13px] font-semibold text-ink-2">
+              {/* The arrow stays: §4.2 keeps arrows for corridor pairs,
+                  which is exactly what this is. The " · " that followed
+                  it does not — a gap separates the two facts instead. */}
+              <span>
+                {from?.iso3} → {to?.iso3}
+              </span>
+              <span>{corridor.purpose.toUpperCase()}</span>
             </p>
           </div>
         )}

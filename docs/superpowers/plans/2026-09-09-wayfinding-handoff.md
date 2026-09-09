@@ -25,7 +25,8 @@ a fresh session can pick one up cold.
 5. `git log --oneline -15` to see what actually landed — this document can go
    stale, git cannot.
 6. `npm test` first, before changing anything, so you know what red looks like
-   on arrival. See the fixture-leak trap in §5.
+   on arrival. Green is 131/131 files, 1856/1856 tests. See the fixture-leak
+   trap in §5, and check for a second session before believing any red.
 
 Use `superpowers:subagent-driven-development` or `superpowers:executing-plans`
 to work through the plan.
@@ -49,32 +50,53 @@ branch — **it is stale**. Verify with `gh repo view` before opening a PR.
 | `1c3d03f` | `--ring` token, widened contrast floors |
 | `2ffd8cd` | The three places the token layer could not reach — wordmark, assets, email shell |
 | `65a4498` | One focus ring instead of two |
+| `5bb83d9` | This handoff |
+| `8b9cf78` | The favicon repaint, and Task 6 step 1 |
+| `8ac9b1d` | Task 4 — the passport materials out, 216 lines of CSS with them |
+| `8323edb` | Task 4 marked landed, with what the plan had wrong |
 
 **Verification status:** the token layer has been through three adversarial
 rounds. Rounds one and two each shipped work that passed review and was broken
-in the browser; both defects are recorded in §4. Round three was running when
-this document was written — check `git log` and the suite rather than trusting
-this line.
+in the browser; both defects are recorded in §4. A full green suite was
+observed after Task 4: 131/131 files, 1856/1856 tests, typecheck clean. Check
+`git log` and the suite rather than trusting this line.
 
 ---
 
 ## 3. The plan map
 
+**There is no plan 1b, 1c, 1d or 1e to write.** An earlier version of this
+document said there was, and that cost a session its first several minutes.
+The whole foundation is *one* file —
+`docs/superpowers/plans/2026-09-09-wayfinding-foundation.md` — and what that
+earlier map called 1b–1e are Tasks 4–8 inside it, already written, with the
+exact code. Execute the task; do not go looking for a plan that does not exist.
+
+| Foundation task | Was called | State |
+|---|---|---|
+| Tasks 1–3 — guard rail, repaint, plate geometry | 1a | landed |
+| **Task 4** — retire the passport materials | 1b | landed (`8ac9b1d`) |
+| **Task 5** — the faces | 1c | open |
+| **Task 6** — the primitives | 1d | step 1 landed, 2–9 open |
+| **Task 7** — error boundaries, loading, skip link | 1e | open |
+| **Task 8** — re-derive the funnel ramp | 1d | open |
+| Task 9 — the things no token owns | — | landed |
+
+These four still have to be written, and only after the foundation lands:
+
 | Plan | Scope | State |
 |---|---|---|
-| **1a** Foundation — token layer | palette, geometry, focus system, guard rail | landed |
-| **1b** Retire the passport materials | `laminate`, `ovi-edge`, `security-paper`, `bar-edge` across 26 files | to write |
-| **1c** The faces | IBM Plex Sans/Mono, Plex Sans Arabic, retire Inter + JetBrains | to write |
-| **1d** Primitives + funnel ramp | Button, Badge, StatusBadge, Panel; re-derive the ramp on the new hue | to write |
-| **1e** Hardening | `error.tsx`, `loading.tsx`, skip link, metadata holes | to write |
 | **2** Traveller concourse | route diagram, next-step plate, corridor bar, intake, documents, profile | to write |
 | **3a / 3b** Agency board | case desk + roster / billing, team, support | to write |
 | **4a / 4b** Ops dispatch | dashboard, tenants, KYB / corridors, enquiries, support, staff | to write |
 | **5** The sweep | 10 locales × 2 themes × RTL × 390px across 46 routes | to write |
 
 **Order matters more than session count.** Plans 2–5 lay out screens against
-primitives that 1b–1e are still moving. Do not start a surface plan before the
-foundation is finished, or the surface work gets redone.
+primitives that Tasks 5–8 are still moving. Do not start a surface plan before
+the foundation is finished, or the surface work gets redone. Plan 5 is the one
+partial exception: it asserts invariants — no horizontal overflow at 390px, RTL
+mirroring, contrast in both themes — rather than appearances, so its harness can
+be built before the surfaces settle. Nothing in `e2e/` sweeps today.
 
 ---
 
@@ -138,9 +160,20 @@ list; update it with the palette.
 - **`npm test` red on arrival is usually the fixture leak.** Symptoms:
   `duplicate key ... profiles_pkey`, `invitations_token_unique`, hook timeouts,
   all in Postgres-backed suites, zero assertion failures. Run
-  `npm run db:clean-fixtures` and re-run — it should be 130/130, 1843 tests. Two
-  verifiers reported this as a blocker with mutually inconsistent counts; both
-  were wrong.
+  `npm run db:clean-fixtures` and re-run — it should be 131/131 files, 1856
+  tests. Two verifiers reported this as a blocker with mutually inconsistent
+  counts; both were wrong.
+- **Check whether another session is running the suite before you believe any
+  red.** Every session on this branch shares one Postgres, so two suites at once
+  produce exactly the fixture-leak signature above, and cleaning fixtures does
+  not fix it because the other run is still inserting. On 2026-09-09 this
+  produced 80 failures, then 98 after a clean, then 7, then zero — same tree,
+  four different answers, no code changed. `ps aux | grep vitest` before
+  bisecting anything.
+- **Never pipe `npm test` into `head` or `tail`.** `head` can SIGPIPE the run
+  and leak fixtures; `tail` keeps only the summary, so the failure detail you
+  need is gone and the rerun costs two minutes. Redirect to a file and read
+  that.
 - **Never verify a focus style by reading CSS.** Tailwind v4 emits
   `@layer theme, base, components, utilities`, and layers order by *declaration*,
   not source position — so `outline-none` on a component beats `:focus-visible`
@@ -151,7 +184,15 @@ list; update it with the palette.
   not reasoned about: `DisclosurePanel`'s summary reported clipped at 2px out
   and not clipped at 2px in. Those call sites turn the ring inward with
   `focus-visible:-outline-offset-2`.
-- **Ports 3000 and 3100 are taken** by other projects. Use 3400.
+- **Ports 3000 and 3100 are taken** by other projects. Use 3400 — but check
+  first: this worktree may already have its own `next dev` on it, in which case
+  use that one rather than starting a second. Next refuses the second anyway,
+  and says which PID and directory holds the first.
+- **Every route on the local dev server redirects to `/sign-in` without a
+  session** — `/en` and `/en/travelers` included. The marketing surfaces
+  (`site-nav`, the hero, `CorridorBar`) therefore cannot be eyeballed without
+  signing in first, which is how Task 4 shipped its one change verified by code
+  rather than by eye. Sign in before claiming you looked at a marketing screen.
 - **Running from a worktree** needs `node_modules` and `.env.local` cloned from
   the main checkout.
 - **The git stash stack is shared across worktrees.** Never bare

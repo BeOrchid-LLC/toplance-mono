@@ -6,6 +6,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Pagination } from "@/components/shared/pagination";
+import { PageSizeSelect } from "@/components/shared/page-size-select";
+import { PAGE_SIZE_OPTIONS } from "@/lib/domain/sorting";
 import { rowOffset } from "@/lib/domain/row-number";
 import { SortHead } from "@/components/shared/sort-head";
 import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
@@ -55,6 +57,22 @@ export type DataColumn<T> = {
  * empty states, and the pager. What each caller still owns is its columns
  * — the only part that was ever actually different.
  *
+ * Two bands above the rows, not four. Until 2026-09-09 the heading, the
+ * search, and the paging controls each had a full-width row of their
+ * own, so `/ops/dashboard` opened on three stacked rules with one
+ * control apiece and a lot of empty space between them — the client
+ * said so looking at the agencies table. They are now sorted by what
+ * they are for. The header names the sheet and carries what changes
+ * *which* rows are in it: the search, the filters, and any action that
+ * makes one. The band under it describes the rows that resulted — how
+ * many there are, how many to show at a time, and where in them the
+ * reader is standing.
+ *
+ * That band appears only where it has a control to hold. A table showing
+ * everything it holds already answers "how many" with its own rows, so
+ * its count stays a `Badge` beside the heading rather than gaining a
+ * rule and a strip of chrome to repeat what is on screen.
+ *
  * The two empty states are not the same message and must not be merged.
  * "Nobody has been invited yet" is a fact about the product; "nothing
  * matches this search" is a fact about the filter the reader just set,
@@ -96,9 +114,17 @@ export function DataTable<T>({
    * a plan, a card — does not gain a column of 1.
    */
   numbered?: boolean;
-  /** Panel heading when nothing is filtered. */
+  /** Panel heading. Names the sheet, and does not move when a filter does. */
   label: string;
-  /** Panel heading when something is — usually "Showing 12 of 96". */
+  /**
+   * What the count line says while a filter is on — usually
+   * "Showing 12 of 96".
+   *
+   * It replaced the heading until 2026-09-09, which meant typing in the
+   * search box renamed the panel and took the table's own name off the
+   * screen. It now replaces the count instead, which is the thing a
+   * filter actually changes.
+   */
   filteredLabel?: string;
   /** The word after the number in the badge. Defaults to "rows"; "" for a bare number. */
   countLabel?: string;
@@ -151,50 +177,79 @@ export function DataTable<T>({
   // the screen.
   const isNoMatch = Boolean(toolbar) && !isEmpty && total === 0;
 
+  // Hidden only when the table holds nothing at all: a search box over
+  // "nothing yet" offers to narrow an empty set. It stays when a filter
+  // has just emptied the table — that is the moment the reader most
+  // needs the control that did it, and the way out below.
+  const showToolbar = Boolean(toolbar) && !isEmpty;
+  // Below the smallest option every choice shows the same rows, so the
+  // select would be a control that does nothing.
+  const showSize = Boolean(pagination) && total > PAGE_SIZE_OPTIONS[0];
+  // The band earns its rule when it has a control in it. A table that
+  // fits on one page at the smallest size has neither pager nor select,
+  // and its count goes back to the badge — a whole row for one figure
+  // over a list the reader can already see the end of is the chrome
+  // this change set out to remove.
+  //
+  // Above the rows, not below them. The pager sat under the table until
+  // 2026-09-08, which on a long page put the only way to page below a
+  // screen of header and a screen of rows — far enough down that a
+  // reader took the first page for the whole table.
+  const showMeta =
+    !isEmpty && !isNoMatch && (showSize || (pagination?.pageCount ?? 0) > 1);
+
+  const countLine = filteredLabel ?? (
+    <>
+      <span className="num">{count ?? total}</span>{" "}
+      {countLabel ?? ADMIN_CONSOLE.rowsWord[locale]}
+    </>
+  );
+
   return (
     <Panel className={className}>
       <PanelHeader
-        label={filteredLabel ?? label}
+        label={label}
+        // The header holds a 36px-tall field once it carries the search,
+        // so its rows need room to breathe when they wrap under `sm`.
+        className={showToolbar ? "gap-x-6 gap-y-3 py-3" : undefined}
         aside={
-          <div className="flex items-center gap-3">
-            <Badge variant="outline">
-              <span className="num">{count ?? total}</span>{" "}
-              {countLabel ?? ADMIN_CONSOLE.rowsWord[locale]}
-            </Badge>
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              // A definite width, so the search inside can be `flex-1`
+              // and still have something to be a fraction of.
+              showToolbar ? "w-full sm:w-auto sm:min-w-[320px] sm:flex-1" : "justify-end"
+            )}
+          >
+            {toolbar && showToolbar && (
+              <TableToolbar
+                placeholder={toolbar.placeholder}
+                filters={toolbar.filters}
+                className="min-w-0 flex-1"
+              />
+            )}
+            {/* No paging band to put it in, so the count keeps the slot
+                `PanelHeader` calls one datum about the sheet. */}
+            {!showMeta && <Badge variant="outline">{countLine}</Badge>}
             {action}
           </div>
         }
       />
 
-      {/* Hidden only when the table holds nothing at all: a search box
-          over "nothing yet" offers to narrow an empty set. It stays when
-          a filter has just emptied the table — that is the moment the
-          reader most needs the control that did it, and the way out
-          below. */}
-      {toolbar && !isEmpty && (
-        <TableToolbar
-          placeholder={toolbar.placeholder}
-          filters={toolbar.filters}
-          className="border-b border-border px-5 py-3 sm:px-6"
-        />
-      )}
-
-      {/* Above the rows, not below them. The pager sat under the table
-          until 2026-09-08, which on a long page put the only way to
-          page below a screen of header and a screen of rows — far
-          enough down that a reader took the first page for the whole
-          table. */}
-      {pagination && !isEmpty && !isNoMatch && (
-        <Pagination
-          page={pagination.page}
-          pageCount={pagination.pageCount}
-          total={total}
-          size={pagination.size}
-          basePath={basePath}
-          params={params}
-          locale={locale}
-          className="border-b border-border px-5 py-4 sm:px-6"
-        />
+      {pagination && showMeta && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border px-5 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <p className="t-muted whitespace-nowrap">{countLine}</p>
+            {showSize && <PageSizeSelect size={pagination.size} locale={locale} />}
+          </div>
+          <Pagination
+            page={pagination.page}
+            pageCount={pagination.pageCount}
+            basePath={basePath}
+            params={params}
+            locale={locale}
+          />
+        </div>
       )}
 
       {isEmpty ? (

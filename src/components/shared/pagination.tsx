@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-import { PageSizeSelect } from "@/components/shared/page-size-select";
-import { PAGE_SIZE_OPTIONS } from "@/lib/domain/sorting";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
@@ -19,18 +17,18 @@ import { cn } from "@/lib/utils";
  * page it belongs to already knows the answer, so nothing here needs
  * client state to discover it.
  *
- * Renders nothing at all when there is one page AND too few rows for the
- * size to be worth choosing. The two halves come and go separately, and
- * that matters in one specific way: at 100 rows a page a 99-row table is
- * a single page, so hiding the whole control on `pageCount <= 1` would
- * take the size select away with it and strand the reader at 100 with no
- * way back to 25.
+ * The arrows only. The rows-per-page select used to sit at the far end
+ * of this same bar, which made one component answer two questions —
+ * "where am I in the list" and "how much of it do I want at a time" —
+ * and left `DataTable` unable to put either beside the row count. The
+ * select is `PageSizeSelect`, and the band the two share is
+ * `DataTable`'s. They come and go separately: at 100 rows a page a
+ * 99-row table is a single page, so a reader who has to get back to 25
+ * still has the select after this returns nothing.
  */
 export function Pagination({
   page,
   pageCount,
-  total,
-  size,
   basePath,
   params,
   locale,
@@ -39,20 +37,13 @@ export function Pagination({
   /** The page actually being shown — `resolvePage`'s answer, not the raw URL. */
   page: number;
   pageCount: number;
-  /** Rows the table holds after filtering — what decides if a size choice is meaningful. */
-  total: number;
-  size: number;
   basePath: string;
   /** Everything already in the query string, so paging keeps the filters. */
   params: Record<string, string | undefined>;
   locale: Locale;
   className?: string;
 }) {
-  const showPages = pageCount > 1;
-  // Below the smallest option every choice shows the same rows, so the
-  // select would be a control that does nothing.
-  const showSize = total > PAGE_SIZE_OPTIONS[0];
-  if (!showPages && !showSize) return null;
+  if (pageCount <= 1) return null;
 
   const href = (target: number) => {
     const next = new URLSearchParams();
@@ -74,70 +65,67 @@ export function Pagination({
   // Arabic with the rest of the layout rather than staying pinned to a
   // left that means "forward" there.
   const arrow = "size-4 rtl:-scale-x-100";
+  // The arrows carry it, at every width. "Previous page" and "Next page"
+  // are the two least surprising controls on the screen, and spelling
+  // them out cost the band more width than the page number beside them —
+  // which is the part a reader actually has to read. The words stay in
+  // the markup as `sr-only` rather than becoming an `aria-label`, so
+  // nothing changes for a screen reader and "Page 1 of 5" is still what
+  // says where the reader is.
+  //
+  // Square, so the pair reads as one control rather than as two buttons
+  // that lost their text.
   const step =
-    "inline-flex h-9 items-center gap-1 rounded-[var(--radius-sm)] border border-border-strong px-3 font-semibold";
+    "inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] border border-border-strong font-semibold";
 
   return (
     <nav
       aria-label={ADMIN_CONSOLE.pagesLabel[locale]}
-      className={cn(
-        "flex flex-wrap items-center justify-between gap-3",
-        className
-      )}
+      className={cn("flex items-center gap-3", className)}
     >
-      {showSize ? <PageSizeSelect size={size} locale={locale} /> : <span />}
-
-      {showPages && (
-        <div className="flex items-center gap-3">
-          {/* An end of the range is a disabled span, never a link to
+      {/* An end of the range is a disabled span, never a link to
           nowhere: a dead anchor is still focusable and still announced
           as a link a screen reader can follow. */}
-          {atStart ? (
-            <span
-              className={cn(step, "cursor-default text-ink-3/60")}
-              aria-disabled
-            >
-              <ChevronLeft className={arrow} aria-hidden />
-              {ADMIN_CONSOLE.previousPage[locale]}
-            </span>
-          ) : (
-            <Link
-              href={href(page - 1)}
-              className={cn(step, "hover:bg-surface-2")}
-            >
-              <ChevronLeft className={arrow} aria-hidden />
-              {ADMIN_CONSOLE.previousPage[locale]}
-            </Link>
-          )}
+      {atStart ? (
+        <span className={cn(step, "cursor-default text-ink-3/60")} aria-disabled>
+          <ChevronLeft className={arrow} aria-hidden />
+          <span className="sr-only">
+            {ADMIN_CONSOLE.previousPage[locale]}
+          </span>
+        </span>
+      ) : (
+        <Link href={href(page - 1)} className={cn(step, "hover:bg-surface-2")}>
+          <ChevronLeft className={arrow} aria-hidden />
+          <span className="sr-only">
+            {ADMIN_CONSOLE.previousPage[locale]}
+          </span>
+        </Link>
+      )}
 
-          {/* No `aria-live` here. Paging is a full navigation, so a screen
+      {/* No `aria-live` here. Paging is a full navigation, so a screen
           reader already announces the new document; a live region would
           make it say the same thing twice. */}
-          <p className="t-muted">
-            {fill(ADMIN_CONSOLE.pageOfTemplate[locale], {
-              page: String(page),
-              pages: String(pageCount),
-            })}
-          </p>
+      <p className="t-muted whitespace-nowrap">
+        {fill(ADMIN_CONSOLE.pageOfTemplate[locale], {
+          page: String(page),
+          pages: String(pageCount),
+        })}
+      </p>
 
-          {atEnd ? (
-            <span
-              className={cn(step, "cursor-default text-ink-3/60")}
-              aria-disabled
-            >
-              {ADMIN_CONSOLE.nextPage[locale]}
-              <ChevronRight className={arrow} aria-hidden />
-            </span>
-          ) : (
-            <Link
-              href={href(page + 1)}
-              className={cn(step, "hover:bg-surface-2")}
-            >
-              {ADMIN_CONSOLE.nextPage[locale]}
-              <ChevronRight className={arrow} aria-hidden />
-            </Link>
-          )}
-        </div>
+      {atEnd ? (
+        <span className={cn(step, "cursor-default text-ink-3/60")} aria-disabled>
+          <span className="sr-only">
+            {ADMIN_CONSOLE.nextPage[locale]}
+          </span>
+          <ChevronRight className={arrow} aria-hidden />
+        </span>
+      ) : (
+        <Link href={href(page + 1)} className={cn(step, "hover:bg-surface-2")}>
+          <span className="sr-only">
+            {ADMIN_CONSOLE.nextPage[locale]}
+          </span>
+          <ChevronRight className={arrow} aria-hidden />
+        </Link>
       )}
     </nav>
   );

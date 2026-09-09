@@ -114,6 +114,14 @@ export default async function AgencyBillingPage() {
   const isDirector = membership.role === "owner";
 
   if (!isDirector) {
+    /**
+     * Which of the two shut-console sentences to use. A plan that ran
+     * out reads differently from one that never started, and a freshly
+     * provisioned agency is always the second — telling its first
+     * colleague that the plan "has ended" describes an event that never
+     * happened. One extra query, on the path that needs it.
+     */
+    const everSubscribed = Boolean(await latestSubscription(orgId));
     return (
       <AgencyShell
         profile={profile}
@@ -132,7 +140,9 @@ export default async function AgencyBillingPage() {
             <p className="max-w-[60ch] text-[15px] text-ink-2">
               {subscriptionActive
                 ? BILLING.reviewerNotice[locale]
-                : BILLING.reviewerBlocked[locale]}
+                : everSubscribed
+                  ? BILLING.reviewerBlocked[locale]
+                  : BILLING.reviewerNotStarted[locale]}
             </p>
           </PanelBody>
         </Panel>

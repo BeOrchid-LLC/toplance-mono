@@ -795,10 +795,14 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
       return created.invitation;
     }
 
-    it("makes the invitee a reviewer at the agency", async () => {
+    it("makes the invitee a reviewer at an agency that already has someone", async () => {
       const orgId = await makeOrg("Staff Invite Agency");
       const inviterId = "test_staff_inviter";
       await makeProfile(inviterId, { role: "org_member" });
+      // The director who is doing the inviting, as a membership row and
+      // not merely a profile. Without it this agency has nobody in it,
+      // which is the bootstrap case below and a different rule.
+      await db.insert(orgMembers).values({ orgId, userId: inviterId, role: "owner" });
       const invitation = await staffInvite(orgId, inviterId, "colleague@test.invalid");
 
       const userId = "test_staff_invitee";
@@ -814,6 +818,72 @@ describe.skipIf(!process.env.DATABASE_URL)("invitations", async () => {
         .from(orgMembers)
         .where(eq(orgMembers.userId, userId));
       expect(memberships).toEqual([{ orgId, role: "reviewer" }]);
+    });
+
+    /**
+     * The bootstrap, and the reason the rule above has an exception.
+     *
+     * `provisionTenantTx` creates an agency with no membership rows and
+     * one `kind: "staff"` invitation. If accepting that made a reviewer,
+     * the only person in a brand-new agency would land on a console
+     * closed for an unpaid plan, be told only a director can start it,
+     * and have no director to ask — nobody in the product could unstick
+     * them but an operator running `setMemberRole` by hand, and nothing
+     * tells the operator to.
+     *
+     * The invariant this suspends is "an invitation cannot mint someone
+     * with the authority to bill and to invite, which has to stay with
+     * the person who already has it". In an empty agency nobody has it,
+     * so there is nothing to keep it away from — and the only way a
+     * staff invitation reaches an empty agency is an operator
+     * provisioning one, which is that operator granting the authority.
+     */
+    it("makes the first person through the door of an empty agency its director", async () => {
+      const orgId = await makeOrg("Bootstrap Agency");
+      const inviterId = "test_bootstrap_inviter";
+      await makeProfile(inviterId, { role: "staff", staffRole: "owner" });
+      const invitation = await staffInvite(orgId, inviterId, "first@test.invalid");
+
+      const userId = "test_bootstrap_invitee";
+      await makeProfile(userId, { email: "first@test.invalid" });
+
+      expect(await acceptInvitationTx(invitation.token, userId)).toEqual({
+        ok: true,
+        orgId,
+      });
+
+      const memberships = await db
+        .select({ orgId: orgMembers.orgId, role: orgMembers.role })
+        .from(orgMembers)
+        .where(eq(orgMembers.userId, userId));
+      expect(memberships).toEqual([{ orgId, role: "owner" }]);
+    });
+
+    it("makes only the first one a director, not the second", async () => {
+      const orgId = await makeOrg("Second Person Agency");
+      const inviterId = "test_second_inviter";
+      await makeProfile(inviterId, { role: "staff", staffRole: "owner" });
+
+      const firstInvite = await staffInvite(orgId, inviterId, "one@test.invalid");
+      await makeProfile("test_second_first", { email: "one@test.invalid" });
+      await acceptInvitationTx(firstInvite.token, "test_second_first");
+
+      const secondInvite = await staffInvite(orgId, inviterId, "two@test.invalid");
+      await makeProfile("test_second_second", { email: "two@test.invalid" });
+      await acceptInvitationTx(secondInvite.token, "test_second_second");
+
+      const roles = await db
+        .select({ userId: orgMembers.userId, role: orgMembers.role })
+        .from(orgMembers)
+        .where(eq(orgMembers.orgId, orgId));
+
+      expect(roles).toEqual(
+        expect.arrayContaining([
+          { userId: "test_second_first", role: "owner" },
+          { userId: "test_second_second", role: "reviewer" },
+        ])
+      );
+      expect(roles).toHaveLength(2);
     });
 
     it("opens no application for a colleague", async () => {

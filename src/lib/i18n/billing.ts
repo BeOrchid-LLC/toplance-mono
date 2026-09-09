@@ -31,6 +31,7 @@ export const BILLING: {
   reviewerLead: L;
   reviewerNotice: L;
   reviewerBlocked: L;
+  reviewerNotStarted: L;
   perMonth: L;
   perApplicationNote: L;
   payPlan: L;
@@ -127,6 +128,24 @@ export const BILLING: {
     ar: "الخطة سارية ولا شيء عليك فعله هنا. تابع ملفاتك — يرى مديرك الخطة وتاريخ التجديد وكل دفعة في هذه الصفحة.",
     tw: "Nhyehyɛe no rekɔ so na biribiara nni ha a ɛsɛ sɛ woyɛ. Kɔ so yɛ wo nsɛm no — wo panyin no tumi hu nhyehyɛe no, da a wɔbɛyɛ no foforɔ ne sika biara a wɔatua wɔ krataafa yi so.",
     zu: "Uhlelo luyasebenza futhi akukho okumele ukwenze lapha. Qhubeka namacala akho — umqondisi wakho ubona uhlelo, usuku lokuvuselela nayo yonke inkokhelo kuleli khasi.",
+  },
+  /**
+   * The same shut console, for an agency that never bought a month
+   * rather than one whose month ran out. `reviewerBlocked` said "has
+   * ended" to both, which for a freshly provisioned agency describes an
+   * event that never happened.
+   */
+  reviewerNotStarted: {
+    en: "Your agency has not started a plan yet, which is why the rest of your console is closed. Only a director can start it — ask a colleague who holds that rank.",
+    ha: "Hukumarku ba ta fara wani shiri ba tukuna, shi ya sa sauran ofishinku a rufe yake. Daraktan kaɗai zai iya fara shi — ku tambayi abokin aiki mai wannan matsayi.",
+    yo: "Ilé-iṣẹ́ yín kò tíì bẹ̀rẹ̀ ètò kankan, ìdí nìyẹn tí ìyókù kọ́ńsólù yín fi wà ní pipade. Olùdarí nìkan ló lè bẹ̀rẹ̀ rẹ̀ — bi ẹlẹgbẹ́ tí ó ní ipò yẹn.",
+    ig: "Ụlọ ọrụ gị amalitebeghị atụmatụ ọ bụla, ọ bụ ya mere e ji mechie ndị ọzọ nʼconsole gị. Naanị onye ntụzịaka nwere ike ịmalite ya — jụọ onye ọrụ ibe nwere ọkwa ahụ.",
+    fr: "Votre agence n'a pas encore souscrit de formule, c'est pourquoi le reste de votre console est fermé. Seul un directeur peut la souscrire — demandez à un collègue qui a ce rang.",
+    pt: "A sua agência ainda não iniciou um plano, e por isso o resto da sua consola está fechado. Só um diretor o pode iniciar — peça a um colega com essa função.",
+    sw: "Wakala wako bado hajaanza mpango, ndiyo maana sehemu nyingine ya konsoli yako imefungwa. Ni mkurugenzi pekee anayeweza kuuanzisha — muulize mwenzako mwenye cheo hicho.",
+    ar: "لم تبدأ وكالتك خطة بعد، ولهذا بقية لوحتك مغلقة. المدير وحده يستطيع بدءها — اسأل زميلًا يحمل هذه الرتبة.",
+    tw: "W'adwumakuo mfii nhyehyɛe biara ase ɛ, ɛno nti na wo console no nkae ato mu. Ɔhwɛfoɔ nko ara na ɔbɛtumi afi ase — bisa wo yɔnko a ɔwɔ saa dibea no.",
+    zu: "I-ejensi yakho ayikaqali uhlelo, yingakho okunye kukhonsoli yakho kuvaliwe. Umqondisi kuphela ongaluqala — buza ozakwenu onaleso sikhundla.",
   },
   reviewerBlocked: {
     en: "Your agency's plan has ended, which is why the rest of your console is closed. Only a director can start it again — ask a colleague who holds that rank.",

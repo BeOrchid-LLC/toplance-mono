@@ -458,9 +458,20 @@ git commit -m "Give the product plates instead of cards"
 
 ---
 
-### Task 4: Retire the passport materials
+### Task 4: Retire the passport materials — LANDED (`8ac9b1d`)
 
 The laminate, the optically-variable edge, the specular tilt and the security paper belonged to the system being replaced. They come out together — a half-removed material language is worse than either.
+
+Two corrections found in execution, recorded so the next reader does not
+re-derive them. **Step 4 undercounts `bar-edge`:** it is on five headers,
+not two — `app-bar`, `site-nav`, `checkout`, `invite`, `(auth)/layout`.
+**`site-nav` fades its rule deliberately** (`[--bar-edge-o:0]` while
+unlifted), so its replacement border follows `lifted` rather than being
+flat, or a hairline appears over the hero where none was. Also: the file
+counts in this task's header and Step 1 (24, 26) are both wrong — the
+union is 31 — though the per-step lists are complete. Only five files
+actually *render* `laminate`; the other seventeen named in Step 2 mention
+it only in comments, which were rewritten rather than left to lie.
 
 **Files:**
 - Modify: `src/app/globals.css` — the laminate axis, `@utility laminate`, `@utility ovi-edge`, `@utility security-paper`, `@utility bar-edge`, `.laminate-sheen`, `@keyframes laminate-tilt`, the `@supports` fallback, and the two `.bar-edge::after` rules
@@ -470,7 +481,7 @@ The laminate, the optically-variable edge, the specular tilt and the security pa
 - Consumes: nothing.
 - Produces: removes `laminate`, `ovi-edge`, `security-paper`, `bar-edge`, `laminate-sheen` from the class vocabulary. Later plans must not reintroduce them.
 
-- [ ] **Step 1: Find every call site**
+- [x] **Step 1: Find every call site**
 
 ```bash
 grep -rln "laminate\|ovi-edge\|security-paper\|bar-edge" src/components src/app
@@ -478,25 +489,25 @@ grep -rln "laminate\|ovi-edge\|security-paper\|bar-edge" src/components src/app
 
 Expected: 26 files. Work through them in this order so the app never renders a half-removed effect — CSS last.
 
-- [ ] **Step 2: Replace `laminate` with a plate at each call site**
+- [x] **Step 2: Replace `laminate` with a plate at each call site**
 
 `laminate` was a glass surface with an inset edge and a shadow. Its replacement is the plate: `bg-surface border border-border`. Where a `laminate` element also carried `<span aria-hidden className="laminate-sheen" />`, delete that span — it has no successor.
 
 Files, from the grep: `(app)/app/(corridor)/layout.tsx`, `(corridor)/page.tsx`, `(corridor)/requirements/page.tsx`, `app/messages/page.tsx`, `app/profile/page.tsx`, `(auth)/agency/sign-up/page.tsx`, `(auth)/layout.tsx`, `agency/page.tsx`, `not-found.tsx`, `agency/client-roster.tsx`, `app/app-bar.tsx`, `app/app-nav.tsx`, `app/corridor-header.tsx`, `app/document-row.tsx`, `app/intake-agent.tsx`, `auth/auth-form.tsx`, `auth/auth-panel.tsx`, `shared/counter-row.tsx`, `shared/panel.tsx`, `site/corridor-bar.tsx`, `site/site-nav.tsx`, `ui/badge.tsx`.
 
-- [ ] **Step 3: Replace `security-paper` with nothing**
+- [x] **Step 3: Replace `security-paper` with nothing**
 
 It was a ruled ground under a hero. The concourse is the ground now. Delete the `aria-hidden` div that carried it at each of: `(corridor)/layout.tsx`, `app/profile/page.tsx`, `(auth)/layout.tsx`, `(site)/page.tsx`, `(site)/travelers/page.tsx`, `checkout/page.tsx`, `go/page.tsx`, `invite/[token]/page.tsx`, `not-found.tsx`, `ops/kyb/[id]/page.tsx`, `app/intake-agent.tsx`.
 
-- [ ] **Step 4: Replace `ovi-edge` and `bar-edge` with a hairline**
+- [x] **Step 4: Replace `ovi-edge` and `bar-edge` with a hairline**
 
 `ovi-edge` on `intake-agent.tsx`, `intake-dock.tsx`, `intake-record.tsx` becomes `border border-border`. `bar-edge` on the two chrome bars becomes `border-b border-border`.
 
-- [ ] **Step 5: Delete the CSS**
+- [x] **Step 5: Delete the CSS**
 
 Remove from `globals.css`: the `laminate axis` `:root` blocks (`--glass-tint`, `--glass-edge`, `--glass-under`, `--glass-sheen`), `@utility security-paper`, `@utility laminate`, the `@supports not (backdrop-filter)` fallback, the `.laminate::before, .ovi-edge::before` rule, `@utility ovi-edge`, `@keyframes laminate-tilt`, `.laminate-sheen`, `@utility bar-edge`, both `.bar-edge::after` rules, and `--bar-edge-o` wherever it is set.
 
-- [ ] **Step 6: Confirm nothing references them**
+- [x] **Step 6: Confirm nothing references them**
 
 ```bash
 grep -rn "laminate\|ovi-edge\|security-paper\|bar-edge\|glass-" src/components src/app
@@ -504,11 +515,11 @@ grep -rn "laminate\|ovi-edge\|security-paper\|bar-edge\|glass-" src/components s
 
 Expected: no output.
 
-- [ ] **Step 7: Verify and look**
+- [x] **Step 7: Verify and look**
 
 Run: `npm run typecheck && npm run lint && npm test`, then `npx next dev -p 3400` and check `/en`, `/en/app`, `/en/agency` in both themes.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A src/app src/components

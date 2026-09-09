@@ -15,6 +15,7 @@ import { CounterRow } from "@/components/shared/counter-row";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getTenant } from "@/lib/data/tenants";
 import { getOpsCounts } from "@/lib/data/ops-counts";
+import { tenantInviteMatches } from "@/lib/domain/tenant-invite-table";
 import { isUuid } from "@/lib/domain/uuid";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
@@ -22,6 +23,7 @@ import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { activeSubscription } from "@/lib/data/payments";
+import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import { opsAccount } from "@/app/[locale]/ops/account";
 
@@ -72,8 +74,10 @@ export async function generateMetadata({
 
 export default async function OpsTenantPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ q?: string; kind?: string }>;
 }) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
@@ -129,6 +133,14 @@ export default async function OpsTenantPage({
    */
   const subscription = await activeSubscription(tenant.id);
 
+  const query = await searchParams;
+  const inviteSearch = (query.q ?? "").trim();
+  const inviteKind = query.kind ?? "";
+  const invitesNarrowed = Boolean(inviteSearch || inviteKind);
+  const visibleInvites = tenant.pendingInvites.filter((i) =>
+    tenantInviteMatches(i, inviteSearch, inviteKind)
+  );
+
   const counters = [
     {
       label: OPS_TENANTS.planLabel[locale],
@@ -144,7 +156,7 @@ export default async function OpsTenantPage({
     },
     {
       label: OPS_TENANTS.tableHead.members[locale],
-      value: `${tenant.members} ${OPS_TENANTS.seatsOf[locale]} ${tenant.seatsPurchased}`,
+      value: String(tenant.members),
       tone: "text-ink",
     },
     {
@@ -207,11 +219,28 @@ export default async function OpsTenantPage({
 
           <CounterRow counters={counters} />
 
+          {/* Searchable, at the client's request on 8 September — she
+              asked for it on every table, and an agency that has been
+              onboarding for a month has more rows here than the two or
+              three a fresh one shows. No pager: the panel lists one
+              agency's outstanding invitations, which is a set that ends,
+              unlike the console's other tables. */}
           <TenantInvitesTable
-            rows={tenant.pendingInvites}
+            rows={visibleInvites}
             locale={locale}
             pendingCount={tenant.pendingInvitations}
             className="mt-8"
+            basePath={`/ops/tenants/${tenant.id}`}
+            params={{ q: query.q, kind: query.kind }}
+            total={visibleInvites.length}
+            unfilteredTotal={tenant.pendingInvites.length}
+            filteredLabel={
+              invitesNarrowed
+                ? ADMIN_CONSOLE.showingTemplate[locale]
+                    .replace("{shown}", String(visibleInvites.length))
+                    .replace("{total}", String(tenant.pendingInvites.length))
+                : undefined
+            }
           />
 
           <div className="mt-8 mb-16">

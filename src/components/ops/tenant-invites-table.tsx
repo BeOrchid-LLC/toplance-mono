@@ -18,11 +18,23 @@ export function TenantInvitesTable({
   /** What the panel badge counts — the agency's own pending total. */
   pendingCount,
   className,
+  basePath,
+  params,
+  total,
+  unfilteredTotal,
+  filteredLabel,
 }: {
+  /** The invitations left after the toolbar, already filtered. */
   rows: TenantPendingInvite[];
   locale: Locale;
   pendingCount: number;
   className?: string;
+  /** This agency's own address — the toolbar writes its query onto it. */
+  basePath?: string;
+  params?: Record<string, string | undefined>;
+  total?: number;
+  unfilteredTotal?: number;
+  filteredLabel?: string;
 }) {
   const columns: DataColumn<TenantPendingInvite>[] = [
     {
@@ -69,8 +81,28 @@ export function TenantInvitesTable({
       numbered
       columns={columns}
       locale={locale}
-      total={rows.length}
-      unfilteredTotal={rows.length}
+      total={total ?? rows.length}
+      unfilteredTotal={unfilteredTotal ?? rows.length}
+      filteredLabel={filteredLabel}
+      basePath={basePath}
+      params={params}
+      toolbar={
+        basePath
+          ? {
+              placeholder: OPS_TENANTS.inviteSearchPlaceholder[locale],
+              filters: [
+                {
+                  param: "kind",
+                  label: OPS_TENANTS.anyKind[locale],
+                  options: [
+                    { value: "client", label: OPS_TENANTS.kindClient[locale] },
+                    { value: "staff", label: OPS_TENANTS.kindStaff[locale] },
+                  ],
+                },
+              ],
+            }
+          : undefined
+      }
       // The live count, not the row count: the panel is titled "Pending
       // invitations", and an expired row is listed below (nothing here
       // can resend one, so the operator needs to see it) but labelled

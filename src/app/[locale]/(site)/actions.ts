@@ -5,7 +5,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { track } from "@/lib/analytics/track";
 import { db } from "@/lib/db/client";
 import { demoRequests } from "@/lib/db/schema";
-import { parseDemoRequest } from "@/lib/domain/demo-request";
+import { HONEYPOT_FIELD, parseDemoRequest } from "@/lib/domain/demo-request";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/locales";
 import { sendEmail } from "@/lib/notifications/email";
 import { demoRequestEmail } from "@/lib/notifications/templates";
@@ -47,7 +47,29 @@ export async function requestDemo(
    * feedback a bot can tune against — so the only thing that differs is
    * that nothing is written.
    */
-  if (field("website").trim()) return { ok: true };
+  const honeypot = field(HONEYPOT_FIELD).trim();
+  if (honeypot) {
+    /**
+     * Logged, and the response is unchanged.
+     *
+     * The reply a bot gets has to stay identical — that is the whole
+     * point — but this branch discards somebody's enquiry, and until
+     * 2026-09-09 it did so leaving no trace of any kind: no row, no
+     * analytics event, no log line. A real visitor whose browser
+     * autofilled the hidden field was told their request was in, and
+     * there was nothing anywhere to contradict that. One line here is
+     * the difference between a silent failure and a findable one.
+     *
+     * Length only, never the value: what a browser put in there is
+     * whatever it thought the field wanted, which in the case that
+     * found this bug was the visitor's own email address.
+     */
+    console.warn(
+      `[demo] honeypot filled (${honeypot.length} chars) — request discarded. ` +
+        `If this was a person, the field name is attracting autofill again: see HONEYPOT_FIELD.`
+    );
+    return { ok: true };
+  }
 
   const parsed = parseDemoRequest({
     fullName: field("full_name"),

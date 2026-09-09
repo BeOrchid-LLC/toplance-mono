@@ -20,12 +20,20 @@ import { useT, useLocale } from "@/components/locale-provider";
 import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 
 /**
- * Matches `Input`, which has no `<select>` sibling in the design
- * system — copied from `src/components/site/demo-dialog.tsx` rather
- * than imported from it.
+ * The design system has no `<select>`, so this stands in for one —
+ * copied from `src/components/site/demo-dialog.tsx` rather than
+ * imported from it.
+ *
+ * `--row-h` rather than the `--control-h` that `Input` uses, which is
+ * the one deliberate difference from that copy. 52px is the height of
+ * a control in a *form*, where it is one of a short stack somebody is
+ * filling in. These two sit inside a `DataTable` cell, beside a 44px
+ * `size="sm"` button, and at 52px they stood taller than every
+ * neighbour and made one row of a table look like a form. Row controls
+ * share the row's height.
  */
 const inputClass =
-  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
+  "h-[var(--row-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
 
 /**
  * The enquiries that have not become an agency yet.
@@ -297,7 +305,11 @@ export function EnquiryTable({
                 {r.convertedOrgName}
               </Link>
             ) : (
-              <ProvisionTenant demoRequest={r} />
+              /* `sm`, which `ProvisionTenant`'s own prop documentation
+                 has always said this call site passes — it did not, so
+                 the button fell back to `bar` and rendered 36px beside
+                 44px neighbours. */
+              <ProvisionTenant demoRequest={r} size="sm" />
             ),
         },
       ]}

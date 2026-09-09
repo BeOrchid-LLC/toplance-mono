@@ -1,6 +1,10 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import { eq } from "drizzle-orm";
 
+// Safe as a static import: a pure module with no database or env reach,
+// unlike `./actions`, which this file imports lazily on purpose.
+import { HONEYPOT_FIELD } from "@/lib/domain/demo-request";
+
 /**
  * The landing page's demo form, end to end from `FormData` to a row.
  *
@@ -80,10 +84,29 @@ describe.skipIf(!process.env.DATABASE_URL)("requestDemo", async () => {
    */
   it("tells a honeypot submission it succeeded, and writes nothing", async () => {
     const email = address();
-    const result = await requestDemo(form({ email, website: "http://spam.example" }));
+    const result = await requestDemo(
+      form({ email, [HONEYPOT_FIELD]: "http://spam.example" })
+    );
 
     expect(result).toEqual({ ok: true });
     expect(await rowsFor(email)).toHaveLength(0);
+  });
+
+  /**
+   * The regression from 2026-09-09, kept as a test.
+   *
+   * The honeypot was named `website`, Chrome autofilled it with a real
+   * visitor's own email address, and their enquiry was discarded while
+   * they were shown a confirmation. `website` must now be an ordinary
+   * unknown field: present in the payload, ignored, and no reason to
+   * throw the lead away.
+   */
+  it("writes the row when a browser autofills a field the form does not use", async () => {
+    const email = address();
+    const result = await requestDemo(form({ email, website: email }));
+
+    expect(result).toEqual({ ok: true });
+    expect(await rowsFor(email)).toHaveLength(1);
   });
 
   it("refuses a second request from the same address within a day", async () => {

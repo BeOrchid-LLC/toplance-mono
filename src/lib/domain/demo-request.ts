@@ -163,3 +163,47 @@ export function parseDemoRequest(
     },
   };
 }
+
+/**
+ * The honeypot input's `name`.
+ *
+ * It was `website` until 2026-09-09, which is the one thing it could
+ * not be called. Chrome's autofill heuristics key on a field's name,
+ * `website` is squarely in the vocabulary they match, and Chrome
+ * deliberately ignores `autocomplete="off"` on contact-shaped forms
+ * because too many sites used it to block password managers. So a real
+ * visitor's browser filled the hidden field with their own email
+ * address, the action read that as a bot, and the lead was discarded
+ * while the visitor was told it had been received.
+ *
+ * Deliberately meaningless. Anything a human would recognise as a
+ * label is something an autofill heuristic may recognise too.
+ */
+export const HONEYPOT_FIELD = "tpl_hp";
+
+/**
+ * Tokens browser autofill matches on, lower-cased.
+ *
+ * Not exhaustive and cannot be — every browser ships its own
+ * heuristics and changes them without telling anyone. It is a floor:
+ * a name containing any of these has a known chance of being filled
+ * for a real person, and must never be the honeypot's.
+ */
+const AUTOFILL_TOKENS = [
+  "website", "url", "homepage", "email", "mail", "phone", "tel", "mobile",
+  "name", "address", "street", "city", "state", "country", "zip", "postal",
+  "company", "organization", "organisation", "title", "user", "login",
+  "search", "birth", "card", "cc", "password",
+] as const;
+
+/**
+ * Whether a field name is one browsers are known to autofill.
+ *
+ * Substring rather than exact match, because the heuristics are
+ * substring-ish too — `company_name` is filled on the strength of
+ * "company" and of "name".
+ */
+export function isAutofillMagnet(fieldName: string): boolean {
+  const name = fieldName.toLowerCase();
+  return AUTOFILL_TOKENS.some((token) => name.includes(token));
+}

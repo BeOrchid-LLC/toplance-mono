@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseDemoRequest, zonedTimeToInstant } from "./demo-request";
+import { HONEYPOT_FIELD, isAutofillMagnet, parseDemoRequest, zonedTimeToInstant } from "./demo-request";
 
 /** A submission with nothing wrong with it, to vary one field at a time. */
 const VALID = {
@@ -138,5 +138,42 @@ describe("parseDemoRequest", () => {
   it("refuses a blank timezone rather than quietly assuming UTC", () => {
     const result = parseDemoRequest({ ...VALID, preferredTz: "" });
     expect(result).toHaveProperty("error");
+  });
+});
+
+/**
+ * The regression this file exists to prevent, from 2026-09-09.
+ *
+ * The honeypot was named `website`. Chrome autofilled it with a real
+ * visitor's email address, the action read a filled honeypot as a bot,
+ * and the lead was silently discarded while the visitor was shown a
+ * confirmation. Renaming it back would reintroduce that exactly, and
+ * nothing else in the codebase would notice — the whole failure is
+ * invisible by design, because a honeypot that announces itself is not
+ * a honeypot.
+ */
+describe("the honeypot field name", () => {
+  it("is not a name browsers autofill", () => {
+    expect(isAutofillMagnet(HONEYPOT_FIELD)).toBe(false);
+  });
+
+  it("recognises the name that caused the bug", () => {
+    expect(isAutofillMagnet("website")).toBe(true);
+  });
+
+  it("recognises the form's real fields, which are meant to be filled", () => {
+    for (const real of ["full_name", "email", "company_name", "job_title"]) {
+      expect(isAutofillMagnet(real)).toBe(true);
+    }
+  });
+
+  it("matches on a token anywhere in the name, the way the heuristics do", () => {
+    expect(isAutofillMagnet("your_company_here")).toBe(true);
+    expect(isAutofillMagnet("HOMEPAGE")).toBe(true);
+  });
+
+  it("leaves a genuinely meaningless name alone", () => {
+    expect(isAutofillMagnet("tpl_hp")).toBe(false);
+    expect(isAutofillMagnet("xq7")).toBe(false);
   });
 });

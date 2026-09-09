@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useLocale, useT } from "@/components/locale-provider";
 import { requestDemo } from "@/app/[locale]/(site)/actions";
+import { HONEYPOT_FIELD } from "@/lib/domain/demo-request";
 import { DEMO_DIALOG } from "@/lib/i18n/demo-dialog";
 import { SITE_HOME } from "@/lib/i18n/site-home";
 import { fillTemplate } from "@/lib/i18n/corridor-picker";
@@ -193,13 +194,26 @@ export function DemoDialog() {
               taken out of the tab order and the accessibility tree so
               nobody using the form as built can reach it. A filled value
               means a script typed into every input it found.
+
+              The name is `HONEYPOT_FIELD` and must stay meaningless.
+              It was `website` until 2026-09-09, and Chrome autofilled
+              it with a real visitor's email — the lead was discarded
+              and the visitor was told it had arrived.
             */}
             <input
               type="text"
-              name="website"
+              name={HONEYPOT_FIELD}
               tabIndex={-1}
               autoComplete="off"
               aria-hidden="true"
+              /* `readOnly` is the second layer, and the one that does the
+                 work: Chrome ignores `autocomplete="off"` on a form
+                 shaped like this one, but it does not autofill a
+                 read-only input. A script setting `.value` directly —
+                 which is what this is here to catch — is unaffected,
+                 because `readOnly` binds the user agent and not the
+                 DOM. */
+              readOnly
               className="absolute -left-[9999px] size-px opacity-0"
             />
 

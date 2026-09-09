@@ -30,9 +30,11 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
   const { KYB_REQUIREMENTS } = await import("@/lib/domain/kyb");
 
   // Fixed ids no other suite uses, so two files running against the same
-  // database cannot delete each other's rows.
-  const SEATED = "00000000-0000-4000-8000-0000000b0001";
-  const OWNERLESS = "00000000-0000-4000-8000-0000000b0002";
+  // database cannot delete each other's rows. Each suite owns its own
+  // block of the fixture range — schema.test holds 0b0001–0b2001 — and
+  // 0b0001 was taken before this file arrived.
+  const SEATED = "00000000-0000-4000-8000-0000000b3001";
+  const OWNERLESS = "00000000-0000-4000-8000-0000000b3002";
   const DIRECTOR = "test_kyb_director";
   const REVIEWER = "test_kyb_reviewer";
 

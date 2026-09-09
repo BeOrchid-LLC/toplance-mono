@@ -89,9 +89,14 @@ describe.skipIf(!process.env.DATABASE_URL)("dashboardData", async () => {
     await db.delete(organisations).where(eq(organisations.id, orgId));
   });
 
-  it("counts a client's applicants and its seats", async () => {
+  it("counts a client's applicants and its decisions", async () => {
+    // Not its seats. The Seats column came off `/ops/dashboard` on
+    // 2026-09-09 and `ClientRow` no longer carries the figure — the
+    // platform bills per application, and the ratio it printed divided
+    // applicants by a headcount cap.
     const { row } = await clientRow();
-    expect(row).toMatchObject({ applicants: 3, seatsPurchased: 10, approved: 1 });
+    expect(row).toMatchObject({ applicants: 3, approved: 1 });
+    expect(row).not.toHaveProperty("seatsPurchased");
   });
 
   it("surfaces the applicant who finished uploading and never submitted", async () => {

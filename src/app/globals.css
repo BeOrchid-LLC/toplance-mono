@@ -106,6 +106,14 @@
   /* fixed dimensions — locked */
   --control-h: 52px;
   --row-h: 44px;
+  /* How tall a data table's rows may get before the body scrolls inside
+     the panel rather than pushing the pager, the footer and everything
+     after it off the screen. Bound at both ends: below 320px a table is
+     a letterbox, and above 640px a full page of 10 rows is again taller
+     than a laptop viewport, which is the thing this token exists to
+     stop. The header row sticks, so a reader who scrolls the body keeps
+     the column names. */
+  --table-max-h: clamp(320px, 60vh, 640px);
   /* 64, not 56. The wordmark's mark is 32px tall, so a 56px bar left it
      12px of air top and bottom — tight enough that the logo read as
      jammed into the rule beneath it. Every consumer reads the token

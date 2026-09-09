@@ -1,5 +1,6 @@
 import type { AdminIconName } from "@/components/shared/admin-icons";
 import { AGENCY } from "@/lib/i18n/agency";
+import { AGENCY_RULE_SETS } from "@/lib/i18n/agency-rule-sets";
 import { BILLING } from "@/lib/i18n/billing";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
@@ -258,6 +259,22 @@ export function agencyAdminNav({
               },
             ]
           : []),
+      ],
+    },
+    {
+      /* The rules a checklist was built from, under the clients they
+         were built for. Every rank, not only a director: the person who
+         has to explain a required document is whoever is on the phone,
+         and nothing on the screen is writable, so there is no
+         permission to gate. `/ops/corridors` stays the only place a
+         corridor is edited. */
+      items: [
+        {
+          id: "rule-sets",
+          href: "/agency/rule-sets",
+          label: AGENCY_RULE_SETS.nav[locale],
+          icon: "routes" as const,
+        },
       ],
     },
     ...(isDirector

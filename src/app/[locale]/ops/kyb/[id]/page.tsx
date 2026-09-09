@@ -10,6 +10,7 @@ import { KYB_STANDING } from "@/components/ops/kyb-standing";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
+import { Panel } from "@/components/shared/panel";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -115,23 +116,21 @@ export default async function OpsKybAgencyPage({
     >
       <Link
         href="/ops/kyb"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-2 transition-colors hover:text-ink"
+        className="t-muted inline-flex items-center gap-2 hover:underline"
       >
-        <ArrowLeft className="size-3.5" /> {OPS_KYB.backToQueue[locale]}
+        <ArrowLeft className="size-4" aria-hidden /> {OPS_KYB.backToQueue[locale]}
       </Link>
 
       {/* Dossier header — the consular sheet: name, standing, and the queue context in one line */}
-      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-surface shadow-sm ovi-edge">
+      <Panel className="mt-4">
         <div className="relative px-5 py-5 sm:px-6 sm:py-6">
           {/* faint ruled paper — the same ground official documents are printed on */}
           <div className="pointer-events-none absolute inset-0 opacity-[0.55] security-paper" aria-hidden />
           <div className="relative flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="tag">Verification dossier</p>
-              <h1 className="mt-1.5 text-[28px] font-semibold tracking-[-0.02em] text-ink sm:text-[30px]">
-                {agency.name}
-              </h1>
-              <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm leading-5 text-ink-2">
+              <p className="special-caps">Verification dossier</p>
+              <h1 className="t-h2 mt-1.5">{agency.name}</h1>
+              <p className="t-muted mt-1.5 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5">
                   <span
                     className={
@@ -156,9 +155,7 @@ export default async function OpsKybAgencyPage({
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2">
-              <Badge variant={standing.variant} className="px-3 py-1 text-xs">
-                {OPS_KYB.standing[standing.key][locale]}
-              </Badge>
+              <Badge variant={standing.variant}>{OPS_KYB.standing[standing.key][locale]}</Badge>
               <span className="special hidden sm:block">
                 {agency.activatedAt
                   ? `Activated ${agency.activatedAt.toISOString().slice(0, 10)}`
@@ -192,7 +189,7 @@ export default async function OpsKybAgencyPage({
             ))}
           </div>
         </div>
-      </div>
+      </Panel>
 
       <div className="mt-6 mb-16">
         <KybChecklist agency={agency} />

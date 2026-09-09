@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { Panel } from "@/components/shared/panel";
 import {
   activateTenant,
   fileKybDocument,
@@ -57,13 +58,6 @@ const STATE_ACCENT: Record<KybState, string> = {
   in_review: "bg-info",
   verified: "bg-success",
   rejected: "bg-danger",
-};
-
-const STATE_SOFT: Record<KybState, string> = {
-  not_started: "bg-surface-2 text-ink-3",
-  in_review: "bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-info-ink",
-  verified: "bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-success-ink",
-  rejected: "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-danger-ink",
 };
 
 /* ── doc icons ── */
@@ -184,7 +178,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
   return (
     <div className="flex flex-col gap-6">
       {/* ── progress dossier header ── */}
-      <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm ovi-edge">
+      <Panel>
         <div className="px-5 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -248,7 +242,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
             <span className="special text-[11px]">6 files · 4 states</span>
           </div>
         </div>
-      </div>
+      </Panel>
 
       {/* ── requirement rows ── */}
       <div className="flex flex-col gap-3.5">
@@ -266,12 +260,10 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
       </div>
 
       {/* ── activation gate ── */}
-      <div
+      <Panel
         className={cn(
-          "overflow-hidden rounded-xl border shadow-sm",
-          agency.progress.canActivate
-            ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,var(--surface))] ovi-edge"
-            : "border-border bg-surface ovi-edge"
+          agency.progress.canActivate &&
+            "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,var(--surface))]"
         )}
       >
         <div className="px-5 py-5 sm:px-6 sm:py-6">
@@ -293,7 +285,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
               <div className="flex gap-4">
                 <span
                   className={cn(
-                    "hidden size-11 shrink-0 items-center justify-center rounded-xl border sm:flex",
+                    "hidden size-11 shrink-0 items-center justify-center rounded-lg border sm:flex",
                     agency.progress.canActivate
                       ? "border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-surface text-success-ink"
                       : "border-border bg-surface-2 text-ink-3"
@@ -361,7 +353,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
             </p>
           )}
         </div>
-      </div>
+      </Panel>
 
       <ConfirmDialog
         open={!!removing}
@@ -424,7 +416,7 @@ function RequirementRow({
     ) : null;
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-surface shadow-sm transition-shadow hover:shadow-[0_4px_24px_-12px_rgb(16_19_28/0.10)]">
+    <Panel className="group relative transition-shadow hover:shadow-[var(--shadow)]">
       {/* state rail */}
       <div className={cn("absolute inset-y-0 left-0 w-[3px]", STATE_ACCENT[requirement.state])} aria-hidden />
 
@@ -434,7 +426,7 @@ function RequirementRow({
           {/* icon */}
           <div
             className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-xl border text-[15px] sm:size-11",
+              "flex size-10 shrink-0 items-center justify-center rounded-lg border text-[15px] sm:size-11",
               requirement.state === "verified"
                 ? "border-[color-mix(in_srgb,var(--success)_24%,transparent)] bg-[color-mix(in_srgb,var(--success)_11%,transparent)] text-success-ink"
                 : requirement.state === "rejected"
@@ -477,7 +469,7 @@ function RequirementRow({
             {/* ── file sleeve ── */}
             <div
               className={cn(
-                "mt-3.5 rounded-xl border px-3 py-3 sm:px-3.5",
+                "mt-3.5 rounded-lg border px-3 py-3 sm:px-3.5",
                 hasDoc
                   ? "border-[color-mix(in_srgb,var(--border)_80%,transparent)] bg-surface-2/60"
                   : "border-dashed bg-bg"
@@ -572,7 +564,7 @@ function RequirementRow({
             </div>
 
             {/* ── verdict ── */}
-            <div className="mt-3 rounded-xl border border-border bg-bg px-3 py-3 sm:px-3.5 sm:py-3.5">
+            <div className="mt-3 rounded-lg border border-border bg-bg px-3 py-3 sm:px-3.5 sm:py-3.5">
               <div className="flex items-center gap-2">
                 <span className="flex size-6 items-center justify-center rounded-full bg-surface text-ink-3 shadow-sm ring-1 ring-border">
                   <FileText className="size-3.5" aria-hidden />
@@ -658,6 +650,6 @@ function RequirementRow({
           </div>
         </div>
       </div>
-    </div>
+    </Panel>
   );
 }

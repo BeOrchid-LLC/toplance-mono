@@ -148,10 +148,11 @@ export default async function OpsDashboardPage({
             sub: "organisations on the platform",
           },
           {
-            // Per application, not per seat. Seats stay on the
-            // per-agency table, where they mean team members and a cap
-            // is a real thing; up here they were the wrong unit for a
-            // business that bills on throughput.
+            // Per application, not per seat — the client's instruction on
+            // 8 September, because the platform bills on throughput.
+            // Seats are now nowhere on this screen: the Clients table's
+            // own Seats column went with it on 9 September, and the cap
+            // lives where it is actually set, on `/ops/tenants`.
             label: "Applications processed",
             value: data.totals.applicationsProcessed,
             sub: `${data.totals.applicants} started, drafts included`,

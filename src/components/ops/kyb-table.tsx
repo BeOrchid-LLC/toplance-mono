@@ -6,6 +6,8 @@ import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import { KYB_STANDING } from "@/components/ops/kyb-standing";
 import type { KybQueueRow } from "@/lib/data/kyb";
+import { kybStandingFilters, type KybSort } from "@/lib/domain/kyb-table";
+import type { SortDir } from "@/lib/domain/sorting";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
@@ -17,23 +19,47 @@ import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
  * `TenantsTable` gives: a column's `cell` is a function and the page
  * above is a server component, so only the rows come down.
  *
- * The rows arrive oldest-first from `kybQueue` and are not re-sorted
- * here. Sorting a queue by how far along its rows are buries the one
- * that has been waiting longest, which is the row it exists to surface.
+ * `kybQueue` orders the rows before they arrive: whatever is owed a
+ * decision first, oldest-first within that. That ordering is the
+ * default and stays the default — sorting a queue by how far along its
+ * rows are buries the one that has been waiting longest, which is the
+ * row it exists to surface. The column headers are an override a
+ * reviewer asks for, not a shape imposed on the screen.
+ *
+ * The search, the standing filter and the pager arrived on 2026-09-09,
+ * with the rest of the console: the client asked for them on every
+ * admin table on 8 September, and this queue was written after that
+ * pass and missed it.
  */
 export function KybTable({
   rows,
   locale,
   className,
+  sort,
+  dir,
+  params,
+  total,
+  unfilteredTotal,
+  filteredLabel,
+  pagination,
 }: {
   rows: KybQueueRow[];
   locale: Locale;
   className?: string;
+  /** Empty when nobody has clicked a header — `kybQueue`'s own order. */
+  sort?: KybSort | "";
+  dir?: SortDir;
+  params?: Record<string, string | undefined>;
+  total?: number;
+  unfilteredTotal?: number;
+  filteredLabel?: string;
+  pagination?: { page: number; pageCount: number; size: number };
 }) {
   const columns: DataColumn<KybQueueRow>[] = [
     {
       id: "agency",
       label: OPS_KYB.tableHead.agency[locale],
+      sortable: true,
       cell: (row) => (
         <Link
           href={`/ops/kyb/${row.orgId}`}
@@ -46,6 +72,7 @@ export function KybTable({
     {
       id: "progress",
       label: OPS_KYB.tableHead.progress[locale],
+      sortable: true,
       className: "num",
       // The bare fraction, not a bar. A bar would need a legend to say
       // whether a rejected row counts, and the fraction simply does not
@@ -55,6 +82,7 @@ export function KybTable({
     {
       id: "standing",
       label: OPS_KYB.tableHead.standing[locale],
+      sortable: true,
       cell: (row) => {
         const standing = KYB_STANDING[row.standing];
         return (
@@ -81,6 +109,7 @@ export function KybTable({
     {
       id: "added",
       label: OPS_KYB.tableHead.added[locale],
+      sortable: true,
       className: "t-muted",
       cell: (row) => row.createdAt.toISOString().slice(0, 10),
     },
@@ -91,12 +120,29 @@ export function KybTable({
       className={className}
       rows={rows}
       rowKey={(row) => row.orgId}
+      numbered
       columns={columns}
       locale={locale}
-      total={rows.length}
-      unfilteredTotal={rows.length}
+      total={total ?? rows.length}
+      unfilteredTotal={unfilteredTotal ?? rows.length}
       label={OPS_KYB.queuePanel[locale]}
+      filteredLabel={filteredLabel}
       countLabel={OPS_KYB.agenciesWord[locale]}
+      basePath="/ops/kyb"
+      params={params}
+      sort={sort}
+      dir={dir}
+      pagination={pagination}
+      toolbar={{
+        placeholder: OPS_KYB.searchPlaceholder[locale],
+        filters: [
+          {
+            param: "standing",
+            label: OPS_KYB.anyStanding[locale],
+            options: kybStandingFilters(locale),
+          },
+        ],
+      }}
       empty={<p className="t-muted max-w-[62ch]">{OPS_KYB.emptyQueue[locale]}</p>}
     />
   );

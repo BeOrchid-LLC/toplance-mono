@@ -41,34 +41,60 @@ Playwright, Tailwind, the in-repo i18n dictionaries.
 
 ## Where things actually stand
 
-Audited against `main` at 5f9e3b6 on 2026-09-08.
+Audited against `main` at 5f9e3b6 on 2026-09-08. **Re-audited at e3a5751 on
+2026-09-09**, after the work below landed — the right-hand column is the second
+reading, and the "Where" column still names where to look.
+
+Everything is built except the three things that are not ours to finish: Peace's
+own account (#20, Task 1), her choice between the two rule-override designs
+(#21, Task 11), and the walk-through on Wednesday.
 
 | # | Asked for | State | Where |
 |---|---|---|---|
-| 01 | Serial numbers on every table row | **Not built** | `shared/data-table.tsx` has no ordinal column |
-| 02 | Pagination at the top of tables | **Not built** | `data-table.tsx:233` renders `<Pagination>` after the rows |
-| 03 | Search + filters on the admin tables | **Partly** | `corridors`, `enquiries`, `invitation-table`, `client-roster` have a toolbar; `tenants`, `clients`, `colleagues`, `tenant-invites` do not |
-| 04 | Stop headers wrapping so narrowly | **Not built** | page headers carry no width cap of their own |
-| 05 | Invite for biometrics / interview | **Not built** | but `notify()`, `notifyAgency()`, templates and the bell all exist |
-| 06 | Contact Support (agency → top admin) | **Not built** | no support surface anywhere in `src` |
-| 07 | Dark-mode illustration | **Not built** | lowest priority, her words |
+| 01 | Serial numbers on every table row | **Done** | `data-table.tsx` `numbered`; on all 9 console tables |
+| 02 | Pagination at the top of tables | **Done** | `data-table.tsx` renders `<Pagination>` above `<Table>` |
+| 03 | Search + filters on the admin tables | **Done** | all nine, `kyb-table` included (2026-09-09) |
+| 04 | Stop headers wrapping so narrowly | **Done** | `admin-shell.tsx:174`; notice strips are `<details>` |
+| 05 | Invite for biometrics / interview | **Done** | `domain/attendance.ts`, `attendanceRequestedEmail`, `attendance-notice.tsx` |
+| 06 | Contact Support (agency → top admin) | **Done** | `/agency/support`, `/ops/support`, two-way threads (#95, #105) |
+| 07 | Dark-mode illustration | **Done** | `public/hero/travel-everywhere-dark.svg`, swapped on `dark:` |
 | 08 | Clients as parent, applications under it | **Done** | `admin-nav.ts:217-227` |
 | 09 | Say the agency overview is agency-wide | **Not built** | |
 | 10 | Billing history under the plan | **Done** | `agency/billing/page.tsx:223` |
 | 11 | Dashboard first in the admin nav | **Done** | `ops-nav.ts:49` |
-| 12 | Agencies list as a real table | **Partly** | `tenants-table.tsx` uses `DataTable` but passes no toolbar and no pagination |
-| 13 | Seats → total applications processed | **Not built** | `ops/dashboard/page.tsx:133` reads `Seats bought` off `totals.seatsPurchased` |
-| 14 | Clients → Agencies in the admin overview | **Partly** | nav says Agencies (`ops-nav.ts:50`); the dashboard page still says Clients (`:128`, `:156`) |
-| 15 | State → Status column | **Not built** | `ops-tenants.ts:303`, `tenants-table.tsx:71` |
-| 16 | Already judged → Already reviewed | **Not built** | `case-review.ts:154` |
-| 17 | Inquiries → Demo requests | **Partly** | the panel already says "Demo requests" (`ops-enquiries.ts:68`); the nav and heading still say "Enquiries" |
-| 18 | Name the document that is still needed | **Not built** | |
-| 19 | Bulk document download | In flight | pre-existing work, not re-planned here |
+| 12 | Agencies list as a real table | **Done** | `tenants-table.tsx` has both |
+| 13 | Seats → total applications processed | **Done** | and the Clients table's own Seats column went too — see below |
+| 14 | Clients → Agencies in the admin overview | **Done** | nav, counter, tab and table all say Agencies |
+| 15 | State → Status column | **Done** | `ops-tenants.ts` and `ops-kyb.ts` carry the same strings |
+| 16 | Already judged → Already reviewed | **Done** | `case-review.ts:164` |
+| 17 | Inquiries → Demo requests | **Done** | panel, nav and heading agree |
+| 18 | Name the document that is still needed | **Done** | `(corridor)/page.tsx:79-90` names the sent-back documents |
+| 19 | Bulk document download | **Done** | `shared/download-documents.tsx` |
 | 20 | Peace can sign in / is an ops admin | **Blocked** | see Task 1 |
-| 21 | Director-only visa-rule change | **Needs her decision** | see Stage 6 |
+| 21 | Director-only visa-rule change | **Spec written, needs her decision** | `specs/2026-09-09-case-level-rule-override.md` |
 | 22 | Role-based dashboards | Deferred | she agreed |
 | 23 | In-product support inquiries | Deferred | email for now; distinct from 06 |
 | 24 | Organisation IDs in tables | Deferred | names are enough for the MVP |
+
+Three things closed on 2026-09-09 that were not on the list above, because
+closing the list surfaced them:
+
+- **`/agency/rule-sets`.** Finding 1 below says the rules engine was never lost.
+  It is still BeOrchid's console, though, and the 7 September spec (§0.3) had
+  already promised the agency its own read-only view rather than an ops account
+  for the director. Built: `data/agency-rule-sets.ts`, scoped to the corridor
+  versions that agency's own cases were built from.
+- **The Clients table's Seats column.** #13 moved the dashboard counter off
+  seats; the column below it still priced a client in them, and the percentage
+  under the figure divided *applicants* by seats — two units in one cell. Gone,
+  with `seatsPurchased`/`seatUtilisation` off `ClientRow` so it cannot grow
+  back. Step 4 of Task 6 asked to confirm this with her first; the
+  double-naming it names was on `/ops/tenants`, which already reads members and
+  applications, so what was deleted is a third column neither of those words
+  covered.
+- **`/ops/kyb`.** Written after the 8 September pass and so missing every rule
+  from it — no serial numbers, no search, no filter, no pager, and a "State"
+  heading where #15 says Status. All five fixed.
 
 Two findings worth carrying into the demo:
 
@@ -140,7 +166,7 @@ Both tasks land in one file and are inherited by every table in both consoles.
 - Produces: `rowOffset(pagination?: { page: number; size: number }): number`
 - Produces: `DataTable` prop `numbered?: boolean`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/lib/domain/row-number.test.ts`:
 
@@ -169,7 +195,7 @@ describe("rowOffset", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 npm run test -- src/lib/domain/row-number.test.ts
@@ -177,7 +203,7 @@ npm run test -- src/lib/domain/row-number.test.ts
 
 Expected: FAIL — cannot resolve `./row-number`.
 
-- [ ] **Step 3: Write the helper**
+- [x] **Step 3: Write the helper**
 
 `src/lib/domain/row-number.ts`:
 
@@ -199,7 +225,7 @@ export function rowOffset(pagination?: { page: number; size: number }): number {
 }
 ```
 
-- [ ] **Step 4: Run it and watch it pass**
+- [x] **Step 4: Run it and watch it pass**
 
 ```bash
 npm run test -- src/lib/domain/row-number.test.ts
@@ -207,7 +233,7 @@ npm run test -- src/lib/domain/row-number.test.ts
 
 Expected: PASS, 4 tests.
 
-- [ ] **Step 5: Add the column heading to the dictionary**
+- [x] **Step 5: Add the column heading to the dictionary**
 
 In `src/lib/i18n/admin-console.ts`, add to the type block and the object:
 
@@ -224,7 +250,7 @@ In `src/lib/i18n/admin-console.ts`, add to the type block and the object:
   },
 ```
 
-- [ ] **Step 6: Render the column in `DataTable`**
+- [x] **Step 6: Render the column in `DataTable`**
 
 Add `numbered` to the props (default `false`, so no existing caller changes
 behaviour until it opts in), import `rowOffset`, then:
@@ -252,7 +278,7 @@ In the body, change `rows.map((row) =>` to `rows.map((row, i) =>` and add, befor
                 )}
 ```
 
-- [ ] **Step 7: Turn it on everywhere**
+- [x] **Step 7: Turn it on everywhere**
 
 Pass `numbered` from every `DataTable` caller:
 `components/ops/tenants-table.tsx`, `clients-table.tsx`, `colleagues-table.tsx`,
@@ -263,7 +289,7 @@ The two bespoke tables — `components/agency/team-roster.tsx` and
 `components/shared/invitation-roster.tsx` — do not use `DataTable`. She said
 "everywhere there's a table", so add a plain `#` column to each by hand.
 
-- [ ] **Step 8: Verify in the browser**
+- [x] **Step 8: Verify in the browser**
 
 ```bash
 npm run dev
@@ -272,7 +298,7 @@ npm run dev
 Open `/ops/tenants` and `/ops/corridors`. Confirm the first column counts 1, 2, 3…
 and that page 2 of corridors starts at 26, not 1.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add src/lib/domain/row-number.ts src/lib/domain/row-number.test.ts \
@@ -288,7 +314,7 @@ git commit -m "feat: number the rows in every table"
 Her reason: the pager sits below a long page header and a long table, so nobody
 finds it. Scrolling inside the table body stays as it is.
 
-- [ ] **Step 1: Move the block**
+- [x] **Step 1: Move the block**
 
 Cut the `{pagination && …}` block from the end of the `<Panel>` and paste it
 immediately after the `{toolbar && …}` block, so the order reads header → toolbar →
@@ -309,19 +335,19 @@ pager → table → footer. Change the pager's className from `border-t` to `bor
       )}
 ```
 
-- [ ] **Step 2: Correct the `footer` prop's doc comment**
+- [x] **Step 2: Correct the `footer` prop's doc comment**
 
 It currently says "the pager is already the row below this one", which stops being
 true. Replace that sentence with: "Not a place for controls: the pager is the row
 above the table, not below this one."
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 Open `/ops/corridors`. The pager sits under the search row, above the column
 headings; paging still works; the footer note on `/ops/dashboard` still renders
 under its table.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add src/components/shared/data-table.tsx
@@ -350,7 +376,7 @@ Follow `src/lib/domain/corridor-table.ts` and
 `src/app/[locale]/ops/corridors/page.tsx` exactly — that page is the worked example
 for this shape, down to the `searchParams` type.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 `src/lib/domain/tenant-table.test.ts`:
 
@@ -386,7 +412,7 @@ describe("tenantMatches", () => {
 });
 ```
 
-- [ ] **Step 2: Run it and watch it fail**
+- [x] **Step 2: Run it and watch it fail**
 
 ```bash
 npm run test -- src/lib/domain/tenant-table.test.ts
@@ -394,7 +420,7 @@ npm run test -- src/lib/domain/tenant-table.test.ts
 
 Expected: FAIL — cannot resolve `./tenant-table`.
 
-- [ ] **Step 3: Write the module**
+- [x] **Step 3: Write the module**
 
 `src/lib/domain/tenant-table.ts`:
 
@@ -446,7 +472,7 @@ If `TenantRow`'s field names differ from `members` / `applications`, rename to m
 the row rather than adapting the row — `src/lib/data/tenants.ts` is the source of
 truth for that shape.
 
-- [ ] **Step 4: Run it and watch it pass**
+- [x] **Step 4: Run it and watch it pass**
 
 ```bash
 npm run test -- src/lib/domain/tenant-table.test.ts
@@ -454,7 +480,7 @@ npm run test -- src/lib/domain/tenant-table.test.ts
 
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Read the query string on the page**
+- [x] **Step 5: Read the query string on the page**
 
 In `src/app/[locale]/ops/tenants/page.tsx`, add the `searchParams` prop with
 `q`, `state`, `sort`, `dir`, `page`, `size` (copy the type from the corridors page),
@@ -462,19 +488,19 @@ then filter → sort → slice with `tenantMatches`, `sortRows` and `resolvePage
 and pass `rows`, `sort`, `dir`, `params`, `total`, `unfilteredTotal` and
 `pagination` down to `<TenantsTable>`.
 
-- [ ] **Step 6: Accept the new props in the table**
+- [x] **Step 6: Accept the new props in the table**
 
 Widen `TenantsTable`'s props to take `sort`, `dir`, `params`, `total`,
 `unfilteredTotal`, `pagination`, and pass them through to `DataTable` alongside a
 `toolbar` with a search placeholder and a state filter (`live`, `suspended`).
 Add `searchPlaceholder` and `anyState` to `OPS_TENANTS`, ten locales each.
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 `/ops/tenants?q=sah` narrows the table; `?state=suspended` narrows it; the pager
 appears above the rows; the row numbers keep counting across pages.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add src/lib/domain/tenant-table.ts src/lib/domain/tenant-table.test.ts \
@@ -491,7 +517,7 @@ git commit -m "feat: search, sort and page the agencies table"
 - Modify: `src/components/ops/tenant-invites-table.tsx` + its page
 - Modify: `src/components/agency/client-roster.tsx` (has a toolbar, needs a pager)
 
-- [ ] **Step 1: `clients-table.tsx` — the ops dashboard's agencies panel**
+- [x] **Step 1: `clients-table.tsx` — the ops dashboard's agencies panel**
 
 Create `src/lib/domain/ops-client-table.ts` with
 `opsClientMatches(row: { name: string; invited: number; applicants: number }, q: string): boolean`
@@ -502,7 +528,7 @@ through `src/app/[locale]/ops/dashboard/page.tsx:293-320` and pass `toolbar` and
 `footer`; that count is of *all* clients and must not change when a search narrows
 the rows, or the footer starts contradicting the table.
 
-- [ ] **Step 2: `colleagues-table.tsx` — ops staff**
+- [x] **Step 2: `colleagues-table.tsx` — ops staff**
 
 Create `src/lib/domain/colleague-table.ts` with
 `colleagueMatches(row: { name: string; email: string; role: string }, q: string, role: string): boolean`
@@ -511,7 +537,7 @@ its test. Wire `src/app/[locale]/ops/staff/page.tsx` the same way. The filter's
 options are the two `staff_role` values, `reviewer` and `owner`, labelled from
 `OPS_COMMON` (which already carries "reviewer" and "director").
 
-- [ ] **Step 3: `tenant-invites-table.tsx` — invitations to an agency**
+- [x] **Step 3: `tenant-invites-table.tsx` — invitations to an agency**
 
 ```bash
 grep -rn "TenantInvitesTable" src/app
@@ -522,13 +548,13 @@ Wire whichever page that names, with
 `tenantInviteMatches(row: { email: string; status: string }, q: string, status: string): boolean`
 — email substring plus an exact status filter — and its test.
 
-- [ ] **Step 4: `client-roster.tsx` — the agency's own clients**
+- [x] **Step 4: `client-roster.tsx` — the agency's own clients**
 
 This one already has a toolbar; it needs only a pager. In
 `src/app/[locale]/agency/clients/page.tsx`, read `page` and `size` with
 `resolvePage`, slice the rows, and pass `pagination` down. No new domain module.
 
-- [ ] **Step 5: Run the whole domain suite**
+- [x] **Step 5: Run the whole domain suite**
 
 ```bash
 npm run test -- src/lib/domain
@@ -536,7 +562,7 @@ npm run test -- src/lib/domain
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit each table separately**
+- [x] **Step 6: Commit each table separately**
 
 One commit per table, so a reviewer can reject one without the others.
 
@@ -557,7 +583,7 @@ One commit per table, so a reviewer can reject one without the others.
 
 Ten locales per string. English below; translate the rest.
 
-- [ ] **Step 1: The pure label changes**
+- [x] **Step 1: The pure label changes**
 
 | File | Key | From | To |
 |---|---|---|---|
@@ -573,7 +599,7 @@ on the new string is how the next reader learns the wrong word. Update
 `src/app/[locale]/agency/clients/[id]/page.tsx:104` and the type block in
 `case-review.ts:22` with it.
 
-- [ ] **Step 2: Add the metric she actually asked for**
+- [x] **Step 2: Add the metric she actually asked for**
 
 "Seats bought" cannot simply be relabelled "applications processed" — it reads
 `totals.seatsPurchased`, which is a different number. Add a real one in
@@ -588,7 +614,7 @@ A draft is a file somebody started and never sent; counting it as processed work
 would overstate the platform's throughput to the person deciding whether it is
 working.
 
-- [ ] **Step 3: Relabel the dashboard**
+- [x] **Step 3: Relabel the dashboard**
 
 In `src/app/[locale]/ops/dashboard/page.tsx`:
 
@@ -602,14 +628,14 @@ Leave the per-agency seats column alone: she explicitly kept it. *"Seats can sta
 on this table because it makes sense to be able to track how many team members are
 active per organization."*
 
-- [ ] **Step 4: Kill the seats/members double-naming**
+- [x] **Step 4: Kill the seats/members double-naming**
 
 In the agency detail view, `members` and `seats` name the same quantity in adjacent
 columns. Keep **seats** (the capped figure, "14 of 25") and drop the second column,
 or keep **members** and drop seats — one word per concept. This one is worth
 confirming with her on Wednesday before deleting a column.
 
-- [ ] **Step 5: Say that the agency overview is agency-wide**
+- [x] **Step 5: Say that the agency overview is agency-wide**
 
 Role-based dashboards are deferred, so the current numbers must not read as
 personal. Add to `AGENCY` and render under the overview heading:
@@ -621,7 +647,7 @@ personal. Add to `AGENCY` and render under the overview heading:
   },
 ```
 
-- [ ] **Step 6: Typecheck, test, verify**
+- [x] **Step 6: Typecheck, test, verify**
 
 ```bash
 npm run typecheck && npm run test
@@ -630,7 +656,7 @@ npm run typecheck && npm run test
 Then open `/ops/dashboard`, `/agency`, `/agency/clients/[id]` and confirm each new
 string renders in English and in one RTL locale (`/ar/ops/dashboard`).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add src/lib/i18n src/lib/data/dashboard.ts "src/app/[locale]"
@@ -646,29 +672,29 @@ git commit -m "feat: rename the labels the client read back to us"
 Her complaint was mechanical: a heading and its blurb wrap into a narrow column, so
 the page grows downward and the table starts below the fold.
 
-- [ ] **Step 1: Find every width cap on a heading block**
+- [x] **Step 1: Find every width cap on a heading block**
 
 ```bash
 grep -rn "max-w-\[6[0-9]ch\]\|max-w-prose\|max-w-2xl" src/components src/app | grep -v "t-muted max-w-\[62ch\]"
 ```
 
-- [ ] **Step 2: Raise the cap on headings and their leads**
+- [x] **Step 2: Raise the cap on headings and their leads**
 
 Page headings and their one-line leads go to the container width. Leave the 62ch
 measure on *body* paragraphs — that limit is a reading rule, and removing it makes
 long prose worse, which is not what she asked for.
 
-- [ ] **Step 3: Make the notice strips collapsible**
+- [x] **Step 3: Make the notice strips collapsible**
 
 She asked for both: full width *and* collapsible. Use a `<details>` element with the
 summary as the strip's one-line version so it works without JavaScript.
 
-- [ ] **Step 4: Verify at three widths**
+- [x] **Step 4: Verify at three widths**
 
 1280px, 1024px and 375px. The heading fills its container at desktop widths and the
 table's first rows are visible without scrolling on a 900px-tall viewport.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components
@@ -703,7 +729,7 @@ biometrics — it has to carry the *summons*.
 This is **not** a destructive control. It adds an appointment; it takes nothing away.
 Per `AGENTS.md` it gets no confirm dialog.
 
-- [ ] **Step 1: Add the notification kinds**
+- [x] **Step 1: Add the notification kinds**
 
 In `src/lib/db/schema.ts`, inside `notificationKind`:
 
@@ -717,13 +743,13 @@ In `src/lib/db/schema.ts`, inside `notificationKind`:
   "attendance_requested",
 ```
 
-- [ ] **Step 2: Generate and run the migration**
+- [x] **Step 2: Generate and run the migration**
 
 ```bash
 npm run db:generate && npm run db:migrate
 ```
 
-- [ ] **Step 3: Write the failing test for the message body**
+- [x] **Step 3: Write the failing test for the message body**
 
 `src/lib/domain/attendance.test.ts`:
 
@@ -757,7 +783,7 @@ describe("attendanceSummary", () => {
 });
 ```
 
-- [ ] **Step 4: Run it and watch it fail**
+- [x] **Step 4: Run it and watch it fail**
 
 ```bash
 npm run test -- src/lib/domain/attendance.test.ts
@@ -765,7 +791,7 @@ npm run test -- src/lib/domain/attendance.test.ts
 
 Expected: FAIL — cannot resolve `./attendance`.
 
-- [ ] **Step 5: Write the helper**
+- [x] **Step 5: Write the helper**
 
 `src/lib/domain/attendance.ts` exporting
 `attendanceSummary({ kind, when, place, locale })`, where `kind` is
@@ -773,17 +799,17 @@ Expected: FAIL — cannot resolve `./attendance`.
 than an empty slot in the sentence — an agency often knows the place before the
 appointment is booked.
 
-- [ ] **Step 6: Run it and watch it pass**
+- [x] **Step 6: Run it and watch it pass**
 
 ```bash
 npm run test -- src/lib/domain/attendance.test.ts
 ```
 
-- [ ] **Step 7: Add the analytics event**
+- [x] **Step 7: Add the analytics event**
 
 In `src/lib/analytics/events.ts`, add `"toplance.attendance_requested"` to the union.
 
-- [ ] **Step 8: Write the server action**
+- [x] **Step 8: Write the server action**
 
 In `src/app/[locale]/agency/actions.ts`, add `inviteToAttend`. It must: check the
 caller is a member of the agency that owns the application; write a row recording
@@ -791,20 +817,20 @@ kind, time, place and who sent it; call `notify()` with `attendance_requested`; 
 `track("toplance.attendance_requested")`. `track()` never throws — do not await it in
 a way that can fail the action.
 
-- [ ] **Step 9: Add the control to the case view**
+- [x] **Step 9: Add the control to the case view**
 
 `src/components/agency/invite-attendance.tsx` — a button beside the existing status
 controls opening a small form: kind (biometrics / interview), date and time
 (optional), place, and a note. The button says what happens: **Ask them to come in**.
 
-- [ ] **Step 10: Show it on the traveller's side**
+- [x] **Step 10: Show it on the traveller's side**
 
 Two surfaces, both of which she asked for by name: a standing notice on the
 application view stating what is being asked, where and when; and the bell entry
 that `notify()` already produces. The email comes from the same `notify()` call —
 add the template to `src/lib/notifications/templates.ts`.
 
-- [ ] **Step 11: Verify end to end**
+- [x] **Step 11: Verify end to end**
 
 ```bash
 npm run dev
@@ -813,7 +839,7 @@ npm run dev
 As an agency reviewer, send the request on a seeded case. As that traveller, confirm
 the notice on the application, the bell entry, and the queued email in the buffer.
 
-- [ ] **Step 12: Commit**
+- [x] **Step 12: Commit**
 
 ```bash
 git add -A && git commit -m "feat: ask a traveller to come in for biometrics or an interview"
@@ -833,7 +859,7 @@ git add -A && git commit -m "feat: ask a traveller to come in for biometrics or 
 The shape agreed on the call: a tab in the agency console that sends a message; it
 lands in the ops console as a queue that can be claimed and resolved.
 
-- [ ] **Step 1: Add the table**
+- [x] **Step 1: Add the table**
 
 In `src/lib/db/schema.ts`, following the *local* conventions (plural, snake_case,
 `public` schema, Clerk user ids as text):
@@ -854,40 +880,40 @@ export const supportRequests = pgTable("support_requests", {
 });
 ```
 
-- [ ] **Step 2: Generate and run the migration**
+- [x] **Step 2: Generate and run the migration**
 
 ```bash
 npm run db:generate && npm run db:migrate
 ```
 
-- [ ] **Step 3: Build the agency side**
+- [x] **Step 3: Build the agency side**
 
 `/agency/support` — subject, body, send. Sending is not destructive: no confirm
 dialog. On success, `notifyStaff()` and a toast that says **Sent**. Below the form,
 the agency's own past requests with their state, so nobody sends the same thing
 twice.
 
-- [ ] **Step 4: Build the ops side**
+- [x] **Step 4: Build the ops side**
 
 `/ops/support` — a `DataTable` with `numbered`, a toolbar filtering by state, and
 per-row **Claim** and **Mark resolved**. Neither is destructive; both commit on the
 click.
 
-- [ ] **Step 5: Add both nav entries**
+- [x] **Step 5: Add both nav entries**
 
 Agency: under the team group. Ops: beside Demo requests.
 
-- [ ] **Step 6: Add the analytics events**
+- [x] **Step 6: Add the analytics events**
 
 `"toplance.support_requested"`, `"toplance.support_claimed"`,
 `"toplance.support_resolved"`.
 
-- [ ] **Step 7: Verify**
+- [x] **Step 7: Verify**
 
 As an agency owner, send a request; as ops, see it, claim it, resolve it; as the
 agency, see the state change.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add -A && git commit -m "feat: let an agency reach the top admin"
@@ -906,18 +932,18 @@ git add -A && git commit -m "feat: let an agency reach the top admin"
 The portal says "additional document needed" beside a 100% progress figure. She
 called the contradiction out; the fix is to name the document.
 
-- [ ] **Step 1: Read the flagged rows**
+- [x] **Step 1: Read the flagged rows**
 
 The reason model already exists (`flag_reason`, `flag-reason.ts`). Render the
 flagged document's name and its reason where the bare status is shown now.
 
-- [ ] **Step 2: Make the percentage honest**
+- [x] **Step 2: Make the percentage honest**
 
 A checklist with an outstanding request is not at 100%. Either exclude flagged
 documents from the numerator or show "1 item needs attention" instead of a
 percentage while any flag is open.
 
-- [ ] **Step 3: Verify, then commit**
+- [x] **Step 3: Verify, then commit**
 
 ```bash
 git add -A && git commit -m "fix: name the document that is holding a case up"
@@ -939,7 +965,7 @@ application, so a mid-flight change cannot silently invalidate someone's checkli
 An agency editing a published corridor would change it for every other agency using
 it.
 
-- [ ] **Step 1: Write the spec for a case-level override**
+- [x] **Step 1: Write the spec for a case-level override**
 
 The application keeps its corridor version. A director — `org_role = 'owner'` —
 amends the fee or adds/removes a required document **for that case only**. The
@@ -967,12 +993,12 @@ Her words: *"that's like the least priority right now."* It is here, at the end,
 because she raised it and it should not be silently dropped — not because it should
 be done early.
 
-- [ ] **Step 1: Give the illustration a dark variant**
+- [x] **Step 1: Give the illustration a dark variant**
 
 Not a transparent background — she rejected that explicitly. A dark-mode
 background that belongs to the dark theme.
 
-- [ ] **Step 2: Verify in both themes, then commit**
+- [x] **Step 2: Verify in both themes, then commit**
 
 ```bash
 git add -A && git commit -m "feat: give the hero illustration a dark-mode ground"
@@ -982,14 +1008,23 @@ git add -A && git commit -m "feat: give the hero illustration a dark-mode ground
 
 ## Before the demo
 
-- [ ] `npm run typecheck`
-- [ ] `npm run test`
-- [ ] `npm run lint`
-- [ ] `npm run build`
+- [x] `npm run typecheck`
+- [x] `npm run test`
+- [x] `npm run lint`
+- [x] `npm run build`
 - [ ] Walk both consoles and the traveller portal in `en` and `ar`
 - [ ] Confirm Peace can sign in, and is an admin on the ops console
 - [ ] Open `/ops/corridors` with her — it is the visa rules engine she has been
       asking after, and she has never seen it
+- [ ] Show her `/agency/rule-sets` straight afterwards: the same reference data
+      from inside her own console, which is where she will actually look for it
+- [ ] Put the two rule-override designs to her —
+      `specs/2026-09-09-case-level-rule-override.md`, recommendation first
+
+The four commands above were run green at e3a5751 + this branch on 2026-09-09:
+typecheck clean, 1761 tests passing, lint with no errors or warnings, build
+emitting both new routes. What is left on this list needs a browser or needs
+her.
 
 ## Explicitly out of scope
 

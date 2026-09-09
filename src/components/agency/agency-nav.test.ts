@@ -13,13 +13,14 @@ describe("agencyNav", () => {
     expect(agencyNav(withOrg)[0].href).toBe("/agency");
   });
 
-  it("carries the rosters, the invitations, the plan and support as their own pages", () => {
+  it("carries the rosters, the invitations, the plan, the rules and support as their own pages", () => {
     expect(agencyNav(withOrg).map((i) => i.href)).toEqual([
       "/agency",
       "/agency/clients",
       "/agency/clients/invitations",
       "/agency/team",
       "/agency/billing",
+      "/agency/rule-sets",
       "/agency/support",
     ]);
   });
@@ -41,11 +42,32 @@ describe("agencyNav", () => {
     // Both are questions about running the agency rather than about
     // handling a case, and both pages turn a reviewer away — a hidden
     // link is not the guard, it is the courtesy.
+    //
+    // Rule sets and support are on the list because neither is such a
+    // question: one is read-only reference data, the other is the way
+    // out of a case going wrong.
     expect(
       agencyNav({ locale: "en", hasOrganisation: true, isDirector: false }).map(
         (i) => i.href
       )
-    ).toEqual(["/agency", "/agency/clients", "/agency/support"]);
+    ).toEqual(["/agency", "/agency/clients", "/agency/rule-sets", "/agency/support"]);
+  });
+
+  /**
+   * The rules a checklist was built from are every rank's, and for a
+   * reason the roster's absence makes clear by contrast: the screen
+   * writes nothing. A handler explaining a required document to a
+   * traveller on the phone is the reader it was built for, and gating
+   * it behind a director would send that call to voicemail.
+   */
+  it("offers the rule sets to every rank", () => {
+    for (const isDirector of [true, false]) {
+      expect(
+        agencyNav({ locale: "en", hasOrganisation: true, isDirector }).map(
+          (i) => i.href
+        )
+      ).toContain("/agency/rule-sets");
+    }
   });
 
   /**
@@ -81,7 +103,7 @@ describe("agencyNav", () => {
     // rank they hold is the agency's business, not a case's.
     expect(
       agencyNav({ locale: "en", hasOrganisation: true }).map((i) => i.href)
-    ).toEqual(["/agency", "/agency/clients", "/agency/support"]);
+    ).toEqual(["/agency", "/agency/clients", "/agency/rule-sets", "/agency/support"]);
   });
 
   it("keeps the client invitations to the director", () => {

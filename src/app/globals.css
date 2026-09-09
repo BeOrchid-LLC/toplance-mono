@@ -479,9 +479,9 @@
   --spacing-row: var(--row-h);
   --spacing-bar: var(--bar-h);
 
-  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-plex-mono), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-archivo), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --ease-out: var(--ease-out);
   --ease-inout: var(--ease-inout);
@@ -501,16 +501,16 @@
    * value into the utilities it generates and does NOT emit the custom
    * property, so `var(--font-sans)` in hand-written CSS resolves to
    * nothing and the declaration is dropped — which is why body copy was
-   * silently rendering in system-ui rather than Inter.
+   * silently rendering in system-ui rather than the body face.
    *
    * They live on `body` and not `:root` because that is where next/font
-   * puts `--font-inter` and friends; a `:root` declaration would resolve
+   * puts `--font-plex-sans` and friends; a `:root` declaration would resolve
    * them before they exist.
    */
   body {
-    --sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
-    --data: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: var(--font-archivo), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --data: var(--font-plex-mono), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), ui-monospace, SFMono-Regular, Menlo, monospace;
 
     background: var(--bg);
     color: var(--ink);
@@ -701,8 +701,8 @@
 
    Two faces, two jobs. Archivo carries the width axis, so display
    type can be genuinely expanded rather than merely large — that
-   width is what stops it reading as Inter at a bigger size.
-   JetBrains stops being a footnote and becomes the data face: every
+   width is what stops it reading as Plex Sans at a bigger size.
+   Plex Mono stops being a footnote and becomes the data face: every
    code, count and status on the page is set in it, because those are
    the parts a traveller reads as fact rather than as marketing.
 

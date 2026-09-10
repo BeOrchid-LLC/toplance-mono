@@ -251,6 +251,7 @@ export default async function AgencyCasePage({
                   <DownloadDocuments
                     applicationId={row.id}
                     label={ARCHIVE.agencyLabel[locale]}
+                    preparingLabel={ARCHIVE.preparingLabel[locale]}
                   />
                 </div>
               )}

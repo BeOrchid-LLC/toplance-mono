@@ -7,6 +7,7 @@ import { canReadDocuments } from "@/lib/auth/policy";
 import { getDocuments } from "@/lib/data/applications";
 import { db } from "@/lib/db/client";
 import { applications } from "@/lib/db/schema";
+import { archiveReadyCookie } from "@/lib/http/cookies";
 import {
   archiveEntryNames,
   archiveFilename,
@@ -40,7 +41,7 @@ import { getDocumentBytes } from "@/lib/storage/documents";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ applicationId: string }> }
 ) {
   const { applicationId } = await params;
@@ -152,9 +153,25 @@ export async function GET(
     });
   }
 
+  /**
+   * Tells the page that started this download that the archive is on its
+   * way. Headers flush with the first byte, so the cookie lands exactly
+   * when the wait ends — see `@/lib/http/cookies` for why this is a
+   * cookie rather than anything the page could have asked for directly.
+   *
+   * Absent unless the caller asked for it, and absent again if what they
+   * asked with is not a ticket this product mints. A download nobody is
+   * watching sets no cookie, which is every download from a typed URL.
+   */
+  const ticket = new URL(request.url).searchParams.get("dl");
+  const readyCookie = ticket
+    ? archiveReadyCookie(ticket, process.env.NODE_ENV === "production")
+    : null;
+
   return new Response(zipEntries(entries()), {
     headers: {
       "content-type": "application/zip",
+      ...(readyCookie ? { "set-cookie": readyCookie } : {}),
       // An empty reference is the one `archiveFilename` answers with a
       // plain `documents.zip`, which is the right answer here: the guard
       // has already passed, so a missing row means the case was deleted

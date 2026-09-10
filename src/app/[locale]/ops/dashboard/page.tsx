@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
+import { TableSkeleton } from "@/components/shared/content-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { FunnelBars } from "@/components/shared/funnel-bars";
@@ -83,62 +85,41 @@ function cycleName(cycle: string): string {
  */
 const DASHBOARD_TABS = ["overview", "clients", "operations", "demand"] as const;
 
-export default async function OpsDashboardPage({
+/** The dashboard's own query string — see `DashboardContent`. */
+type DashboardSearchParams = Promise<{
+  tab?: string;
+  q?: string;
+  page?: string;
+  size?: string;
+}>;
+
+/**
+ * The dashboard itself, below the rail.
+ *
+ * `dashboardData()` is the widest read in the product — every agency,
+ * every application, the revenue series and the demand series, for the
+ * whole platform. The rail's badges do not come from it (`getOpsCounts`
+ * answers those, and the page still awaits that), so there is no reason
+ * for the console's chrome to wait behind it. Behind a `<Suspense>` it
+ * does not: the rail, the title and the bell paint first.
+ *
+ * `searchParams` is handed on unawaited — awaiting it in the page would
+ * put the page back to blocking before it returns, which is the whole
+ * thing this split undoes.
+ */
+async function DashboardContent({
+  locale,
   searchParams,
 }: {
-  searchParams: Promise<{
-    tab?: string;
-    q?: string;
-    page?: string;
-    size?: string;
-  }>;
+  locale: Awaited<ReturnType<typeof getLocale>>;
+  searchParams: DashboardSearchParams;
 }) {
-  if (!hasDatabaseEnv) return <SetupNotice />;
-
-  const locale = await getLocale();
-
-  const gate = await requireStaffConsole("owner");
-  if (gate.decision === "refuse") return <StaffAccessRefused />;
-  if (gate.decision === "refuse-role") return <OwnerAccessRefused />;
-  if (gate.decision === "enroll") {
-    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
-  }
-  const { profile, actor } = gate;
-
-  const [data, counts, notifications, unreadCount] = await Promise.all([
-    dashboardData(),
-    getOpsCounts(),
-    getNotifications(actor.userId),
-    unreadNotificationCount(actor.userId),
-  ]);
-
-  // Never awaited and never able to throw — `track` swallows its own
-  // errors, because no analytics write is worth failing a page load for.
-  void track("toplance.dashboard_viewed", {}, actor.userId);
-
-  const account = await opsAccount(profile, actor, locale);
-
+  const data = await dashboardData();
   const params = await searchParams;
   const openTab = openTabOf(params.tab, DASHBOARD_TABS);
 
   return (
-    <AdminShell
-      groups={opsAdminNav({ locale, ...counts, isOwner: true })}
-      activeId="business"
-      railTitle={OPS_RAIL_TITLE}
-      railBrand={<OpsWordmark />}
-      railSubtitle={account.subtitle}
-      account={account}
-      title={OPS_COMMON.nav.dashboard[locale]}
-      lead="The state of the business — agencies, revenue, the review desk and where demand is going."
-      actions={
-        <NotificationsMenu
-          notifications={notifications}
-          unreadCount={unreadCount}
-          fallbackHref="/ops"
-        />
-      }
-    >
+    <>
       <CounterRow
         className="mt-0"
         counters={[
@@ -188,6 +169,63 @@ export default async function OpsDashboardPage({
           { value: "demand", label: "Demand", panel: <Demand data={data} /> },
         ]}
       />
+    </>
+  );
+}
+
+export default async function OpsDashboardPage({
+  searchParams,
+}: {
+  searchParams: DashboardSearchParams;
+}) {
+  if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
+
+  const gate = await requireStaffConsole("owner");
+  if (gate.decision === "refuse") return <StaffAccessRefused />;
+  if (gate.decision === "refuse-role") return <OwnerAccessRefused />;
+  if (gate.decision === "enroll") {
+    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
+  }
+  const { profile, actor } = gate;
+
+  // The chrome's own reads, and only those. `dashboardData()` moved to
+  // `DashboardContent`, so the rail no longer waits behind the widest
+  // read in the product.
+  const [counts, notifications, unreadCount] = await Promise.all([
+    getOpsCounts(),
+    getNotifications(actor.userId),
+    unreadNotificationCount(actor.userId),
+  ]);
+
+  // Never awaited and never able to throw — `track` swallows its own
+  // errors, because no analytics write is worth failing a page load for.
+  void track("toplance.dashboard_viewed", {}, actor.userId);
+
+  const account = await opsAccount(profile, actor, locale);
+
+  return (
+    <AdminShell
+      groups={opsAdminNav({ locale, ...counts, isOwner: true })}
+      activeId="business"
+      railTitle={OPS_RAIL_TITLE}
+      railBrand={<OpsWordmark />}
+      railSubtitle={account.subtitle}
+      account={account}
+      title={OPS_COMMON.nav.dashboard[locale]}
+      lead="The state of the business — agencies, revenue, the review desk and where demand is going."
+      actions={
+        <NotificationsMenu
+          notifications={notifications}
+          unreadCount={unreadCount}
+          fallbackHref="/ops"
+        />
+      }
+    >
+      <Suspense fallback={<TableSkeleton />}>
+        <DashboardContent locale={locale} searchParams={searchParams} />
+      </Suspense>
     </AdminShell>
   );
 }
@@ -612,3 +650,4 @@ function CountList({
     </ul>
   );
 }
+

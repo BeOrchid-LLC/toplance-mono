@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
+import { TableSkeleton } from "@/components/shared/content-skeleton";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
@@ -42,36 +44,40 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: OPS_TENANTS.heading[locale] };
 }
 
-export default async function OpsTenantsPage({
+/** The tenant list's own query string — see `TenantsContent`. */
+type TenantsSearchParams = Promise<{
+  q?: string;
+  state?: string;
+  sort?: string;
+  dir?: string;
+  page?: string;
+  size?: string;
+}>;
+
+/**
+ * The agency list itself, below the rail.
+ *
+ * `listTenants` and `listDemoRequests` read every agency on the
+ * platform and every enquiry against them, and the counters, the
+ * filtering and the paging all run on those two results. None of it
+ * is anything the console's chrome needs — the rail's own badges come
+ * from `getOpsCounts`, which the page still awaits — so behind a
+ * `<Suspense>` the rail, the title and the provision button paint
+ * first and the table arrives when it is ready.
+ *
+ * `searchParams` is handed on unawaited, because awaiting it in the
+ * page would put the page back to blocking before it returns.
+ */
+async function TenantsContent({
+  locale,
   searchParams,
 }: {
-  searchParams: Promise<{
-    q?: string;
-    state?: string;
-    sort?: string;
-    dir?: string;
-    page?: string;
-    size?: string;
-  }>;
+  locale: Awaited<ReturnType<typeof getLocale>>;
+  searchParams: TenantsSearchParams;
 }) {
-  if (!hasDatabaseEnv) return <SetupNotice />;
-
-  const locale = await getLocale();
-
-  const gate = await requireStaffConsole();
-  if (gate.decision === "refuse") return <StaffAccessRefused />;
-  if (gate.decision === "enroll") {
-    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
-  }
-  const { profile, actor } = gate;
-
-  const account = await opsAccount(profile, actor, locale);
-
-  const [tenants, demoRequests, notifications, unreadCount] = await Promise.all([
+  const [tenants, demoRequests] = await Promise.all([
     listTenants(),
     listDemoRequests(),
-    getNotifications(actor.userId),
-    unreadNotificationCount(actor.userId),
   ]);
 
   const live = tenants.filter((t) => !t.suspendedAt);
@@ -122,8 +128,6 @@ export default async function OpsTenantsPage({
     },
   ];
 
-  const counts = await getOpsCounts();
-
   const params = await searchParams;
   const search = (params.q ?? "").trim();
   const state = params.state ?? "";
@@ -143,6 +147,58 @@ export default async function OpsTenantsPage({
   // cannot ask this page for every row it holds.
   const size = readPageSize(params.size);
   const { page, pageCount, start, end } = resolvePage(params.page, sorted.length, size);
+  return (
+    <>
+      <KpiRow items={counters} />
+
+      <TenantsTable
+        rows={sorted.slice(start, end)}
+        locale={locale}
+        className="mt-8"
+        params={{ q: params.q, state: params.state, size: params.size }}
+        sort={sort}
+        dir={dir}
+        total={sorted.length}
+        unfilteredTotal={tenants.length}
+        pagination={{ page, pageCount, size }}
+        filteredLabel={
+          narrowed
+            ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
+                shown: sorted.length,
+                total: tenants.length,
+              })
+            : undefined
+        }
+      />
+    </>
+  );
+}
+
+export default async function OpsTenantsPage({
+  searchParams,
+}: {
+  searchParams: TenantsSearchParams;
+}) {
+  if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
+
+  const gate = await requireStaffConsole();
+  if (gate.decision === "refuse") return <StaffAccessRefused />;
+  if (gate.decision === "enroll") {
+    return <StaffEnrollmentRequired accountsUrl={gate.accountsUrl} />;
+  }
+  const { profile, actor } = gate;
+
+  const account = await opsAccount(profile, actor, locale);
+
+  // The chrome's own reads, and only those. The two agency lists moved
+  // to `TenantsContent`, so the rail no longer waits behind them.
+  const [notifications, unreadCount, counts] = await Promise.all([
+    getNotifications(actor.userId),
+    unreadNotificationCount(actor.userId),
+    getOpsCounts(),
+  ]);
 
   return (
     <AdminShell
@@ -169,27 +225,9 @@ export default async function OpsTenantsPage({
         </>
       }
     >
-      <KpiRow items={counters} />
-
-      <TenantsTable
-        rows={sorted.slice(start, end)}
-        locale={locale}
-        className="mt-8"
-        params={{ q: params.q, state: params.state, size: params.size }}
-        sort={sort}
-        dir={dir}
-        total={sorted.length}
-        unfilteredTotal={tenants.length}
-        pagination={{ page, pageCount, size }}
-        filteredLabel={
-          narrowed
-            ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
-                shown: sorted.length,
-                total: tenants.length,
-              })
-            : undefined
-        }
-      />
+      <Suspense fallback={<TableSkeleton />}>
+        <TenantsContent locale={locale} searchParams={searchParams} />
+      </Suspense>
     </AdminShell>
   );
 }

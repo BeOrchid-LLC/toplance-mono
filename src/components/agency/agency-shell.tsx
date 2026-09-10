@@ -39,6 +39,7 @@ export async function AgencyShell({
   title,
   lead,
   actions,
+  titleActions,
   centred,
   children,
 }: {
@@ -53,7 +54,10 @@ export async function AgencyShell({
   activeId: string;
   title?: string;
   lead?: string;
+  /** Console-wide chrome for the bar — see `AdminShell`. */
   actions?: React.ReactNode;
+  /** This page's own primary action, on the row with its heading. */
+  titleActions?: React.ReactNode;
   /** Centre this page on a reading measure — see `AdminShell`. */
   centred?: boolean;
   children: React.ReactNode;
@@ -129,6 +133,7 @@ export async function AgencyShell({
       }}
       title={title}
       lead={lead}
+      titleActions={titleActions}
       actions={
         <>
           {actions}

@@ -705,3 +705,39 @@ export async function noticesOfKindFor(
     return Number(rows[0]?.count ?? 0);
   });
 }
+
+/**
+ * Enough agencies to make `/ops/tenants` paginate.
+ *
+ * Peace asked for serial numbers "everywhere there's a table" on
+ * 8 September, and the half that is easy to get wrong is not the first
+ * page — it is the second, where a naive `i + 1` restarts at one and
+ * makes the twenty-sixth row look like the first. Proving that needs
+ * more rows than one page holds, and `?size=10` is what keeps the
+ * fixture small enough to be worth seeding.
+ *
+ * Named with a fixed prefix so the cleanup below can only ever delete
+ * rows this helper made, and given a domain each because the same table
+ * is searched by name *and* by domain.
+ */
+const PAGING_AGENCY_PREFIX = "E2E Numbering ";
+
+export async function seedAgenciesForPaging(count: number): Promise<void> {
+  await withClient(async (client) => {
+    for (let i = 1; i <= count; i += 1) {
+      const n = String(i).padStart(2, "0");
+      await client.query(
+        `insert into organisations (name, domain) values ($1, $2)`,
+        [`${PAGING_AGENCY_PREFIX}${n}`, `numbering-${n}.e2e.invalid`]
+      );
+    }
+  });
+}
+
+export async function clearPagingAgencies(): Promise<void> {
+  await withClient(async (client) => {
+    await client.query(`delete from organisations where name like $1`, [
+      `${PAGING_AGENCY_PREFIX}%`,
+    ]);
+  });
+}

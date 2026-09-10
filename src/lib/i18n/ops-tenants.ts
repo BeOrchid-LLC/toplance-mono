@@ -282,17 +282,28 @@ export const OPS_TENANTS: {
     tw: "Hwehwɛ adwumakuo anaa domain so",
     zu: "Sesha nge-ejensi noma isizinda",
   },
+  /**
+   * "All statuses" — the client's wording, asked for on this table on
+   * 10 September and applied to every status filter in the product on
+   * the same day, because a filter that reads one way on the agencies
+   * table and another on the four beside it is not a filter anyone
+   * learns once.
+   *
+   * The distinction is real, not cosmetic: "Any status" describes what
+   * the filter would match, and "All statuses" describes what is
+   * currently shown. The second is what an unfiltered table is.
+   */
   anyStatus: {
-    en: "Any status",
-    ha: "Kowane matsayi",
-    yo: "Ipò yòówù",
-    ig: "Ọnọdụ ọ bụla",
-    fr: "Tout statut",
-    pt: "Qualquer estado",
-    sw: "Hali yoyote",
-    ar: "أي حالة",
-    tw: "Tebea biara",
-    zu: "Noma isiphi isimo",
+    en: "All statuses",
+    ha: "Duk matsayi",
+    yo: "Gbogbo ipò",
+    ig: "Ọnọdụ niile",
+    fr: "Tous les statuts",
+    pt: "Todos os estados",
+    sw: "Hali zote",
+    ar: "كل الحالات",
+    tw: "Tebea nyinaa",
+    zu: "Zonke izimo",
   },
   agenciesWord: {
     en: "agencies",

@@ -43,6 +43,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -200,7 +201,7 @@ export default async function EmployerConsolePage() {
       const created = await createOrganisationTx(profile.id, orgName);
       // Straight back through the front door, so the roster below reads
       // the membership this just wrote rather than a stale `undefined`.
-      if (!("error" in created)) redirect("/agency");
+      if (!("error" in created)) redirect(withLocalePrefix("/agency", await getLocale()));
       // Kept, not swallowed. This branch used to drop the refusal on the
       // floor: a director whose registered name ran past `NAME_MAX`
       // signed up successfully, landed here, and was shown a blank

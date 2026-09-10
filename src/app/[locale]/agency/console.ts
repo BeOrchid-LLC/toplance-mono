@@ -27,6 +27,8 @@ import {
 } from "@/lib/db/schema";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { isUuid } from "@/lib/domain/uuid";
+import { withLocalePrefix } from "@/lib/i18n/paths";
+import { getLocale } from "@/lib/i18n/server";
 
 /** The agency this console is showing, as its own bar and header need it. */
 export type AgencyMembership = {
@@ -143,7 +145,7 @@ export async function resolveAgencyConsole(
   if (!profile || !actor) {
     [profile, actor] = await recoverEmployer();
   }
-  if (!profile || !actor) redirect("/go");
+  if (!profile || !actor) redirect(withLocalePrefix("/go", await getLocale()));
 
   // Staff belong in `/ops`, whatever else is true of their account.
   //
@@ -233,10 +235,25 @@ export async function resolveAgencyConsole(
   // button by the very flag that exists to let the paywall render its
   // own escape hatch. Nesting the KYB check inside `!allowUnpaid` would
   // make the paywall's exemption the hole in the gate in front of it.
+  /**
+   * Prefixed, all three of them. The locale lives in the URL and nowhere
+   * else — `src/proxy.ts` reads it off the path and there is no cookie
+   * behind that — so a bare `redirect("/agency/verification")` does not
+   * send a Hausa director to the holding screen. It sends them to the
+   * English one.
+   *
+   * Every gated redirect in the product had this wrong, and the console
+   * sweep is what found it: `/ar/agency/verification` reported
+   * `dir="ltr"`, because an activated agency is redirected off that
+   * screen and the redirect dropped the prefix.
+   * `src/lib/i18n/redirects.test.ts` is the guard rail.
+   */
   if (!allowPending && decision === "pending-verification") {
-    redirect("/agency/verification");
+    redirect(withLocalePrefix("/agency/verification", await getLocale()));
   }
-  if (!allowUnpaid && decision === "checkout") redirect("/agency/billing");
+  if (!allowUnpaid && decision === "checkout") {
+    redirect(withLocalePrefix("/agency/billing", await getLocale()));
+  }
 
   return {
     profile,
@@ -261,7 +278,7 @@ export async function requireAgencyConsole(): Promise<
   AgencyConsole & { membership: AgencyMembership }
 > {
   const console_ = await resolveAgencyConsole();
-  if (!console_.membership) redirect("/agency");
+  if (!console_.membership) redirect(withLocalePrefix("/agency", await getLocale()));
 
   return { ...console_, membership: console_.membership };
 }

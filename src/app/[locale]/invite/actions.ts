@@ -8,6 +8,7 @@ import { requireActor, toActionError } from "@/lib/auth/guards";
 import { acceptInvitationTx } from "@/lib/data/invitations";
 import { INVITE_ACTIONS } from "@/lib/i18n/invite";
 import { getActionLocale } from "@/lib/i18n/server";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 /**
  * The one write on this surface, called only from the accept page's own
@@ -45,5 +46,5 @@ export async function acceptInvitation(token: string) {
     throw error;
   }
 
-  redirect("/app/agent");
+  redirect(withLocalePrefix("/app/agent", await getActionLocale()));
 }

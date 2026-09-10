@@ -20,6 +20,7 @@ import {
 import { isApplicationPaid } from "@/lib/data/payments";
 import { decideClientPaywall } from "@/lib/payments/gates";
 import { signedDocumentUrl } from "@/lib/storage/documents";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 export default async function AppLayout({
   children,
@@ -32,7 +33,7 @@ export default async function AppLayout({
   // auth pages, so sending a session that has no profile row back there
   // bounces it straight here again — an endless redirect rather than an
   // explanation. `/go` is where that chain is allowed to stop.
-  if (!profile) redirect("/go");
+  if (!profile) redirect(withLocalePrefix("/go", await getLocale()));
 
   // Holding a profile is not the same as belonging here. `/go` sends
   // each role to its own console, but nothing routed someone who typed
@@ -74,7 +75,7 @@ export default async function AppLayout({
       applicationPaid: application ? await isApplicationPaid(application.id) : false,
     }) === "checkout"
   ) {
-    redirect("/checkout");
+    redirect(withLocalePrefix("/checkout", await getLocale()));
   }
 
   // Profile is reachable from the account menu (`profileHref` below),

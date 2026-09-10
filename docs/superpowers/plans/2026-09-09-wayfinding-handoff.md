@@ -308,7 +308,60 @@ list; update it with the palette.
 
 ## 6. Open — not ours to close
 
-Both were flagged before the work started and neither is resolved.
+Two were flagged before the work started. The third was found on
+2026-09-10 while trying to close the §4.6 sweep, and it is the same kind
+of thing as the first.
+
+**§4.6's ban on caps eyebrows collides with the client-locked fence.**
+Spec §4.6 bans, explicitly, *"tracked-out ALL-CAPS eyebrow labels"* and
+*"mono used as a label style rather than for machine-assigned values"*.
+Guideline §2 — the fence that says *"Do not move it"* — names three roles
+that are exactly those two things: `special-caps` and `kicker` in the
+`.t-*` scale, and `tag` (JetBrains, 13/600/+0.14em, uppercase) in the
+marketing one. All three predate the redesign; `.kicker` and
+`.special-caps` are in the initial commit. There are **67 call sites**.
+
+Removing them is a client decision, not a design one, and it belongs in
+the same conversation as the font question rather than being taken
+quietly on the way past. Spec §8 lists what this redesign reverses and
+does **not** list these, which is the gap: the ban was written as a
+principle without noticing it reversed a locked decision.
+
+The narrower reading — that the offence is using such a role as a
+decorative eyebrow above a heading, not the role existing, so a caps
+column header in `ui/table.tsx` is fine — is defensible and would make
+the sweep nearly empty. Two readings, 67 sites versus about none: that is
+the definition of a question to ask rather than answer.
+
+**The other two §4.6 bans are blocked for their own reasons, so the whole
+of §4.6 waits on one conversation.**
+
+*` · `-joined meta strings.* 48 occurrences, and they split in two. The
+marketing ones (`site-home.ts`, `site-travelers.ts`, ×10 locales each)
+are **client copy** — `(site)/page.tsx` records that the prose "was
+replaced wholesale on 2026-09-05 from the client's copy doc", and those
+files still carry NEEDS NATIVE REVIEW. Editing punctuation inside
+translated client copy is not a design change. The product ones
+(`corridor-header.tsx`, `trip-list.tsx`, `agency-shell.tsx`,
+`team-roster.tsx`, `ops-account.ts`, `ops-common.ts`) are ours — but the
+spec's own §3 layout sketch draws `NG → GB · Work` in the traveller
+header, so §3 asks for the thing §4.6 bans. The traveller concourse spec
+§7 already recorded that ("Correcting it was offered and not taken"), and
+it is still not taken.
+
+*`→` appended to a button or link label.* Scanned: **zero violations.**
+Every arrow in the product is a corridor pair or a route diagram, which
+§4.2 explicitly permits. This half of §4.6 is already satisfied and needs
+nothing. Recorded so nobody goes looking.
+
+**The five "metadata holes" in spec §6 are not holes.** §6 lists
+`agency/people`, both sign-in doors, `/ops` and `/go` as *"sign-in pages
+with no title"*. Every one of those pages either `redirect()`s or calls
+`notFound()` on every path through it, so none of them ever paints a
+title; `[...unmatched]` renders `not-found.tsx`, which has its own. `/go`
+has metadata already. Adding `generateMetadata` to a page that never
+renders would be dead code. Checked 2026-09-10 by reading all five —
+recorded so the next reader does not spend the hour again.
 
 **The type fence is client-locked.** Guideline §2 fences Inter to product
 screens and Archivo to marketing, and says in terms: *"This fence is

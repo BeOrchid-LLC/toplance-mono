@@ -31,6 +31,7 @@ import {
   revokePlatformInvitationAction,
 } from "@/app/[locale]/ops/staff/actions";
 import { opsAccount } from "@/app/[locale]/ops/account";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -80,7 +81,7 @@ export default async function OpsStaffPage({
   }
   const { profile, actor } = gate;
 
-  if (!isOwner(actor)) redirect("/ops/corridors");
+  if (!isOwner(actor)) redirect(withLocalePrefix("/ops/corridors", await getLocale()));
 
   const account = await opsAccount(profile, actor, locale);
 

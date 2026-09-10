@@ -9,6 +9,8 @@ import { isSuspendedColleague } from "@/lib/data/staff";
 import { isStaff } from "@/lib/auth/policy";
 import type { Actor, StaffRole } from "@/lib/auth/policy";
 import { buildAccountsBaseUrl } from "@clerk/shared/buildAccountsBaseUrl";
+import { withLocalePrefix } from "@/lib/i18n/paths";
+import { getLocale } from "@/lib/i18n/server";
 
 /**
  * The three outcomes a staff-only screen can be in, once identity is
@@ -150,7 +152,7 @@ const staffGate = cache(async function staffGate(
   // `/go` rather than the ops door, for the reason on `GoPage`: the
   // proxy bounces a signed-in visitor off every auth page, so a session
   // with no profile row would ricochet between the two.
-  if (!profile || !actor) redirect("/go");
+  if (!profile || !actor) redirect(withLocalePrefix("/go", await getLocale()));
 
   if (!isStaff(actor)) return { decision: "refuse" };
 
@@ -161,7 +163,7 @@ const staffGate = cache(async function staffGate(
    * case — the same trick the missing-profile redirect above plays, and
    * the reason a suspension needed no edit on any ops page.
    */
-  if (profile.suspendedAt) redirect("/ops/suspended");
+  if (profile.suspendedAt) redirect(withLocalePrefix("/ops/suspended", await getLocale()));
 
   // Role first, so a reviewer opening an owner-only screen is never sent
   // off to enrol an authenticator app that would not let them in. It

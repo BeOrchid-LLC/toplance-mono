@@ -12,6 +12,7 @@ import { aiEnabled } from "@/lib/ai/models";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getLocale } from "@/lib/i18n/server";
 import { INTAKE_UI } from "@/lib/i18n/intake-ui";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -26,7 +27,7 @@ export default async function AgentPage() {
 
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/go");
+  if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   const answers = await getIntakeAnswers(application.id);
 

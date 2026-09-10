@@ -16,6 +16,7 @@ import { homeFor } from "@/lib/auth/routes";
 import { clientCharge, formatMoney } from "@/lib/domain/pricing";
 import { BILLING, CHECKOUT } from "@/lib/i18n/billing";
 import { getLocale } from "@/lib/i18n/server";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -44,14 +45,14 @@ export default async function CheckoutPage() {
 
   const locale = await getLocale();
   const profile = await getProfile();
-  if (!profile) redirect("/go");
+  if (!profile) redirect(withLocalePrefix("/go", await getLocale()));
 
   // An agency member or a staff account has no application to pay for,
   // and their own console is the honest place to send them.
   if (profile.role !== "traveler") redirect(homeFor(profile.role));
 
   const application = await getApplication();
-  if (!application || (await isApplicationPaid(application.id))) redirect("/app");
+  if (!application || (await isApplicationPaid(application.id))) redirect(withLocalePrefix("/app", await getLocale()));
 
   const card = await activeRateCard();
   const fee = clientCharge(card);

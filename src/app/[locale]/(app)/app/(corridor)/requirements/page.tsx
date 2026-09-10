@@ -33,6 +33,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { getLocale } from "@/lib/i18n/server";
 import { REQUIREMENTS } from "@/lib/i18n/requirements";
 import type { Locale } from "@/lib/i18n/locales";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -227,8 +228,8 @@ export default async function RequirementsPage() {
   const locale = await getLocale();
   const t = REQUIREMENTS;
   const application = await getApplication();
-  if (!application) redirect("/go");
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application) redirect(withLocalePrefix("/go", await getLocale()));
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const [initialDocs, answers, codes] = await Promise.all([
     getDocuments(application.id),

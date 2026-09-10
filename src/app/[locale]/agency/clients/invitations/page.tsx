@@ -11,6 +11,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { getLocale } from "@/lib/i18n/server";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
 import { resendInvitation, revokeInvitation } from "@/app/[locale]/agency/actions";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -52,7 +53,7 @@ export default async function AgencyInvitationsPage() {
   const locale = await getLocale();
   const { profile, actor, membership, orgId } = await requireAgencyConsole();
 
-  if (membership.role !== "owner") redirect("/agency/clients");
+  if (membership.role !== "owner") redirect(withLocalePrefix("/agency/clients", await getLocale()));
 
   // Staff invitations are `/agency/team`'s, and platform ones are
   // `/ops/staff`'s. Filtering here rather than in the query for the

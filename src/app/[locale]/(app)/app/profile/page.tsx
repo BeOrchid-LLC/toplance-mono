@@ -47,6 +47,7 @@ import { PROFILE } from "@/lib/i18n/profile";
 import { currencyForCountryName } from "@/lib/domain/currencies";
 import { convertFee, formatApproximate } from "@/lib/domain/fx";
 import { getPairRate } from "@/lib/fx/rates";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -123,10 +124,10 @@ export default async function ProfilePage() {
   const t = PROFILE;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/go");
+  if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   // The profile is the intake's output; before it there is nothing to show.
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const [docs, answers, corridor, trips, notes, events, itinerary, sponsorName] =
     await Promise.all([

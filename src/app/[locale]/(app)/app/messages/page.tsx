@@ -13,6 +13,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getLocale } from "@/lib/i18n/server";
 import { MESSAGES } from "@/lib/i18n/messages";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -34,10 +35,10 @@ export default async function MessagesPage() {
   const locale = await getLocale();
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/go");
+  if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   // Pre-intake there is no case to message anyone about yet.
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const thread = await listMessages(application.id);
 

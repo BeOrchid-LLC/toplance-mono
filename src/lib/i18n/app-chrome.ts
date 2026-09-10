@@ -38,6 +38,7 @@ type NotificationKindKey =
   | "visa_expiring"
   | "advisory_changed"
   | "attendance_requested"
+  | "interview_reminder"
   | "support_replied";
 
 /**
@@ -247,6 +248,25 @@ export const NOTIFICATIONS: {
       ar: "طلبت منك وكالتك الحضور",
       tw: "W'adwumakuo abisa sɛ bra",
       zu: "I-ejensi yakho icele ukuthi uze",
+    },
+    /**
+     * Deliberately not the same line as `attendance_requested` above.
+     * That one says an appointment has been made; this one says a
+     * standing appointment is nearly here, and a reader who saw the
+     * first would skip a repeat of it in a list. The date itself is on
+     * the notification's own row.
+     */
+    interview_reminder: {
+      en: "Your interview is coming up",
+      ha: "Hirar ka ta gabato",
+      yo: "Ìfọ̀rọ̀wánilẹ́nuwò rẹ ń bọ̀",
+      ig: "Ajụjụ ọnụ gị na-abịaru nso",
+      fr: "Votre entretien approche",
+      pt: "A sua entrevista está a chegar",
+      sw: "Mahojiano yako yanakaribia",
+      ar: "اقترب موعد مقابلتك",
+      tw: "Wo nkɔmmɔbɔ berɛ abɛn",
+      zu: "Inhlolokhono yakho iyasondela",
     },
     checklist_changed: {
       en: "Your document checklist changed",

@@ -3,26 +3,45 @@ import "server-only";
 /**
  * The exchange-rate provider, behind one function.
  *
- * Open Exchange Rates, on a paid plan — the client asked for a
- * commercial feed rather than a free endpoint, and this is the shape
- * that decision takes in code. Everything vendor-specific is in this
- * file: the URL, the shape of the response and the name of the key.
- * `@/lib/fx/rates` and every screen above it know only "a base and a
- * table of rates", so replacing the vendor is this file and the row in
- * `.env.local.example`, not a change at each call site — the same stance
- * `track()` takes on analytics.
+ * ExchangeRate-API's open endpoint. Everything vendor-specific is in
+ * this file: the URL, the shape of the response and the credit the
+ * licence obliges us to print. `@/lib/fx/rates` and every screen above
+ * it know only "a base and a table of rates", so replacing the vendor is
+ * this file and nothing else — the same stance `track()` takes on
+ * analytics, and the reason this swap cost one file.
  *
- * **Quoted against one base.** Every plan returns "one base → every
- * currency" in a single call, so the whole product's conversions are one
- * request a day and each pair is a cross of two rows. `USD` is the base
- * because it is the one every plan allows; nothing above cares, since
- * `crossRate` works from whatever base is stored.
+ * **Why this one, over the Open Exchange Rates plan the 01/09 review
+ * settled on.** That decision was revisited on 2026-09-10 for the
+ * ordinary reason: staging had shown "We could not convert this into NGN
+ * today" since launch, because the key was never bought and the daily
+ * job had therefore never written a row. The free tier of that vendor
+ * was not an option — its licence is personal and open-source use only,
+ * and this is a commercial product. This endpoint permits commercial
+ * conversion outright, needs no key at all, and quotes 161 currencies
+ * including every one this product deals in.
+ *
+ * The currency coverage is the whole test, and it is why the obvious
+ * free feeds do not qualify: anything sourced from the ECB (Frankfurter
+ * and the rest) carries 31 currencies and no naira, cedi, shilling or
+ * dirham — which is to say it can convert a fee for every traveller
+ * except the ones this product was built for.
+ *
+ * **Quoted against one base.** One call returns "one base → every
+ * currency", so the whole product's conversions are one request a day
+ * and each pair is a cross of two rows. `crossRate` works from whatever
+ * base is stored, so nothing above cares that it is USD.
  */
 
-const ENDPOINT = "https://openexchangerates.org/api/latest.json";
+const ENDPOINT = "https://open.er-api.com/v6/latest/USD";
 
-/** Named on screen beside the figure, the way a corridor names its source. */
-export const FX_SOURCE = "Open Exchange Rates";
+/**
+ * Stored beside every rate, the way a corridor stores its source name.
+ *
+ * The credit a traveller actually sees is `FX_ATTRIBUTION`, which lives
+ * in its own module rather than here — this file is `server-only`, and a
+ * licence credit has to be renderable from anywhere.
+ */
+export const FX_SOURCE = "Exchange Rate API";
 
 export type LatestRates = {
   base: string;
@@ -33,18 +52,16 @@ export type LatestRates = {
 /**
  * The current rates, or null.
  *
- * Null on a missing key, a refused request, a timeout or a response that
- * does not parse — the same "degrade to silence" stance `visalist.ts`
- * and `travelbuddy.ts` take. A conversion is a courtesy on top of a fee
- * that is already correct in its own currency; it is never worth an
- * error page, and the caller renders nothing when this returns null.
+ * Null on a refused request, a timeout, a response that does not parse
+ * or one the vendor itself marks failed — the same "degrade to silence"
+ * stance `visalist.ts` and `travelbuddy.ts` take. A conversion is a
+ * courtesy on top of a fee that is already correct in its own currency;
+ * it is never worth an error page, and the caller renders nothing when
+ * this returns null.
  */
 export async function fetchLatestRates(): Promise<LatestRates | null> {
-  const appId = process.env.OPEN_EXCHANGE_RATES_APP_ID;
-  if (!appId) return null;
-
   try {
-    const response = await fetch(`${ENDPOINT}?app_id=${appId}`, {
+    const response = await fetch(ENDPOINT, {
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(10_000),
       // This is the job that refreshes the cache; caching the refresh
@@ -57,8 +74,16 @@ export async function fetchLatestRates(): Promise<LatestRates | null> {
     const body: unknown = await response.json();
     if (!body || typeof body !== "object") return null;
 
-    const { base, rates } = body as { base?: unknown; rates?: unknown };
-    if (typeof base !== "string" || !rates || typeof rates !== "object") {
+    const { result, base_code: baseCode, rates } = body as {
+      result?: unknown;
+      base_code?: unknown;
+      rates?: unknown;
+    };
+
+    // This vendor answers 200 with `result: "error"` for a rejected
+    // request, so the status code alone does not say the call worked.
+    if (result !== "success") return null;
+    if (typeof baseCode !== "string" || !rates || typeof rates !== "object") {
       return null;
     }
 
@@ -73,7 +98,7 @@ export async function fetchLatestRates(): Promise<LatestRates | null> {
 
     if (!Object.keys(clean).length) return null;
 
-    return { base: base.toUpperCase(), rates: clean };
+    return { base: baseCode.toUpperCase(), rates: clean };
   } catch {
     return null;
   }

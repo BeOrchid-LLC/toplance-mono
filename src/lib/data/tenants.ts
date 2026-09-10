@@ -129,6 +129,17 @@ const BUCKET: Record<
   submitted: "withReviewer",
   under_review: "withReviewer",
   processing: "withReviewer",
+  /*
+   * Both interview statuses join `processing` on the same argument, and
+   * `interview_scheduled` is the one worth stating: the traveller does
+   * have something to do — attend — so "the traveller's court" is nearly
+   * arguable. It is still wrong here. This bucket answers whether an
+   * agency is sitting on work, and an agency waiting on a consulate
+   * appointment is not; counting it as `inProgress` would report a desk
+   * as busy with a case that has left the building.
+   */
+  interview_scheduled: "withReviewer",
+  awaiting_decision: "withReviewer",
   approved: "approved",
   rejected: "rejected",
 };

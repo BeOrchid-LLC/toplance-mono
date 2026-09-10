@@ -3,7 +3,7 @@ import {
   NATIONALITY_ISO,
   PURPOSE_ISO,
 } from "@/lib/domain/corridors";
-import { INTAKE_QUESTIONS, HISTORY_NOTE } from "@/lib/domain/intake";
+import { INTAKE_QUESTIONS, HISTORY_NOTE, intakeNextStep } from "@/lib/domain/intake";
 import { DEFAULT_LOCALE, LOCALES, type Locale } from "@/lib/i18n/locales";
 
 /**
@@ -25,6 +25,7 @@ export function buildIntakeSystemPrompt({
   locale,
   fullName,
   reopenedKey,
+  hasChecklist = false,
 }: {
   answers: Record<string, string>;
   locale: Locale;
@@ -42,6 +43,17 @@ export function buildIntakeSystemPrompt({
    * "Germany" is a destination correction and not a nationality.
    */
   reopenedKey?: string;
+  /**
+   * Whether this traveller's answers actually built a checklist.
+   *
+   * `completeIntake` finishes three ways and only one of them
+   * materialises documents, so an agent told to send everybody to the
+   * upload screen sends the other two to an empty page — right after
+   * thanking them for finishing. Defaults false: the requirements screen
+   * is the one that explains an absent checklist, so a caller that has
+   * not looked errs towards the screen that can answer for itself.
+   */
+  hasChecklist?: boolean;
 }): string {
   const language =
     LOCALES.find((l) => l.code === locale) ??
@@ -120,7 +132,11 @@ ${
     ? `The traveller has just reopened \`${reopened.key}\` from their answers panel to change it. Their next message answers that topic: record it under \`${reopened.key}\`, whatever the JSON above still says for it. Everything after it is then cleared and asked again — say so briefly.`
     : next
       ? `The next unanswered topic is \`${next.key}\`. Ask about that one now.`
-      : `Every topic is answered. Tell them their checklist is ready and point them to the requirements page at /app/requirements. Do not start the questions again — but if they want to change one of their answers, record the correction as usual.`
+      : `Every topic is answered. Thank them, tell them you have everything you needed to ask, and point them to ${intakeNextStep(hasChecklist).href}${
+          hasChecklist
+            ? " to upload their documents"
+            : " — their answers are saved, and that screen tells them where their route stands"
+        }. Do not start the questions again — but if they want to change one of their answers, record the correction as usual.`
 }
 
 ## Recording an answer
@@ -168,6 +184,7 @@ export function buildVoiceIntakeInstructions(args: {
   answers: Record<string, string>;
   locale: Locale;
   fullName: string;
+  hasChecklist?: boolean;
 }): string {
   return `${buildIntakeSystemPrompt(args)}
 ## You are speaking aloud

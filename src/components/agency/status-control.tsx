@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, FileWarning, Landmark, Search, X } from "lucide-react";
+import { CalendarClock, Check, FileWarning, Hourglass, Landmark, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import { CASE_COMMON, STATUS_CONTROL } from "@/lib/i18n/case-review-actions";
 const ICON: Partial<Record<ApplicationStatus, React.ComponentType<{ className?: string }>>> = {
   under_review: Search,
   processing: Landmark,
+  interview_scheduled: CalendarClock,
+  awaiting_decision: Hourglass,
   additional_documents: FileWarning,
   approved: Check,
   rejected: X,
@@ -36,6 +38,11 @@ const ICON: Partial<Record<ApplicationStatus, React.ComponentType<{ className?: 
  */
 const ACTION_LABEL: Partial<Record<ApplicationStatus, typeof STATUS_CONTROL.markLodged>> = {
   processing: STATUS_CONTROL.markLodged,
+  // Both for the same reason: "Interview scheduled" and "Awaiting
+  // decision" are places the case is, and a button that reads as a fact
+  // asks somebody to click a statement rather than to do something.
+  interview_scheduled: STATUS_CONTROL.markInterviewBooked,
+  awaiting_decision: STATUS_CONTROL.markInterviewHeld,
 };
 
 /**

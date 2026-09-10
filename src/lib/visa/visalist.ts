@@ -256,6 +256,11 @@ export function toEntryRules(entry: VisaRequirement): CorridorRuleSet | null {
     registrationName: declarationName,
     registrationUrl: declarationName ? declarationUrl : null,
     // Not ours to state — see above.
+    // Neither of these sources says anything about interviews — they
+    // answer "do I need a visa", not "how is one decided" — so this is
+    // the field's "nobody has said" value rather than a claim that the
+    // route has no interview. See `requiresInterview` on `RuleSet`.
+    requiresInterview: false,
     processingWeeksMin: null,
     processingWeeksMax: null,
     governmentFeeMinor: null,

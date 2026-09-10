@@ -299,6 +299,28 @@ describe("operationsOf", () => {
     expect(ops.openCases).toBe(2);
   });
 
+  /**
+   * The bug this pins is the one `processing`'s own comment warns about,
+   * one step further along: a status that means "waiting on a mission"
+   * and is left out of `OPEN_STATUSES` makes the desk's open count fall
+   * every time a reviewer does their job. Booking an interview would
+   * have closed the case as far as every tile on the dashboard was
+   * concerned, while the traveller sat waiting for a date.
+   */
+  it("keeps a case open through the interview leg", () => {
+    const ops = operationsOf(
+      [
+        queued({ status: "interview_scheduled" }),
+        queued({ status: "awaiting_decision" }),
+      ],
+      now
+    );
+
+    expect(ops.openCases).toBe(2);
+    expect(ops.decided).toBe(0);
+    expect(ops.approvalRate).toBeNull();
+  });
+
   it("counts an open case with no reviewer as unassigned", () => {
     const ops = operationsOf(
       [

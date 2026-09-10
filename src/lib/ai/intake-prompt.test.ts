@@ -90,7 +90,28 @@ describe("buildIntakeSystemPrompt", () => {
     const text = prompt({ answers });
 
     expect(text).not.toContain("next unanswered topic is");
-    expect(text).toContain("/app/requirements");
+    expect(text).toContain("Thank them");
+  });
+
+  /**
+   * The handoff has to match the button under it. Intake finishes for a
+   * traveller on a corridor we do not serve exactly as it does for one
+   * we do, and only the second has anything to upload — so the agent is
+   * told which of the two it is talking to rather than left to guess,
+   * and `intakeNextStep` gives the completion bar the same answer.
+   */
+  it("sends a finished traveller to the screen that has something on it", () => {
+    const answers = Object.fromEntries(
+      INTAKE_QUESTIONS.map((q) => [q.key, "something"])
+    );
+
+    const withChecklist = prompt({ answers, hasChecklist: true });
+    expect(withChecklist).toContain("/app/documents");
+    expect(withChecklist).not.toContain("/app/requirements");
+
+    const without = prompt({ answers, hasChecklist: false });
+    expect(without).toContain("/app/requirements");
+    expect(without).not.toContain("/app/documents");
   });
 
   it("reads back the answers already recorded", () => {

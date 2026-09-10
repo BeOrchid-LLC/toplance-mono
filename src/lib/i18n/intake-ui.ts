@@ -51,6 +51,8 @@ export const INTAKE_UI: {
   close: L;
   transcript: L;
   seeRequirements: L;
+  /** The other half of `intakeNextStep` — where a built checklist sends them. */
+  uploadDocuments: L;
   ariaAgent: L;
   placeholderListening: L;
   placeholderTypeAnswer: L;
@@ -244,17 +246,25 @@ export const INTAKE_UI: {
     tw: "Wo ho nsɛm awie",
     zu: "Iphrofayela iphelele",
   },
+  /**
+   * True on all three completion paths, which the old wording was not.
+   * It opened "Your checklist is ready", and intake finishes for a
+   * traveller on a corridor we do not serve with no checklist at
+   * all — so the one screen that thanked them for finishing also told
+   * them something that was not so. What is always true is that the
+   * questions are over and the answers are theirs to change.
+   */
   completionBody: {
-    en: "Your checklist is ready. You can change any answer later and it rebuilds.",
-    ha: "Jerin takardunka a shirye yake. Za ka iya canza kowace amsa daga baya kuma zai sake ginawa.",
-    yo: "Àkọsílẹ̀ rẹ ti ṣetán. O lè yí èsì kankan padà nígbà tó bá yá, á sì tún kọ́.",
-    ig: "Ndepụta gị adịla njikere. Ị nwere ike ịgbanwe azịza ọ bụla ma emesịa, ọ ga-emegharị.",
-    fr: "Votre liste est prête. Vous pouvez modifier n'importe quelle réponse plus tard et elle se reconstruit.",
-    pt: "A sua lista está pronta. Pode alterar qualquer resposta mais tarde e ela reconstrói-se.",
-    sw: "Orodha yako iko tayari. Unaweza kubadilisha jibu lolote baadaye na itajengwa upya.",
-    ar: "قائمتك جاهزة. يمكنك تغيير أي إجابة لاحقاً وستُعاد بناؤها.",
-    tw: "Wo krataa nhyehyɛeɛ awie. Wobɛtumi asesa mmuae biara akyiri yi na ɛbɛsan ayɛ foforɔ.",
-    zu: "Uhlu lwakho selulungile. Ungashintsha noma yimuphi impendulo kamuva bese luyakhiwa kabusha.",
+    en: "Thank you — that is everything we needed to ask. You can change any answer later and it rebuilds.",
+    ha: "Na gode — wannan shi ne duk abin da muke buƙatar tambaya. Za ka iya canza kowace amsa daga baya kuma zai sake ginawa.",
+    yo: "O ṣeun — ìyẹn ni gbogbo ohun tí a nílò láti béèrè. O lè yí èsì kankan padà nígbà tó bá yá, á sì tún kọ́.",
+    ig: "Daalụ — nke ahụ bụ ihe niile anyị chọrọ ịjụ. Ị nwere ike ịgbanwe azịza ọ bụla ma emesịa, ọ ga-emegharị.",
+    fr: "Merci — c'est tout ce que nous avions à vous demander. Vous pouvez modifier n'importe quelle réponse plus tard et elle se reconstruit.",
+    pt: "Obrigado — é tudo o que precisávamos de perguntar. Pode alterar qualquer resposta mais tarde e ela reconstrói-se.",
+    sw: "Asante — hayo ndiyo yote tuliyohitaji kuuliza. Unaweza kubadilisha jibu lolote baadaye na itajengwa upya.",
+    ar: "شكراً لك — هذا كل ما احتجنا إلى سؤاله. يمكنك تغيير أي إجابة لاحقاً وستُعاد بناؤها.",
+    tw: "Meda wo ase — ɛno ne deɛ yɛhia sɛ yɛbisa nyinaa. Wobɛtumi asesa mmuae biara akyiri yi na ɛbɛsan ayɛ foforɔ.",
+    zu: "Siyabonga — yilokho konke ebesikudinga ukukubuza. Ungashintsha noma yimuphi impendulo kamuva bese luyakhiwa kabusha.",
   },
   close: {
     en: "Close",
@@ -279,6 +289,18 @@ export const INTAKE_UI: {
     ar: "نص المحادثة",
     tw: "Nkɔmmɔdie krataa",
     zu: "Umbhalo wengxoxo",
+  },
+  uploadDocuments: {
+    en: "Upload my documents",
+    ha: "Loda takarduna",
+    yo: "Gbé àwọn ìwé mi wọlé",
+    ig: "Bulite akwụkwọ m",
+    fr: "Téléverser mes documents",
+    pt: "Carregar os meus documentos",
+    sw: "Pakia nyaraka zangu",
+    ar: "رفع مستنداتي",
+    tw: "Fa me nkrataa gu so",
+    zu: "Layisha amadokhumenti ami",
   },
   seeRequirements: {
     en: "See my requirements",

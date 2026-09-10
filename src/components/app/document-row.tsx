@@ -13,6 +13,7 @@ import { useUploadOutcome } from "@/components/app/upload-outcome";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { DocumentSpecimen } from "@/components/app/document-specimen";
 import { documentGuidance } from "@/lib/domain/document-guidance";
+import { documentVerdict } from "@/lib/domain/status";
 import { specimenFor } from "@/lib/domain/specimens";
 import { ACCEPT } from "@/lib/domain/uploads";
 import { cn } from "@/lib/utils";
@@ -162,7 +163,7 @@ export function DocumentRow({
         <div className="min-w-[280px] flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="t-title">{doc.name}</h3>
-            <DocStateBadge state={doc.state} locale={locale} />
+            <DocStateBadge state={doc.state} locale={locale} verdict={documentVerdict(doc)} />
             <RequirementBadge required={doc.isRequired} />
           </div>
           {rejection ? (

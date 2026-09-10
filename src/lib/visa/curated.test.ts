@@ -42,6 +42,25 @@ describe.skipIf(!process.env.DATABASE_URL)("curatedProvider", async () => {
     expect(ruleSet!.corridorId).not.toBeNull();
   });
 
+  /**
+   * The column is curated and defaults to `false`, so a live corridor
+   * nobody has annotated reports `false` — meaning "nobody has said",
+   * never "no interview". That is why the notice this feeds may only
+   * ever be added and never inverted into a promise, and why this test
+   * asserts the type rather than a particular corridor's answer: the
+   * seeded routes are unannotated today and the assertion would flip
+   * the moment somebody curates one, which is not a regression.
+   */
+  it("reports whether the route ends in an interview", async () => {
+    const ruleSet = await curatedProvider.fetch({
+      nationalityIso: "ng",
+      destinationIso: "gb",
+      purpose: "work",
+    });
+
+    expect(typeof ruleSet!.requiresInterview).toBe("boolean");
+  });
+
   it("carries the requirements in checklist order", async () => {
     const ruleSet = await curatedProvider.fetch({
       nationalityIso: "ng",

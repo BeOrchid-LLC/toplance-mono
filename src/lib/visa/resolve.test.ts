@@ -36,6 +36,7 @@ const ruleSet = (over: Partial<CorridorRuleSet> = {}): CorridorRuleSet => ({
   evisaUrl: null,
   registrationName: null,
   registrationUrl: null,
+  requiresInterview: false,
   processingWeeksMin: 3,
   processingWeeksMax: 8,
   governmentFeeMinor: 71900,

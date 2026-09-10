@@ -52,6 +52,20 @@ export type AdminNavItem = {
 export type AdminNavGroup = {
   /** Omitted for the first group, which needs no heading above the first row. */
   label?: string;
+  /**
+   * Stands this group apart from the one above it without printing a
+   * heading over it.
+   *
+   * The rail's gap between groups is the room a heading sits in. An
+   * unlabelled group used to take that gap anyway and open 24px of
+   * nothing — which is exactly what a reviewer's agency rail was, three
+   * lone rows spaced as though each were a titled section. So an
+   * unlabelled group now runs on from its neighbour, and this is the
+   * opt-out for the case where the separation is itself the point:
+   * `/ops`'s route row is a different job from the operations rows above
+   * it and says so with the gap alone.
+   */
+  separated?: boolean;
   items: AdminNavItem[];
 };
 
@@ -175,8 +189,11 @@ export function opsAdminNav({
     },
     {
       // Unlabelled, so the rail does not print "Routes" as a heading over
-      // a single row that already says it. The `mt-6` `AdminSidebar` puts
-      // above every group but the first is the separation this needs.
+      // a single row that already says it — and `separated` because it
+      // still has to stand apart: curating reference data is not one of
+      // the operations rows above. That flag is what buys the gap now
+      // that an unlabelled group runs on from its neighbour by default.
+      separated: true,
       items: [
         {
           id: "routes",
@@ -221,6 +238,13 @@ export function opsAdminNav({
  * row called Clients is a label for a group of one. Same test the ops
  * rail applies to its route row and this file to Support: a lone entry
  * that already names itself needs no heading above it.
+ *
+ * Which is why a reviewer gets one group and not four. Strip the
+ * director's rows and every remaining section holds exactly one row and
+ * prints no heading — so the rail rendered three lone destinations with
+ * 24px of blank between them, spaced as though each were a titled part
+ * of the console. The sections are the director's; without them there
+ * is nothing to section, and the rows sit together as one list.
  */
 export function agencyAdminNav({
   locale,
@@ -281,13 +305,31 @@ export function agencyAdminNav({
       : []),
   ];
 
+  const support: AdminNavItem = {
+    /* Every rank, unlike the team and billing rows below. A handler
+       whose case was claimed by the wrong colleague is the person with
+       the problem, and making the only channel out a director's row
+       would make a dispute wait on somebody else's calendar. */
+    id: "support",
+    href: "/agency/support",
+    label: OPS_SUPPORT.agencyHeading[locale],
+    icon: "enquiries",
+  };
+
+  // A reviewer's console has no sections — see the note above. One
+  // unlabelled group, so the three rows read as one list rather than as
+  // three headingless sections with the room for a heading still in.
+  if (!isDirector) return [{ items: [dashboard, ...clientRows, support] }];
+
   return [
     { items: [dashboard] },
     {
       // The same word over the section and on the row inside it, exactly
-      // as the team section does it below — and only once there are two
-      // rows to gather.
-      label: clientRows.length > 1 ? AGENCY.navClients[locale] : undefined,
+      // as the team section does it below. Unconditional here: only a
+      // director reaches this branch, and a director always has the
+      // invitations row, so the section always holds the two rows that
+      // earn the heading.
+      label: AGENCY.navClients[locale],
       items: clientRows,
     },
     /* A rule-sets group sat here until 2026-09-09, when the client
@@ -296,43 +338,32 @@ export function agencyAdminNav({
        between two real ones. The screen itself is untouched and still
        reachable at `/agency/rule-sets`; the reasoning, and what to put
        back, is on the matching item in `agency-nav.ts`. */
-    ...(isDirector
-      ? [
-          {
-            label: AGENCY.navTeam[locale],
-            items: [
-              {
-                id: "team",
-                href: "/agency/team",
-                label: AGENCY.navTeam[locale],
-                icon: "team" as const,
-                badge: pendingTeamInvitations,
-              },
-              {
-                id: "billing",
-                href: "/agency/billing",
-                label: BILLING.navBilling[locale],
-                icon: "billing" as const,
-              },
-            ],
-          },
-        ]
-      : []),
     {
-      /* Every rank, unlike the team and billing rows above it. A
-         handler whose case was claimed by the wrong colleague is the
-         person with the problem, and making the only channel out a
-         director's row would make a dispute wait on somebody else's
-         calendar. Unlabelled group, like the ops console's route row:
-         one entry that already names itself. */
+      label: AGENCY.navTeam[locale],
       items: [
         {
-          id: "support",
-          href: "/agency/support",
-          label: OPS_SUPPORT.agencyHeading[locale],
-          icon: "enquiries" as const,
+          id: "team",
+          href: "/agency/team",
+          label: AGENCY.navTeam[locale],
+          icon: "team",
+          badge: pendingTeamInvitations,
+        },
+        {
+          id: "billing",
+          href: "/agency/billing",
+          label: BILLING.navBilling[locale],
+          icon: "billing",
         },
       ],
+    },
+    {
+      /* Unlabelled, like the ops console's route row: one entry that
+         already names itself. `separated` because it follows two titled
+         sections here and would otherwise read as the last row of Team —
+         which is the one thing support is not, being the row every rank
+         can use. */
+      separated: true,
+      items: [support],
     },
   ];
 }

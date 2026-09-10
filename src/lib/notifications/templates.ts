@@ -241,6 +241,55 @@ export function itineraryReadyEmail({ url }: { url: string }): EmailContent {
  * band would tell someone with 31 days left that they have 60 — a claim
  * the body of the very same email then contradicts.
  */
+/**
+ * A reminder that a consulate interview is coming up.
+ *
+ * `when` and `place` are the whole point — an interview is the one step
+ * of a visa application that fails by not turning up, and a reminder
+ * that does not repeat the address is asking somebody to go and find the
+ * original email. `note` is whatever the agency added when they booked
+ * it ("bring the original of your bank statement"), and is included for
+ * the same reason.
+ *
+ * `daysRemaining` is the true count on the day of sending, never the
+ * threshold that fired the reminder — `visaExpiringEmail` above learned
+ * that the hard way, and the payload keeps the two apart so this cannot
+ * repeat it.
+ */
+export function interviewReminderEmail({
+  when,
+  place,
+  note,
+  daysRemaining,
+  url,
+}: {
+  when: string;
+  place: string;
+  note: string | null;
+  daysRemaining: number;
+  url: string;
+}): EmailContent {
+  // Same rule as the expiry notice: "in 1 days" is not a sentence, and
+  // the last two days are the ones that have to read as urgent. There is
+  // no negative case — `dueInterviewReminder` returns null once the day
+  // is behind them.
+  const remaining =
+    daysRemaining <= 0 ? "today" : daysRemaining === 1 ? "tomorrow" : `in ${daysRemaining} days`;
+
+  return {
+    subject: `Your visa interview is ${remaining}`,
+    ...renderEmail({
+      heading: `Your interview is ${remaining}`,
+      paragraphs: [
+        `It is on ${when}, at ${place}.`,
+        ...(note ? [note] : []),
+        "Take your passport and the original of every document on your checklist. Missing an interview usually means starting the application again.",
+      ],
+      cta: { href: url, label: "See your appointment" },
+    }),
+  };
+}
+
 export function visaExpiringEmail({
   visaName,
   expiresOn,

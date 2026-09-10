@@ -4,6 +4,7 @@ import {
   INTAKE_QUESTIONS,
   applyIntakeWrites,
   intakeFrontier,
+  intakeNextStep,
   nextIntakeQuestion,
   orderIntakeWrites,
   resolveChips,
@@ -482,5 +483,35 @@ describe("resolveChips — budget bands follow the country already answered", ()
         }
       }
     }
+  });
+});
+
+/**
+ * Where a finished intake sends the traveller.
+ *
+ * Intake completes down three paths and only one of them builds a
+ * checklist: an answer set that resolves to a corridor materialises the
+ * documents, while a corridor we do not serve yet and a route the engine
+ * cannot resolve both finish with `intake_complete` true and no document
+ * rows at all. Sending that second group to the upload screen thanks
+ * them and then shows them an empty page.
+ *
+ * One function because three surfaces have to agree on the answer — the
+ * completion bar's button, the typed agent's closing line and the spoken
+ * one — and a screen whose button and whose agent disagree is worse than
+ * either being wrong alone.
+ */
+describe("intakeNextStep", () => {
+  it("sends a traveller with a checklist to upload their documents", () => {
+    expect(intakeNextStep(true)).toEqual({ href: "/app/documents", key: "uploadDocuments" });
+  });
+
+  /*
+   * No checklist: the requirements screen is the only one that explains
+   * why, through `corridorGap`. The upload screen would show them the
+   * bare "no checklist yet" panel instead.
+   */
+  it("sends a traveller without one to the screen that explains why", () => {
+    expect(intakeNextStep(false)).toEqual({ href: "/app/requirements", key: "seeRequirements" });
   });
 });

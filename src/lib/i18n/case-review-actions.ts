@@ -189,7 +189,11 @@ export const STATUS_CONTROL: {
   confirmApproval: L;
   confirmRejection: L;
   markLodged: L;
+  markInterviewBooked: L;
+  markInterviewHeld: L;
   exportedNudge: L;
+  interviewBookedNudge: L;
+  interviewHeldNudge: L;
   toastMoved: L;
 } = {
   messagePlaceholder: {
@@ -258,6 +262,40 @@ export const STATUS_CONTROL: {
     zu: "Maka njengokufakiwe",
   },
   /**
+   * The other two verbs, for the same reason `markLodged` is one: both
+   * pills name a place the case is rather than a thing the reviewer
+   * does, and a button reading "Awaiting decision" asks somebody to
+   * click a fact.
+   *
+   * "Interview held" and not "Interview done" — the reviewer is
+   * recording something a consulate did, not finishing a task of their
+   * own, and the difference is the whole meaning of the status.
+   */
+  markInterviewBooked: {
+    en: "Interview booked",
+    ha: "An yi ajiyar hira",
+    yo: "A ti ṣètò ìfọ̀rọ̀wánilẹ́nuwò",
+    ig: "Edebela ajụjụ ọnụ",
+    fr: "Entretien réservé",
+    pt: "Entrevista marcada",
+    sw: "Mahojiano yamewekwa",
+    ar: "تم حجز المقابلة",
+    tw: "Wɔahyɛ nkɔmmɔbɔ berɛ",
+    zu: "Inhlolokhono ibhukhiwe",
+  },
+  markInterviewHeld: {
+    en: "Interview held",
+    ha: "An yi hirar",
+    yo: "A ti ṣe ìfọ̀rọ̀wánilẹ́nuwò",
+    ig: "E meela ajụjụ ọnụ",
+    fr: "Entretien passé",
+    pt: "Entrevista realizada",
+    sw: "Mahojiano yamefanyika",
+    ar: "تمت المقابلة",
+    tw: "Wɔayɛ nkɔmmɔbɔ no",
+    zu: "Inhlolokhono ibanjiwe",
+  },
+  /**
    * Shown on the case screen once the pack has been exported and the
    * case is still `under_review`. `{date}` is the export, formatted in
    * the reader's own locale.
@@ -279,6 +317,41 @@ export const STATUS_CONTROL: {
     ar: "صُدِّرت المستندات في {date}. إذا كان الملف قد ذهب إلى السفارة، فضع علامة على هذه الحالة بأنها قُدِّمت حتى يتوقف المسافر عن انتظارك.",
     tw: "Wɔyii nkrataa no firii mu {date}. Sɛ kotokuo no akɔ ɔmanpanin asoeɛ hɔ a, hyɛ asɛm yi agyiraeɛ sɛ wɔde ama sɛdeɛ ɛbɛyɛ a ɔkwantuni no nnyae wo twɛn.",
     zu: "Amadokhumenti athunyelwe ngo-{date}. Uma iphakethe seliye enxusweni, maka leli cala njengelifakiwe ukuze isihambi siyeke ukukulinda.",
+  },
+  /**
+   * The two interview questions, drawn by `interviewNudge` in
+   * `@/lib/domain/interview`. `{date}` is the appointment, formatted in
+   * the reader's own locale.
+   *
+   * They ask for the same reason `exportedNudge` does, and each names
+   * the cost of not answering rather than the action alone: the first
+   * leaves a traveller reading "With the embassy" with an interview in
+   * their calendar, and the second leaves them told an interview is
+   * coming weeks after they sat it.
+   */
+  interviewBookedNudge: {
+    en: "An interview is written down for {date}. Mark this case as booked, or the traveler's status keeps telling them the embassy is still reading their file.",
+    ha: "An rubuta hira don {date}. Yi wa wannan shari'a alama an yi ajiya, in ba haka ba matsayin matafiyi zai ci gaba da gaya masa ofishin jakadanci na karanta fayil ɗinsa.",
+    yo: "A ti kọ ìfọ̀rọ̀wánilẹ́nuwò sílẹ̀ fún {date}. Sàmì sí ẹjọ́ yìí pé a ti ṣètò rẹ̀, bí bẹ́ẹ̀ kọ́ ipò arìnrìn-àjò yóò máa sọ fún un pé ilé-iṣẹ́ aṣojú ṣì ń ka fáìlì rẹ̀.",
+    ig: "Edeela ajụjụ ọnụ maka {date}. Kaa ikpe a akara na edebere ya, ma ọ bụ ọnọdụ onye njem ga-anọgide na-agwa ya na ụlọ ọrụ nnọchiteanya ka na-agụ faịlụ ya.",
+    fr: "Un entretien est noté pour le {date}. Marquez ce dossier comme réservé, sinon le statut du voyageur continue de lui dire que l'ambassade lit encore son dossier.",
+    pt: "Está marcada uma entrevista para {date}. Marque este processo como reservado, ou o estado do viajante continua a dizer-lhe que a embaixada ainda está a ler o seu processo.",
+    sw: "Mahojiano yameandikwa kwa {date}. Weka kesi hii alama kuwa imewekwa, la sivyo hali ya msafiri itaendelea kumwambia ubalozi bado unasoma jalada lake.",
+    ar: "هناك مقابلة مسجّلة بتاريخ {date}. ضع علامة على هذه الحالة بأنها محجوزة، وإلا ظلّت حالة المسافر تخبره بأن السفارة ما زالت تطالع ملفه.",
+    tw: "Wɔatwerɛ nkɔmmɔbɔ ato hɔ ma {date}. Hyɛ asɛm yi agyiraeɛ sɛ wɔahyɛ berɛ ama, anyɛ saa a akwantufoɔ no tebea bɛkɔ so aka akyerɛ no sɛ ɔmanpanin asoeɛ hɔ da so ara rekenkan ne faele.",
+    zu: "Kubhalwe phansi inhlolokhono ka-{date}. Maka leli cala njengelibhukhiwe, ngaphandle kwalokho isimo sesihambi siyaqhubeka sisitshela ukuthi inxusa lisafunda ifayela laso.",
+  },
+  interviewHeldNudge: {
+    en: "The interview was on {date}. Record what happened, or the traveler goes on being told an interview is coming.",
+    ha: "Hirar ta kasance a {date}. Rubuta abin da ya faru, in ba haka ba za a ci gaba da gaya wa matafiyi cewa ana zuwa hira.",
+    yo: "Ìfọ̀rọ̀wánilẹ́nuwò náà wáyé ní {date}. Kọ ohun tí ó ṣẹlẹ̀ sílẹ̀, bí bẹ́ẹ̀ kọ́ a ó máa sọ fún arìnrìn-àjò pé ìfọ̀rọ̀wánilẹ́nuwò ń bọ̀.",
+    ig: "Ajụjụ ọnụ ahụ mere na {date}. Dee ihe merenụ, ma ọ bụ a ga-anọgide na-agwa onye njem na ajụjụ ọnụ na-abịa.",
+    fr: "L'entretien a eu lieu le {date}. Consignez ce qui s'est passé, sinon on continue d'annoncer au voyageur un entretien à venir.",
+    pt: "A entrevista foi a {date}. Registe o que aconteceu, ou continua a dizer-se ao viajante que a entrevista está para vir.",
+    sw: "Mahojiano yalikuwa {date}. Andika kilichotokea, la sivyo msafiri ataendelea kuambiwa mahojiano yanakuja.",
+    ar: "جرت المقابلة في {date}. سجّل ما حدث، وإلا ظلّ المسافر يُخبَر بأن المقابلة قادمة.",
+    tw: "Nkɔmmɔbɔ no yɛɛ {date}. Twerɛ deɛ ɛsiiɛ, anyɛ saa a wɔbɛkɔ so aka akyerɛ akwantufoɔ no sɛ nkɔmmɔbɔ reba.",
+    zu: "Inhlolokhono ibinge-{date}. Bhala okwenzekile, ngaphandle kwalokho isihambi siyaqhubeka sitshelwa ukuthi inhlolokhono iyeza.",
   },
   /** `{status}` is `STATUS_COPY[to].label` (`@/lib/i18n/status.ts`), localised into the same locale as this sentence. */
   toastMoved: {

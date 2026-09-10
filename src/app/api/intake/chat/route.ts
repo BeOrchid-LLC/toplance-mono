@@ -19,7 +19,7 @@ import {
 } from "@/lib/ai/intake-tool";
 import { requireApplicationAccess, toActionError } from "@/lib/auth/guards";
 import { canWriteIntakeAnswers } from "@/lib/auth/policy";
-import { getIntakeAnswers, getProfile } from "@/lib/data/applications";
+import { getDocuments, getIntakeAnswers, getProfile } from "@/lib/data/applications";
 import { recordIntakeAnswer } from "@/lib/data/intake";
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/locales";
@@ -201,6 +201,11 @@ export async function POST(request: Request) {
 
   const profile = await getProfile();
   const answers = await getIntakeAnswers(applicationId);
+  // Read every turn rather than passed in, for the same reason the
+  // answers are: this is rebuilt from the database each request so the
+  // prompt cannot drift from what is actually stored. It goes true on
+  // the turn the last answer lands, which is the turn the model needs it.
+  const hasChecklist = (await getDocuments(applicationId)).length > 0;
 
   const locale =
     profile && isLocale(profile.locale) ? profile.locale : DEFAULT_LOCALE;
@@ -219,7 +224,7 @@ export async function POST(request: Request) {
 
   const result = streamText({
     model: openai(INTAKE_MODEL),
-    system: buildIntakeSystemPrompt({ answers, locale, fullName, reopenedKey }),
+    system: buildIntakeSystemPrompt({ answers, locale, fullName, reopenedKey, hasChecklist }),
     messages: modelMessages,
     tools,
     // One tool call, then the reply that acknowledges it. Three is the

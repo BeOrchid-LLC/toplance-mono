@@ -74,6 +74,25 @@ export const orgRoleEnum = pgEnum("org_role", ["reviewer", "owner"]);
  * Added after `under_review` in the list because that is where it falls
  * in the case's life, and the enum's own order is what `order by status`
  * would follow if anything ever did.
+ *
+ * `interview_scheduled` and `awaiting_decision` joined on 10 September,
+ * for the same complaint one step further along. The product could
+ * already summon a traveller to a consulate — `attendance_requests`
+ * carries the date, the place and the note, and has since the summons
+ * was built — but nothing that record said reached the status, so a
+ * traveller with an interview on Thursday read "With the embassy" and
+ * the desk's queue could not tell a lodged file from one whose owner was
+ * about to be interviewed.
+ *
+ * They sit between `processing` and `additional_documents` because that
+ * is the order they happen in. The entrances are deliberately narrow —
+ * `interview_scheduled` only from `processing`, `awaiting_decision` only
+ * from `interview_scheduled` — and the reasoning for each is on
+ * `STAFF_TRANSITIONS` in `@/lib/domain/status`, which is where anyone
+ * looking for it will be. The short version of the one that matters:
+ * there is no `processing → awaiting_decision`, because a lodged case
+ * with no interview is already awaiting a decision and `processing` is
+ * its name.
  */
 export const applicationStatus = pgEnum("application_status", [
   "draft",
@@ -81,6 +100,8 @@ export const applicationStatus = pgEnum("application_status", [
   "submitted",
   "under_review",
   "processing",
+  "interview_scheduled",
+  "awaiting_decision",
   "additional_documents",
   "approved",
   "rejected",
@@ -316,6 +337,19 @@ export const notificationKind = pgEnum("notification_kind", [
    * `applicationId` is optional and this is why: a support request
    * belongs to an agency rather than to a case.
    */
+  /**
+   * → traveller: their consulate interview is coming up. Sent at most
+   * twice per appointment (see `INTERVIEW_REMINDER_THRESHOLDS`), never
+   * after the day itself, and the `daysOut` in the payload is which
+   * notice it was — read back the way `visa_expiring` reads its own.
+   *
+   * The payload also carries `scheduledFor`, and that is half the dedupe
+   * key rather than decoration. An interview that is moved is a new
+   * appointment: a traveller who had the seven-day notice for the 14th
+   * and is rebooked to the 30th must get the whole run again for the new
+   * date, which keying on the application alone would silently deny them.
+   */
+  "interview_reminder",
   "support_replied",
   /**
    * → traveller: their visa is approaching the expiry date they gave us.
@@ -817,6 +851,19 @@ export const corridors = pgTable(
     formUrl: text(),
     processingWeeksMin: integer(),
     processingWeeksMax: integer(),
+    /**
+     * Whether this route ends in a consulate interview.
+     *
+     * Curated, like everything else on this table, and defaulted to
+     * `false` — which for the corridors already live means "nobody has
+     * said yet" rather than "no interview". That is the honest default
+     * for a new column on curated rows, and the reason it may only be
+     * used to *add* a warning: a traveller is told an interview is
+     * likely when this is true, and told nothing when it is false. The
+     * checklist must never promise there is no interview on the strength
+     * of a column nobody has filled in.
+     */
+    requiresInterview: boolean().notNull().default(false),
     governmentFeeMinor: bigint({ mode: "number" }),
     governmentFeeCurrency: text().default("NGN"),
     isLive: boolean().notNull().default(true),

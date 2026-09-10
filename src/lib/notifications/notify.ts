@@ -26,6 +26,7 @@ import {
   statusChangedEmail,
   submissionEmail,
   visaExpiringEmail,
+  interviewReminderEmail,
 } from "@/lib/notifications/templates";
 
 /**
@@ -132,6 +133,27 @@ export type NotificationPayload = {
     note: string | null;
     url: string;
   };
+  /**
+   * Two day-counts and a date, on the same discipline as `visa_expiring`
+   * above. `thresholdDays` is which notice this is (7 or 1) and
+   * `scheduledFor` is the appointment it was about — together they are
+   * the dedupe key `travellersDueForInterviewReminder` reads back, and
+   * neither is ever shown to anyone. `daysRemaining` is the true count
+   * on the day of sending, and is the only one the copy may use.
+   *
+   * `scheduledFor` being half the key is what makes a rescheduled
+   * interview re-arm the whole run: a new date has no notices against it.
+   * `when` is the same instant already formatted for the email.
+   */
+  interview_reminder: {
+    when: string;
+    place: string;
+    note: string | null;
+    scheduledFor: string;
+    thresholdDays: number;
+    daysRemaining: number;
+    url: string;
+  };
 };
 
 function templateFor<K extends keyof NotificationPayload>(
@@ -166,6 +188,10 @@ function templateFor<K extends keyof NotificationPayload>(
     case "attendance_requested":
       return attendanceRequestedEmail(
         payload as NotificationPayload["attendance_requested"]
+      );
+    case "interview_reminder":
+      return interviewReminderEmail(
+        payload as NotificationPayload["interview_reminder"]
       );
     case "checklist_changed":
       return checklistChangedEmail(

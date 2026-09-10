@@ -52,6 +52,15 @@ const COUNTED =
  * Pure and separate from the page so the three branches can be asserted
  * directly: this is the copy that was wrong, so this is the copy that
  * needs a test.
+ *
+ * The headings say what is being built rather than what is missing —
+ * asked for on 10 September, after "We do not cover X yet" read as a
+ * door closing on somebody who had just spent ten questions answering
+ * us. What did not change is what is claimed: no date, no "soon", and
+ * nothing about writing to them, because nothing in this product
+ * schedules a corridor or watches for one going live. `COUNTED` is the
+ * whole of the promise and it is a true one. There is a test below that
+ * holds the line on the email.
  */
 export function corridorGap({
   nationality,
@@ -101,7 +110,7 @@ export function corridorGap({
   if (purposes.length) {
     return {
       kind: "gap",
-      heading: `We cover ${where}, but not for ${why} yet`,
+      heading: `We cover ${where}, and we are building it for ${why}`,
       lead:
         `Your answers are saved. With your passport, ${where} is live for ` +
         `${or(purposes.map((p) => p.toLowerCase()))} — changing that one ` +
@@ -113,7 +122,7 @@ export function corridorGap({
   if (destinations.length) {
     return {
       kind: "gap",
-      heading: `We do not cover ${where} for ${why} yet`,
+      heading: `We are building ${where} for ${why}`,
       lead:
         `Your answers are saved. With your passport we are live for ` +
         `${or(destinations)}. ${COUNTED}`,
@@ -124,8 +133,8 @@ export function corridorGap({
   return {
     kind: "gap",
     heading: nationality
-      ? `We do not cover ${nationality} passports yet`
-      : "We do not cover that route yet",
+      ? `We are building routes for ${nationality} passports`
+      : "We are building that route",
     lead:
       `Your answers are saved. Every route we have built so far starts ` +
       `from ${or(liveNationalities())}, so changing destination will not ` +

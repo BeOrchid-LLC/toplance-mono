@@ -302,24 +302,64 @@ Turning on the settings this app depends on is per instance and does not carry
 over from development — email verification code as a first factor, single
 session mode, and staff TOTP (see **Staff two-factor authentication** above).
 
-### Scheduling the post-arrival digest
+### Scheduled tasks
 
-`/api/cron/companion` is not self-triggering. It needs a scheduler calling it
-with the `CRON_SECRET` as a bearer token:
+**Five routes under `/api/cron/` are not self-triggering.** None of them runs
+because the app is deployed; each runs because something outside the app calls
+it on a timer. In Coolify (which is what the `Dockerfile` builds for) that is a
+**Scheduled Task** on the application, one per row below, each doing:
 
 ```
-curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/cron/companion
+curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://<host>/api/cron/<route>
 ```
 
-In Coolify (which is what the `Dockerfile` builds for) that is a **Scheduled
-Task** on the application, set to run daily — `0 8 * * *`.
+`CRON_SECRET` is the only guard on all five — they are reachable with no Clerk
+session, because a scheduler is a server calling a server. Left unset, every one
+of them answers **503** and does nothing, which is why it is the first thing to
+check when a job appears not to work.
 
-Daily is deliberate, and it is not the cadence. Each traveller chooses daily,
-weekly or monthly on their profile, and `travellersDueForDigest` sends only to
-those whose last digest is older than their own interval. So the schedule is a
-poll: running it more often than the shortest frequency costs a query and sends
-nothing extra, and a missed run makes the next digest late rather than lost.
-Without `CRON_SECRET` set the route answers 503 and sends nothing at all.
+| Route | Coolify schedule | What stops if it never runs |
+| --- | --- | --- |
+| `companion` | `0 8 * * *` | No post-arrival digests are sent |
+| `notification-emails` | `*/5 * * * *` | Buffered flag and message emails are never sent — the in-app notification still appears |
+| `visa-warm` | `0 * * * *` | VisaList is fetched on a traveller's page view instead of ahead of it |
+| `fx-rates` | `0 3 * * *` | Government fees show in the mission's currency only: "We could not convert this into NGN today" |
+| `corridor-recheck` | `0 4 * * *` | Corridors are never re-read against their sources, so drift is never raised for approval |
+
+**Every one of these schedules is a poll, not a cadence**, and that is the
+property worth having in the one part of this system that lives outside the
+repository — external config is the part that cannot be tested, so nothing here
+is allowed to depend on getting it exactly right.
+
+- **`companion`** — each traveller chooses daily, weekly or monthly on their
+  profile, and `travellersDueForDigest` sends only to those whose last digest is
+  older than their own interval. Running it more often costs a query and sends
+  nothing extra; a missed run makes the next digest late rather than lost.
+- **`notification-emails`** — the fifteen-minute buffer lives in
+  `EMAIL_BUFFER_MS`, and the route sends only what is already due, so the
+  schedule cannot shorten it, only add latency. Every five minutes puts real
+  delivery between fifteen and twenty. Hourly is also correct, just slower.
+- **`visa-warm`** — one passport per invocation, deliberately: the Basic tier
+  meters one request an hour and the endpoint is keyed on the passport, so the
+  whole product's tourism rules are five calls. Slower simply warms more slowly.
+  Without `VISALIST_API_KEY` it reports `no VISALIST_API_KEY set` and is a no-op.
+- **`fx-rates`** — the upstream data refreshes once every 24h, so the hour barely
+  matters; `RATE_STALE_AFTER_HOURS` is 48 so one missed run degrades nothing.
+  Needs no vendor key of its own (see `src/lib/fx/provider.ts`). A successful run
+  answers `{"updated":166,"base":"USD"}`; `{"updated":null,...}` means the
+  provider did not answer, and is deliberately a 200 so a scheduler does not
+  retry something that is not broken.
+- **`corridor-recheck`** — nothing breaks at a slower cadence. A corridor simply
+  ages, and the traveller's screen already says how long it has been since
+  anyone checked.
+
+**A job that has never been scheduled looks exactly like a job with nothing to
+do.** All five answer 200 and degrade quietly, which is right for a request and
+unhelpful for an operator: there is no screen that distinguishes "ran and found
+nothing" from "was never wired up". `fx-rates` went unscheduled from launch until
+2026-09-10 for exactly this reason, and it took client feedback to find. When
+standing up an environment, run each row by hand once and read what comes back —
+that is currently the only way to know they are live.
 
 ---
 

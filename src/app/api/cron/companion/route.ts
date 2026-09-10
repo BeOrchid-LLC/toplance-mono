@@ -1,6 +1,7 @@
 import { getCorridorFor } from "@/lib/data/applications";
 import { countDueForDigest, travellersDueForDigest } from "@/lib/data/digest";
 import { travellersDueForExpiryReminder } from "@/lib/data/expiry";
+import { travellersDueForInterviewReminder } from "@/lib/data/interviews";
 import {
   approvedTravellersForAdvisories,
   markAdvisoriesAlerted,
@@ -120,6 +121,7 @@ export async function GET(request: Request) {
   }
 
   const expiry = await remindExpiringVisas();
+  const interviews = await remindUpcomingInterviews();
   const advisories = await alertAdvisoryChanges();
 
   // `eligible` is the true population size (a cheap COUNT, no per-row
@@ -132,6 +134,7 @@ export async function GET(request: Request) {
     eligible: eligibleCount,
     skipped: Math.max(0, eligibleCount - checked),
     expiryReminded: expiry.reminded,
+    interviewsReminded: interviews.reminded,
     advisoriesChecked: advisories.checked,
     advisoriesAlerted: advisories.alerted,
   });
@@ -285,6 +288,79 @@ async function remindExpiringVisas(): Promise<{ reminded: number }> {
     } catch (error) {
       console.error(
         `[cron/companion] could not send the expiry reminder for application ${row.applicationId}`,
+        error
+      );
+    }
+  }
+
+  return { reminded };
+}
+
+/**
+ * The fourth sweep: remind travellers whose consulate interview is
+ * coming up.
+ *
+ * Rides this route for the same reason the expiry warning does — a new
+ * route means new deploy-time scheduler config, which is the one part of
+ * this system no test can reach.
+ *
+ * The date is formatted here rather than in the template, in the
+ * traveller's own `en-GB`/UTC terms, exactly as `attendanceRequestedEmail`
+ * receives an already-formatted `when`. Formatting an instant locally on
+ * a server in another zone is how an appointment moves a day in
+ * somebody's inbox.
+ */
+async function remindUpcomingInterviews(): Promise<{ reminded: number }> {
+  let reminded = 0;
+
+  const due = await travellersDueForInterviewReminder(CRON_BATCH_LIMIT);
+
+  for (const row of due) {
+    try {
+      const ok = await notify(
+        row.travelerId,
+        "interview_reminder",
+        {
+          when: row.scheduledFor.toLocaleString("en-GB", {
+            timeZone: "UTC",
+            weekday: "long",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          place: row.place,
+          note: row.note,
+          // The dedupe key, and the reason a rescheduled interview
+          // re-arms the run. Never shown to anyone.
+          scheduledFor: row.scheduledFor.toISOString(),
+          thresholdDays: row.thresholdDays,
+          daysRemaining: row.daysRemaining,
+          url: appUrl("/app"),
+        },
+        row.applicationId
+      );
+
+      // Gated on what `notify` reports, for the reason spelled out in
+      // `remindExpiringVisas`: the notification row is what stops the
+      // next run repeating this notice, so an event claiming a reminder
+      // the traveller never got is a lie the dedupe makes permanent.
+      if (!ok) continue;
+
+      await track(
+        "toplance.interview_reminder_sent",
+        {
+          applicationId: row.applicationId,
+          thresholdDays: row.thresholdDays,
+          daysRemaining: row.daysRemaining,
+        },
+        null
+      );
+      reminded += 1;
+    } catch (error) {
+      console.error(
+        `[cron/companion] could not send the interview reminder for application ${row.applicationId}`,
         error
       );
     }

@@ -21,6 +21,7 @@ import {
   HISTORY_NOTE,
   applyIntakeWrites,
   intakeFrontier,
+  intakeNextStep,
   nextIntakeQuestion,
   orderIntakeWrites,
   truncateAnswersAt,
@@ -56,11 +57,19 @@ export function IntakeAgent({
   initialAnswers,
   fullName,
   aiEnabled,
+  hasChecklist,
 }: {
   applicationId: string;
   initialAnswers: Answers;
   fullName: string;
   aiEnabled: boolean;
+  /**
+   * Whether this traveller's answers built a checklist, which decides
+   * where the completion bar sends them. Read on the server and refreshed
+   * by the `router.refresh()` the `done` effect already fires, so it is
+   * true by the time the bar that reads it appears.
+   */
+  hasChecklist: boolean;
 }) {
   const [degraded, setDegraded] = React.useState(false);
   // Where the scripted flow picks up if the model drops out mid-way, so
@@ -73,6 +82,7 @@ export function IntakeAgent({
         applicationId={applicationId}
         initialAnswers={handover}
         fullName={fullName}
+        hasChecklist={hasChecklist}
       />
     );
   }
@@ -82,6 +92,7 @@ export function IntakeAgent({
       applicationId={applicationId}
       initialAnswers={initialAnswers}
       fullName={fullName}
+      hasChecklist={hasChecklist}
       onDegrade={(answers) => {
         setHandover(answers);
         setDegraded(true);
@@ -100,11 +111,13 @@ function LiveIntake({
   applicationId,
   initialAnswers,
   fullName,
+  hasChecklist,
   onDegrade,
 }: {
   applicationId: string;
   initialAnswers: Answers;
   fullName: string;
+  hasChecklist: boolean;
   onDegrade: (answers: Answers) => void;
 }) {
   const [draft, setDraft] = React.useState("");
@@ -266,6 +279,7 @@ function LiveIntake({
     answers,
     fullName,
     locale,
+    hasChecklist,
     // No live transcript bubbles, deliberately: the rail filling in is
     // the feedback, and it is the only feedback that is also the record.
     // Speech the traveller can already hear does not need repeating on
@@ -346,6 +360,7 @@ function LiveIntake({
       answers={answers}
       frontier={frontier}
       done={done}
+      hasChecklist={hasChecklist}
       // The document is the only place an answer is reopened here: the
       // log is the model's own words, and there is no reliable mapping
       // from a bubble back to a topic.
@@ -470,10 +485,12 @@ function ScriptedIntake({
   applicationId,
   initialAnswers,
   fullName,
+  hasChecklist,
 }: {
   applicationId: string;
   initialAnswers: Answers;
   fullName: string;
+  hasChecklist: boolean;
 }) {
   const [answers, setAnswers] = React.useState<Answers>(initialAnswers);
   const [typing, setTyping] = React.useState(false);
@@ -596,6 +613,7 @@ function ScriptedIntake({
       answers={answers}
       frontier={frontier}
       done={done}
+      hasChecklist={hasChecklist}
       onEdit={editFrom}
       reopenedKey={reopened?.key}
       reopenedPrevious={reopened?.previous}
@@ -698,6 +716,7 @@ function AgentLayout({
   answers,
   frontier,
   done,
+  hasChecklist,
   say,
   log,
   composer,
@@ -710,6 +729,8 @@ function AgentLayout({
   /** Index of the question being asked — see `intakeFrontier`. */
   frontier: number;
   done: boolean;
+  /** Passed straight to `CompletionBar`; see `intakeNextStep`. */
+  hasChecklist: boolean;
   /** What the agent is saying right now. The dock's line, not the log. */
   say: React.ReactNode;
   /** The full transcript, shown when the traveller opens it. */
@@ -778,6 +799,7 @@ function AgentLayout({
           left says what happened and what to do next. */}
       {done ? (
         <CompletionBar
+          hasChecklist={hasChecklist}
           transcriptOpen={transcript}
           onToggleTranscript={() => setTranscript((open) => !open)}
         />
@@ -901,13 +923,18 @@ function Thinking() {
  * way back to what was said.
  */
 function CompletionBar({
+  hasChecklist,
   transcriptOpen,
   onToggleTranscript,
 }: {
+  hasChecklist: boolean;
   transcriptOpen: boolean;
   onToggleTranscript: () => void;
 }) {
   const t = useT();
+  // The same answer the agent's closing line is built from, so the
+  // button and the sentence above it cannot point two different ways.
+  const next = intakeNextStep(hasChecklist);
 
   return (
     // The same card the dock was, so the final answer changes what the
@@ -951,8 +978,8 @@ function CompletionBar({
             {transcriptOpen ? t(INTAKE_UI.close) : t(INTAKE_UI.transcript)}
           </button>
           <Button asChild className="w-full sm:w-auto">
-            <Link href="/app/requirements">
-              {t(INTAKE_UI.seeRequirements)} <ArrowRight />
+            <Link href={next.href}>
+              {t(INTAKE_UI[next.key])} <ArrowRight />
             </Link>
           </Button>
         </div>

@@ -44,6 +44,17 @@ const MARKER_BY_STATUS: Record<ApplicationStatus, string> = {
   submitted: "submitted",
   under_review: "submitted",
   processing: "submitted",
+  /*
+   * The interview leg sits on `submitted` rather than earning a stage of
+   * its own. `FUNNEL_STAGES` is shared with the dashboard funnel, so a
+   * sixth stage here would be a sixth bar there and a new denominator
+   * under every conversion the console prints — a large change to buy a
+   * tick on a diagram. It is also true as it stands: the pack has gone
+   * and nobody has decided. Where and when to be reaches the traveller
+   * through their attendance notice, which can say it properly.
+   */
+  interview_scheduled: "submitted",
+  awaiting_decision: "submitted",
   approved: "decided",
   rejected: "decided",
 };

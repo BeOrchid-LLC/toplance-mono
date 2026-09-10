@@ -11,6 +11,7 @@ import { documentUrl } from "@/app/[locale]/(app)/actions";
 import { reviewDocument } from "@/app/[locale]/agency/actions";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { FLAG_REASON_KEYS } from "@/lib/domain/flag-reason";
+import { documentVerdict } from "@/lib/domain/status";
 import type { FlagReason } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/components/locale-provider";
@@ -110,7 +111,7 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
         <div className="min-w-[280px] flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="t-title">{doc.name}</h3>
-            <DocStateBadge state={doc.state} locale={locale} />
+            <DocStateBadge state={doc.state} locale={locale} verdict={documentVerdict(doc)} />
             {!doc.isRequired && (
               <span className="special-caps">{t(REVIEW_ROW.optional)}</span>
             )}

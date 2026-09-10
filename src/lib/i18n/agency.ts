@@ -129,6 +129,9 @@ export const AGENCY: {
   pipelineEmpty: L;
   pipelineOfPrevious: L;
   pipelineStalled: L;
+  staleInterviewsTitle: L;
+  staleInterviewsLead: L;
+  staleInterviewsWhen: L;
   funnel: {
     started: L;
     intake: L;
@@ -1290,6 +1293,52 @@ export const AGENCY: {
     ar: "{n} لم يُرسل قط",
     tw: "{n} amfa ankɔ da",
     zu: "{n} abakaze bathumele",
+  },
+  /**
+   * The forgotten-interview panel. `{n}` is how many, `{date}` is one
+   * case's appointment in the reader's own locale.
+   *
+   * The lead names the consequence rather than the action, because the
+   * action is obvious once the consequence is known: nobody needs
+   * telling to update a case, and everybody needs telling that a
+   * traveller is still reading "your interview is coming" a fortnight
+   * after they sat it.
+   */
+  staleInterviewsTitle: {
+    en: "Interviews with no outcome",
+    ha: "Hirarraki babu sakamako",
+    yo: "Àwọn ìfọ̀rọ̀wánilẹ́nuwò tí kò ní ìyọrísí",
+    ig: "Ajụjụ ọnụ na-enweghị nsonaazụ",
+    fr: "Entretiens sans issue enregistrée",
+    pt: "Entrevistas sem resultado",
+    sw: "Mahojiano yasiyo na matokeo",
+    ar: "مقابلات بلا نتيجة مسجّلة",
+    tw: "Nkɔmmɔbɔ a nsunsuansoɔ nni ho",
+    zu: "Izinhlolokhono ezingenamphumela",
+  },
+  staleInterviewsLead: {
+    en: "{n} of your cases were interviewed and have not moved since. Until somebody records what happened, each of these travelers is still being told an interview is coming.",
+    ha: "An yi hira da {n} daga cikin shari'o'inka kuma ba su motsa ba tun daga lokacin. Har sai wani ya rubuta abin da ya faru, ana ci gaba da gaya wa kowanne daga cikin waɗannan matafiya cewa ana zuwa hira.",
+    yo: "A ti fọ̀rọ̀ wá {n} nínú àwọn ẹjọ́ rẹ lẹ́nu wò, wọn kò sì tí ì yí padà láti ìgbà náà. Títí ẹnìkan yóò fi kọ ohun tí ó ṣẹlẹ̀ sílẹ̀, a ń sọ fún ọ̀kọ̀ọ̀kan àwọn arìnrìn-àjò yìí pé ìfọ̀rọ̀wánilẹ́nuwò ń bọ̀.",
+    ig: "A gbara {n} n'ime ikpe gị ajụjụ ọnụ, ha akwagharịbeghịkwa kemgbe ahụ. Ruo mgbe mmadụ dere ihe merenụ, a ka na-agwa onye njem ọ bụla n'ime ndị a na ajụjụ ọnụ na-abịa.",
+    fr: "{n} de vos dossiers ont eu leur entretien et n'ont pas bougé depuis. Tant que personne ne consigne ce qui s'est passé, on continue d'annoncer à chacun de ces voyageurs un entretien à venir.",
+    pt: "{n} dos seus processos tiveram entrevista e não se moveram desde então. Até alguém registar o que aconteceu, continua a dizer-se a cada um destes viajantes que a entrevista está para vir.",
+    sw: "Kesi {n} kati ya zako zilifanyiwa mahojiano na hazijasogea tangu wakati huo. Hadi mtu aandike kilichotokea, kila mmoja wa wasafiri hawa bado anaambiwa mahojiano yanakuja.",
+    ar: "أُجريت المقابلة لـ {n} من حالاتك ولم تتحرك منذ ذلك الحين. وإلى أن يسجّل أحد ما حدث، يظل كل واحد من هؤلاء المسافرين يُخبَر بأن المقابلة قادمة.",
+    tw: "Wɔne w'anwensɛm no mu {n} bɔɔ nkɔmmɔ na ɛfiri saa berɛ no wɔnkɔɔ baabiara. Kɔsi sɛ obi bɛtwerɛ deɛ ɛsiiɛ no, wɔda so ara ka kyerɛ akwantufoɔ yi mu biara sɛ nkɔmmɔbɔ reba.",
+    zu: "Amacala akho angu-{n} enziwe inhlolokhono futhi awakashintshi kusukela lapho. Kuze kube yilapho othile ebhala okwenzekile, ngamunye kulezi zihambi usatshelwa ukuthi inhlolokhono iyeza.",
+  },
+  staleInterviewsWhen: {
+    en: "Interviewed {date}",
+    ha: "An yi hira {date}",
+    yo: "A fọ̀rọ̀ wá lẹ́nu wò ní {date}",
+    ig: "A gbara ya ajụjụ ọnụ na {date}",
+    fr: "Entretien le {date}",
+    pt: "Entrevistado a {date}",
+    sw: "Alihojiwa {date}",
+    ar: "أُجريت المقابلة في {date}",
+    tw: "Wɔne no bɔɔ nkɔmmɔ {date}",
+    zu: "Uhlolokhonwe ngo-{date}",
   },
   funnel: {
     started: {

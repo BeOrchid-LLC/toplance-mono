@@ -5,6 +5,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { applications, intakeAnswers } from "@/lib/db/schema";
 import { isNationalityServed } from "@/lib/domain/corridors";
+import { RESUBMITTABLE } from "@/lib/domain/status";
 import { normaliseAnswer } from "@/lib/domain/normalise-answer";
 import { adoptRuleSet } from "@/lib/data/checklist";
 import {
@@ -15,6 +16,40 @@ import {
 import { INTAKE_QUESTIONS } from "@/lib/domain/intake";
 import { resolveRuleSet } from "@/lib/visa";
 import { track } from "@/lib/analytics/track";
+
+/**
+ * Every write the intake makes to the application row, narrowed to a
+ * case that is still the traveller's to change.
+ *
+ * `buildChecklist` used to end with an unconditional
+ * `status: "collecting_documents"`, so re-answering a single question
+ * un-submitted a case that was already with the desk. Silently, too: a
+ * status written here inserts no `status_events` row, so it appeared in
+ * no timeline and told nobody. What the traveller saw was their Submit
+ * button back on the next render, on a checklist that was still fully
+ * verified.
+ *
+ * The incomplete branch did the same damage by the other column.
+ * Re-answering anything but the last question deletes the answers after
+ * it, which makes `intake_complete` false — and `/app/documents`
+ * redirects on that, so a submitted case bounced its own owner to the
+ * intake agent.
+ *
+ * A `where` clause rather than a read-then-write, so it cannot lose a
+ * race with `submitApplicationTx`: that transaction takes `for update`
+ * on this row, and a check made before it committed would be acted on
+ * after.
+ *
+ * `RESUBMITTABLE` is the list submission itself gates on, so the two
+ * cannot drift — a status a traveller may submit from is exactly a
+ * status their answers may still rebuild.
+ */
+function stillTheTravellers(applicationId: string) {
+  return and(
+    eq(applications.id, applicationId),
+    inArray(applications.status, [...RESUBMITTABLE])
+  );
+}
 
 export type IntakeAnswerResult =
   | {
@@ -118,7 +153,7 @@ export async function recordIntakeAnswer(
     await db
       .update(applications)
       .set({ intakeComplete: false })
-      .where(eq(applications.id, applicationId));
+      .where(stillTheTravellers(applicationId));
   }
 
   return unservedNationality ? { complete, unservedNationality } : { complete };
@@ -180,7 +215,7 @@ async function buildChecklist(
         corridorId: null,
         status: "collecting_documents",
       })
-      .where(eq(applications.id, applicationId));
+      .where(stillTheTravellers(applicationId));
     return;
   }
 
@@ -211,7 +246,7 @@ async function buildChecklist(
         corridorId: null,
         status: "collecting_documents",
       })
-      .where(eq(applications.id, applicationId));
+      .where(stillTheTravellers(applicationId));
     return;
   }
 
@@ -234,5 +269,5 @@ async function buildChecklist(
   await db
     .update(applications)
     .set({ intakeComplete: true, status: "collecting_documents" })
-    .where(eq(applications.id, applicationId));
+    .where(stillTheTravellers(applicationId));
 }

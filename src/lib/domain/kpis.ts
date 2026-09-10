@@ -269,12 +269,20 @@ export type OperationsKpis = {
  * mission decides, but the case is open, the traveller is waiting, and
  * dropping it would make the desk's open count fall every time a
  * reviewer did their job and lodged one.
+ *
+ * The interview leg counts for the same reason, and more plainly still:
+ * a case with an interview booked is the most open a case ever gets —
+ * there is a date, somebody has to keep it, and it can still go either
+ * way. Leaving either status out would have closed the case on every
+ * tile here the moment the appointment was made.
  */
 export const OPEN_STATUSES: readonly ApplicationStatus[] = [
   "collecting_documents",
   "submitted",
   "under_review",
   "processing",
+  "interview_scheduled",
+  "awaiting_decision",
   "additional_documents",
 ];
 

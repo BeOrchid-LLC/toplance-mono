@@ -75,7 +75,16 @@ export function AdminSidebar({
         className="min-h-0 flex-1 overflow-y-auto px-3 py-4 group-data-[collapsed]/rail:px-2"
       >
         {groups.map((group, gi) => (
-          <div key={group.label ?? `group-${gi}`} className={cn(gi > 0 && "mt-6")}>
+          /* The gap between groups is the room a heading sits in, so a
+             group with no heading does not take it — it runs on from the
+             one above. Three unlabelled groups used to render as three
+             rows with 24px of nothing between them, spaced as though
+             each were a titled section. `separated` is the opt-out, for
+             a group whose whole point is standing apart unnamed. */
+          <div
+            key={group.label ?? `group-${gi}`}
+            className={cn(gi > 0 && (group.label || group.separated) && "mt-6")}
+          >
             {group.label && (
               <p className="special-caps px-2.5 pb-2 text-ink-3 group-data-[collapsed]/rail:hidden">
                 {group.label}

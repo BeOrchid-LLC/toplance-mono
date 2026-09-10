@@ -54,6 +54,7 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
     sourceUrl: null,
     formName: null,
     formUrl: null,
+    requiresInterview: false,
     processingWeeksMin: null,
     processingWeeksMax: null,
     governmentFeeMinor: null,

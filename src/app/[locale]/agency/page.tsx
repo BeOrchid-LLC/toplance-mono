@@ -432,6 +432,47 @@ async function AgencyOverview({
           is not managing the account, and their desk below is the screen
           they came for.
         */}
+        {/* Work, not a chart — so above the pair below rather than
+            beside them, and drawn only when there is any. A case
+            interviewed and left alone is the one thing on this screen
+            that is actively telling a traveller something untrue, and
+            it stays invisible everywhere else: the funnel counts it
+            under Sent, which is true and is not the point. */}
+        {summary && summary.charts.staleInterviews.length > 0 && (
+          <Panel>
+            <PanelHeader label={AGENCY.staleInterviewsTitle[locale]} />
+            <PanelBody>
+              <p className="t-muted mb-4 max-w-[74ch]">
+                {fill(AGENCY.staleInterviewsLead[locale], {
+                  n: summary.charts.staleInterviews.length,
+                })}
+              </p>
+              <ul className="divide-y divide-border">
+                {summary.charts.staleInterviews.map((c) => (
+                  <li key={c.applicationId}>
+                    <Link
+                      href={`/agency/clients/${c.applicationId}`}
+                      className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
+                    >
+                      <span className="font-medium">
+                        {c.travelerName}{" "}
+                        <span className="t-muted num">{c.caseRef}</span>
+                      </span>
+                      <span className="t-muted">
+                        {fill(AGENCY.staleInterviewsWhen[locale], {
+                          date: new Intl.DateTimeFormat(locale, {
+                            dateStyle: "medium",
+                          }).format(c.scheduledFor),
+                        })}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </PanelBody>
+          </Panel>
+        )}
+
         {summary && (
           <div className="grid gap-6 lg:grid-cols-2">
             <Panel>

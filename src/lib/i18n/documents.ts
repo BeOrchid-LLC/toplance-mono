@@ -46,6 +46,23 @@ export const DOCUMENTS: {
    */
   everythingCollectedHeading: L;
   everythingCollectedBody: L;
+  /**
+   * Sent, and confirmed on the screen rather than in a toast.
+   *
+   * `submissionNotice` picks this out of the statuses that can no longer
+   * submit, because it is the only one the traveller reached by their
+   * own click. Written in the present tense about what has actually
+   * landed — the same discipline as `everythingCollectedBody` above, and
+   * for the same reason: this is the screen's last word to somebody who
+   * has just finished, and a sentence that overstates where their file
+   * has got to is the one they will remember.
+   */
+  submittedHeading: L;
+  submittedBody: L;
+  /** `SubmitButton`, which is a client component and reads these through `useT`. */
+  submitCta: L;
+  submitPending: L;
+  submitToast: L;
   noChecklistYet: L;
 } = {
   title: {
@@ -203,6 +220,66 @@ export const DOCUMENTS: {
     ar: "جميع مستنداتك الـ {count} لدى المراجعين. سنخبرك هنا وبالبريد الإلكتروني عند التحقق من كل واحد — لا شيء عليك فعله الآن.",
     tw: "Wo nkrataa {count} nyinaa wɔ wo nhwehwɛmufoɔ nsam. Yɛbɛka akyerɛ wo wɔ ha ne email so bere a wɔhwɛ biara mu — biribiara nni hɔ a ɛsɛ sɛ woyɛ seesei.",
     zu: "Onke amadokhumenti akho angu-{count} asebahloli. Sizokwazisa lapha nangeposi-e njengoba ngalinye lihlolwa — akukho okumele ukwenze njengamanje.",
+  },
+  submittedHeading: {
+    en: "Your application is with the review team",
+    ha: "Aikace-aikacenka yana hannun ƙungiyar bitar",
+    yo: "Ìbéèrè rẹ wà lọ́wọ́ ẹgbẹ́ àyẹ̀wò",
+    ig: "Ngwa gị nọ n'aka ndị otu nyocha",
+    fr: "Votre demande est entre les mains de l'équipe d'examen",
+    pt: "O seu pedido está com a equipa de análise",
+    sw: "Ombi lako liko na timu ya ukaguzi",
+    ar: "طلبك الآن لدى فريق المراجعة",
+    tw: "Wo abisadeɛ no wɔ nhwehwɛmufoɔ kuo no nsam",
+    zu: "Isicelo sakho sikuthimba lokubuyekeza",
+  },
+  submittedBody: {
+    en: "Your reviewers have been notified and are checking your documents now. We will tell you here and by email as soon as there is news — there is nothing for you to do right now.",
+    ha: "An sanar da masu bitarka kuma suna duba takardunka yanzu. Za mu gaya maka a nan da kuma ta imel da zarar an sami labari — babu abin da za ka yi a yanzu.",
+    yo: "A ti sọ fún àwọn olùyẹ̀wò rẹ, wọ́n sì ń yẹ àwọn ìwé rẹ wò báyìí. A ó sọ fún ọ níbí àti nípasẹ̀ ìméèlì bí ìròyìn bá dé — kò sí ohun tí o ní láti ṣe nísinsìnyí.",
+    ig: "A gwaala ndị na-enyocha gị, ha na-elele akwụkwọ gị ugbu a. Anyị ga-agwa gị ebe a na site na email ozugbo akụkọ dị — o nweghị ihe ị ga-eme ugbu a.",
+    fr: "Vos examinateurs ont été prévenus et vérifient vos documents. Nous vous informerons ici et par e-mail dès qu'il y aura du nouveau — vous n'avez rien à faire pour le moment.",
+    pt: "Os seus analistas foram notificados e estão a verificar os seus documentos. Iremos informá-lo aqui e por e-mail assim que houver novidades — não há nada a fazer neste momento.",
+    sw: "Wakaguzi wako wamearifiwa na wanakagua nyaraka zako sasa. Tutakuambia hapa na kwa barua pepe mara tu kutakapokuwa na habari — hakuna unachohitaji kufanya sasa.",
+    ar: "تم إخطار المراجعين وهم يفحصون مستنداتك الآن. سنخبرك هنا وبالبريد الإلكتروني فور توفر أي جديد — لا يوجد ما عليك فعله الآن.",
+    tw: "Yɛabɔ wo nhwehwɛmufoɔ amanneɛ na wɔrehwɛ wo nkrataa no seesei. Yɛbɛka akyerɛ wo wɔ ha ne email so bere a asɛm bi ba — biribiara nni hɔ a ɛsɛ sɛ woyɛ seesei.",
+    zu: "Ababuyekezi bakho baziswe futhi bahlola amadokhumenti akho manje. Sizokutshela lapha nange-imeyili lapho kunezindaba — akukho okudingeka ukwenze manje.",
+  },
+  submitCta: {
+    en: "Submit my application",
+    ha: "Aika aikace-aikacena",
+    yo: "Fi ìbéèrè mi ránṣẹ́",
+    ig: "Zipu ngwa m",
+    fr: "Envoyer ma demande",
+    pt: "Enviar o meu pedido",
+    sw: "Wasilisha ombi langu",
+    ar: "إرسال طلبي",
+    tw: "Fa me abisadeɛ kɔ",
+    zu: "Thumela isicelo sami",
+  },
+  submitPending: {
+    en: "Submitting…",
+    ha: "Ana aikawa…",
+    yo: "Ń fi ránṣẹ́…",
+    ig: "Na-ezipu…",
+    fr: "Envoi en cours…",
+    pt: "A enviar…",
+    sw: "Inawasilisha…",
+    ar: "جارٍ الإرسال…",
+    tw: "Ɛrekɔ…",
+    zu: "Iyathumela…",
+  },
+  submitToast: {
+    en: "Submitted — the review team has been notified",
+    ha: "An aika — an sanar da ƙungiyar bitar",
+    yo: "A ti fi ránṣẹ́ — a ti sọ fún ẹgbẹ́ àyẹ̀wò",
+    ig: "Ezigala — a gwaala ndị otu nyocha",
+    fr: "Envoyé — l'équipe d'examen a été prévenue",
+    pt: "Enviado — a equipa de análise foi notificada",
+    sw: "Imewasilishwa — timu ya ukaguzi imearifiwa",
+    ar: "أُرسل — تم إخطار فريق المراجعة",
+    tw: "Wɔde akɔ — yɛabɔ nhwehwɛmufoɔ kuo no amanneɛ",
+    zu: "Kuthunyelwe — ithimba lokubuyekeza lisaziwe",
   },
   noChecklistYet: {
     en: "No checklist yet. Finish the intake conversation and it appears here.",

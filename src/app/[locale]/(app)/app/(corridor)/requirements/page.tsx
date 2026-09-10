@@ -5,6 +5,7 @@ import { ArrowRight, Check, ExternalLink, Flag } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FxCredit } from "@/components/app/fx-credit";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelHeader } from "@/components/shared/panel";
 import { DocStateBadge } from "@/components/shared/status-badge";
@@ -589,6 +590,20 @@ export default async function RequirementsPage() {
             {ruleSet.attribution && (
               <p className="t-muted basis-full">{ruleSet.attribution}</p>
             )}
+            {/*
+              And the same for the rates behind the fee's second line,
+              on the same terms and for the same reason: the endpoint is
+              free for commercial conversion only while this is shown.
+              Conditional on the conversion, not on the corridor — with
+              no fresh rate the sheet prints the mission's own figure
+              alone, and crediting a rates provider for that would credit
+              it for a number it had nothing to do with.
+            */}
+            {approximateFee && (
+              <p className="t-muted basis-full">
+                <FxCredit className="hover:underline" />
+              </p>
+            )}
 
             {/*
               Where a figure came from, when it did not come from the
@@ -629,6 +644,17 @@ export default async function RequirementsPage() {
             ))}
           </div>
         </Panel>
+
+        {/* Added when the corridor says so, and never inverted. The
+            column defaults to false on every route nobody has
+            annotated, so its silence means "nobody has said" — a
+            "no interview needed" drawn from it would be most confident
+            on exactly the corridors least looked at. Placed under the
+            facts sheet rather than in it: the sheet is three figures
+            with sources, and this is a sentence about what is coming. */}
+        {ruleSet.requiresInterview && (
+          <p className="t-muted mt-6 max-w-[74ch]">{t.interviewLikely[locale]}</p>
+        )}
 
         {ruleSet.formUrl && (
           <Panel className="mt-6">

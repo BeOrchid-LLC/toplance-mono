@@ -17,8 +17,8 @@ import { FX_SOURCE, fetchLatestRates } from "../src/lib/fx/provider.ts";
  * a path alias does not resolve under `--experimental-strip-types`.
  * Every other script here talks to Postgres through `pg` for the same
  * reason. The *provider* is imported rather than re-implemented, so the
- * request, the app id and the source name have one definition — only the
- * insert is restated, and it is pinned by `fx_rates_pair` either way.
+ * request and the source name have one definition — only the insert is
+ * restated, and it is pinned by `fx_rates_pair` either way.
  *
  * `--conditions=react-server` is what lets that import work at all:
  * `provider.ts` opens with `server-only`, which resolves to a module
@@ -33,11 +33,9 @@ if (!url) {
 const latest = await fetchLatestRates();
 
 if (!latest) {
-  console.error(
-    process.env.OPEN_EXCHANGE_RATES_APP_ID
-      ? "The rates provider did not answer. Nothing was written."
-      : "No OPEN_EXCHANGE_RATES_APP_ID is set, so there is nothing to fetch."
-  );
+  // One message where there were two. The provider needs no key, so
+  // "nothing is configured" has stopped being a way this can fail.
+  console.error("The rates provider did not answer. Nothing was written.");
   process.exit(1);
 }
 

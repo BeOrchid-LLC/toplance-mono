@@ -21,13 +21,35 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
  */
 const BUCKET = process.env.S3_BUCKET ?? "documents";
 
+/**
+ * One client for the process, not one per call.
+ *
+ * An `S3Client` owns the connection pool, so a fresh one per call is a
+ * fresh TCP connection and TLS handshake per object — nothing is ever
+ * kept alive to reuse. That is invisible against MinIO on loopback and
+ * is not invisible against R2 across the internet, which is where the
+ * archive route pays it: it fetches every document on a checklist in
+ * turn, and until the first of them is in hand there is no byte of ZIP
+ * to write, no response headers, and so nothing at all on the
+ * traveller's screen.
+ *
+ * Built on first use rather than at import, so the missing-endpoint
+ * error below still belongs to the caller that needed the bucket rather
+ * than to whatever module happened to be imported first. The `S3_*`
+ * variables are read once for the life of the process, which is what
+ * they already were — nothing rewrites them at runtime.
+ */
+let shared: S3Client | null = null;
+
 function client() {
+  if (shared) return shared;
+
   const endpoint = process.env.S3_ENDPOINT;
   if (!endpoint) {
     throw new Error("S3_ENDPOINT is not set. See .env.local.example.");
   }
 
-  return new S3Client({
+  shared = new S3Client({
     endpoint,
     // R2 wants "auto" and rejects AWS region names; MinIO ignores this.
     region: process.env.S3_REGION ?? "us-east-1",
@@ -38,6 +60,8 @@ function client() {
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "",
     },
   });
+
+  return shared;
 }
 
 export async function putDocument(path: string, file: File): Promise<void> {

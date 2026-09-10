@@ -84,6 +84,7 @@ export const curatedProvider: VisaDataProvider = {
       evisaUrl: null,
       registrationName: null,
       registrationUrl: null,
+      requiresInterview: corridor.requiresInterview,
       processingWeeksMin: corridor.processingWeeksMin,
       processingWeeksMax: corridor.processingWeeksMax,
       governmentFeeMinor: corridor.governmentFeeMinor,

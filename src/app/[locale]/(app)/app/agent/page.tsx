@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { IntakeAgent } from "@/components/app/intake-agent";
 import {
+  getDocuments,
   getIntakeAnswers,
   getApplication,
   getProfile,
@@ -30,6 +31,13 @@ export default async function AgentPage() {
   if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   const answers = await getIntakeAnswers(application.id);
+  // Where the completion bar sends them. Two of the three ways intake can
+  // finish build no checklist at all, and the upload screen has nothing
+  // to show those travellers — see `intakeNextStep`. Re-read on the
+  // `router.refresh()` the agent fires the moment it finishes; that
+  // refresh races the bar's first paint, which the prop's own comment
+  // in `intake-agent.tsx` explains.
+  const hasChecklist = (await getDocuments(application.id)).length > 0;
 
   // Decided on the server: the key is server-only, and the client needs
   // to know which of the two agents it is rendering before it renders.
@@ -39,6 +47,7 @@ export default async function AgentPage() {
       initialAnswers={answers}
       fullName={profile.fullName}
       aiEnabled={aiEnabled()}
+      hasChecklist={hasChecklist}
     />
   );
 }

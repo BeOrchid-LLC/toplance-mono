@@ -17,7 +17,7 @@ import { inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("agencyDashboard", async () => {
   const { db } = await import("@/lib/db/client");
-  const { applications, organisations, profiles } = await import(
+  const { applications, attendanceRequests, organisations, profiles } = await import(
     "@/lib/db/schema"
   );
   const { agencyDashboard } = await import("@/lib/data/agency-dashboard");
@@ -27,8 +27,8 @@ describe.skipIf(!process.env.DATABASE_URL)("agencyDashboard", async () => {
 
   // Two agencies, because the claim under test is separation. A suite
   // with one agency passes just as happily against a missing `where`.
-  const OURS = ["test_agdash_a", "test_agdash_b", "test_agdash_c"];
-  const THEIRS = ["test_agdash_x", "test_agdash_y"];
+  const OURS = ["test_agdash_a", "test_agdash_b", "test_agdash_c", "test_agdash_d"];
+  const THEIRS = ["test_agdash_x", "test_agdash_y", "test_agdash_z"];
 
   let orgId = "";
   let otherOrgId = "";
@@ -79,6 +79,16 @@ describe.skipIf(!process.env.DATABASE_URL)("agencyDashboard", async () => {
       },
       // Has not started.
       { travelerId: OURS[2], orgId, status: "draft" as const },
+      // Interviewed a fortnight ago and never moved on — the case the
+      // chase exists to surface.
+      {
+        travelerId: OURS[3],
+        orgId,
+        status: "interview_scheduled" as const,
+        intakeComplete: true,
+        checklistCompleteAt: new Date("2026-08-01T00:00:00Z"),
+        submittedAt: new Date("2026-08-02T00:00:00Z"),
+      },
 
       // The other agency's, and never ours. Both submitted, so a
       // leak would be visible at more than one stage of the funnel.
@@ -99,7 +109,30 @@ describe.skipIf(!process.env.DATABASE_URL)("agencyDashboard", async () => {
         checklistCompleteAt: new Date("2026-08-04T00:00:00Z"),
         submittedAt: new Date("2026-08-05T00:00:00Z"),
       },
+      // The other agency's forgotten interview. A missing `where` on
+      // the chase would put this director's name on their screen.
+      {
+        travelerId: THEIRS[2],
+        orgId: otherOrgId,
+        status: "interview_scheduled" as const,
+        intakeComplete: true,
+        submittedAt: new Date("2026-08-02T00:00:00Z"),
+      },
     ]);
+
+    for (const travelerId of [OURS[3], THEIRS[2]]) {
+      const [app] = await db
+        .select({ id: applications.id })
+        .from(applications)
+        .where(inArray(applications.travelerId, [travelerId]));
+      await db.insert(attendanceRequests).values({
+        applicationId: app.id,
+        kind: "interview",
+        scheduledFor: new Date("2026-08-06T09:00:00Z"),
+        place: "British High Commission, Lagos",
+        note: null,
+      });
+    }
   });
 
   afterEach(async () => {
@@ -112,12 +145,14 @@ describe.skipIf(!process.env.DATABASE_URL)("agencyDashboard", async () => {
   it("counts only this agency's cases at every stage of the funnel", async () => {
     const data = await read();
 
-    // Three of ours, not the five in the table. Exact, so a dropped
+    // Four of ours, not the seven in the table. Exact, so a dropped
     // `where` fails here rather than passing quietly at a bigger number.
-    expect(stage(data, "started")).toBe(3);
-    expect(stage(data, "intake")).toBe(2);
-    expect(stage(data, "collected")).toBe(2);
-    expect(stage(data, "submitted")).toBe(1);
+    expect(stage(data, "started")).toBe(4);
+    expect(stage(data, "intake")).toBe(3);
+    expect(stage(data, "collected")).toBe(3);
+    // The interviewed case counts as Sent and not as Decided, which is
+    // the whole of what the funnel has to say about the interview leg.
+    expect(stage(data, "submitted")).toBe(2);
     expect(stage(data, "decided")).toBe(1);
   });
 
@@ -163,5 +198,39 @@ describe.skipIf(!process.env.DATABASE_URL)("agencyDashboard", async () => {
     expect(data.stalled).toBe(0);
     expect(data.invoices).toEqual([]);
     expect(data.funnel.every((s) => s.count === 0)).toBe(true);
+  });
+
+  /**
+   * The blind spot the interview leg was added to close: a case sits in
+   * `interview_scheduled` until a person moves it, so one interviewed in
+   * March goes on telling its traveller an interview is coming. Nothing
+   * else on this dashboard would show it — the funnel counts it under
+   * Sent, which is true and is not the point.
+   */
+  describe("forgotten interviews", () => {
+    it("names a case whose interview has been and gone", async () => {
+      const data = await read();
+      expect(data.staleInterviews.map((c) => c.travelerId)).toEqual([OURS[3]]);
+    });
+
+    it("carries enough to act on without opening the case", async () => {
+      const [row] = (await read()).staleInterviews;
+      expect(row.caseRef).toMatch(/^TPL-/);
+      expect(row.travelerName).toBe("Agency Dashboard Test");
+      expect(row.scheduledFor).toEqual(new Date("2026-08-06T09:00:00Z"));
+    });
+
+    it("is another agency's business, never this one's", async () => {
+      // The claim this whole suite exists for, applied to the newest
+      // read on the page.
+      const data = await read();
+      expect(data.staleInterviews.map((c) => c.travelerId)).not.toContain(THEIRS[2]);
+    });
+
+    it("says nothing before the interview has happened", async () => {
+      // Read as though today were the day before the appointment.
+      const data = await read(new Date("2026-08-05T12:00:00Z"));
+      expect(data.staleInterviews).toEqual([]);
+    });
   });
 });

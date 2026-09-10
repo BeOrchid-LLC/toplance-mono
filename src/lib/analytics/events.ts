@@ -110,6 +110,14 @@ export const EVENT_NAMES = [
   /** One of the three pre-expiry warnings actually went out. */
   "toplance.expiry_reminder_sent",
 
+  /**
+   * One reminder about an upcoming consulate interview went out. Twice
+   * per appointment at most, and re-armed by a reschedule — so a rising
+   * count against a flat interview count is agencies moving dates, which
+   * is worth knowing and is not visible anywhere else.
+   */
+  "toplance.interview_reminder_sent",
+
   /** A government advisory for a destination moved, and we told the traveller. */
   "toplance.advisory_change_notified",
 

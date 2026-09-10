@@ -141,6 +141,18 @@ export type CorridorRuleSet = {
   evisaUrl: string | null;
   registrationName: string | null;
   registrationUrl: string | null;
+  /**
+   * Whether this route ends in a consulate interview.
+   *
+   * **`false` means "nobody has said", never "no interview."** The
+   * curated column defaults to false on every corridor already live,
+   * and no other provider reports it at all, so the only sound use is
+   * to *add* a warning when it is true. A screen that reads `false` as
+   * a promise of no interview would be inventing the one fact this
+   * field is least entitled to assert — and would do it most confidently
+   * on exactly the corridors nobody has looked at.
+   */
+  requiresInterview: boolean;
   processingWeeksMin: number | null;
   processingWeeksMax: number | null;
   governmentFeeMinor: number | null;

@@ -176,9 +176,12 @@ describe("agencyAdminNav", () => {
 
   /**
    * A heading over one row called Clients would be a label for a group
-   * of one. The same test the route row and Support already pass.
+   * of one. The same test the route row and Support already pass — and
+   * once every section a reviewer can see fails it, there are no
+   * sections left, so the rows travel together in one group rather than
+   * as three headingless ones spaced as if they were titled.
    */
-  it("drops the clients heading for a reviewer, who has no invitations row", () => {
+  it("gives a reviewer one unlabelled group, not a section per row", () => {
     const groups = agencyAdminNav({
       locale: "en",
       hasOrganisation: true,
@@ -186,8 +189,32 @@ describe("agencyAdminNav", () => {
       isDirector: false,
     });
 
-    expect(groups[1].items.map((i) => i.id)).toEqual(["clients"]);
-    expect(groups[1].label).toBeUndefined();
+    expect(groups).toHaveLength(1);
+    expect(groups[0].label).toBeUndefined();
+    expect(groups[0].items.map((i) => i.id)).toEqual([
+      "overview",
+      "clients",
+      "support",
+    ]);
+  });
+
+  /**
+   * The gap the rail puts above a group is the room its heading sits in,
+   * so an unlabelled group only takes it by asking. Support asks: it
+   * follows two titled sections and would otherwise read as the last row
+   * of Team, which is the one thing it is not.
+   */
+  it("sets support apart from the team section without titling it", () => {
+    const support = agencyAdminNav({
+      locale: "en",
+      hasOrganisation: true,
+      ...counts,
+      isDirector: true,
+    }).at(-1);
+
+    expect(support?.items.map((i) => i.id)).toEqual(["support"]);
+    expect(support?.label).toBeUndefined();
+    expect(support?.separated).toBe(true);
   });
 
   /**

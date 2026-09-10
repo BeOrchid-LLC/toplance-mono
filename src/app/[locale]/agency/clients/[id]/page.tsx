@@ -8,6 +8,8 @@ import { CaseHandlerControl } from "@/components/agency/case-handler-control";
 import { ReviewRow } from "@/components/agency/review-row";
 import { AskAboutCase } from "@/components/agency/ask-about-case";
 import { InviteAttendance } from "@/components/agency/invite-attendance";
+import { latestAttendanceRequest } from "@/lib/data/attendance";
+import { interviewNudge } from "@/lib/domain/interview";
 import { StatusControl } from "@/components/agency/status-control";
 import { MessageComposer } from "@/components/app/message-composer";
 import {
@@ -26,6 +28,7 @@ import {
 import { DownloadDocuments } from "@/components/shared/download-documents";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { documentVerdict } from "@/lib/domain/status";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { completionOf, getDocuments } from "@/lib/data/applications";
 import { listMessages, markThreadRead } from "@/lib/data/messages";
@@ -106,7 +109,7 @@ export default async function AgencyCasePage({
   const { console: agency, case: row } = await requireAgencyCase(id);
   const { profile, actor, membership, orgId } = agency;
 
-  const [docs, thread, colleagues] = await Promise.all([
+  const [docs, thread, colleagues, latestAttendance] = await Promise.all([
     getDocuments(row.id),
     listMessages(row.id),
     // The *case's* agency, not the console's. They are the same for
@@ -115,7 +118,25 @@ export default async function AgencyCasePage({
     // other — in which case this list named the wrong agency's people
     // and `assignCaseTo` refused every pick as "not at this agency".
     row.orgId ? listOrgMembers(row.orgId) : Promise.resolve([]),
+    // The appointment the interview nudge below asks about. The latest
+    // row rather than every one, for the reason `latestAttendanceRequest`
+    // gives: if an agency has moved an interview twice, the third is the
+    // one anybody should be asked about.
+    latestAttendanceRequest(row.id),
   ]);
+
+  /**
+   * Which interview question this case is owed, if any — see
+   * `interviewNudge`. Only an interview counts: a biometrics slot moves
+   * no status, so a prompt about one would ask for a button that does
+   * not exist.
+   */
+  const nudge = interviewNudge({
+    status: row.status,
+    scheduledFor:
+      latestAttendance?.kind === "interview" ? latestAttendance.scheduledFor : null,
+    now: new Date(),
+  });
 
   const completion = completionOf(docs);
   const destination = countryFromIso2(row.destinationIso);
@@ -152,9 +173,19 @@ export default async function AgencyCasePage({
    * only set with anything in it, because nothing folds away the whole
    * screen.
    */
-  const awaiting = docs.filter((d) => d.state === "checking" || d.state === "uploaded");
-  const reviewed = docs.filter((d) => d.state === "verified" || d.state === "flagged");
+  /*
+   * Bucketed on who gave the verdict, not on `state`. An AI flag is
+   * written through the same columns a human flag is, so filtering
+   * `state === "flagged"` into "already reviewed" filed a document
+   * nobody had opened under the heading that says somebody has — and
+   * folded it shut, because that set folds. It is work, so it belongs in
+   * the set that holds work.
+   */
   const missing = docs.filter((d) => d.state === "not_started" || d.state === "failed");
+  const reviewed = docs.filter((d) => documentVerdict(d) === "human");
+  const awaiting = docs.filter(
+    (d) => !missing.includes(d) && !reviewed.includes(d)
+  );
 
   const sets = [
     {
@@ -344,6 +375,24 @@ export default async function AgencyCasePage({
                     "{date}",
                     new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
                       row.documentsExportedAt
+                    )
+                  )}
+                </p>
+              )}
+              {/* The interview questions, drawn by the same argument as
+                  the export nudge above: this product saw an
+                  appointment written down and saw a date go by, and
+                  neither is a fact about what a consulate did. The
+                  answer arrives through the buttons below, carrying a
+                  message the traveller can read. */}
+              {nudge && latestAttendance?.scheduledFor && (
+                <p className="t-muted mb-4 max-w-[62ch]">
+                  {(nudge === "book"
+                    ? STATUS_CONTROL.interviewBookedNudge
+                    : STATUS_CONTROL.interviewHeldNudge)[locale].replace(
+                    "{date}",
+                    new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
+                      latestAttendance.scheduledFor
                     )
                   )}
                 </p>

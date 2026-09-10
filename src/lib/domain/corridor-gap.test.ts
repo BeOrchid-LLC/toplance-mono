@@ -106,8 +106,8 @@ describe("corridorGap", () => {
     });
 
     it("does not claim we fail to cover the country", () => {
-      expect(gap.heading).not.toBe("We do not cover Canada yet");
-      expect(gap.heading).toBe("We cover Canada, but not for tourism yet");
+      expect(gap.heading).not.toBe("We are building Canada");
+      expect(gap.heading).toBe("We cover Canada, and we are building it for tourism");
     });
 
     it("names the purpose that is live instead", () => {
@@ -127,7 +127,7 @@ describe("corridorGap", () => {
     });
 
     it("names the corridor, not the country alone", () => {
-      expect(gap.heading).toBe(`We do not cover ${UNSERVED} for work yet`);
+      expect(gap.heading).toBe(`We are building ${UNSERVED} for work`);
     });
 
     it("lists where this passport can actually go", () => {
@@ -149,7 +149,7 @@ describe("corridorGap", () => {
     });
 
     it("blames the passport rather than the destination", () => {
-      expect(gap.heading).toBe("We do not cover Ghana passports yet");
+      expect(gap.heading).toBe("We are building routes for Ghana passports");
     });
 
     it("says plainly that changing destination will not help", () => {
@@ -173,7 +173,7 @@ describe("corridorGap", () => {
         purpose: "Work",
       });
 
-      expect(gap.heading).toBe("We do not cover Senegal passports yet");
+      expect(gap.heading).toBe("We are building routes for Senegal passports");
     });
 
     it("does not render an empty slot when an answer is blank", () => {
@@ -183,7 +183,7 @@ describe("corridorGap", () => {
         purpose: "",
       });
 
-      expect(gap.heading).toBe("We do not cover that route yet");
+      expect(gap.heading).toBe("We are building that route");
       expect(`${gap.heading}${gap.lead}`).not.toMatch(/\s{2,}|undefined|null/);
     });
   });

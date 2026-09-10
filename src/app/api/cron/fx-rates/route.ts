@@ -5,7 +5,7 @@ import { refreshFxRates } from "@/lib/fx/rates";
  *
  * One provider call fills the whole table — every currency is quoted
  * against a single base, so a traveller's page view crosses two cached
- * rows and never spends a metered request. Same shape and the same
+ * rows and never spends a request. Same shape and the same
  * `CRON_SECRET` guard as the companion digest and the VisaList warmer.
  *
  * *Scheduling is deploy-time config*, like the other jobs here: the repo
@@ -32,16 +32,19 @@ export async function GET(request: Request) {
   const result = await refreshFxRates();
 
   if (!result) {
-    // Not an error, and deliberately a 200: with no key configured, or
-    // with the provider refusing, the product shows fees in the
-    // mission's own currency and nothing else — which is the state it
-    // was in before any of this existed. A scheduler that retries on a
-    // 5xx would be retrying something that is not broken.
+    // Not an error, and deliberately a 200: with the provider refusing,
+    // the product shows fees in the mission's own currency and nothing
+    // else — which is the state it was in before any of this existed. A
+    // scheduler that retries on a 5xx would be retrying something that
+    // is not broken.
+    //
+    // One reason now, where there were two. The provider needs no key,
+    // so "nobody configured it" has stopped being a way this can fail —
+    // which was the whole point of the swap: an unset secret is a
+    // failure that reports nothing and lasts until a client notices.
     return Response.json({
       updated: null,
-      reason: process.env.OPEN_EXCHANGE_RATES_APP_ID
-        ? "the rates provider did not answer"
-        : "no OPEN_EXCHANGE_RATES_APP_ID set",
+      reason: "the rates provider did not answer",
     });
   }
 

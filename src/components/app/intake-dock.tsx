@@ -306,7 +306,7 @@ function VoiceButton({
         {voice.status === "connecting" ? (
           <Loader2 className="size-5 animate-spin" />
         ) : live ? (
-          <Square className="size-5" />
+          <Square className="size-4 fill-current stroke-none" />
         ) : (
           <Mic className="size-5" />
         )}

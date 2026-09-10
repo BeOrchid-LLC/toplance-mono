@@ -146,6 +146,12 @@ describe("routeOf", () => {
       application({ intakeComplete: true, status: "collecting_documents" }),
       application({ intakeComplete: true, submittedAt: at(2), status: "submitted" }),
       application({ intakeComplete: true, submittedAt: at(2), status: "processing" }),
+      application({
+        intakeComplete: true,
+        submittedAt: at(2),
+        status: "interview_scheduled",
+      }),
+      application({ intakeComplete: true, submittedAt: at(2), status: "awaiting_decision" }),
       application({ intakeComplete: true, submittedAt: at(2), status: "additional_documents" }),
       application({ intakeComplete: true, decidedAt: at(3), status: "approved" }),
       application({ intakeComplete: true, decidedAt: at(3), status: "rejected" }),
@@ -156,6 +162,26 @@ describe("routeOf", () => {
         (s) => s.state === "current" || s.state === "returned"
       );
       expect(marked).toHaveLength(1);
+    }
+  });
+
+  /**
+   * The interview leg is not a stage of its own on this diagram.
+   *
+   * `FUNNEL_STAGES` is shared with the dashboard funnel, so a sixth
+   * stage here would be a sixth bar there and a changed denominator on
+   * every conversion the console prints. Both interview statuses
+   * therefore sit on `submitted`, which is true of them: the pack has
+   * gone and nobody has decided. The date and place of the interview
+   * reach the traveller through their attendance notice, which is the
+   * surface that can actually say where to be and when.
+   */
+  it("keeps an interviewed case on Sent, not on Decided", () => {
+    for (const status of ["interview_scheduled", "awaiting_decision"] as const) {
+      const facts = application({ intakeComplete: true, submittedAt: at(2), status });
+
+      expect(stateOf(facts, "submitted")).toBe("current");
+      expect(stateOf(facts, "decided")).toBe("ahead");
     }
   });
 

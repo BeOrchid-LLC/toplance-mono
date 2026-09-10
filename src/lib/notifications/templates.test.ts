@@ -13,6 +13,7 @@ import {
   advisoryChangedEmail,
   demoRequestEmail,
   visaExpiringEmail,
+  interviewReminderEmail,
 } from "@/lib/notifications/templates";
 
 const SCRIPT = "<script>alert(1)</script>";
@@ -84,6 +85,58 @@ describe("email templates", () => {
     expect(email.html).toContain("14 Mar 2027");
     expect(email.html).toContain("https://x.test/app/companion");
     expect(email.text).toContain("https://x.test/app/companion");
+  });
+
+  it("interviewReminderEmail names the day and the place, and links on", () => {
+    const email = interviewReminderEmail({
+      when: "14 Mar 2027",
+      place: "British High Commission, Lagos",
+      note: null,
+      daysRemaining: 7,
+      url: "https://x.test/app",
+    });
+    expect(email.subject).not.toHaveLength(0);
+    expect(email.html).toContain("14 Mar 2027");
+    expect(email.html).toContain("British High Commission, Lagos");
+    expect(email.text).toContain("https://x.test/app");
+  });
+
+  it("interviewReminderEmail escapes the address and the agency's note", () => {
+    // Both are free text typed into `InviteAttendance` by a handler —
+    // the same class of input as `message` and `reason` above.
+    const email = interviewReminderEmail({
+      when: "14 Mar 2027",
+      place: SCRIPT,
+      note: SCRIPT,
+      daysRemaining: 1,
+      url: "https://x.test/app",
+    });
+    expect(email.html).not.toContain("<script>");
+  });
+
+  it("interviewReminderEmail names the last two days rather than counting them", () => {
+    // "in 1 days" is not a sentence, and the day of the interview is
+    // the one message that must read as urgent. Same rule
+    // `visaExpiringEmail` follows, and for the same reason.
+    expect(
+      interviewReminderEmail({
+        when: "14 Mar 2027",
+        place: "Lagos",
+        note: null,
+        daysRemaining: 1,
+        url: "https://x.test/app",
+      }).subject
+    ).toContain("tomorrow");
+
+    expect(
+      interviewReminderEmail({
+        when: "14 Mar 2027",
+        place: "Lagos",
+        note: null,
+        daysRemaining: 0,
+        url: "https://x.test/app",
+      }).subject
+    ).toContain("today");
   });
 
   it("visaExpiringEmail counts the days that are actually left, not the threshold", () => {

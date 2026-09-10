@@ -39,6 +39,7 @@ export const REQUIREMENTS: {
   allApplySub: L;
   fromDateReceivedSub: L;
   paidToMissionSub: L;
+  interviewLikely: L;
   perEntrySub: L;
   refusalReasonSub: L;
   approxAtRatesDate: L;
@@ -258,6 +259,29 @@ export const REQUIREMENTS: {
     ar: "تُدفَع للبعثة، وليس لـ Toplance",
     tw: "wɔtua ma amansini afikyi no, ɛnyɛ Toplance",
     zu: "ikhokhelwa ihhovisi elimele izwe, hhayi iToplance",
+  },
+  /**
+   * Drawn only where the corridor says an interview is required, and
+   * never inverted into "no interview needed" — the column defaults to
+   * false on every route nobody has annotated, so its silence means
+   * nothing. See `requiresInterview` on `RuleSet`.
+   *
+   * It promises no date, because there is none to promise: a consulate
+   * issues the slot and the agency passes it on, which is what the
+   * second sentence says rather than leaving the reader to wonder when
+   * they will hear.
+   */
+  interviewLikely: {
+    en: "This route usually ends with an interview at the consulate. Your agency will tell you the date and place once the mission has set one — there is nothing to book yourself.",
+    ha: "Wannan hanya kan ƙare da hira a ofishin jakadanci. Hukumarka za ta gaya maka ranar da wurin da zarar ofishin ya sa ɗaya — babu abin da za ka yi ajiya da kanka.",
+    yo: "Ọ̀nà yìí máa ń parí pẹ̀lú ìfọ̀rọ̀wánilẹ́nuwò ní ọ́fíìsì aṣojú. Ilé-iṣẹ́ rẹ yóò sọ ọjọ́ àti ibi fún ọ ní kété tí ọ́fíìsì bá ṣètò ọ̀kan — kò sí ohun tí ìwọ yóò ṣètò fúnra rẹ.",
+    ig: "Ụzọ a na-ejikarị ajụjụ ọnụ n'ụlọ ọrụ nnọchiteanya akwụsị. Ụlọ ọrụ gị ga-agwa gị ụbọchị na ebe ozugbo ozi ahụ hazichara otu — ọ dịghị ihe ị ga-edebe n'onwe gị.",
+    fr: "Cette procédure se termine généralement par un entretien au consulat. Votre agence vous en communiquera la date et le lieu dès que la mission l'aura fixé — vous n'avez rien à réserver vous-même.",
+    pt: "Esta via termina normalmente com uma entrevista no consulado. A sua agência dir-lhe-á a data e o local assim que a missão a marcar — não tem nada a marcar por si.",
+    sw: "Njia hii huishia na mahojiano ubalozini. Wakala wako atakuambia tarehe na mahali mara tu ubalozi utakapopanga — hakuna cha kujiwekea mwenyewe.",
+    ar: "يَنتهي هذا المسار عادةً بمقابلة في القنصلية. ستُبلغك وكالتك بالموعد والمكان فور أن تحدّدهما البعثة — ولا شيء عليك حجزه بنفسك.",
+    tw: "Saa kwan yi taa de nkɔmmɔbɔ a ɛyɛ wɔ amansini afikyi hɔ na ɛwie. W'adwumakuo bɛka da ne beaeɛ akyerɛ wo sɛ amansini no hyɛ bi berɛ pɛ — biribiara nni hɔ a wo ara wobɛhyɛ berɛ ama.",
+    zu: "Le ndlela ivamise ukuphetha ngenhlolokhono enxusweni. I-ejensi yakho izokutshela usuku nendawo lapho inxusa selihlelile — akukho okumele uzibhukhele khona.",
   },
   perEntrySub: {
     en: "on this visa, per entry",

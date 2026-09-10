@@ -9,7 +9,7 @@ import { CompletionRing } from "@/components/app/completion-ring";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
-import { canSubmitFrom } from "@/lib/domain/status";
+import { canSubmitFrom, submissionNotice } from "@/lib/domain/status";
 import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
 import { MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
 import { UPLOADS } from "@/lib/i18n/uploads";
@@ -218,10 +218,23 @@ export default async function DocumentsPage() {
               </p>
               <SubmitButton applicationId={application.id} />
             </section>
+          ) : submissionNotice(application.status) === "success" ? (
+            /* Just sent, by the click they have this second made. The
+               green sheet above was replaced by the grey one below the
+               instant they pressed Submit, so the screen's answer to the
+               biggest act on it was to look like every other state — and
+               the only thing that said it had worked was a toast that
+               fades. This is that confirmation, and it stays. */
+            <section className="mt-8 rounded-lg border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] px-5 py-5 sm:px-6">
+              <h2 className="t-h3">{t.submittedHeading[locale]}</h2>
+              <p className="t-muted mt-2 max-w-[74ch]">{t.submittedBody[locale]}</p>
+            </section>
           ) : (
-            /* Already sent. Saying where it is beats saying nothing:
-               the panel disappearing on its own would read as the
-               submission having failed. */
+            /* Somewhere further on — under review, with the embassy, or
+               decided. Saying where it is beats saying nothing: the panel
+               disappearing on its own would read as the submission having
+               failed. Neutral on purpose; none of these is a report on
+               the act of submitting. */
             <section className="mt-8 rounded-lg border border-border-strong px-5 py-5 sm:px-6">
               <h2 className="t-h3">{STATUS_COPY[application.status].label[locale]}</h2>
               <p className="t-muted mt-2 max-w-[74ch]">

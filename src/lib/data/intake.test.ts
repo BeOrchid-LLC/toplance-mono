@@ -239,4 +239,78 @@ describe.skipIf(!process.env.DATABASE_URL)("recordIntakeAnswer", async () => {
     expect(result).toEqual({ complete: false });
   });
 
+  /**
+   * The intake once the case has left the traveller's hands — the bug of
+   * 10 September.
+   *
+   * Both branches of `recordIntakeAnswer` wrote to the application row
+   * unconditionally, and both of them undid a submission.
+   *
+   * The complete branch ended `buildChecklist` with
+   * `status: "collecting_documents"`, so one re-answered question put a
+   * case that was already with the desk back into the traveller's hands.
+   * It carried no `status_events` row — this is not `changeStatusTx` —
+   * so nothing appeared in the timeline and nobody was told. What the
+   * traveller saw was the green sheet and their Submit button back, on a
+   * checklist still fully verified, immediately after being told the
+   * file had gone.
+   *
+   * The incomplete branch reached the same place by the other column:
+   * answering anything but the last question deletes the answers after
+   * it, `intake_complete` went false, and `/app/documents` redirects on
+   * that — so a submitted case bounced its own owner to the intake
+   * agent.
+   *
+   * The answers themselves are still recorded on both paths. A traveller
+   * correcting their name after submitting is telling the truth about
+   * something, and the desk should read it; what must not follow is the
+   * case moving.
+   */
+  describe("after the case has been submitted", () => {
+    beforeEach(async () => {
+      await answerAll();
+      await db
+        .update(applications)
+        .set({ status: "submitted", submittedAt: new Date() })
+        .where(eq(applications.id, applicationId));
+    });
+
+    it("does not un-submit a case by rebuilding its checklist", async () => {
+      const last = INTAKE_QUESTIONS[INTAKE_QUESTIONS.length - 1];
+      await recordIntakeAnswer(applicationId, last.key, "Within a month", TRAVELLER);
+
+      const app = await application();
+      expect(app.status).toBe("submitted");
+      expect(app.intakeComplete).toBe(true);
+    });
+
+    it("does not send a submitted traveller back to the intake agent", async () => {
+      // Re-answering question one truncates the rest, so this is the
+      // branch that writes `intake_complete = false`.
+      await recordIntakeAnswer(
+        applicationId,
+        INTAKE_QUESTIONS[0].key,
+        "Ada Lovelace",
+        TRAVELLER
+      );
+
+      const app = await application();
+      expect(app.status).toBe("submitted");
+      expect(app.intakeComplete).toBe(true);
+    });
+
+    it("records the answer all the same", async () => {
+      await recordIntakeAnswer(
+        applicationId,
+        INTAKE_QUESTIONS[0].key,
+        "Ada Lovelace",
+        TRAVELLER
+      );
+
+      expect(await storedAnswers()).toMatchObject({
+        [INTAKE_QUESTIONS[0].key]: "Ada Lovelace",
+      });
+    });
+  });
+
 });

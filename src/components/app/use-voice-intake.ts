@@ -52,6 +52,7 @@ export function useVoiceIntake({
   answers,
   fullName,
   locale,
+  hasChecklist,
   onAnswerRecorded,
   onComplete,
   onError,
@@ -61,6 +62,15 @@ export function useVoiceIntake({
   answers: Record<string, string>;
   fullName: string;
   locale: Locale;
+  /**
+   * Passed through to the prompt so the spoken closing line matches the
+   * typed one and the button under it — see `intakeNextStep`. Read at
+   * connect time, which is before the last answer can land, so a call
+   * that finishes the intake in one sitting closes on the requirements
+   * screen. That is the safe half of the split: it explains itself, and
+   * the completion bar behind the voice is refreshed and correct.
+   */
+  hasChecklist: boolean;
   /** One answer landed in the database. */
   onAnswerRecorded: (key: string, value: string) => void;
   /** The tenth answer landed — there is a checklist now. */
@@ -190,6 +200,7 @@ export function useVoiceIntake({
           answers: answersRef.current,
           locale,
           fullName,
+          hasChecklist,
         }),
         tools: [recordAnswer],
       });
@@ -259,7 +270,7 @@ export function useVoiceIntake({
     } finally {
       startingRef.current = false;
     }
-  }, [applicationId, fullName, locale, stop]);
+  }, [applicationId, fullName, hasChecklist, locale, stop]);
 
   // A session left open would hold the microphone and keep billing after
   // the screen is gone, so leaving the page ends the call.

@@ -199,6 +199,11 @@ describe("opsAdminNav", () => {
     const groups = opsAdminNav({ locale: "en", ...counts, isOwner: true });
 
     expect(groups.at(-1)?.items.map((i) => i.id)).toEqual(["routes"]);
+    // Unlabelled, so it has to ask for the gap that separates it from
+    // the operations rows — an unlabelled group runs on from its
+    // neighbour otherwise.
+    expect(groups.at(-1)?.label).toBeUndefined();
+    expect(groups.at(-1)?.separated).toBe(true);
     // The operations heading is above it, which is what "below" means
     // once the rail is the thing rendering.
     expect(groups[0].label).toBeTruthy();

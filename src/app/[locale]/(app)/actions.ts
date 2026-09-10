@@ -209,7 +209,22 @@ export async function uploadDocument(formData: FormData) {
 
   await db
     .update(documents)
-    .set({ state: "checking", storagePath: path, reason: null })
+    // Every verdict column, not just `reason`. What stood here reset
+    // `state` and the traveller-facing sentence and left `checkedAt`,
+    // `verifiedBy`, `reasonCode` and `precheck` describing the file that
+    // was just replaced — a reviewer's name and timestamp against a
+    // document nobody had seen, and an AI verdict about different bytes.
+    // Nothing read those columns closely enough to notice until
+    // `documentVerdict` did, which is exactly why they have to be true.
+    .set({
+      state: "checking",
+      storagePath: path,
+      reason: null,
+      reasonCode: null,
+      checkedAt: null,
+      verifiedBy: null,
+      precheck: null,
+    })
     .where(
       and(
         eq(documents.applicationId, applicationId),

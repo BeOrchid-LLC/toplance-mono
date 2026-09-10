@@ -46,7 +46,11 @@ export function AdminMobileNav({
       <DropdownMenuContent align="start" className="w-[248px]">
         {groups.map((group, gi) => (
           <div key={group.label ?? `group-${gi}`}>
-            {gi > 0 && <DropdownMenuSeparator />}
+            {/* Same test the rail applies to its group gap: a rule
+                between two groups says a section ended, so an unlabelled
+                group that is not asking to stand apart runs straight on
+                from the one above it. */}
+            {gi > 0 && (group.label || group.separated) && <DropdownMenuSeparator />}
             {group.label && <DropdownMenuLabel>{group.label}</DropdownMenuLabel>}
             {group.items.map((item) => {
               const active = item.id === activeId;

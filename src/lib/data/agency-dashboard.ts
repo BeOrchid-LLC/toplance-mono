@@ -3,6 +3,10 @@ import "server-only";
 import { inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
+import {
+  casesAwaitingInterviewOutcome,
+  type StaleInterview,
+} from "@/lib/data/interviews";
 import { applications } from "@/lib/db/schema";
 import {
   clientFeesForOrgs,
@@ -48,6 +52,16 @@ export type AgencyDashboardData = {
    * two of its bars.
    */
   stalled: number;
+  /**
+   * Cases interviewed with no outcome recorded — see
+   * `casesAwaitingInterviewOutcome`.
+   *
+   * The rows themselves rather than a count, because unlike `stalled`
+   * there is nothing to infer: a director acts on this by opening a
+   * named case, so the name and the date are the figure. Oldest first,
+   * which is the order the work should be done in.
+   */
+  staleInterviews: StaleInterview[];
   /** This agency's own bill, newest cycle last. Empty before its first. */
   invoices: Invoice[];
   /**
@@ -99,7 +113,7 @@ export async function agencyDashboard(
   // `Promise.all` still goes out at once.
   const clientRevenuePromise = clientRevenueForOrgs(orgIds);
 
-  const [rows, invoices, clientRevenue, clientFees] = await Promise.all([
+  const [rows, staleInterviews, invoices, clientRevenue, clientFees] = await Promise.all([
     // One row per traveller by constraint, so this is a small read even
     // for a busy agency, and both figures below come out of the one
     // pass. Only the five columns the funnel turns on — a dashboard has
@@ -120,6 +134,11 @@ export async function agencyDashboard(
         // follows: the failure mode of a missing `where` here is one
         // agency's caseload rendered on another's dashboard.
         Promise.resolve([]),
+
+    // `orgIds`, matching the funnel: a director managing two agencies
+    // has forgotten interviews at both, and this list is work rather
+    // than money — there is no cycle or invoice to scope it to one.
+    casesAwaitingInterviewOutcome(orgIds, now),
 
     orgId ? listInvoices({ orgId, now }) : Promise.resolve([]),
 
@@ -146,6 +165,7 @@ export async function agencyDashboard(
   return {
     funnel: funnelOf(rows),
     stalled: stalledAtChecklist(rows),
+    staleInterviews,
     // Oldest first: `listInvoices` walks cycles newest-first per
     // organisation, and a chart's x-axis reads left to right in time.
     // Sorted here rather than in the component so the chart renders

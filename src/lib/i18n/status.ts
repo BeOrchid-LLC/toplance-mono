@@ -248,6 +248,97 @@ export const STATUS_COPY: Record<
       zu: "I-ejensi yakho ithumele isicelo sakho enxusweni. Akukho okumele ukwenze ngenkathi benquma.",
     },
   },
+  /**
+   * The two statuses added on 10 September, in the order they happen.
+   *
+   * The blurbs are the reason the pair earns its keep. `processing`
+   * tells a traveller "there is nothing for you to do", which is exactly
+   * wrong on the one day of a case when there is something to do and
+   * missing it ends the application. This one says where the details
+   * are, and `awaiting_decision` then goes back to saying there is
+   * nothing — truthfully, and having said the other thing first.
+   *
+   * Neither blurb states the date or the place. A pill is fixed copy in
+   * ten languages and the appointment is per-case; the attendance notice
+   * (`attendanceSummary` in `@/lib/domain/attendance`) is the surface
+   * that carries both, and saying it twice invites the two to disagree.
+   */
+  interview_scheduled: {
+    label: {
+      en: "Interview scheduled",
+      ha: "An tsara hira",
+      yo: "A ti ṣètò ìfọ̀rọ̀wánilẹ́nuwò",
+      ig: "Ahaziela ajụjụ ọnụ",
+      fr: "Entretien programmé",
+      pt: "Entrevista marcada",
+      sw: "Mahojiano yamepangwa",
+      ar: "تم تحديد موعد المقابلة",
+      tw: "Wɔahyɛ nkɔmmɔbɔ berɛ",
+      zu: "Kuhlelwe inhlolokhono",
+    },
+    short: {
+      en: "Interview",
+      ha: "Hira",
+      yo: "Ìfọ̀rọ̀wánilẹ́nuwò",
+      ig: "Ajụjụ ọnụ",
+      fr: "Entretien",
+      pt: "Entrevista",
+      sw: "Mahojiano",
+      ar: "المقابلة",
+      tw: "Nkɔmmɔbɔ",
+      zu: "Inhlolokhono",
+    },
+    blurb: {
+      en: "The embassy wants to meet you. Your interview date and place are on your dashboard — take everything the notice asks for.",
+      ha: "Ofishin jakadanci yana son ganin ka. Ranar hirar ka da wurin suna kan shafin ka — ka kawo duk abin da sanarwar ta nema.",
+      yo: "Ilé-iṣẹ́ aṣojú orílẹ̀-èdè fẹ́ rí ọ. Ọjọ́ àti ibi ìfọ̀rọ̀wánilẹ́nuwò rẹ wà lórí ojú-ìwé rẹ — mú gbogbo ohun tí ìwífún náà béèrè.",
+      ig: "Ụlọ ọrụ nnọchiteanya chọrọ ịhụ gị. Ụbọchị na ebe ajụjụ ọnụ gị dị na peeji gị — weta ihe niile ọkwa ahụ chọrọ.",
+      fr: "L'ambassade souhaite vous rencontrer. La date et le lieu de votre entretien sont sur votre tableau de bord — apportez tout ce que l'avis demande.",
+      pt: "A embaixada quer encontrar-se consigo. A data e o local da sua entrevista estão no seu painel — leve tudo o que o aviso pede.",
+      sw: "Ubalozi unataka kukutana nawe. Tarehe na mahali pa mahojiano yako yapo kwenye ukurasa wako — chukua kila kitu ambacho taarifa inaomba.",
+      ar: "تريد السفارة مقابلتك. موعد مقابلتك ومكانها على صفحتك — أحضر كل ما يطلبه الإشعار.",
+      tw: "Ɔmanpanin asoeɛ hɔ pɛ sɛ wɔhyia wo. Wo nkɔmmɔbɔ da ne beaeɛ wɔ wo kratafa so — fa deɛ nkrataa no bisa nyinaa.",
+      zu: "Inxusa lifuna ukuhlangana nawe. Usuku nendawo yenhlolokhono yakho kusekhasini lakho — phatha konke okucelwa yisaziso.",
+    },
+  },
+  awaiting_decision: {
+    label: {
+      en: "Awaiting decision",
+      ha: "Ana jiran shawara",
+      yo: "Ń dúró de ìpinnu",
+      ig: "Na-echere mkpebi",
+      fr: "En attente de décision",
+      pt: "A aguardar decisão",
+      sw: "Inasubiri uamuzi",
+      ar: "في انتظار القرار",
+      tw: "Ɛretwɛn gyinaeɛ",
+      zu: "Kulindwe isinqumo",
+    },
+    short: {
+      en: "Deciding",
+      ha: "Ana jira",
+      yo: "Ń dúró",
+      ig: "Na-echere",
+      fr: "En attente",
+      pt: "A aguardar",
+      sw: "Inasubiri",
+      ar: "قيد القرار",
+      tw: "Ɛretwɛn",
+      zu: "Kulindwe",
+    },
+    blurb: {
+      en: "You have sat your interview. The embassy is deciding now, and there is nothing more for you to do.",
+      ha: "Ka yi hirar ka. Yanzu ofishin jakadanci yana yanke shawara, kuma ba sauran abin da za ka yi.",
+      yo: "O ti ṣe ìfọ̀rọ̀wánilẹ́nuwò rẹ. Ilé-iṣẹ́ aṣojú orílẹ̀-èdè ń pinnu báyìí, kò sì sí ohun mìíràn tí o ní láti ṣe.",
+      ig: "Ị gaala ajụjụ ọnụ gị. Ụlọ ọrụ nnọchiteanya na-ekpebi ugbu a, ọ dịghịkwa ihe ọzọ ị ga-eme.",
+      fr: "Vous avez passé votre entretien. L'ambassade décide maintenant, et vous n'avez plus rien à faire.",
+      pt: "Já fez a sua entrevista. A embaixada está a decidir agora, e não tem mais nada a fazer.",
+      sw: "Umefanya mahojiano yako. Ubalozi unaamua sasa, na hakuna kingine cha kufanya.",
+      ar: "لقد أجريت مقابلتك. السفارة تبتّ في طلبك الآن، ولا شيء آخر عليك فعله.",
+      tw: "Woayɛ wo nkɔmmɔbɔ no. Seesei ɔmanpanin asoeɛ hɔ resi gyinaeɛ, na biribiara nni hɔ bio a ɛsɛ sɛ woyɛ.",
+      zu: "Usuyenzile inhlolokhono yakho. Inxusa liyanquma manje, futhi akusekho okunye okumele ukwenze.",
+    },
+  },
   additional_documents: {
     label: {
       en: "Additional documents needed",
@@ -376,6 +467,46 @@ export const STATUS_COPY: Record<
  *
  * NEEDS NATIVE REVIEW before launch.
  */
+/**
+ * What the AI pre-check has said, when it has said anything.
+ *
+ * Separate from `DOC_STATE_COPY` because it is not a state: the row is
+ * still on `checking` or `flagged`, and these words say who looked
+ * rather than where the file is. Kept apart so nothing can start
+ * treating "Checked by AI" as a `document_state` and gating a submit on
+ * it — the machine's pass is not a person's, which is the whole point of
+ * `applyPrecheckTx` refusing to write `verified`.
+ *
+ * NEEDS NATIVE REVIEW before launch — translated in-house from the
+ * English, like `AUTH_DOORS` before it.
+ */
+export const DOC_VERDICT_COPY: { aiChecked: L; aiFlagged: L } = {
+  aiChecked: {
+    en: "Checked by AI",
+    ha: "AI ya duba",
+    yo: "AI ti ṣàyẹ̀wò",
+    ig: "AI nyochara ya",
+    fr: "Vérifié par l'IA",
+    pt: "Verificado pela IA",
+    sw: "Imekaguliwa na AI",
+    ar: "فحصه الذكاء الاصطناعي",
+    tw: "AI ahwɛ",
+    zu: "Kuhlolwe yi-AI",
+  },
+  aiFlagged: {
+    en: "AI found an issue",
+    ha: "AI ya sami matsala",
+    yo: "AI rí ìṣòro kan",
+    ig: "AI hụrụ nsogbu",
+    fr: "L'IA a détecté un problème",
+    pt: "A IA encontrou um problema",
+    sw: "AI imepata tatizo",
+    ar: "وجد الذكاء الاصطناعي مشكلة",
+    tw: "AI ahunu ɔhaw bi",
+    zu: "I-AI ithole inkinga",
+  },
+};
+
 export const DOC_STATE_COPY: Record<DocumentState, { label: L }> = {
   not_started: {
     label: {

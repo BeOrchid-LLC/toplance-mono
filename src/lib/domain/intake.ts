@@ -690,6 +690,36 @@ export function nextIntakeQuestion(
   return INTAKE_QUESTIONS[intakeFrontier(answers)];
 }
 
+/**
+ * Where a finished intake sends the traveller, and what the button on
+ * the way there says.
+ *
+ * Three surfaces read this and they must not disagree: the completion
+ * bar's CTA, the typed agent's closing line and the spoken agent's. The
+ * bar used to point at the requirements screen unconditionally while
+ * nothing told the model anything, so what the agent said and what the
+ * button did were two independent guesses at the same question.
+ *
+ * `hasChecklist` rather than a status, because the status is the same
+ * either way: all three completion paths in `completeIntake` set
+ * `collecting_documents`, and only one of them materialises documents.
+ * A traveller on a corridor we do not serve is told so on the
+ * requirements screen, which is the only screen that explains it —
+ * `/app/documents` would show them the bare "no checklist yet" panel
+ * directly after thanking them for finishing.
+ *
+ * Returns the key rather than the words: this module takes no locale,
+ * and `INTAKE_UI` holds the ten of them.
+ */
+export function intakeNextStep(hasChecklist: boolean): {
+  href: string;
+  key: "uploadDocuments" | "seeRequirements";
+} {
+  return hasChecklist
+    ? { href: "/app/documents", key: "uploadDocuments" }
+    : { href: "/app/requirements", key: "seeRequirements" };
+}
+
 /** One answer being recorded — by whichever agent was listening. */
 export type IntakeWrite = { key: string; value: string };
 

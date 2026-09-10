@@ -7,6 +7,7 @@ import { Hint } from "@/components/ui/hint";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FxCredit } from "@/components/app/fx-credit";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -441,6 +442,17 @@ export default async function ProfilePage() {
                         {corridor.sourceName ?? t.officialSourceFallback[uiLocale]} ·{" "}
                         {t.ruleSetVersion[uiLocale].replace("{version}", String(corridor.version))} ·{" "}
                         {t.inEffectSince[uiLocale].replace("{date}", effective ?? "")}
+                        {/* The rates credit rides on the provenance
+                            line, which is already the place this page
+                            says where its figures came from — and only
+                            when the converted figure it credits is
+                            actually above it. */}
+                        {feeApprox && (
+                          <>
+                            {" · "}
+                            <FxCredit className="hover:underline" />
+                          </>
+                        )}
                       </span>
                     </p>
                   </div>

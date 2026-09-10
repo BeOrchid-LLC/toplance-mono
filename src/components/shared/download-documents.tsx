@@ -9,14 +9,18 @@ import { ARCHIVE_READY_COOKIE, readCookie } from "@/lib/http/cookies";
 /**
  * The link that hands somebody a whole checklist as one ZIP.
  *
- * Still an anchor the browser follows. The click handler below does not
- * call `preventDefault`, so the navigation, the `Content-Disposition`
- * the route sets and the filename it chooses are all exactly what they
- * were before this component had any state — and with scripting off the
+ * Still an anchor the browser follows. The click that starts a download
+ * is not intercepted, so the navigation, the `Content-Disposition` the
+ * route sets and the filename it chooses are all exactly what they were
+ * before this component had any state — and with scripting off the
  * button is the plain link it always was. The React state rides
  * alongside the download rather than performing it: if the watching
  * breaks, the file still arrives, and the worst that happens is a bar
  * that runs its course.
+ *
+ * The one click it does swallow is a second one on a download already in
+ * flight, which the browser would otherwise serve by abandoning the
+ * first request — see the handler.
  *
  * `download` is deliberately absent: the attribute is ignored on a
  * cross-origin response and, worse, it overrides the filename the route
@@ -80,8 +84,6 @@ export function DownloadDocuments({
     ? `/api/documents/${applicationId}?dl=${ticket}`
     : `/api/documents/${applicationId}`;
 
-  const timedOut = useRef(false);
-
   useEffect(() => {
     if (!preparing || !ticket) return;
 
@@ -99,11 +101,27 @@ export function DownloadDocuments({
       setPreparing(false);
     }, 250);
 
-    const giveUp = window.setTimeout(() => {
-      timedOut.current = true;
-      // TODO(you): decide what a download that never announces itself
-      // leaves on screen. See the note in chat.
-    }, GIVE_UP_AFTER_MS);
+    /**
+     * What a download that never announces itself leaves on screen:
+     * the button it was before the click.
+     *
+     * The indicator can only ever report the cookie arriving, and the
+     * cookie can be lost for reasons the page cannot see — the route
+     * refusing, the response failing, the ticket being rejected. Left
+     * running, the button says "preparing" about an archive nothing is
+     * preparing, and the click guard above then holds the only way to
+     * ask again shut behind that lie.
+     *
+     * Going back to the idle label claims nothing: it is the state the
+     * page was in before the click, and if the file is still on its way
+     * it still arrives. No new sentence, deliberately — a "this is
+     * taking longer than usual" would be a diagnosis of a request this
+     * page has no way to inspect, in ten languages.
+     */
+    const giveUp = window.setTimeout(
+      () => setPreparing(false),
+      GIVE_UP_AFTER_MS
+    );
 
     return () => {
       window.clearInterval(poll);
@@ -121,12 +139,39 @@ export function DownloadDocuments({
           href={href}
           aria-busy={preparing}
           className="relative overflow-hidden"
-          onClick={() => {
+          onClick={(event) => {
             if (!ticket) return;
+
+            /**
+             * The second click on a download already in flight is the
+             * one that has to be swallowed.
+             *
+             * Nothing reaches the browser until the archive's first
+             * byte — the route reads a whole document out of the bucket
+             * before archiver can write one — so for that whole wait
+             * the tab is on a navigation with nothing to show for it,
+             * and the natural response to that is to click again.
+             * Following the link a second time makes the browser
+             * abandon the first request and start the wait over, which
+             * is the opposite of what the person clicking wants: three
+             * clicks measured 21 seconds to a file that one click
+             * fetched in six.
+             *
+             * `preventDefault` rather than a `disabled` attribute,
+             * because an anchor has none, and rather than
+             * `pointer-events: none`, because that also takes the link
+             * off the keyboard. It stays focusable and says
+             * `aria-busy`; what it does not do is throw away the
+             * download that is already coming.
+             */
+            if (preparing) {
+              event.preventDefault();
+              return;
+            }
+
             // Cleared on the way out so the watcher waits for this
             // download's cookie rather than reading the last one's.
             clearReadyCookie();
-            timedOut.current = false;
             setPreparing(true);
           }}
         >
@@ -163,6 +208,11 @@ const subscribeToNothing = () => () => {};
  * believing in it. Generous, because the wait it covers is a bucket
  * round trip per document and a ten-document case on a slow morning is
  * not a failure.
+ *
+ * It is also how long the click guard holds the link shut, which is the
+ * other half of the same number: whatever this is, it is how long
+ * somebody whose download really did fail waits before they may ask
+ * again.
  */
 const GIVE_UP_AFTER_MS = 30_000;
 

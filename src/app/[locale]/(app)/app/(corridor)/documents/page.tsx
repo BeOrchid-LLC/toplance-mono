@@ -119,6 +119,7 @@ export default async function DocumentsPage() {
                 <DownloadDocuments
                   applicationId={application.id}
                   label={ARCHIVE.travelerLabel[locale]}
+                  preparingLabel={ARCHIVE.preparingLabel[locale]}
                 />
               </div>
             )}

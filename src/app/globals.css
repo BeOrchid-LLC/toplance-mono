@@ -981,6 +981,51 @@
   }
 }
 
+/* The archive download's own indicator, and the only indeterminate one
+   in the product.
+
+   A sweep rather than a fill, because there is nothing honest to fill
+   against: the wait it covers is the ZIP route fetching each document
+   from the bucket in turn, and no total exists until the last one is
+   in. A bar that crept to 90% and sat there would be inventing a figure
+   for the same reason §7 forbids elsewhere.
+
+   The segment is 40% of the track, so `250%` is exactly the distance
+   that carries its trailing edge off the far end.
+
+   Mirrored under RTL by name. The sweep is direction of travel in the
+   same sense the route diagram's chevron is, and a progress indicator
+   running against the reading direction reads as rewinding. */
+@keyframes archive-sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(250%); }
+}
+@keyframes archive-sweep-rtl {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-250%); }
+}
+.archive-sweep {
+  animation: archive-sweep 1.1s var(--ease-inout) infinite;
+}
+[dir="rtl"] .archive-sweep {
+  animation-name: archive-sweep-rtl;
+}
+
+/* Switched off by name, like the intake animations above and for the
+   same reason — the blanket 0.001ms rule turns an infinite loop into a
+   strobe. Stopping the sweep alone would leave the segment parked off
+   the left edge, which is a button that looks broken rather than busy,
+   so the track fills instead: still visibly not the resting state, with
+   nothing moving. */
+@media (prefers-reduced-motion: reduce) {
+  .archive-sweep {
+    animation-name: none;
+    transform: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
 /* Keyframes the accordion and OTP caret reference. */
 @theme inline {
   --animate-accordion-down: accordion-down var(--dur-toggle) var(--ease-out);

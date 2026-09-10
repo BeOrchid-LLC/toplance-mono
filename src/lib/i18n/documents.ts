@@ -37,12 +37,23 @@ export const DOCUMENTS: {
    */
   guidanceToggle: L;
   /**
-   * "{collected} of {total} collected" — the counted form of what
-   * `CompletionRing` drew as a percentage. Two files out of eight is a
-   * fact a traveller can act on; 25% is the same fact with the
-   * actionable part removed.
+   * "{pct}% collected" — the figure `CompletionRing` drew, kept at the
+   * client's request when the ring itself came off this screen.
+   *
+   * The word travels with the number for the reason the ring's own
+   * caption existed: a bare percentage on a documents screen reads as
+   * "how far through the application am I", which it is not — it counts
+   * files uploaded, not files verified and not a decision. It is also
+   * translated here, which the ring's hardcoded English "collected"
+   * never was.
    */
   collectedCount: L;
+  /**
+   * The single word inside the ring, under the figure. Separate from
+   * `collectedCount` because the ring stacks the number and the word on
+   * two lines, and the accessible name needs them as one sentence.
+   */
+  collectedCaption: L;
   needsAttention: L;
   stillToUpload: L;
   done: L;
@@ -128,16 +139,28 @@ export const DOCUMENTS: {
     zu: "Indlela amafayela akho ahlolwa ngayo",
   },
   collectedCount: {
-    en: "{collected} of {total} collected",
-    ha: "{collected} daga {total} an tattara",
-    yo: "{collected} nínú {total} tí a ti kójọ",
-    ig: "{collected} n'ime {total} anakọtara",
-    fr: "{collected} sur {total} collectés",
-    pt: "{collected} de {total} recolhidos",
-    sw: "{collected} kati ya {total} zimekusanywa",
-    ar: "تم جمع {collected} من {total}",
-    tw: "{collected} wɔ {total} mu na wɔaboaboa ano",
-    zu: "{collected} kwangu-{total} okuqoqiwe",
+    en: "{pct}% collected",
+    ha: "An tattara {pct}%",
+    yo: "{pct}% tí a ti kójọ",
+    ig: "{pct}% anakọtara",
+    fr: "{pct}% collectés",
+    pt: "{pct}% recolhidos",
+    sw: "{pct}% zimekusanywa",
+    ar: "تم جمع {pct}%",
+    tw: "Wɔaboaboa {pct}% ano",
+    zu: "{pct}% okuqoqiwe",
+  },
+  collectedCaption: {
+    en: "collected",
+    ha: "an tattara",
+    yo: "tí a kójọ",
+    ig: "anakọtara",
+    fr: "collectés",
+    pt: "recolhidos",
+    sw: "zimekusanywa",
+    ar: "مجموعة",
+    tw: "aboaboa ano",
+    zu: "okuqoqiwe",
   },
   intro: {
     en: "Each file is checked automatically within a few seconds of arriving, then confirmed by a person before submission.",

@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/app/submit-button";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { CompletionRing } from "@/components/app/completion-ring";
 import {
   Accordion,
   AccordionContent,
@@ -136,28 +136,47 @@ export default async function DocumentsPage() {
           page. */}
       <div className="sticky top-[var(--bar-h)] z-30 max-h-[calc(100dvh-var(--bar-h))] overflow-y-auto border-b border-border bg-bg">
         <Shell className="py-4 md:py-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-8 gap-y-1">
-            <h1 className="t-h2">{t.heading[locale]}</h1>
-            {/* Counted, not a percentage. The ring that used to sit
-                here drew "0%" at 120px — the largest object on the
-                screen, saying the least useful version of the number,
-                and it could not come with us: its figure is `t-h3`
-                sized for the opening of a 120px circle, so there is no
-                small version of it. Two of eight is a fact you can act
-                on. */}
-            <p id="collected-count" className="t-muted num shrink-0">
-              {fill(t.collectedCount[locale], {
-                collected: String(completion.collected),
-                total: String(completion.total),
-              })}
-            </p>
-          </div>
+          {/* The ring stays, at the client's request, and the download
+              button rides with it — the two things that were on this
+              row before now travel together into the strip that follows
+              the reader down.
 
-          <Progress
-            value={completion.pct}
-            aria-labelledby="collected-count"
-            className="mt-3"
-          />
+              `items-center` rather than `items-start`: the button sits
+              beside a 96px circle, and aligning their tops leaves the
+              button floating against the ring's shoulder.
+
+              96px, not the 120px it was. The figure inside is `t-h3` in
+              a 72px opening at this size — "100%" measures about 62px,
+              so three digits still clear the arc, which is the
+              constraint the original comment inside the ring is about.
+              What 96 buys is a strip that is always on screen costing
+              ~150px instead of ~190px. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+            <div className="min-w-0">
+              <h1 className="t-h2">{t.heading[locale]}</h1>
+              {/* Only once there is something to download. An empty
+                  checklist offering a copy of nothing is a button that
+                  exists to disappoint, and the route answers 404 for the
+                  same state. */}
+              {uploaded > 0 && (
+                <div className="mt-4">
+                  <DownloadDocuments
+                    applicationId={application.id}
+                    label={ARCHIVE.travelerLabel[locale]}
+                    preparingLabel={ARCHIVE.preparingLabel[locale]}
+                  />
+                </div>
+              )}
+            </div>
+            <CompletionRing
+              pct={completion.pct}
+              size={96}
+              caption={t.collectedCaption[locale]}
+              ariaLabel={fill(t.collectedCount[locale], {
+                pct: String(completion.pct),
+              })}
+            />
+          </div>
 
           {/* Folded shut by default.
 
@@ -222,23 +241,6 @@ export default async function DocumentsPage() {
       </div>
 
       <Shell className="py-6 md:py-8">
-        {/* Only once there is something to download. An empty checklist
-            offering a copy of nothing is a button that exists to
-            disappoint, and the route answers 404 for the same state.
-
-            Below the header rather than inside it: it is an action on
-            the work, not a fact about it, and a sticky strip should
-            carry only what stays true while you scroll. */}
-        {uploaded > 0 && (
-          <div className="mb-6">
-            <DownloadDocuments
-              applicationId={application.id}
-              label={ARCHIVE.travelerLabel[locale]}
-              preparingLabel={ARCHIVE.preparingLabel[locale]}
-            />
-          </div>
-        )}
-
 {/* The ring reaches 100% when everything is uploaded; this
             section needs the stronger condition — every required
             document past review — because that is what the submit

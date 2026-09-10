@@ -145,6 +145,30 @@ export const documentState = pgEnum("document_state", [
 ]);
 
 /**
+ * Who put a checklist row on this case.
+ *
+ * Until 10 September the corridor was the only author — every
+ * `documents` row came out of `adoptRuleSet` — so nothing had to say
+ * where a row came from. A reviewer could send a case back for more
+ * documents but could not name one, and the traveller's screen showed
+ * the consequence: "Everything is verified. Nothing else is waiting on
+ * you", beside a status card reading "Additional documents needed".
+ *
+ * `agency` is a document a reviewer asked this one traveller for. It is
+ * an ordinary checklist row in every other respect, which is the point —
+ * upload, the AI pre-check, the verify/flag cycle, the completion ring
+ * and the export archive all work on it without knowing it exists.
+ *
+ * Stored rather than derived, and deliberately not inferred from
+ * `requestedBy` being non-null. That column is `set null`, and Clerk has
+ * no `user.deleted` webhook, so a reviewer leaving the agency takes
+ * their `profiles` row with them — which would silently turn every
+ * document they requested back into a corridor row and hand it to the
+ * stale-row sweep in `@/lib/data/checklist`.
+ */
+export const documentSource = pgEnum("document_source", ["corridor", "agency"]);
+
+/**
  * Where a corridor version sits in the review it must pass before a
  * traveller can be shown it.
  *
@@ -1161,6 +1185,18 @@ export const documents = pgTable(
      * guidance. A checklist row must carry its own instructions.
      */
     description: text(),
+    /**
+     * Corridor or agency — see `documentSource`. Defaults to `corridor`,
+     * which is what every row written before 10 September is, so this
+     * needs no backfill.
+     */
+    source: documentSource().notNull().default("corridor"),
+    /**
+     * The reviewer who asked for this, on an `agency` row; null on a
+     * corridor one. Provenance for the case screen and the audit trail —
+     * never the discriminator, for the reason on `documentSource`.
+     */
+    requestedBy: text().references(() => profiles.id, { onDelete: "set null" }),
     state: documentState().notNull().default("not_started"),
     storagePath: text(),
     /** The sentence the traveller reads. */

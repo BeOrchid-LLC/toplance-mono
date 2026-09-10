@@ -422,6 +422,92 @@ describe.skipIf(!process.env.DATABASE_URL)("adoptRuleSet", async () => {
       expect((await checklist()).map((d) => d.docKey)).toContain("marriage_cert");
     });
   });
+
+  /**
+   * A checklist row the corridor never asked for.
+   *
+   * The stale-row sweep at the end of `adoptRuleSet` deletes anything
+   * this corridor no longer wants that nobody has uploaded to, and until
+   * `source` existed that was a safe reading: the corridor was the only
+   * author, so "not wanted here" and "wanted by nobody" were the same
+   * sentence. An agency request is neither uploaded nor in the
+   * requirements, so it matched on both counts — and the requirements
+   * screen re-adopts on every visit to heal a checklist-less case, which
+   * means the traveller deletes the request themselves by opening the
+   * page they were sent to.
+   *
+   * That failure is silent on both sides. No error, no notification, and
+   * a reviewer who looks again simply sees a case that never had the row.
+   */
+  describe("a document the agency asked for", () => {
+    /** What `requestDocument` writes, without reaching for the action. */
+    async function requested(docKey: string, name: string) {
+      await db.insert(documents).values({
+        applicationId,
+        docKey,
+        name,
+        source: "agency",
+        requestedBy: TRAVELLER,
+        isRequired: true,
+        sortOrder: 99,
+      });
+    }
+
+    it("survives a re-adopt of the corridor that never asked for it", async () => {
+      await adoptRuleSet(applicationId, ruleSet([["passport", "Passport", 1]]));
+      await requested("bank_statements", "Bank statements, last 6 months");
+
+      // The requirements screen, healing state on an ordinary visit.
+      await adoptRuleSet(applicationId, ruleSet([["passport", "Passport", 1]]));
+
+      expect((await checklist()).map((d) => d.docKey)).toEqual([
+        "passport",
+        "bank_statements",
+      ]);
+    });
+
+    it("is still swept when the corridor drops one of its own", async () => {
+      // The guard is about who authored the row, not about switching the
+      // sweep off. A corridor document the corridor stopped wanting goes,
+      // exactly as it did before any of this.
+      await adoptRuleSet(
+        applicationId,
+        ruleSet([
+          ["passport", "Passport", 1],
+          ["funds", "Bank statements", 2],
+        ])
+      );
+      await requested("police_check", "Police certificate");
+
+      await adoptRuleSet(applicationId, ruleSet([["passport", "Passport", 1]]));
+
+      const keys = (await checklist()).map((d) => d.docKey);
+      expect(keys).not.toContain("funds");
+      expect(keys).toContain("police_check");
+    });
+
+    it("becomes the corridor's when the corridor catches up and asks for it", async () => {
+      // Otherwise the row sits outside the sweep's reach for good: a
+      // later revision that drops the requirement again could never
+      // remove it, because it would still be filed as the agency's.
+      await adoptRuleSet(applicationId, ruleSet([["passport", "Passport", 1]]));
+      await requested("police_check", "Police certificate");
+
+      await adoptRuleSet(
+        applicationId,
+        ruleSet([
+          ["passport", "Passport", 1],
+          ["police_check", "Police certificate", 2, "Issued within 3 months."],
+        ])
+      );
+
+      const [row] = (await checklist()).filter((d) => d.docKey === "police_check");
+      expect(row.source).toBe("corridor");
+      // Promotion carries the corridor's wording with it — the row is
+      // the corridor's now, and it should read like the corridor's.
+      expect(row.description).toBe("Issued within 3 months.");
+    });
+  });
 });
 
 /**

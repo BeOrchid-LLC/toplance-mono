@@ -103,6 +103,33 @@ export async function uploadDocument(formData: FormData) {
   const applicationId = String(formData.get("application_id") ?? "");
   const docKey = String(formData.get("doc_key") ?? "");
 
+  /*
+   * Temporary. Added 2026-09-10 to settle one question that nothing
+   * outside the server can answer: does the request reach this action
+   * at all?
+   *
+   * A traveller uploading a PDF on staging saw a 403 while the same row
+   * accepted a photograph. Every layer in front — Cloudflare, Coolify's
+   * Traefik, Next itself — was probed from outside and passes PDFs of
+   * every size and content, and production Next has no code path that
+   * answers 403. Those two facts cannot both be true, so one of the
+   * measurements is wrong, and the only untested link is the
+   * authenticated request itself.
+   *
+   * A line here means the body arrived and the answer is below. No line
+   * means it never got this far, and the answer is in front of the app.
+   * Logged before anything is read, so even a malformed multipart says
+   * so. Remove once that is known.
+   */
+  const arrived = formData.get("file");
+  console.error(
+    `[upload] arrived application=${applicationId || "(none)"} ` +
+      `doc=${docKey || "(none)"} ` +
+      (arrived instanceof File
+        ? `name=${JSON.stringify(arrived.name)} type=${arrived.type || "(none)"} bytes=${arrived.size}`
+        : `file=(not a File: ${typeof arrived})`)
+  );
+
   let actorId: string;
   try {
     // Before the file is read, so an unauthorized caller never causes an
@@ -144,6 +171,7 @@ export async function uploadDocument(formData: FormData) {
    */
   const rejection = validateUpload(file);
   if (rejection) {
+    console.error(`[upload] refused doc=${docKey} reason=${rejection}`);
     return {
       error: UPLOAD_ACTIONS[rejection][locale].replace("{size}", MAX_UPLOAD_LABEL),
     };
@@ -174,7 +202,8 @@ export async function uploadDocument(formData: FormData) {
 
   try {
     await putDocument(path, file);
-  } catch {
+  } catch (error) {
+    console.error(`[upload] storage write failed doc=${docKey}`, error);
     return { error: UPLOAD_ACTIONS.uploadFailed[locale] };
   }
 

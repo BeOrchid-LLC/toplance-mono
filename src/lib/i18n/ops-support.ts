@@ -123,10 +123,15 @@ export const OPS_SUPPORT: {
     tw: "Hwehwɛ adwumakuo anaa asɛmti so",
     zu: "Sesha nge-ejensi noma isihloko",
   },
+  /**
+   * "All requests", not "Any state" — renamed 2026-09-10 at the
+   * client's request. Same nouns as `requestsWord`, so the closed
+   * dropdown and the count badge beside it speak of the same thing.
+   */
   anyState: {
-    en: "Any state", ha: "Kowane hali", yo: "Ipò yòówù", ig: "Ọnọdụ ọ bụla",
-    fr: "Tout état", pt: "Qualquer estado", sw: "Hali yoyote", ar: "أي حالة",
-    tw: "Tebea biara", zu: "Noma isiphi isimo",
+    en: "All requests", ha: "Duk buƙatu", yo: "Gbogbo ìbéèrè", ig: "Arịrịọ niile",
+    fr: "Toutes les demandes", pt: "Todos os pedidos", sw: "Maombi yote",
+    ar: "كل الطلبات", tw: "Abisadeɛ nyinaa", zu: "Zonke izicelo",
   },
   stateOpen: {
     en: "Open", ha: "A buɗe", yo: "Ṣí sílẹ̀", ig: "Emeghere", fr: "Ouverte",

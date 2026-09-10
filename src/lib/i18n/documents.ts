@@ -29,6 +29,31 @@ export const DOCUMENTS: {
    * upload rather than buried in terms.
    */
   precheckDisclosure: L;
+  /**
+   * The label on the disclosure that folds `intro`, `UPLOADS.guidance`
+   * and `precheckDisclosure` away. It names what is inside rather than
+   * the act of opening it — "Show more" would be a label for the
+   * chevron, not for the three paragraphs behind it.
+   */
+  guidanceToggle: L;
+  /**
+   * "{pct}% collected" — the figure `CompletionRing` drew, kept at the
+   * client's request when the ring itself came off this screen.
+   *
+   * The word travels with the number for the reason the ring's own
+   * caption existed: a bare percentage on a documents screen reads as
+   * "how far through the application am I", which it is not — it counts
+   * files uploaded, not files verified and not a decision. It is also
+   * translated here, which the ring's hardcoded English "collected"
+   * never was.
+   */
+  collectedCount: L;
+  /**
+   * The single word inside the ring, under the figure. Separate from
+   * `collectedCount` because the ring stacks the number and the word on
+   * two lines, and the accessible name needs them as one sentence.
+   */
+  collectedCaption: L;
   needsAttention: L;
   stillToUpload: L;
   done: L;
@@ -100,6 +125,42 @@ export const DOCUMENTS: {
     ar: "يُفحَص كل ملف ترفعه بواسطة برنامج أولاً — يبحث عن الصور المظلمة أو المقصوصة أو منتهية الصلاحية، لتعرف ذلك خلال دقائق بدل أيام. لا أحد في Toplance يقرأ مستنداتك؛ وكالتك وحدها.",
     tw: "Software na edi kan hwɛ fael biara a wode ba — ɛhwehwɛ mfonini a esum, wɔatwa mu, anaa ne berɛ atwam, sɛdeɛ wobɛte wɔ simma mu na ɛnyɛ nna. Obiara nni Toplance a ɔkenkan wo nkrataa; wo ahyehyɛdeɛ nko ara.",
     zu: "Yonke ifayela olilayishayo lihlolwa kuqala isofthiwe — ifuna izithombe ezimnyama kakhulu, ezinqunyiwe, noma ezidlulelwe yisikhathi, ukuze uzwe ngazo ngemizuzu esikhundleni sezinsuku. Akekho e-Toplance ofunda amadokhumenti akho; inkampani yakho kuphela.",
+  },
+  guidanceToggle: {
+    en: "How your files are checked",
+    ha: "Yadda ake duba fayilolinku",
+    yo: "Bí a ṣe ń yẹ àwọn fáìlì yín wò",
+    ig: "Otú e si enyocha faịlụ gị",
+    fr: "Comment vos fichiers sont vérifiés",
+    pt: "Como os seus ficheiros são verificados",
+    sw: "Jinsi faili zako zinavyokaguliwa",
+    ar: "كيف تُفحَص ملفاتك",
+    tw: "Sɛdeɛ wɔhwɛ wo fael ahoroɔ",
+    zu: "Indlela amafayela akho ahlolwa ngayo",
+  },
+  collectedCount: {
+    en: "{pct}% collected",
+    ha: "An tattara {pct}%",
+    yo: "{pct}% tí a ti kójọ",
+    ig: "{pct}% anakọtara",
+    fr: "{pct}% collectés",
+    pt: "{pct}% recolhidos",
+    sw: "{pct}% zimekusanywa",
+    ar: "تم جمع {pct}%",
+    tw: "Wɔaboaboa {pct}% ano",
+    zu: "{pct}% okuqoqiwe",
+  },
+  collectedCaption: {
+    en: "collected",
+    ha: "an tattara",
+    yo: "tí a kójọ",
+    ig: "anakọtara",
+    fr: "collectés",
+    pt: "recolhidos",
+    sw: "zimekusanywa",
+    ar: "مجموعة",
+    tw: "aboaboa ano",
+    zu: "okuqoqiwe",
   },
   intro: {
     en: "Each file is checked automatically within a few seconds of arriving, then confirmed by a person before submission.",

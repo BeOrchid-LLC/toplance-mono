@@ -5,10 +5,16 @@ import { DocumentRow } from "@/components/app/document-row";
 import { DownloadDocuments } from "@/components/shared/download-documents";
 import { UploadOutcomeProvider } from "@/components/app/upload-outcome";
 import { SubmitButton } from "@/components/app/submit-button";
-import { CompletionRing } from "@/components/app/completion-ring";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { Badge } from "@/components/ui/badge";
+import { CompletionRing } from "@/components/app/completion-ring";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { canSubmitFrom, submissionNotice } from "@/lib/domain/status";
 import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
 import { MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
@@ -106,65 +112,135 @@ export default async function DocumentsPage() {
 
   return (
     <main id="main">
-      <Shell className="py-8 md:py-10">
-        <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
-          <div>
-            <h1 className="t-h2">{t.heading[locale]}</h1>
-            {/* Only once there is something to download. An empty
-                checklist offering a copy of nothing is a button that
-                exists to disappoint, and the route answers 404 for the
-                same state. */}
-            {uploaded > 0 && (
-              <div className="mt-4">
-                <DownloadDocuments
-                  applicationId={application.id}
-                  label={ARCHIVE.travelerLabel[locale]}
-                  preparingLabel={ARCHIVE.preparingLabel[locale]}
-                />
-              </div>
-            )}
+      {/* The header follows the reader down the page.
+
+          This screen is a list of eight to twelve documents and the
+          reason to be on it is to work through them, so the two things
+          that orient that work — which screen this is, and how much of
+          it is done — should not be things you scroll back up to find.
+          It sticks under the app bar rather than at `top-0`, because
+          `AppBar` is already `sticky top-0 z-40`; `--bar-h` is that
+          bar's height and `z-30` puts this underneath it, so the two
+          never overlap. `rail.tsx` offsets by the same token.
+
+          Full-bleed background with the row inside a `Shell`, the same
+          construction and for the same reason as `AppBar`: a sticky
+          strip that stops short of the edges reads as a floating card,
+          while the heading still starts on the measure every other
+          heading starts on.
+
+          The height cap is the one thing that makes this safe. A sticky
+          box taller than the space under the bar can never be scrolled
+          past, so on a short viewport with the guidance open the
+          overflow scrolls inside the header instead of trapping the
+          page. */}
+      <div className="sticky top-[var(--bar-h)] z-30 max-h-[calc(100dvh-var(--bar-h))] overflow-y-auto border-b border-border bg-bg">
+        <Shell className="py-4 md:py-5">
+          {/* The ring stays, at the client's request, and the download
+              button rides with it — the two things that were on this
+              row before now travel together into the strip that follows
+              the reader down.
+
+              `items-center` rather than `items-start`: the button sits
+              beside a 96px circle, and aligning their tops leaves the
+              button floating against the ring's shoulder.
+
+              96px, not the 120px it was. The figure inside is `t-h3` in
+              a 72px opening at this size — "100%" measures about 62px,
+              so three digits still clear the arc, which is the
+              constraint the original comment inside the ring is about.
+              What 96 buys is a strip that is always on screen costing
+              ~150px instead of ~190px. */}
+          <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+            <div className="min-w-0">
+              <h1 className="t-h2">{t.heading[locale]}</h1>
+              {/* Only once there is something to download. An empty
+                  checklist offering a copy of nothing is a button that
+                  exists to disappoint, and the route answers 404 for the
+                  same state. */}
+              {uploaded > 0 && (
+                <div className="mt-4">
+                  <DownloadDocuments
+                    applicationId={application.id}
+                    label={ARCHIVE.travelerLabel[locale]}
+                    preparingLabel={ARCHIVE.preparingLabel[locale]}
+                  />
+                </div>
+              )}
+            </div>
+            <CompletionRing
+              pct={completion.pct}
+              size={96}
+              caption={t.collectedCaption[locale]}
+              ariaLabel={fill(t.collectedCount[locale], {
+                pct: String(completion.pct),
+              })}
+            />
           </div>
-          <CompletionRing pct={completion.pct} size={120} />
-        </div>
 
-        {/* Three columns, not one stacked block and not one long line.
+          {/* Folded shut by default.
 
-            Stacked in a 62ch column beside the ring — what this was —
-            three paragraphs took twice the height for the same words and
-            pushed the first document off the fold, which is what the
-            client saw. But simply removing the measure trades that for a
-            140-character line at this page's width, which is the other
-            way to make a paragraph unreadable.
+              These three paragraphs are read once, on the first visit,
+              and are furniture on every visit after it — but they were
+              permanently on screen, and with the heading and the ring
+              above them they took the top third of the page before the
+              first upload button. Three columns was the last attempt at
+              this and bought back a third of the height; the client
+              asked again on 10 September, and the honest answer to
+              copy that matters once is a disclosure, not a smaller
+              font.
 
-            Side by side, each block keeps a sane measure, the row fills
-            the width of the panels it explains, and the whole explainer
-            costs a third of the vertical space. §6's measures are about
-            a paragraph being readable; a column here is one.
+              `type="single" collapsible` — one panel, and clicking the
+              open one shuts it, which is what "click to open, click to
+              close" asks for. `AccordionItem` drops its bottom rule
+              because the sticky container already carries one. */}
+          <Accordion type="single" collapsible>
+            <AccordionItem value="guidance" className="border-b-0">
+              <AccordionTrigger className="min-h-0 py-3 text-base">
+                {t.guidanceToggle[locale]}
+              </AccordionTrigger>
+              <AccordionContent className="max-w-none pb-4">
+                {/* Three columns, not one stacked block and not one
+                    long line. Stacked in a 62ch column, three
+                    paragraphs take twice the height for the same words;
+                    removing the measure trades that for a
+                    140-character line at this page's width, which is
+                    the other way to make a paragraph unreadable. §6's
+                    measures are about a paragraph being readable, and a
+                    column here is one.
 
-            They stack below `md`, where there is only one column's worth
-            of width to begin with. */}
-        <div className="mt-6 grid gap-x-10 gap-y-3 border-t border-border pt-6 md:grid-cols-3">
-          <p className="t-muted">
-            {t.intro[locale]} {VERIFIED_MEANS[locale]}
-          </p>
-          {/* Said before they photograph anything, not after a refusal.
-              Legibility is the largest single cause of a re-upload and
-              the one thing entirely within the traveller's control at
-              the moment they take the picture. */}
-          <p className="t-muted">
-            {fill(UPLOADS.guidance[locale], {
-              formats: UPLOADS.acceptedFormats[locale],
-              size: MAX_UPLOAD_LABEL,
-            })}
-          </p>
-          {/* Mandatory, not a nicety. Decision 2 made the pre-check
-              unconditional — there is no setting under which a
-              traveller's file is not read by a machine — so saying so
-              is what makes it honest, and it is said where they upload
-              rather than buried in terms. */}
-          <p className="t-muted">{t.precheckDisclosure[locale]}</p>
-        </div>
+                    They stack below `md`, where there is only one
+                    column's worth of width to begin with. */}
+                <div className="grid gap-x-10 gap-y-3 md:grid-cols-3">
+                  <p className="t-muted">
+                    {t.intro[locale]} {VERIFIED_MEANS[locale]}
+                  </p>
+                  {/* Said before they photograph anything, not after a
+                      refusal. Legibility is the largest single cause of
+                      a re-upload and the one thing entirely within the
+                      traveller's control at the moment they take the
+                      picture. */}
+                  <p className="t-muted">
+                    {fill(UPLOADS.guidance[locale], {
+                      formats: UPLOADS.acceptedFormats[locale],
+                      size: MAX_UPLOAD_LABEL,
+                    })}
+                  </p>
+                  {/* Mandatory, not a nicety. Decision 2 made the
+                      pre-check unconditional — there is no setting
+                      under which a traveller's file is not read by a
+                      machine — so saying so is what makes it honest,
+                      and it is said where they upload rather than
+                      buried in terms. */}
+                  <p className="t-muted">{t.precheckDisclosure[locale]}</p>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </Shell>
+      </div>
 
+      <Shell className="py-6 md:py-8">
 {/* The ring reaches 100% when everything is uploaded; this
             section needs the stronger condition — every required
             document past review — because that is what the submit

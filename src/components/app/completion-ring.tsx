@@ -17,9 +17,22 @@
 export function CompletionRing({
   pct,
   size = 140,
+  caption,
+  ariaLabel,
 }: {
   pct: number;
   size?: number;
+  /**
+   * The word under the figure, translated by the caller.
+   *
+   * It was the string "collected", hardcoded, on a screen that exists in
+   * ten languages — so a Hausa or Yoruba traveller read their whole
+   * documents page in their own language apart from the one word
+   * explaining the largest number on it. Same for `ariaLabel`, which
+   * announced English to every screen reader.
+   */
+  caption: string;
+  ariaLabel: string;
 }) {
   const stroke = 12;
   const radius = (size - stroke) / 2;
@@ -31,7 +44,7 @@ export function CompletionRing({
       className="relative shrink-0"
       style={{ width: size, height: size }}
       role="img"
-      aria-label={`${pct}% of required documents collected`}
+      aria-label={ariaLabel}
     >
       <svg width={size} height={size} className="-rotate-90" aria-hidden>
         <circle
@@ -67,8 +80,15 @@ export function CompletionRing({
             were told two different things about one figure, and the
             sighted one was told the stronger of the two. 100% collected
             is true the moment the last required file is uploaded; 100%
-            complete is not, because review has not happened yet. */}
-        <span className="special-caps mt-1.5">collected</span>
+            complete is not, because review has not happened yet.
+
+            `truncate` because the word is a translation now: "collected"
+            is nine characters and `okuqoqiwe` is nine, but several
+            locales are longer, and a caption that wraps inside the arc
+            pushes the figure off centre. */}
+        <span className="special-caps mt-1.5 max-w-full truncate px-1">
+          {caption}
+        </span>
       </span>
     </div>
   );

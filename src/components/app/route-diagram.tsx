@@ -100,13 +100,22 @@ const isMarked = (stage: RouteStage) =>
  * is that colour classifies and an outcome is a classification. These
  * are `--success` and `--danger`, which carry the spec's `--clear` and
  * `--stop` values — the palette kept the existing identifiers.
+ *
+ * The outcome is asked on its own, and that is load-bearing rather than
+ * a simplification. It used to be `stage.outcome && filled`, which is a
+ * pair that cannot occur: `routeOf` sets an outcome only on `decided`
+ * and only once the status is approved or rejected, and that is exactly
+ * when `decided` is the marker stage — so its state is `current`, never
+ * `reached`. Every granted visa painted its last segment `--border`,
+ * and `bg-success` and `bg-danger` never rendered anywhere in the
+ * product. An outcome is already proof the stage is done; asking a
+ * second time asked for the one combination the model forbids.
  */
 function fillOf(stage: RouteStage): string {
-  const filled = stage.state === "reached" || stage.state === "returned";
-
-  if (stage.outcome && filled) {
+  if (stage.outcome) {
     return stage.outcome === "granted" ? "bg-success" : "bg-danger";
   }
+  const filled = stage.state === "reached" || stage.state === "returned";
   return filled ? "bg-brand" : "bg-border";
 }
 

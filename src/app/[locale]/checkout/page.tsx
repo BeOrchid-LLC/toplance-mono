@@ -45,14 +45,21 @@ export default async function CheckoutPage() {
 
   const locale = await getLocale();
   const profile = await getProfile();
-  if (!profile) redirect(withLocalePrefix("/go", await getLocale()));
+  if (!profile) redirect(withLocalePrefix("/go", locale));
 
   // An agency member or a staff account has no application to pay for,
   // and their own console is the honest place to send them.
-  if (profile.role !== "traveler") redirect(homeFor(profile.role));
+  //
+  // Prefixed: `homeFor` hands back a bare console path, which is
+  // English by the time the proxy resolves it.
+  if (profile.role !== "traveler") {
+    redirect(withLocalePrefix(homeFor(profile.role), locale));
+  }
 
   const application = await getApplication();
-  if (!application || (await isApplicationPaid(application.id))) redirect(withLocalePrefix("/app", await getLocale()));
+  if (!application || (await isApplicationPaid(application.id))) {
+    redirect(withLocalePrefix("/app", locale));
+  }
 
   const card = await activeRateCard();
   const fee = clientCharge(card);

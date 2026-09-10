@@ -201,7 +201,7 @@ export default async function EmployerConsolePage() {
       const created = await createOrganisationTx(profile.id, orgName);
       // Straight back through the front door, so the roster below reads
       // the membership this just wrote rather than a stale `undefined`.
-      if (!("error" in created)) redirect(withLocalePrefix("/agency", await getLocale()));
+      if (!("error" in created)) redirect(withLocalePrefix("/agency", locale));
       // Kept, not swallowed. This branch used to drop the refusal on the
       // floor: a director whose registered name ran past `NAME_MAX`
       // signed up successfully, landed here, and was shown a blank
@@ -228,7 +228,9 @@ export default async function EmployerConsolePage() {
       .from(applications)
       .where(eq(applications.travelerId, profile.id))
       .limit(1);
-    if (ownCase) redirect(homeFor("traveler"));
+    // Prefixed. `homeFor` is locale-blind by design — it names a
+    // console, not a URL a particular reader should be sent to.
+    if (ownCase) redirect(withLocalePrefix(homeFor("traveler"), locale));
 
     return (
       <AgencyShell

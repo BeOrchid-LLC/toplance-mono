@@ -7,7 +7,8 @@ import { ERROR_PAGE } from "@/lib/i18n/errors";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/locales";
 
 /**
- * The boundary for everything under a locale that no nearer boundary\n * caught — the marketing pages, `/go`, `/checkout`, an invitation.
+ * The boundary for everything under a locale that no nearer boundary
+ * caught — the marketing pages, `/go`, `/checkout`, an invitation.
  *
  * The locale comes from `useParams` rather than `getLocale()`: this is a
  * client component, and the segment is the one piece of routing state

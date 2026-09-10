@@ -90,13 +90,17 @@ const plexSansVietnamese = localFont({
 });
 
 /**
- * The last family in the chain carries `fallback`, and only it. `fallback` is baked INTO
- * the variable next/font emits, so putting it on the first family
- * would place system-ui ahead of the other three subsets and every
- * Arabic glyph would land on Arial before Plex Sans Arabic was ever
- * reached. That is exactly the bug this split was made to fix, and it
- * is easy to re-introduce by adding `fallback` to any of the three
- * above.
+ * No family here carries `fallback`, and none may. `fallback` is baked
+ * INTO the variable next/font emits, so a list on any of these
+ * families would expand mid-chain — putting system-ui ahead of every
+ * subset after it, and landing each Arabic glyph on Arial before Plex
+ * Sans Arabic was ever reached. That is exactly the bug this split was
+ * made to fix.
+ *
+ * The generics live at the end of `--sans`, `--display` and `--data` in
+ * `globals.css` instead, which is the one place they can sit behind all
+ * five real families. `fonts.test.ts` asserts both halves: the ordering
+ * there, and that no `localFont` call in this file grows a `fallback`.
  */
 const plexSansArabic = localFont({
   src: [

@@ -7,7 +7,9 @@ import { ERROR_PAGE } from "@/lib/i18n/errors";
 import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n/locales";
 
 /**
- * The traveller surface's boundary. A fault here lands on somebody\n * part-way through a visa application, so the copy says first that\n * nothing they uploaded has gone.
+ * The traveller surface's boundary. A fault here lands on somebody
+ * part-way through a visa application, so the copy says first that
+ * nothing they uploaded has gone.
  *
  * The locale comes from `useParams` rather than `getLocale()`: this is a
  * client component, and the segment is the one piece of routing state

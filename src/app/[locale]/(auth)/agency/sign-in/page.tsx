@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 
 import { isInternalPath, SIGN_IN_DOOR } from "@/lib/auth/routes";
+import { withLocalePrefix } from "@/lib/i18n/paths";
+import { getLocale } from "@/lib/i18n/server";
 
 /**
  * The organisation door used to be its own, with its own copy beside
@@ -19,6 +21,11 @@ import { isInternalPath, SIGN_IN_DOOR } from "@/lib/auth/routes";
  * `next` is carried across so a lapsed session still lands where it was
  * interrupted; `isInternalPath` is what keeps that from becoming an open
  * redirect, and the proxy sets the parameter in the first place.
+ *
+ * Prefixed on the way out. `SIGN_IN_DOOR` is one constant for the whole
+ * product and carries no locale, so redirecting to it bare answers a
+ * Hausa reader's own bookmark with the English door — and `next` is
+ * encoded into the query, where the prefix on the path cannot reach it.
  */
 export default async function AgencySignInRedirect({
   searchParams,
@@ -28,8 +35,11 @@ export default async function AgencySignInRedirect({
   const { next } = await searchParams;
 
   redirect(
-    isInternalPath(next)
-      ? `${SIGN_IN_DOOR}?next=${encodeURIComponent(next)}`
-      : SIGN_IN_DOOR
+    withLocalePrefix(
+      isInternalPath(next)
+        ? `${SIGN_IN_DOOR}?next=${encodeURIComponent(next)}`
+        : SIGN_IN_DOOR,
+      await getLocale()
+    )
   );
 }

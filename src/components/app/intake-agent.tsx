@@ -727,8 +727,17 @@ function AgentLayout({
   // The record owns the viewport height under the chrome, which is now a
   // single bar at every width — the phone nav lives in the bar's
   // hamburger, not in a second rail below it.
+  //
+  // `<main id="main">` rather than a div, because this is the `(app)`
+  // group's one route that renders no `<main>` of its own — the six
+  // sibling pages each carry the id in their own page file, and the
+  // group's `SkipLink` points at it. Without this the skip link on
+  // `/app/agent` was a link to nothing: tab, enter, nothing moves.
   return (
-    <div className="mx-auto flex h-[calc(100dvh-var(--bar-h))] w-full max-w-[1240px] flex-col">
+    <main
+      id="main"
+      className="mx-auto flex h-[calc(100dvh-var(--bar-h))] w-full max-w-[1240px] flex-col"
+    >
       <div className="relative isolate flex min-h-0 flex-1 flex-col">
         {/* Centred in whatever room is left, which is safe precisely
             because the document does not grow: all ten fields render
@@ -780,7 +789,7 @@ function AgentLayout({
           onToggleTranscript={() => setTranscript((open) => !open)}
         />
       )}
-    </div>
+    </main>
   );
 }
 

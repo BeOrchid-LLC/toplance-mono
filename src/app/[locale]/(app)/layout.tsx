@@ -33,14 +33,21 @@ export default async function AppLayout({
   // auth pages, so sending a session that has no profile row back there
   // bounces it straight here again — an endless redirect rather than an
   // explanation. `/go` is where that chain is allowed to stop.
-  if (!profile) redirect(withLocalePrefix("/go", await getLocale()));
+  if (!profile) redirect(withLocalePrefix("/go", locale));
 
   // Holding a profile is not the same as belonging here. `/go` sends
   // each role to its own console, but nothing routed someone who typed
   // this path, kept a bookmark or followed a stale link — and the answer
   // has to come before the reads below, because `getApplication`
   // opens a draft on sight and a reviewer must never come to own one.
-  if (profile.role !== "traveler") redirect(homeFor(profile.role));
+  //
+  // Prefixed like every other gate here. `homeFor` answers with a bare
+  // console path — it is the same string for every reader — so handing
+  // it straight to `redirect()` walks a Hausa reviewer into the English
+  // console at the one moment they were being sent somewhere useful.
+  if (profile.role !== "traveler") {
+    redirect(withLocalePrefix(homeFor(profile.role), locale));
+  }
 
   const [application, notifications, unreadCount, unreadMessages, avatarUrl] =
     await Promise.all([
@@ -75,7 +82,7 @@ export default async function AppLayout({
       applicationPaid: application ? await isApplicationPaid(application.id) : false,
     }) === "checkout"
   ) {
-    redirect(withLocalePrefix("/checkout", await getLocale()));
+    redirect(withLocalePrefix("/checkout", locale));
   }
 
   // Profile is reachable from the account menu (`profileHref` below),

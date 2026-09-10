@@ -16,7 +16,15 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         // that would have been 4.985:1. An input is not inside a clip, so
         // the outline lands with room around it.
         "placeholder:text-ink-3",
-        "aria-invalid:border-danger aria-invalid:ring-[color-mix(in_srgb,var(--danger)_22%,transparent)]",
+        // Border alone, like `Textarea`. The `aria-invalid:ring-…` that
+        // stood here set `--tw-ring-color` and nothing else: Tailwind v4
+        // composes the ring's box-shadow in the ring-*width* utility,
+        // and the only one on this component was the
+        // `focus-visible:ring-[3px]` removed above. So the wash painted
+        // in no state at all, and giving it a width back would mark
+        // every invalid field with a permanent 3px halo the rest of the
+        // product does not use.
+        "aria-invalid:border-danger",
         "disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink-3",
         "file:h-full file:border-0 file:bg-transparent file:text-base file:font-medium",
         className

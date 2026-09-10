@@ -131,8 +131,16 @@ async function TenantsContent({
   const params = await searchParams;
   const search = (params.q ?? "").trim();
   const state = params.state ?? "";
-  const sort = readSort(params.sort, TENANT_SORTS, "agency");
-  const dir = readDir(params.dir, "asc");
+  // Newest agency first, at the client's request on 10 September: an
+  // agency created during the call came third under the old A-Z
+  // default, and the reason to open this table at all is usually the
+  // one that just arrived. Alphabetical is still a click away, and
+  // `SortHead` writes `dir` into the URL on every click, so this
+  // fallback only decides the view nobody has sorted yet.
+  const sort = readSort(params.sort, TENANT_SORTS, "added");
+  // Descending belongs to the date column alone. A hand-typed
+  // `?sort=agency` with no `dir` should still read A-Z, not Z-A.
+  const dir = readDir(params.dir, sort === "added" ? "desc" : "asc");
 
   // Any narrowing at all, however many rows survive it — the panel
   // heading has to say "showing 3 of 104" whenever the reader is not

@@ -48,17 +48,31 @@ export const AGENCY_VERIFICATION: {
     tw: "Yɛresɔ {agency} ano",
     zu: "Siqinisekisa i-{agency}",
   },
+  /**
+   * Rewritten 2026-09-10 at the client's request. The previous copy —
+   * "Our team is reviewing the documents you sent" — described a review
+   * already under way, and a director who had sent nothing read it as a
+   * status about work that did not exist. What actually happens is an
+   * email asking for the documents, so that is what this now says.
+   *
+   * The subscription link the old copy promised is deliberately not
+   * mentioned, and nothing is lost by dropping it: it is a real link in
+   * the activation email itself — `kybActivatedEmail` in
+   * `@/lib/notifications/templates`, whose CTA is "Start your
+   * subscription" pointing at `billingUrl`. Promising it here described
+   * a button on a letter that has not arrived yet.
+   */
   body: {
-    en: "Our team is reviewing the documents you sent. We will email you the moment your console is open, with a link to start your subscription.",
-    ha: "Ƙungiyarmu tana bitar takardun da kuka aika. Za mu aika muku da imel nan da nan da na'urar sarrafa ta buɗe, tare da hanyar haɗi don fara biyan kuɗin ku.",
-    yo: "Ẹgbẹ́ wa ń yẹ àwọn ìwé tí ẹ rán sí wa wò. A ó fi ímeèlì ránṣẹ́ sí yín kété tí kọ̀nsólù yín bá ṣí, pẹ̀lú ọ̀nà àsopọ̀ láti bẹ̀rẹ̀ ìforúkọsílẹ̀ yín.",
-    ig: "Ndị otu anyị na-enyocha akwụkwọ ị zitere. Anyị ga-ezigara gị ozi ozugbo consul gị meghere, tinyere njikọ iji malite ndenye aha gị.",
-    fr: "Notre équipe examine les documents que vous avez envoyés. Nous vous écrirons dès l'ouverture de votre console, avec un lien pour lancer votre abonnement.",
-    pt: "A nossa equipa está a analisar os documentos que enviou. Enviaremos um e-mail assim que a sua consola abrir, com uma ligação para iniciar a sua subscrição.",
-    sw: "Timu yetu inakagua nyaraka ulizotuma. Tutakutumia barua pepe mara kiweko chako kitakapofunguka, pamoja na kiungo cha kuanzisha usajili wako.",
-    ar: "يراجع فريقنا المستندات التي أرسلتها. سنراسلك بالبريد فور فتح لوحتك، مع رابط لبدء اشتراكك.",
-    tw: "Yɛn kuo no rehwɛ nkrataa a wode kɔmaa yɛn no mu. Yɛbɛsoma email akɔma wo bere a wo console no bue, a link a wode bɛfiri wo subscription ase ka ho.",
-    zu: "Ithimba lethu libuyekeza amadokhumenti owathumele. Sizokuthumela i-imeyili ngokushesha lapho ikhonsoli yakho ivuleka, nesixhumanisi sokuqala okubhalisayo kwakho.",
+    en: "We have sent you an email request for verification documents. Once your documents are verified, we will activate your account.",
+    ha: "Mun aika muku da imel muna neman takardun tabbatarwa. Da zarar an tabbatar da takardunku, za mu kunna asusunku.",
+    yo: "A ti fi ímeèlì ránṣẹ́ sí yín láti béèrè àwọn ìwé ìjẹ́rìísí. Kété tí a bá ti jẹ́rìísí àwọn ìwé yín, a ó ṣí àkọọ́lẹ̀ yín.",
+    ig: "Anyị ezigala gị ozi ịmeel na-arịọ akwụkwọ nkwenye. Ozugbo anyị kwadoro akwụkwọ gị, anyị ga-agbanye akaụntụ gị.",
+    fr: "Nous vous avons envoyé un e-mail demandant vos documents de vérification. Dès qu'ils seront vérifiés, nous activerons votre compte.",
+    pt: "Enviámos-lhe um e-mail a pedir os documentos de verificação. Assim que os seus documentos forem verificados, ativaremos a sua conta.",
+    sw: "Tumekutumia barua pepe tukiomba nyaraka za uthibitisho. Mara nyaraka zako zitakapothibitishwa, tutawasha akaunti yako.",
+    ar: "لقد أرسلنا إليك بريدًا إلكترونيًا نطلب فيه مستندات التحقق. وبمجرد التحقق من مستنداتك، سنقوم بتفعيل حسابك.",
+    tw: "Yɛasoma email akɔma wo rebisa wo nkrataa a wɔde bɛsɔ wo ano. Sɛ yɛsɔ wo nkrataa no ano wie a, yɛbɛbue wo akawnt no.",
+    zu: "Sikuthumele i-imeyili sicela amadokhumenti okuqinisekisa. Uma amadokhumenti akho eseqinisekisiwe, sizovula i-akhawunti yakho.",
   },
   /**
    * `{email}` rather than a hard-coded address: the support address is

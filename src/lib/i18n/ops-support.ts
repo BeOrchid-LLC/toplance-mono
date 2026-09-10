@@ -132,9 +132,25 @@ export const OPS_SUPPORT: {
     en: "Open", ha: "A buɗe", yo: "Ṣí sílẹ̀", ig: "Emeghere", fr: "Ouverte",
     pt: "Aberto", sw: "Wazi", ar: "مفتوح", tw: "Abue", zu: "Kuvuliwe",
   },
+  /**
+   * "In progress", not "Claimed" — renamed 2026-09-10 with `claim` and
+   * `tableHead.assignee`, which are the same vocabulary and had to move
+   * together. The client's objection was to the metaphor: claiming
+   * reads like a dispute someone has called a mediator to, when all
+   * that has happened is a colleague picking the ticket up.
+   *
+   * The state says what is happening to the ticket, and the assignee
+   * column beside it says who. The two used to overlap — "Claimed" and
+   * a name — which is the drift the note at the top of this file warns
+   * about.
+   *
+   * The key stays `stateClaimed`: `claimed` is the value in the
+   * database and in `STATE_LABEL`, and renaming the word on the pill is
+   * not a migration.
+   */
   stateClaimed: {
-    en: "Claimed", ha: "An ɗauka", yo: "A gbà", ig: "Ewerela", fr: "Prise en charge",
-    pt: "Atribuído", sw: "Imechukuliwa", ar: "قيد المعالجة", tw: "Wɔafa", zu: "Kuthathiwe",
+    en: "In progress", ha: "Ana kan aiki", yo: "Ó ń lọ lọ́wọ́", ig: "Na-aga n'ihu", fr: "En cours",
+    pt: "Em curso", sw: "Inaendelea", ar: "قيد التنفيذ", tw: "Ɛrekɔ so", zu: "Kuyaqhubeka",
   },
   stateResolved: {
     en: "Resolved", ha: "An warware", yo: "A yanjú", ig: "Edoziela", fr: "Résolue",
@@ -157,18 +173,35 @@ export const OPS_SUPPORT: {
       en: "Status", ha: "Matsayi", yo: "Ipò", ig: "Ọnọdụ", fr: "Statut",
       pt: "Estado", sw: "Hali", ar: "الحالة", tw: "Tebea", zu: "Isimo",
     },
+    /**
+     * "Assignee", not "With" — the key was already `assignee` and only
+     * the word disagreed. A one-word preposition as a column head reads
+     * as a fragment of the sentence in the cell rather than a label for
+     * the column, which is why several locales had to translate it as
+     * one ("Ku-", "Wɔ").
+     */
     assignee: {
-      en: "With", ha: "Tare da", yo: "Pẹ̀lú", ig: "Nʼaka", fr: "Chez",
-      pt: "Com", sw: "Kwa", ar: "لدى", tw: "Wɔ", zu: "Ku-",
+      en: "Assignee", ha: "Wanda aka ba", yo: "Ẹni tí a yàn", ig: "Onye e kenyere", fr: "Responsable",
+      pt: "Responsável", sw: "Aliyekabidhiwa", ar: "المسؤول", tw: "Deɛ wɔde ama", zu: "Obelwe",
     },
     actions: {
       en: "Actions", ha: "Ayyuka", yo: "Ìṣe", ig: "Omume", fr: "Actions",
       pt: "Ações", sw: "Vitendo", ar: "إجراءات", tw: "Nneyɛe", zu: "Izenzo",
     },
   },
+  /**
+   * "Assign to me" — the act named from the presser's side, so the
+   * button and the `Assignee` column it fills use one word. Portuguese
+   * already read "Atribuir a mim" and is unchanged; it had arrived at
+   * the same phrasing on its own.
+   *
+   * It sits beside `release` ("Hand back"), which is its undo and
+   * commits on the click — nothing is taken away by picking a ticket
+   * up, so neither of these confirms.
+   */
   claim: {
-    en: "Claim", ha: "Ɗauka", yo: "Gbà", ig: "Were", fr: "Prendre en charge",
-    pt: "Atribuir a mim", sw: "Chukua", ar: "استلام", tw: "Fa", zu: "Thatha",
+    en: "Assign to me", ha: "Ba ni wannan", yo: "Yàn án fún mi", ig: "Kenye m ya", fr: "M'attribuer",
+    pt: "Atribuir a mim", sw: "Nikabidhi mimi", ar: "إسناد إليّ", tw: "Fa ma me", zu: "Ngabele mina",
   },
   release: {
     en: "Hand back", ha: "Mayar", yo: "Dá padà", ig: "Nyeghachi", fr: "Rendre",

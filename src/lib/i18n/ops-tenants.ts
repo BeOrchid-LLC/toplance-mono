@@ -282,17 +282,28 @@ export const OPS_TENANTS: {
     tw: "Hwehwɛ adwumakuo anaa domain so",
     zu: "Sesha nge-ejensi noma isizinda",
   },
+  /**
+   * "All statuses" — the client's wording, asked for on this table on
+   * 10 September and applied to every status filter in the product on
+   * the same day, because a filter that reads one way on the agencies
+   * table and another on the four beside it is not a filter anyone
+   * learns once.
+   *
+   * The distinction is real, not cosmetic: "Any status" describes what
+   * the filter would match, and "All statuses" describes what is
+   * currently shown. The second is what an unfiltered table is.
+   */
   anyStatus: {
-    en: "Any status",
-    ha: "Kowane matsayi",
-    yo: "Ipò yòówù",
-    ig: "Ọnọdụ ọ bụla",
-    fr: "Tout statut",
-    pt: "Qualquer estado",
-    sw: "Hali yoyote",
-    ar: "أي حالة",
-    tw: "Tebea biara",
-    zu: "Noma isiphi isimo",
+    en: "All statuses",
+    ha: "Duk matsayi",
+    yo: "Gbogbo ipò",
+    ig: "Ọnọdụ niile",
+    fr: "Tous les statuts",
+    pt: "Todos os estados",
+    sw: "Hali zote",
+    ar: "كل الحالات",
+    tw: "Tebea nyinaa",
+    zu: "Zonke izimo",
   },
   agenciesWord: {
     en: "agencies",
@@ -307,16 +318,16 @@ export const OPS_TENANTS: {
     zu: "ama-ejensi",
   },
   emptyTenants: {
-    en: "No agency has been created yet. Provision one from an enquiry below, or start from scratch.",
-    ha: "Ba a ƙirƙiri wata hukuma ba tukuna. Kafa ɗaya daga buƙatar da ke ƙasa, ko fara daga farko.",
-    yo: "A kò tí ì dá ilé-iṣẹ́ kan sílẹ̀. Ṣètò ọ̀kan láti inú ìbéèrè tí ó wà nísàlẹ̀, tàbí bẹ̀rẹ̀ láti ìbẹ̀rẹ̀pẹ̀pẹ̀.",
-    ig: "Etolitebeghị ụlọ ọrụ ọ bụla ma ọlị. Tọlite otu site na arịrịọ dị n'okpuru, ma ọ bụ malite site na mbido.",
+    en: "No agency has been created yet. Create one from an enquiry below, or start from scratch.",
+    ha: "Ba a ƙirƙiri wata hukuma ba tukuna. Ƙirƙiri ɗaya daga buƙatar da ke ƙasa, ko fara daga farko.",
+    yo: "A kò tí ì dá ilé-iṣẹ́ kan sílẹ̀. Ṣẹ̀dá ọ̀kan láti inú ìbéèrè tí ó wà nísàlẹ̀, tàbí bẹ̀rẹ̀ láti ìbẹ̀rẹ̀pẹ̀pẹ̀.",
+    ig: "Etolitebeghị ụlọ ọrụ ọ bụla ma ọlị. Mepụta otu site na arịrịọ dị n'okpuru, ma ọ bụ malite site na mbido.",
     fr: "Aucune agence n'a encore été créée. Créez-en une à partir d'une demande ci-dessous, ou partez de zéro.",
     pt: "Ainda não foi criada nenhuma agência. Crie uma a partir de um pedido abaixo, ou comece do zero.",
-    sw: "Hakuna wakala aliyeundwa bado. Anzisha mmoja kutoka ombi lililo hapa chini, au anza upya.",
+    sw: "Hakuna wakala aliyeundwa bado. Unda mmoja kutoka ombi lililo hapa chini, au anza upya.",
     ar: "لم تُنشأ أي وكالة بعد. أنشئ واحدة من طلب أدناه، أو ابدأ من الصفر.",
-    tw: "Wɔmmɔɔ adwumakuo biara ɛnnye. Fi abisadeɛ a ɛwɔ ase ha si baako, anaasɛ fi ahyɛaseɛ.",
-    zu: "Ayikho i-ejensi esidaliwe okwamanje. Setha eyodwa kusukela esicelweni esingezansi, noma qala kusukela ekuqaleni.",
+    tw: "Wɔmmɔɔ adwumakuo biara ɛnnye. Bɔ baako fi abisadeɛ a ɛwɔ ase ha, anaasɛ fi ahyɛaseɛ.",
+    zu: "Ayikho i-ejensi esidaliwe okwamanje. Dala eyodwa kusukela esicelweni esingezansi, noma qala kusukela ekuqaleni.",
   },
   tableHead: {
     agency: {
@@ -462,17 +473,30 @@ export const OPS_TENANTS: {
     tw: "Kosi {date}",
     zu: "Kuze kube ngu-{date}",
   },
+  /**
+   * "Create agency", not "Provision agency" — renamed 2026-09-10 after
+   * the client stopped the demo to ask what provisioning was. The key
+   * keeps its name: `provisionTenant`, `ProvisionTenant` and
+   * `toplance.tenant_provisioned` are a server action, a component and
+   * an analytics event, and the last of those is a union member in
+   * `@/lib/analytics/events` with an audit trail behind it. The word on
+   * the button is what the client reads; the word in the code is what
+   * the platform already agreed on.
+   *
+   * French, Portuguese and Arabic already said "create" and are
+   * unchanged — they never carried the "provision" metaphor.
+   */
   provisionButton: {
-    en: "Provision agency",
-    ha: "Kafa hukuma",
-    yo: "Ṣètò ilé-iṣẹ́",
-    ig: "Tọlite ụlọ ọrụ",
+    en: "Create agency",
+    ha: "Ƙirƙiri hukuma",
+    yo: "Ṣẹ̀dá ilé-iṣẹ́",
+    ig: "Mepụta ụlọ ọrụ",
     fr: "Créer une agence",
     pt: "Criar agência",
-    sw: "Anzisha wakala",
+    sw: "Unda wakala",
     ar: "إنشاء وكالة",
-    tw: "Hyɛ adwumakuo ase",
-    zu: "Setha i-ejensi",
+    tw: "Bɔ adwumakuo",
+    zu: "Dala i-ejensi",
   },
   provisionTitle: {
     en: "Set up an agency",

@@ -34,8 +34,9 @@ export default async function AgentPage() {
   // Where the completion bar sends them. Two of the three ways intake can
   // finish build no checklist at all, and the upload screen has nothing
   // to show those travellers — see `intakeNextStep`. Re-read on the
-  // `router.refresh()` the agent fires the moment it finishes, so this is
-  // current by the time the bar reading it renders.
+  // `router.refresh()` the agent fires the moment it finishes; that
+  // refresh races the bar's first paint, which the prop's own comment
+  // in `intake-agent.tsx` explains.
   const hasChecklist = (await getDocuments(application.id)).length > 0;
 
   // Decided on the server: the key is server-only, and the client needs

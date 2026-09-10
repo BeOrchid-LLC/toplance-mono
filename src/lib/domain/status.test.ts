@@ -153,6 +153,25 @@ describe("documentVerdict", () => {
     expect(doc({ state: "flagged", checkedAt: new Date() })).toBe("human");
   });
 
+  /**
+   * `verified` is human on the strength of the state alone, and this is
+   * the assertion that says why it cannot lean on `checkedAt`.
+   *
+   * The AI never writes `verified` — `applyPrecheckTx` refuses to, and
+   * submission and billing both gate on that column — so the state is
+   * already proof a person signed it off. `checkedAt` is not: 58 of the
+   * 62 verified rows in a local database have it null, left by fixtures
+   * and by whatever wrote them before `reviewDocumentTx` did. Requiring
+   * it here marched every one of those back into the reviewer's
+   * "Awaiting review" pile as work nobody owed.
+   */
+  it("trusts verified without a timestamp, because the AI cannot write it", () => {
+    expect(doc({ state: "verified", checkedAt: null, precheck: null })).toBe("human");
+    expect(doc({ state: "verified", checkedAt: null, precheck: { verdict: "pass" } })).toBe(
+      "human"
+    );
+  });
+
   /*
    * The bug, stated directly: an AI flag is not a review. It has a
    * `reason` and a `reasonCode` like a human flag does, and no

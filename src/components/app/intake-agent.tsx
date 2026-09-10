@@ -65,9 +65,20 @@ export function IntakeAgent({
   aiEnabled: boolean;
   /**
    * Whether this traveller's answers built a checklist, which decides
-   * where the completion bar sends them. Read on the server and refreshed
-   * by the `router.refresh()` the `done` effect already fires, so it is
-   * true by the time the bar that reads it appears.
+   * where the completion bar sends them.
+   *
+   * Read on the server, and brought up to date by the `router.refresh()`
+   * the `done` effect already fires — but not synchronously with the bar
+   * appearing, so the CTA can read "See my requirements" for the moment
+   * the refresh is in flight and then settle on "Upload my documents".
+   * Observed, not theorised: caught in a browser on 10 September.
+   *
+   * Left as a race rather than closed, because both destinations are
+   * real screens that answer for themselves and the wrong one costs a
+   * click. Closing it means the completion path carrying the answer
+   * itself — `answerQuestion` already returns `complete` to the scripted
+   * flow — and the live agent has no equivalent, so it would be one
+   * mechanism for one path and a second for the other.
    */
   hasChecklist: boolean;
 }) {

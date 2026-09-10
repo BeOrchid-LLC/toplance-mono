@@ -266,11 +266,18 @@ export function documentVerdict(doc: {
   checkedAt: Date | null;
   precheck: unknown;
 }): DocumentVerdict {
-  // A person, whichever way they went. `uploadDocument` clears this on a
-  // re-upload, so it can only be about the file currently on the row.
-  if (doc.checkedAt !== null && (doc.state === "verified" || doc.state === "flagged")) {
-    return "human";
-  }
+  // `verified` is a person on the strength of the state alone: the AI
+  // cannot write it, which is the invariant submission and billing are
+  // already built on. It deliberately does not also require `checkedAt`
+  // — that column is null on most verified rows in practice, left so by
+  // fixtures and by whatever wrote them before `reviewDocumentTx`, and
+  // demanding it here reads a finished document as outstanding work.
+  if (doc.state === "verified") return "human";
+  // A flag is the ambiguous one, because the AI writes flags too. Here
+  // `checkedAt` is the discriminator, and it is a sound one: only
+  // `reviewDocumentTx` sets it, and `uploadDocument` clears it on a
+  // re-upload so it can only be about the file currently on the row.
+  if (doc.state === "flagged" && doc.checkedAt !== null) return "human";
   if (doc.precheck == null) return "none";
   if (doc.state === "flagged") return "ai_flagged";
   // A pass leaves the row on `checking`, waiting for a person.

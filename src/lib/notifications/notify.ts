@@ -21,6 +21,7 @@ import {
   checklistCompleteEmail,
   companionDigestEmail,
   documentFlaggedEmail,
+  documentRequestedEmail,
   itineraryReadyEmail,
   messageReceivedEmail,
   statusChangedEmail,
@@ -79,6 +80,7 @@ export type NotificationPayload = {
   checklist_complete: { caseRef: string; url: string };
   status_changed: { statusLabel: string; message: string; url: string };
   document_flagged: { documentName: string; reason: string; url: string };
+  document_requested: { documentName: string; guidance: string; url: string };
   message_received: { senderName: string; preview: string; url: string };
   itinerary_ready: { url: string };
   advisory_changed: {
@@ -171,6 +173,10 @@ function templateFor<K extends keyof NotificationPayload>(
       return statusChangedEmail(payload as NotificationPayload["status_changed"]);
     case "document_flagged":
       return documentFlaggedEmail(payload as NotificationPayload["document_flagged"]);
+    case "document_requested":
+      return documentRequestedEmail(
+        payload as NotificationPayload["document_requested"]
+      );
     case "message_received":
       return messageReceivedEmail(payload as NotificationPayload["message_received"]);
     case "itinerary_ready":

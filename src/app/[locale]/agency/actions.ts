@@ -31,6 +31,10 @@ import { assignCaseTo, claimCase, releaseCase } from "@/lib/data/assignments";
 import { createOrganisationTx, isAgencyOwner } from "@/lib/data/organisations";
 import { hasActiveSubscription } from "@/lib/data/payments";
 import { reviewDocumentTx, type ReviewVerdict } from "@/lib/data/review";
+import {
+  requestDocumentTx,
+  withdrawDocumentRequestTx,
+} from "@/lib/data/document-requests";
 import { changeStatusTx } from "@/lib/data/transitions";
 import { orgLogoKey, validateLogoFile } from "@/lib/domain/org-logo";
 import { isApplicationStatus } from "@/lib/domain/status";
@@ -355,6 +359,114 @@ export async function reviewDocument(formData: FormData) {
 
     // The traveller's ring, dashboard and documents page read this state;
     // so does the case screen the verdict was made on.
+    revalidateCase();
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Ask this one traveller for a document the corridor never listed.
+ *
+ * `canReviewDocuments`, the same guard `reviewDocument` carries: naming
+ * what a checklist is missing is the same job as judging what is on it,
+ * and it is not a case decision.
+ *
+ * Deliberately not folded into `changeCaseStatus`. The desk can want a
+ * document without sending the case back — a reviewer half-way through a
+ * file who spots a gap should be able to ask for it and keep reading,
+ * rather than bounce the traveller to `additional_documents` to do so.
+ * The two compose: `sentBackWithoutDetail` is what stops a reviewer
+ * sending a case back and naming nothing.
+ */
+export async function requestDocument(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const name = String(formData.get("name") ?? "");
+  const guidance = String(formData.get("guidance") ?? "");
+
+  try {
+    const { actor } = await requireApplicationAccess(applicationId, canReviewDocuments);
+
+    const result = await requestDocumentTx(applicationId, name, guidance, actor.userId);
+    if ("error" in result) return result;
+
+    await track(
+      "toplance.document_requested",
+      { applicationId, docKey: result.docKey },
+      actor.userId
+    );
+    await audit(actor.userId, "document.requested", "document", applicationId, {
+      docKey: result.docKey,
+    });
+
+    // Not buffered, unlike `document_flagged`: that one lands seconds
+    // after the traveller's own upload, while they are still on the page
+    // reading the row it is about. This arrives out of nowhere, from
+    // somebody else's desk, and there is no in-app moment to protect.
+    await notify(
+      result.travelerId,
+      "document_requested",
+      {
+        documentName: result.documentName,
+        // Trimmed as `requestDocumentTx` trims it before writing, so the
+        // email says exactly what the checklist row says.
+        guidance: guidance.trim(),
+        url: appUrl("/app/documents"),
+      },
+      applicationId
+    );
+
+    revalidateCase();
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Take back a request nobody has uploaded to.
+ *
+ * Destructive under the rule in `AGENTS.md` — it takes a listed
+ * requirement off somebody's checklist — so the control that calls this
+ * goes through `ConfirmDialog`. What it cannot do is destroy a file:
+ * `withdrawDocumentRequestTx` refuses the moment the traveller has
+ * uploaded, and refuses a corridor row outright.
+ */
+export async function withdrawDocumentRequest(formData: FormData) {
+  const applicationId = String(formData.get("application_id") ?? "");
+  const docKey = String(formData.get("doc_key") ?? "");
+
+  try {
+    const { actor } = await requireApplicationAccess(applicationId, canReviewDocuments);
+
+    const result = await withdrawDocumentRequestTx(applicationId, docKey);
+    if ("error" in result) return result;
+
+    await track(
+      "toplance.document_request_withdrawn",
+      { applicationId, docKey },
+      actor.userId
+    );
+    await audit(
+      actor.userId,
+      "document.request_withdrawn",
+      "document",
+      applicationId,
+      { docKey }
+    );
+
+    /*
+     * No notification. The traveller was told this document was wanted;
+     * they are not told it stopped being wanted, because the row simply
+     * goes and an email saying "ignore the last one" is more noise than
+     * the silence it replaces. A withdrawal only ever happens before
+     * they have acted on it — the transaction refuses once they have.
+     */
     revalidateCase();
     return { ok: true };
   } catch (error) {

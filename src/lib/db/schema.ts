@@ -329,6 +329,18 @@ export const notificationKind = pgEnum("notification_kind", [
   "application_submitted", // → staff: a file reached 100% and was submitted
   "status_changed", // → traveller
   "document_flagged", // → traveller
+  /**
+   * → traveller: their agency has asked them for a document the corridor
+   * never listed.
+   *
+   * Its own kind rather than folded into `status_changed`, because
+   * requesting a document does not move the case — the desk can add a
+   * slot while a review is still running, and the traveller needs
+   * telling either way. Carries the document's name for the same reason
+   * `document_flagged` does: "your agency needs something else" is not
+   * an email anybody can act on.
+   */
+  "document_requested", // → traveller
   "message_received", // → the other side of the thread
   "itinerary_ready", // → traveller
   "companion_digest", // → traveller: weekly post-arrival digest

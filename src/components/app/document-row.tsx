@@ -19,6 +19,7 @@ import { ACCEPT } from "@/lib/domain/uploads";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/components/locale-provider";
 import { DOCUMENT_ROW } from "@/lib/i18n/document-row";
+import { DOCUMENT_REQUESTS } from "@/lib/i18n/document-requests";
 
 /**
  * Camera first. Most applicants are photographing a paper document on a
@@ -166,6 +167,22 @@ export function DocumentRow({
             <DocStateBadge state={doc.state} locale={locale} verdict={documentVerdict(doc)} />
             <RequirementBadge required={doc.isRequired} />
           </div>
+          {/* Why this one appeared.
+              Every other row on this screen was there from the day the
+              checklist was built, so a traveller who had finished and
+              come back finds a new document with no account of where it
+              came from — which reads as the list changing under them. It
+              did not: a person at their agency asked for it, and saying
+              so is the difference between a demand and a request.
+
+              Above the guidance rather than below, because the guidance
+              is that person's own sentence about the document and this
+              is what frames it as theirs. */}
+          {doc.source === "agency" ? (
+            <p className="t-muted mt-2 max-w-[74ch]">
+              {t(DOCUMENT_REQUESTS.askedByAgency)}
+            </p>
+          ) : null}
           {rejection ? (
             <p className="t-body mt-2 max-w-[74ch] text-ink-2">{rejection}</p>
           ) : null}

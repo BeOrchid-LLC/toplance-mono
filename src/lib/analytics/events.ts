@@ -70,6 +70,19 @@ export const EVENT_NAMES = [
   "toplance.document_flagged",
 
   /**
+   * A reviewer asking one traveller for a document the corridor never
+   * listed, and taking that ask back.
+   *
+   * Worth counting separately from the corridor's own requirements,
+   * because a `docKey` the desk keeps requesting by hand is a corridor
+   * missing a row — the same signal a rising `other` on `flag_reason`
+   * carries, and the reason this is emitted with the key rather than
+   * only the application.
+   */
+  "toplance.document_requested",
+  "toplance.document_request_withdrawn",
+
+  /**
    * The AI pre-check's verdict on one upload, `pass` or `flag` — not a
    * reviewer's, which stays `document_verified` / `document_flagged`.
    */

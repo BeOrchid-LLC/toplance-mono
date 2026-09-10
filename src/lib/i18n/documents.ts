@@ -72,6 +72,22 @@ export const DOCUMENTS: {
   everythingCollectedHeading: L;
   everythingCollectedBody: L;
   /**
+   * Sent back for documents, and the desk has not listed one yet.
+   *
+   * The state the client photographed on 10 September: the status card
+   * read "Additional documents needed" while this panel read "Everything
+   * is verified. Nothing else is waiting on you", over a live Submit
+   * button. Both were true — `additional_documents` allows a resubmit,
+   * and the checklist really was complete, because the document being
+   * asked for had no row on it.
+   *
+   * Points at messages rather than at nothing, because that is where the
+   * sentence explaining the send-back actually is: every status change
+   * in this product carries one.
+   */
+  sentBackHeading: L;
+  sentBackBody: L;
+  /**
    * Sent, and confirmed on the screen rather than in a toast.
    *
    * `submissionNotice` picks this out of the statuses that can no longer
@@ -257,6 +273,30 @@ export const DOCUMENTS: {
     ar: "يؤدي الإرسال إلى نقل ملفك إلى فريق المراجعة وإخطاره فوراً.",
     tw: "Sɛ wode kɔ a, ɛde wo faele no kɔma nhwehwɛmufoɔ kuo no na ɛbɔ wɔn kɔkɔ ntɛm ara.",
     zu: "Ukuthumela kuthumela ifayela lakho kwithimba lokubuyekeza futhi likwazise ngokushesha.",
+  },
+  sentBackHeading: {
+    en: "Your agency needs something else",
+    ha: "Hukumarku tana buƙatar wani abu dabam",
+    yo: "Ilé-iṣẹ́ rẹ nílò ohun mìíràn",
+    ig: "Ụlọ ọrụ gị chọrọ ihe ọzọ",
+    fr: "Votre agence a besoin d'autre chose",
+    pt: "A sua agência precisa de mais alguma coisa",
+    sw: "Wakala wako anahitaji kitu kingine",
+    ar: "تحتاج وكالتك إلى شيء آخر",
+    tw: "W'adwumakuo no hia biribi foforɔ",
+    zu: "I-ejensi yakho idinga okunye",
+  },
+  sentBackBody: {
+    en: "They have sent your file back and are writing up what they need. Check your messages — anything they add will appear on this page.",
+    ha: "Sun mayar da fayil ɗinka kuma suna rubuta abin da suke buƙata. Duba saƙonninka — duk abin da suka ƙara zai bayyana a wannan shafin.",
+    yo: "Wọ́n ti dá fáìlì rẹ padà, wọ́n sì ń kọ ohun tí wọ́n nílò sílẹ̀. Yẹ àwọn ìránṣẹ́ rẹ wò — ohunkóhun tí wọ́n bá fi kún un yóò hàn ní ojú-ìwé yìí.",
+    ig: "Ha ezighachila faịlụ gị ma na-ede ihe ha chọrọ. Lelee ozi gị — ihe ọ bụla ha gbakwunyere ga-apụta na ibe a.",
+    fr: "Votre dossier vous a été renvoyé et l'agence précise ce dont elle a besoin. Consultez vos messages — tout ajout apparaîtra sur cette page.",
+    pt: "Devolveram o seu processo e estão a escrever o que precisam. Veja as suas mensagens — o que acrescentarem aparece nesta página.",
+    sw: "Wamerudisha faili lako na wanaandika wanachohitaji. Angalia ujumbe wako — chochote watakachoongeza kitaonekana kwenye ukurasa huu.",
+    ar: "أعادوا ملفك ويكتبون الآن ما يحتاجونه. راجع رسائلك — وكل ما يضيفونه سيظهر في هذه الصفحة.",
+    tw: "Wɔasan de wo faele no aba na wɔretwerɛ deɛ wɔhia. Hwɛ wo nkrasɛm — biribiara a wɔde bɛka ho no bɛpue saa kratafa yi so.",
+    zu: "Balibuyisile ifayela lakho futhi babhala abakudingayo. Bheka imilayezo yakho — noma yini abayengezayo izovela kuleli khasi.",
   },
   everythingCollectedHeading: {
     en: "Everything is in",

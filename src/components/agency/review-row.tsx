@@ -1,14 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Check, Eye, Flag, X } from "lucide-react";
+import { Check, Eye, Flag, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DocStateBadge } from "@/components/shared/status-badge";
 import { documentUrl } from "@/app/[locale]/(app)/actions";
-import { reviewDocument } from "@/app/[locale]/agency/actions";
+import {
+  reviewDocument,
+  withdrawDocumentRequest,
+} from "@/app/[locale]/agency/actions";
 import type { DocumentRow as Doc } from "@/lib/data/applications";
 import { FLAG_REASON_KEYS } from "@/lib/domain/flag-reason";
 import { documentVerdict } from "@/lib/domain/status";
@@ -20,6 +24,7 @@ import {
   FLAG_REASONS,
   REVIEW_ROW,
 } from "@/lib/i18n/case-review-actions";
+import { DOCUMENT_REQUESTS } from "@/lib/i18n/document-requests";
 
 /**
  * One checklist row as the reviewer sees it: the traveller's
@@ -45,12 +50,26 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
   const [flagging, setFlagging] = React.useState(false);
   const [reason, setReason] = React.useState("");
   const [reasonCode, setReasonCode] = React.useState<FlagReason | null>(null);
+  const [withdrawing, setWithdrawing] = React.useState(false);
 
   const reviewable =
     doc.state === "uploaded" ||
     doc.state === "checking" ||
     doc.state === "verified" ||
     doc.state === "flagged";
+
+  /**
+   * A row somebody at this desk asked for, rather than one the corridor
+   * requires — and, while nothing has been uploaded to it, one they can
+   * take back.
+   *
+   * The second half is the whole of what makes the withdrawal safe to
+   * offer: `withdrawDocumentRequestTx` refuses once the state moves off
+   * `not_started`, so the button disappears at the same moment the
+   * transaction would start saying no. Nothing here can delete a file.
+   */
+  const requested = doc.source === "agency";
+  const withdrawable = requested && doc.state === "not_started";
 
   function view() {
     startTransition(async () => {
@@ -70,6 +89,22 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
     setFlagging(false);
     setReason("");
     setReasonCode(null);
+  }
+
+  function withdraw() {
+    const formData = new FormData();
+    formData.set("application_id", applicationId);
+    formData.set("doc_key", doc.docKey);
+
+    startTransition(async () => {
+      const result = await withdrawDocumentRequest(formData);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      setWithdrawing(false);
+      toast.success(t(DOCUMENT_REQUESTS.withdrawn));
+    });
   }
 
   function submit(verdict: "verified" | "flagged") {
@@ -115,6 +150,15 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
             {!doc.isRequired && (
               <span className="special-caps">{t(REVIEW_ROW.optional)}</span>
             )}
+            {/* Says this row is not the corridor's. Without it a
+                reviewer picking up somebody else's case reads a
+                checklist of eleven documents with no way to tell which
+                one a colleague added by hand on Thursday — and the
+                withdraw button appearing on exactly one row would be
+                the only clue. */}
+            {requested && (
+              <span className="special-caps">{t(DOCUMENT_REQUESTS.askedBadge)}</span>
+            )}
           </div>
           {doc.reason && (
             <p className="t-body mt-2 max-w-[74ch] text-ink-2">{doc.reason}</p>
@@ -154,8 +198,36 @@ export function ReviewRow({ doc, applicationId }: { doc: Doc; applicationId: str
               <Flag /> {t(REVIEW_ROW.flag)}
             </Button>
           )}
+          {withdrawable && (
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={() => setWithdrawing(true)}
+              disabled={pending}
+              aria-label={`${t(DOCUMENT_REQUESTS.withdraw)} ${doc.name}`}
+            >
+              <Undo2 /> {t(DOCUMENT_REQUESTS.withdraw)}
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Destructive under the rule in `AGENTS.md` — it takes a listed
+          requirement off somebody's checklist — so it goes through the
+          shared dialog rather than one assembled here. The body says the
+          part the row behind it does not: that the traveller is never
+          told, and that asking again means typing it out again. */}
+      <ConfirmDialog
+        open={withdrawing}
+        onOpenChange={setWithdrawing}
+        title={t(DOCUMENT_REQUESTS.withdrawConfirmTitle)}
+        body={t(DOCUMENT_REQUESTS.withdrawConfirmBody)}
+        confirmLabel={t(DOCUMENT_REQUESTS.withdrawConfirm)}
+        cancelLabel={t(DOCUMENT_REQUESTS.cancel)}
+        onConfirm={withdraw}
+        pending={pending}
+        icon={<Undo2 className="size-4" aria-hidden />}
+      />
 
       {flagging && (
         <div className="mt-4 max-w-[62ch]">

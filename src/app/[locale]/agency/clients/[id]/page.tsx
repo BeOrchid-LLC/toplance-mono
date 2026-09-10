@@ -8,6 +8,7 @@ import { CaseHandlerControl } from "@/components/agency/case-handler-control";
 import { ReviewRow } from "@/components/agency/review-row";
 import { AskAboutCase } from "@/components/agency/ask-about-case";
 import { InviteAttendance } from "@/components/agency/invite-attendance";
+import { RequestDocument } from "@/components/agency/request-document";
 import { latestAttendanceRequest } from "@/lib/data/attendance";
 import { interviewNudge } from "@/lib/domain/interview";
 import { StatusControl } from "@/components/agency/status-control";
@@ -414,6 +415,12 @@ export default async function AgencyCasePage({
               they are controls on the desk, not another sheet in the
               file. */}
           <div className="flex flex-wrap gap-3">
+            {/* Third of the same kind: a control on the desk that opens
+                a form somewhere else and comes back. Asking for a
+                document is not a case decision — the desk can want one
+                without sending the file back — so it belongs here beside
+                the other two rather than among the verdict buttons. */}
+            <RequestDocument applicationId={row.id} />
             <InviteAttendance applicationId={row.id} />
             <AskAboutCase applicationId={row.id} />
           </div>

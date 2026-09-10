@@ -92,6 +92,7 @@ Every destructive control in the product today, and what each one asks:
 | Demote an owner | `ops/tenant-controls.tsx` | takes the owner's controls off a person; only this direction asks |
 | Remove a document | `app/document-row.tsx` | deletes the stored file; the button says "Replace" but nothing replaces it |
 | Remove a trip | `app/travel-history.tsx` | gone from travel history for good, from a bare icon in a list of alike rows |
+| Withdraw a requested document | `agency/review-row.tsx` | takes a listed requirement off a traveller's checklist; they are never told, and asking again means typing it out again |
 | Revoke an invitation | `shared/invitation-actions.tsx` | the link dies on the spot and there is no un-revoke |
 | End the agency plan | `agency/cancel-plan.tsx` | the console closes on every colleague at once, mid-case, and the days already paid for are not refunded |
 | Remove a KYB document | `ops/kyb-checklist.tsx` | deletes the filed licence or passport scan; this product keeps no other copy |
@@ -102,6 +103,9 @@ Every destructive control in the product today, and what each one asks:
 
 `CorridorDecision` is the worked example of the other kind and deliberately does
 not confirm: approving a corridor publishes something, it takes nothing away.
+So is `requestDocument`, the counterpart of the withdrawal above — asking a
+traveller for a document adds a requirement, and the button commits on the
+click beside a withdrawal that asks.
 `restoreTenant`, promoting a member and resending an invitation are likewise
 additive — and so is `restoreColleague`, the undo for a suspended member of
 staff, which commits on the click beside a suspension that asks. So is `purchaseSubscription`, which is the undo for ending the plan

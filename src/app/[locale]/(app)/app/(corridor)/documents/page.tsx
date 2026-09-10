@@ -15,7 +15,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { canSubmitFrom, submissionNotice } from "@/lib/domain/status";
+import {
+  canSubmitFrom,
+  sentBackWithoutDetail,
+  submissionNotice,
+} from "@/lib/domain/status";
 import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
 import { MAX_UPLOAD_LABEL } from "@/lib/domain/uploads";
 import { UPLOADS } from "@/lib/i18n/uploads";
@@ -54,6 +58,16 @@ export default async function DocumentsPage() {
 
   const docs = await getDocuments(application.id);
   const completion = completionOf(docs);
+
+  /**
+   * How many documents this traveller's agency has asked for by hand.
+   *
+   * Counted rather than filtered to the outstanding ones, because
+   * `sentBackWithoutDetail` asks whether the desk has named anything at
+   * all — a traveller who has uploaded what was asked for has nothing
+   * outstanding and must still be able to resubmit.
+   */
+  const requestedCount = docs.filter((d) => d.source === "agency").length;
 
   /**
    * How many files exist to be downloaded — not `completion.collected`,
@@ -291,7 +305,20 @@ export default async function DocumentsPage() {
 
         {completion.total > 0 &&
           completion.verified === completion.total &&
-          (canSubmitFrom(application.status) ? (
+          /* Sent back for documents nobody has named yet.
+             Checked ahead of `canSubmitFrom` because it is the narrower
+             claim and both are true at once: `additional_documents` is
+             in `RESUBMITTABLE`, so without this the green sheet won and
+             the screen read "Everything is verified. Nothing else is
+             waiting on you" beside a status card asking for documents.
+             Nothing here is a contradiction the traveller can resolve —
+             the missing half is on the desk. */
+          (sentBackWithoutDetail(application.status, requestedCount) ? (
+            <section className="mt-8 rounded-lg border border-border-strong px-5 py-5 sm:px-6">
+              <h2 className="t-h3">{t.sentBackHeading[locale]}</h2>
+              <p className="t-muted mt-2 max-w-[74ch]">{t.sentBackBody[locale]}</p>
+            </section>
+          ) : canSubmitFrom(application.status) ? (
             <section className="mt-8 rounded-lg border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,transparent)] px-5 py-5 sm:px-6">
               <h2 className="t-h3">{t.everythingVerifiedHeading[locale]}</h2>
               <p className="t-muted mt-2 max-w-[74ch]">

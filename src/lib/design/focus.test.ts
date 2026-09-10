@@ -150,13 +150,31 @@ describe("the focus system", () => {
   /**
    * The base rule itself, so a future edit cannot quietly repoint the one
    * ring the components now depend on back at the fill.
+   *
+   * The `toContain` pair is necessary and was not sufficient. A fourth
+   * declaration inside the same block — `outline-color: transparent` — leaves
+   * both strings present and every assertion green while painting nothing,
+   * because the later longhand wins over the shorthand it follows. That was
+   * one of five evasions an adversarial pass got past this file, and it is
+   * the only one that lives in CSS rather than in a class name. So the block
+   * is enumerated rather than searched: these three declarations, no fourth.
    */
-  it("draws the base ring from --ring", () => {
+  it("draws the base ring from --ring, and declares nothing that cancels it", () => {
     const css = readFileSync(GLOBALS, "utf8");
     const rule = css.slice(css.indexOf(":focus-visible {"));
     const block = rule.slice(0, rule.indexOf("}"));
+
     expect(block).toContain("outline: 2px solid var(--ring)");
     expect(block).toContain("outline-offset: 2px");
+
+    const declared = block
+      .slice(block.indexOf("{") + 1)
+      .split(";")
+      .map((d) => d.trim())
+      .filter(Boolean)
+      .map((d) => d.slice(0, d.indexOf(":")).trim());
+
+    expect(declared.sort()).toEqual(["border-radius", "outline", "outline-offset"]);
   });
 
   /**
@@ -176,7 +194,24 @@ describe("the focus system", () => {
    * passed. One of them was switching off the focus indicator on the
    * largest tab stop in the console.
    */
-  const SUPPRESSES = /^outline-(?:none|hidden|0)$/;
+  const SUPPRESSES = /^outline-(?:none|hidden|0|\[0(?:\.0+)?(?:px|rem|em|pt|%)?\])$/;
+
+  /**
+   * The other way to draw nothing: keep the outline and make it invisible.
+   *
+   * `outline-transparent` compiles to `outline-color: transparent`, which
+   * beats the base rule's shorthand and leaves a control with a 2px ring
+   * nobody can see — indistinguishable, at the pixel, from `outline-none`.
+   * An adversarial pass got this past the suppression check three ways: on
+   * its own, composed with a `ring-border` substitute, and spelled as an
+   * arbitrary value. It is the same offence as suppression and is judged by
+   * the same allowlist.
+   *
+   * Scoped to focus variants. `outline-transparent` on a control that is not
+   * being focused is a layout device — it reserves the ring's space so the
+   * box does not jump when it arrives — and cancels nothing.
+   */
+  const INVISIBLE = /^outline-(?:transparent|\[transparent\]|\[rgba?\([^)]*[,\s]0(?:\.0+)?\)\])$/;
 
   /**
    * The suppressions that are allowed, keyed to the exact class that does
@@ -195,15 +230,23 @@ describe("the focus system", () => {
    * element takes focus from nothing at all. Neither is "the ring looked
    * wrong here". A row with no reason beside it is the same as no row.
    */
-  const ALLOWED_SUPPRESSIONS: Record<string, string> = {
-    "components/app/intake-dock.tsx: outline-none":
-      "The composer's <textarea>. Its shell carries the ring for it — the deviation :focus-visible in globals.css permits and describes, for an element flush inside a clipped wrapper.",
-    "components/auth/phone-field.tsx: outline-none":
-      "The dial-code button and the number field. Three of each one's edges are the shell's, so an outward ring is clipped there and the fourth edge paints a stray 2px bar down the middle of the control. The shell rings for both children.",
-    "components/ui/chart.tsx: [&_.recharts-layer]:outline-hidden":
-      "The <g> grouping inside the chart svg, measured on /ops/dashboard with no tabindex attribute at all. Nothing tabs to it; the class suppresses only the stray outline a browser can hang on an SVG child it decides a click focused.",
-    "components/ui/chart.tsx: [&_.recharts-sector]:outline-hidden":
-      "The pie and radial-bar wedge, which this product never renders — every chart here is a BarChart, so the selector matches no element on any screen. Dormant rather than justified, and left as stock ships it.",
+  const ALLOWED_SUPPRESSIONS: Record<string, { count: number; why: string }> = {
+    "components/app/intake-dock.tsx: outline-none": {
+      count: 1,
+      why: "The composer's <textarea>. Its shell carries the ring for it — the deviation :focus-visible in globals.css permits and describes, for an element flush inside a clipped wrapper.",
+    },
+    "components/auth/phone-field.tsx: outline-none": {
+      count: 2,
+      why: "The dial-code button and the number field. Three of each one's edges are the shell's, so an outward ring is clipped there and the fourth edge paints a stray 2px bar down the middle of the control. The shell rings for both children.",
+    },
+    "components/ui/chart.tsx: [&_.recharts-layer]:outline-hidden": {
+      count: 1,
+      why: "The <g> grouping inside the chart svg, measured on /ops/dashboard with no tabindex attribute at all. Nothing tabs to it; the class suppresses only the stray outline a browser can hang on an SVG child it decides a click focused.",
+    },
+    "components/ui/chart.tsx: [&_.recharts-sector]:outline-hidden": {
+      count: 1,
+      why: "The pie and radial-bar wedge, which this product never renders — every chart here is a BarChart, so the selector matches no element on any screen. Dormant rather than justified, and left as stock ships it.",
+    },
   };
 
   /**
@@ -226,15 +269,40 @@ describe("the focus system", () => {
    * removal is the only evidence the check works.
    */
   it("suppresses the outline only where a row here says why", () => {
-    const suppressing = new Set<string>();
+    const suppressing = new Map<string, number>();
     for (const { path, body } of FILES) {
       for (const token of classTokens(body)) {
-        if (SUPPRESSES.test(utilityOf(token))) suppressing.add(`${path}: ${token}`);
+        const utility = utilityOf(token);
+        const invisible = INVISIBLE.test(utility) && variantsOf(token).includes("focus");
+        if (!SUPPRESSES.test(utility) && !invisible) continue;
+        const key = `${path}: ${token}`;
+        suppressing.set(key, (suppressing.get(key) ?? 0) + 1);
       }
     }
-    expect([...suppressing].sort()).toEqual(Object.keys(ALLOWED_SUPPRESSIONS).sort());
-    for (const reason of Object.values(ALLOWED_SUPPRESSIONS)) {
-      expect(reason.length).toBeGreaterThan(40);
+
+    expect([...suppressing.keys()].sort()).toEqual(Object.keys(ALLOWED_SUPPRESSIONS).sort());
+
+    /**
+     * The count, and not merely the key, because a Set was the fifth hole.
+     *
+     * The rows below are keyed `path: token`, so every occurrence of the
+     * same class in the same file collapses to one entry — and an
+     * adversarial pass put a second `outline-none` on a different control
+     * inside an already-listed file and watched the suite stay green. Two
+     * controls suppressed under a reason written for one is exactly the
+     * shape of the `chart.tsx` bug this file was widened to catch: three
+     * decisions waved through on the strength of the best one.
+     *
+     * `phone-field.tsx` is the row that legitimately reads 2 — the dial
+     * code and the number are two elements under one shell — and it is
+     * written out here so that a third would fail rather than hide.
+     */
+    for (const [key, { count }] of Object.entries(ALLOWED_SUPPRESSIONS)) {
+      expect(`${key} ×${suppressing.get(key)}`).toBe(`${key} ×${count}`);
+    }
+
+    for (const { why } of Object.values(ALLOWED_SUPPRESSIONS)) {
+      expect(why.length).toBeGreaterThan(40);
     }
   });
 });

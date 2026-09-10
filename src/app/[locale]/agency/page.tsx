@@ -15,7 +15,6 @@ import {
 import { eq } from "drizzle-orm";
 
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { CreateOrganisation } from "@/components/agency/create-organisation";
 import { KpiRow, type Kpi } from "@/components/shared/kpi-card";

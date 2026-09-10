@@ -147,6 +147,42 @@ if (action === "warn" && !globalForDb.sslWarned) {
   console.warn(`⚠️  INSECURE DATABASE CONNECTION\n   ${insecure}`);
 }
 
-globalForDb.pool ??= new Pool({ connectionString: process.env.DATABASE_URL });
+/**
+ * How many connections one process may hold.
+ *
+ * Pure, and takes its environment as an argument, so the budget can be
+ * checked without opening a socket.
+ *
+ * Production keeps the driver's own default of 10 — this is not a
+ * tuning knob and changing it there is somebody's load test, not this
+ * function's business. What it exists for is the test run, where the
+ * shape of the process tree makes 10 the wrong number by arithmetic:
+ * Vitest's fork pool starts one worker per CPU less one, each worker is
+ * a process with its own module graph and therefore its own Pool, and
+ * `max_connections` on the local Postgres is 100. Eleven cores is
+ * enough to exhaust it. The symptom is not an error anyone reads — it is
+ * `too many clients already` on one worker while a dozen others sit out
+ * a 5s timeout waiting for a slot, which reads exactly like a slow
+ * machine.
+ *
+ * Three is the budget: a file may hold a transaction and query inside
+ * it, which needs two, and one spare. Three fits 33 workers under the
+ * limit, so the number stops depending on the host.
+ *
+ * `DATABASE_POOL_MAX` overrides both, for a CI runner whose Postgres is
+ * sized differently. A value that is not a positive integer is ignored
+ * rather than obeyed — a typo in an env var should not quietly halve
+ * the pool.
+ */
+export function poolMax(env: Record<string, string | undefined>): number {
+  const override = Number(env.DATABASE_POOL_MAX);
+  if (Number.isInteger(override) && override > 0) return override;
+  return env.VITEST ? 3 : 10;
+}
+
+globalForDb.pool ??= new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: poolMax(process.env),
+});
 
 export const db = drizzle(globalForDb.pool, { schema, casing: "snake_case" });

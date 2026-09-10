@@ -4,6 +4,7 @@ import {
   actionForInsecureConnection,
   insecureConnectionReason,
   isPrivateHost,
+  poolMax,
 } from "./client";
 
 /**
@@ -256,5 +257,54 @@ describe("what a production boot does about a cleartext connection", () => {
     vi.resetModules();
 
     await expect(import("./client")).resolves.toBeDefined();
+  });
+});
+
+/**
+ * The suite's own connection budget.
+ *
+ * `npm test` failed 18 tests on one run of this machine and 81 on the
+ * next, every one of them a 5s or 10s timeout in a database-backed file,
+ * and the reds moved between runs with Postgres otherwise idle. That
+ * looked like a flaky machine for long enough to be written down as one,
+ * in a handoff and in a commit message.
+ *
+ * It is arithmetic. `max_connections` is 100. Vitest's fork pool takes
+ * one worker per CPU less one — 13 here — and each worker is a process
+ * with its own module graph and therefore its own `pg` Pool, whose
+ * default `max` is 10. 13 × 10 = 130, and every connection past the
+ * limit gets `too many clients already` while the worker behind it waits
+ * out its timeout on a slot that is never coming. 16 of those appeared
+ * verbatim in one run's output, under 44 timeouts that hid them.
+ *
+ * Nothing about that is specific to this machine — it fires on any host
+ * with 11 or more cores, and a dev server holding its own pool moves the
+ * threshold lower. So the fix is a budget rather than a retry.
+ */
+describe("poolMax", () => {
+  it("leaves production on the driver's own default", () => {
+    expect(poolMax({})).toBe(10);
+  });
+
+  it("fits every test worker inside max_connections at once", () => {
+    const perWorker = poolMax({ VITEST: "true" });
+    const workers = 32; // far past this machine; the budget must still hold
+    expect(perWorker * workers).toBeLessThanOrEqual(100);
+  });
+
+  it("still gives a test worker more than one connection", () => {
+    // A file that opens a transaction and queries inside it needs two.
+    expect(poolMax({ VITEST: "true" })).toBeGreaterThan(1);
+  });
+
+  it("takes an explicit override ahead of either default", () => {
+    expect(poolMax({ DATABASE_POOL_MAX: "4", VITEST: "true" })).toBe(4);
+    expect(poolMax({ DATABASE_POOL_MAX: "40" })).toBe(40);
+  });
+
+  it("ignores an override that is not a positive integer", () => {
+    expect(poolMax({ DATABASE_POOL_MAX: "0" })).toBe(10);
+    expect(poolMax({ DATABASE_POOL_MAX: "-2" })).toBe(10);
+    expect(poolMax({ DATABASE_POOL_MAX: "many" })).toBe(10);
   });
 });

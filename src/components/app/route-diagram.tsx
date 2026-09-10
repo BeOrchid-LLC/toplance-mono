@@ -24,7 +24,10 @@ import { cn } from "@/lib/utils";
  * **It carries no `--way`.** §4.1 allows exactly one `--way` object per
  * screen and that is the next-step plate below this. A route diagram
  * saying "here is everything" in the colour reserved for "do this next"
- * would be the second yellow thing the principle exists to forbid.
+ * would be the second `--way` object the principle exists to forbid.
+ * Named by the token rather than by its hue, which has already moved
+ * twice on 2026-09-10 (amber, then aqua, then `--brand`'s blue) and
+ * left this sentence wrong each time it was named by colour.
  *
  * **No chevrons.** They used to sit between every pair of bars: four
  * glyphs saying the same thing four times, and the thing they said —

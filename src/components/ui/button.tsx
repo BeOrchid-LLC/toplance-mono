@@ -58,7 +58,13 @@ const buttonVariants = cva(
         /**
          * Direction. The single next step on a screen, and never more
          * than one — see `--way` in globals.css. Its ink is fixed rather
-         * than themed because yellow is a light fill in both modes.
+         * than themed because the fill is one value in both modes; since
+         * the 2026-09-10 repaint that fill is `--brand`'s own blue, so
+         * the ink is white rather than the near-black the amber carried.
+         *
+         * That makes this variant render identically to `primary`. It is
+         * the client's call and it is recorded in globals.css; the
+         * variant stays separate so the role survives the colour.
          */
         way: "bg-way text-way-ink hover:bg-[color-mix(in_srgb,var(--way)_88%,#fff)] active:bg-[color-mix(in_srgb,var(--way)_88%,#000)]",
         ghost: "hover:bg-surface-2 hover:text-ink",

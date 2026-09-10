@@ -173,14 +173,49 @@
      `--way-ink` on it, never type on a plate — as type it cannot clear
      4.5:1 on white, and using it as a field is what real signage does.
 
-     The ink on it is the light-mode ink in BOTH themes, because yellow
-     is a light fill in both. There is therefore ONE ratio, not two:
-     `--way` and `--way-ink` are byte-identical in the two blocks, so the
-     pair measures 9.515:1 whichever theme is resolved. The 10.48 that
-     used to be quoted here as the dark figure was dark `--warning-ink`
-     on the dark plate, copied across by mistake. */
-  --way: #f5b915;
-  --way-ink: #10131c;
+     ONE ratio, not two: `--way` and `--way-ink` are byte-identical in
+     the two blocks, so the pair measures 6.534:1 whichever theme is
+     resolved. The 10.48 that used to be quoted here as the dark figure
+     was dark `--warning-ink` on the dark plate, copied across by
+     mistake.
+
+     It was #f5b915 amber until 2026-09-10, when the client asked for
+     blue and then, seeing the result, asked specifically for the blue
+     the rest of the product already wears. So `--way` is now `--brand`'s
+     own #2450d8, carrying white — a DARK fill in both themes, where the
+     amber was a light one. That inverts what the ink is, which is why
+     `--way-ink` moved with it for the first time; it stays a single
+     value across the two blocks, so the one-ratio property above holds.
+
+     **Know what this costs, before changing it back.** `--way` is now
+     byte-identical to `--brand`, so `button.tsx`'s `way` variant renders
+     the same as `primary`, and the rule at the top of this comment — one
+     `--way` object per screen, in a colour nothing else wears — is no
+     longer enforced by the colour itself. It is a deliberate client
+     decision (2026-09-10), not an oversight, and the role is kept as its
+     own token so that reversing it is a value change here rather than a
+     hunt through call sites.
+
+     **If it is ever reversed, judge the replacement by HUE, not by
+     contrast ratio.** WCAG contrast is luminance-only — it cannot see
+     hue, and two shades of one hue score well on it while reading as the
+     same colour. That is how #5ac8fa got shipped here in the first pass:
+     3.446:1 from `--brand` looked like separation, while being ΔE 0.084
+     in OKLab from `--brand-2` (#57a9f2), i.e. the same colour. Measured
+     against the blue arc this system occupies — `--brand` 265°,
+     `--info` 262°, `--brand-2` 248°:
+
+       amber   84°   ΔE 0.499 / 0.313 from --brand / --brand-2
+       #5ac8fa 231°  ΔE 0.323 / 0.084   <- rejected, too close
+       #10d8d8 195°  ΔE 0.371 / 0.147   <- furthest cold hue available
+       #2450d8 265°  ΔE 0.000 / 0.313   <- this, by request
+
+     No blue matches the amber's separation, because the amber's came
+     from being the only WARM hue in a cold system — not a property a
+     blue can have here. A true blue that is also distinct needs
+     `--brand-2` moved out of the light-blue slot first. */
+  --way: #2450d8;
+  --way-ink: #ffffff;
 
   /* chart fills — the same three hues as the semantics above, stepped
      to pass the categorical-palette checks rather than reused verbatim.
@@ -347,10 +382,12 @@
   --on-warning: #10131c;
   --on-danger: #10131c;
 
-  /* Holds. Yellow is a light fill on either ground, and so is the ink
-     that sits on it. */
-  --way: #f5b915;
-  --way-ink: #10131c;
+  /* Holds, and now for the opposite reason it used to: the signage blue
+     is a DARK fill on either ground, so white is what reads on it in
+     both. Byte-identical to the light block, as the pair has always
+     been — see the note there for what changed and what it cost. */
+  --way: #2450d8;
+  --way-ink: #ffffff;
 
   /* Chosen for dark, not flipped into it. The dark semantics above are
      deliberately bright — they carry small marks on a near-black

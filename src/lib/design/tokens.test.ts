@@ -316,9 +316,10 @@ describe.each([
    *
    * `--brand` alone, because it is the only fill a ring has to sit beside
    * that is dark in BOTH themes. The signage fills flip with the theme
-   * and the gap does the separating there: `--way` is 9.344 from the dark
-   * plate and 1.775 from the light one, so the ratio that matters for it
-   * moves between the two boundaries rather than staying on one.
+   * and the gap did the separating while `--way` was a light fill. Since
+   * the 2026-09-10 repaint it is `--brand`'s own hex, so it is no longer
+   * a separate case at all — 2.716 from the dark plate, 6.534 from the
+   * light one, the same numbers `--brand` posts.
    */
   it("does not ring a primary button in the button's own colour", () => {
     expect(contrast(tokens["--ring"], tokens["--brand"])).toBeGreaterThanOrEqual(2.0);
@@ -332,7 +333,7 @@ describe.each([
    * light neutral — and `--ink` in light is #0b1f2a, byte-identical to
    * `--way-ink` in both blocks, so the ratio it printed was the right
    * number arrived at from the wrong token. Setting dark `--way-ink` to
-   * white takes the pair a person actually sees to 1.775:1 on the yellow,
+   * white was 1.774:1 on the aqua this briefly carried,
    * and the old assertion stayed green through it, because nothing in
    * this file named the token the call sites render: `button.tsx`'s `way`
    * variant is `bg-way text-way-ink`, and `corridor-bar.tsx:227` is the

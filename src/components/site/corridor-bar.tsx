@@ -216,9 +216,16 @@ export function CorridorBar({
                 regression to undo — the same pairing measured 2.077:1
                 before the repaint and had never cleared the 3:1 a
                 boundary owes, let alone the 4.5:1 a label does. `--way`
-                is a light fill in both themes and `--way-ink` is the ink
-                that belongs on it in both, so the pair holds at 9.515:1
-                at rest and 10.379:1 on hover, light and dark alike. */}
+                is one fill in both themes and `--way-ink` is the ink
+                that belongs on it in both, so the pair holds at 6.534:1
+                at rest and 4.806:1 on hover, light and dark alike. Both
+                figures moved with the 2026-09-10 repaint of `--way` to
+                `--brand`'s blue: the fill is now DARK in both themes and
+                the ink is white, the inverse of the amber this started
+                from. Note the hover figure — mixing 15% white into an
+                already-dark fill walks a white label TOWARD the 4.5
+                floor rather than away from it, and 4.806 is the margin
+                that leaves. A deeper mix here would fail. */}
             <Button
               asChild
               className={cn(

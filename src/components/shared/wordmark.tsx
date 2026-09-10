@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
  *   public/hero/travel-everywhere-dark.svg      7 fills
  *   src/app/favicon.ico                         3 raster frames
  *
- * They carry the hue as literal hex — currently #0a4ea3 — and a literal is
+ * They carry the hue as literal hex — currently #2450d8 — and a literal is
  * a copy that goes stale in silence. They move in the same commit as the
  * token, or they are wrong until somebody happens to look.
  *

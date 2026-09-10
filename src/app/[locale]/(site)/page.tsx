@@ -355,7 +355,7 @@ export default async function HomePage() {
                 brand is the signage blue is the clearest single tell
                 that a library illustration was dropped in untouched.
                 All seven occurrences in
-                `public/hero/travel-everywhere.svg` are painted #0a4ea3
+                `public/hero/travel-everywhere.svg` are painted #2450d8
                 instead — a literal, not `--brand`, and this line used to
                 claim otherwise. An <img> is a separate document: no
                 custom property set on this page reaches inside it, so
@@ -383,7 +383,7 @@ export default async function HomePage() {
                 on the dark page the way it sits on the light one.
 
                 Two `<Image>`s rather than one with a filter: a CSS
-                invert would take the brand blue with it, and #0a4ea3 is
+                invert would take the brand blue with it, and #2450d8 is
                 the one colour in here that must survive both grounds.
                 Swapped with `dark:` classes rather than by reading the
                 theme in JS, so the right one is in the first paint and

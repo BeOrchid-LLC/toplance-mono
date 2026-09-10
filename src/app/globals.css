@@ -11,125 +11,144 @@
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
 :root {
-  /* The concourse. A cool grey with a faint green cast — the colour of
-     a terminal floor and of the backing a sign is mounted on. Replaces
-     the blue-grey #f1f4fa set on 2026-09-08; that decision was about
-     separating the ground from a white sheet, and this keeps the
-     separation while changing the temperature. */
-  --bg: #e7ebea;
-  --surface: #ffffff;
-  --surface-2: #f1f4f3;
-  --surface-inset: #e0e6e5;
-  --border: #d3dad9;
-  /* Lifted from #ccd2de, which was 1.517:1 on white — invisible as the
-     edge of a control. 3:1 is the WCAG floor for a non-text boundary
-     somebody has to see, and this token has to clear it on every ground
-     it is ruled across, not only on a plate: `border-t
-     border-border-strong` puts it straight onto the concourse in the
-     marketing pages, and `bg-surface-2` puts it under a table's header
-     band. The #8e9695 that stood here cleared white alone, at 3.023:1,
-     and fell to 2.731 on the secondary plate and 2.515 on the ground.
-     This one is 3.666:1 / 3.313:1 / 3.05:1, and `tokens.test.ts` now
-     holds all three rather than the first. */
-  --border-strong: #808786;
-  --ink: #0b1f2a;
-  --ink-2: #44565f;
-  /* 5.769:1 on the plate, 5.213:1 on the secondary plate, 4.799:1 on the
-     concourse, 4.566:1 in an inset well — AA on all four, which is what
-     this role needs, because it is the muted colour and it lands on
-     every ground the product has. `.special-caps` sets a table's column
-     heads in it on `--surface-2`; the marketing comparison rows set 17px
-     body copy in it straight onto `--bg`.
+  /* neutrals — light. One ramp, one hue: every step carries the same
+     cool blue-grey cast, so text does not drift warm as it lightens.
 
-     Both of those were failing. The #697980 that stood here was picked
-     against white and cleared white alone (4.519:1, by 0.019), landing
-     at 4.083 / 3.759 / 3.576 on the other three. The #7b8296 before it
-     was 3.835:1 even on white.
+     The ground is a step deeper than the near-white it used to be
+     (#f6f7fa), which was close enough to `--surface` that a white panel
+     on it read as flush rather than as a sheet laid on a page. Client's
+     call, 2026-09-08.
+
+     The wayfinding redesign repainted this whole ramp onto a green-cast
+     grey concourse (#e7ebea and a near-black-teal ink) on 2026-09-09,
+     and that was reverted on 2026-09-10 at the client's word: the theme
+     and the radii go back, everything else the redesign did stays. Where
+     a value below is NOT the one `main` carries, it is because `main`'s
+     failed a contrast floor — each of those says so and shows both
+     numbers. Nothing was changed for taste on the way past. */
+  --bg: #f1f4fa;
+  --surface: #ffffff;
+  --surface-2: #eef0f5;
+  --surface-inset: #e7eaf1;
+  --border: #e1e5ed;
+  /* NOT `main`'s #ccd2de, and this is the one revert that could not be
+     taken. #ccd2de is 1.517:1 on white, and this token is the entire
+     boundary of every text input, textarea and OTP box in the product —
+     `input.tsx`, `textarea.tsx`, `input-otp.tsx`, `visa-expiry-field`,
+     `profile-fields`, the intake composer. All of them are `bg-surface`
+     on `bg-surface`, so there is no fill difference behind the border:
+     the edge is the only thing saying where the control is, which is
+     exactly the case WCAG 1.4.11 puts a 3:1 floor on.
+
+     So it is `main`'s hue, walked down its own ramp until it clears 3:1
+     on all three grounds it is ruled across — `border-t
+     border-border-strong` puts it straight onto the ground in the
+     marketing pages, and `bg-surface-2` puts it under a table's header
+     band. 3.467:1 on white, 3.040 on the secondary plate, 3.146 on the
+     ground, against 1.517 / 1.331 / 1.377 before.
+
+     A pre-existing defect, not one the redesign introduced. */
+  --border-strong: #868a91;
+  --ink: #10131c;
+  --ink-2: #4a5163;
+  /* NOT `main`'s #7b8296, for the same reason as the edge above: it is
+     3.835:1 on white and this role is text.
+
+     `.special-caps` sets a table's column heads in it on `--surface-2`;
+     the marketing comparison rows set 17px body copy in it straight onto
+     `--bg`. Both were failing AA, and on the three non-white grounds it
+     was worse — 3.364 / 3.184 / 3.481.
+
+     `main`'s hue, stepped down until it clears 4.5:1 on all four:
+     5.464:1 on the plate, 4.792 on the secondary plate, 4.537 in an
+     inset well, 4.959 on the ground.
+
+     A token is checked against every ground it lands on, and this is the
+     token that taught that rule — an earlier attempt cleared white alone
+     by 0.019 and failed the other three.
 
      `.t-muted` is not one of the consumers this token is chosen for —
      it sets `--ink-2`. The real ones are `.special`, `.special-caps`,
      `.tag`, `.mrz` and the `text-ink-3` / `placeholder:text-ink-3`
      call sites. */
-  --ink-3: #5a686e;
+  --ink-3: #64697a;
 
   /* The focus ring — the one token in this block that is not a neutral,
      and it is here rather than on the brand axis because a fill and a
      boundary have different floors and one hex cannot serve both.
 
-     `--brand` is a fill. It carries `--on-brand` white on it as a
-     primary button label, so it has to stay dark enough for 4.5:1
-     against that label: #0a4ea3 gives 7.98:1. The ring is the opposite
-     job — a boundary drawn against the ground — and in dark that same
-     #0a4ea3 measures 2.078:1 on the plate and 2.331:1 on the concourse,
-     under the 3:1 a boundary somebody has to see. Lifting `--brand`
-     itself to the light blue fixes the ring and breaks the button:
-     white on #4c8fe0 is 3.327:1.
-
-     So the ring is split out and given a value per theme. Dark lifts it
-     to a light blue — see the note in the dark block.
+     `--brand` is a fill: it carries `--on-brand` white as a primary
+     button label, so it has to stay dark enough for 4.5:1 against that
+     label. The ring is the opposite job — a boundary drawn against the
+     ground — and a fill dark enough to carry white is too dark to clear
+     3:1 against a dark plate. Lifting `--brand` to fix the ring breaks
+     the button. So the ring is split out and given a value per theme.
 
      Light leaves the hue axis altogether, and that is the second thing
      the ring has to do. Clearing the ground is not enough on its own: a
-     ring also has to not merge with the control it is ringing, and light
-     `--ring` used to be the same #0a4ea3 as `--brand`, which on a primary
-     button put the ring and the fill at 1.000:1. In a browser it read as
-     one blue shape with a white pinstripe through it rather than as a
-     button with a ring around it — the offset gap was carrying the whole
-     signal.
+     ring also has to not merge with the control it is ringing, and a
+     ring in `--brand`'s own colour on a primary button measures 1.000:1
+     against the fill. In a browser that read as one blue shape with a
+     white pinstripe through it rather than as a button with a ring
+     around it — the offset gap was carrying the whole signal.
 
      No blue can fix that in light, and the arithmetic is worth writing
      down because it looks as if a lighter or darker blue ought to work.
-     A ring needs 3:1 against the least contrasty light ground,
-     `--surface-inset`, which caps its luminance at 0.209; being 2:1 from
-     `--brand` on the lighter side needs at least 0.213. The two windows
-     do not overlap. The only way out is downward, past `--brand` rather
-     than around it — which is also what every browser's own light-mode
-     ring does, and why theirs are near-black rather than accent-coloured.
+     A ring needs 3:1 against the least contrasty light ground, which
+     caps its luminance; being 2:1 from `--brand` on the lighter side
+     needs more than that cap allows. The two windows do not overlap.
+     The only way out is downward, past `--brand` rather than around it —
+     which is also what every browser's own light-mode ring does, and why
+     theirs are near-black rather than accent-coloured.
 
-     So light's ring is the signage ink: 16.886 on the plate, 15.257 on
-     the secondary plate, 14.047 on the concourse, 13.363 in an inset
-     well, and 2.116:1 against a primary button's fill — a shade better
-     than the 2.399 dark already manages with its blue. It stays `--ink`'s
-     hex rather than a new one because the ring is the darkest mark in the
-     light theme for the same reason the ink is.
+     So light's ring is `--ink`'s own hex: the darkest mark in the light
+     theme, for the same reason the ink is. It clears 3:1 on all four
+     light grounds with margin and sits 2.9:1 from `--brand`'s fill.
 
-     Dark keeps the route blue, because there it does both jobs: #4c8fe0
-     is 4.985 on the plate and 2.399 from the fill. The asymmetry is not
-     an accident of two decisions — it is the same rule resolved twice.
-     Use the route colour where it clears both floors; drop to the end of
-     the value scale where it cannot.
-
-     This deviates from the spec's §1 and §7, which name `--route` alone
-     for the ring, on the reading that one route colour does both jobs.
-     It does neither in light nor in dark, and the deviation is recorded
-     here rather than left for the next audit to rediscover.
+     Dark lifts to #5e90f0 — `main`'s own dark `--brand-text` — which
+     does both jobs there: 5.681 on the plate and 2.092 from the fill.
+     The asymmetry is not an accident of two decisions; it is the same
+     rule resolved twice. Use the route colour where it clears both
+     floors, drop to the end of the value scale where it cannot.
 
      Declared per theme rather than per brand, so a BeOrchid console
-     focuses the same way for now. That is the deferral the spec already
-     takes on `--way`, and it ends the same way: when BeOrchid gets its
-     own route pair, this gets a value in that block. */
-  --ring: #0b1f2a;
+     focuses the same way for now. */
+  --ring: #10131c;
 
-  /* Plates sit ON the concourse; they do not float above it. What
-     separates a plate from its ground is the ground being darker and
-     the plate having a real edge — not a blur. `--shadow-sm` survives
-     as a hairline-thin contact shadow for a plate that genuinely
-     overlaps another (menus, dialogs, the mobile nav sheet); the two
-     larger steps are for those and nothing else. */
-  --shadow-sm: 0 1px 0 rgb(11 31 42 / 0.06);
-  --shadow: 0 1px 2px rgb(11 31 42 / 0.10), 0 8px 20px -10px rgb(11 31 42 / 0.16);
-  --shadow-lg: 0 2px 6px rgb(11 31 42 / 0.14), 0 20px 44px -14px rgb(11 31 42 / 0.24);
+  /* Elevation is a real tool. At 6% on a near-white ground the values
+     before these were invisible, so every card fell back to a 1px border
+     — which is what turned the page into a grid of boxes.
 
-  /* Signage green and red, not the old semantic pair. Both are read at
-     a glance next to a status word, never alone. */
-  --success: #00713c;
-  --success-ink: #005c31;
+     Restored with the radii on 2026-09-10, and the two go together: the
+     wayfinding pass cut elevation to a 1px contact shadow *because* it
+     had cut the corners to 4px, on the argument that a plate reads as an
+     object by its edge rather than by a blur. Reverting one without the
+     other leaves soft corners with nothing under them, which is neither
+     treatment. */
+  --shadow-sm: 0 1px 2px rgb(16 19 28 / 0.06);
+  --shadow: 0 1px 3px rgb(16 19 28 / 0.08), 0 12px 28px -8px rgb(16 19 28 / 0.10);
+  --shadow-lg: 0 2px 8px rgb(16 19 28 / 0.10), 0 24px 56px -12px rgb(16 19 28 / 0.18);
+
+  /* Semantics — shared across brands, never a brand accent.
+
+     `--success` and `--warning` are NOT `main`'s #18935a and #b4740a.
+     Both are type on a plate as well as fills carrying a white label,
+     and both failed 4.5:1 doing it: #18935a is 3.918 either way, and
+     white on #b4740a is 3.858. `--warning` is now `main`'s own
+     `--warning-ink` step (5.980 on white, 5.245 under a table band) and
+     `--warning-ink` moves one further down; `--success` is stepped down
+     its own ramp to 4.715.
+
+     `--danger` and `--info` are `main`'s, unchanged — they already
+     cleared. */
+  --success: #168451;
+  --success-ink: #0e6b3e;
   --warning: #8a5905;
   --warning-ink: #6f4704;
-  --danger: #c8102e;
-  --danger-ink: #a30d25;
-  --info: #0a4ea3;
-  --info-ink: #083f83;
+  --danger: #c0392b;
+  --danger-ink: #9a2c20;
+  --info: #2f6be0;
+  --info-ink: #1f4eaf;
 
   /* The label ink each fill carries, the way --brand carries --on-brand
      and --way carries --way-ink. It exists because `text-white` is one
@@ -161,7 +180,7 @@
      used to be quoted here as the dark figure was dark `--warning-ink`
      on the dark plate, copied across by mistake. */
   --way: #f5b915;
-  --way-ink: #0b1f2a;
+  --way-ink: #10131c;
 
   /* chart fills — the same three hues as the semantics above, stepped
      to pass the categorical-palette checks rather than reused verbatim.
@@ -190,24 +209,24 @@
      which makes lightness a second, redundant encoding of the same
      magnitude the bar width already shows, running the same direction.
 
-     One hue at 258°, L 0.36 → 0.68 in even 0.08 steps, chroma held
-     near 0.16 until the gamut takes it — the deep end clips to 0.133.
+     One hue at 265°, L 0.36 → 0.68 in even 0.08 steps, chroma held
+     at 0.16, which this hue holds across the whole light ramp.
      Validated as an ordinal ramp against --surface: monotone L, every
      adjacent gap over the 0.06 floor, and the pale end at 2.90:1,
      clear of the 2:1 an ordinal light end has to hold.
 
-     258° is --brand's own hue, measured: #0a4ea3 is OKLCH 257.6°. The
+     265° is --brand's own hue, measured: #2450d8 is OKLCH 265.2°. The
      earlier note here called the ramp brand-neutral and said it would
      stay put when --brand moved — it did not, because a ramp derived
-     off the old 264.5° brand read as a second, disagreeing blue beside
+     off a different brand hue read as a second, disagreeing blue beside
      the new one. Sharing the hue is the point: the funnel is the same
      product speaking, in lightness rather than in hue. If --brand's
      hue moves again, this ramp moves with it. */
-  --chart-funnel-1: #003981;
-  --chart-funnel-2: #034da8;
-  --chart-funnel-3: #2466c3;
-  --chart-funnel-4: #3d7ede;
-  --chart-funnel-5: #5598f9;
+  --chart-funnel-1: #13308f;
+  --chart-funnel-2: #2649a9;
+  --chart-funnel-3: #3b61c4;
+  --chart-funnel-4: #517adf;
+  --chart-funnel-5: #6793fa;
 
   /* what tints blend into */
   --mix: #ffffff;
@@ -223,15 +242,19 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* Signage geometry. A sign is a plate with a machined edge, so the
-     radius is the smallest one that still reads as manufactured rather
-     than as a cut corner. 14px read as a SaaS card, which is what it
-     was chosen to be on the previous system; that decision goes with
-     the system it belonged to. */
-  --radius-sm: 3px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 10px;
+  /* radius — 14px is the system default. Softened across the board;
+     paired with the real elevation above, this lets a card read as a
+     surface rather than as an outlined box.
+
+     The wayfinding pass cut these to 3/4/6/10px on the argument that a
+     sign is a plate with a machined edge. Reverted on 2026-09-10 at the
+     client's word, together with the elevation that had been flattened
+     to suit them — see the shadow block for why the two cannot move
+     apart. */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-pill: 999px;
   --radius: var(--radius-md);
 
@@ -268,48 +291,48 @@
    the .dark class next-themes toggles, and the un-stamped system default. */
 :root[data-theme="dark"],
 .dark {
-  /* The night concourse. Selected against this ground, not flipped out
-     of the light steps — a flip puts the hairline at 1.29:1 and the
-     strong edge at 1.86:1, both invisible. */
-  --bg: #0a141b;
-  --surface: #132029;
-  --surface-2: #1b2b36;
-  --surface-inset: #0e1a22;
-  --border: #2b3a44;
-  /* 3.488 / 3.056 / 3.913 on the plate, the secondary plate and the
-     concourse. The #5d6c75 it replaces cleared the plate at 3.054 and
-     then dropped to 2.676 under a table's header band — the same
-     one-ground selection the light step had. */
-  --border-strong: #67757d;
-  --ink: #e8edec;
-  --ink-2: #a3b1b8;
-  /* 5.149 / 4.511 / 5.777 / 5.482 — AA on the plate, the secondary
-     plate, the concourse and an inset well. #7a8b93 was 4.111 under a
-     table's header band, which is where most of the muted type in the
-     consoles actually sits. */
-  --ink-3: #829299;
+  /* Dark is selected against this ground, not flipped out of the light
+     steps. `main`'s ramp, restored on 2026-09-10 with the light one; the
+     two values below that are NOT `main`'s say why. */
+  --bg: #0b0d13;
+  --surface: #141822;
+  --surface-2: #1d222e;
+  --surface-inset: #101420;
+  --border: #262c3a;
+  /* NOT `main`'s #38404f — 1.702:1 on the plate, and this token is the
+     only boundary an input has in either theme. `main`'s hue, lifted
+     until it clears the 3:1 of WCAG 1.4.11 on all three grounds:
+     3.360 / 3.011 / 3.678. Same repair as the light block. */
+  --border-strong: #666c77;
+  --ink: #f3f5fa;
+  --ink-2: #aab2c4;
+  /* NOT `main`'s #767e91, which is 4.363 on the plate and 3.910 under a
+     table's header band — and the band is where most of the muted type
+     in the consoles actually sits. Lifted on its own hue to
+     5.065 / 4.539 / 5.244 / 5.544, AA on all four. */
+  --ink-3: #82899a;
 
-  /* Lifted off `--brand`, which stays #0a4ea3 because it is the button
-     fill and carries white. 4.985 on this plate, 5.592 on this concourse,
-     4.367 under a table's band and 5.307 in an inset well, against a 3:1
-     boundary floor that #0a4ea3 misses here at 2.078 / 2.331 / 1.821 /
-     2.212. It is also 2.399:1 from that fill, so unlike the light block
-     the route colour can stay: a ring on a primary button reads as a ring
-     here rather than as a wider button. The full argument, including why
-     light cannot do the same, is on the light `--ring`. */
-  --ring: #4c8fe0;
+  /* Lifted off `--brand`, which stays #2450d8 because it is the button
+     fill and carries white. This is `main`'s own dark `--brand-text`:
+     5.681 on this plate, 6.219 on this ground, 5.092 under a table's
+     band, against the 3:1 a boundary needs — and 2.092:1 from the fill,
+     so unlike the light block the brand colour can stay here. A ring on
+     a primary button reads as a ring rather than as a wider button. The
+     full argument, including why light cannot do the same, is on the
+     light `--ring`. */
+  --ring: #5e90f0;
 
-  --shadow-sm: 0 1px 0 rgb(0 0 0 / 0.4);
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 20px -10px rgb(0 0 0 / 0.45);
-  --shadow-lg: 0 2px 6px rgb(0 0 0 / 0.55), 0 20px 44px -14px rgb(0 0 0 / 0.55);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
+  --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 12px 28px -8px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 2px 8px rgb(0 0 0 / 0.55), 0 24px 56px -12px rgb(0 0 0 / 0.55);
 
-  --success: #2fa968;
+  --success: #3cc57e;
   --success-ink: #7fe0ac;
   --warning: #e5a83c;
   --warning-ink: #f3c77e;
-  --danger: #e4574c;
+  --danger: #e8695c;
   --danger-ink: #f2a199;
-  --info: #4c8fe0;
+  --info: #5e90f0;
   --info-ink: #9dbaf6;
 
   /* The signage ink, the same #0b1f2a --way-ink uses and for the same
@@ -320,14 +343,14 @@
      history. Note which way `hover:brightness-110` moves them now: 
      lightening the fill under a dark label walks toward the floor's
      safe side, where under a white label it walked away from it. */
-  --on-success: #0b1f2a;
-  --on-warning: #0b1f2a;
-  --on-danger: #0b1f2a;
+  --on-success: #10131c;
+  --on-warning: #10131c;
+  --on-danger: #10131c;
 
   /* Holds. Yellow is a light fill on either ground, and so is the ink
      that sits on it. */
   --way: #f5b915;
-  --way-ink: #0b1f2a;
+  --way-ink: #10131c;
 
   /* Chosen for dark, not flipped into it. The dark semantics above are
      deliberately bright — they carry small marks on a near-black
@@ -340,7 +363,7 @@
   --chart-outstanding: #c08829;
 
   /* The funnel ramp re-anchored for dark, not inverted into it. Same
-     hue — 258°, --brand's own — and the same 0.08 lightness steps,
+     hue — 265°, --brand's own — and the same 0.08 lightness steps,
      but the ends swap jobs:
      on a near-black ground the *bright* step is the emphatic one, so
      the wide end of the funnel is the lightest and the ramp darkens
@@ -349,11 +372,11 @@
      rather than assumed: the narrow end lands at 2.27:1, which is the
      end that would have gone invisible had these been a straight flip
      of the light steps. */
-  --chart-funnel-1: #8ab9ff;
-  --chart-funnel-2: #5c9eff;
-  --chart-funnel-3: #4385e4;
-  --chart-funnel-4: #2a6cc9;
-  --chart-funnel-5: #0d53af;
+  --chart-funnel-1: #8bafff;
+  --chart-funnel-2: #6793fa;
+  --chart-funnel-3: #517adf;
+  --chart-funnel-4: #3b61c4;
+  --chart-funnel-5: #2649a9;
 
   /* What the tinted fills blend toward, so a 12%-brand wash reads as a
      wash on the plate rather than as a hole in it. It has to BE the dark
@@ -361,7 +384,7 @@
      It was still #141822 — the plate colour from before the repaint —
      which put every one of those tints on a ground the product no longer
      has. */
-  --mix: #132029;
+  --mix: #141822;
 }
 
 /* ---------- brand axis ---------- */
@@ -371,11 +394,11 @@
      hue was a SaaS default; this one is the institutional register the
      rest of the system is written in. 7.98:1 on white, 6.64:1 on the
      concourse. */
-  --brand: #0a4ea3;
-  --brand-press: #083f83;
-  --brand-2: #4c8fe0;
-  --brand-text: #0a4ea3;
-  --brand-accent: var(--way);
+  --brand: #2450d8;
+  --brand-press: #1b3eae;
+  --brand-2: #57a9f2;
+  --brand-text: #2450d8;
+  --brand-accent: #f4a521;
   --on-brand: #ffffff;
   /* The route's pill ink, and the last fill in the system to get one.
      --success, --warning, --danger and --info each carry a `-ink` half
@@ -386,8 +409,8 @@
      the plate in dark and takes the ratio down with it. Measured at
      4.283:1 on --surface-2, under the 4.5 a 13px label needs. Light is
      --brand-text's own value, so nothing moves there. */
-  --brand-ink: #0a4ea3;
-  --brand-grad: linear-gradient(150deg, #0a4ea3, #4c8fe0);
+  --brand-ink: #2450d8;
+  --brand-grad: linear-gradient(150deg, #2450d8, #57a9f2);
 }
 
 [data-brand="beorchid"] {
@@ -411,7 +434,7 @@
 :root[data-theme="dark"] [data-brand="toplance"],
 .dark,
 .dark [data-brand="toplance"] {
-  --brand-text: #5192e1;
+  --brand-text: #5e90f0;
   /* Lifted past --brand-text rather than sharing it: on the pill's
      mixed ground #5192e1 is 4.283 and this is 5.746. Kept clear of
      --info-ink's #9dbaf6 so "Processing" and "Submitted" stay two

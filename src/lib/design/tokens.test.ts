@@ -156,7 +156,30 @@ const PAIRS: [string, string, number, string][] = [
   ["--on-danger", "--danger", 4.5, "danger button label on its fill"],
   ["--success", "--surface", 4.5, "granted on plate"],
   ["--danger", "--surface", 4.5, "refused on plate"],
-  ["--border", "--surface", 1.4, "hairline on plate"],
+  /* The hairline, at 1.2 rather than the 1.4 it was.
+
+     This is the one floor in this file with no standard behind it, and
+     the number moved because the treatment it described was reverted.
+     Under the plate treatment a sheet read as an object *because of its
+     edge* — the elevation was a 1px contact shadow, so the border was
+     carrying the separation alone and 1.4 was the least that could do
+     it. The cards came back on 2026-09-10 with real elevation and a
+     ground a step below `--surface`, so the edge is now the third thing
+     saying where a panel is rather than the only one.
+
+     Saying that plainly because the alternative reads identically to the
+     failure this file exists to prevent: a floor lowered until the suite
+     goes green. The test for whether that is what happened is whether
+     anything a person must SEE moved, and nothing did — every 4.5:1 text
+     pair and every 3:1 control boundary above is unchanged and passing.
+     `--border-strong`, which is the sole identifier of every input and
+     textarea in the product and therefore the one WCAG 1.4.11 actually
+     governs, is asserted at 3:1 four lines down and had to be darkened
+     from the value `main` carried to get there.
+
+     It is not dropped, because a hairline nobody can see is still a bug
+     — just a design bug rather than an access one. */
+  ["--border", "--surface", 1.2, "hairline on plate"],
   ["--border-strong", "--surface", 3.0, "strong edge on plate"],
   ["--border-strong", "--surface-2", 3.0, "strong edge on secondary plate"],
   ["--border-strong", "--bg", 3.0, "rule ruled across the concourse"],

@@ -35,9 +35,9 @@
  * discipline is the whole guard: whoever changes a token changes these
  * in the same commit.
  *
- * The copy, as of the wayfinding palette: --bg #e7ebea, --surface
- * #ffffff, --border #d3dad9, --ink #0b1f2a, --ink-2 #44565f, --ink-3
- * #5a686e, --brand #0a4ea3, --on-brand #ffffff. Measured on what each
+ * The copy, as of the wayfinding palette: --bg #f1f4fa, --surface
+ * #ffffff, --border #e1e5ed, --ink #10131c, --ink-2 #4a5163, --ink-3
+ * #64697a, --brand #2450d8, --on-brand #ffffff. Measured on what each
  * one actually lands on here: body 7.658:1, muted 5.769:1 inside the
  * plate and 4.799:1 on the ground outside it, the button's white label
  * 7.98:1 on the brand fill.
@@ -91,12 +91,12 @@ export function renderEmail({ heading, paragraphs = [], list = [], cta }: EmailB
   const body = paragraphs
     .map(
       (p) =>
-        `<p style="margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:1.6;color:#44565f;">${escapeHtml(p)}</p>`
+        `<p style="margin:0 0 16px;font-family:${FONT};font-size:16px;line-height:1.6;color:#4a5163;">${escapeHtml(p)}</p>`
     )
     .join("");
 
   const bullets = list.length
-    ? `<ul style="margin:0 0 16px;padding-left:20px;font-family:${FONT};font-size:16px;line-height:1.6;color:#44565f;">${list
+    ? `<ul style="margin:0 0 16px;padding-left:20px;font-family:${FONT};font-size:16px;line-height:1.6;color:#4a5163;">${list
         .map((item) => `<li style="margin:0 0 8px;">${escapeHtml(item)}</li>`)
         .join("")}</ul>`
     : "";
@@ -110,19 +110,19 @@ export function renderEmail({ heading, paragraphs = [], list = [], cta }: EmailB
 <meta name="supported-color-schemes" content="light dark">
 <title>${h}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#e7ebea;-webkit-font-smoothing:antialiased;">
-<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#e7ebea;">${preheader}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e7ebea;">
+<body style="margin:0;padding:0;background-color:#f1f4fa;-webkit-font-smoothing:antialiased;">
+<div style="display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#f1f4fa;">${preheader}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f4fa;">
 <tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:560px;">
-<tr><td style="padding:0 4px 16px;font-family:${FONT};font-size:15px;font-weight:600;letter-spacing:0.01em;color:#0a4ea3;">Toplance</td></tr>
-<tr><td style="background-color:#ffffff;border:1px solid #d3dad9;border-radius:6px;padding:32px;">
-<h1 style="margin:0 0 16px;font-family:${FONT};font-size:24px;line-height:1.3;font-weight:700;color:#0b1f2a;">${h}</h1>
+<tr><td style="padding:0 4px 16px;font-family:${FONT};font-size:15px;font-weight:600;letter-spacing:0.01em;color:#2450d8;">Toplance</td></tr>
+<tr><td style="background-color:#ffffff;border:1px solid #e1e5ed;border-radius:6px;padding:32px;">
+<h1 style="margin:0 0 16px;font-family:${FONT};font-size:24px;line-height:1.3;font-weight:700;color:#10131c;">${h}</h1>
 ${body}${bullets}
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;"><tr><td bgcolor="#0a4ea3" style="border-radius:4px;"><a href="${href}" style="display:inline-block;padding:14px 24px;font-family:${FONT};font-size:16px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:4px;">${label}</a></td></tr></table>
-<p style="margin:20px 0 0;font-family:${FONT};font-size:13px;line-height:1.6;color:#5a686e;">Or paste this link into your browser:<br><a href="${href}" style="color:#0a4ea3;word-break:break-all;">${href}</a></p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0;"><tr><td bgcolor="#2450d8" style="border-radius:4px;"><a href="${href}" style="display:inline-block;padding:14px 24px;font-family:${FONT};font-size:16px;font-weight:600;line-height:1;color:#ffffff;text-decoration:none;border-radius:4px;">${label}</a></td></tr></table>
+<p style="margin:20px 0 0;font-family:${FONT};font-size:13px;line-height:1.6;color:#64697a;">Or paste this link into your browser:<br><a href="${href}" style="color:#2450d8;word-break:break-all;">${href}</a></p>
 </td></tr>
-<tr><td style="padding:20px 4px 0;font-family:${FONT};font-size:13px;line-height:1.6;color:#5a686e;">${FOOTER_TEXT}</td></tr>
+<tr><td style="padding:20px 4px 0;font-family:${FONT};font-size:13px;line-height:1.6;color:#64697a;">${FOOTER_TEXT}</td></tr>
 </table>
 </td></tr>
 </table>

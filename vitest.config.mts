@@ -16,6 +16,15 @@ const serverOnlyStub = fileURLToPath(
   new URL("./node_modules/server-only/empty.js", import.meta.url)
 );
 
+/**
+ * `next/root-params` ships a module that throws — the compiler is meant
+ * to replace it, and Vitest does not compile. See the stub for why it
+ * answers `undefined` rather than a plausible locale.
+ */
+const rootParamsStub = fileURLToPath(
+  new URL("./vitest.root-params.mts", import.meta.url)
+);
+
 const DB_TESTS = databaseBackedTests();
 
 const shared = {
@@ -43,7 +52,10 @@ const shared = {
 export default defineConfig({
   resolve: {
     tsconfigPaths: true,
-    alias: { "server-only": serverOnlyStub },
+    alias: {
+      "server-only": serverOnlyStub,
+      "next/root-params": rootParamsStub,
+    },
   },
   test: {
     /**
@@ -106,7 +118,10 @@ export default defineConfig({
       {
         resolve: {
           tsconfigPaths: true,
-          alias: { "server-only": serverOnlyStub },
+          alias: {
+            "server-only": serverOnlyStub,
+            "next/root-params": rootParamsStub,
+          },
         },
         test: {
           ...shared,
@@ -129,7 +144,10 @@ export default defineConfig({
       {
         resolve: {
           tsconfigPaths: true,
-          alias: { "server-only": serverOnlyStub },
+          alias: {
+            "server-only": serverOnlyStub,
+            "next/root-params": rootParamsStub,
+          },
         },
         test: {
           ...shared,

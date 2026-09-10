@@ -37,7 +37,7 @@ const buttonVariants = cva(
            thing that says where the control is — there is no fill behind
            it — so it takes the boundary floor, and `--brand` is a fill
            hue that measures 2.078:1 on a dark plate. `--brand-text` is
-           the same #0a4ea3 in light, so nothing moves there, and lifts to
+           the same #2450d8 in light, so nothing moves there, and lifts to
            #5192e1 in dark, which is 5.171:1 and is already the colour of
            this button's own label. */
         secondary:

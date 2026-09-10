@@ -1,7 +1,18 @@
 import { expect, test } from "@playwright/test";
 
-import { payAgencyPlan, resetFixtures, signUp, testEmail } from "./helpers/auth";
-import { activateOrganisation, promoteToStaff } from "./helpers/db";
+import {
+  payAgencyPlan,
+  resetFixtures,
+  signUp,
+  signUpInvited,
+  testEmail,
+} from "./helpers/auth";
+import {
+  activateOrganisation,
+  approveApplicationFor,
+  promoteToStaff,
+  seedInvitation,
+} from "./helpers/db";
 import {
   emptyInvariants,
   measureInvariants,
@@ -52,6 +63,10 @@ const OPS_EMAIL = testEmail("sweep-ops");
 const OPS_NAME = "Ibrahim Danjuma";
 const OPS_ORG = "Sweep Ops Agency";
 
+const APP_EMAIL = testEmail("sweep-traveller");
+const APP_NAME = "Aisha Bello";
+const APP_ORG = "Sweep Sponsor Agency";
+
 /** Static agency console routes. A director sees all of these. */
 const AGENCY_ROUTES = [
   "/agency",
@@ -75,6 +90,22 @@ const OPS_ROUTES = [
   "/ops/support",
   "/ops/staff",
   "/ops/profile",
+];
+
+/**
+ * The traveller's own screens. Every one of these bounces to
+ * `/app/agent` until intake is finished, and `/app/companion` bounces to
+ * `/app` until a decision has been made — so a sweep of a brand-new
+ * account measures the intake screen seven times and reports it green.
+ */
+const APP_ROUTES = [
+  "/app",
+  "/app/requirements",
+  "/app/documents",
+  "/app/companion",
+  "/app/messages",
+  "/app/agent",
+  "/app/profile",
 ];
 
 const LOCALES = [
@@ -211,5 +242,28 @@ test("the platform console holds its invariants at 390px, both themes, LTR and R
 
   await page.setViewportSize(NARROW);
   const { found, bounced } = await sweepRoutes(page, OPS_ROUTES);
+  assertInvariants(found, bounced);
+});
+
+test("the traveller's screens hold their invariants at 390px, both themes, LTR and RTL", async ({
+  page,
+}) => {
+  await resetFixtures([APP_EMAIL], [APP_ORG]);
+
+  // The only way a traveller exists: an agency invited them.
+  const token = await seedInvitation(APP_EMAIL, APP_ORG);
+  await signUpInvited(page, { email: APP_EMAIL, fullName: APP_NAME, token });
+
+  // Bought rather than walked. Intake is a conversation with a model and
+  // a decision is a reviewer's working day; `traveller.spec.ts` and
+  // `client-spec-traveller.spec.ts` prove both through the UI, and
+  // repeating them here would buy nothing but an hour. What this sweep
+  // needs is the state on the far side — an approved application with a
+  // finished checklist — because that is the only state in which all
+  // seven screens render themselves rather than a redirect.
+  await approveApplicationFor(APP_EMAIL);
+
+  await page.setViewportSize(NARROW);
+  const { found, bounced } = await sweepRoutes(page, APP_ROUTES);
   assertInvariants(found, bounced);
 });

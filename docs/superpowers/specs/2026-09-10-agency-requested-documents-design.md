@@ -113,10 +113,13 @@ const stale = existing
 
 `existing` gains `source` in its select.
 
-**Fix 2 — corridor propagation, `src/lib/data/corridors.ts`.** `corridorCoverageGaps`
+**Fix 2 — corridor propagation, `src/lib/data/corridors.ts`.** `checklistChangesFrom`
 computes its `removed` list by the same set difference and needs the same filter. Without
 it, a corridor revision tells the traveller "we removed Bank statements" about a document
 the agency asked for five minutes earlier.
+
+(Named `corridorCoverageGaps` when this was drafted. That function exists and does
+something else — the set difference that matters is in `checklistChangesFrom`.)
 
 **Promotion.** If a later corridor revision asks for a `docKey` an agency row already
 holds, that row is promoted to `source: "corridor"` and its description refreshed, rather
@@ -199,6 +202,21 @@ column guard makes that write once-only.
 6. `sentBackWithoutDetail` — full truth table across statuses and counts.
 7. `withdrawDocumentRequest` refuses once `state !== "not_started"`. *The guarantee that
    no agency click destroys a traveller's file.*
+
+## Found while building
+
+Three guards the design did not anticipate, each added with a test:
+
+- **A decided case refuses a request.** Nobody can submit from `approved` or
+  `rejected`, so a required row added there could never be cleared by anyone — it would
+  sit on a closed checklist holding the completion ring down with no way out.
+- **Withdrawing refuses a corridor row outright.** Withdrawing is the undo of one
+  reviewer's request, not a delete button for the checklist; a corridor requirement comes
+  off by revising the corridor, which reaches every traveller on it.
+- **Promotion writes the description itself** rather than leaving it to the reword pass
+  above it. That pass compares the corridor's wording against what is stored, and on a
+  promoted row what is stored is what the reviewer typed — so a request whose wording
+  happened to match would compare equal and keep the agency's wording for good.
 
 ## Out of scope
 

@@ -11,6 +11,8 @@ import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { RouteDiagram } from "@/components/app/route-diagram";
 import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
+import { COMPANION } from "@/lib/i18n/companion";
+import { nextStepFor, type NextStep } from "@/lib/domain/next-step";
 import {
   completionOf,
   getDocuments,
@@ -23,6 +25,7 @@ import { unreadCountFor } from "@/lib/data/messages";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getLocale } from "@/lib/i18n/server";
+import type { Locale } from "@/lib/i18n/locales";
 import { DASHBOARD } from "@/lib/i18n/dashboard";
 import { withLocalePrefix } from "@/lib/i18n/paths";
 
@@ -69,13 +72,6 @@ export default async function DashboardPage() {
 
   const completion = completionOf(docs);
   const statusCopy = STATUS_COPY[application.status];
-  // Three moments, in order: uploads outstanding, everything uploaded
-  // but still being checked, everything verified. Only the first leaves
-  // the traveller something to do.
-  const toUpload = completion.total - completion.collected;
-  const done = completion.total > 0 && completion.verified >= completion.total;
-  const allUploaded = toUpload <= 0;
-
   /**
    * Sent back beats everything else this page could say.
    *
@@ -88,7 +84,20 @@ export default async function DashboardPage() {
    * saying which is a question rather than an instruction.
    */
   const sentBack = docs.filter((d) => d.isRequired && d.state === "flagged");
-  const sentBackNames = sentBack.map((d) => d.name).join(", ");
+
+  /**
+   * What the lead plate says, decided in one place rather than in four
+   * nested ternaries on a screen. `nextStepFor` reads the status first:
+   * the checklist only gets a say while the case is still the
+   * traveller's to send.
+   */
+  const step = nextStepFor({
+    status: application.status,
+    completion,
+    sentBack: sentBack.map((d) => d.name),
+  });
+  const actionable =
+    step.kind !== "with_team" && step.kind !== "decided" && step.kind !== "interview";
 
   return (
     <main id="main">
@@ -123,57 +132,57 @@ export default async function DashboardPage() {
           <Panel>
             <PanelBody className="py-8 sm:px-8 sm:py-10">
               <div className="max-w-[58ch]">
-                <h1 className="t-h2">
-                  {sentBack.length > 0
-                    ? (sentBack.length === 1
-                        ? t.headingSentBackOne[locale]
-                        : t.headingSentBackMany[locale]
-                      ).replace("{n}", String(sentBack.length))
-                    : done
-                      ? t.headingVerified[locale]
-                      : allUploaded
-                        ? t.headingUploaded[locale]
-                        : (toUpload === 1 ? t.headingToUploadOne[locale] : t.headingToUploadMany[locale]).replace(
-                            "{n}",
-                            String(toUpload)
-                          )}
-                </h1>
-                <p className="t-body-lg mt-3 text-ink-2">
-                  {sentBack.length > 0
-                    ? t.bodySentBack[locale].replace("{names}", sentBackNames)
-                    : done
-                    ? t.bodyVerified[locale]
-                    : allUploaded
-                      ? t.bodyUploaded[locale]
-                          .replace("{verified}", String(completion.verified))
-                          .replace("{total}", String(completion.total))
-                      : t.bodyToUpload[locale]
-                          .replace("{collected}", String(completion.collected))
-                          .replace("{total}", String(completion.total))}
-                </p>
-                <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
+                <h1 className="t-h2">{headingOf(step, locale)}</h1>
+                {bodyOf(step, locale) && (
+                  <p className="t-body-lg mt-3 text-ink-2">{bodyOf(step, locale)}</p>
+                )}
+                {/* Only while the checklist is still the subject. Once
+                    the case has gone, "verified means accepted for
+                    review" is answering a question nobody is asking —
+                    and beside a decision it is worse than noise. */}
+                {actionable && (
+                  <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
+                )}
                 {/* The one `--way` object on this screen, per §4.1 —
                     the next action and nothing else wears it. The
                     arrows that used to close three of these four labels
                     are gone: §4.2 keeps arrows for route diagrams and
                     corridor pairs, and bans them on a button outright.
                     `Upload` stays; it names the act rather than
-                    pointing. */}
-                <Button asChild variant="way" className="mt-6">
-                  <Link href="/app/documents">
-                    {sentBack.length > 0
-                      ? t.ctaFixSentBack[locale]
-                      : done
-                        ? t.ctaReviewSubmit[locale]
-                        : allUploaded
-                          ? t.ctaSeeDocuments[locale]
-                          : (
-                              <>
-                                <Upload /> {t.ctaUploadNext[locale]}
-                              </>
-                            )}
-                  </Link>
-                </Button>
+                    pointing.
+
+                    It is absent entirely while the case is with the
+                    desk: `--way` marks the next action, and a traveller
+                    waiting on a decision has none. A button that leads
+                    to a screen which has correctly stopped offering the
+                    action is worse than no button. */}
+                {actionable ? (
+                  <Button asChild variant="way" className="mt-6">
+                    <Link href="/app/documents">
+                      {step.kind === "sent_back" ? (
+                        t.ctaFixSentBack[locale]
+                      ) : step.kind === "review_submit" ? (
+                        t.ctaReviewSubmit[locale]
+                      ) : step.kind === "checking" ? (
+                        t.ctaSeeDocuments[locale]
+                      ) : (
+                        <>
+                          <Upload /> {t.ctaUploadNext[locale]}
+                        </>
+                      )}
+                    </Link>
+                  </Button>
+                ) : (
+                  step.kind === "decided" &&
+                  step.outcome === "granted" && (
+                    // The arrival companion is the genuine next step,
+                    // and it exists only from `approved` — the same
+                    // condition the rail uses to show its tab.
+                    <Button asChild variant="way" className="mt-6">
+                      <Link href="/app/companion">{COMPANION.title[locale]}</Link>
+                    </Button>
+                  )
+                )}
               </div>
             </PanelBody>
           </Panel>
@@ -269,4 +278,61 @@ export default async function DashboardPage() {
       </Shell>
     </main>
   );
+}
+
+/** The plate's headline, one per state of `nextStepFor`. */
+function headingOf(step: NextStep, locale: Locale): string {
+  switch (step.kind) {
+    case "sent_back":
+      return (
+        step.names.length === 1
+          ? DASHBOARD.headingSentBackOne[locale]
+          : DASHBOARD.headingSentBackMany[locale]
+      ).replace("{n}", String(step.names.length));
+    case "review_submit":
+      return DASHBOARD.headingVerified[locale];
+    case "checking":
+      return DASHBOARD.headingUploaded[locale];
+    case "to_upload":
+      return (
+        step.outstanding === 1
+          ? DASHBOARD.headingToUploadOne[locale]
+          : DASHBOARD.headingToUploadMany[locale]
+      ).replace("{n}", String(step.outstanding));
+    case "interview":
+      return DASHBOARD.headingInterview[locale];
+    case "with_team":
+      return DASHBOARD.headingWithTeam[locale];
+    case "decided":
+      return step.outcome === "granted"
+        ? DASHBOARD.headingApproved[locale]
+        : DASHBOARD.headingRefused[locale];
+  }
+}
+
+/**
+ * The sentence under it, or an empty string where the heading says the
+ * whole thing — which is only the approved plate. See `headingApproved`.
+ */
+function bodyOf(step: NextStep, locale: Locale): string {
+  switch (step.kind) {
+    case "sent_back":
+      return DASHBOARD.bodySentBack[locale].replace("{names}", step.names.join(", "));
+    case "review_submit":
+      return DASHBOARD.bodyVerified[locale];
+    case "checking":
+      return DASHBOARD.bodyUploaded[locale]
+        .replace("{verified}", String(step.verified))
+        .replace("{total}", String(step.total));
+    case "to_upload":
+      return DASHBOARD.bodyToUpload[locale]
+        .replace("{collected}", String(step.collected))
+        .replace("{total}", String(step.total));
+    case "interview":
+      return "";
+    case "with_team":
+      return DASHBOARD.bodyWithTeam[locale];
+    case "decided":
+      return step.outcome === "granted" ? "" : DASHBOARD.bodyRefused[locale];
+  }
 }

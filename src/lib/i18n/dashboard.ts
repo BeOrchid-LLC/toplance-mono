@@ -26,6 +26,12 @@ export const DASHBOARD: {
   ctaReviewSubmit: L;
   ctaSeeDocuments: L;
   ctaUploadNext: L;
+  headingInterview: L;
+  headingWithTeam: L;
+  bodyWithTeam: L;
+  headingApproved: L;
+  headingRefused: L;
+  bodyRefused: L;
   routeLabel: L;
   stageStarted: L;
   stageIntake: L;
@@ -260,6 +266,108 @@ export const DASHBOARD: {
    * reads "Documents complete" about somebody else's case, and a
    * traveller reads "Documents" about their own.
    */
+  /**
+   * The three states in which the traveller has nothing to do, which
+   * the plate had no words for until 10 September — it read the
+   * checklist alone, and a complete checklist kept "Everything is
+   * verified" and a yellow "Review and submit" on the screen for the
+   * rest of the case's life. See `nextStepFor`.
+   *
+   * None of these repeats the status pill in the panel beside it.
+   * "Under review" is already said there, in the same ten languages;
+   * saying it twice on one screen is how a page stops being read.
+   *
+   * Translated in-house from the English, like the rest of this file.
+   * NEEDS NATIVE REVIEW before launch.
+   */
+  /**
+   * Carries no body line, like the approved plate and for the opposite
+   * reason: the detail the traveller needs — the date, the place, what
+   * to bring — is long, it is already written once in
+   * `STATUS_COPY.interview_scheduled.blurb` beside this, and an
+   * attendance notice above this plate says it again with the actual
+   * date on it. A third telling would be the least accurate of the
+   * three.
+   */
+  headingInterview: {
+    en: "The embassy wants to meet you",
+    ha: "Ofishin jakadanci yana son ganin ka",
+    yo: "Ilé-iṣẹ́ aṣojú ìjọba fẹ́ pàdé rẹ",
+    ig: "Ụlọ ọrụ nnọchiteanya chọrọ izute gị",
+    fr: "L'ambassade souhaite vous rencontrer",
+    pt: "A embaixada quer encontrar-se consigo",
+    sw: "Ubalozi unataka kukutana nawe",
+    ar: "تريد السفارة مقابلتك",
+    tw: "Ɔman ananmusifoɔ asoɛe no pɛ sɛ ɔhyia wo",
+    zu: "Inxusa lifuna ukuhlangana nawe",
+  },
+  headingWithTeam: {
+    en: "Your file is with the team",
+    ha: "Fayil ɗinka yana hannun tawagar",
+    yo: "Fáìlì rẹ wà lọ́wọ́ ẹgbẹ́ náà",
+    ig: "Faịlụ gị dị n'aka ndị otu ahụ",
+    fr: "Votre dossier est entre les mains de l'équipe",
+    pt: "O seu processo está com a equipa",
+    sw: "Faili lako liko mikononi mwa timu",
+    ar: "ملفك لدى الفريق",
+    tw: "Wo faele no wɔ ekuo no nsam",
+    zu: "Ifayela lakho lisethimbeni",
+  },
+  bodyWithTeam: {
+    en: "Nothing is waiting on you. We will message you if anything else is needed.",
+    ha: "Babu wani abu da ke jiran ka. Za mu tura maka saƙo idan ana buƙatar wani abu.",
+    yo: "Kò sí ohunkóhun tí ó ń dúró de ọ. A ó fi iṣẹ́ ránṣẹ́ sí ọ bí a bá nílò ohunkóhun mìíràn.",
+    ig: "Ọ dịghị ihe na-echere gị. Anyị ga-ezitere gị ozi ma ọ bụrụ na achọrọ ihe ọzọ.",
+    fr: "Rien n'attend de vous. Nous vous écrirons si autre chose est nécessaire.",
+    pt: "Não há nada à sua espera. Enviaremos uma mensagem se for preciso mais alguma coisa.",
+    sw: "Hakuna kinachosubiri wewe. Tutakutumia ujumbe ikiwa kitu kingine kinahitajika.",
+    ar: "لا شيء ينتظرك. سنراسلك إذا لزم شيء آخر.",
+    tw: "Biribiara nnda hɔ a ɛretwɛn wo. Yɛbɛsoma nkra akɔma wo sɛ biribi foforɔ ho hia a.",
+    zu: "Akukho okulindele wena. Sizokuthumelela umyalezo uma kudingeka okunye.",
+  },
+  /**
+   * The approved plate carries no body line on purpose: the heading is
+   * the news, and the button under it is the one real next thing —
+   * `/app/companion`, which exists only from this status. A sentence
+   * between them would be padding on the one screen in the product
+   * nobody needs persuading to read.
+   */
+  headingApproved: {
+    en: "Your visa is approved",
+    ha: "An amince da bizar ka",
+    yo: "A ti fọwọ́sí físà rẹ",
+    ig: "Akwadoro visa gị",
+    fr: "Votre visa est accordé",
+    pt: "O seu visto foi aprovado",
+    sw: "Visa yako imeidhinishwa",
+    ar: "تمت الموافقة على تأشيرتك",
+    tw: "Wɔapene wo visa no so",
+    zu: "Ivisa yakho igunyaziwe",
+  },
+  headingRefused: {
+    en: "Your application was refused",
+    ha: "An ƙi buƙatarka",
+    yo: "A kọ ìbéèrè rẹ",
+    ig: "Ajụrụ arịrịọ gị",
+    fr: "Votre demande a été refusée",
+    pt: "O seu pedido foi recusado",
+    sw: "Ombi lako limekataliwa",
+    ar: "تم رفض طلبك",
+    tw: "Wɔapo wo abisadeɛ no",
+    zu: "Isicelo sakho sinqatshiwe",
+  },
+  bodyRefused: {
+    en: "Your agency will message you about what happens next.",
+    ha: "Hukumar ka za ta tura maka saƙo game da abin da zai biyo baya.",
+    yo: "Ilé-iṣẹ́ rẹ yóò fi iṣẹ́ ránṣẹ́ sí ọ nípa ohun tí yóò tẹ̀lé.",
+    ig: "Ụlọ ọrụ gị ga-ezitere gị ozi banyere ihe na-esote.",
+    fr: "Votre agence vous écrira au sujet de la suite.",
+    pt: "A sua agência entrará em contacto sobre os próximos passos.",
+    sw: "Wakala wako atakutumia ujumbe kuhusu hatua zinazofuata.",
+    ar: "ستراسلك وكالتك بشأن الخطوة التالية.",
+    tw: "Wo adwumakuo no bɛsoma nkra akɔma wo wɔ deɛ ɛdi hɔ ho.",
+    zu: "I-ejensi yakho izokuthumelela umyalezo mayelana nokulandelayo.",
+  },
   routeLabel: {
     en: "Your route",
     ha: "Hanyar ka",

@@ -166,6 +166,40 @@ describe.skipIf(!process.env.DATABASE_URL)("submitApplicationTx", async () => {
     expect(await statusOf()).toBe("submitted");
   });
 
+  it("refuses while a document the agency asked for is unverified", async () => {
+    /**
+     * This passes on the strength of code nobody changed, which is the
+     * point of writing it down. Submission gates on `isRequired` and
+     * `state`, and a requested row carries both — so the gate holds
+     * without ever learning that `source` exists.
+     *
+     * It is here as a guard on that. The obvious "fix" if this ever
+     * looks wrong is to teach the gate about `source`, and doing so
+     * would let a traveller submit straight past the document their
+     * agency was waiting for, which is the state the whole feature was
+     * built to end.
+     */
+    await db
+      .update(applications)
+      .set({ status: "additional_documents" })
+      .where(eq(applications.id, applicationId));
+
+    await db.insert(documents).values({
+      applicationId,
+      docKey: "police_check",
+      name: "Police certificate",
+      source: "agency",
+      isRequired: true,
+      sortOrder: 99,
+    });
+
+    await expect(submitApplicationTx(applicationId)).resolves.toEqual({
+      error: "1 document still to verify.",
+    });
+
+    expect(await statusOf()).toBe("additional_documents");
+  });
+
   it("refuses while a required document is unverified", async () => {
     await db
       .update(documents)

@@ -13,6 +13,8 @@ import {
   profiles,
 } from "@/lib/db/schema";
 import { listInvoices } from "@/lib/data/payments";
+import { requestedRoutes } from "@/lib/data/corridor-demand";
+import type { RequestedRoute } from "@/lib/domain/corridor-demand";
 import {
   OPEN_STATUSES,
   funnelOf,
@@ -71,6 +73,17 @@ export type DemandKpis = {
   destinations: TopCount[];
   purposes: TopCount[];
   nationalities: TopCount[];
+  /**
+   * The busiest routes travellers asked for that no live corridor
+   * answers — the panel's rows, capped for display.
+   *
+   * The only figures on this screen that are not about work the platform
+   * has done: they are about work it has not. All-time rather than the
+   * 30-day window the events panel uses; see `requestedRoutes`.
+   */
+  requestedRoutes: RequestedRoute[];
+  /** Every such route, which is what the counter beside them reads. */
+  unbuiltRoutes: number;
   sponsored: number;
   direct: number;
   /** Approved travellers whose visa expires in the next 90 days. */
@@ -127,6 +140,7 @@ export async function dashboardData(
     flaggedByKey,
     eventRows,
     invoices,
+    askedRoutes,
   ] = await Promise.all([
     db
       .select({
@@ -196,6 +210,11 @@ export async function dashboardData(
       .limit(8),
 
     listInvoices({ now }),
+
+    // Its own two reads, joined to nothing here: the request log is
+    // keyed on what a traveller typed, not on an application row, so
+    // there is no column on the pass above to hang it from.
+    requestedRoutes(),
   ]);
 
   const clients = rollupClients({
@@ -230,7 +249,11 @@ export async function dashboardData(
     stalled: stalledAtChecklist(applicationRows),
     operations: operationsOf(applicationRows, now),
     documents: documentsOf(documentRows, flaggedByKey),
-    demand: demandOf(applicationRows, eventRows, expiryHorizon),
+    demand: {
+      ...demandOf(applicationRows, eventRows, expiryHorizon),
+      requestedRoutes: askedRoutes.routes,
+      unbuiltRoutes: askedRoutes.total,
+    },
     invoices,
     payments: summarise(invoices, now),
     revenue: revenueByCycle(invoices),
@@ -267,11 +290,16 @@ type DemandRow = {
   purpose: string | null;
 };
 
+/*
+ * Everything except the requested routes, which come from their own
+ * module rather than from these rows — an unserved route leaves no
+ * application column behind to count.
+ */
 function demandOf(
   rows: readonly DemandRow[],
   events: readonly { name: string; n: number }[],
   expiryHorizon: Date
-): DemandKpis {
+): Omit<DemandKpis, "requestedRoutes" | "unbuiltRoutes"> {
   const horizon = expiryHorizon.toISOString().slice(0, 10);
 
   return {

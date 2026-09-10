@@ -19,6 +19,7 @@ export const OPS_CORRIDORS: {
     awaitingReviewSub: L;
     destinations: { label: L; sub: L };
     notCheckedYet: { label: L; sub: L };
+    notBuilt: { label: L; sub: L };
   };
   allVersionsPanel: L;
   rowsWord: L;
@@ -151,6 +152,38 @@ export const OPS_CORRIDORS: {
         ar: "مُفعَّلة دون أي فحص مسجَّل",
         tw: "ɛreyɛ adwuma nanso nhwehwɛmu biara nni ho a wɔakyerɛw",
         zu: "ziyasebenza kodwa akukho ukuhlolwa okurekhodiwe",
+      },
+    },
+    /*
+     * The only counter on this page that measures what is missing rather
+     * than what exists. It has no `href`, unlike the four beside it:
+     * there is no `?state=` that would filter this table down to routes
+     * which are, by definition, not rows in it.
+     */
+    notBuilt: {
+      label: {
+        en: "Asked for, not built",
+        ha: "An nema, ba a gina ba",
+        yo: "Wọ́n béèrè, kò tíì sí",
+        ig: "A rịọrọ ya, e wubeghị ya",
+        fr: "Demandés, non construits",
+        pt: "Pedidas, por criar",
+        sw: "Zimeombwa, hazijajengwa",
+        ar: "مطلوبة، وغير مبنية",
+        tw: "Wɔabisa, na wɔnyɛɛ bi",
+        zu: "Zicelwe, azakhiwanga",
+      },
+      sub: {
+        en: "routes travellers asked for",
+        ha: "hanyoyin da matafiya suka nema",
+        yo: "àwọn ipa ọ̀nà tí àwọn arìnrìn-àjò béèrè",
+        ig: "ụzọ ndị njem rịọrọ",
+        fr: "itinéraires demandés par les voyageurs",
+        pt: "rotas pedidas por viajantes",
+        sw: "njia ambazo wasafiri wameomba",
+        ar: "مسارات طلبها المسافرون",
+        tw: "akwan a akwantufoɔ abisa",
+        zu: "izindlela ezicelwe abahambi",
       },
     },
   },

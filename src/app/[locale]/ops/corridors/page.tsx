@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { ClipboardCheck, Globe2, Route as RouteIcon, ShieldAlert } from "lucide-react";
+import {
+  ClipboardCheck,
+  Globe2,
+  MapPinOff,
+  Route as RouteIcon,
+  ShieldAlert,
+} from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
@@ -10,6 +16,7 @@ import { opsAdminNav } from "@/components/shared/admin-nav";
 import { KpiRow } from "@/components/shared/kpi-card";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listCorridors } from "@/lib/data/corridors";
+import { requestedRoutes } from "@/lib/data/corridor-demand";
 import { getOpsCounts } from "@/lib/data/ops-counts";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import {
@@ -67,11 +74,14 @@ export default async function OpsCorridorsPage({
   const sort = readSort(params.sort, CORRIDOR_SORTS, "route");
   const dir = readDir(params.dir, "asc");
 
-  const [rows, notifications, unreadCount, counts] = await Promise.all([
+  const [rows, notifications, unreadCount, counts, asked] = await Promise.all([
     listCorridors(),
     getNotifications(actor.userId),
     unreadNotificationCount(actor.userId),
     getOpsCounts(),
+    // Nought routes wanted, only the count of them: the list moved to
+    // the Demand tab, and this page shows the figure alone.
+    requestedRoutes(0),
   ]);
 
   const pending = rows.filter((r) => r.reviewState === "pending");
@@ -146,6 +156,17 @@ export default async function OpsCorridorsPage({
       href: "/ops/corridors?state=unverified",
       tone: unverified.length ? ("danger" as const) : ("neutral" as const),
     },
+    {
+      // No `href`. The four cards above filter this table; these routes
+      // are by definition not rows in it, so a link would open a search
+      // that can only ever come back empty. `KpiRow` renders a card
+      // without one as the same box, minus the hover.
+      label: OPS_CORRIDORS.counters.notBuilt.label[locale],
+      value: asked.total,
+      sub: OPS_CORRIDORS.counters.notBuilt.sub[locale],
+      icon: MapPinOff,
+      tone: asked.total ? ("warning" as const) : ("neutral" as const),
+    },
   ];
 
   return (
@@ -172,6 +193,14 @@ export default async function OpsCorridorsPage({
     >
       <KpiRow items={kpis} />
 
+      {/*
+       * The ranked list of these routes lives on the dashboard's Demand
+       * tab, not here — asked for on 2026-09-10. This page keeps the
+       * count, because a reviewer deciding what to curate should see
+       * that there is unmet demand without leaving the screen; the
+       * breakdown of it is a director's question, and the Demand tab is
+       * where the console already answers those.
+       */}
       <CorridorsTable
         rows={sorted.slice(start, end)}
         locale={locale}

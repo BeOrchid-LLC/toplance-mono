@@ -40,6 +40,7 @@ export async function AdminShell({
   title,
   lead,
   actions,
+  titleActions,
   centred = false,
   children,
 }: {
@@ -81,8 +82,28 @@ export async function AdminShell({
    */
   title?: string;
   lead?: string;
-  /** Primary actions for this page — an invite button, an export. */
+  /**
+   * Console chrome that happens to sit in the bar — the notifications
+   * bell, and anything else true of the whole console rather than of
+   * this page.
+   *
+   * A page's *own* primary action belongs in `titleActions` instead, on
+   * the row with the heading it acts on. The comment on the bar below
+   * says why, and this slot predates it.
+   */
   actions?: React.ReactNode;
+  /**
+   * This page's own primary action — an invite button, an export — on
+   * the row with the `title` it belongs to.
+   *
+   * Rendered beside the `h1` rather than up in the bar, so the control
+   * sits next to the thing it acts on: "Invite" is about the roster on
+   * this screen, and in the bar it read as console furniture alongside
+   * the theme toggle and the bell. Requires a `title` to sit beside; a
+   * detail screen that omits one has no such row, and its controls go
+   * in its own header sheet.
+   */
+  titleActions?: React.ReactNode;
   /**
    * Centres this page on a reading measure instead of letting it start
    * at the left padding.
@@ -133,7 +154,14 @@ export async function AdminShell({
               are, what is new, how it looks — and nothing about the page
               below it. The page's own title sits in the page, where a
               heading belongs, rather than being pulled up into chrome that
-              then has to re-state it on every route. */}
+              then has to re-state it on every route.
+
+              `actions` used to be the one thing here that broke that rule:
+              an invite button or an export is about the page, not the
+              console, and beside the theme toggle and the bell it read as
+              furniture. `titleActions` is where those go now — on the row
+              with the heading they act on. What is left in this slot is
+              the bell and anything else genuinely console-wide. */}
           <header className="sticky top-0 z-30 flex h-[var(--bar-h)] shrink-0 items-center gap-3 border-b border-border bg-surface px-4 sm:px-6">
             <RailToggle />
             <AdminMobileNav groups={groups} activeId={activeId} />
@@ -162,7 +190,22 @@ export async function AdminShell({
             <div className={cn("min-w-0", centred && "mx-auto w-full max-w-[720px]")}>
               {title && (
                 <div className="mb-8 min-w-0">
-                  <h1 className="t-h2 text-balance">{title}</h1>
+                  {/* The heading and this page's own control on one row.
+                      `me-auto` on the heading rather than `justify-between`
+                      on the row, so a title that wraps keeps the button
+                      pinned to the end instead of the pair drifting apart
+                      — the same reason the privacy summary on `/agency`
+                      does it that way. Logical, so Arabic puts the button
+                      at the left end without a second rule.
+
+                      `items-center`: the button lines up with the heading,
+                      not with the top of a block whose height depends on
+                      whether there is a `lead` under it. The lead stays
+                      below at full width, where a sentence belongs. */}
+                  <div className="flex items-center gap-4">
+                    <h1 className="t-h2 me-auto min-w-0 text-balance">{title}</h1>
+                    {titleActions && <div className="shrink-0">{titleActions}</div>}
+                  </div>
                   {/* No reading measure on the lead.
                       62ch is the right cap for prose somebody settles
                       into, and the wrong one for the single sentence

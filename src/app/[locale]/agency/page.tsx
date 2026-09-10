@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -22,6 +23,7 @@ import { FunnelBars } from "@/components/shared/funnel-bars";
 import { BillChart } from "@/components/agency/bill-chart";
 import { ClientFeeChart } from "@/components/agency/client-fee-chart";
 import { AgencyShell } from "@/components/agency/agency-shell";
+import { ProseSkeleton } from "@/components/shared/content-skeleton";
 import { ClientRoster } from "@/components/agency/client-roster";
 import type { Actor } from "@/lib/auth/policy";
 import { homeFor } from "@/lib/auth/routes";
@@ -47,6 +49,14 @@ import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
+
+/**
+ * What `resolveAgencyConsole` hands back, named so the pieces of it can
+ * be passed on as props without importing `Profile` and
+ * `AgencyMembership` separately. One source for the shapes, so a change
+ * to the console's preamble reaches everything that carries part of it.
+ */
+type AgencyConsoleData = Awaited<ReturnType<typeof resolveAgencyConsole>>;
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
@@ -165,115 +175,37 @@ async function reviewerDesk(actor: Actor) {
   return { assigned, unclaimed };
 }
 
-export default async function EmployerConsolePage() {
-  if (!hasDatabaseEnv) return <SetupNotice />;
-
-  const locale = await getLocale();
-
-  // Identity, role and membership — the preamble every page under
-  // `/agency` shares, and the redirects that go with it.
-  const { profile, actor, membership, orgId } = await resolveAgencyConsole();
-
-  // No org row for this person yet — sign-up created the account but
-  // not the organisation, or seed data never ran. The roster, seat
-  // count and privacy panel below all assume an organisation exists;
-  // rendering them here would either crash on `org.name` or show a
-  // "0 people" roster for an org that was never created. This is the
-  // only door in: name one, then the branch below takes over.
-  if (!membership) {
-    // The organisation the director named on the sign-up form, finished
-    // here rather than there.
-    //
-    // Everything after Clerk's `finalize()` is a POST from a page the
-    // proxy is already walking the newly signed-in visitor off, so it
-    // gets cancelled in flight often enough to be the normal case, not
-    // the edge one — which is why `completeProfile` is retried and why
-    // `recoverEmployer` in `console.ts` exists at all. A client call to
-    // `createOrganisation` sat in exactly that gap and lost the name.
-    //
-    // So the name crosses inside Clerk's own record, and the first
-    // server render that finds no membership spends it. Idempotent by
-    // construction: `createOrganisationTx` locks the profile row and
-    // refuses a second organisation, so a double render cannot make two.
-    const { orgName } = readPendingProfile((await currentUser())?.unsafeMetadata);
-    let pendingOrgError: string | null = null;
-    if (orgName) {
-      const created = await createOrganisationTx(profile.id, orgName);
-      // Straight back through the front door, so the roster below reads
-      // the membership this just wrote rather than a stale `undefined`.
-      if (!("error" in created)) redirect(withLocalePrefix("/agency", locale));
-      // Kept, not swallowed. This branch used to drop the refusal on the
-      // floor: a director whose registered name ran past `NAME_MAX`
-      // signed up successfully, landed here, and was shown a blank
-      // "Name of organisation" form with no sign that what they had
-      // already typed was rejected, or why. The form below says it.
-      pendingOrgError = created.error;
-    }
-
-    // …but not everyone holding a session belongs at that door. Since
-    // travellers became invite-only (2026-08-31) a new employer arrives
-    // already holding `org_member`, written by `completeProfile` — but
-    // the membership row still begins in `createOrganisationTx`, so the
-    // role alone cannot decide who belongs here.
-    //
-    // Staff are already gone by this point. What is left to refuse is
-    // the account `createOrganisationTx` refuses anyway, rather than
-    // hand it a form guaranteed to fail at submit: a traveller already
-    // mid-case, whose account is committed to the other side of the
-    // privacy boundary. Keep this in step with that transaction — a
-    // rule relaxed there and not here shows a dead form; the reverse
-    // hides a live one.
-    const [ownCase] = await db
-      .select({ id: applications.id })
-      .from(applications)
-      .where(eq(applications.travelerId, profile.id))
-      .limit(1);
-    // Prefixed. `homeFor` is locale-blind by design — it names a
-    // console, not a URL a particular reader should be sent to.
-    if (ownCase) redirect(withLocalePrefix(homeFor("traveler"), locale));
-
-    return (
-      <AgencyShell
-        profile={profile}
-        membership={null}
-        actor={actor}
-        orgId={orgId}
-        locale={locale}
-        activeId="overview"
-      >
-        <Panel className="mx-auto max-w-[560px]">
-          {/* "Name of", not "Name your". The field asks for the
-              registered name of a licensed travel agency, which is a
-              fact to be matched against a register — "name your
-              organisation" invites a label the director makes up. */}
-          <PanelHeader label={AGENCY.nameOrgLabel[locale]} />
-          <PanelBody>
-            <p className="t-muted max-w-[62ch]">
-              {AGENCY.nameOrgBody[locale]}
-            </p>
-            {/* Why the name they already gave did not take. Said
-                here rather than as a toast: this render is the first
-                thing they see after sign-up, and a toast fired
-                during it would be gone before they had read the
-                form. */}
-            {pendingOrgError && (
-              <p
-                role="alert"
-                className="t-body mt-4 max-w-[62ch] text-danger-ink"
-              >
-                {pendingOrgError}
-              </p>
-            )}
-            <div className="mt-6">
-              <CreateOrganisation defaultName={orgName ?? ""} />
-            </div>
-          </PanelBody>
-        </Panel>
-      </AgencyShell>
-    );
-  }
-
-  const org = membership;
+/**
+ * The dashboard itself, below the rail.
+ *
+ * Split out of the page so the console's chrome does not wait on it.
+ * `resolveAgencyConsole` already gives `AgencyShell` everything it
+ * renders, while these queries — five for a director, two for a
+ * reviewer, the funnel and both charts among them — are the slowest
+ * thing on the screen. Behind a `<Suspense>` they no longer hold it up:
+ * the rail, the bar and the agency's name stream as soon as the console
+ * resolves, and this fills in underneath.
+ *
+ * Awaited in the page instead, as it was until now, every one of them
+ * had to land before a single byte of the console was sent — a page
+ * function returns nothing until it returns everything, which is why
+ * wrapping the old markup in `<Suspense>` where it stood would have
+ * changed nothing at all.
+ */
+async function AgencyOverview({
+  profile,
+  actor,
+  org,
+  orgId,
+  locale,
+}: {
+  profile: AgencyConsoleData["profile"];
+  actor: Actor;
+  /** Never `null` here — the page returns early before this renders. */
+  org: NonNullable<AgencyConsoleData["membership"]>;
+  orgId: AgencyConsoleData["orgId"];
+  locale: Awaited<ReturnType<typeof getLocale>>;
+}) {
   const isDirector = org.role === "owner";
 
   // A director's dashboard answers "how is the agency doing"; a
@@ -365,22 +297,8 @@ export default async function EmployerConsolePage() {
         },
       ]
     : [];
-
   return (
-    <AgencyShell
-      profile={profile}
-      membership={org}
-      actor={actor}
-      orgId={orgId}
-      locale={locale}
-      activeId="overview"
-      // The agency's own name, as it was in the band this replaced.
-      // The rail carries it too, but as chrome — `AdminSidebar` renders
-      // its title as a `p`, so making "Dashboard" the heading left the
-      // organisation's name as a heading on no screen at all, which is
-      // what `agency.spec` and `pricing.spec` both caught.
-      title={org.name || AGENCY.yourOrganisationFallback[locale]}
-    >
+    <>
       {/* What the rest of the band above the page used to carry. */}
       <div className="mb-8">
         {/*
@@ -695,6 +613,147 @@ export default async function EmployerConsolePage() {
           </div>
         )}
       </div>
+    </>
+  );
+}
+
+export default async function EmployerConsolePage() {
+  if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
+
+  // Identity, role and membership — the preamble every page under
+  // `/agency` shares, and the redirects that go with it.
+  const { profile, actor, membership, orgId } = await resolveAgencyConsole();
+
+  // No org row for this person yet — sign-up created the account but
+  // not the organisation, or seed data never ran. The roster, seat
+  // count and privacy panel below all assume an organisation exists;
+  // rendering them here would either crash on `org.name` or show a
+  // "0 people" roster for an org that was never created. This is the
+  // only door in: name one, then the branch below takes over.
+  if (!membership) {
+    // The organisation the director named on the sign-up form, finished
+    // here rather than there.
+    //
+    // Everything after Clerk's `finalize()` is a POST from a page the
+    // proxy is already walking the newly signed-in visitor off, so it
+    // gets cancelled in flight often enough to be the normal case, not
+    // the edge one — which is why `completeProfile` is retried and why
+    // `recoverEmployer` in `console.ts` exists at all. A client call to
+    // `createOrganisation` sat in exactly that gap and lost the name.
+    //
+    // So the name crosses inside Clerk's own record, and the first
+    // server render that finds no membership spends it. Idempotent by
+    // construction: `createOrganisationTx` locks the profile row and
+    // refuses a second organisation, so a double render cannot make two.
+    const { orgName } = readPendingProfile((await currentUser())?.unsafeMetadata);
+    let pendingOrgError: string | null = null;
+    if (orgName) {
+      const created = await createOrganisationTx(profile.id, orgName);
+      // Straight back through the front door, so the roster below reads
+      // the membership this just wrote rather than a stale `undefined`.
+      if (!("error" in created)) redirect(withLocalePrefix("/agency", locale));
+      // Kept, not swallowed. This branch used to drop the refusal on the
+      // floor: a director whose registered name ran past `NAME_MAX`
+      // signed up successfully, landed here, and was shown a blank
+      // "Name of organisation" form with no sign that what they had
+      // already typed was rejected, or why. The form below says it.
+      pendingOrgError = created.error;
+    }
+
+    // …but not everyone holding a session belongs at that door. Since
+    // travellers became invite-only (2026-08-31) a new employer arrives
+    // already holding `org_member`, written by `completeProfile` — but
+    // the membership row still begins in `createOrganisationTx`, so the
+    // role alone cannot decide who belongs here.
+    //
+    // Staff are already gone by this point. What is left to refuse is
+    // the account `createOrganisationTx` refuses anyway, rather than
+    // hand it a form guaranteed to fail at submit: a traveller already
+    // mid-case, whose account is committed to the other side of the
+    // privacy boundary. Keep this in step with that transaction — a
+    // rule relaxed there and not here shows a dead form; the reverse
+    // hides a live one.
+    const [ownCase] = await db
+      .select({ id: applications.id })
+      .from(applications)
+      .where(eq(applications.travelerId, profile.id))
+      .limit(1);
+    // Prefixed. `homeFor` is locale-blind by design — it names a
+    // console, not a URL a particular reader should be sent to.
+    if (ownCase) redirect(withLocalePrefix(homeFor("traveler"), locale));
+
+    return (
+      <AgencyShell
+        profile={profile}
+        membership={null}
+        actor={actor}
+        orgId={orgId}
+        locale={locale}
+        activeId="overview"
+      >
+        <Panel className="mx-auto max-w-[560px]">
+          {/* "Name of", not "Name your". The field asks for the
+              registered name of a licensed travel agency, which is a
+              fact to be matched against a register — "name your
+              organisation" invites a label the director makes up. */}
+          <PanelHeader label={AGENCY.nameOrgLabel[locale]} />
+          <PanelBody>
+            <p className="t-muted max-w-[62ch]">
+              {AGENCY.nameOrgBody[locale]}
+            </p>
+            {/* Why the name they already gave did not take. Said
+                here rather than as a toast: this render is the first
+                thing they see after sign-up, and a toast fired
+                during it would be gone before they had read the
+                form. */}
+            {pendingOrgError && (
+              <p
+                role="alert"
+                className="t-body mt-4 max-w-[62ch] text-danger-ink"
+              >
+                {pendingOrgError}
+              </p>
+            )}
+            <div className="mt-6">
+              <CreateOrganisation defaultName={orgName ?? ""} />
+            </div>
+          </PanelBody>
+        </Panel>
+      </AgencyShell>
+    );
+  }
+
+  const org = membership;
+  return (
+    <AgencyShell
+      profile={profile}
+      membership={org}
+      actor={actor}
+      orgId={orgId}
+      locale={locale}
+      activeId="overview"
+      // The agency's own name, as it was in the band this replaced.
+      // The rail carries it too, but as chrome — `AdminSidebar` renders
+      // its title as a `p`, so making "Dashboard" the heading left the
+      // organisation's name as a heading on no screen at all, which is
+      // what `agency.spec` and `pricing.spec` both caught.
+      title={org.name || AGENCY.yourOrganisationFallback[locale]}
+    >
+      {/* The rail, the bar and the agency's name are already resolved by
+          the time this renders; everything below waits on its own
+          queries. See `AgencyOverview` for why the split is what makes
+          the fallback mean anything. */}
+      <Suspense fallback={<ProseSkeleton locale={locale} />}>
+        <AgencyOverview
+          profile={profile}
+          actor={actor}
+          org={org}
+          orgId={orgId}
+          locale={locale}
+        />
+      </Suspense>
     </AgencyShell>
   );
 }

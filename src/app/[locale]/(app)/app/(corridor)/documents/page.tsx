@@ -168,9 +168,14 @@ export default async function DocumentsPage() {
                 </div>
               )}
             </div>
+            {/* 128, not 96: the caption under the figure is uppercase at
+                0.08em tracking, and inside a 96px ring the opening is
+                72px — "COLLECTED" is ~80px, so it sat across the arc and
+                clipped. 128 leaves a 104px opening, which holds every
+                locale's caption ("an tattara", "tí a kójọ", …). */}
             <CompletionRing
               pct={completion.pct}
-              size={96}
+              size={128}
               caption={t.collectedCaption[locale]}
               ariaLabel={fill(t.collectedCount[locale], {
                 pct: String(completion.pct),

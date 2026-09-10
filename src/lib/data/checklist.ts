@@ -80,6 +80,7 @@ export async function adoptRuleSet(
       docKey: documents.docKey,
       state: documents.state,
       description: documents.description,
+      source: documents.source,
     })
     .from(documents)
     .where(eq(documents.applicationId, applicationId));
@@ -132,10 +133,63 @@ export async function adoptRuleSet(
       );
   }
 
-  // Drop rows this corridor no longer asks for, unless already uploaded.
+  /**
+   * A requirement the corridor has caught up with.
+   *
+   * A reviewer asks one traveller for a police certificate; a later
+   * revision adds it to the corridor for everyone. The row is the
+   * corridor's now, and saying so is what keeps it inside the sweep's
+   * reach — left filed as the agency's, a revision that dropped the
+   * requirement again could never remove it, because the sweep above
+   * only ever touches `corridor` rows.
+   *
+   * The description goes with it. The reword pass above skips these:
+   * `wording` holds whatever the reviewer typed, so a request that
+   * already reads like the corridor's line would compare equal and keep
+   * the agency's wording forever. Setting both here is one write either
+   * way.
+   */
+  const requestedKeys = new Set(
+    existing.filter((d) => d.source === "agency").map((d) => d.docKey)
+  );
+  const promoted = requirements.filter((r) => requestedKeys.has(r.docKey));
+
+  for (const r of promoted) {
+    await db
+      .update(documents)
+      .set({ source: "corridor", requestedBy: null, description: r.description })
+      .where(
+        and(
+          eq(documents.applicationId, applicationId),
+          eq(documents.docKey, r.docKey)
+        )
+      );
+  }
+
+  /**
+   * Drop rows this corridor no longer asks for, unless already uploaded
+   * — or unless the corridor never asked for them in the first place.
+   *
+   * `!wanted.has(docKey)` was a safe reading of "nobody wants this" only
+   * while the corridor was the sole author of a checklist. A document a
+   * reviewer asked this one traveller for is `not_started` and is not in
+   * any corridor's requirements, so it matched the sweep on both counts
+   * — and the requirements screen re-adopts on an ordinary visit to heal
+   * a checklist-less case, so the traveller deleted the request by
+   * opening the page they had been sent to. Silently: no error, and a
+   * reviewer looking again just sees a case that never had the row.
+   *
+   * The filter is on who wrote the row, not on switching the sweep off.
+   * A corridor document the corridor has stopped wanting still goes.
+   */
   const wanted = new Set(requirements.map((r) => r.docKey));
   const stale = existing
-    .filter((d) => !wanted.has(d.docKey) && d.state === "not_started")
+    .filter(
+      (d) =>
+        d.source === "corridor" &&
+        !wanted.has(d.docKey) &&
+        d.state === "not_started"
+    )
     .map((d) => d.docKey);
 
   if (stale.length) {

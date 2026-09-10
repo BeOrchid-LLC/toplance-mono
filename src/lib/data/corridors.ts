@@ -449,7 +449,11 @@ export async function checklistChangesFrom(
 
   for (const app of affected) {
     const held = await db
-      .select({ docKey: documents.docKey, name: documents.name })
+      .select({
+        docKey: documents.docKey,
+        name: documents.name,
+        source: documents.source,
+      })
       .from(documents)
       .where(eq(documents.applicationId, app.applicationId));
 
@@ -458,8 +462,23 @@ export async function checklistChangesFrom(
     const added = wanted
       .filter((r) => !heldKeys.has(r.docKey))
       .map((r) => r.name);
+    /**
+     * Corridor rows only, for the reason the stale-row sweep in
+     * `@/lib/data/checklist` carries at length: this set difference
+     * reads "the corridor stopped asking for it" as "nobody is asking
+     * for it", which held only while the corridor was a checklist's one
+     * author. A document a reviewer asked this traveller for is in no
+     * corridor's requirements, so every revision would announce it as
+     * dropped — telling the traveller to stop work on something their
+     * agency wanted, in an email the agency never sent and cannot see.
+     *
+     * `added` needs no such guard: it is keyed on what the corridor
+     * wants and the traveller lacks, and a requested row the corridor
+     * has caught up with is already held. `adoptRuleSet` promotes that
+     * one to `corridor` when it next runs.
+     */
     const removed = held
-      .filter((d) => !wantedKeys.has(d.docKey))
+      .filter((d) => d.source === "corridor" && !wantedKeys.has(d.docKey))
       .map((d) => d.name);
 
     if (added.length || removed.length) {

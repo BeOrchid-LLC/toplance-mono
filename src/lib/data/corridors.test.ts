@@ -353,6 +353,28 @@ describe.skipIf(!process.env.DATABASE_URL)("checklistChangesFrom", async () => {
     // believing they still need it.
     expect(change.removed).toEqual(["Doc funds"]);
   });
+
+  it("never reports a document the agency asked for as dropped", async () => {
+    // Same mistaken inference the stale-row sweep made: `removed` is a
+    // set difference against this corridor's requirements, which reads
+    // "the corridor stopped asking" as "nobody is asking". A reviewer's
+    // request is in no corridor, so every revision would announce it as
+    // dropped — and the traveller would be told to stop working on a
+    // document their agency asked for minutes earlier, by an email the
+    // agency never sent and cannot see.
+    await db.insert(documents).values({
+      applicationId,
+      docKey: "police_check",
+      name: "Police certificate",
+      source: "agency",
+      requestedBy: TRAVELLER,
+      sortOrder: 99,
+    });
+
+    const revised = await versionAsking(2, ["passport", "funds"], false);
+
+    expect(await checklistChangesFrom(revised)).toEqual([]);
+  });
 });
 
 /**

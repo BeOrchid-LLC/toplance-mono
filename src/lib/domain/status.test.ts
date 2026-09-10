@@ -6,6 +6,7 @@ import {
   isTerminalStatus,
   RESUBMITTABLE,
   STAFF_TRANSITIONS,
+  sentBackWithoutDetail,
   STATUS_VARIANT,
   submissionNotice,
   TERMINAL_STATUSES,
@@ -325,5 +326,54 @@ describe("the interview leg", () => {
     // nobody who can act on it.
     expect(RESUBMITTABLE).not.toContain("interview_scheduled");
     expect(RESUBMITTABLE).not.toContain("awaiting_decision");
+  });
+});
+
+/**
+ * The case was sent back for documents nobody has named yet.
+ *
+ * This is the screen the client photographed on 10 September: the status
+ * card read "Additional documents needed" while the panel beside it read
+ * "Everything is verified. Nothing else is waiting on you", over a live
+ * Submit button. Both were true. `additional_documents` is in
+ * `RESUBMITTABLE`, so the panel drew itself; the checklist was complete,
+ * because the document the desk wanted had no row on it.
+ *
+ * The predicate counts requests that *exist*, not requests that are
+ * outstanding — a traveller who has uploaded the requested document must
+ * be able to send it back, and by then that upload is verified rather
+ * than outstanding. Counting outstanding rows would lock them out at
+ * exactly the moment they had done what was asked.
+ */
+describe("sentBackWithoutDetail", () => {
+  it("holds a case sent back with nothing named", () => {
+    expect(sentBackWithoutDetail("additional_documents", 0)).toBe(true);
+  });
+
+  it("releases it as soon as the desk names something", () => {
+    // One request is enough. Whether that request has been uploaded yet
+    // is the checklist's business, not this predicate's.
+    expect(sentBackWithoutDetail("additional_documents", 1)).toBe(false);
+  });
+
+  it("says nothing about any other status", () => {
+    // A case still collecting has no requests either, and nothing is
+    // holding it. Only `additional_documents` makes the promise this
+    // predicate checks — that the desk has asked for something.
+    const others: ApplicationStatus[] = [
+      "draft",
+      "collecting_documents",
+      "submitted",
+      "under_review",
+      "processing",
+      "interview_scheduled",
+      "awaiting_decision",
+      "approved",
+      "rejected",
+    ];
+
+    for (const status of others) {
+      expect(sentBackWithoutDetail(status, 0)).toBe(false);
+    }
   });
 });

@@ -238,6 +238,36 @@ export function canSubmitFrom(status: ApplicationStatus): boolean {
 }
 
 /**
+ * Sent back for documents the desk has not listed yet.
+ *
+ * `canSubmitFrom` is true on `additional_documents` — resubmitting is
+ * what that status asks for — and the checklist behind it can be
+ * complete, because a document the desk has only described in a message
+ * has no row to be outstanding. The documents screen then drew
+ * "Everything is verified. Nothing else is waiting on you" above a live
+ * Submit button, beside a status card reading "Additional documents
+ * needed". Both halves were correct and the page contradicted itself.
+ *
+ * So this is the second half of that branch, and it lives beside
+ * `canSubmitFrom` for the reason that one lives here at all: the two
+ * have to be read together, and a screen is a bad place to keep a rule
+ * two people will later disagree about.
+ *
+ * It counts requests that *exist*, not requests still outstanding. A
+ * traveller who has uploaded what was asked for has nothing outstanding
+ * and must be able to resubmit — gating on outstanding rows would shut
+ * them out at the exact moment they had complied. Withdrawing the last
+ * request puts the case back to holding, which is also right: the desk
+ * is once again asking for something it has not named.
+ */
+export function sentBackWithoutDetail(
+  status: ApplicationStatus,
+  requestedCount: number
+): boolean {
+  return status === "additional_documents" && requestedCount === 0;
+}
+
+/**
  * Who last gave a verdict on a document.
  *
  * `state` cannot answer this, and the screens that asked it of `state`

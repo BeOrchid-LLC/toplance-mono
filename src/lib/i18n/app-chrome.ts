@@ -31,6 +31,7 @@ type NotificationKindKey =
   | "document_uploaded"
   | "status_changed"
   | "document_flagged"
+  | "document_requested"
   | "message_received"
   | "itinerary_ready"
   | "companion_digest"
@@ -188,6 +189,24 @@ export const NOTIFICATIONS: {
       ar: "يحتاج مستند إلى مراجعة أخرى",
       tw: "Krataa bi hia sɛ wɔhwɛ bio",
       zu: "Idokhumenti idinga ukuhlolwa futhi",
+    },
+    /**
+     * "Asked for", not "needs another look". Nothing of theirs was
+     * judged here — the agency wants a document they were never asked
+     * for, and borrowing the flag's wording would read as a verdict on
+     * work they have not done yet.
+     */
+    document_requested: {
+      en: "Your agency has asked for a document",
+      ha: "Hukumarku ta nemi wata takarda",
+      yo: "Ilé-iṣẹ́ rẹ ti béèrè ìwé kan",
+      ig: "Ụlọ ọrụ gị arịọla akwụkwọ",
+      fr: "Votre agence demande un document",
+      pt: "A sua agência pediu um documento",
+      sw: "Wakala wako ameomba hati",
+      ar: "طلبت وكالتك مستندًا",
+      tw: "W'adwumakuo no abisa krataa bi",
+      zu: "I-ejensi yakho icele idokhumenti",
     },
     message_received: {
       en: "You have a new message",

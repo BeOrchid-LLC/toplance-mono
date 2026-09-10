@@ -188,6 +188,42 @@ export function documentFlaggedEmail({
   };
 }
 
+/**
+ * → traveller: the agency has asked for a document the corridor never
+ * listed.
+ *
+ * `guidance` is what the reviewer typed under the name, and it is often
+ * the whole of why this document is being asked for — "the one showing
+ * the last six months", "issued within three months". Empty is normal,
+ * so the paragraph is dropped rather than rendered blank.
+ *
+ * The call to action says "Upload it" rather than the flag email's
+ * "Re-upload it": nothing was sent and rejected here, and telling
+ * somebody to re-do a thing they never did reads as blame for a mistake
+ * they did not make.
+ */
+export function documentRequestedEmail({
+  documentName,
+  guidance,
+  url,
+}: {
+  documentName: string;
+  guidance: string;
+  url: string;
+}): EmailContent {
+  return {
+    subject: `Your agency needs one more document: ${documentName}`,
+    ...renderEmail({
+      heading: `Please add ${documentName}`,
+      paragraphs: [
+        "Your agency has asked for this on top of your checklist. It has been added to your documents.",
+        ...(guidance.trim() ? [guidance] : []),
+      ],
+      cta: { href: url, label: "Upload it" },
+    }),
+  };
+}
+
 /** → the other side of the thread. `preview` is truncated to ~140 characters. */
 export function messageReceivedEmail({
   senderName,

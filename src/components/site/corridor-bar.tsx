@@ -43,10 +43,17 @@ function Slot({
       className={cn(
         "relative flex min-w-0 flex-col justify-center gap-1.5 px-5 py-4 transition-colors",
         /* Both states mix toward `transparent`, not toward `--surface`.
-           An opaque tint here would punch a solid rectangle through the
-           laminate on hover and undo the refraction under that one slot. */
+           The slots sit on the card's own plate, and a tint mixed toward
+           a ground they do not share would step out of it on hover. */
         "has-[select:focus-visible]:bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]",
-        "has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-inset has-[select:focus-visible]:ring-brand",
+        /* The <select> below is `opacity-0`, so its own outline is
+           invisible by construction and the slot has to draw the ring —
+           the second permitted deviation on `:focus-visible` in
+           globals.css. Inset rather than offset because the card is
+           `overflow-hidden` and an outward ring on an inner slot would
+           be cut off at its edge. `--ring`, not
+           `--brand`: the fill hue was 2.078:1 against this plate in dark. */
+        "has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-inset has-[select:focus-visible]:ring-ring",
         "hover:bg-[color-mix(in_srgb,var(--surface-2)_60%,transparent)]",
         className
       )}
@@ -60,7 +67,7 @@ function Slot({
         aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0 outline-none"
+        className="absolute inset-0 cursor-pointer opacity-0"
       >
         {options.map((o) => (
           <option key={o.name} value={o.name}>
@@ -106,14 +113,11 @@ export function CorridorBar({
 
   return (
     <div>
-      {/* One laminated card, not a card plus two loose lines beneath it.
-          The slots, the machine-readable band and the status all sit under
-          the same sheet, which is the arrangement a data page actually
-          has — and it means the specular sweep crosses the whole object
-          rather than a fragment of it. */}
-      <div className="laminate overflow-hidden rounded-lg">
-        {/* Keyed on the corridor, so choosing a slot tilts the card. */}
-        <span key={code} aria-hidden className="laminate-sheen" />
+      {/* One plate, not a plate plus two loose lines beneath it. The
+          slots, the machine-readable band and the status all sit on the
+          same surface, which is the arrangement a data page actually
+          has. */}
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
 
         {/* Two full-width rows: the question on top, the answer and what
             to do about it underneath.
@@ -125,14 +129,13 @@ export function CorridorBar({
             a second primary on the first screen, competing with the
             first. Its label sat centred in a block tall enough to leave
             most of the blue empty, so the weight it carried was
-            decoration rather than content. And it interrupted the
-            specular sweep, which is the one effect that makes this card
-            read as a laminated document rather than a form.
+            decoration rather than content. And it cut the card in two,
+            so the slots and the band beside it read as a fragment
+            rather than as one object.
 
             As a normal control on the readout row it keeps its job —
-            nothing about the interaction changed — and gives the sweep,
-            the three slots and the machine-readable band the full width
-            back. Separators are still drawn per cell rather than with
+            nothing about the interaction changed — and gives the three
+            slots and the machine-readable band the full width back. Separators are still drawn per cell rather than with
             `divide-*`, so the last slot can close without one. */}
         <div className="relative z-[1]">
           <div className="grid lg:grid-cols-[1fr_1.15fr_0.85fr]">
@@ -200,13 +203,28 @@ export function CorridorBar({
                 the 18%-tinted panel the slab used. At button size a tint
                 that faint stops reading as a state at all — and "request"
                 and "start" being visibly different actions is the whole
-                point of the distinction. */}
+                point of the distinction.
+
+                The label is `--way-ink` and the fill is `--way`, named
+                as a pair on both halves so no later edit can move one
+                without the other. It read `bg-brand-accent text-ink`
+                until now, which was two tokens that happened to look
+                right together on the old amber and stopped: `--ink` is
+                near-white in dark, so a button anybody can reach and
+                press was setting its own label at 1.501:1 on the fill,
+                and 1.376:1 while the pointer was on it. Nor is this a
+                regression to undo — the same pairing measured 2.077:1
+                before the repaint and had never cleared the 3:1 a
+                boundary owes, let alone the 4.5:1 a label does. `--way`
+                is a light fill in both themes and `--way-ink` is the ink
+                that belongs on it in both, so the pair holds at 9.515:1
+                at rest and 10.379:1 on hover, light and dark alike. */}
             <Button
               asChild
               className={cn(
                 "group shrink-0 max-lg:w-full",
                 soon &&
-                  "bg-brand-accent text-ink hover:bg-[color-mix(in_srgb,var(--brand-accent)_85%,#fff)]"
+                  "bg-way text-way-ink hover:bg-[color-mix(in_srgb,var(--way)_85%,#fff)]"
               )}
             >
               <Link href="/agency/sign-up">

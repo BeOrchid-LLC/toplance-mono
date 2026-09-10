@@ -16,6 +16,7 @@ import { homeFor } from "@/lib/auth/routes";
 import { clientCharge, formatMoney } from "@/lib/domain/pricing";
 import { BILLING, CHECKOUT } from "@/lib/i18n/billing";
 import { getLocale } from "@/lib/i18n/server";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -44,21 +45,28 @@ export default async function CheckoutPage() {
 
   const locale = await getLocale();
   const profile = await getProfile();
-  if (!profile) redirect("/go");
+  if (!profile) redirect(withLocalePrefix("/go", locale));
 
   // An agency member or a staff account has no application to pay for,
   // and their own console is the honest place to send them.
-  if (profile.role !== "traveler") redirect(homeFor(profile.role));
+  //
+  // Prefixed: `homeFor` hands back a bare console path, which is
+  // English by the time the proxy resolves it.
+  if (profile.role !== "traveler") {
+    redirect(withLocalePrefix(homeFor(profile.role), locale));
+  }
 
   const application = await getApplication();
-  if (!application || (await isApplicationPaid(application.id))) redirect("/app");
+  if (!application || (await isApplicationPaid(application.id))) {
+    redirect(withLocalePrefix("/app", locale));
+  }
 
   const card = await activeRateCard();
   const fee = clientCharge(card);
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="bar-edge flex h-[var(--bar-h)] items-center gap-4 px-[max(16px,calc((100%-1140px)/2))]">
+      <header className="flex h-[var(--bar-h)] border-b border-border items-center gap-4 px-[max(16px,calc((100%-1140px)/2))]">
         <Wordmark className="[&_.wordmark-label]:max-md:hidden" />
         <div className="ms-auto flex items-center gap-2">
           <SettingsCluster />
@@ -66,10 +74,6 @@ export default async function CheckoutPage() {
       </header>
 
       <main className="relative isolate flex-1 px-6 py-14 md:py-20">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-0 -z-10"
-        />
         <Shell className="max-w-[560px]">
           <p className="tag">{CHECKOUT.feeLabel[locale]}</p>
           <h1 className="t-h2 mt-3 max-w-[22ch]">{CHECKOUT.title[locale]}</h1>

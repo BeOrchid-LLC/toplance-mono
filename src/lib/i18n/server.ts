@@ -53,3 +53,40 @@ export async function getActionLocale(): Promise<Locale> {
   const value = (await headers()).get(LOCALE_HEADER);
   return isLocale(value) ? value : DEFAULT_LOCALE;
 }
+
+/**
+ * The same locale again, for code that is reachable from both.
+ *
+ * A route guard is not a component or an action — it is whichever one
+ * called it. `resolveAgencyConsole` opens every page under `/agency`
+ * *and* is the first line of the support actions, so `getLocale()`
+ * there is a throw waiting for the one caller that is an action, and
+ * `getActionLocale()` is an empty header waiting for the first guard on
+ * a `force-static` route. This asks the route parameter and falls back
+ * to the header, which is the only answer correct in both places.
+ *
+ * **It cannot throw, and that is the point.** The only thing a guard
+ * does with this is build the URL it is about to redirect to, so a
+ * lookup that raises turns a clean redirect into an unhandled error on
+ * the way to the screen that would have explained itself — which is
+ * precisely what a director with a lapsed plan hit when this was
+ * `getLocale()`: submitting the support form threw instead of sending
+ * them to billing. Both reads are guarded, and `DEFAULT_LOCALE` is the
+ * last resort rather than the first answer.
+ */
+export async function getGuardLocale(): Promise<Locale> {
+  try {
+    const param = await localeRootParam();
+    if (isLocale(param)) return param;
+  } catch {
+    // A Server Action: root parameters do not exist here by design.
+  }
+
+  try {
+    return await getActionLocale();
+  } catch {
+    // No request scope at all — a unit test, or a context Next has not
+    // bound headers to. English, as an unprefixed path already is.
+    return DEFAULT_LOCALE;
+  }
+}

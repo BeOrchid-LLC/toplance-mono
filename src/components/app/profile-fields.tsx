@@ -126,7 +126,7 @@ function SaveCancel({
 }
 
 const inputClass =
-  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink outline-none placeholder:text-ink-3 focus-visible:border-brand focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)]";
+  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink placeholder:text-ink-3";
 
 export function EditableName({ fullName }: { fullName: string }) {
   const t = useT();

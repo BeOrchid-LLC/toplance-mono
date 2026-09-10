@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, MessageSquare, Sparkles, Upload } from "lucide-react";
+import { MessageSquare, Sparkles, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { AttendanceNotice } from "@/components/app/attendance-notice";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { CompletionRing } from "@/components/app/completion-ring";
+import { RouteDiagram } from "@/components/app/route-diagram";
 import { STATUS_COPY, VERIFIED_MEANS } from "@/lib/i18n/status";
 import {
   completionOf,
@@ -24,6 +24,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { getLocale } from "@/lib/i18n/server";
 import { DASHBOARD } from "@/lib/i18n/dashboard";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -54,10 +55,10 @@ export default async function DashboardPage() {
   const t = DASHBOARD;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/go");
+  if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   // Intake first — there is nothing meaningful to show before it.
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const [docs, attendance, answers, unreadMessages] = await Promise.all([
     getDocuments(application.id),
@@ -90,24 +91,38 @@ export default async function DashboardPage() {
   const sentBackNames = sentBack.map((d) => d.name).join(", ");
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
-        {/* Above the completion ring, deliberately. Every other thing
-            on this page is about a document; this one asks the reader
-            to be somewhere on a day, and it is the only message here
-            whose cost of being missed is a missed appointment. */}
-        <AttendanceNotice request={attendance} locale={locale} />
+        {/* The masthead: where this traveller is on their corridor.
+            §3 spends the boldness here and demotes the headline number
+            that used to lead — `CompletionRing` is gone from this screen
+            because the diagram already says how far along you are, and
+            a ring beside it is the same fact twice. */}
+        <RouteDiagram facts={application} locale={locale} />
+
+        {/* Below the diagram but above the next action, deliberately.
+            Every other thing on this page is about a document; this one
+            asks the reader to be somewhere on a day, and it is the only
+            message here whose cost of being missed is a missed
+            appointment. The diagram above is orientation, not an alert,
+            so it does not displace this. */}
+        <div className="mt-8">
+          <AttendanceNotice request={attendance} locale={locale} />
+        </div>
         {/*
           The lead card is the next action, not a greeting. The corridor,
-          the status and the case reference are all on the laminate above
+          the status and the case reference are all on the header above
           this, so the dashboard's own job is the one sentence about what
           happens next.
         */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        {/* `items-start`, so each column is its own height. The plate
+            used to be stretched and vertically centred because it sat
+            beside the completion ring; with the ring gone that left the
+            copy floating in the middle of a tall empty panel. */}
+        <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
           <Panel>
-            <PanelBody className="flex h-full flex-wrap items-center gap-x-10 gap-y-8 py-8 sm:px-8 sm:py-10">
-              <CompletionRing pct={completion.pct} />
-              <div className="min-w-[260px] max-w-[58ch] flex-1">
+            <PanelBody className="py-8 sm:px-8 sm:py-10">
+              <div className="max-w-[58ch]">
                 <h1 className="t-h2">
                   {sentBack.length > 0
                     ? (sentBack.length === 1
@@ -137,25 +152,26 @@ export default async function DashboardPage() {
                           .replace("{total}", String(completion.total))}
                 </p>
                 <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
-                <Button asChild className="mt-6">
+                {/* The one `--way` object on this screen, per §4.1 —
+                    the next action and nothing else wears it. The
+                    arrows that used to close three of these four labels
+                    are gone: §4.2 keeps arrows for route diagrams and
+                    corridor pairs, and bans them on a button outright.
+                    `Upload` stays; it names the act rather than
+                    pointing. */}
+                <Button asChild variant="way" className="mt-6">
                   <Link href="/app/documents">
-                    {sentBack.length > 0 ? (
-                      <>
-                        {t.ctaFixSentBack[locale]} <ArrowRight />
-                      </>
-                    ) : done ? (
-                      <>
-                        {t.ctaReviewSubmit[locale]} <ArrowRight />
-                      </>
-                    ) : allUploaded ? (
-                      <>
-                        {t.ctaSeeDocuments[locale]} <ArrowRight />
-                      </>
-                    ) : (
-                      <>
-                        <Upload /> {t.ctaUploadNext[locale]}
-                      </>
-                    )}
+                    {sentBack.length > 0
+                      ? t.ctaFixSentBack[locale]
+                      : done
+                        ? t.ctaReviewSubmit[locale]
+                        : allUploaded
+                          ? t.ctaSeeDocuments[locale]
+                          : (
+                              <>
+                                <Upload /> {t.ctaUploadNext[locale]}
+                              </>
+                            )}
                   </Link>
                 </Button>
               </div>
@@ -245,9 +261,7 @@ export default async function DashboardPage() {
             <PanelBody>
               <p className="t-muted">{t.profileBlurb[locale]}</p>
               <Button asChild variant="neutral" size="sm" className="mt-4">
-                <Link href="/app/profile">
-                  {t.openProfile[locale]} <ArrowRight />
-                </Link>
+                <Link href="/app/profile">{t.openProfile[locale]}</Link>
               </Button>
             </PanelBody>
           </Panel>

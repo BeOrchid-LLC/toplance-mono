@@ -47,6 +47,7 @@ import { PROFILE } from "@/lib/i18n/profile";
 import { currencyForCountryName } from "@/lib/domain/currencies";
 import { convertFee, formatApproximate } from "@/lib/domain/fx";
 import { getPairRate } from "@/lib/fx/rates";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -123,10 +124,10 @@ export default async function ProfilePage() {
   const t = PROFILE;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/go");
+  if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   // The profile is the intake's output; before it there is nothing to show.
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const [docs, answers, corridor, trips, notes, events, itinerary, sponsorName] =
     await Promise.all([
@@ -244,7 +245,7 @@ export default async function ProfilePage() {
     : null;
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         {/* ---- identity ---- */}
         <Panel className="relative">
@@ -252,10 +253,6 @@ export default async function ProfilePage() {
               of visible — the identity sheet is the one card in the file
               that is about a person rather than a process, and it gets
               the document material to say so. */}
-          <div
-            aria-hidden
-            className="security-paper pointer-events-none absolute inset-x-0 top-0 h-[140px] opacity-60"
-          />
           <PanelBody className="relative py-6 sm:px-8 sm:py-7">
             <div className="flex items-start gap-5 sm:gap-7">
               {/* The photo window. A passport photo is a portrait
@@ -298,7 +295,7 @@ export default async function ProfilePage() {
           </PanelBody>
           {/* The case facts, in a band at the foot of the sheet — the
               same place the machine-readable strip sits on a data page,
-              and the same place the corridor laminate carries its case
+              and the same place the corridor header carries its case
               reference. Nothing here ever shares a shrinking row with
               the name above. */}
           <div className="relative flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-border px-5 py-4 sm:px-8">

@@ -28,6 +28,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { track } from "@/lib/analytics/track";
 import { getLocale } from "@/lib/i18n/server";
 import { COMPANION } from "@/lib/i18n/companion";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -44,19 +45,19 @@ export default async function CompanionPage() {
   const t = COMPANION;
   const profile = await getProfile();
   const application = await getApplication();
-  if (!profile || !application) redirect("/go");
+  if (!profile || !application) redirect(withLocalePrefix("/go", await getLocale()));
 
   // This page is what "approved" unlocks. Anyone who lands here before
   // that — a stale bookmark, a link shared too early — goes back to the
   // dashboard rather than seeing a checklist built against no corridor.
-  if (application.status !== "approved") redirect("/app");
+  if (application.status !== "approved") redirect(withLocalePrefix("/app", await getLocale()));
 
   const corridor = await getCorridorFor(application.id);
   // Approval only happens once a corridor has resolved, so this should
   // never be null in practice — but a checklist and renewal card have no
   // honest content to show without one, so the same redirect applies
   // rather than rendering a page that guesses at a destination.
-  if (!corridor) redirect("/app");
+  if (!corridor) redirect(withLocalePrefix("/app", await getLocale()));
 
   const checklist = arrivalChecklist(corridor.destinationIso, corridor.purpose);
   const renewal = renewalGuidance(
@@ -90,7 +91,7 @@ export default async function CompanionPage() {
   await track("toplance.companion_viewed", { applicationId: application.id }, profile.id);
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         <h1 className="d-lg text-ink">{t.heading[locale]}</h1>
         <p className="t-body-lg mt-2 max-w-[62ch] text-ink-2">{t.intro[locale]}</p>

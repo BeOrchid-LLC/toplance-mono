@@ -13,12 +13,10 @@ export type { NavItem };
  * second bar treatment is the fastest way to make it look like a
  * different one.
  *
- * It closes on `bar-edge`, the optically-variable laminate hairline the
- * documents in this product already use, and the current page marks that
- * edge. It used to close on a flat `border-b border-border` and mark the
- * page with a brand-tinted pill — which is the chrome any dashboard
- * ships with, on the only surface here that carried no material of its
- * own.
+ * It closes on a hairline, and the current page marks that edge rather
+ * than wearing a brand-tinted pill — a pill is a second shape saying
+ * what the mark already says, and it is the chrome any dashboard ships
+ * with.
  */
 export function AppBar({
   nav,
@@ -48,7 +46,7 @@ export function AppBar({
     // `px-4 sm:px-6` on the header itself, which put the avatar hard
     // against the right edge of a wide monitor with the content it
     // belongs to centred a couple of hundred pixels away.
-    <header className="bar-edge sticky top-0 z-40 bg-surface">
+    <header className="sticky top-0 z-40 border-b border-border bg-surface">
       <Shell className="flex h-[var(--bar-h)] items-center gap-6">
         <div className="flex h-full min-w-0 items-center gap-3 lg:gap-6">
           {/* Below `lg` the bar hides its nav, and the items move into a

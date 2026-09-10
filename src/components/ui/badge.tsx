@@ -17,12 +17,11 @@ import { cn } from "@/lib/utils";
  *   Under review → warning · Approved → success · Rejected → danger
  *
  * Every fill mixes toward `transparent`, never toward `--mix`. A status
- * pill is one of the few things that lands *on* the laminate — the
- * corridor header carries one — and an opaque tint there punches a solid
- * rectangle through the material, cancelling the refraction under
- * exactly the object meant to be sitting on glass (guideline §3, and the
- * `Slot` comment in `corridor-bar.tsx` for the same rule applied to the
- * bar's own hover states).
+ * pill lands on more than one ground — the corridor header's plate, a
+ * table row, the inset beneath it — and a tint mixed toward any single
+ * one of those is wrong on the rest (guideline §3, and the `Slot`
+ * comment in `corridor-bar.tsx` for the same rule applied to the bar's
+ * own hover states).
  */
 const badgeVariants = cva(
   "inline-flex w-fit shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-pill)] px-3 py-1 text-[13px] font-semibold tracking-[0.02em] [&_svg]:size-4 [&_svg]:pointer-events-none",
@@ -31,7 +30,7 @@ const badgeVariants = cva(
       variant: {
         neutral: "bg-surface-2 text-ink-2 border border-border",
         brand:
-          "border border-[color-mix(in_srgb,var(--brand)_28%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-brand-text",
+          "border border-[color-mix(in_srgb,var(--brand)_28%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-brand-ink",
         info: "border border-[color-mix(in_srgb,var(--info)_28%,transparent)] bg-[color-mix(in_srgb,var(--info)_13%,transparent)] text-info-ink",
         success:
           "border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-success-ink",

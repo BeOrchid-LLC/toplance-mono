@@ -13,6 +13,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { getLocale } from "@/lib/i18n/server";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
 import { resendInvitation, revokeInvitation } from "@/app/[locale]/agency/actions";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -46,7 +47,7 @@ export default async function AgencyTeamPage() {
   // tab for it, and typing the path is not a way around that — who works
   // here, and at what rank, is a fact about running the agency rather
   // than about handling a case.
-  if (membership.role !== "owner") redirect("/agency");
+  if (membership.role !== "owner") redirect(withLocalePrefix("/agency", await getLocale()));
 
   // `orgId` comes from `actor.orgIds`, which excludes suspended
   // agencies — so a suspended agency's console shows no colleagues

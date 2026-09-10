@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { Panel, PanelBody } from "@/components/shared/panel";
@@ -8,10 +9,22 @@ import { goDestination } from "@/lib/auth/routes";
 import { getActor, getApplication } from "@/lib/data/applications";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { GO_PAGE } from "@/lib/i18n/go";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 import { getLocale } from "@/lib/i18n/server";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
+
+/**
+ * Static and English, like every other title in the product — the page
+ * itself is translated, but `metadata` is resolved once per route rather
+ * than per reader, and the root layout's template appends the product
+ * name to it.
+ *
+ * Only the branch below carries a title at all: when `goDestination`
+ * answers, this page redirects and never paints.
+ */
+export const metadata: Metadata = { title: "Your account" };
 
 /**
  * The role dispatcher. Roles live in Postgres, so neither the proxy nor
@@ -38,6 +51,7 @@ export const dynamic = "force-dynamic";
 export default async function GoPage() {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
   const actor = await getActor();
   // `goDestination`, not `homeFor`: a role names a console, but it does
   // not promise that console has anything to open. A traveller who never
@@ -49,16 +63,15 @@ export default async function GoPage() {
     actor,
     actor?.role === "traveler" ? !!(await getApplication()) : false
   );
-  if (destination) redirect(destination);
-
-  const locale = await getLocale();
+  // Prefixed, and this is the redirect that mattered most: `/go` is
+  // where every other gate in the product sends a reader who has hit
+  // one, so a bare `redirect(destination)` here undid all of them one
+  // hop later. `goDestination` answers with a console path and no
+  // opinion about language — the opinion belongs here.
+  if (destination) redirect(withLocalePrefix(destination, locale));
 
   return (
     <main className="relative isolate grid min-h-dvh place-items-center px-6 py-14">
-      <div
-        aria-hidden
-        className="security-paper pointer-events-none absolute inset-0 -z-10"
-      />
       <Shell className="max-w-[560px]">
         <Panel>
           <PanelBody>

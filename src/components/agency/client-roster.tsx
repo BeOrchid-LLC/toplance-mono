@@ -22,7 +22,7 @@ import type { Locale } from "@/lib/i18n/locales";
  * Named structurally rather than inferred from the view, so the shape
  * this component may render is written down: there is no document
  * column here, and there is no column that could carry one. That is the
- * privacy promise the laminate makes, expressed as a type.
+ * privacy promise this screen makes, expressed as a type.
  */
 export type RosterRow = {
   id: string;

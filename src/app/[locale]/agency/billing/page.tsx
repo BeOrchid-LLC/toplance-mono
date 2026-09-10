@@ -20,6 +20,7 @@ import { BILLING } from "@/lib/i18n/billing";
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locales";
 import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -91,7 +92,7 @@ export default async function AgencyBillingPage() {
 
   // No organisation, nothing to buy a plan for. The dashboard is where
   // that state is explained and where it is fixed.
-  if (!membership || !orgId) redirect("/agency");
+  if (!membership || !orgId) redirect(withLocalePrefix("/agency", await getLocale()));
 
   /**
    * What the agency pays is the director's business, asked for by the

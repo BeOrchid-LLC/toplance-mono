@@ -11,59 +11,176 @@
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 
 :root {
-  /* neutrals — light.
-     One ramp, one hue. Every step carries the same cool blue-grey cast,
-     so text does not drift warm as it lightens. The previous ramp mixed
-     a cool --ink with warm mid-tones, which read as muddy rather than
-     as a deliberate temperature.
+  /* neutrals — light. One ramp, one hue: every step carries the same
+     cool blue-grey cast, so text does not drift warm as it lightens.
 
-     The ground is a step deeper than the near-white it was (#f6f7fa),
-     which was close enough to --surface that a white panel on it read
-     as flush rather than as a sheet laid on a page. Client's call,
-     2026-09-08. It stays on the same hue: the separation this buys is
-     in lightness, not in a second temperature the paragraph above
-     argues against.
+     The ground is a step deeper than the near-white it used to be
+     (#f6f7fa), which was close enough to `--surface` that a white panel
+     on it read as flush rather than as a sheet laid on a page. Client's
+     call, 2026-09-08.
 
-     Everything below it is untouched, which costs --surface-2 most of
-     its contrast against the ground — ~1.5 L* now, down from ~2.6.
-     Nearly every use of --surface-2 is on a white surface (table
-     headers, code blocks, badges, hover states), where the step it has
-     to clear is --surface and nothing changed. The exception is a
-     --surface-2 fill sitting directly on the page, and there is one:
-     TabsList, which DashboardTabs renders on the ground. That call site
-     carries a border rather than relying on a fill difference that is
-     now too small to see. Lifting --surface-2 to suit it is the wrong
-     trade — it would have to clear the ground *and* stay under white,
-     and it is on white far more often than on the page.
-
-     Skeleton is the same shape of risk and has no instance on the
-     ground today. Put one there and it needs the same border. */
+     The wayfinding redesign repainted this whole ramp onto a green-cast
+     grey concourse (#e7ebea and a near-black-teal ink) on 2026-09-09,
+     and that was reverted on 2026-09-10 at the client's word: the theme
+     and the radii go back, everything else the redesign did stays. Where
+     a value below is NOT the one `main` carries, it is because `main`'s
+     failed a contrast floor — each of those says so and shows both
+     numbers. Nothing was changed for taste on the way past. */
   --bg: #f1f4fa;
   --surface: #ffffff;
   --surface-2: #eef0f5;
   --surface-inset: #e7eaf1;
   --border: #e1e5ed;
-  --border-strong: #ccd2de;
+  /* NOT `main`'s #ccd2de, and this is the one revert that could not be
+     taken. #ccd2de is 1.517:1 on white, and this token is the entire
+     boundary of every text input, textarea and OTP box in the product —
+     `input.tsx`, `textarea.tsx`, `input-otp.tsx`, `visa-expiry-field`,
+     `profile-fields`, the intake composer. All of them are `bg-surface`
+     on `bg-surface`, so there is no fill difference behind the border:
+     the edge is the only thing saying where the control is, which is
+     exactly the case WCAG 1.4.11 puts a 3:1 floor on.
+
+     So it is `main`'s hue, walked down its own ramp until it clears 3:1
+     on all three grounds it is ruled across — `border-t
+     border-border-strong` puts it straight onto the ground in the
+     marketing pages, and `bg-surface-2` puts it under a table's header
+     band. 3.467:1 on white, 3.040 on the secondary plate, 3.146 on the
+     ground, against 1.517 / 1.331 / 1.377 before.
+
+     A pre-existing defect, not one the redesign introduced. */
+  --border-strong: #868a91;
   --ink: #10131c;
   --ink-2: #4a5163;
-  --ink-3: #7b8296;
+  /* NOT `main`'s #7b8296, for the same reason as the edge above: it is
+     3.835:1 on white and this role is text.
 
-  /* Elevation is a real tool now. At 6% on a near-white ground the old
-     values were invisible, so every card had to fall back to a 1px
-     border — which is what turned the page into a grid of boxes. */
+     `.special-caps` sets a table's column heads in it on `--surface-2`;
+     the marketing comparison rows set 17px body copy in it straight onto
+     `--bg`. Both were failing AA, and on the three non-white grounds it
+     was worse — 3.364 / 3.184 / 3.481.
+
+     `main`'s hue, stepped down until it clears 4.5:1 on all four:
+     5.464:1 on the plate, 4.792 on the secondary plate, 4.537 in an
+     inset well, 4.959 on the ground.
+
+     A token is checked against every ground it lands on, and this is the
+     token that taught that rule — an earlier attempt cleared white alone
+     by 0.019 and failed the other three.
+
+     `.t-muted` is not one of the consumers this token is chosen for —
+     it sets `--ink-2`. The real ones are `.special`, `.special-caps`,
+     `.tag`, `.mrz` and the `text-ink-3` / `placeholder:text-ink-3`
+     call sites. */
+  --ink-3: #64697a;
+
+  /* The focus ring — the one token in this block that is not a neutral,
+     and it is here rather than on the brand axis because a fill and a
+     boundary have different floors and one hex cannot serve both.
+
+     `--brand` is a fill: it carries `--on-brand` white as a primary
+     button label, so it has to stay dark enough for 4.5:1 against that
+     label. The ring is the opposite job — a boundary drawn against the
+     ground — and a fill dark enough to carry white is too dark to clear
+     3:1 against a dark plate. Lifting `--brand` to fix the ring breaks
+     the button. So the ring is split out and given a value per theme.
+
+     Light leaves the hue axis altogether, and that is the second thing
+     the ring has to do. Clearing the ground is not enough on its own: a
+     ring also has to not merge with the control it is ringing, and a
+     ring in `--brand`'s own colour on a primary button measures 1.000:1
+     against the fill. In a browser that read as one blue shape with a
+     white pinstripe through it rather than as a button with a ring
+     around it — the offset gap was carrying the whole signal.
+
+     No blue can fix that in light, and the arithmetic is worth writing
+     down because it looks as if a lighter or darker blue ought to work.
+     A ring needs 3:1 against the least contrasty light ground, which
+     caps its luminance; being 2:1 from `--brand` on the lighter side
+     needs more than that cap allows. The two windows do not overlap.
+     The only way out is downward, past `--brand` rather than around it —
+     which is also what every browser's own light-mode ring does, and why
+     theirs are near-black rather than accent-coloured.
+
+     So light's ring is `--ink`'s own hex: the darkest mark in the light
+     theme, for the same reason the ink is. It clears 3:1 on all four
+     light grounds with margin and sits 2.9:1 from `--brand`'s fill.
+
+     Dark lifts to #5e90f0 — `main`'s own dark `--brand-text` — which
+     does both jobs there: 5.681 on the plate and 2.092 from the fill.
+     The asymmetry is not an accident of two decisions; it is the same
+     rule resolved twice. Use the route colour where it clears both
+     floors, drop to the end of the value scale where it cannot.
+
+     Declared per theme rather than per brand, so a BeOrchid console
+     focuses the same way for now. */
+  --ring: #10131c;
+
+  /* Elevation is a real tool. At 6% on a near-white ground the values
+     before these were invisible, so every card fell back to a 1px border
+     — which is what turned the page into a grid of boxes.
+
+     Restored with the radii on 2026-09-10, and the two go together: the
+     wayfinding pass cut elevation to a 1px contact shadow *because* it
+     had cut the corners to 4px, on the argument that a plate reads as an
+     object by its edge rather than by a blur. Reverting one without the
+     other leaves soft corners with nothing under them, which is neither
+     treatment. */
   --shadow-sm: 0 1px 2px rgb(16 19 28 / 0.06);
   --shadow: 0 1px 3px rgb(16 19 28 / 0.08), 0 12px 28px -8px rgb(16 19 28 / 0.10);
   --shadow-lg: 0 2px 8px rgb(16 19 28 / 0.10), 0 24px 56px -12px rgb(16 19 28 / 0.18);
 
-  /* semantics — shared across brands, never a brand accent */
-  --success: #18935a;
+  /* Semantics — shared across brands, never a brand accent.
+
+     `--success` and `--warning` are NOT `main`'s #18935a and #b4740a.
+     Both are type on a plate as well as fills carrying a white label,
+     and both failed 4.5:1 doing it: #18935a is 3.918 either way, and
+     white on #b4740a is 3.858. `--warning` is now `main`'s own
+     `--warning-ink` step (5.980 on white, 5.245 under a table band) and
+     `--warning-ink` moves one further down; `--success` is stepped down
+     its own ramp to 4.715.
+
+     `--danger` and `--info` are `main`'s, unchanged — they already
+     cleared. */
+  --success: #168451;
   --success-ink: #0e6b3e;
-  --warning: #b4740a;
-  --warning-ink: #8a5905;
+  --warning: #8a5905;
+  --warning-ink: #6f4704;
   --danger: #c0392b;
   --danger-ink: #9a2c20;
   --info: #2f6be0;
   --info-ink: #1f4eaf;
+
+  /* The label ink each fill carries, the way --brand carries --on-brand
+     and --way carries --way-ink. It exists because `text-white` is one
+     value serving two themes that need different ones: these three are
+     dark fills in light and light fills in dark, so what reads on them
+     inverts and a single hue cannot follow.
+
+     Do NOT close the gap by darkening the fills instead. --success and
+     --danger are also type on the plate, asserted at 4.5:1 there, and
+     taking them dark enough to carry white breaks the assertion that
+     keeps a status word readable. That is the trap --brand fell into. */
+  --on-success: #ffffff;
+  --on-warning: #ffffff;
+  --on-danger: #ffffff;
+
+  /* Direction — the one genuinely new role in the wayfinding system,
+     and the reason it gets a new name rather than reusing
+     --brand-accent, which was an amber used decoratively.
+
+     `--way` marks the next step and nothing else. Exactly one thing per
+     screen wears it; two means one is wrong. It is always a FILL with
+     `--way-ink` on it, never type on a plate — as type it cannot clear
+     4.5:1 on white, and using it as a field is what real signage does.
+
+     The ink on it is the light-mode ink in BOTH themes, because yellow
+     is a light fill in both. There is therefore ONE ratio, not two:
+     `--way` and `--way-ink` are byte-identical in the two blocks, so the
+     pair measures 9.515:1 whichever theme is resolved. The 10.48 that
+     used to be quoted here as the dark figure was dark `--warning-ink`
+     on the dark plate, copied across by mistake. */
+  --way: #f5b915;
+  --way-ink: #10131c;
 
   /* chart fills — the same three hues as the semantics above, stepped
      to pass the categorical-palette checks rather than reused verbatim.
@@ -79,6 +196,38 @@
   --chart-accruing: #2f6be0;
   --chart-outstanding: #b4740a;
 
+  /* funnel steps — an *ordinal* ramp, not a categorical palette, and
+     the distinction is the whole design. Funnel stages have an order:
+     swap "Submitted" and "Started" and the chart means something else.
+     Colour that carries order is one hue in monotone lightness steps,
+     so the reader sees the sequence in the ramp; eight unrelated hues
+     would say the stages are five different *kinds* of thing, which is
+     exactly what they are not.
+
+     Deep at the wide end, pale at the narrow one. `funnelOf` counts
+     each stage as reached-or-passed, so the series cannot widen —
+     which makes lightness a second, redundant encoding of the same
+     magnitude the bar width already shows, running the same direction.
+
+     One hue at 265°, L 0.36 → 0.68 in even 0.08 steps, chroma held
+     at 0.16, which this hue holds across the whole light ramp.
+     Validated as an ordinal ramp against --surface: monotone L, every
+     adjacent gap over the 0.06 floor, and the pale end at 2.90:1,
+     clear of the 2:1 an ordinal light end has to hold.
+
+     265° is --brand's own hue, measured: #2450d8 is OKLCH 265.2°. The
+     earlier note here called the ramp brand-neutral and said it would
+     stay put when --brand moved — it did not, because a ramp derived
+     off a different brand hue read as a second, disagreeing blue beside
+     the new one. Sharing the hue is the point: the funnel is the same
+     product speaking, in lightness rather than in hue. If --brand's
+     hue moves again, this ramp moves with it. */
+  --chart-funnel-1: #13308f;
+  --chart-funnel-2: #2649a9;
+  --chart-funnel-3: #3b61c4;
+  --chart-funnel-4: #517adf;
+  --chart-funnel-5: #6793fa;
+
   /* what tints blend into */
   --mix: #ffffff;
 
@@ -93,9 +242,15 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* radius — 14px is the system default.
-     Softened across the board. Paired with real elevation this lets a
-     card read as a surface rather than as an outlined box. */
+  /* radius — 14px is the system default. Softened across the board;
+     paired with the real elevation above, this lets a card read as a
+     surface rather than as an outlined box.
+
+     The wayfinding pass cut these to 3/4/6/10px on the argument that a
+     sign is a plate with a machined edge. Reverted on 2026-09-10 at the
+     client's word, together with the elevation that had been flattened
+     to suit them — see the shadow block for why the two cannot move
+     apart. */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -136,15 +291,36 @@
    the .dark class next-themes toggles, and the un-stamped system default. */
 :root[data-theme="dark"],
 .dark {
+  /* Dark is selected against this ground, not flipped out of the light
+     steps. `main`'s ramp, restored on 2026-09-10 with the light one; the
+     two values below that are NOT `main`'s say why. */
   --bg: #0b0d13;
   --surface: #141822;
   --surface-2: #1d222e;
   --surface-inset: #101420;
   --border: #262c3a;
-  --border-strong: #38404f;
+  /* NOT `main`'s #38404f — 1.702:1 on the plate, and this token is the
+     only boundary an input has in either theme. `main`'s hue, lifted
+     until it clears the 3:1 of WCAG 1.4.11 on all three grounds:
+     3.360 / 3.011 / 3.678. Same repair as the light block. */
+  --border-strong: #666c77;
   --ink: #f3f5fa;
   --ink-2: #aab2c4;
-  --ink-3: #767e91;
+  /* NOT `main`'s #767e91, which is 4.363 on the plate and 3.910 under a
+     table's header band — and the band is where most of the muted type
+     in the consoles actually sits. Lifted on its own hue to
+     5.065 / 4.539 / 5.244 / 5.544, AA on all four. */
+  --ink-3: #82899a;
+
+  /* Lifted off `--brand`, which stays #2450d8 because it is the button
+     fill and carries white. This is `main`'s own dark `--brand-text`:
+     5.681 on this plate, 6.219 on this ground, 5.092 under a table's
+     band, against the 3:1 a boundary needs — and 2.092:1 from the fill,
+     so unlike the light block the brand colour can stay here. A ring on
+     a primary button reads as a ring rather than as a wider button. The
+     full argument, including why light cannot do the same, is on the
+     light `--ring`. */
+  --ring: #5e90f0;
 
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.45);
   --shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 12px 28px -8px rgb(0 0 0 / 0.45);
@@ -159,6 +335,23 @@
   --info: #5e90f0;
   --info-ink: #9dbaf6;
 
+  /* The signage ink, the same #0b1f2a --way-ink uses and for the same
+     reason: in dark these three are light fills, so what reads on them
+     is dark. White on them was 2.100 / 3.002 / 3.642 against a 4.5
+     floor — and dark --warning is byte-identical either side of the
+     repaint, so that one had never cleared anything in this product's
+     history. Note which way `hover:brightness-110` moves them now: 
+     lightening the fill under a dark label walks toward the floor's
+     safe side, where under a white label it walked away from it. */
+  --on-success: #10131c;
+  --on-warning: #10131c;
+  --on-danger: #10131c;
+
+  /* Holds. Yellow is a light fill on either ground, and so is the ink
+     that sits on it. */
+  --way: #f5b915;
+  --way-ink: #10131c;
+
   /* Chosen for dark, not flipped into it. The dark semantics above are
      deliberately bright — they carry small marks on a near-black
      ground — and as large fills they land above the lightness band a
@@ -169,18 +362,54 @@
   --chart-accruing: #5e90f0;
   --chart-outstanding: #c08829;
 
+  /* The funnel ramp re-anchored for dark, not inverted into it. Same
+     hue — 265°, --brand's own — and the same 0.08 lightness steps,
+     but the ends swap jobs:
+     on a near-black ground the *bright* step is the emphatic one, so
+     the wide end of the funnel is the lightest and the ramp darkens
+     as the funnel narrows — the reverse of the light-mode hexes and
+     the same reading. L 0.78 → 0.46. Re-validated against --surface
+     rather than assumed: the narrow end lands at 2.27:1, which is the
+     end that would have gone invisible had these been a straight flip
+     of the light steps. */
+  --chart-funnel-1: #8bafff;
+  --chart-funnel-2: #6793fa;
+  --chart-funnel-3: #517adf;
+  --chart-funnel-4: #3b61c4;
+  --chart-funnel-5: #2649a9;
+
+  /* What the tinted fills blend toward, so a 12%-brand wash reads as a
+     wash on the plate rather than as a hole in it. It has to BE the dark
+     plate: eleven `color-mix(… var(--mix))` call sites paint onto one.
+     It was still #141822 — the plate colour from before the repaint —
+     which put every one of those tints on a ground the product no longer
+     has. */
   --mix: #141822;
 }
 
 /* ---------- brand axis ---------- */
 :root,
 [data-brand="toplance"] {
+  /* A motorway-sign blue, not the indigo #2450d8 it replaces. The old
+     hue was a SaaS default; this one is the institutional register the
+     rest of the system is written in. 7.98:1 on white, 6.64:1 on the
+     concourse. */
   --brand: #2450d8;
   --brand-press: #1b3eae;
   --brand-2: #57a9f2;
   --brand-text: #2450d8;
   --brand-accent: #f4a521;
   --on-brand: #ffffff;
+  /* The route's pill ink, and the last fill in the system to get one.
+     --success, --warning, --danger and --info each carry a `-ink` half
+     for the tinted pill they sit behind; --brand carried none, so
+     `badge.tsx` borrowed --brand-text. That token is tuned to land on a
+     PLATE, and a pill's ground is not the plate — it is --brand mixed
+     12% into whichever surface the pill fell on, which is lighter than
+     the plate in dark and takes the ratio down with it. Measured at
+     4.283:1 on --surface-2, under the 4.5 a 13px label needs. Light is
+     --brand-text's own value, so nothing moves there. */
+  --brand-ink: #2450d8;
   --brand-grad: linear-gradient(150deg, #2450d8, #57a9f2);
 }
 
@@ -191,235 +420,32 @@
   --brand-text: #0b7f78;
   --brand-accent: #e0a100;
   --on-brand: #ffffff;
+  --brand-ink: #0b7f78;
   --brand-grad: linear-gradient(150deg, #0b7f78, #3fbfb4);
 }
 
-/* Brand text lifts in dark so it clears AA on the dark ground. */
+/* Brand text lifts in dark so it clears AA on every dark ground, not
+   only on the plate. The #4c8fe0 that stood here was 4.985 on the plate
+   and 5.592 on the concourse but 4.367 on `--surface-2` — and the site
+   footer is a `bg-surface-2` band full of underlined 16px links set in
+   this token, so the one ground it failed on is the one it is most
+   visibly used on. 5.171 / 4.531 / 5.801 / 5.505. */
 :root[data-theme="dark"],
 :root[data-theme="dark"] [data-brand="toplance"],
 .dark,
 .dark [data-brand="toplance"] {
   --brand-text: #5e90f0;
+  /* Lifted past --brand-text rather than sharing it: on the pill's
+     mixed ground #5192e1 is 4.283 and this is 5.746. Kept clear of
+     --info-ink's #9dbaf6 so "Processing" and "Submitted" stay two
+     different pills rather than one blue shape read twice. */
+  --brand-ink: #7fa8f2;
 }
 :root[data-theme="dark"] [data-brand="beorchid"],
 .dark [data-brand="beorchid"] {
   --brand-text: #35d3c3;
-}
-
-/* ---------- laminate axis ----------
-   A passport data page is sealed under polycarbonate, and that material
-   is the honest source for the glass on this page: it refracts the ground
-   beneath it, its edge carries optically-variable ink that shifts blue to
-   gold with the viewing angle, and it throws a specular band when tilted.
-
-   Held as tokens rather than literals because the tint has to survive a
-   theme flip: on a near-white ground glass is mostly white and barely
-   tinted, on the dark ground it is mostly dark and the edge highlight has
-   to drop to a tenth of its light-mode strength or it reads as a stroke. */
-:root {
-  --glass-tint: 76%;
-  --glass-edge: rgb(255 255 255 / 0.75);
-  --glass-under: rgb(16 19 28 / 0.07);
-  --glass-sheen: rgb(255 255 255 / 0.6);
-}
-:root[data-theme="dark"],
-.dark {
-  --glass-tint: 60%;
-  --glass-edge: rgb(255 255 255 / 0.1);
-  --glass-under: rgb(0 0 0 / 0.42);
-  --glass-sheen: rgb(255 255 255 / 0.13);
-}
-
-/* Ruled security paper, at the threshold of visible. Official documents
-   are printed on a ground, never on blank white, and the hero is the one
-   place on the page with room to say so before any text does. */
-@utility security-paper {
-  background-image: repeating-linear-gradient(
-    0deg,
-    color-mix(in srgb, var(--ink-3) 13%, transparent) 0 1px,
-    transparent 1px 11px
-  );
-  mask-image: linear-gradient(to bottom, #000 0%, transparent 62%);
-}
-
-/* The laminate itself. Three things stacked, in the order real
-   polycarbonate does them:
-
-   1. `backdrop-filter` refracts the ground. `saturate` is what separates
-      glass from fog — blur alone reads as a smeared overlay, blur plus
-      saturation reads as something with a refractive index.
-   2. A tint carries the text. Legibility is not negotiable against a
-      moving ground, so the tint is high enough that 13px MRZ stays
-      readable over the ruled paper beneath it.
-   3. Two inset hairlines light the edge: bright along the top where a
-      real bevel catches the room, dark along the bottom where it does
-      not. This is what makes the card read as having a thickness.
-
-   Kept to `blur(14px)`, on one element per page. The comment in
-   `corridor-bar.tsx` is not decorative — this page is mostly read on
-   mid-range Android, where a wide backdrop-filter is a real frame cost,
-   and the `@supports` fallback below is for the same reason. */
-@utility laminate {
-  position: relative;
-  isolation: isolate;
-  background: linear-gradient(
-    150deg,
-    color-mix(in srgb, var(--surface) var(--glass-tint), transparent),
-    color-mix(
-      in srgb,
-      var(--surface) calc(var(--glass-tint) - 12%),
-      transparent
-    )
-  );
-  /* Unprefixed only. Lightning CSS adds the `-webkit-` twin from the
-     project's browser targets; writing it by hand here does not
-     supplement that, it replaces it — a hand-written prefixed copy that
-     comes second wins the dedupe and the standard property is dropped
-     from the build entirely, which is silent and costs you the effect in
-     every browser that only speaks the standard name. */
-  backdrop-filter: blur(14px) saturate(175%);
-  box-shadow:
-    inset 0 1px 0 var(--glass-edge),
-    inset 0 -1px 0 var(--glass-under),
-    var(--shadow);
-}
-
-/* No backdrop-filter: fall back to the opaque surface the bar used
-   before. A half-transparent card over ruled paper with nothing
-   refracting it is unreadable, which is worse than no effect at all. */
-@supports not (backdrop-filter: blur(1px)) {
-  .laminate {
-    background: var(--surface);
-  }
-}
-
-/* The optically-variable edge. A single 1px ring, blue at the top-left
-   corner and gold at the bottom-right, transparent through the middle —
-   the shift real OVI makes as you turn a document to the light. Drawn as
-   a padding-box/border-box mask exclusion because a gradient cannot be a
-   `border-color`, and the alternative (a second inset element) would sit
-   inside the overflow clip and round differently at the corners. */
-/* `.ovi-edge` carries the same hairline without the blur. The intake
-   record is a tall, scrolling card on a page that is mostly read on
-   mid-range Android, and a `backdrop-filter` re-blurring that area every
-   scroll frame is the exact cost the comment above warns about. The edge
-   is the part of the effect that says "document"; the refraction is the
-   part that costs. */
-@utility ovi-edge {
-  position: relative;
-  isolation: isolate;
-}
-
-.laminate::before,
-.ovi-edge::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  padding: 1px;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--brand-2) 60%, transparent),
-    color-mix(in srgb, var(--border-strong) 55%, transparent) 32%,
-    color-mix(in srgb, var(--border-strong) 55%, transparent) 68%,
-    color-mix(in srgb, var(--brand-accent) 50%, transparent)
-  );
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-}
-
-/* The tilt. One specular band crossing the card, skewed so it reads as
-   light raking across a surface rather than a bar sliding over one.
-   Mounted keyed on the corridor, so it fires on the same state change
-   that re-runs the MRZ resolve — the gesture of turning a passport to
-   check it is the gesture of changing where you are going. */
-@keyframes laminate-tilt {
-  from {
-    transform: translateX(-140%) skewX(-18deg);
-    opacity: 0;
-  }
-  30% {
-    opacity: 1;
-  }
-  to {
-    transform: translateX(260%) skewX(-18deg);
-    opacity: 0;
-  }
-}
-.laminate-sheen {
-  position: absolute;
-  inset: -1px;
-  z-index: 3;
-  width: 38%;
-  pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    transparent,
-    var(--glass-sheen),
-    transparent
-  );
-  animation: laminate-tilt 900ms var(--ease-out) both;
-}
-
-/* The chrome's own laminate edge.
-
-   Both bars used to close with `border-b border-border` — a flat
-   hairline, and the one surface in the product that carried no material
-   at all while twenty-six other files reached for `laminate`,
-   `ovi-edge` or `security-paper`. That is what made the chrome read as
-   generic: not its proportions, but that it could have come from any
-   repository.
-
-   So the bar closes on the same optically-variable hairline the
-   documents do — blue at the leading edge, neutral through the middle,
-   gold at the trailing one. It is one pixel, and it is the only
-   decoration either bar gets; everything else in there was made quieter
-   to pay for it.
-
-   `--bar-edge-o` exists because the marketing bar is transparent until
-   the page scrolls under it. Fading the pseudo-element rather than the
-   header keeps the row's own contents at full opacity — an `opacity` on
-   the parent would take the wordmark and the call to action down with
-   the rule. */
-@utility bar-edge {
-  position: relative;
-}
-
-.bar-edge::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 1px;
-  pointer-events: none;
-  opacity: var(--bar-edge-o, 1);
-  transition: opacity var(--dur-toggle) var(--ease-out);
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--brand-2) 70%, transparent) 0%,
-    var(--border) 26%,
-    var(--border) 74%,
-    color-mix(in srgb, var(--brand-accent) 60%, transparent) 100%
-  );
-}
-
-/* Dark drops the two accents to roughly half. Same reasoning as
-   `--glass-edge`: on the dark ground a mix that reads as a tint in light
-   mode reads as a drawn stroke, and a stroke across the full width of
-   the viewport is a stripe, not an edge. */
-:root[data-theme="dark"] .bar-edge::after,
-.dark .bar-edge::after {
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--brand-2) 42%, transparent) 0%,
-    var(--border) 26%,
-    var(--border) 74%,
-    color-mix(in srgb, var(--brand-accent) 34%, transparent) 100%
-  );
+  /* Already 6.948 on its own mixed ground, so this one shares. */
+  --brand-ink: #35d3c3;
 }
 
 /* Wayfinding labels. Archivo was already loaded and already paid for —
@@ -457,8 +483,16 @@
   --color-brand-press: var(--brand-press);
   --color-brand-2: var(--brand-2);
   --color-brand-text: var(--brand-text);
+  --color-brand-ink: var(--brand-ink);
   --color-brand-accent: var(--brand-accent);
   --color-on-brand: var(--on-brand);
+
+  --color-way: var(--way);
+  --color-way-ink: var(--way-ink);
+
+  --color-on-success: var(--on-success);
+  --color-on-warning: var(--on-warning);
+  --color-on-danger: var(--on-danger);
 
   --color-success: var(--success);
   --color-success-ink: var(--success-ink);
@@ -472,6 +506,16 @@
   --color-chart-collected: var(--chart-collected);
   --color-chart-accruing: var(--chart-accruing);
   --color-chart-outstanding: var(--chart-outstanding);
+
+  /* Aliased for completeness rather than for a caller: `FunnelBars`
+     indexes the ramp by stage position, so it reads the custom
+     properties directly — a `bg-chart-funnel-${i}` built at runtime is
+     a class name Tailwind never sees and never emits. */
+  --color-chart-funnel-1: var(--chart-funnel-1);
+  --color-chart-funnel-2: var(--chart-funnel-2);
+  --color-chart-funnel-3: var(--chart-funnel-3);
+  --color-chart-funnel-4: var(--chart-funnel-4);
+  --color-chart-funnel-5: var(--chart-funnel-5);
 
   /* shadcn compatibility: components generated by `npx shadcn add`
      reference these names, so they inherit BeOrchid automatically. */
@@ -492,7 +536,11 @@
   --color-destructive: var(--danger);
   --color-destructive-foreground: #ffffff;
   --color-input: var(--border-strong);
-  --color-ring: var(--brand);
+  /* `--ring`, not `--brand`. Everything generated off this name is a
+     boundary drawn against a ground, and the fill hue does not clear the
+     boundary floor in dark. See the note on `--ring` in the light
+     block. */
+  --color-ring: var(--ring);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -503,9 +551,9 @@
   --spacing-row: var(--row-h);
   --spacing-bar: var(--bar-h);
 
-  --font-sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-plex-mono), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-archivo), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --ease-out: var(--ease-out);
   --ease-inout: var(--ease-inout);
@@ -525,16 +573,16 @@
    * value into the utilities it generates and does NOT emit the custom
    * property, so `var(--font-sans)` in hand-written CSS resolves to
    * nothing and the declaration is dropped — which is why body copy was
-   * silently rendering in system-ui rather than Inter.
+   * silently rendering in system-ui rather than the body face.
    *
    * They live on `body` and not `:root` because that is where next/font
-   * puts `--font-inter` and friends; a `:root` declaration would resolve
+   * puts `--font-plex-sans` and friends; a `:root` declaration would resolve
    * them before they exist.
    */
   body {
-    --sans: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
-    --data: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --display: var(--font-archivo), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --data: var(--font-plex-mono), var(--font-plex-sans), var(--font-plex-sans-ext), var(--font-plex-sans-vietnamese), var(--font-plex-sans-arabic), var(--font-latin-african), ui-monospace, SFMono-Regular, Menlo, monospace;
 
     background: var(--bg);
     color: var(--ink);
@@ -545,10 +593,62 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* The product's focus indicator, and deliberately the whole of it.
+
+     It used to be one of two. This rule was here, and sixteen component
+     files also carried `outline-none` plus a `focus-visible:ring-2
+     ring-brand ring-offset-2 ring-offset-bg` box-shadow ring of their
+     own. The second one is the one that painted, and not because it was
+     written later: Tailwind v4 emits `@layer theme, base, components,
+     utilities;` at the top of the compiled sheet, and layers cascade in
+     DECLARATION order rather than source order, so `.outline-none {
+     outline-style: none }` in the utilities layer beat this rule in the
+     base layer wherever a component carried the class. The base outline
+     was live only on the elements nobody had styled — which is why, in a
+     real browser, a plain <a> reported `outlineStyle: "solid"` while a
+     Button two nodes away reported "none".
+
+     The one that painted was the wrong colour. It was drawn in
+     `--brand`, which is the button FILL and stays dark so it can carry
+     white at 7.98:1; as a boundary on the dark palette that same hue is
+     2.078:1 on a plate, 2.331:1 on the concourse, 1.821 on the secondary
+     plate and 2.212 in an inset well, against the 3:1 a boundary
+     somebody has to see. On a primary button it was also the fill's own
+     colour: a ring at 1.000:1 against the thing it was ringing.
+
+     So there is one ring now, it is `--ring`, and nothing suppresses or
+     repaints it. `--ring` clears the boundary floor on all four grounds
+     in both themes — 7.980 / 6.638 / 7.210 / 6.316 light, 4.985 / 5.592
+     / 4.367 / 5.307 dark — and `tokens.test.ts` holds all eight.
+
+     `outline-offset` is what makes one ring enough on a filled control.
+     The gap it leaves is TRANSPARENT, so the colour immediately either
+     side of the ring is whatever ground the control sits on and never
+     the control's own fill. That is the whole difference from the ring
+     this replaces, which painted its gap `ring-offset-bg`: an opaque
+     `--bg` band between a `--brand` ring and a `--brand` fill, on a
+     `--surface` plate, no two of which were 3:1 apart in dark. Nothing
+     in the product fills a ground with `--brand` — every `bg-brand` is a
+     dot, a 2px rule, a count badge or a button — so the four grounds the
+     test asserts are the only ones the gap can show.
+
+     Two deviations are allowed and there are no others. Both keep the
+     colour and the width and change only where the ring is drawn:
+
+       - inward, `-outline-offset-2`, where an ancestor's
+         `overflow-hidden` would clip an outward ring away;
+       - onto the visible shell, `has-[…:focus-visible]:outline-2
+         outline-offset-2 outline-ring`, where the element that takes
+         focus is not the element a person sees — an `opacity-0` <select>
+         laid over a styled slot, an `sr-only` file input behind a
+         <label>, an <input> sitting flush inside a clipped wrapper.
+
+     Each of those sites says so in a comment where it is written, and
+     `focus.test.ts` fails the suite if a third mechanism appears. */
   :focus-visible {
-    outline: 2px solid var(--brand);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 3px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -673,8 +773,8 @@
 
    Two faces, two jobs. Archivo carries the width axis, so display
    type can be genuinely expanded rather than merely large — that
-   width is what stops it reading as Inter at a bigger size.
-   JetBrains stops being a footnote and becomes the data face: every
+   width is what stops it reading as Plex Sans at a bigger size.
+   Plex Mono stops being a footnote and becomes the data face: every
    code, count and status on the page is set in it, because those are
    the parts a traveller reads as fact rather than as marketing.
 

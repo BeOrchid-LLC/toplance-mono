@@ -782,7 +782,7 @@ export function AuthForm(props: AuthFormProps) {
           *
           * The tint is `badge`'s danger variant, mixed over `--mix`
           * rather than `transparent` so the fill stays opaque against
-          * the panel's own laminate; `--mix` is the page ground in both
+          * the panel it sits on; `--mix` is the page ground in both
           * themes, which is what keeps this legible in dark mode instead
           * of glowing. The icon is `upload-outcome-dialog`'s: same
           * lucide glyph, same `mt-0.5` optical nudge onto the first

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { isOwner } from "@/lib/auth/policy";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
+import { withLocalePrefix } from "@/lib/i18n/paths";
+import { getLocale } from "@/lib/i18n/server";
 
 // Reads a session to decide where to send the visitor, so it is never
 // prerendered.
@@ -35,7 +37,7 @@ export const dynamic = "force-dynamic";
 export default async function OpsHome() {
   const gate = await requireStaffConsole();
 
-  if (gate.decision === "ok" && isOwner(gate.actor)) redirect("/ops/dashboard");
+  if (gate.decision === "ok" && isOwner(gate.actor)) redirect(withLocalePrefix("/ops/dashboard", await getLocale()));
 
-  redirect("/ops/corridors");
+  redirect(withLocalePrefix("/ops/corridors", await getLocale()));
 }

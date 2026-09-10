@@ -7,7 +7,7 @@ import {
 
 /**
  * The application-journey screens — dashboard, requirements, documents —
- * open with the corridor laminate. Pages outside this route group are
+ * open with the corridor header. Pages outside this route group are
  * excluded by construction: `/app/agent`, because the card kept
  * appearing above the conversation the moment the final answer resolved
  * a corridor, crowning the intake chat with a summary of itself; and
@@ -28,16 +28,7 @@ export default async function CorridorLayout({
   return (
     <>
       {application && corridor && (
-        /* The ruled ground exists so the laminate has something to
-           refract. Over flat `--bg` a backdrop-filter is an expensive
-           way to draw nothing — the material only reads as material
-           when there is a pattern bending underneath it. The utility's
-           own mask fades it out, so the band ends without a seam. */
         <div className="relative isolate">
-          <div
-            aria-hidden
-            className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[320px]"
-          />
           <Shell className="pt-8">
             <CorridorHeader
               caseRef={application.caseRef}

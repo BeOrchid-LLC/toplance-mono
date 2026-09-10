@@ -12,10 +12,15 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // The e2e suite's dev server builds into its own dist dir
-    // (`NEXT_DIST_DIR` in playwright.config.ts) — as much generated
-    // output as `.next`, and as unlintable.
-    ".next-e2e*/**",
+    // Any dist dir but the default one. `next.config.ts` takes
+    // `NEXT_DIST_DIR`, so a build that must not disturb a running dev
+    // server goes somewhere else — the e2e suite uses `.next-e2e`, and a
+    // production build run alongside `next dev` needs a name of its own
+    // too. Each is as much generated output as `.next`, and as
+    // unlintable: one of them put 41,228 warnings and 1,334 errors in
+    // front of the single real warning in `src`, which is the same as
+    // having no lint at all.
+    ".next-*/**",
     // Playwright's own output: reports, traces, screenshots.
     "playwright-report/**",
     "test-results/**",

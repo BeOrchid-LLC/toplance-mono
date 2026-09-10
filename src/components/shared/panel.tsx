@@ -3,10 +3,10 @@ import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * The case-file card. One sheet in the traveller's dossier: a matte
- * surface with a hairline edge and real (small) elevation. Matte on
- * purpose — the laminate in the corridor header is the only glass on any
- * screen, and these cards are the ground it reads against.
+ * The plate. One sign face: a solid surface with a machined edge, sitting
+ * on the concourse rather than floating above it. What separates it from
+ * its ground is the ground being darker and the plate having a real edge,
+ * which is why the elevation is a 1px contact shadow and not a blur.
  *
  * The header pairs a quiet caps label with one right-aligned datum
  * (a badge, a count, an action). The label names the sheet; the datum is
@@ -116,7 +116,16 @@ export function DisclosurePanel({
           // `list-none` above covers most engines; WebKit needs its own
           // marker turned off, or the chevron below is the second
           // disclosure mark on the row.
-          "[&::-webkit-details-marker]:hidden"
+          "[&::-webkit-details-marker]:hidden",
+          // The ring turns inward here — the first of the two deviations
+          // `:focus-visible` in globals.css permits. This summary is the
+          // whole top edge of an `overflow-hidden` <details>, so an
+          // outward 2px ring is cut off on three sides and what a
+          // keyboard user gets is a line under the label. Measured in a
+          // browser rather than reasoned about: the fold reported
+          // `clipped by an overflow ancestor: true` at 2px out and false
+          // at 2px in. Same token, same width, drawn on the inside.
+          "focus-visible:-outline-offset-2"
         )}
       >
         <ChevronRight

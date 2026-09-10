@@ -116,7 +116,6 @@ export default async function TravellersPage() {
     <CorridorProvider>
       {/* ---------- hero ---------- */}
       <header className="relative isolate overflow-hidden">
-        <div aria-hidden className="security-paper pointer-events-none absolute inset-0 -z-10" />
         <Shell className="pb-20 pt-12 md:pb-28 md:pt-16">
           <HeroCopy />
         </Shell>

@@ -58,7 +58,7 @@ export function LocaleMenu({
           "inline-flex items-center transition-colors",
           bare
             ? "nav-label h-9 rounded-e-[var(--radius-sm)] px-3 text-[13px] font-semibold text-ink-2 hover:bg-surface-2 hover:text-ink"
-            : "rounded-sm border border-border-strong bg-surface font-semibold text-ink-2 hover:border-brand hover:text-ink",
+            : "rounded-sm border border-border-strong bg-surface font-semibold text-ink-2 hover:border-brand-text hover:text-ink",
           !bare && (small ? "h-9 gap-1.5 px-2.5 text-[13px]" : "min-h-[var(--row-h)] gap-2 px-3 text-base"),
           className
         )}

@@ -26,6 +26,16 @@ export const DASHBOARD: {
   ctaReviewSubmit: L;
   ctaSeeDocuments: L;
   ctaUploadNext: L;
+  routeLabel: L;
+  stageStarted: L;
+  stageIntake: L;
+  stageCollected: L;
+  stageSubmitted: L;
+  stageDecision: L;
+  stageGranted: L;
+  stageRefused: L;
+  youAreHere: L;
+  backHere: L;
   statusPanelLabel: L;
   caseHandlerLabel: L;
   caseHandlerBody: L;
@@ -243,6 +253,134 @@ export const DASHBOARD: {
     ar: "رفع المستند التالي",
     tw: "To krataa a ɛdi hɔ soro",
     zu: "Layisha idokhumenti elandelayo",
+  },
+  /**
+   * The route diagram's own copy. The stage keys are `FUNNEL_STAGES`',
+   * shared with the agency funnel, but the wording is not: the console
+   * reads "Documents complete" about somebody else's case, and a
+   * traveller reads "Documents" about their own.
+   */
+  routeLabel: {
+    en: "Your route",
+    ha: "Hanyar ka",
+    yo: "Ọ̀nà rẹ",
+    ig: "Ụzọ gị",
+    fr: "Votre parcours",
+    pt: "O seu percurso",
+    sw: "Njia yako",
+    ar: "مسارك",
+    tw: "Wo kwan",
+    zu: "Uhambo lwakho",
+  },
+  stageStarted: {
+    en: "Started",
+    ha: "An fara",
+    yo: "Ó bẹ̀rẹ̀",
+    ig: "Amalitela",
+    fr: "Commencé",
+    pt: "Iniciado",
+    sw: "Imeanza",
+    ar: "بدأ",
+    tw: "Afi ase",
+    zu: "Kuqalile",
+  },
+  stageIntake: {
+    en: "Intake",
+    ha: "Tambayoyi",
+    yo: "Ìbéèrè",
+    ig: "Ajụjụ",
+    fr: "Questionnaire",
+    pt: "Questionário",
+    sw: "Maswali",
+    ar: "الأسئلة",
+    tw: "Nsɛmmisa",
+    zu: "Imibuzo",
+  },
+  stageCollected: {
+    en: "Documents",
+    ha: "Takardu",
+    yo: "Àwọn ìwé",
+    ig: "Akwụkwọ",
+    fr: "Documents",
+    pt: "Documentos",
+    sw: "Nyaraka",
+    ar: "المستندات",
+    tw: "Nkrataa",
+    zu: "Amadokhumenti",
+  },
+  stageSubmitted: {
+    en: "Sent",
+    ha: "An aika",
+    yo: "A ti fi ránṣẹ́",
+    ig: "E zigala",
+    fr: "Envoyé",
+    pt: "Enviado",
+    sw: "Imetumwa",
+    ar: "أُرسل",
+    tw: "Wɔasoma",
+    zu: "Kuthunyeliwe",
+  },
+  /** The final stage before a decision lands. Neutral on purpose. */
+  stageDecision: {
+    en: "Decision",
+    ha: "Hukunci",
+    yo: "Ìpinnu",
+    ig: "Mkpebi",
+    fr: "Décision",
+    pt: "Decisão",
+    sw: "Uamuzi",
+    ar: "القرار",
+    tw: "Gyinaesi",
+    zu: "Isinqumo",
+  },
+  stageGranted: {
+    en: "Granted",
+    ha: "An bayar",
+    yo: "A fọwọ́sí",
+    ig: "Anabatala",
+    fr: "Accordé",
+    pt: "Concedido",
+    sw: "Imekubaliwa",
+    ar: "مُنح",
+    tw: "Wɔapene so",
+    zu: "Kuvunyiwe",
+  },
+  stageRefused: {
+    en: "Refused",
+    ha: "An ƙi",
+    yo: "A kọ̀",
+    ig: "Ajụla",
+    fr: "Refusé",
+    pt: "Recusado",
+    sw: "Imekataliwa",
+    ar: "رُفض",
+    tw: "Wɔapo",
+    zu: "Kunqatshiwe",
+  },
+  youAreHere: {
+    en: "You are here",
+    ha: "Kana nan",
+    yo: "O wà níbí",
+    ig: "Ị nọ ebe a",
+    fr: "Vous êtes ici",
+    pt: "Está aqui",
+    sw: "Uko hapa",
+    ar: "أنت هنا",
+    tw: "Wowɔ ha",
+    zu: "Ukhona lapha",
+  },
+  /** Said instead of "you are here" when a case has come back a stage. */
+  backHere: {
+    en: "Back here",
+    ha: "Ka dawo nan",
+    yo: "O padà síbí",
+    ig: "Ị laghachiri ebe a",
+    fr: "De retour ici",
+    pt: "De volta aqui",
+    sw: "Umerudi hapa",
+    ar: "عدت إلى هنا",
+    tw: "Wasan aba ha",
+    zu: "Ubuyele lapha",
   },
   statusPanelLabel: {
     en: "Application status",

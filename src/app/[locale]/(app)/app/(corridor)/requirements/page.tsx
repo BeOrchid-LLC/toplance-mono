@@ -33,6 +33,7 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { getLocale } from "@/lib/i18n/server";
 import { REQUIREMENTS } from "@/lib/i18n/requirements";
 import type { Locale } from "@/lib/i18n/locales";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -131,7 +132,7 @@ function CorridorGap({
   const answered = gap.kind === "answer";
 
   return (
-    <main>
+    <main id="main">
       <Shell className="max-w-[720px] py-16">
         <span
           className={
@@ -227,8 +228,8 @@ export default async function RequirementsPage() {
   const locale = await getLocale();
   const t = REQUIREMENTS;
   const application = await getApplication();
-  if (!application) redirect("/go");
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application) redirect(withLocalePrefix("/go", await getLocale()));
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const [initialDocs, answers, codes] = await Promise.all([
     getDocuments(application.id),
@@ -387,9 +388,9 @@ export default async function RequirementsPage() {
   });
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
-        {/* The corridor is named on the laminate above this screen, so
+        {/* The corridor is named on the header above this screen, so
             the heading is what the rule set *is* rather than a second
             printing of the same three facts. */}
         <h1 className="t-h2 max-w-[26ch]">{ruleSet.visaName}</h1>

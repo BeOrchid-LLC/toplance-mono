@@ -54,7 +54,7 @@ export function AvatarUpload({
   return (
     <label
       className={
-        "group relative grid h-20 w-16 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-[var(--radius-sm)] border border-border-strong bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] text-[20px] font-bold tracking-wide text-brand-text shadow-[inset_0_1px_3px_rgb(16_19_28/0.08)] focus-within:ring-[3px] focus-within:ring-[color-mix(in_srgb,var(--brand)_22%,transparent)] sm:h-24 sm:w-20 sm:text-[22px]" +
+        "group relative grid h-20 w-16 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-[var(--radius-sm)] border border-border-strong bg-[color-mix(in_srgb,var(--brand)_10%,var(--surface))] text-[20px] font-bold tracking-wide text-brand-text shadow-[inset_0_1px_3px_rgb(16_19_28/0.08)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring sm:h-24 sm:w-20 sm:text-[22px]" +
         (pending ? " opacity-60" : "")
       }
     >

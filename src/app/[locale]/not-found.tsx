@@ -12,21 +12,17 @@ export const metadata = { title: "Page not found" };
  * Next's own black-on-white default — a page from a different product,
  * with no way back into this one.
  *
- * No laminate. §4 keeps it for a surface whose subject is a corridor, a
+ * No plate. §4 keeps one for a surface whose subject is a corridor, a
  * case or a person's standing in one, and this page has no subject at
- * all; glass here would be decoration with nothing underneath it. The
- * ruled ground and the type scale are the whole treatment, which is §2's
- * point about matching through tokens rather than through devices.
+ * all; a sheet here would be decoration with nothing on it. The ground
+ * and the type scale are the whole treatment, which is §2's point about
+ * matching through tokens rather than through devices.
  */
 export default function NotFound() {
   return (
     <div className="min-h-dvh">
       <SiteNav />
       <main className="relative isolate">
-        <div
-          aria-hidden
-          className="security-paper pointer-events-none absolute inset-x-0 top-0 -z-10 h-[420px]"
-        />
         <Shell className="py-24 md:py-32">
           <p className="kicker">Error 404</p>
           <h1 className="t-h1 mt-4 max-w-[26ch]">
@@ -38,11 +34,26 @@ export default function NotFound() {
           </p>
 
           {/* The two ways back, on one sheet — the same card the product
-              is built from, so even the dead end looks like the product. */}
+              is built from, so even the dead end looks like the product.
+
+              Both rows turn their focus ring inward, the first of the two
+              deviations `:focus-visible` in globals.css permits. Each row
+              is the full width of the sheet and half its height, and the
+              sheet is `overflow-hidden` so its rounded corners actually
+              cut — so an outward ring survives only on the edge that
+              faces the other row. Measured before and after rather than
+              reasoned about: "Start from the beginning" answered a Tab
+              with a single 2px bar under it and "Go to my application"
+              with a single bar over it, which between them look less
+              like two focused links than like one rule drawn twice.
+              Drawn on the inside they ring, at 16.89:1 light and 4.99:1
+              dark on the sheet, and 11.90 / 3.52 along the top row's
+              bottom edge, where the band crosses the rule between the
+              two rows. */}
           <div className="mt-10 max-w-[560px] overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]">
             <Link
               href="/"
-              className="group flex items-center justify-between gap-6 border-b border-border px-5 py-5 transition-colors hover:bg-surface-2 hover:text-brand-text sm:px-6"
+              className="group flex items-center justify-between gap-6 border-b border-border px-5 py-5 transition-colors hover:bg-surface-2 hover:text-brand-text focus-visible:-outline-offset-2 sm:px-6"
             >
               <span>
                 <span className="t-title block">Start from the beginning</span>
@@ -57,7 +68,7 @@ export default function NotFound() {
             </Link>
             <Link
               href="/app"
-              className="group flex items-center justify-between gap-6 px-5 py-5 transition-colors hover:bg-surface-2 hover:text-brand-text sm:px-6"
+              className="group flex items-center justify-between gap-6 px-5 py-5 transition-colors hover:bg-surface-2 hover:text-brand-text focus-visible:-outline-offset-2 sm:px-6"
             >
               <span>
                 <span className="t-title block">Go to my application</span>

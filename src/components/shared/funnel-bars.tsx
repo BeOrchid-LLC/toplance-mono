@@ -14,6 +14,9 @@
  * a label in here would mean either shipping English into a translated
  * console or pulling the whole `AGENCY` dictionary into a staff page.
  *
+ * **Colour comes from the stage's position, not from the caller.** See
+ * `RAMP` below for why that is one hue in steps rather than five hues.
+ *
  * Widths are measured against the first stage rather than the largest,
  * which is the same thing by construction: `funnelOf` counts each stage
  * as reached-or-passed, so the series cannot widen and a bar cannot
@@ -32,6 +35,39 @@ export type FunnelBar = {
 /** A share as a whole percentage, or an em dash where there is no rate. */
 function pct(value: number | null): string {
   return value === null ? "—" : `${Math.round(value * 100)}%`;
+}
+
+/**
+ * One step of the ordinal ramp per stage, deepest first.
+ *
+ * The stages were all `bg-brand`, which made five bars of one colour
+ * and left the eye nothing to hold on to between a label and its
+ * width. The ramp is ordinal rather than categorical on purpose:
+ * these stages have an order, so the colour carries it, deepening at
+ * the wide end and paling as the funnel narrows. Five hues would have
+ * claimed the stages are five unrelated kinds of thing.
+ *
+ * The steps and the reasoning behind them are in `globals.css`; both
+ * modes are validated there against their own surface, which is why
+ * this reads tokens rather than naming colours.
+ */
+const RAMP = [
+  "var(--chart-funnel-1)",
+  "var(--chart-funnel-2)",
+  "var(--chart-funnel-3)",
+  "var(--chart-funnel-4)",
+  "var(--chart-funnel-5)",
+] as const;
+
+/**
+ * The ramp is five steps because `FUNNEL_STAGES` is five stages. A
+ * sixth stage would run off the end, so it holds at the last step
+ * rather than reading `undefined` and painting nothing — a bar that
+ * vanishes is a worse failure than two stages sharing a colour, and
+ * the extra step gets added to the ramp when that day comes.
+ */
+function step(index: number): string {
+  return RAMP[Math.min(index, RAMP.length - 1)];
 }
 
 export function FunnelBars({
@@ -53,7 +89,7 @@ export function FunnelBars({
 
   return (
     <div className="space-y-4">
-      {stages.map((stage) => {
+      {stages.map((stage, i) => {
         const share = widest ? stage.count / widest : 0;
         return (
           <div key={stage.key}>
@@ -74,8 +110,11 @@ export function FunnelBars({
                   stage with nobody in it gets no bar at all — a 1% mark
                   under a zero is a mark for a person who is not there. */}
               <div
-                className="h-full rounded-full bg-brand"
-                style={{ width: `${Math.max(share * 100, share > 0 ? 1 : 0)}%` }}
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.max(share * 100, share > 0 ? 1 : 0)}%`,
+                  background: step(i),
+                }}
               />
             </div>
           </div>

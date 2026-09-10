@@ -293,7 +293,6 @@ export default async function HomePage() {
           locales, the same as `/travelers`. The only client-side boundary
           left in the hero is `CorridorBar` itself. */}
       <header className="relative isolate overflow-hidden">
-        <div aria-hidden className="security-paper pointer-events-none absolute inset-0 -z-10" />
         <Shell className="pb-20 pt-12 md:pb-28 md:pt-16">
           {/* Two columns from `lg`, one below it. The text keeps the
               left, and the image takes the space the copy was never
@@ -353,14 +352,24 @@ export default async function HomePage() {
 
                 unDraw art, with one edit on the way in: its stock accent
                 is #6c63ff, and shipping that violet on a page whose
-                brand is #2450d8 is the clearest single tell that a
-                library illustration was dropped in untouched. All seven
-                occurrences are recoloured to `--brand` in
-                `public/hero/travel-everywhere.svg`. Its greys are left
-                alone — those are the drawing, not the branding.
+                brand is the signage blue is the clearest single tell
+                that a library illustration was dropped in untouched.
+                All seven occurrences in
+                `public/hero/travel-everywhere.svg` are painted #2450d8
+                instead — a literal, not `--brand`, and this line used to
+                claim otherwise. An <img> is a separate document: no
+                custom property set on this page reaches inside it, so
+                the file cannot track the token and is hand-copied from
+                it instead. That is what went wrong on 2026-09-09, when
+                the repaint moved `--brand` off the indigo and left this
+                comment describing a recolour the file had never had.
+                When the hue moves again, this drawing and its dark twin
+                move in the same commit, along with the three logo assets
+                `wordmark.tsx` lists. Its greys are left alone — those
+                are the drawing, not the branding.
 
                 The ground is genuinely transparent, so in light mode
-                `security-paper` rules straight through the artwork and
+                the page ground runs straight through the artwork and
                 there is nothing to frame, tint or blend.
 
                 Dark mode used to sit the drawing on a light panel,

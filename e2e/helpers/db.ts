@@ -222,6 +222,47 @@ export async function promoteToStaff(
 }
 
 /**
+ * Let an agency in, the way BeOrchid would after reading its KYB file.
+ *
+ * A newly signed-up agency is `pending-verification`, and
+ * `resolveAgencyConsole` walks it to `/agency/verification` from every
+ * console route including the billing screen — deliberately, so the
+ * paywall's own exemption cannot become the hole in the gate in front of
+ * it. The consequence for a test is that `payAgencyPlan` can never
+ * reach a Pay button on a fresh org: it waits for `/agency/billing`,
+ * watches the app redirect to `/agency/verification`, and times out.
+ *
+ * Stamped directly rather than driven through `/ops/kyb`, for the same
+ * reason `promoteToStaff` is: this is setup for the thing under test,
+ * not the thing under test. A spec that wants to prove activation works
+ * should click it.
+ */
+export async function activateOrganisation(name: string): Promise<void> {
+  await withClient(async (client) => {
+    // Polls for the same reason `promoteToStaff` does, and was written
+    // without it once: `signUp` returns when the browser has left the
+    // auth surface, and the organisation insert can still be in flight
+    // behind that navigation. The first version updated zero rows and
+    // failed, and the row was in the table by the time anyone looked —
+    // which is the most misleading way for setup to break.
+    const deadline = Date.now() + 15_000;
+    for (;;) {
+      const result = await client.query(
+        "update organisations set activated_at = now() where name = $1",
+        [name]
+      );
+      if (result.rowCount === 1) return;
+      if ((result.rowCount ?? 0) > 1 || Date.now() > deadline) {
+        throw new Error(
+          `Expected exactly one organisation named ${name} to activate, found ${result.rowCount}. Did the sign-up finish?`
+        );
+      }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+  });
+}
+
+/**
  * How many applications an account owns.
  *
  * Zero is the interesting number. The traveller console provisions a

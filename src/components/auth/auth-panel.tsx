@@ -1,13 +1,12 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The one laminated surface on an auth screen.
+ * The one plate on an auth screen.
  *
  * A sign-up form is the first page of the record a traveller is about to
- * build, so the laminate is honest here in a way it would not be on a
- * settings screen — the sheet is over the document you are filling in.
- * It is also the only glass allowed on these routes: the guideline caps
- * signature moments at one per screen, at the top.
+ * build, so it earns a surface of its own in a way a settings screen
+ * would not. The guideline caps signature moments at one per screen, at
+ * the top, and this is that one.
  *
  * There is deliberately no MRZ band. The mark carries a corridor, and at
  * sign-up no corridor has been chosen — the landing page keeps that
@@ -28,7 +27,7 @@ export function AuthPanel({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("laminate overflow-hidden rounded-lg", className)}>
+    <div className={cn("overflow-hidden rounded-lg border border-border bg-surface", className)}>
       <div className="relative z-[1] p-6 sm:p-8">
         <p className="tag">{eyebrow}</p>
         <div className="mt-4">{children}</div>

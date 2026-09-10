@@ -27,6 +27,7 @@ import { getLocale } from "@/lib/i18n/server";
 import { DOCUMENTS } from "@/lib/i18n/documents";
 import { ARCHIVE } from "@/lib/i18n/archive";
 import { exportableDocuments } from "@/lib/storage/archive";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -42,8 +43,8 @@ export default async function DocumentsPage() {
   const locale = await getLocale();
   const t = DOCUMENTS;
   const application = await getApplication();
-  if (!application) redirect("/go");
-  if (!application.intakeComplete) redirect("/app/agent");
+  if (!application) redirect(withLocalePrefix("/go", await getLocale()));
+  if (!application.intakeComplete) redirect(withLocalePrefix("/app/agent", await getLocale()));
 
   const docs = await getDocuments(application.id);
   const completion = completionOf(docs);
@@ -104,7 +105,7 @@ export default async function DocumentsPage() {
   ];
 
   return (
-    <main>
+    <main id="main">
       <Shell className="py-8 md:py-10">
         <div className="flex flex-wrap items-start justify-between gap-x-10 gap-y-6">
           <div>

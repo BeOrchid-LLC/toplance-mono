@@ -12,6 +12,15 @@ node_modules/
 .next/
 # The e2e suite's own dev server (see next.config.ts).
 .next-e2e*/
+# Any other build directory, and this one is not housekeeping.
+# Tailwind v4 discovers its own sources and excludes what git ignores, so
+# a dist dir that is NOT ignored gets scanned as source: it reads the
+# compiled chunks, extracts byte-mangled candidates out of them, and
+# emits CSS like `.rounded-\[var\(--\@\1 us-pill\)\]`. The dev server
+# then 500s on `Parsing CSS source code failed` with the fault reported
+# against globals.css, which is clean. Any `E2E_DIST_DIR` or one-off
+# audit build must land on a path this covers.
+.next-*/
 out/
 build/
 dist/

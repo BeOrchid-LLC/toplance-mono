@@ -27,6 +27,8 @@ import {
 } from "@/lib/db/schema";
 import { readPendingProfile } from "@/lib/domain/pending-profile";
 import { isUuid } from "@/lib/domain/uuid";
+import { withLocalePrefix } from "@/lib/i18n/paths";
+import { getGuardLocale } from "@/lib/i18n/server";
 
 /** The agency this console is showing, as its own bar and header need it. */
 export type AgencyMembership = {
@@ -143,7 +145,7 @@ export async function resolveAgencyConsole(
   if (!profile || !actor) {
     [profile, actor] = await recoverEmployer();
   }
-  if (!profile || !actor) redirect("/go");
+  if (!profile || !actor) redirect(withLocalePrefix("/go", await getGuardLocale()));
 
   // Staff belong in `/ops`, whatever else is true of their account.
   //
@@ -157,7 +159,9 @@ export async function resolveAgencyConsole(
   // reads them. Nothing was leaked (the console selects from the
   // progress view, which carries no document column) but the routing
   // said the opposite of what the product does.
-  if (actor.role === "staff") redirect(homeFor(actor.role));
+  if (actor.role === "staff") {
+    redirect(withLocalePrefix(homeFor(actor.role), await getGuardLocale()));
+  }
 
   const orgId = actor.orgIds[0] ?? null;
 
@@ -233,10 +237,30 @@ export async function resolveAgencyConsole(
   // button by the very flag that exists to let the paywall render its
   // own escape hatch. Nesting the KYB check inside `!allowUnpaid` would
   // make the paywall's exemption the hole in the gate in front of it.
+  /**
+   * Prefixed, every one of them. The locale lives in the URL and nowhere
+   * else — `src/proxy.ts` reads it off the path and there is no cookie
+   * behind that — so a bare `redirect("/agency/verification")` does not
+   * send a Hausa director to the holding screen. It sends them to the
+   * English one.
+   *
+   * `getGuardLocale` rather than `getLocale`, and that is not a detail:
+   * this guard is also the first line of the support actions, where
+   * root parameters do not exist and `getLocale()` throws instead of
+   * redirecting. See its own note in `i18n/server.ts`.
+   *
+   * Every gated redirect in the product had this wrong, and the console
+   * sweep is what found it: `/ar/agency/verification` reported
+   * `dir="ltr"`, because an activated agency is redirected off that
+   * screen and the redirect dropped the prefix.
+   * `src/lib/i18n/redirects.test.ts` is the guard rail.
+   */
   if (!allowPending && decision === "pending-verification") {
-    redirect("/agency/verification");
+    redirect(withLocalePrefix("/agency/verification", await getGuardLocale()));
   }
-  if (!allowUnpaid && decision === "checkout") redirect("/agency/billing");
+  if (!allowUnpaid && decision === "checkout") {
+    redirect(withLocalePrefix("/agency/billing", await getGuardLocale()));
+  }
 
   return {
     profile,
@@ -261,7 +285,7 @@ export async function requireAgencyConsole(): Promise<
   AgencyConsole & { membership: AgencyMembership }
 > {
   const console_ = await resolveAgencyConsole();
-  if (!console_.membership) redirect("/agency");
+  if (!console_.membership) redirect(withLocalePrefix("/agency", await getGuardLocale()));
 
   return { ...console_, membership: console_.membership };
 }

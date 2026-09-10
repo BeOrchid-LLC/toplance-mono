@@ -44,7 +44,13 @@ function DropdownMenuItem({
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
       className={cn(
-        "flex min-h-[var(--row-h)] cursor-default select-none items-center gap-3 rounded-sm px-3 text-base text-ink-2 outline-none",
+        // `focus:bg-surface-2` is a 1.07:1 change of ground in light and
+        // was carrying the whole indicator on its own once `outline-none`
+        // had switched the base outline off. It stays — it is what marks
+        // the item Radix has moved to under the pointer — but the ring is
+        // what a keyboard user reads, and the content's 8px padding leaves
+        // the 2px offset room inside the menu's clip.
+        "flex min-h-[var(--row-h)] cursor-default select-none items-center gap-3 rounded-sm px-3 text-base text-ink-2",
         "focus:bg-surface-2 focus:text-ink data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:size-5 [&_svg]:shrink-0",
         className

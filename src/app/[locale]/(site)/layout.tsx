@@ -1,5 +1,7 @@
+import { SkipLink } from "@/components/shared/skip-link";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteNav } from "@/components/site/site-nav";
+import { getLocale } from "@/lib/i18n/server";
 
 /**
  * The marketing pages' chrome. `SiteNav` is rendered unconditionally:
@@ -14,13 +16,15 @@ import { SiteNav } from "@/components/site/site-nav";
  * through the proxy to `/go`, which reads the role from Postgres and
  * forwards to that person's console.
  */
-export default function SiteLayout({
+export default async function SiteLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
   return (
     <div className="min-h-dvh">
+      <SkipLink locale={locale} />
       <SiteNav />
-      <main>{children}</main>
+      <main id="main">{children}</main>
       <SiteFooter />
     </div>
   );

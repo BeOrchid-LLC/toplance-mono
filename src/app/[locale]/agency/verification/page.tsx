@@ -9,6 +9,7 @@ import { hasDatabaseEnv } from "@/lib/db/client";
 import { AGENCY_VERIFICATION } from "@/lib/i18n/agency-verification";
 import { getLocale } from "@/lib/i18n/server";
 import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -47,12 +48,12 @@ export default async function AgencyVerificationPage() {
 
   // No organisation, nothing to verify. `/agency` is where that state is
   // explained and where it is fixed.
-  if (!membership || !orgId) redirect("/agency");
+  if (!membership || !orgId) redirect(withLocalePrefix("/agency", await getLocale()));
 
   // Already through. Not a state a link leads to, but a bookmark from
   // the waiting week is — and it must land on the console rather than on
   // a screen saying we are still deciding.
-  if (kybActivated) redirect("/agency");
+  if (kybActivated) redirect(withLocalePrefix("/agency", await getLocale()));
 
   const supportEmail = process.env.SUPPORT_EMAIL?.trim();
 

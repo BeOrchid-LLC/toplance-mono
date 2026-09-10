@@ -4,8 +4,10 @@ import { AppBar } from "@/components/app/app-bar";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { travellerNav } from "@/components/app/traveller-nav";
 import { SetupNotice } from "@/components/shared/setup-notice";
+import { SkipLink } from "@/components/shared/skip-link";
 import { homeFor } from "@/lib/auth/routes";
 import { hasDatabaseEnv } from "@/lib/db/client";
+import { getLocale } from "@/lib/i18n/server";
 import {
   getApplication,
   getProfile,
@@ -18,25 +20,34 @@ import {
 import { isApplicationPaid } from "@/lib/data/payments";
 import { decideClientPaywall } from "@/lib/payments/gates";
 import { signedDocumentUrl } from "@/lib/storage/documents";
+import { withLocalePrefix } from "@/lib/i18n/paths";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   if (!hasDatabaseEnv) return <SetupNotice />;
 
+  const locale = await getLocale();
   const profile = await getProfile();
   // `/go`, not `/sign-in`. The proxy walks a signed-in visitor off the
   // auth pages, so sending a session that has no profile row back there
   // bounces it straight here again — an endless redirect rather than an
   // explanation. `/go` is where that chain is allowed to stop.
-  if (!profile) redirect("/go");
+  if (!profile) redirect(withLocalePrefix("/go", locale));
 
   // Holding a profile is not the same as belonging here. `/go` sends
   // each role to its own console, but nothing routed someone who typed
   // this path, kept a bookmark or followed a stale link — and the answer
   // has to come before the reads below, because `getApplication`
   // opens a draft on sight and a reviewer must never come to own one.
-  if (profile.role !== "traveler") redirect(homeFor(profile.role));
+  //
+  // Prefixed like every other gate here. `homeFor` answers with a bare
+  // console path — it is the same string for every reader — so handing
+  // it straight to `redirect()` walks a Hausa reviewer into the English
+  // console at the one moment they were being sent somewhere useful.
+  if (profile.role !== "traveler") {
+    redirect(withLocalePrefix(homeFor(profile.role), locale));
+  }
 
   const [application, notifications, unreadCount, unreadMessages, avatarUrl] =
     await Promise.all([
@@ -71,7 +82,7 @@ export default async function AppLayout({
       applicationPaid: application ? await isApplicationPaid(application.id) : false,
     }) === "checkout"
   ) {
-    redirect("/checkout");
+    redirect(withLocalePrefix("/checkout", locale));
   }
 
   // Profile is reachable from the account menu (`profileHref` below),
@@ -84,6 +95,7 @@ export default async function AppLayout({
 
   return (
     <div className="min-h-dvh bg-bg">
+      <SkipLink locale={locale} />
       <AppBar
         nav={nav}
         name={profile.fullName}

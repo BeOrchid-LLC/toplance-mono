@@ -29,6 +29,20 @@ export const DOCUMENTS: {
    * upload rather than buried in terms.
    */
   precheckDisclosure: L;
+  /**
+   * The label on the disclosure that folds `intro`, `UPLOADS.guidance`
+   * and `precheckDisclosure` away. It names what is inside rather than
+   * the act of opening it — "Show more" would be a label for the
+   * chevron, not for the three paragraphs behind it.
+   */
+  guidanceToggle: L;
+  /**
+   * "{collected} of {total} collected" — the counted form of what
+   * `CompletionRing` drew as a percentage. Two files out of eight is a
+   * fact a traveller can act on; 25% is the same fact with the
+   * actionable part removed.
+   */
+  collectedCount: L;
   needsAttention: L;
   stillToUpload: L;
   done: L;
@@ -100,6 +114,30 @@ export const DOCUMENTS: {
     ar: "يُفحَص كل ملف ترفعه بواسطة برنامج أولاً — يبحث عن الصور المظلمة أو المقصوصة أو منتهية الصلاحية، لتعرف ذلك خلال دقائق بدل أيام. لا أحد في Toplance يقرأ مستنداتك؛ وكالتك وحدها.",
     tw: "Software na edi kan hwɛ fael biara a wode ba — ɛhwehwɛ mfonini a esum, wɔatwa mu, anaa ne berɛ atwam, sɛdeɛ wobɛte wɔ simma mu na ɛnyɛ nna. Obiara nni Toplance a ɔkenkan wo nkrataa; wo ahyehyɛdeɛ nko ara.",
     zu: "Yonke ifayela olilayishayo lihlolwa kuqala isofthiwe — ifuna izithombe ezimnyama kakhulu, ezinqunyiwe, noma ezidlulelwe yisikhathi, ukuze uzwe ngazo ngemizuzu esikhundleni sezinsuku. Akekho e-Toplance ofunda amadokhumenti akho; inkampani yakho kuphela.",
+  },
+  guidanceToggle: {
+    en: "How your files are checked",
+    ha: "Yadda ake duba fayilolinku",
+    yo: "Bí a ṣe ń yẹ àwọn fáìlì yín wò",
+    ig: "Otú e si enyocha faịlụ gị",
+    fr: "Comment vos fichiers sont vérifiés",
+    pt: "Como os seus ficheiros são verificados",
+    sw: "Jinsi faili zako zinavyokaguliwa",
+    ar: "كيف تُفحَص ملفاتك",
+    tw: "Sɛdeɛ wɔhwɛ wo fael ahoroɔ",
+    zu: "Indlela amafayela akho ahlolwa ngayo",
+  },
+  collectedCount: {
+    en: "{collected} of {total} collected",
+    ha: "{collected} daga {total} an tattara",
+    yo: "{collected} nínú {total} tí a ti kójọ",
+    ig: "{collected} n'ime {total} anakọtara",
+    fr: "{collected} sur {total} collectés",
+    pt: "{collected} de {total} recolhidos",
+    sw: "{collected} kati ya {total} zimekusanywa",
+    ar: "تم جمع {collected} من {total}",
+    tw: "{collected} wɔ {total} mu na wɔaboaboa ano",
+    zu: "{collected} kwangu-{total} okuqoqiwe",
   },
   intro: {
     en: "Each file is checked automatically within a few seconds of arriving, then confirmed by a person before submission.",

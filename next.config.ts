@@ -44,6 +44,32 @@ const nextConfig: NextConfig = {
       // multipart body, so leave room for boundary/header overhead.
       bodySizeLimit: "11mb",
     },
+    /**
+     * The second limit on the same upload, and the one that silently
+     * truncated it.
+     *
+     * This app has a `proxy.ts`, so Next clones and buffers every
+     * request body in memory to let the proxy and the route both read
+     * it. That buffer has its own cap, and it defaults to 10MB —
+     * independent of `bodySizeLimit` above, and lower than it.
+     *
+     * Over the cap, the request is not refused. The body is buffered
+     * "up to the limit" and handed on truncated, so a multipart upload
+     * arrives with its final boundary missing and fails somewhere that
+     * has nothing to do with size. Staging logged
+     * `Request body exceeded 10MB for /app/documents` on every failed
+     * attempt while the traveller saw a 403 from the edge.
+     *
+     * A 10MB file — exactly what `MAX_UPLOAD_BYTES` advertises — is
+     * already over the default once boundaries and part headers are
+     * counted, so the advertised maximum could never have worked. That
+     * is why photographs uploaded and PDF scans did not.
+     *
+     * Kept equal to `bodySizeLimit`, and both above `MAX_UPLOAD_BYTES`.
+     * `next.config.test.ts` pins that ordering, because three limits in
+     * two files drifted apart once already.
+     */
+    proxyClientMaxBodySize: "11mb",
   },
   /**
    * Every route, including the API handlers and the signed-URL

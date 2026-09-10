@@ -21,6 +21,7 @@ import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { CounterRow, type Counter } from "@/components/shared/counter-row";
+import { CountList } from "@/components/shared/count-list";
 import { RevenueChart } from "@/components/ops/revenue-chart";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -31,13 +32,12 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { track } from "@/lib/analytics/track";
 import { dashboardData, USAGE_WINDOW_DAYS, type DashboardData } from "@/lib/data/dashboard";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import { routeName } from "@/lib/domain/corridor-demand";
 import { formatMoney } from "@/lib/domain/pricing";
-import type { TopCount } from "@/lib/domain/kpis";
 import type { Invoice } from "@/lib/domain/payments";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locales";
-import { cn } from "@/lib/utils";
 import { opsAccount } from "@/app/[locale]/ops/account";
 
 // Reads a session, so it is never prerendered.
@@ -507,7 +507,7 @@ function Operations({ data, locale }: { data: DashboardData; locale: Locale }) {
             <CountList
               rows={documents.mostFlagged}
               empty="Nothing has been flagged yet."
-              label={(key) => key.replace(/_/g, " ")}
+              label={(row) => row.key.replace(/_/g, " ")}
             />
           </PanelBody>
         </Panel>
@@ -522,7 +522,7 @@ function Demand({ data }: { data: DashboardData }) {
   return (
     <>
       <CounterRow
-        columns={4}
+        columns={5}
         className="mt-0"
         counters={[
           {
@@ -546,6 +546,15 @@ function Demand({ data }: { data: DashboardData }) {
             value: demand.destinations.length,
             sub: "with at least one application",
           },
+          {
+            // The only counter on this row that measures work not done.
+            // Untinted at zero on purpose: no unbuilt route is the good
+            // state, and a coloured nought reads as an alarm.
+            label: "Routes not built",
+            value: demand.unbuiltRoutes,
+            sub: "asked for, no rule set yet",
+            tone: demand.unbuiltRoutes > 0 ? "text-warning-ink" : undefined,
+          },
         ]}
       />
 
@@ -556,7 +565,37 @@ function Demand({ data }: { data: DashboardData }) {
             <CountList
               rows={demand.destinations}
               empty="No application has a route yet."
-              label={(key) => countryFromIso2(key)?.name ?? key.toUpperCase()}
+              label={(row) => countryFromIso2(row.key)?.name ?? row.key.toUpperCase()}
+            />
+          </PanelBody>
+        </Panel>
+
+        <Panel>
+          {/* Beside Top destinations rather than below the fold: the two
+              answer the same question from opposite ends — where demand
+              went, and where it had nowhere to go. */}
+          <PanelHeader label="Asked for, not built" />
+          <PanelBody>
+            {/* The caption came with the panel from `/ops/corridors` on
+                2026-09-10. It earns its line: without it the counts read
+                as applications, and the second sentence is the only
+                place the console says how a route leaves this list. */}
+            <p className="t-muted mb-4">
+              Counted from what travellers answered at intake. Approving a
+              version for one of these takes it off the list.
+            </p>
+            <CountList
+              rows={demand.requestedRoutes}
+              empty="Every route anyone has asked for is live."
+              label={(row) => {
+                const { from, to, purpose } = routeName(row);
+                return (
+                  <>
+                    {from} → {to}{" "}
+                    <span className="t-muted capitalize">{purpose}</span>
+                  </>
+                );
+              }}
             />
           </PanelBody>
         </Panel>
@@ -567,7 +606,7 @@ function Demand({ data }: { data: DashboardData }) {
             <CountList
               rows={demand.nationalities}
               empty="No travellers yet."
-              label={(key) => countryFromIso2(key)?.name ?? key.toUpperCase()}
+              label={(row) => countryFromIso2(row.key)?.name ?? row.key.toUpperCase()}
             />
           </PanelBody>
         </Panel>
@@ -578,7 +617,7 @@ function Demand({ data }: { data: DashboardData }) {
             <CountList
               rows={demand.purposes}
               empty="No application has a purpose yet."
-              label={(key) => key}
+              label={(row) => row.key}
               className="capitalize"
             />
           </PanelBody>
@@ -597,7 +636,7 @@ function Demand({ data }: { data: DashboardData }) {
               empty="No events recorded in this window."
               // `toplance.document_uploaded` → `document uploaded`. The
               // prefix is a platform convention, not information.
-              label={(key) => key.replace(/^toplance\./, "").replace(/_/g, " ")}
+              label={(row) => row.key.replace(/^toplance\./, "").replace(/_/g, " ")}
               className="capitalize"
             />
           </PanelBody>
@@ -606,48 +645,3 @@ function Demand({ data }: { data: DashboardData }) {
     </>
   );
 }
-
-/**
- * A ranked list with a bar behind each row.
- *
- * The bar is scaled to the largest row rather than to the total, because
- * the question these panels answer is "which is biggest", not "what
- * share of everything is this".
- */
-function CountList({
-  rows,
-  empty,
-  label,
-  className,
-}: {
-  rows: TopCount[];
-  empty: string;
-  label: (key: string) => string;
-  className?: string;
-}) {
-  if (rows.length === 0) return <p className="t-muted">{empty}</p>;
-
-  const top = rows[0].count;
-
-  return (
-    <ul className="space-y-3">
-      {rows.map((row) => (
-        <li key={row.key}>
-          <div className="flex items-baseline justify-between gap-4">
-            <span className={cn("t-body truncate", className)}>
-              {label(row.key)}
-            </span>
-            <span className="num font-semibold">{row.count}</span>
-          </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
-            <div
-              className="h-full rounded-full bg-brand-2"
-              style={{ width: `${(row.count / top) * 100}%` }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-

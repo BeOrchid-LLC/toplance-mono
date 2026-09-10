@@ -1,9 +1,11 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
 import { InviteDialog } from "@/components/agency/invite-dialog";
 import { ClientRoster } from "@/components/agency/client-roster";
 import { SetupNotice } from "@/components/shared/setup-notice";
+import { TableSkeleton } from "@/components/shared/content-skeleton";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { listOrgRoster } from "@/lib/data/organisations";
 import { CLIENT_SORTS } from "@/lib/domain/client-table";
@@ -45,25 +47,47 @@ export async function generateMetadata(): Promise<Metadata> {
  * director can send to whoever should be working it, and the back button
  * undoes a filter the way it undoes everything else.
  */
-export default async function AgencyClientsPage({
+/**
+ * The roster's own query string. Named rather than inlined on the
+ * page, because `ClientsRoster` below takes the same promise: the
+ * page hands it on unawaited so that reading it cannot put the page
+ * back to blocking before it returns.
+ */
+type ClientsSearchParams = Promise<{
+  q?: string;
+  status?: string;
+  date?: string;
+  sort?: string;
+  dir?: string;
+  page?: string;
+  size?: string;
+}>;
+
+/** What the console preamble hands back, for the props taken from it. */
+type AgencyConsoleData = Awaited<ReturnType<typeof requireAgencyConsole>>;
+
+/**
+ * The roster itself, below the rail.
+ *
+ * `listOrgRoster` reads every case this person may see, and the
+ * filtering, sorting and paging all run on the result — the slowest
+ * thing on the screen by a distance, and none of it is anything the
+ * console's chrome needs. Behind a `<Suspense>` the rail, the title
+ * and the invite button paint as soon as `requireAgencyConsole`
+ * resolves, and the table arrives when it is ready.
+ */
+async function ClientsRoster({
+  actor,
+  locale,
+  isDirector,
   searchParams,
 }: {
-  searchParams: Promise<{
-    q?: string;
-    status?: string;
-    date?: string;
-    sort?: string;
-    dir?: string;
-    page?: string;
-    size?: string;
-  }>;
+  actor: AgencyConsoleData["actor"];
+  locale: Awaited<ReturnType<typeof getLocale>>;
+  /** From `membership.role`, resolved by the page above. */
+  isDirector: boolean;
+  searchParams: ClientsSearchParams;
 }) {
-  if (!hasDatabaseEnv) return <SetupNotice />;
-
-  const locale = await getLocale();
-  const { profile, actor, membership, orgId } = await requireAgencyConsole();
-
-  const isDirector = membership.role === "owner";
 
   const params = await searchParams;
   const { q, status, date } = params;
@@ -153,6 +177,46 @@ export default async function AgencyClientsPage({
   const size = readPageSize(params.size);
   const { page, pageCount, start, end } = resolvePage(params.page, sorted.length, size);
 
+  /* Filtered to nothing is `DataTable`'s own branch now, not a second
+     panel beside this one: it keeps the toolbar on the screen above the
+     way out, which is the moment the reader most needs the control that
+     did it. `total` and `unfilteredTotal` are what let it tell that from
+     an agency with no clients at all. */
+  return (
+    <ClientRoster
+      rows={sorted.slice(start, end)}
+      locale={locale}
+      toolbar={{ placeholder: AGENCY.searchClients[locale], filters }}
+      empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
+      label={
+        narrowed
+          ? ADMIN_CONSOLE.showingTemplate[locale]
+              .replace("{shown}", String(visible.length))
+              .replace("{total}", String(rows.length))
+          : undefined
+      }
+      count={visible.length}
+      total={visible.length}
+      unfilteredTotal={rows.length}
+      sort={sort}
+      dir={dir}
+      basePath="/agency/clients"
+      params={params}
+      pagination={{ page, pageCount, size }}
+    />
+  );
+}
+
+export default async function AgencyClientsPage({
+  searchParams,
+}: {
+  searchParams: ClientsSearchParams;
+}) {
+  if (!hasDatabaseEnv) return <SetupNotice />;
+
+  const locale = await getLocale();
+  const { profile, actor, membership, orgId } = await requireAgencyConsole();
+
   return (
     <AgencyShell
       profile={profile}
@@ -163,34 +227,21 @@ export default async function AgencyClientsPage({
       activeId="clients"
       title={AGENCY.navClients[locale]}
       lead={AGENCY.clientsCardBody[locale]}
-      actions={<InviteDialog kind="client" />}
+      // On the heading's row, not up in the bar: "Invite" acts on the
+      // roster this page shows, and beside the theme toggle and the bell
+      // it read as console furniture rather than as this screen's action.
+      titleActions={<InviteDialog kind="client" />}
     >
-      {/* Filtered to nothing is `DataTable`'s own branch now, not a
-          second panel beside this one: it keeps the toolbar on the screen
-          above the way out, which is the moment the reader most needs the
-          control that did it. `total` and `unfilteredTotal` are what let
-          it tell that from an agency with no clients at all. */}
-      <ClientRoster
-        rows={sorted.slice(start, end)}
-        locale={locale}
-        toolbar={{ placeholder: AGENCY.searchClients[locale], filters }}
-        empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
-        label={
-          narrowed
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(rows.length))
-            : undefined
-        }
-        count={visible.length}
-        total={visible.length}
-        unfilteredTotal={rows.length}
-        sort={sort}
-        dir={dir}
-        basePath="/agency/clients"
-        params={params}
-        pagination={{ page, pageCount, size }}
-      />
+      {/* The chrome above is already resolved; the table below waits
+          on its own read. See `ClientsRoster`. */}
+      <Suspense fallback={<TableSkeleton locale={locale} />}>
+        <ClientsRoster
+          actor={actor}
+          locale={locale}
+          isDirector={membership.role === "owner"}
+          searchParams={searchParams}
+        />
+      </Suspense>
     </AgencyShell>
   );
 }

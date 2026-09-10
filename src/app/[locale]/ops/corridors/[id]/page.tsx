@@ -187,11 +187,20 @@ export default async function ReviewCorridorPage({
             requirements screen used to carry this sentence, which put
             the doubt in front of the one reader who cannot resolve it —
             they have no source to check and no way to record a check.
-            Absent entirely for a corridor verified inside its window. */}
+            Absent entirely for a corridor verified inside its window.
+
+            No reading measure on it. 74ch is the right cap for prose
+            somebody settles into and the wrong one for a notice read
+            once on the way past: capped, it sat as a short column
+            against an empty half-screen while the panel of facts
+            directly below it ran the full width, which reads as two
+            unrelated widths rather than one page. It takes the width
+            the page has, the way the lead under a page title does, for
+            the same reason. */}
         {freshness.notice && (
           <p
             role="note"
-            className="mt-5 max-w-[74ch] rounded-sm border border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_7%,transparent)] px-5 py-4 text-base text-ink-2"
+            className="mt-5 rounded-sm border border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_7%,transparent)] px-5 py-4 text-base text-ink-2"
           >
             {freshness.notice}
           </p>

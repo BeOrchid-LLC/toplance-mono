@@ -16,6 +16,7 @@ import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 export const ENQUIRY_SORTS = [
   "who",
   "company",
+  "requested",
   "preferred",
   "status",
   "assignee",
@@ -39,6 +40,8 @@ export function enquirySortKey(
   switch (sort) {
     case "company":
       return row.companyName;
+    case "requested":
+      return row.createdAt;
     case "preferred":
       return row.preferredAt;
     case "status":

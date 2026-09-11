@@ -24,7 +24,15 @@ export const OPS_ENQUIRIES: {
   intro: L;
   panel: L;
   empty: L;
-  head: { who: L; company: L; preferred: L; status: L; assignee: L; action: L };
+  head: {
+    who: L;
+    company: L;
+    requested: L;
+    preferred: L;
+    status: L;
+    assignee: L;
+    action: L;
+  };
   status: {
     new: L;
     contacted: L;
@@ -112,6 +120,19 @@ export const OPS_ENQUIRIES: {
       ar: "الشركة",
       tw: "Adwumakuw",
       zu: "Inkampani",
+    },
+    /** The day the enquiry arrived, not the day they want the call. */
+    requested: {
+      en: "Requested",
+      ha: "Ranar nema",
+      yo: "Ọjọ́ ìbéèrè",
+      ig: "Ụbọchị arịrịọ",
+      fr: "Demandée le",
+      pt: "Pedido em",
+      sw: "Tarehe ya ombi",
+      ar: "تاريخ الطلب",
+      tw: "Da a wɔbisaeɛ",
+      zu: "Usuku lwesicelo",
     },
     preferred: {
       en: "Preferred time",
@@ -237,17 +258,24 @@ export const OPS_ENQUIRIES: {
     tw: "Wɔmfaa mma obiara",
     zu: "Ayabelwe muntu",
   },
+  /**
+   * "Assign to me", not "Claim" — renamed 2026-09-11 to match the support
+   * queue, which dropped the word on 2026-09-10 (see `OPS_SUPPORT.claim`).
+   * The translations are that key's, so the same button reads the same
+   * on both screens. The key stays `claimButton`: renaming the word is
+   * not a reason to touch every call site.
+   */
   claimButton: {
-    en: "Claim",
-    ha: "Ɗauka",
-    yo: "Gbà á",
-    ig: "Were ya",
-    fr: "Prendre",
-    pt: "Assumir",
-    sw: "Chukua",
-    ar: "استلام",
-    tw: "Fa",
-    zu: "Thatha",
+    en: "Assign to me",
+    ha: "Ba ni wannan",
+    yo: "Yàn án fún mi",
+    ig: "Kenye m ya",
+    fr: "M'attribuer",
+    pt: "Atribuir a mim",
+    sw: "Nikabidhi mimi",
+    ar: "إسناد إليّ",
+    tw: "Fa ma me",
+    zu: "Ngabele mina",
   },
   assigneeFilterAll: {
     en: "Anyone",

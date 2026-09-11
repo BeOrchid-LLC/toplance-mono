@@ -176,8 +176,8 @@ test("the enquiry queue is findable, and an enquiry can be moved and claimed", a
     // Reloaded before asserting, and the database read after that: the
     // select showing a name proves the browser re-rendered, not that a
     // row was written.
-    await expect(row.getByRole("button", { name: "Claim" })).toBeVisible();
-    await row.getByRole("button", { name: "Claim" }).click();
+    await expect(row.getByRole("button", { name: "Assign to me" })).toBeVisible();
+    await row.getByRole("button", { name: "Assign to me" }).click();
 
     await expect(row.getByLabel("Assigned to")).toHaveValue(/.+/);
     await page.reload();
@@ -189,7 +189,7 @@ test("the enquiry queue is findable, and an enquiry can be moved and claimed", a
     expect(await demoRequestAssignee(requestId)).not.toBeNull();
 
     // Once it is theirs, the shortcut has done its job and goes away.
-    await expect(claimed.getByRole("button", { name: "Claim" })).toHaveCount(0);
+    await expect(claimed.getByRole("button", { name: "Assign to me" })).toHaveCount(0);
   } finally {
     await clearDemoRequest(requestId);
   }

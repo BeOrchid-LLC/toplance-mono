@@ -30,7 +30,7 @@ import { opsAccount } from "@/app/[locale]/ops/account";
  * No counter row, deliberately. `/ops/tenants` has four cards because
  * the questions it answers are about the platform's shape; the question
  * this screen answers is "whose turn is it", and that is the table
- * itself, ordered oldest-first. A row of figures above it would be a
+ * itself. A row of figures above it would be a
  * summary of a list short enough to read.
  */
 
@@ -78,13 +78,14 @@ export default async function OpsKybPage({
   const { q, standing } = params;
   const search = q ?? "";
 
-  // Empty by default, unlike every other table on this console. The
-  // queue arrives already ordered by what is owed a decision, and
-  // defaulting a sort here would silently overrule that on first paint —
-  // see `KybTable`. `readSort` needs a member of the union as its
-  // fallback, so the empty string is applied after it.
-  const sort = params.sort ? readSort(params.sort, KYB_SORTS, "agency") : "";
-  const dir = readDir(params.dir, "asc");
+  // Newest first by default, as on `/ops/tenants`: the client asked for
+  // it on 2026-09-11, so the agency that just signed up is the first row
+  // a reviewer sees. `SortHead` writes `dir` into the URL on every click,
+  // so this fallback only decides the view nobody has sorted yet.
+  const sort = readSort(params.sort, KYB_SORTS, "added");
+  // Descending belongs to the date column alone. A hand-typed
+  // `?sort=agency` with no `dir` should still read A-Z, not Z-A.
+  const dir = readDir(params.dir, sort === "added" ? "desc" : "asc");
 
   const filtered = Boolean(search.trim() || standing);
 
@@ -92,7 +93,7 @@ export default async function OpsKybPage({
     (r) => kybMatchesStanding(r, standing ?? "") && kybMatches(r, search)
   );
 
-  const sorted = sort ? sortRows(visible, (r) => kybSortKey(r, sort), dir) : visible;
+  const sorted = sortRows(visible, (r) => kybSortKey(r, sort), dir);
 
   // Allow-listed, so `?size=1000000` cannot ask this page to render
   // every row it holds.

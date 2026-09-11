@@ -19,12 +19,11 @@ import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
  * `TenantsTable` gives: a column's `cell` is a function and the page
  * above is a server component, so only the rows come down.
  *
- * `kybQueue` orders the rows before they arrive: whatever is owed a
- * decision first, oldest-first within that. That ordering is the
- * default and stays the default — sorting a queue by how far along its
- * rows are buries the one that has been waiting longest, which is the
- * row it exists to surface. The column headers are an override a
- * reviewer asks for, not a shape imposed on the screen.
+ * The page sorts by `added`, newest first, unless a header says
+ * otherwise — the client asked for that on 2026-09-11, replacing
+ * `kybQueue`'s own "owed a decision first" order as the default. A
+ * reviewer after the rows waiting on them has the Status filter and the
+ * Status header, which ranks `ready` first.
  *
  * The search, the standing filter and the pager arrived on 2026-09-09,
  * with the rest of the console: the client asked for them on every
@@ -46,8 +45,7 @@ export function KybTable({
   rows: KybQueueRow[];
   locale: Locale;
   className?: string;
-  /** Empty when nobody has clicked a header — `kybQueue`'s own order. */
-  sort?: KybSort | "";
+  sort?: KybSort;
   dir?: SortDir;
   params?: Record<string, string | undefined>;
   total?: number;

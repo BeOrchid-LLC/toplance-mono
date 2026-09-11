@@ -72,7 +72,7 @@ export function EnquiryTable({
   rows: DemoRequestRow[];
   /** Everyone the assignee picker may offer. */
   staff: PlatformStaff[];
-  /** Who is reading, so "Claim" can assign to them without a picker. */
+  /** Who is reading, so "Assign to me" can skip the picker. */
   viewerId: string;
   sort: EnquirySort;
   dir: SortDir;
@@ -185,6 +185,20 @@ export function EnquiryTable({
           ),
         },
         {
+          id: "requested",
+          label: t(OPS_ENQUIRIES.head.requested),
+          sortable: true,
+          className: "t-muted",
+          // The page's default order, so it has to be on screen: a sort
+          // nobody can see is one nobody can reverse. Pinned to UTC
+          // because this cell renders on the server first, and the
+          // browser's own zone would disagree with it on hydration.
+          cell: (r) =>
+            new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(
+              r.createdAt
+            ),
+        },
+        {
           id: "preferred",
           label: t(OPS_ENQUIRIES.head.preferred),
           sortable: true,
@@ -242,7 +256,7 @@ export function EnquiryTable({
            * done, and the action refuses the write anyway — a picker
            * that always errors is worse than no picker.
            *
-           * "Claim" sits beside the picker rather than replacing it,
+           * "Assign to me" sits beside the picker rather than replacing it,
            * because taking a row yourself is the common case and doing
            * it through a roster of colleagues is three interactions for
            * the one everybody wants.

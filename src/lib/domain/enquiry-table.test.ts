@@ -59,6 +59,12 @@ describe("enquirySortKey", () => {
   it("orders the preferred column by the instant, not its printed form", () => {
     expect(enquirySortKey(enquiry(), "preferred", "en")).toBeInstanceOf(Date);
   });
+
+  /** The page's default: when they asked, not when they want the call. */
+  it("orders the requested column by when the enquiry arrived", () => {
+    const row = enquiry();
+    expect(enquirySortKey(row, "requested", "en")).toBe(row.createdAt);
+  });
 });
 
 describe("the assignee filter", () => {

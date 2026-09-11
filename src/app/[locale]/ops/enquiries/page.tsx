@@ -96,13 +96,15 @@ export default async function OpsEnquiriesPage({
   const search = (params.q ?? "").trim().toLowerCase();
   const assigneeFilter = readAssigneeFilter(params.assignee);
 
-  // Oldest-preferred first would be the other reasonable default. This
-  // one is "who asked most recently", which is the order the queue was
-  // read in when it lived on `/ops/tenants`, and changing the order and
-  // the address in the same commit would make a regression impossible to
-  // attribute.
-  const sort = readSort(params.sort, ENQUIRY_SORTS, "who");
-  const dir = readDir(params.dir, "asc");
+  // Newest enquiry first, as `/ops/tenants` and `/ops/kyb` open — the
+  // client asked for it on 2026-09-11. It is also the order
+  // `listDemoRequests` reads in, so the default no longer overrules the
+  // query. `SortHead` writes `dir` on every click, so this fallback only
+  // decides the view nobody has sorted yet.
+  const sort = readSort(params.sort, ENQUIRY_SORTS, "requested");
+  // Descending belongs to the date columns alone. A hand-typed
+  // `?sort=who` with no `dir` should still read A-Z, not Z-A.
+  const dir = readDir(params.dir, sort === "requested" ? "desc" : "asc");
 
   // Any narrowing at all, however many rows survive it — the same test
   // `/ops/staff` and `/ops/corridors` use.

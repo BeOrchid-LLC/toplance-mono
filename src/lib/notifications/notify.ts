@@ -564,3 +564,40 @@ export async function markNotificationsRead(
       )
     );
 }
+
+/**
+ * Marks one notification read — the row the recipient just opened.
+ *
+ * The bell's rows are links, so until this existed the only way to move
+ * the badge was "Read all": opening the one notification you cared
+ * about left it unread for ever, and the count stood still for the one
+ * thing you actually did about it.
+ *
+ * `recipientId` is in the `where` rather than checked beforehand, so
+ * there is no read-then-write window and somebody else's id simply
+ * matches nothing. `notInTheBell` is the same predicate the bell's list
+ * and count are built from — an id is a string a caller supplies, and
+ * honouring a `message_received` one here would clear the Messages
+ * badge, and cancel that message's buffered email, for a thread nobody
+ * opened.
+ *
+ * `emailDueAt: null` rides along for the reason the bulk write does it:
+ * one statement, so the sweep cannot email about a row that has just
+ * been read.
+ */
+export async function markNotificationRead(
+  recipientId: string,
+  id: string
+): Promise<void> {
+  await db
+    .update(notifications)
+    .set({ readAt: new Date(), emailDueAt: null })
+    .where(
+      and(
+        eq(notifications.id, id),
+        eq(notifications.recipientId, recipientId),
+        isNull(notifications.readAt),
+        notInTheBell
+      )
+    );
+}

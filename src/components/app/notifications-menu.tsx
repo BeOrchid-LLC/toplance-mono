@@ -13,7 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { markNotificationsRead } from "@/app/[locale]/(app)/actions";
+import {
+  markNotificationRead,
+  markNotificationsRead,
+} from "@/app/[locale]/(app)/actions";
 import type { Notification } from "@/lib/db/schema";
 import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/components/locale-provider";
@@ -66,13 +69,20 @@ function linkFor(n: Notification, fallbackHref: string): string {
  * the menu used to mark everything in it read, which made the badge
  * clear itself and — worse — destroyed the bold on every unread row at
  * the exact moment somebody looked at it: the styling below has existed
- * since the bell shipped and nobody had ever seen it. "Read all" in the
- * header does that write now, and `router.refresh()` after it is what
- * clears the badge without a full reload.
+ * since the bell shipped and nobody had ever seen it. So opening the
+ * menu still does nothing but open it.
  *
- * It does not confirm. Marking read takes away no access, no data and
- * nobody's work in progress, so it falls outside the rule in `AGENTS.md`
- * the way promoting a member does.
+ * The two deliberate acts do the writing. Opening a notification reads
+ * that one, and "Read all" in the header reads the lot; `router.refresh()`
+ * after either is what moves the badge without a full reload. Between
+ * them the badge finally answers the question people actually ask it —
+ * how many of these have I not looked at — because for a while it could
+ * only be cleared all at once, and reading the one notification you
+ * cared about moved nothing.
+ *
+ * Neither confirms. Marking read takes away no access, no data and
+ * nobody's work in progress, so both fall outside the rule in
+ * `AGENTS.md` the way promoting a member does.
  */
 export function NotificationsMenu({
   notifications,
@@ -95,6 +105,28 @@ export function NotificationsMenu({
       // The menu is deliberately left open. The point of the button is
       // watching the bold come off the rows you have just read; closing
       // on the click would hide the only thing it does.
+      router.refresh();
+    });
+  }
+
+  /**
+   * Opening one notification reads that one.
+   *
+   * The navigation is not awaited and must not be: the `<Link>` below
+   * follows on the same click, and holding it back behind a database
+   * write would make every notification in the bell feel slow to open.
+   * The write and the refresh finish behind the page that is already
+   * arriving — this component lives in the layout, which survives the
+   * navigation, so the transition it started is still running when the
+   * action returns and the new badge lands on the bell in place.
+   *
+   * Already-read rows return early. Clicking one is the ordinary way to
+   * re-read something, and it owes the server nothing.
+   */
+  function read(n: Notification) {
+    if (n.readAt) return;
+    startTransition(async () => {
+      await markNotificationRead(n.id);
       router.refresh();
     });
   }
@@ -162,7 +194,13 @@ export function NotificationsMenu({
           <div className="max-h-[min(60vh,20rem)] overflow-y-auto">
             {notifications.map((n, i) => (
               <React.Fragment key={n.id}>
-                <DropdownMenuItem asChild>
+                {/* `onSelect` rather than `onClick` on the link: it is
+                    Radix's own hook and fires for Enter on a
+                    keyboard-focused row as well as for the pointer, so
+                    reading a notification does not become a thing only
+                    a mouse can do. Left to close the menu, unlike
+                    "Read all" above — this one is going somewhere. */}
+                <DropdownMenuItem asChild onSelect={() => read(n)}>
                   <Link
                     href={linkFor(n, fallbackHref)}
                     className="flex-col items-start gap-0.5 py-2"

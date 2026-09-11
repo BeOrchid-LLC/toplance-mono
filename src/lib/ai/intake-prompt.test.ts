@@ -177,6 +177,26 @@ describe("buildIntakeSystemPrompt", () => {
     expect(prompt().toLowerCase()).toContain("never invent");
   });
 
+  /**
+   * "Never invent" was not enough on its own. Given a turn that answers
+   * nothing — a question of the traveller's, or an attempt to talk the
+   * agent out of its instructions — the model reached for the tool
+   * anyway and filed whatever text was in front of it: its own question
+   * back, or the traveller's message, as `residence_country`. Measured
+   * at 14 runs in 20 before this rule existed and 0 after, on a prompt
+   * otherwise unchanged.
+   *
+   * It lives beside the recording rules rather than with the scope
+   * section, because it is a rule about recording: a second copy of it
+   * elsewhere is what made the model record more, not less.
+   */
+  it("records only a turn that actually answers the topic", () => {
+    const text = prompt().toLowerCase();
+
+    expect(text).toContain("record only what the traveler has actually told you");
+    expect(text).toContain("call nothing at all");
+  });
+
   it("keeps the reassurance the scripted flow shows beside the refusal question", () => {
     expect(prompt()).toContain(HISTORY_NOTE);
   });
@@ -270,6 +290,13 @@ describe("buildIntakeSystemPrompt — the passport name", () => {
  * rule is helpful by default.
  */
 describe("buildIntakeSystemPrompt — what it will not talk about", () => {
+  /** Just this section, so an assertion about its restraint cannot be satisfied by the rest of the prompt. */
+  const scopeSection = (text: string) =>
+    text.slice(
+      text.indexOf("## What you are here for"),
+      text.indexOf("## What you must never do")
+    );
+
   const prompt = (overrides: Partial<Parameters<typeof buildIntakeSystemPrompt>[0]> = {}) =>
     buildIntakeSystemPrompt({
       answers: {},
@@ -294,22 +321,28 @@ describe("buildIntakeSystemPrompt — what it will not talk about", () => {
     expect(prompt().toLowerCase()).toContain("not as an aside");
   });
 
-  it("puts the pending question back rather than leaving them nowhere", () => {
-    expect(prompt().toLowerCase()).toContain("ask the pending topic again");
-  });
-
   /**
-   * Measured, not guessed. Telling the model to put the pending topic
-   * back made it *resolve* that topic — `passport_name` is pending with
-   * `fullName` sitting in the JSON as a ready-made value, and it filed
-   * that as the traveller's answer in 4 runs out of 5 against 1 without
-   * this section. The sentence below is what closes it.
+   * The fix, pinned — and the reason this section is as short as it is.
+   *
+   * A draft that also told the model what to do about the pending topic,
+   * and what to record while doing it, made it file answers nobody had
+   * given: `residence_country` came out as "Unknown" after it declined a
+   * question about the weather, measured at 4 runs in 5 against 1 with
+   * the section sliced out. A later draft read "Record nothing." aloud
+   * to the traveller. Both belong to machinery this prompt already has —
+   * the `next` pointer asks the pending question, and "never invent"
+   * forbids the rest — and a second copy of a rule, a few lines from a
+   * JSON block holding a ready-made `fullName`, is how the model was
+   * talked into using it.
+   *
+   * So the assertion is on what is NOT here. This section draws the edge
+   * of the conversation and nothing else.
    */
-  it("does not let re-asking become answering on the traveller's behalf", () => {
-    const text = prompt().toLowerCase();
+  it("legislates nothing about the pending topic or about recording", () => {
+    const section = scopeSection(prompt()).toLowerCase();
 
-    expect(text).toContain("re-asking the pending topic is not answering it");
-    expect(text).toContain("record nothing");
+    expect(section).not.toContain("record");
+    expect(section).not.toContain("pending topic");
   });
 
   /**

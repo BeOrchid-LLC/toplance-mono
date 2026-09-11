@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { and, eq } from "drizzle-orm";
 
+import { ForbiddenError } from "@/lib/auth/errors";
 import { revalidateCase } from "@/lib/cache/consoles";
 import { db } from "@/lib/db/client";
 import { applications, documents, organisations, profiles } from "@/lib/db/schema";
@@ -43,11 +44,13 @@ import { avatarKey, validateAvatarFile } from "@/lib/domain/avatar";
 import { COUNTRIES, toE164 } from "@/lib/domain/countries";
 import { isDigestFrequency } from "@/lib/domain/digest";
 import { parseVisaExpiry } from "@/lib/domain/expiry";
+import { isUuid } from "@/lib/domain/uuid";
 import { isLocale } from "@/lib/i18n/locales";
 import { track } from "@/lib/analytics/track";
 import {
   appUrl,
   BELL_KINDS,
+  markNotificationRead as markOwnNotificationRead,
   markNotificationsRead as markOwnNotificationsRead,
   notify,
   notifyAgency,
@@ -952,6 +955,37 @@ export async function markNotificationsRead() {
   try {
     const actor = await requireActor();
     await markOwnNotificationsRead(actor.userId, BELL_KINDS);
+    return { ok: true };
+  } catch (error) {
+    const message = toActionError(error);
+    if (message) return { error: message };
+    throw error;
+  }
+}
+
+/**
+ * Reading one notification: the row the caller just clicked in the bell.
+ *
+ * The sibling above is the bulk gesture, and it was the bell's only
+ * write — so opening a single notification left it unread and the badge
+ * unmoved, which is the one thing a person who has just read something
+ * expects to change.
+ *
+ * It does not confirm, for the same reason "Read all" does not: marking
+ * read takes away no access, no data and nobody's work in progress, so
+ * it sits outside the rule in `AGENTS.md`.
+ *
+ * Whose row it is is decided in the `where`, not here — see
+ * `markNotificationRead`. The uuid check is only to keep a malformed id
+ * from reaching Postgres as a failed cast, and it raises the same error
+ * `requireApplicationAccess` raises for one rather than writing the
+ * sentence out again: garbage in a link is not a server fault.
+ */
+export async function markNotificationRead(id: string) {
+  try {
+    const actor = await requireActor();
+    if (!isUuid(id)) throw new ForbiddenError();
+    await markOwnNotificationRead(actor.userId, id);
     return { ok: true };
   } catch (error) {
     const message = toActionError(error);

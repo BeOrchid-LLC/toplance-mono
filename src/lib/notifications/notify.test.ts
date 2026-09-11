@@ -23,6 +23,7 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
     unreadNotificationCount,
     unreadMessageCount,
     markNotificationsRead,
+    markNotificationRead,
     dueNotificationEmails,
     BELL_KINDS,
     appUrl,
@@ -315,6 +316,94 @@ describe.skipIf(!process.env.DATABASE_URL)("notify", async () => {
 
     const own = await getNotifications(TRAVELLER);
     expect(own.every((n) => n.readAt !== null)).toBe(true);
+  });
+
+  /**
+   * The singular counterpart, and the one the bell's rows use. "Read
+   * all" was the only write path the bell had, so a notification you
+   * actually opened stayed unread for ever and the badge never moved
+   * for the one thing you did about it.
+   */
+  describe("markNotificationRead", () => {
+    it("clears the row you opened and leaves the rest of the badge standing", async () => {
+      await notify(TRAVELLER, "itinerary_ready", { url: appUrl("/app") });
+      await notify(TRAVELLER, "document_flagged", {
+        documentName: "Passport",
+        reason: "Blurry scan.",
+        url: appUrl("/app/documents"),
+      });
+      await notify(TRAVELLER, "document_requested", {
+        documentName: "Bank statement",
+        guidance: "Last three months.",
+        url: appUrl("/app/documents"),
+      });
+
+      const [newest] = await getNotifications(TRAVELLER);
+      await markNotificationRead(TRAVELLER, newest.id);
+
+      // Two, not zero: the count is the point of the whole exercise.
+      expect(await unreadNotificationCount(TRAVELLER)).toBe(2);
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.id, newest.id));
+      expect(row.readAt).not.toBeNull();
+    });
+
+    it("will not read a row belonging to somebody else", async () => {
+      await notify(OTHER, "itinerary_ready", { url: appUrl("/app") });
+      const [theirs] = await getNotifications(OTHER);
+
+      await markNotificationRead(TRAVELLER, theirs.id);
+
+      expect(await unreadNotificationCount(OTHER)).toBe(1);
+    });
+
+    /**
+     * Same statement, same reason as the bulk write: two writes leave a
+     * window in which the sweep sees a row that has just been read and
+     * emails about it anyway.
+     */
+    it("cancels the buffered email for the row it reads", async () => {
+      await notify(TRAVELLER, "document_flagged", {
+        documentName: "Passport",
+        reason: "Blurry scan.",
+        url: appUrl("/app/documents"),
+      });
+      const [flagged] = await getNotifications(TRAVELLER);
+      expect(flagged.emailDueAt).not.toBeNull();
+
+      await markNotificationRead(TRAVELLER, flagged.id);
+
+      const [row] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.id, flagged.id));
+      expect(row.emailDueAt).toBeNull();
+    });
+
+    /**
+     * `message_received` is not in the bell, so no row the bell renders
+     * can carry that id — but an id is a string a caller supplies, and
+     * honouring one here would clear the Messages badge, and cancel the
+     * message's buffered email, for a thread nobody opened.
+     */
+    it("refuses a message notification, which the bell does not own", async () => {
+      await notify(TRAVELLER, "message_received", {
+        senderName: "Grace",
+        preview: "We have your passport.",
+        url: appUrl("/app/messages"),
+      });
+      const [message] = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.recipientId, TRAVELLER));
+
+      await markNotificationRead(TRAVELLER, message.id);
+
+      expect(await unreadMessageCount(TRAVELLER)).toBe(1);
+    });
   });
 });
 

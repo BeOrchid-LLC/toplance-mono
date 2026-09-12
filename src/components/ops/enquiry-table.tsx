@@ -40,6 +40,14 @@ import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
  * Left to its own width a native select asks for its widest option,
  * which is the honest claim: the control gets its width before the
  * text columns share what is left, same as the buttons do.
+ *
+ * Honest, but not unbounded. The status select's options are four
+ * fixed words; the assignee select's are the staff roster, labelled
+ * `fullName || email` — the same unbounded data every text column in
+ * this table carries a ceiling against. One colleague whose label
+ * falls back to a long address would widen the unshrinkable Assignee
+ * column on every pending row, so that select carries the same kind
+ * of ceiling at the call site below.
  */
 const inputClass =
   "h-[var(--row-h)] rounded-md border border-border-strong bg-surface px-4 text-base text-ink";
@@ -180,8 +188,9 @@ export function EnquiryTable({
           // span's content is the whole address, so one enquiry pushed
           // this column to 624px and the table past its panel on a
           // 1680px monitor. The ceiling is what `truncate` truncates
-          // against.
-          className: "max-w-[260px]",
+          // against — `ceiling`, not `className`, because Firefox
+          // ignores `max-width` on the cell itself; see `DataColumn`.
+          ceiling: "max-w-[260px]",
           label: t(OPS_ENQUIRIES.head.who),
           sortable: true,
           cell: (r) => (
@@ -198,7 +207,7 @@ export function EnquiryTable({
         {
           id: "company",
           width: "w-[12%]",
-          className: "max-w-[200px]",
+          ceiling: "max-w-[200px]",
           label: t(OPS_ENQUIRIES.head.company),
           sortable: true,
           cell: (r) => (
@@ -308,7 +317,11 @@ export function EnquiryTable({
               <div className="flex items-center gap-2">
                 <select
                   aria-label={t(OPS_ENQUIRIES.head.assignee)}
-                  className={inputClass}
+                  // The ceiling on the roster's unbounded labels — see
+                  // the `inputClass` note. On the control itself rather
+                  // than a wrapper: a select is not a table cell, so its
+                  // `max-width` holds in every browser.
+                  className={`${inputClass} max-w-[240px]`}
                   value={r.assigneeId ?? ""}
                   disabled={pending}
                   onChange={(e) =>

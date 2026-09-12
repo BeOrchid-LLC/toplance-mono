@@ -24,25 +24,25 @@ import { cn } from "@/lib/utils";
  * never narrower than what is in it, so the buttons get their width
  * before anything else is shared out, at every viewport measured.
  *
- * The 900px floor is doing less than it looks. Every console table
- * measured wants more than it anyway — `/ops/support` 1015px,
- * `/ops/staff` 1078px, `/ar/ops/enquiries` 1737px — so it binds only on
- * a table whose columns are all truncatable text and could otherwise
- * collapse to nothing. A table that needs a higher floor should pass
- * its own `min-w-[…]`: `twMerge` drops this one.
+ * The floor under it stays `max-lg:min-w-[720px]`, and only below `lg`.
+ * An unconditional 900px floor shipped here briefly and did the
+ * opposite of its job: content sizing already hands a wide table its
+ * width — `/ops/support` wants 1015px, `/ar/ops/enquiries` 1737px,
+ * floor or no floor — so the only tables a blanket floor ever bound
+ * were the small rosters on `/agency/team`, stretched over empty
+ * columns to 900px and handed a permanent sideways scroll in the
+ * 1024–1180px windows where the rail leaves the panel less than that.
+ * Below `lg` the floor earns its keep: a phone-width panel could
+ * otherwise squeeze a table of all-truncatable columns toward nothing.
+ * A table that needs its own floor passes `min-w-[…]`; `twMerge` drops
+ * this one.
  *
- * Two things this replaced, worth not reinventing:
- *
- *   - `table-fixed` with percentage columns. It makes text truncate
- *     predictably, which is why it was tried, but a percentage is a
- *     share of whatever is left and a button is a fixed number of
- *     pixels. Under it the action column is squeezed and its contents
- *     overflow, which is the bug above. Content sizing gets the buttons
- *     their width first and shares the rest.
- *   - `@max-[900px]:min-w-[900px]`, a container query. The floor now
- *     applies at every width; `w-full` already wins whenever the panel
- *     is wider than it, so the query was only ever describing what
- *     `min-width` does on its own.
+ * One thing this replaced, worth not reinventing: `table-fixed` with
+ * percentage columns. It makes text truncate predictably, which is why
+ * it was tried, but a percentage is a share of whatever is left and a
+ * button is a fixed number of pixels. Under it the action column is
+ * squeezed and its contents overflow, which is the bug above. Content
+ * sizing gets the buttons their width first and shares the rest.
  *
  * The wrapper also caps its height at `--table-max-h` and scrolls the
  * rows inside it. A page of 10 rows was taller than a laptop viewport,
@@ -75,7 +75,7 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
       <table
         data-slot="table"
         className={cn(
-          "w-full caption-bottom border-collapse text-base min-w-[900px]",
+          "w-full caption-bottom border-collapse text-base max-lg:min-w-[720px]",
           className
         )}
         {...props}
@@ -124,6 +124,11 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
         // browser only takes the second line when the column is
         // genuinely too narrow for one — and `--row-h` has room for two
         // lines of caps at this size, so nothing moves on a wide screen.
+        // A label that wraps past two lines — a four-word header in a
+        // wrapping locale over a narrow column — grows the header row
+        // past `--row-h`, and `SortHead`'s link grows with it rather
+        // than staying a fixed 44px band inside a taller cell; the
+        // `min-h` note there is the other half of this one.
         "special-caps h-[var(--row-h)] bg-surface-2 px-4 text-start align-middle",
         // Sticks to the top of the scrolling wrapper, so scrolling the
         // rows never leaves a reader guessing which column is which.

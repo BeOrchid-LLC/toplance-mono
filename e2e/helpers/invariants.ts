@@ -383,15 +383,43 @@ export async function measureCellSpill(
     for (const cell of document.querySelectorAll("tbody td")) {
       const box = cell.getBoundingClientRect();
       if (!box.width) continue;
-      for (const child of cell.children) {
-        const r = child.getBoundingClientRect();
-        if (!r.width) continue;
-        const past = Math.max(box.left - r.left, r.right - box.right);
+
+      // Element children and bare text nodes both. A `whitespace-nowrap`
+      // date lands in its `td` with no wrapper at all — an element-only
+      // walk has nothing to measure there, and a nowrap text node
+      // painting across its neighbour is exactly the overlap this
+      // invariant exists to catch. A Range is what can put a rect on a
+      // text node.
+      const contents: { rect: DOMRect; what: string }[] = [];
+      for (const node of cell.childNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const el = node as HTMLElement;
+          const rect = el.getBoundingClientRect();
+          if (rect.width) {
+            contents.push({ rect, what: el.innerText?.trim().slice(0, 40) || el.tagName });
+          }
+        } else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          const rect = range.getBoundingClientRect();
+          if (rect.width) {
+            contents.push({ rect, what: node.textContent.trim().slice(0, 40) });
+          }
+        }
+      }
+
+      for (const { rect, what } of contents) {
+        const past = Math.max(box.left - rect.left, rect.right - box.right);
         if (past > 2) {
           const col = [...(cell.parentElement?.children ?? [])].indexOf(cell);
-          const head = document.querySelectorAll("thead th")[col] as HTMLElement | undefined;
+          // The cell's own table, not the document: /ops/staff and
+          // /agency/team stack two tables with different column sets,
+          // and a document-wide th list would label a spill in the
+          // second with a column name from the first.
+          const head = cell.closest("table")?.querySelectorAll("thead th")[col] as
+            | HTMLElement
+            | undefined;
           const name = head?.innerText.trim() || `column ${col + 1}`;
-          const what = (child as HTMLElement).innerText?.trim().slice(0, 40) || child.tagName;
           out.push(
             `"${name}" cell is ${Math.round(box.width)}px, content spills ` +
               `${Math.round(past)}px past it — ${what}`

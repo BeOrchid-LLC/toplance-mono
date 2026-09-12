@@ -68,7 +68,16 @@ export function SortHead({
       <Link
         href={`${basePath}?${next.toString()}`}
         className={cn(
-          "flex h-[var(--row-h)] w-full items-center gap-1.5 px-4 transition-colors",
+          // `h-full min-h-[var(--row-h)]`, not a fixed `h-[var(--row-h)]`.
+          // Headers wrap since 2026-09-12 (see `TableHead`), and a label
+          // that takes three lines — a four-word header in a wrapping
+          // locale over a narrow column — grows its `th` past 44px. A
+          // fixed-height link inside that taller cell painted its own
+          // label out of the header band and left the grown remainder
+          // unclickable; `min-h` keeps the 44px floor and `h-full` keeps
+          // the link the size of its cell when a *neighbouring* header
+          // is the one that wrapped.
+          "flex h-full min-h-[var(--row-h)] w-full items-center gap-1.5 px-4 transition-colors",
           // The ring turns inward — the first of the two deviations
           // `:focus-visible` in globals.css permits — and this is the
           // one place in the product where it repairs two different
@@ -76,8 +85,8 @@ export function SortHead({
           // than left as a class somebody later reads as cosmetic.
           //
           // The link fills its `TableHead` exactly (`p-0` there, `w-full`
-          // and `h-[var(--row-h)]` here), so every edge of the ring lands
-          // on a boundary something else owns:
+          // plus `h-full min-h-[var(--row-h)]` here), so every edge of
+          // the ring lands on a boundary something else owns:
           //
           //   - Top and the outer sides are CLIPPED. The header band is
           //     `sticky top-0` inside `Table`'s `overflow-auto` wrapper,

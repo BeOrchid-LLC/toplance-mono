@@ -72,7 +72,7 @@ export function ColleaguesTable({
     {
       id: "person",
       width: "w-[30%]",
-      className: "max-w-[280px]",
+      ceiling: "max-w-[280px]",
       label: OPS_STAFF.tableHead.person[locale],
       cell: (person) => (
         <>

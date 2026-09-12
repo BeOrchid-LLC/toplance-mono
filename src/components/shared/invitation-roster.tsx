@@ -162,30 +162,40 @@ export function InvitationRoster({
                 <TableRow key={invite.id}>
                   <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                   <TableCell>
-                    <span
-                      className="block truncate font-semibold"
-                      title={invite.email}
-                    >
-                      {invite.fullName || invite.email}
-                    </span>
-                    {invite.fullName && (
-                      <span className="special block truncate">{invite.email}</span>
-                    )}
+                    {/* The ceiling the truncates inside need: on a block
+                        wrapper, not the cell, because Firefox ignores
+                        `max-width` on a `td` — see `DataColumn.ceiling`.
+                        An invitation's address is the tokenised 50+
+                        character kind that makes an unceilinged
+                        `truncate` inert. */}
+                    <div className="max-w-[280px]">
+                      <span
+                        className="block truncate font-semibold"
+                        title={invite.email}
+                      >
+                        {invite.fullName || invite.email}
+                      </span>
+                      {invite.fullName && (
+                        <span className="special block truncate">{invite.email}</span>
+                      )}
+                    </div>
                   </TableCell>
 
                   <TableCell>
-                    <span className="block truncate">
-                      {invite.kind === "platform_staff"
-                        ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]
-                        : invite.kind === "staff"
-                          ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
-                          : (destination?.name ??
-                            invite.destinationIso?.toUpperCase() ??
-                            AGENCY.destinationNotSet[locale])}
-                    </span>
-                    <span className="special block truncate">
-                      {invitationTimeline(invite, locale)}
-                    </span>
+                    <div className="max-w-[240px]">
+                      <span className="block truncate">
+                        {invite.kind === "platform_staff"
+                          ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]
+                          : invite.kind === "staff"
+                            ? invite.jobTitle || AGENCY.jobTitleNotSet[locale]
+                            : (destination?.name ??
+                              invite.destinationIso?.toUpperCase() ??
+                              AGENCY.destinationNotSet[locale])}
+                      </span>
+                      <span className="special block truncate">
+                        {invitationTimeline(invite, locale)}
+                      </span>
+                    </div>
                   </TableCell>
 
                   <TableCell>

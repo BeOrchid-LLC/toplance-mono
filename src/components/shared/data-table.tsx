@@ -61,18 +61,34 @@ export type DataColumn<T> = {
    * they are a statement about relative emphasis, and the browser
    * settles the rest.
    *
-   * A column that truncates needs a ceiling as well, in `className` —
-   * `"max-w-[260px]"`. `truncate` is `white-space: nowrap` plus
-   * `overflow: hidden`, and only the second half of that does anything
-   * here: the first half makes the cell's preferred width the whole
-   * unbroken string, which is the width the column then asks for. One
-   * enquiry whose address carried an invitation token took the Who
-   * column to 624px and pushed the table off a 1680px monitor, with
-   * `truncate` on it the whole time. The ceiling is the thing it
-   * truncates against.
+   * A column that truncates needs a ceiling as well — see `ceiling`.
    */
   width?: string;
   className?: string;
+  /**
+   * The ceiling a truncating column truncates against, as a literal
+   * Tailwind class — `"max-w-[260px]"`.
+   *
+   * Why it is needed at all: `truncate` is `white-space: nowrap` plus
+   * `overflow: hidden`, and only the second half does anything in a
+   * content-sized table. The first half makes the content's preferred
+   * width the whole unbroken string, which is the width the column then
+   * asks for. One enquiry whose address carried an invitation token took
+   * the Who column to 624px and pushed the table off a 1680px monitor,
+   * with `truncate` on it the whole time. The ceiling is the thing it
+   * truncates against.
+   *
+   * Why it is its own field and not a `className`: `DataTable` puts it
+   * on a block wrapper *inside* the cell, because `max-width` on a
+   * `td`/`th` is undefined in CSS 2.1 auto table layout and Firefox
+   * ignores it there (Bugzilla 823483) — a ceiling on the cell holds in
+   * Chrome, silently does nothing in Firefox, and the Chromium-only
+   * Playwright sweep cannot tell the difference. On a block box inside
+   * the cell the clamp is specified behaviour everywhere: the cell's
+   * min-content contribution is the wrapper's, and the wrapper's is
+   * capped by its `max-width`.
+   */
+  ceiling?: string;
   /** Hides the header text from sight but keeps it for a screen reader. */
   labelHidden?: boolean;
   cell: (row: T) => ReactNode;
@@ -339,7 +355,11 @@ export function DataTable<T>({
                     key={c.id}
                     className={cn(c.width, c.align === "end" && "text-end", c.className)}
                   >
-                    {c.cell(row)}
+                    {c.ceiling ? (
+                      <div className={c.ceiling}>{c.cell(row)}</div>
+                    ) : (
+                      c.cell(row)
+                    )}
                   </TableCell>
                 ))}
               </TableRow>

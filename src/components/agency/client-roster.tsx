@@ -149,6 +149,10 @@ export function ClientRoster({
       id: "client",
       label: AGENCY.tableHead.client[locale],
       sortable,
+      // A traveller's name is unbounded data; without a ceiling the
+      // `truncate` below is inert in the content-sized table — the
+      // column's min-content is the whole string. See `DataColumn`.
+      ceiling: "max-w-[260px]",
       cell: (r) =>
         takeableBy ? (
           <>
@@ -178,6 +182,7 @@ export function ClientRoster({
       id: "route",
       label: AGENCY.tableHead.route[locale],
       sortable,
+      ceiling: "max-w-[240px]",
       cell: (r) => {
         const destination = countryFromIso2(r.destinationIso);
         return (

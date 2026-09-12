@@ -89,7 +89,7 @@ export function SupportTable({
     {
       id: "agency",
       width: "w-[16%]",
-      className: "max-w-[220px]",
+      ceiling: "max-w-[220px]",
       label: OPS_SUPPORT.tableHead.agency[locale],
       cell: (r) => (
         <Link
@@ -104,7 +104,7 @@ export function SupportTable({
     {
       id: "subject",
       width: "w-[26%]",
-      className: "max-w-[340px]",
+      ceiling: "max-w-[340px]",
       label: OPS_SUPPORT.tableHead.subject[locale],
       cell: (r) => (
         <>

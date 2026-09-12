@@ -71,9 +71,10 @@ export async function skilledWorkerCorridorId(): Promise<string> {
 /**
  * Everything a previous run of these emails left behind. `profiles`
  * cascades to applications, documents, messages and memberships, so the
- * two extra statements are for the rows that hang off nothing: an
- * invitation addressed to an invitee who never existed as a profile, and
- * an organisation whose only member has just been deleted.
+ * extra statements are for the rows that hang off nothing: an
+ * invitation addressed to an invitee who never existed as a profile, an
+ * organisation whose only member has just been deleted, and the stale
+ * seeded rows reaped at the end.
  */
 export async function resetAccounts(
   emails: string[],
@@ -93,6 +94,17 @@ export async function resetAccounts(
     // same database, and its case is not this run's litter.
     await client.query(
       "delete from profiles where id like 'e2e_seed_%' and created_at < now() - interval '1 hour'"
+    );
+    // Seeded enquiries, on the same terms. `clearDemoRequest` runs in a
+    // test-body `finally`, which a timed-out run — this sweep's recorded
+    // failure mode — or a killed worker never reaches, and nothing else
+    // deletes from `demo_requests`; each aborted run was leaving one
+    // permanent "Ada Enquirer" row in the real /ops/enquiries queue.
+    // The address is this suite's recognisable litter (`seedDemoRequest`
+    // stamps `ada+<timestamp>@test.invalid`), and the hour guard keeps a
+    // parallel run's live row out of reach.
+    await client.query(
+      "delete from demo_requests where email like 'ada+%@test.invalid' and created_at < now() - interval '1 hour'"
     );
   });
 }

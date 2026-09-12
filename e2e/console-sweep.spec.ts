@@ -219,7 +219,7 @@ async function sweepRoutes(
         });
 
         /**
-         * Then the same page at a laptop width, for invariant 4 only.
+         * Then the same page at a laptop width, for invariants 4–6.
          *
          * A resize rather than a second navigation: the route is already
          * loaded and settled, and re-walking the redirect chain per
@@ -227,12 +227,48 @@ async function sweepRoutes(
          * measurement. Back to `NARROW` afterwards so the next
          * iteration measures the width the other three invariants are
          * written against.
+         *
+         * Guarded, because these evaluates run seconds after the settle
+         * loop above and the same background navigation it exists for —
+         * a Clerk session refresh — can still land in that window and
+         * destroy the execution context. Unguarded, one such throw near
+         * the end of the sweep discarded every violation accumulated
+         * over the preceding ~30 routes and failed the whole 15–30
+         * minute run. So: one retry after re-settling, and a failure
+         * after that is *recorded* rather than thrown — a lost
+         * measurement reported by name, not a lost run. The viewport
+         * restore lives in `finally` for the same reason: without it a
+         * failure here would leave every following route measured at
+         * the wrong width.
          */
+        const laptopPath = `${path} [${theme}]`;
+        const measureLaptop = async () => {
+          await measureTableFit(page, { path: laptopPath, into: found });
+          await measureCellSpill(page, { path: laptopPath, into: found });
+          await measureControlFit(page, { path: laptopPath, into: found });
+        };
         await page.setViewportSize(LAPTOP);
-        await measureTableFit(page, { path: `${path} [${theme}]`, into: found });
-        await measureCellSpill(page, { path: `${path} [${theme}]`, into: found });
-        await measureControlFit(page, { path: `${path} [${theme}]`, into: found });
-        await page.setViewportSize(NARROW);
+        try {
+          try {
+            await measureLaptop();
+          } catch {
+            for (let i = 0; i < 10; i++) {
+              const before = page.url();
+              await page.waitForTimeout(250);
+              if (page.url() === before) break;
+            }
+            await measureLaptop();
+          }
+        } catch (error) {
+          found.unreachable.push({
+            route: laptopPath,
+            detail: `laptop measurement lost, twice: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+        } finally {
+          await page.setViewportSize(NARROW);
+        }
       }
     }
   }

@@ -574,7 +574,7 @@ function Demand({ data }: { data: DashboardData }) {
           {/* Beside Top destinations rather than below the fold: the two
               answer the same question from opposite ends — where demand
               went, and where it had nowhere to go. */}
-          <PanelHeader label="Asked for, not built" />
+          <PanelHeader label="Most requested routes" />
           <PanelBody>
             {/* The caption came with the panel from `/ops/corridors` on
                 2026-09-10. It earns its line: without it the counts read

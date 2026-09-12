@@ -29,7 +29,7 @@ const TONE: Record<NonNullable<Kpi["tone"]>, string> = {
 };
 
 const BOX =
-  "rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-sm)]";
+  "@container/tile min-w-0 rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-sm)]";
 
 /** The figure itself. Identical whether or not the card is a door. */
 function KpiBody({ kpi }: { kpi: Kpi }) {
@@ -37,7 +37,7 @@ function KpiBody({ kpi }: { kpi: Kpi }) {
   return (
     <>
       <div className="flex items-start justify-between gap-3">
-        <p className="t-muted">{kpi.label}</p>
+        <p className="t-muted min-w-0">{kpi.label}</p>
         {/* Tinted toward transparent, not toward --surface: these cards
             sit on the ruled ground and an opaque chip would punch a
             rectangle through it (guideline §3). */}
@@ -47,7 +47,9 @@ function KpiBody({ kpi }: { kpi: Kpi }) {
       </div>
       <p
         className={cn(
-          "num mt-3 text-[32px] font-semibold leading-none",
+          // Keyed to the card, not the window — see the same steps in
+          // `counter-row.tsx` for what a 32px figure did to a 194px tile.
+          "num mt-3 text-[22px] @min-[165px]/tile:text-[26px] @min-[200px]/tile:text-[32px] font-semibold leading-none",
           TONE[kpi.tone ?? "neutral"]
         )}
       >
@@ -89,39 +91,45 @@ function KpiBody({ kpi }: { kpi: Kpi }) {
  * a mistake rather than a figure.
  */
 const COLUMNS: Record<number, string> = {
-  1: "xl:grid-cols-1",
-  2: "xl:grid-cols-2",
-  3: "xl:grid-cols-3",
-  4: "xl:grid-cols-4",
-  5: "xl:grid-cols-5",
+  1: "@4xl/row:grid-cols-1",
+  2: "@4xl/row:grid-cols-2",
+  3: "@4xl/row:grid-cols-3",
+  4: "@4xl/row:grid-cols-4",
+  5: "@4xl/row:grid-cols-5",
 };
 
 export function KpiRow({ items }: { items: Kpi[] }) {
   return (
-    <div
-      className={cn(
-        "grid gap-4 sm:grid-cols-2",
-        COLUMNS[items.length] ?? "xl:grid-cols-4"
-      )}
-    >
-      {items.map((kpi) =>
-        kpi.href ? (
-          <Link
-            key={kpi.label}
-            href={kpi.href}
-            className={cn(
-              "group transition-colors duration-[var(--dur-tap)] hover:border-border-strong",
-              BOX
-            )}
-          >
-            <KpiBody kpi={kpi} />
-          </Link>
-        ) : (
-          <div key={kpi.label} className={BOX}>
-            <KpiBody kpi={kpi} />
-          </div>
-        )
-      )}
+    // The row is its own container so the steps below measure the space
+    // the cards actually have. `xl:grid-cols-5` was a 1280px *window*,
+    // which in the agency console is 984px of row — and the rail had
+    // already taken the difference.
+    <div className="@container/row">
+      <div
+        className={cn(
+          "grid gap-4 @md/row:grid-cols-2",
+          COLUMNS[items.length] ?? "@4xl/row:grid-cols-4"
+        )}
+      >
+        {items.map((kpi) =>
+          kpi.href ? (
+            <Link
+              key={kpi.label}
+              href={kpi.href}
+              className={cn(
+                "group transition-colors duration-[var(--dur-tap)] hover:border-border-strong",
+                BOX
+              )}
+            >
+              <KpiBody kpi={kpi} />
+            </Link>
+          ) : (
+            <div key={kpi.label} className={BOX}>
+              <KpiBody kpi={kpi} />
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 }

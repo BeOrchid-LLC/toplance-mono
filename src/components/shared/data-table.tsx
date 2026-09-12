@@ -42,6 +42,36 @@ export type DataColumn<T> = {
   sortable?: boolean;
   /** Right-aligns the column — for an actions cell or a bare number. */
   align?: "end";
+  /**
+   * A width hint for this column, as a literal Tailwind class —
+   * `"w-[22%]"`, `"w-[120px]"`. Written out rather than interpolated
+   * because Tailwind scans source for whole class names.
+   *
+   * A hint, not a rule. The table sizes columns to their content
+   * (`table-auto`), so this is the width the column prefers when there
+   * is room to honour it, and a column whose content will not fit
+   * takes what it needs regardless. That is deliberate, and it is the
+   * difference between this and the `table-fixed` version it replaced
+   * on 2026-09-12: under `table-fixed` a 15% actions column was 151px
+   * whatever was in it, and the 394px of buttons in `/ops/support`
+   * spilled out across its neighbours. See `ui/table.tsx`.
+   *
+   * So: give the text columns hints, and leave an actions column
+   * without one. Percentages need not total 100 and are not checked —
+   * they are a statement about relative emphasis, and the browser
+   * settles the rest.
+   *
+   * A column that truncates needs a ceiling as well, in `className` —
+   * `"max-w-[260px]"`. `truncate` is `white-space: nowrap` plus
+   * `overflow: hidden`, and only the second half of that does anything
+   * here: the first half makes the cell's preferred width the whole
+   * unbroken string, which is the width the column then asks for. One
+   * enquiry whose address carried an invitation token took the Who
+   * column to 624px and pushed the table off a 1680px monitor, with
+   * `truncate` on it the whole time. The ceiling is the thing it
+   * truncates against.
+   */
+  width?: string;
   className?: string;
   /** Hides the header text from sight but keeps it for a screen reader. */
   labelHidden?: boolean;
@@ -282,12 +312,12 @@ export function DataTable<T>({
                     dir={dir}
                     basePath={basePath}
                     params={params}
-                    className={c.className}
+                    className={cn(c.width, c.className)}
                   />
                 ) : (
                   <TableHead
                     key={c.id}
-                    className={cn(c.align === "end" && "text-end", c.className)}
+                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
                   >
                     {/* An actions column has a header for a screen reader
                         and nothing for an eye — the buttons name
@@ -307,7 +337,7 @@ export function DataTable<T>({
                 {columns.map((c) => (
                   <TableCell
                     key={c.id}
-                    className={cn(c.align === "end" && "text-end", c.className)}
+                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
                   >
                     {c.cell(row)}
                   </TableCell>

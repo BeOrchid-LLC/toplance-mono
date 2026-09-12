@@ -10,12 +10,18 @@ import {
 import {
   activateOrganisation,
   approveApplicationFor,
+  clearDemoRequest,
   promoteToStaff,
+  seedDemoRequest,
   seedInvitation,
 } from "./helpers/db";
 import {
   emptyInvariants,
+  LAPTOP,
+  measureCellSpill,
+  measureControlFit,
   measureInvariants,
+  measureTableFit,
   NARROW,
   pathFor,
   report,
@@ -177,7 +183,27 @@ async function sweepRoutes(
           await page.waitForTimeout(250);
           if (page.url() === before) break;
         }
-        await page.waitForLoadState("load");
+        /*
+         * Bounded, because `load` can fail to arrive for the same
+         * reason `networkidle` does.
+         *
+         * The note above rejects `networkidle` as a wait that can never
+         * finish behind Clerk's session refresh. `load` is a weaker
+         * claim but not a safe one: it still waits on every subresource,
+         * and one that stalls takes the whole 900s budget with it. The
+         * sweep spent two consecutive 19-minute runs parked here on
+         * `/agency/clients`, on a page the failure snapshot shows fully
+         * rendered — the heading, the table and all.
+         *
+         * What the measurement actually needs is the redirect settled,
+         * and the loop above has already established that. So this is
+         * an optimisation on top of it: take the quiet page if it comes
+         * quickly, and measure anyway if it does not. Five seconds is
+         * comfortably above what a settled console route takes locally
+         * and far below the point where the budget is the thing being
+         * reported.
+         */
+        await page.waitForLoadState("load", { timeout: 5_000 }).catch(() => {});
 
         const landed = new URL(page.url()).pathname;
         if (/\/sign-in|\/sign-up/.test(landed)) {
@@ -191,6 +217,22 @@ async function sweepRoutes(
           dir,
           into: found,
         });
+
+        /**
+         * Then the same page at a laptop width, for invariant 4 only.
+         *
+         * A resize rather than a second navigation: the route is already
+         * loaded and settled, and re-walking the redirect chain per
+         * route would roughly double the sweep for one cheap
+         * measurement. Back to `NARROW` afterwards so the next
+         * iteration measures the width the other three invariants are
+         * written against.
+         */
+        await page.setViewportSize(LAPTOP);
+        await measureTableFit(page, { path: `${path} [${theme}]`, into: found });
+        await measureCellSpill(page, { path: `${path} [${theme}]`, into: found });
+        await measureControlFit(page, { path: `${path} [${theme}]`, into: found });
+        await page.setViewportSize(NARROW);
       }
     }
   }
@@ -206,6 +248,21 @@ function assertInvariants(
   expect.soft(found.mirrored, `wrong direction:\n${report(found.mirrored)}`).toEqual([]);
   expect.soft(found.overflow, `overflows 390px:\n${report(found.overflow)}`).toEqual([]);
   expect.soft(found.contrast, `under the contrast floor:\n${report(found.contrast)}`).toEqual([]);
+  expect
+    .soft(
+      found.unreachable,
+      `overflow that cannot be scrolled to at 1280px:\n${report(found.unreachable)}`
+    )
+    .toEqual([]);
+  expect
+    .soft(found.spilled, `cells painting outside themselves at 1280px:\n${report(found.spilled)}`)
+    .toEqual([]);
+  expect
+    .soft(
+      found.squeezed,
+      `selects too narrow to show their value at 1280px:\n${report(found.squeezed)}`
+    )
+    .toEqual([]);
 }
 
 test("the agency console holds its invariants at 390px, both themes, LTR and RTL", async ({
@@ -240,9 +297,30 @@ test("the platform console holds its invariants at 390px, both themes, LTR and R
   // four copies of the refusal screen and report them green.
   await promoteToStaff(OPS_EMAIL, "owner");
 
-  await page.setViewportSize(NARROW);
-  const { found, bounced } = await sweepRoutes(page, OPS_ROUTES);
-  assertInvariants(found, bounced);
+  /*
+   * One enquiry, so that `/ops/enquiries` has a row.
+   *
+   * Every queue this account can reach is empty on a fresh sign-up, and
+   * an empty table renders its empty state — a sentence in a panel, with
+   * no columns and no controls in them. The sweep was therefore
+   * measuring the one shape of this screen that cannot exhibit the
+   * failures invariants 4 and 5 are about: the buttons that overflowed
+   * their column on `/ops/support` only exist next to a row. Green on an
+   * empty table is not evidence about a full one.
+   *
+   * A demo request is the cheapest row with an action cell in it —
+   * `seedDemoRequest` is one insert, and the Status select, the Assign
+   * control and `ProvisionTenant` all render beside it.
+   */
+  const enquiryId = await seedDemoRequest(OPS_ORG);
+
+  try {
+    await page.setViewportSize(NARROW);
+    const { found, bounced } = await sweepRoutes(page, OPS_ROUTES);
+    assertInvariants(found, bounced);
+  } finally {
+    await clearDemoRequest(enquiryId);
+  }
 });
 
 test("the traveller's screens hold their invariants at 390px, both themes, LTR and RTL", async ({

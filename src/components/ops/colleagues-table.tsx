@@ -71,6 +71,8 @@ export function ColleaguesTable({
   const columns: DataColumn<StaffColleague>[] = [
     {
       id: "person",
+      width: "w-[30%]",
+      className: "max-w-[280px]",
       label: OPS_STAFF.tableHead.person[locale],
       cell: (person) => (
         <>
@@ -96,6 +98,7 @@ export function ColleaguesTable({
     },
     {
       id: "rank",
+      width: "w-[12%]",
       label: OPS_STAFF.tableHead.rank[locale],
       // A director is the rank that can approve a corridor and invite
       // the next colleague, so it is the one worth picking out of a
@@ -111,12 +114,16 @@ export function ColleaguesTable({
     },
     {
       id: "joined",
+      width: "w-[14%]",
       label: OPS_STAFF.tableHead.joined[locale],
       className: "num whitespace-nowrap",
       cell: (person) => formatDay(person.createdAt),
     },
     {
       id: "actions",
+      // No width hint; `ColleagueActions` is an unshrinkable row of
+      // buttons and sizes itself. The 39% this used to carry was that
+      // measurement done by hand, and only for English.
       label: OPS_STAFF.tableHead.actions[locale],
       // Hidden, aligned right — the shape `InvitationTable` sets on the
       // same screen. A header over three buttons labels the obvious.

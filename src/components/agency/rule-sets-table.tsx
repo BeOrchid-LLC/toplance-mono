@@ -56,28 +56,45 @@ export function RuleSetsTable({
   const columns: DataColumn<AgencyRuleSetRow>[] = [
     {
       id: "route",
+      width: "w-[25%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
       sortable: true,
-      cell: (row) => (
-        <>
-          <Link
-            href={`/agency/rule-sets/${row.id}`}
-            className="font-semibold text-brand-text hover:underline"
-          >
-            {countryName(row.nationalityIso)} → {countryName(row.destinationIso)}
-          </Link>
-          <span className="t-muted block">{row.visaName}</span>
-        </>
-      ),
+      // What the two `truncate`s below truncate against: a country
+      // pair like "United Kingdom → United Arab Emirates" is exactly
+      // the unbroken string whose full width the column would
+      // otherwise ask for. See `DataColumn`.
+      ceiling: "max-w-[300px]",
+      cell: (row) => {
+        const route = `${countryName(row.nationalityIso)} → ${countryName(row.destinationIso)}`;
+        return (
+          <>
+            <Link
+              href={`/agency/rule-sets/${row.id}`}
+              // The full pair is on the `title` and on the page this
+              // links to, so an ellipsis here costs a reader nothing.
+              // Wrapping cost them a row three times as tall.
+              title={route}
+              className="block truncate font-semibold text-brand-text hover:underline"
+            >
+              {route}
+            </Link>
+            <span className="t-muted block truncate" title={row.visaName}>
+              {row.visaName}
+            </span>
+          </>
+        );
+      },
     },
     {
       id: "purpose",
+      width: "w-[12%]",
       label: OPS_CORRIDORS.tableHead.purpose[locale],
       sortable: true,
       cell: (row) => OPS_COMMON.purpose[row.purpose][locale],
     },
     {
       id: "cases",
+      width: "w-[9%]",
       label: AGENCY_RULE_SETS.tableHead.cases[locale],
       sortable: true,
       className: "num",
@@ -85,6 +102,7 @@ export function RuleSetsTable({
     },
     {
       id: "documents",
+      width: "w-[11%]",
       label: OPS_CORRIDORS.tableHead.documents[locale],
       sortable: true,
       className: "num",
@@ -92,6 +110,7 @@ export function RuleSetsTable({
     },
     {
       id: "fee",
+      width: "w-[12%]",
       label: AGENCY_RULE_SETS.tableHead.fee[locale],
       cell: (row) =>
         row.governmentFeeMinor == null ? (
@@ -105,6 +124,7 @@ export function RuleSetsTable({
     },
     {
       id: "version",
+      width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.version[locale],
       sortable: true,
       cell: (row) => (
@@ -120,6 +140,7 @@ export function RuleSetsTable({
     },
     {
       id: "checked",
+      width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.lastChecked[locale],
       cell: (row) => {
         // The same verdict the platform console prints, from the same

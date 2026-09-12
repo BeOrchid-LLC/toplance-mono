@@ -36,7 +36,12 @@ export type Counter = {
  *
  * `columns` is the widest the grid ever goes. Four is the common case;
  * the dashboard's money and operations rows want five, and five tiles in
- * an `lg:grid-cols-4` grid drop one onto a row of its own.
+ * a four-column grid drop one onto a row of its own.
+ *
+ * The steps are container queries, not viewport ones. `lg:grid-cols-5`
+ * fired at a 1024px *window*, which inside the console rail is 726px of
+ * actual row — 145px a tile. Measured on the row itself, five columns
+ * arrive at 896px and each tile gets 179px or better.
  */
 export function CounterRow({
   counters,
@@ -48,29 +53,53 @@ export function CounterRow({
   className?: string;
 }) {
   return (
-    <div className={cn("mt-8 overflow-hidden rounded-lg border border-border bg-surface", className)}>
+    <div
+      className={cn(
+        "@container/row mt-8 overflow-hidden rounded-lg border border-border bg-surface",
+        className
+      )}
+    >
       <dl
         className={cn(
-          "relative z-[1] grid sm:grid-cols-2",
-          columns === 3 && "lg:grid-cols-3",
-          columns === 4 && "lg:grid-cols-4",
-          columns === 5 && "lg:grid-cols-5"
+          "relative z-[1] grid @md/row:grid-cols-2",
+          columns === 3 && "@4xl/row:grid-cols-3",
+          columns === 4 && "@4xl/row:grid-cols-4",
+          columns === 5 && "@4xl/row:grid-cols-5"
         )}
       >
         {counters.map((c, i) => (
           <div
             key={c.label}
             className={cn(
-              "border-border px-5 py-5",
-              "border-b sm:[&:nth-last-child(-n+2)]:border-b-0 lg:border-b-0",
-              i < counters.length - 1 && "lg:border-e",
-              i % 2 === 0 && "sm:border-e"
+              "@container/tile min-w-0 border-border px-5 py-5",
+              "border-b @md/row:[&:nth-last-child(-n+2)]:border-b-0 @4xl/row:border-b-0",
+              i < counters.length - 1 && "@4xl/row:border-e",
+              i % 2 === 0 && "@md/row:border-e"
             )}
           >
             <dt className="tag">{c.label}</dt>
+            {/* Sized against the tile, not the window. Five tiles in a
+                969px console are 194px wide, which leaves 154px inside
+                the padding — and `$14,100.00` set at 32px is 198px, so
+                three of the ops dashboard's five money figures used to
+                run past their own divider and collide with the next
+                tile's. The steps are keyed to `@container/tile`, so a
+                figure gets its full size exactly when its own cell can
+                hold it, whatever the row decided about columns.
+
+                200px is that arithmetic and not a round number: it is
+                the 198px `$14,100.00` occupies at 32px, which is the
+                widest figure this product prints. It is compared
+                against the tile's *content* box, because that is what a
+                container query measures — the `px-5` is already
+                subtracted, so this threshold is the room the figure
+                actually gets and not the tile it sits in. The ops
+                dashboard's four-across row clears it at 206px and keeps
+                32px; the five-across money row has 156px and steps down
+                rather than overflowing. */}
             <dd
               className={cn(
-                "num mt-2 text-[32px] font-semibold leading-none",
+                "num mt-2 text-[22px] @min-[165px]/tile:text-[26px] @min-[200px]/tile:text-[32px] font-semibold leading-none",
                 c.tone ?? "text-ink"
               )}
             >

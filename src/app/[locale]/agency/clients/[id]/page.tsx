@@ -230,7 +230,14 @@ export default async function AgencyCasePage({
           traveller's name across two lines and stand the head up at 384
           pixels. 340px is the width at which the name fits on one line
           again. */}
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[auto_1fr] xl:grid-cols-[minmax(0,1fr)_420px]">
+      {/* No `xl:` step widening the desk to 420px. `xl` is a 1280px
+          *window*, and inside the rail that is still a ~969px row, so
+          the extra 80px came straight out of the file: crossing 1280
+          took the case column from 604px to 525px and it did not get
+          back to 604 until about 1360. The paragraph above picked 340px
+          against the space this grid actually has, which does not
+          change when the window does. */}
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[auto_1fr]">
         {/* The same identity sheet the traveller's own profile opens
             with — the reviewer is looking at the same person, so the
             case head reads the same way on both sides of the desk. */}

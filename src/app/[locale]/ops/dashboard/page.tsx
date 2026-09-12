@@ -574,6 +574,12 @@ function Demand({ data }: { data: DashboardData }) {
           {/* Beside Top destinations rather than below the fold: the two
               answer the same question from opposite ends — where demand
               went, and where it had nowhere to go. */}
+          {/* "Asked for, not built", and deliberately not "Most
+              requested routes": the list holds only the routes nobody
+              has built — a heavily-requested corridor that is live
+              never appears, which a "most requested" heading would
+              contradict — and /ops/corridors captions the identical
+              metric under this same name. */}
           <PanelHeader label="Asked for, not built" />
           <PanelBody>
             {/* The caption came with the panel from `/ops/corridors` on

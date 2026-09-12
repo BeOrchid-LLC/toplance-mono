@@ -217,7 +217,10 @@ export default async function OpsTenantPage({
           </div>
           {tenant.domain && <p className="t-muted mt-2">{tenant.domain}</p>}
 
-          <CounterRow counters={counters} />
+          {/* Five counters, so the row has to be told five — the
+              default is four, and the fifth landed on a line of its
+              own beside three empty cells. */}
+          <CounterRow counters={counters} columns={5} />
 
           {/* Searchable, at the client's request on 8 September — she
               asked for it on every table, and an agency that has been

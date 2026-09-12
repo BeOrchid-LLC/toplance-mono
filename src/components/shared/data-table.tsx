@@ -42,7 +42,53 @@ export type DataColumn<T> = {
   sortable?: boolean;
   /** Right-aligns the column — for an actions cell or a bare number. */
   align?: "end";
+  /**
+   * A width hint for this column, as a literal Tailwind class —
+   * `"w-[22%]"`, `"w-[120px]"`. Written out rather than interpolated
+   * because Tailwind scans source for whole class names.
+   *
+   * A hint, not a rule. The table sizes columns to their content
+   * (`table-auto`), so this is the width the column prefers when there
+   * is room to honour it, and a column whose content will not fit
+   * takes what it needs regardless. That is deliberate, and it is the
+   * difference between this and the `table-fixed` version it replaced
+   * on 2026-09-12: under `table-fixed` a 15% actions column was 151px
+   * whatever was in it, and the 394px of buttons in `/ops/support`
+   * spilled out across its neighbours. See `ui/table.tsx`.
+   *
+   * So: give the text columns hints, and leave an actions column
+   * without one. Percentages need not total 100 and are not checked —
+   * they are a statement about relative emphasis, and the browser
+   * settles the rest.
+   *
+   * A column that truncates needs a ceiling as well — see `ceiling`.
+   */
+  width?: string;
   className?: string;
+  /**
+   * The ceiling a truncating column truncates against, as a literal
+   * Tailwind class — `"max-w-[260px]"`.
+   *
+   * Why it is needed at all: `truncate` is `white-space: nowrap` plus
+   * `overflow: hidden`, and only the second half does anything in a
+   * content-sized table. The first half makes the content's preferred
+   * width the whole unbroken string, which is the width the column then
+   * asks for. One enquiry whose address carried an invitation token took
+   * the Who column to 624px and pushed the table off a 1680px monitor,
+   * with `truncate` on it the whole time. The ceiling is the thing it
+   * truncates against.
+   *
+   * Why it is its own field and not a `className`: `DataTable` puts it
+   * on a block wrapper *inside* the cell, because `max-width` on a
+   * `td`/`th` is undefined in CSS 2.1 auto table layout and Firefox
+   * ignores it there (Bugzilla 823483) — a ceiling on the cell holds in
+   * Chrome, silently does nothing in Firefox, and the Chromium-only
+   * Playwright sweep cannot tell the difference. On a block box inside
+   * the cell the clamp is specified behaviour everywhere: the cell's
+   * min-content contribution is the wrapper's, and the wrapper's is
+   * capped by its `max-width`.
+   */
+  ceiling?: string;
   /** Hides the header text from sight but keeps it for a screen reader. */
   labelHidden?: boolean;
   cell: (row: T) => ReactNode;
@@ -282,12 +328,12 @@ export function DataTable<T>({
                     dir={dir}
                     basePath={basePath}
                     params={params}
-                    className={c.className}
+                    className={cn(c.width, c.className)}
                   />
                 ) : (
                   <TableHead
                     key={c.id}
-                    className={cn(c.align === "end" && "text-end", c.className)}
+                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
                   >
                     {/* An actions column has a header for a screen reader
                         and nothing for an eye — the buttons name
@@ -307,9 +353,13 @@ export function DataTable<T>({
                 {columns.map((c) => (
                   <TableCell
                     key={c.id}
-                    className={cn(c.align === "end" && "text-end", c.className)}
+                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
                   >
-                    {c.cell(row)}
+                    {c.ceiling ? (
+                      <div className={c.ceiling}>{c.cell(row)}</div>
+                    ) : (
+                      c.cell(row)
+                    )}
                   </TableCell>
                 ))}
               </TableRow>

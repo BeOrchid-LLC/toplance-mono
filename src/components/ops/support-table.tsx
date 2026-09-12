@@ -88,11 +88,14 @@ export function SupportTable({
   const columns: DataColumn<SupportRequestRow>[] = [
     {
       id: "agency",
+      width: "w-[16%]",
+      ceiling: "max-w-[220px]",
       label: OPS_SUPPORT.tableHead.agency[locale],
       cell: (r) => (
         <Link
           href={`/ops/tenants/${r.orgId}`}
-          className="font-semibold text-brand-text hover:underline"
+          title={r.orgName ?? undefined}
+          className="block truncate font-semibold text-brand-text hover:underline"
         >
           {r.orgName ?? "—"}
         </Link>
@@ -100,6 +103,8 @@ export function SupportTable({
     },
     {
       id: "subject",
+      width: "w-[26%]",
+      ceiling: "max-w-[340px]",
       label: OPS_SUPPORT.tableHead.subject[locale],
       cell: (r) => (
         <>
@@ -110,7 +115,8 @@ export function SupportTable({
               request. */}
           <Link
             href={`/ops/support/${r.id}`}
-            className="t-title block font-semibold text-brand-text hover:underline"
+            title={r.subject}
+            className="t-title block truncate font-semibold text-brand-text hover:underline"
           >
             {r.subject}
           </Link>
@@ -128,12 +134,14 @@ export function SupportTable({
     },
     {
       id: "raised",
+      width: "w-[12%]",
       label: OPS_SUPPORT.tableHead.raised[locale],
       className: "t-muted",
       cell: (r) => r.createdAt.toISOString().slice(0, 10),
     },
     {
       id: "state",
+      width: "w-[12%]",
       label: OPS_SUPPORT.tableHead.state[locale],
       cell: (r) => (
         <Badge variant={STATE_VARIANT[r.state]}>{STATE_LABEL[r.state][locale]}</Badge>
@@ -141,12 +149,17 @@ export function SupportTable({
     },
     {
       id: "assignee",
+      width: "w-[14%]",
       label: OPS_SUPPORT.tableHead.assignee[locale],
       className: "t-muted",
       cell: (r) => r.assigneeName ?? OPS_SUPPORT.unassigned[locale],
     },
     {
       id: "actions",
+      // No width hint: this cell is three buttons that cannot shrink or
+      // wrap, so it takes what they measure and the rest of the table
+      // shares what is left. Giving it 15% is what put them on top of
+      // the Status and Assignee cells — see `ui/table.tsx`.
       label: OPS_SUPPORT.tableHead.actions[locale],
       labelHidden: true,
       align: "end",

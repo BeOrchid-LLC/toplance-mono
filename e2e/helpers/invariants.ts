@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 
 /**
- * The three invariants the wayfinding sweep asserts, in one place.
+ * The six invariants the wayfinding sweep asserts, in one place.
  *
  * They were written inside `sweep.spec.ts`, which covers the five routes
  * a signed-out visitor can reach. The console routes — 28 of them, and
@@ -21,10 +21,42 @@ import type { Page } from "@playwright/test";
  *      the palette's declared pairs clear their floors; it cannot know
  *      which token a component actually put on which ground. This
  *      measures what the browser painted.
+ *   4. Nothing a table overflows by is unreachable, at 1280px. The
+ *      first three all run at 390px, and three of them could have run
+ *      at 390px forever without noticing that the consoles break on the
+ *      laptops they are read on. See `LAPTOP`.
+ *   5. No cell paints outside itself, at 1280px. Invariant 4 asks
+ *      whether the *table* fits its panel; this asks whether each
+ *      *cell* fits its column, which is a different question and the
+ *      one that was being got wrong. See `measureCellSpill`.
+ *   6. A select is wide enough to show the value it holds, at 1280px.
+ *      The failure invariant 5 cannot see, because it is the opposite
+ *      shape: a control that clips *inside* itself paints nothing
+ *      anywhere it should not, and reads as an empty chevron. See
+ *      `measureControlFit`.
  */
 
 /** 390px is an iPhone 12/13/14 mini and the floor the spec names. */
 export const NARROW = { width: 390, height: 844 };
+
+/**
+ * A 13-inch laptop, and the width this sweep was blind to until
+ * 2026-09-12.
+ *
+ * Everything above measures one width, and at 390px a console table is
+ * *fine*: it gets its min-width floor and scrolls sideways honestly, so
+ * `scrolls` catches nothing and the page reports clean. The band where
+ * these screens are actually read — 1024px to about 1400px, where the
+ * rail has taken 248px but the breakpoints still think they have the
+ * whole window — was measured by nobody, and on the author's own
+ * 1680px monitor everything fits.
+ *
+ * What broke there does not move the document one pixel sideways, which
+ * is why invariant 1 cannot see it: the damage is inside a `w-full`
+ * table whose columns shrink to min-content and wrap. One row of
+ * `/agency/rule-sets` was 81px at 1680px and 202px at 1024px.
+ */
+export const LAPTOP = { width: 1280, height: 800 };
 
 export type Violation = { route: string; detail: string };
 
@@ -32,10 +64,20 @@ export type Invariants = {
   mirrored: Violation[];
   overflow: Violation[];
   contrast: Violation[];
+  unreachable: Violation[];
+  spilled: Violation[];
+  squeezed: Violation[];
 };
 
 export function emptyInvariants(): Invariants {
-  return { mirrored: [], overflow: [], contrast: [] };
+  return {
+    mirrored: [],
+    overflow: [],
+    contrast: [],
+    unreachable: [],
+    spilled: [],
+    squeezed: [],
+  };
 }
 
 /**
@@ -269,4 +311,187 @@ export async function measureInvariants(
     });
   }
   for (const d of found.low.slice(0, 4)) into.contrast.push({ route: path, detail: d });
+}
+
+
+/**
+ * Invariant 4: at a laptop width, anything a table overflows by can be
+ * scrolled to.
+ *
+ * This used to assert the opposite — that no table wanted more width
+ * than its panel had — and it was written when the answer to a table
+ * that did want more was to squeeze it with `table-fixed`. That answer
+ * is gone. A console table now sizes its columns to their content and
+ * the wrapper scrolls under it, deliberately and with the client's
+ * agreement, because `/ops/support` ends in 394px of buttons that
+ * cannot be made narrower and a percentage column cannot be made to
+ * hold them. See `ui/table.tsx` for that decision.
+ *
+ * So overflow is no longer the failure. Overflow nobody can reach is:
+ * a table wider than its box, inside a box that does not scroll, is a
+ * column of data silently cut off the side of the screen. That is the
+ * one outcome worse than a scrollbar, and it is what this now measures.
+ *
+ * Deliberately not an assertion about row height. Two lines in a cell
+ * can be the design — `/ops/staff` puts a name over an address on
+ * purpose — so height tells you something is tall without telling you
+ * whether anyone meant it.
+ */
+export async function measureTableFit(
+  page: Page,
+  { path, into }: { path: string; into: Invariants }
+): Promise<void> {
+  const stuck = await page.evaluate(() => {
+    const out: string[] = [];
+    for (const table of document.querySelectorAll("table")) {
+      const box = (table.closest("[data-slot=table-container]") ??
+        table.parentElement) as HTMLElement | null;
+      if (!box || !box.clientWidth) continue;
+
+      const wants = table.getBoundingClientRect().width;
+      const has = box.clientWidth;
+      // A pixel or two is rounding, not an overflow.
+      if (wants <= has + 2) continue;
+
+      // It overflows. The only question is whether the reader can get
+      // to the rest of it: the box has to both admit the overflow and
+      // be allowed to scroll it.
+      const axis = getComputedStyle(box).overflowX;
+      const scrollable = box.scrollWidth > box.clientWidth + 2;
+      if (scrollable && (axis === "auto" || axis === "scroll")) continue;
+
+      const heads = [...table.querySelectorAll("thead th")]
+        .map((th) => (th as HTMLElement).innerText.trim().split(/\s+/)[0])
+        .join(" · ");
+      out.push(
+        `${Math.round(wants - has)}px past a ${Math.round(has)}px box that ` +
+          `does not scroll (overflow-x: ${axis}) — ${heads}`
+      );
+    }
+    return out;
+  });
+
+  for (const detail of stuck) into.unreachable.push({ route: path, detail });
+}
+
+export async function measureCellSpill(
+  page: Page,
+  { path, into }: { path: string; into: Invariants }
+): Promise<void> {
+  const spills = await page.evaluate(() => {
+    const out: string[] = [];
+    for (const cell of document.querySelectorAll("tbody td")) {
+      const box = cell.getBoundingClientRect();
+      if (!box.width) continue;
+
+      // Element children and bare text nodes both. A `whitespace-nowrap`
+      // date lands in its `td` with no wrapper at all — an element-only
+      // walk has nothing to measure there, and a nowrap text node
+      // painting across its neighbour is exactly the overlap this
+      // invariant exists to catch. A Range is what can put a rect on a
+      // text node.
+      const contents: { rect: DOMRect; what: string }[] = [];
+      for (const node of cell.childNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const el = node as HTMLElement;
+          const rect = el.getBoundingClientRect();
+          if (rect.width) {
+            contents.push({ rect, what: el.innerText?.trim().slice(0, 40) || el.tagName });
+          }
+        } else if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          const rect = range.getBoundingClientRect();
+          if (rect.width) {
+            contents.push({ rect, what: node.textContent.trim().slice(0, 40) });
+          }
+        }
+      }
+
+      for (const { rect, what } of contents) {
+        const past = Math.max(box.left - rect.left, rect.right - box.right);
+        if (past > 2) {
+          const col = [...(cell.parentElement?.children ?? [])].indexOf(cell);
+          // The cell's own table, not the document: /ops/staff and
+          // /agency/team stack two tables with different column sets,
+          // and a document-wide th list would label a spill in the
+          // second with a column name from the first.
+          const head = cell.closest("table")?.querySelectorAll("thead th")[col] as
+            | HTMLElement
+            | undefined;
+          const name = head?.innerText.trim() || `column ${col + 1}`;
+          out.push(
+            `"${name}" cell is ${Math.round(box.width)}px, content spills ` +
+              `${Math.round(past)}px past it — ${what}`
+          );
+        }
+      }
+    }
+    // One route can repeat the same cell down ten rows; the reader needs
+    // the shape of it, not ten copies.
+    return [...new Set(out)];
+  });
+
+  for (const detail of spills) into.spilled.push({ route: path, detail });
+}
+
+/**
+ * Invariant 6: a select in a table row is wide enough to show the value
+ * it holds.
+ *
+ * This is the failure the other five cannot see. It moves nothing
+ * sideways (1), paints nothing outside its cell (5), and the table
+ * around it can fit its box perfectly (4) — a select clips its own text
+ * *inside* its own border, silently, and what survives is a chevron
+ * with no words: a control whose current value is a secret.
+ *
+ * How it happens is specific to the content-sized table. `table-auto`
+ * gives a column what its content asks for — but a `w-full` control
+ * asks for nothing, because "100% of my cell" resolves against the very
+ * width being decided. The Assignee column of `/ops/enquiries` measured
+ * only its shrink-0 "Assign to me" button, and the flex row beside it
+ * squeezed the select to 34px: selects, unlike text, have no automatic
+ * minimum in a flex row.
+ *
+ * The floor asserted is the *selected* option, not the widest one. The
+ * widest is the tidier build-time answer, but it fails rows a reader
+ * can read perfectly well; what is actually broken is a value on screen
+ * that is not on screen. The probe is a clone of the select holding
+ * only that option, sized to `width: auto` — the width the browser
+ * itself says those words need in that font, chrome and padding
+ * included.
+ */
+export async function measureControlFit(
+  page: Page,
+  { path, into }: { path: string; into: Invariants }
+): Promise<void> {
+  const clipped = await page.evaluate(() => {
+    const out: string[] = [];
+    for (const select of document.querySelectorAll<HTMLSelectElement>("tbody select")) {
+      const chosen = select.options[select.selectedIndex];
+      if (!chosen) continue;
+
+      const probe = select.cloneNode(false) as HTMLSelectElement;
+      probe.appendChild(chosen.cloneNode(true));
+      // Inline, so it wins over the `w-full` the clone carried along.
+      probe.style.cssText =
+        "position:absolute;visibility:hidden;width:auto;min-width:0;max-width:none";
+      select.parentElement?.appendChild(probe);
+      const needs = probe.getBoundingClientRect().width;
+      probe.remove();
+
+      const has = select.getBoundingClientRect().width;
+      if (has + 2 < needs) {
+        out.push(
+          `select "${select.getAttribute("aria-label") ?? select.name}" is ` +
+            `${Math.round(has)}px, its value "${chosen.text}" needs ${Math.round(needs)}px`
+        );
+      }
+    }
+    // The same select repeats down every row of a queue; one copy names
+    // the shape of it.
+    return [...new Set(out)];
+  });
+
+  for (const detail of clipped) into.squeezed.push({ route: path, detail });
 }

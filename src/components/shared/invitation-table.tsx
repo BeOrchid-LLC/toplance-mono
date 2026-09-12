@@ -72,6 +72,11 @@ export function InvitationTable({
       id: "person",
       label: OPS_STAFF.tableHead.person[locale],
       sortable: true,
+      // The same ceiling `ColleaguesTable` puts on the same data one
+      // panel up: an invitation is addressed to exactly the kind of
+      // 50+ character tokenised address that makes `truncate` inert
+      // without one — the column's min-content is the whole string.
+      ceiling: "max-w-[280px]",
       cell: (invite) => (
         <>
           <p className="t-title truncate" title={invite.email}>

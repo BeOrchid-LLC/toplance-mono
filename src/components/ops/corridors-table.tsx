@@ -56,28 +56,41 @@ export function CorridorsTable({
   const columns: DataColumn<CorridorRow>[] = [
     {
       id: "route",
+      width: "w-[26%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
       sortable: true,
-      cell: (row) => (
-        <>
-          <Link
-            href={`/ops/corridors/${row.id}`}
-            className="font-semibold text-brand-text hover:underline"
-          >
-            {countryName(row.nationalityIso)} → {countryName(row.destinationIso)}
-          </Link>
-          <span className="t-muted block">{row.visaName}</span>
-        </>
-      ),
+      // Same ceiling, same reason as `rule-sets-table`'s route column:
+      // a country pair is one unbroken string, and `truncate` without
+      // a ceiling is inert in the content-sized table.
+      ceiling: "max-w-[300px]",
+      cell: (row) => {
+        const route = `${countryName(row.nationalityIso)} → ${countryName(row.destinationIso)}`;
+        return (
+          <>
+            <Link
+              href={`/ops/corridors/${row.id}`}
+              title={route}
+              className="block truncate font-semibold text-brand-text hover:underline"
+            >
+              {route}
+            </Link>
+            <span className="t-muted block truncate" title={row.visaName}>
+              {row.visaName}
+            </span>
+          </>
+        );
+      },
     },
     {
       id: "purpose",
+      width: "w-[11%]",
       label: OPS_CORRIDORS.tableHead.purpose[locale],
       sortable: true,
       cell: (row) => OPS_COMMON.purpose[row.purpose][locale],
     },
     {
       id: "version",
+      width: "w-[10%]",
       label: OPS_CORRIDORS.tableHead.version[locale],
       sortable: true,
       className: "num",
@@ -85,6 +98,7 @@ export function CorridorsTable({
     },
     {
       id: "state",
+      width: "w-[19%]",
       label: OPS_CORRIDORS.tableHead.state[locale],
       sortable: true,
       cell: (row) => (
@@ -100,6 +114,7 @@ export function CorridorsTable({
     },
     {
       id: "documents",
+      width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.documents[locale],
       sortable: true,
       cell: (row) => (
@@ -110,6 +125,7 @@ export function CorridorsTable({
     },
     {
       id: "checked",
+      width: "w-[17%]",
       label: OPS_CORRIDORS.tableHead.lastChecked[locale],
       sortable: true,
       cell: (row) => {

@@ -79,6 +79,9 @@ export function ClientsTable({
       id: "client",
       label: "Client",
       className: "w-[30%]",
+      // The ceiling the `truncate` below truncates against — inert
+      // without one in the content-sized table. See `DataColumn`.
+      ceiling: "max-w-[280px]",
       cell: (client) => (
         <>
           <span className="t-title block truncate">{client.name}</span>

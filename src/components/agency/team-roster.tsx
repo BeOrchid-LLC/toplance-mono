@@ -106,15 +106,20 @@ export function TeamRoster({
               <TableRow key={member.userId}>
                 <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                 <TableCell>
-                  <span
-                    className="block truncate font-semibold"
-                    title={member.email}
-                  >
-                    {member.fullName || member.email}
-                  </span>
-                  {member.fullName && (
-                    <span className="special block truncate">{member.email}</span>
-                  )}
+                  {/* The ceiling the truncates inside need: on a block
+                      wrapper, not the cell, because Firefox ignores
+                      `max-width` on a `td` — see `DataColumn.ceiling`. */}
+                  <div className="max-w-[280px]">
+                    <span
+                      className="block truncate font-semibold"
+                      title={member.email}
+                    >
+                      {member.fullName || member.email}
+                    </span>
+                    {member.fullName && (
+                      <span className="special block truncate">{member.email}</span>
+                    )}
+                  </div>
                 </TableCell>
 
                 <TableCell className="t-muted">

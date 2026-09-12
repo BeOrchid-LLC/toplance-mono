@@ -1082,3 +1082,51 @@
   0%, 70%, 100% { opacity: 1; }
   20%, 50% { opacity: 0; }
 }
+
+/* ---------- the table's scrollbar ----------
+   Painted by the product, not left to the platform. A console table
+   sizes its columns to their content and scrolls under the wrapper when
+   the panel is narrower than the data — decided 2026-09-12, see
+   `ui/table.tsx` — and that decision only works if a reader can tell
+   the table scrolls. On a machine set to overlay scrollbars (macOS
+   default, and every touch-device emulation) the platform bar is
+   invisible until the reader is already scrolling, so a column sitting
+   past the right edge announces itself with nothing at all.
+
+   Styling `::-webkit-scrollbar` is what opts a Chromium/WebKit scroll
+   box out of overlay rendering; the sizes and colours are almost
+   secondary to that. The thumb is `--border-strong`, the token whose
+   whole job is to be an edge that clears 3:1 on the surfaces it sits
+   on, and the track stays transparent so the bar reads as belonging to
+   the rows, not as a band of chrome under them. `background-color`
+   rather than the shorthand, because the shorthand would reset the
+   `background-clip` that keeps the thumb inside its 2px gutter.
+
+   Firefox never supported the `::-webkit-scrollbar` family, so it gets
+   the standard properties under `@supports not` — Chromium ignores
+   `::-webkit-scrollbar` styling entirely whenever `scrollbar-width` or
+   `scrollbar-color` is set on the same box, so the two schemes have to
+   be mutually exclusive rather than layered. */
+[data-slot="table-container"]::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+[data-slot="table-container"]::-webkit-scrollbar-track,
+[data-slot="table-container"]::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+[data-slot="table-container"]::-webkit-scrollbar-thumb {
+  background-color: var(--border-strong);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+[data-slot="table-container"]::-webkit-scrollbar-thumb:hover {
+  background-color: var(--ink-3);
+}
+@supports not selector(::-webkit-scrollbar) {
+  [data-slot="table-container"] {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+}

@@ -3,10 +3,46 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Client override, locked: 13px floor inside data tables only, and no
- * horizontal scroll on desktop. Columns set explicit widths and truncate
- * with a title attribute; below 900px the wrapper scrolls, because on a
- * phone that is the honest behaviour.
+ * Client override, locked: 13px floor inside data tables only. Columns
+ * truncate long text with a title attribute rather than wrapping it.
+ *
+ * The rule used to end "and no horizontal scroll on desktop". It was
+ * overridden on 2026-09-12, by the person who set it, because the
+ * console had grown a row of controls it cannot honour: `/ops/support`
+ * ends in Chat + Assign to me + Mark resolved, which measure 394px
+ * together, and the 15% column they were given is 151px at the panel
+ * width a 1366px laptop leaves. Nothing about that is a styling choice
+ * — 394 does not fit in 151 — so the only question was which way it
+ * broke. It broke silently: `td` is `overflow: visible` and the buttons
+ * are `shrink-0 whitespace-nowrap`, so instead of clipping or scrolling
+ * they painted leftward across the Status and Assignee cells and sat on
+ * top of them. Measured at 1180px, 1018px, 900px, 800px and 700px of
+ * panel, the overlap was there at every one.
+ *
+ * So the table now sizes its columns to their content and the wrapper
+ * scrolls under it. Content sizing is what does the work: a column is
+ * never narrower than what is in it, so the buttons get their width
+ * before anything else is shared out, at every viewport measured.
+ *
+ * The floor under it stays `max-lg:min-w-[720px]`, and only below `lg`.
+ * An unconditional 900px floor shipped here briefly and did the
+ * opposite of its job: content sizing already hands a wide table its
+ * width — `/ops/support` wants 1015px, `/ar/ops/enquiries` 1737px,
+ * floor or no floor — so the only tables a blanket floor ever bound
+ * were the small rosters on `/agency/team`, stretched over empty
+ * columns to 900px and handed a permanent sideways scroll in the
+ * 1024–1180px windows where the rail leaves the panel less than that.
+ * Below `lg` the floor earns its keep: a phone-width panel could
+ * otherwise squeeze a table of all-truncatable columns toward nothing.
+ * A table that needs its own floor passes `min-w-[…]`; `twMerge` drops
+ * this one.
+ *
+ * One thing this replaced, worth not reinventing: `table-fixed` with
+ * percentage columns. It makes text truncate predictably, which is why
+ * it was tried, but a percentage is a share of whatever is left and a
+ * button is a fixed number of pixels. Under it the action column is
+ * squeezed and its contents overflow, which is the bug above. Content
+ * sizing gets the buttons their width first and shares the rest.
  *
  * The wrapper also caps its height at `--table-max-h` and scrolls the
  * rows inside it. A page of 10 rows was taller than a laptop viewport,
@@ -16,8 +52,7 @@ import { cn } from "@/lib/utils";
  * which sits above the table, stays on screen while the rows move under
  * it. `overflow-auto`, not `overflow-y-auto`: a single scrollable axis
  * promotes the other one out of `visible` anyway, so asking for both is
- * the honest spelling — and on desktop the columns fit, so no
- * horizontal bar appears.
+ * the honest spelling.
  *
  * That scroll box also clips anything painted outside it, which is why
  * `SortHead` draws its focus ring inward. A header sitting at the top of
@@ -25,6 +60,11 @@ import { cn } from "@/lib/utils";
  * the cap or dropping `overflow-auto` here is a change to how the
  * console's 15 sort headers indicate focus — the reasoning, and what was
  * measured, is in `shared/sort-head.tsx`.
+ *
+ * The scrollbars themselves are painted in `globals.css`, keyed on
+ * `data-slot="table-container"`: an overlay scrollbar is invisible
+ * until the reader is already scrolling, and a table that scrolls
+ * sideways by design needs to say so before it is touched.
  */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -75,7 +115,21 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
         // inside a `Panel`: the header band stops short of the panel's
         // own edge, leaving a notch of card behind each corner rather
         // than one clean rule across the table.
-        "special-caps h-[var(--row-h)] whitespace-nowrap bg-surface-2 px-4 text-start align-middle",
+        // Not `whitespace-nowrap`. A header that cannot wrap sets its
+        // column's floor at the width of the whole phrase, and in a
+        // console table the widest phrases sit over the narrowest data:
+        // "YOUR CASES" held 134px open above a column of single digits,
+        // while the route beside it wrapped its country pair across
+        // three lines to pay for it. Wrapping is opportunistic — the
+        // browser only takes the second line when the column is
+        // genuinely too narrow for one — and `--row-h` has room for two
+        // lines of caps at this size, so nothing moves on a wide screen.
+        // A label that wraps past two lines — a four-word header in a
+        // wrapping locale over a narrow column — grows the header row
+        // past `--row-h`, and `SortHead`'s link grows with it rather
+        // than staying a fixed 44px band inside a taller cell; the
+        // `min-h` note there is the other half of this one.
+        "special-caps h-[var(--row-h)] bg-surface-2 px-4 text-start align-middle",
         // Sticks to the top of the scrolling wrapper, so scrolling the
         // rows never leaves a reader guessing which column is which.
         // The rule under the band is an inset shadow rather than a

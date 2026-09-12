@@ -10,12 +10,18 @@ import {
 import {
   activateOrganisation,
   approveApplicationFor,
+  clearDemoRequest,
   promoteToStaff,
+  seedDemoRequest,
   seedInvitation,
 } from "./helpers/db";
 import {
   emptyInvariants,
+  LAPTOP,
+  measureCellSpill,
+  measureControlFit,
   measureInvariants,
+  measureTableFit,
   NARROW,
   pathFor,
   report,
@@ -177,7 +183,27 @@ async function sweepRoutes(
           await page.waitForTimeout(250);
           if (page.url() === before) break;
         }
-        await page.waitForLoadState("load");
+        /*
+         * Bounded, because `load` can fail to arrive for the same
+         * reason `networkidle` does.
+         *
+         * The note above rejects `networkidle` as a wait that can never
+         * finish behind Clerk's session refresh. `load` is a weaker
+         * claim but not a safe one: it still waits on every subresource,
+         * and one that stalls takes the whole 900s budget with it. The
+         * sweep spent two consecutive 19-minute runs parked here on
+         * `/agency/clients`, on a page the failure snapshot shows fully
+         * rendered — the heading, the table and all.
+         *
+         * What the measurement actually needs is the redirect settled,
+         * and the loop above has already established that. So this is
+         * an optimisation on top of it: take the quiet page if it comes
+         * quickly, and measure anyway if it does not. Five seconds is
+         * comfortably above what a settled console route takes locally
+         * and far below the point where the budget is the thing being
+         * reported.
+         */
+        await page.waitForLoadState("load", { timeout: 5_000 }).catch(() => {});
 
         const landed = new URL(page.url()).pathname;
         if (/\/sign-in|\/sign-up/.test(landed)) {
@@ -191,6 +217,58 @@ async function sweepRoutes(
           dir,
           into: found,
         });
+
+        /**
+         * Then the same page at a laptop width, for invariants 4–6.
+         *
+         * A resize rather than a second navigation: the route is already
+         * loaded and settled, and re-walking the redirect chain per
+         * route would roughly double the sweep for one cheap
+         * measurement. Back to `NARROW` afterwards so the next
+         * iteration measures the width the other three invariants are
+         * written against.
+         *
+         * Guarded, because these evaluates run seconds after the settle
+         * loop above and the same background navigation it exists for —
+         * a Clerk session refresh — can still land in that window and
+         * destroy the execution context. Unguarded, one such throw near
+         * the end of the sweep discarded every violation accumulated
+         * over the preceding ~30 routes and failed the whole 15–30
+         * minute run. So: one retry after re-settling, and a failure
+         * after that is *recorded* rather than thrown — a lost
+         * measurement reported by name, not a lost run. The viewport
+         * restore lives in `finally` for the same reason: without it a
+         * failure here would leave every following route measured at
+         * the wrong width.
+         */
+        const laptopPath = `${path} [${theme}]`;
+        const measureLaptop = async () => {
+          await measureTableFit(page, { path: laptopPath, into: found });
+          await measureCellSpill(page, { path: laptopPath, into: found });
+          await measureControlFit(page, { path: laptopPath, into: found });
+        };
+        await page.setViewportSize(LAPTOP);
+        try {
+          try {
+            await measureLaptop();
+          } catch {
+            for (let i = 0; i < 10; i++) {
+              const before = page.url();
+              await page.waitForTimeout(250);
+              if (page.url() === before) break;
+            }
+            await measureLaptop();
+          }
+        } catch (error) {
+          found.unreachable.push({
+            route: laptopPath,
+            detail: `laptop measurement lost, twice: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+        } finally {
+          await page.setViewportSize(NARROW);
+        }
       }
     }
   }
@@ -206,6 +284,21 @@ function assertInvariants(
   expect.soft(found.mirrored, `wrong direction:\n${report(found.mirrored)}`).toEqual([]);
   expect.soft(found.overflow, `overflows 390px:\n${report(found.overflow)}`).toEqual([]);
   expect.soft(found.contrast, `under the contrast floor:\n${report(found.contrast)}`).toEqual([]);
+  expect
+    .soft(
+      found.unreachable,
+      `overflow that cannot be scrolled to at 1280px:\n${report(found.unreachable)}`
+    )
+    .toEqual([]);
+  expect
+    .soft(found.spilled, `cells painting outside themselves at 1280px:\n${report(found.spilled)}`)
+    .toEqual([]);
+  expect
+    .soft(
+      found.squeezed,
+      `selects too narrow to show their value at 1280px:\n${report(found.squeezed)}`
+    )
+    .toEqual([]);
 }
 
 test("the agency console holds its invariants at 390px, both themes, LTR and RTL", async ({
@@ -240,9 +333,30 @@ test("the platform console holds its invariants at 390px, both themes, LTR and R
   // four copies of the refusal screen and report them green.
   await promoteToStaff(OPS_EMAIL, "owner");
 
-  await page.setViewportSize(NARROW);
-  const { found, bounced } = await sweepRoutes(page, OPS_ROUTES);
-  assertInvariants(found, bounced);
+  /*
+   * One enquiry, so that `/ops/enquiries` has a row.
+   *
+   * Every queue this account can reach is empty on a fresh sign-up, and
+   * an empty table renders its empty state — a sentence in a panel, with
+   * no columns and no controls in them. The sweep was therefore
+   * measuring the one shape of this screen that cannot exhibit the
+   * failures invariants 4 and 5 are about: the buttons that overflowed
+   * their column on `/ops/support` only exist next to a row. Green on an
+   * empty table is not evidence about a full one.
+   *
+   * A demo request is the cheapest row with an action cell in it —
+   * `seedDemoRequest` is one insert, and the Status select, the Assign
+   * control and `ProvisionTenant` all render beside it.
+   */
+  const enquiryId = await seedDemoRequest(OPS_ORG);
+
+  try {
+    await page.setViewportSize(NARROW);
+    const { found, bounced } = await sweepRoutes(page, OPS_ROUTES);
+    assertInvariants(found, bounced);
+  } finally {
+    await clearDemoRequest(enquiryId);
+  }
 });
 
 test("the traveller's screens hold their invariants at 390px, both themes, LTR and RTL", async ({

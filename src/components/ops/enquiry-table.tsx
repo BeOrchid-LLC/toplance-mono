@@ -22,18 +22,35 @@ import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 /**
  * The design system has no `<select>`, so this stands in for one —
  * copied from `src/components/site/demo-dialog.tsx` rather than
- * imported from it.
+ * imported from it, with two deliberate differences.
  *
- * `--row-h` rather than the `--control-h` that `Input` uses, which is
- * the one deliberate difference from that copy. 52px is the height of
- * a control in a *form*, where it is one of a short stack somebody is
- * filling in. These two sit inside a `DataTable` cell, beside a 44px
- * `size="sm"` button, and at 52px they stood taller than every
- * neighbour and made one row of a table look like a form. Row controls
- * share the row's height.
+ * `--row-h` rather than the `--control-h` that `Input` uses. 52px is
+ * the height of a control in a *form*, where it is one of a short
+ * stack somebody is filling in. These two sit inside a `DataTable`
+ * cell, beside a 44px `size="sm"` button, and at 52px they stood
+ * taller than every neighbour and made one row of a table look like a
+ * form. Row controls share the row's height.
+ *
+ * And no `w-full`. In the form it fills a column whose width the form
+ * set; in the content-sized table (`ui/table.tsx`) the question runs
+ * the other way — the column asks its content how wide to be, and a
+ * `w-full` control answers "100% of you", which resolves to nothing.
+ * The Assignee column measured only its shrink-0 button and the flex
+ * row squeezed the select to a 34px chevron, its value unreadable.
+ * Left to its own width a native select asks for its widest option,
+ * which is the honest claim: the control gets its width before the
+ * text columns share what is left, same as the buttons do.
+ *
+ * Honest, but not unbounded. The status select's options are four
+ * fixed words; the assignee select's are the staff roster, labelled
+ * `fullName || email` — the same unbounded data every text column in
+ * this table carries a ceiling against. One colleague whose label
+ * falls back to a long address would widen the unshrinkable Assignee
+ * column on every pending row, so that select carries the same kind
+ * of ceiling at the call site below.
  */
 const inputClass =
-  "h-[var(--row-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink";
+  "h-[var(--row-h)] rounded-md border border-border-strong bg-surface px-4 text-base text-ink";
 
 /**
  * The enquiries that have not become an agency yet.
@@ -164,28 +181,49 @@ export function EnquiryTable({
       columns={[
         {
           id: "who",
+          width: "w-[16%]",
+          // An invited address carries its invitation token, so these
+          // run to 50+ characters. `truncate` alone does not hold them:
+          // the column sizes to its content, and a `whitespace-nowrap`
+          // span's content is the whole address, so one enquiry pushed
+          // this column to 624px and the table past its panel on a
+          // 1680px monitor. The ceiling is what `truncate` truncates
+          // against — `ceiling`, not `className`, because Firefox
+          // ignores `max-width` on the cell itself; see `DataColumn`.
+          ceiling: "max-w-[260px]",
           label: t(OPS_ENQUIRIES.head.who),
           sortable: true,
           cell: (r) => (
             <>
-              <span className="font-semibold">{r.fullName}</span>
-              <span className="t-muted block">{r.email}</span>
+              <span className="block truncate font-semibold" title={r.fullName}>
+                {r.fullName}
+              </span>
+              <span className="t-muted block truncate" title={r.email}>
+                {r.email}
+              </span>
             </>
           ),
         },
         {
           id: "company",
+          width: "w-[12%]",
+          ceiling: "max-w-[200px]",
           label: t(OPS_ENQUIRIES.head.company),
           sortable: true,
           cell: (r) => (
             <>
-              {r.companyName}
-              <span className="t-muted block">{r.jobTitle}</span>
+              <span className="block truncate" title={r.companyName ?? undefined}>
+                {r.companyName}
+              </span>
+              <span className="t-muted block truncate" title={r.jobTitle ?? undefined}>
+                {r.jobTitle}
+              </span>
             </>
           ),
         },
         {
           id: "requested",
+          width: "w-[13%]",
           label: t(OPS_ENQUIRIES.head.requested),
           sortable: true,
           className: "t-muted",
@@ -200,6 +238,7 @@ export function EnquiryTable({
         },
         {
           id: "preferred",
+          width: "w-[14%]",
           label: t(OPS_ENQUIRIES.head.preferred),
           sortable: true,
           className: "t-muted",
@@ -219,6 +258,7 @@ export function EnquiryTable({
         },
         {
           id: "status",
+          width: "w-[10%]",
           label: t(OPS_ENQUIRIES.head.status),
           sortable: true,
           cell: (r) =>
@@ -249,6 +289,7 @@ export function EnquiryTable({
         },
         {
           id: "assignee",
+          width: "w-[16%]",
           label: t(OPS_ENQUIRIES.head.assignee),
           sortable: true,
           /**
@@ -267,10 +308,20 @@ export function EnquiryTable({
                 {r.assigneeName ?? t(OPS_ENQUIRIES.unassigned)}
               </span>
             ) : (
+              // Was `flex-wrap` with the button allowed to break its
+              // own label, because at a laptop width the select and the
+              // control wanted 190px in a 177px column. The column is
+              // no longer 177px — it is what this pair measures — so
+              // the compensation is gone with the squeeze that needed
+              // it.
               <div className="flex items-center gap-2">
                 <select
                   aria-label={t(OPS_ENQUIRIES.head.assignee)}
-                  className={inputClass}
+                  // The ceiling on the roster's unbounded labels — see
+                  // the `inputClass` note. On the control itself rather
+                  // than a wrapper: a select is not a table cell, so its
+                  // `max-width` holds in every browser.
+                  className={`${inputClass} max-w-[240px]`}
                   value={r.assigneeId ?? ""}
                   disabled={pending}
                   onChange={(e) =>
@@ -308,6 +359,7 @@ export function EnquiryTable({
         },
         {
           id: "action",
+          // No width hint — see the actions column in `support-table`.
           label: t(OPS_ENQUIRIES.head.action),
           align: "end",
           cell: (r) =>

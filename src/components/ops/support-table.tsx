@@ -162,9 +162,13 @@ export function SupportTable({
       // the Status and Assignee cells — see `ui/table.tsx`.
       label: OPS_SUPPORT.tableHead.actions[locale],
       labelHidden: true,
-      align: "end",
+      // Start-aligned, unlike the other action columns, because this is
+      // the one whose set changes per row: a resolved request keeps only
+      // Chat, and end-aligned that lone button sat at the far edge, out
+      // of line with the Chat that leads every other row. Chat is always
+      // first, so anchoring the column at its start edge lines them up.
       cell: (r) => (
-        <div className="flex justify-end gap-2">
+        <div className="flex gap-2">
           {/* Always first, and always present — including on a resolved
               request, where every other control is hidden and the row
               would otherwise have no way into the conversation at all.

@@ -78,10 +78,8 @@ export function EnquiryTable({
   viewerId,
   sort,
   dir,
-  params,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
   className,
 }: {
@@ -93,10 +91,8 @@ export function EnquiryTable({
   viewerId: string;
   sort: EnquirySort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
   className?: string;
 }) {
@@ -139,10 +135,7 @@ export function EnquiryTable({
       total={total}
       unfilteredTotal={unfilteredTotal}
       label={t(OPS_ENQUIRIES.panel)}
-      filteredLabel={filteredLabel}
-      countLabel=""
       basePath="/ops/enquiries"
-      params={params}
       sort={sort}
       dir={dir}
       pagination={pagination}

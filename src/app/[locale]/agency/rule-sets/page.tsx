@@ -14,7 +14,6 @@ import {
 } from "@/lib/domain/rule-set-table";
 import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
 import { getLocale } from "@/lib/i18n/server";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY_RULE_SETS } from "@/lib/i18n/agency-rule-sets";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
 
@@ -70,7 +69,6 @@ export default async function AgencyRuleSetsPage({
   // should not need a click to reach the top.
   const dir = readDir(params.dir, params.sort ? "asc" : "desc");
 
-  const filtered = Boolean(search.trim() || purpose);
 
   const visible = rows.filter(
     (r) => ruleSetMatchesPurpose(r, purpose ?? "") && ruleSetMatches(r, search)
@@ -112,17 +110,9 @@ export default async function AgencyRuleSetsPage({
         locale={locale}
         sort={sort}
         dir={dir}
-        params={params}
         purposes={purposes}
         total={sorted.length}
         unfilteredTotal={rows.length}
-        filteredLabel={
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(rows.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
       />
     </AgencyShell>

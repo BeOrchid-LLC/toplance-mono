@@ -20,8 +20,6 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
-import { fill } from "@/lib/i18n/fill";
 import {
   TENANT_SORTS,
   tenantMatches,
@@ -142,10 +140,6 @@ async function TenantsContent({
   // `?sort=agency` with no `dir` should still read A-Z, not Z-A.
   const dir = readDir(params.dir, sort === "added" ? "desc" : "asc");
 
-  // Any narrowing at all, however many rows survive it — the panel
-  // heading has to say "showing 3 of 104" whenever the reader is not
-  // looking at everything.
-  const narrowed = Boolean(search || state);
   const visible = tenants.filter((t) => tenantMatches(t, search, state));
   const sorted = sortRows(visible, (t) => tenantSortKey(t, sort), dir);
 
@@ -163,20 +157,11 @@ async function TenantsContent({
         rows={sorted.slice(start, end)}
         locale={locale}
         className="mt-8"
-        params={{ q: params.q, state: params.state, size: params.size }}
         sort={sort}
         dir={dir}
         total={sorted.length}
         unfilteredTotal={tenants.length}
         pagination={{ page, pageCount, size }}
-        filteredLabel={
-          narrowed
-            ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
-                shown: sorted.length,
-                total: tenants.length,
-              })
-            : undefined
-        }
       />
     </>
   );

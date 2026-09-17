@@ -34,23 +34,19 @@ export function CorridorsTable({
   locale,
   sort,
   dir,
-  params,
   purposes,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
 }: {
   rows: CorridorRow[];
   locale: Locale;
   sort: CorridorSort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   /** Every purpose present in the data, so the filter offers only real ones. */
   purposes: CorridorRow["purpose"][];
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
 }) {
   const columns: DataColumn<CorridorRow>[] = [
@@ -143,10 +139,7 @@ export function CorridorsTable({
       numbered
       columns={columns}
       label={OPS_CORRIDORS.allVersionsPanel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={OPS_CORRIDORS.rowsWord[locale]}
       basePath="/ops/corridors"
-      params={params}
       sort={sort}
       dir={dir}
       locale={locale}

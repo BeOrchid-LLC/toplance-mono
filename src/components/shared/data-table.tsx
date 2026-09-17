@@ -3,10 +3,8 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
-import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import { Pagination } from "@/components/shared/pagination";
-import { PageSizeSelect } from "@/components/shared/page-size-select";
+import { Panel, PanelBody } from "@/components/shared/panel";
+import { TablePager } from "@/components/shared/pagination";
 import { PAGE_SIZE_OPTIONS } from "@/lib/domain/sorting";
 import { rowOffset } from "@/lib/domain/row-number";
 import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
@@ -112,26 +110,22 @@ export type DataColumn<T> = {
  * Every console table, as one component.
  *
  * What it owns is the chrome that was copied six times: the panel and its
- * header, the "showing N of M" line, the row-count badge, the search and
- * filter row, the sort control, the column headers, the two different
- * empty states, and the pager. What each caller still owns is its columns
- * — the only part that was ever actually different.
+ * header, the search, filter and sort controls, the column headers, the
+ * two different empty states, and the pager. What each caller still owns
+ * is its columns — the only part that was ever actually different.
  *
- * Two bands above the rows, not four. Until 2026-09-09 the heading, the
- * search, and the paging controls each had a full-width row of their
- * own, so `/ops/dashboard` opened on three stacked rules with one
- * control apiece and a lot of empty space between them — the client
- * said so looking at the agencies table. They are now sorted by what
- * they are for. The header names the sheet and carries what changes
- * *which* rows are in it: the search, the filters, and any action that
- * makes one. The band under it describes the rows that resulted — how
- * many there are, how many to show at a time, and where in them the
- * reader is standing.
+ * One band above the rows. Until 2026-09-09 the heading, the search and
+ * the paging controls each had a full-width row; then two, a header with
+ * the search and a second band with the row count, a rows-per-page
+ * select and "Page 1 of 5". The client's review of 17 September asked
+ * for one, taking Gmail's as the model: the title at the start, the
+ * filters and sort beside it, the search in the middle, and the pager
+ * — "1–25 of 104" with its arrows — at the far end. The row count went
+ * with the second band, at the client's word: the `#` column already
+ * counts the rows, and the pager's range says how many there are.
  *
- * That band appears only where it has a control to hold. A table showing
- * everything it holds already answers "how many" with its own rows, so
- * its count stays a `Badge` beside the heading rather than gaining a
- * rule and a strip of chrome to repeat what is on screen.
+ * Below `lg` there is not room for one row, so the search takes a line
+ * of its own under the title and pager rather than squeezing them.
  *
  * The two empty states are not the same message and must not be merged.
  * "Nobody has been invited yet" is a fact about the product; "nothing
@@ -145,11 +139,7 @@ export function DataTable<T>({
   columns,
   numbered = false,
   label,
-  filteredLabel,
-  countLabel,
-  count,
   basePath = "",
-  params = {},
   sort = "",
   dir = "asc",
   toolbar,
@@ -174,25 +164,15 @@ export function DataTable<T>({
    * a plan, a card — does not gain a column of 1.
    */
   numbered?: boolean;
-  /** Panel heading. Names the sheet, and does not move when a filter does. */
-  label: string;
   /**
-   * What the count line says while a filter is on — usually
-   * "Showing 12 of 96".
-   *
-   * It replaced the heading until 2026-09-09, which meant typing in the
-   * search box renamed the panel and took the table's own name off the
-   * screen. It now replaces the count instead, which is the thing a
-   * filter actually changes.
+   * Panel heading. Names the sheet, and does not move when a filter
+   * does — a search that renamed the panel took the table's own name off
+   * the screen.
    */
-  filteredLabel?: string;
-  /** The word after the number in the badge. Defaults to "rows"; "" for a bare number. */
-  countLabel?: string;
-  /** Badge number, when it is not the row count — a live total that excludes expired rows, say. */
-  count?: number;
-  /** Only needed by a table that sorts, filters or pages — the URL it writes. */
+  label: string;
+  /** The page's own address, for the "clear the filters" way out. */
   basePath?: string;
-  params?: Record<string, string | undefined>;
+  /** The order the page sorted the rows in — what the sort control shows. */
   sort?: string;
   dir?: SortDir;
   toolbar?: { placeholder: string; filters: ToolbarFilter[] };
@@ -205,24 +185,22 @@ export function DataTable<T>({
   /** Shown when the table holds nothing at all. */
   empty: ReactNode;
   /**
-   * One control at the end of the panel header, after the count badge.
+   * One control in the header, just before the pager.
    *
    * For the action that makes a row in *this* table and nothing else —
    * `/ops/staff`'s "Invite a colleague", which sat in the console bar
    * until 2026-09-08 and named a thing three screens away from the list
-   * it fills. `PanelHeader` calls its right-hand slot one datum about
-   * the sheet; a button that adds to the sheet is that, where a page-wide
-   * export or a filter would not be.
+   * it fills. A page-wide export or a filter would not belong here.
    */
   action?: ReactNode;
   /**
-   * A note under the table, in the band the pager would use.
+   * A note under the table.
    *
    * For a fact about the rows that are *not* here — the ops dashboard
    * counts its dormant clients rather than listing them, and that
    * sentence has to sit inside the panel or it reads as a caption
    * belonging to whatever comes next on the page. Not a place for
-   * controls: the pager is the row above the table, not below this one.
+   * controls: the pager is in the header.
    */
   footer?: ReactNode;
   className?: string;
@@ -242,21 +220,17 @@ export function DataTable<T>({
   // has just emptied the table — that is the moment the reader most
   // needs the control that did it, and the way out below.
   const showToolbar = Boolean(toolbar) && !isEmpty;
-  // Below the smallest option every choice shows the same rows, so the
-  // select would be a control that does nothing.
-  const showSize = Boolean(pagination) && total > PAGE_SIZE_OPTIONS[0];
-  // The band earns its rule when it has a control in it. A table that
-  // fits on one page at the smallest size has neither pager nor select,
-  // and its count goes back to the badge — a whole row for one figure
-  // over a list the reader can already see the end of is the chrome
-  // this change set out to remove.
-  //
-  // Above the rows, not below them. The pager sat under the table until
-  // 2026-09-08, which on a long page put the only way to page below a
-  // screen of header and a screen of rows — far enough down that a
-  // reader took the first page for the whole table.
-  const showMeta =
-    !isEmpty && !isNoMatch && (showSize || (pagination?.pageCount ?? 0) > 1);
+
+  // The pager earns its place when it has something to do: another page
+  // to go to, or a rows-per-page choice that would change what is shown.
+  // At or under the smallest page size every choice shows the same rows,
+  // and a single page has nowhere to go — then the rows on screen are
+  // the whole answer and the header carries no pager at all.
+  const showPager =
+    Boolean(pagination) &&
+    !isEmpty &&
+    !isNoMatch &&
+    ((pagination?.pageCount ?? 0) > 1 || total > PAGE_SIZE_OPTIONS[0]);
 
   const sortOptions = buildSortOptions(columns, locale);
   const toolbarSort =
@@ -268,60 +242,44 @@ export function DataTable<T>({
         }
       : undefined;
 
-  const countLine = filteredLabel ?? (
-    <>
-      <span className="num">{count ?? total}</span>{" "}
-      {countLabel ?? ADMIN_CONSOLE.rowsWord[locale]}
-    </>
-  );
-
   return (
     <Panel className={className}>
-      <PanelHeader
-        label={label}
-        // The header holds a 36px-tall field once it carries the search,
-        // so its rows need room to breathe when they wrap under `sm`.
-        className={showToolbar ? "gap-x-6 gap-y-3 py-3" : undefined}
-        aside={
+      {/* `PanelHeader`'s anatomy — same height, padding and rule — laid
+          out as one row of its own, because `PanelHeader` holds a label
+          and one datum and this holds up to four groups. */}
+      <div className="flex min-h-[60px] flex-wrap items-center gap-x-4 gap-y-3 border-b border-border px-5 py-3 sm:px-6">
+        <h2 className="t-title">{label}</h2>
+        {toolbar && showToolbar && (
+          <TableToolbar
+            placeholder={toolbar.placeholder}
+            filters={toolbar.filters}
+            sort={toolbarSort}
+          />
+        )}
+        {(action || (pagination && showPager)) && (
           <div
             className={cn(
-              "flex items-center gap-3",
-              // A definite width, so the search inside can be `flex-1`
-              // and still have something to be a fraction of.
-              showToolbar ? "w-full sm:w-auto sm:min-w-[320px] sm:flex-1" : "justify-end"
+              // Pushed to the end. From `lg` the search's own auto
+              // margins do that and centre the search, so this one
+              // steps aside rather than taking a third share of the
+              // space and pulling the search off-centre.
+              "ms-auto flex items-center gap-3",
+              showToolbar && "lg:ms-0"
             )}
           >
-            {toolbar && showToolbar && (
-              <TableToolbar
-                placeholder={toolbar.placeholder}
-                filters={toolbar.filters}
-                sort={toolbarSort}
-                className="min-w-0 flex-1"
+            {action}
+            {pagination && showPager && (
+              <TablePager
+                page={pagination.page}
+                pageCount={pagination.pageCount}
+                size={pagination.size}
+                total={total}
+                locale={locale}
               />
             )}
-            {/* No paging band to put it in, so the count keeps the slot
-                `PanelHeader` calls one datum about the sheet. */}
-            {!showMeta && <Badge variant="outline">{countLine}</Badge>}
-            {action}
           </div>
-        }
-      />
-
-      {pagination && showMeta && (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border px-5 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            <p className="t-muted whitespace-nowrap">{countLine}</p>
-            {showSize && <PageSizeSelect size={pagination.size} locale={locale} />}
-          </div>
-          <Pagination
-            page={pagination.page}
-            pageCount={pagination.pageCount}
-            basePath={basePath}
-            params={params}
-            locale={locale}
-          />
-        </div>
-      )}
+        )}
+      </div>
 
       {isEmpty ? (
         <PanelBody>{empty}</PanelBody>

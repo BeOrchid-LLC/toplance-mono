@@ -27,7 +27,6 @@ export const AGENCY_RULE_SETS: {
   heading: L;
   intro: L;
   panel: L;
-  routesWord: L;
   empty: L;
   searchPlaceholder: L;
   tableHead: { cases: L; fee: L };
@@ -87,18 +86,6 @@ export const AGENCY_RULE_SETS: {
     ar: "المسارات التي تقدّم عليها",
     tw: "Akwan a wode nkrataa hyɛ so",
     zu: "Izindlela ofaka kuzo izicelo",
-  },
-  routesWord: {
-    en: "routes",
-    ha: "hanyoyi",
-    yo: "ipa ọ̀nà",
-    ig: "ụzọ",
-    fr: "itinéraires",
-    pt: "rotas",
-    sw: "njia",
-    ar: "مسارات",
-    tw: "akwan",
-    zu: "izindlela",
   },
   empty: {
     en: "No rule sets yet. One appears here as soon as a client's case resolves a route.",

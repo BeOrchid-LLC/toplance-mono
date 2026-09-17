@@ -22,16 +22,14 @@ export const ADMIN_CONSOLE: {
   expandMenu: L;
   openMenu: L;
   menuTitle: L;
-  showingTemplate: L;
-  rowsWord: L;
   ordinalHeading: L;
   noMatch: L;
   clearFilters: L;
   pagesLabel: L;
   rowsPerPage: L;
-  pageOfTemplate: L;
   previousPage: L;
   nextPage: L;
+  rangeTemplate: L;
   sortLabel: L;
   sortAsc: L;
   sortDesc: L;
@@ -107,19 +105,6 @@ export const ADMIN_CONSOLE: {
     tw: "Adwumayɛbea menu",
     zu: "Imenyu yendawo yokusebenzela",
   },
-  /** `{shown}` and `{total}` are literal markers the call site replaces. */
-  showingTemplate: {
-    en: "Showing {shown} of {total}",
-    ha: "Ana nuna {shown} daga {total}",
-    yo: "Ń fi {shown} nínú {total} hàn",
-    ig: "Na-egosi {shown} n'ime {total}",
-    fr: "Affichage de {shown} sur {total}",
-    pt: "A mostrar {shown} de {total}",
-    sw: "Inaonyesha {shown} kati ya {total}",
-    ar: "عرض {shown} من {total}",
-    tw: "Ɛreda {shown} wɔ {total} mu adi",
-    zu: "Kukhonjiswa {shown} kwangu-{total}",
-  },
   /**
    * The ordinal column's heading.
    *
@@ -138,18 +123,6 @@ export const ADMIN_CONSOLE: {
     ar: "#",
     tw: "#",
     zu: "#",
-  },
-  rowsWord: {
-    en: "rows",
-    ha: "layuka",
-    yo: "ìlà",
-    ig: "ahịrị",
-    fr: "lignes",
-    pt: "linhas",
-    sw: "safu",
-    ar: "صفوف",
-    tw: "nsɔre",
-    zu: "imigqa",
   },
   noMatch: {
     en: "Nothing here matches this search.",
@@ -200,19 +173,6 @@ export const ADMIN_CONSOLE: {
     tw: "Nkrataafa",
     zu: "Amakhasi",
   },
-  /** `{page}` and `{pages}` are literal markers the call site replaces. */
-  pageOfTemplate: {
-    en: "Page {page} of {pages}",
-    ha: "Shafi {page} na {pages}",
-    yo: "Ojú ìwé {page} nínú {pages}",
-    ig: "Peeji {page} n'ime {pages}",
-    fr: "Page {page} sur {pages}",
-    pt: "Página {page} de {pages}",
-    sw: "Ukurasa {page} kati ya {pages}",
-    ar: "صفحة {page} من {pages}",
-    tw: "Krataafa {page} wɔ {pages} mu",
-    zu: "Ikhasi {page} kwangu-{pages}",
-  },
   previousPage: {
     en: "Previous page",
     ha: "Shafin da ya gabata",
@@ -236,6 +196,23 @@ export const ADMIN_CONSOLE: {
     ar: "الصفحة التالية",
     tw: "Krataafa a edi so",
     zu: "Ikhasi elilandelayo",
+  },
+  /**
+   * The pager's range, Gmail's way: "26–50 of 104". `{start}`, `{end}`
+   * and `{total}` are literal markers the call site replaces; see
+   * `pageRange`. It is also the button that opens the rows-per-page menu.
+   */
+  rangeTemplate: {
+    en: "{start}–{end} of {total}",
+    ha: "{start}–{end} daga {total}",
+    yo: "{start}–{end} nínú {total}",
+    ig: "{start}–{end} n'ime {total}",
+    fr: "{start}–{end} sur {total}",
+    pt: "{start}–{end} de {total}",
+    sw: "{start}–{end} kati ya {total}",
+    ar: "{start}–{end} من {total}",
+    tw: "{start}–{end} wɔ {total} mu",
+    zu: "{start}–{end} kwangu-{total}",
   },
   /**
    * The accessible name of a table's sort control. Never shown: the

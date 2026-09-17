@@ -19,7 +19,6 @@ import {
   readAssigneeFilter,
 } from "@/lib/domain/enquiry-table";
 import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 import { getLocale } from "@/lib/i18n/server";
 import {
@@ -106,9 +105,6 @@ export default async function OpsEnquiriesPage({
   // `?sort=who` with no `dir` should still read A-Z, not Z-A.
   const dir = readDir(params.dir, sort === "requested" ? "desc" : "asc");
 
-  // Any narrowing at all, however many rows survive it — the same test
-  // `/ops/staff` and `/ops/corridors` use.
-  const filtered = Boolean(search || params.status || params.assignee);
 
   const visible = enquiries.filter((row) => {
     if (params.status && row.status !== params.status) return false;
@@ -149,16 +145,8 @@ export default async function OpsEnquiriesPage({
         viewerId={actor.userId}
         sort={sort}
         dir={dir}
-        params={params}
         total={sorted.length}
         unfilteredTotal={enquiries.length}
-        filteredLabel={
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(enquiries.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
       />
     </AdminShell>

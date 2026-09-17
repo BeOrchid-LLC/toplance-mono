@@ -118,7 +118,6 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
         total={tenant.members_.length}
         unfilteredTotal={tenant.members_.length}
         label={t(OPS_TENANTS.rosterPanel)}
-        countLabel=""
         columns={[
           {
             id: "person",

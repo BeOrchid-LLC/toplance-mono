@@ -45,15 +45,12 @@ export function ClientsTable({
   money,
   currency,
   locale,
-  totalClients,
   dormant,
-  params,
   sort,
   dir,
   total,
   unfilteredTotal,
   pagination,
-  filteredLabel,
   searchPlaceholder,
 }: {
   /** The clients with activity. The dormant tail is counted, not listed. */
@@ -62,16 +59,12 @@ export function ClientsTable({
   money: Record<string, ClientMoney>;
   currency: string;
   locale: Locale;
-  /** Every client, dormant ones included — the badge's figure. */
-  totalClients: number;
   dormant: number;
-  params?: Record<string, string | undefined>;
   sort?: string;
   dir?: "asc" | "desc";
   total?: number;
   unfilteredTotal?: number;
   pagination?: { page: number; pageCount: number; size: number };
-  filteredLabel?: string;
   searchPlaceholder?: string;
 }) {
   const columns: DataColumn<ClientRow>[] = [
@@ -174,14 +167,10 @@ export function ClientsTable({
       numbered
       columns={columns}
       label="Agencies"
-      filteredLabel={filteredLabel}
-      count={totalClients}
-      countLabel="agencies"
       locale={locale}
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       basePath="/ops/dashboard"
-      params={params}
       sort={sort}
       dir={dir}
       pagination={pagination}

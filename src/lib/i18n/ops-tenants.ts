@@ -24,7 +24,6 @@ export const OPS_TENANTS: {
     openEnquiries: { label: L; sub: L };
   };
   tenantsPanel: L;
-  agenciesWord: L;
   searchPlaceholder: L;
   anyStatus: L;
   inviteSearchPlaceholder: L;
@@ -304,18 +303,6 @@ export const OPS_TENANTS: {
     ar: "كل الحالات",
     tw: "Tebea nyinaa",
     zu: "Zonke izimo",
-  },
-  agenciesWord: {
-    en: "agencies",
-    ha: "hukumomi",
-    yo: "àwọn ilé-iṣẹ́",
-    ig: "ụlọ ọrụ",
-    fr: "agences",
-    pt: "agências",
-    sw: "mawakala",
-    ar: "الوكالات",
-    tw: "adwumakuo",
-    zu: "ama-ejensi",
   },
   emptyTenants: {
     en: "No agency has been created yet. Create one from an enquiry below, or start from scratch.",

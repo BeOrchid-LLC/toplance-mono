@@ -25,7 +25,6 @@ export const OPS_KYB: {
   heading: L;
   intro: L;
   queuePanel: L;
-  agenciesWord: L;
   emptyQueue: L;
   searchPlaceholder: L;
   anyStanding: L;
@@ -98,18 +97,6 @@ export const OPS_KYB: {
     ar: "قائمة انتظار التحقق",
     tw: "Nhwehwɛmu santen",
     zu: "Ulayini wokuqinisekisa",
-  },
-  agenciesWord: {
-    en: "agencies",
-    ha: "hukumomi",
-    yo: "àwọn ilé-iṣẹ́",
-    ig: "ụlọ ọrụ",
-    fr: "agences",
-    pt: "agências",
-    sw: "mawakala",
-    ar: "وكالات",
-    tw: "adwumakuo",
-    zu: "ama-ejensi",
   },
   emptyQueue: {
     en: "No agencies yet. One appears here the moment it is provisioned.",

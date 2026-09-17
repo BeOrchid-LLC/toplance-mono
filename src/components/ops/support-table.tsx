@@ -47,22 +47,18 @@ export function SupportTable({
   locale,
   viewerId,
   className,
-  params,
   total,
   unfilteredTotal,
   pagination,
-  filteredLabel,
 }: {
   rows: SupportRequestRow[];
   locale: Locale;
   /** Who is looking, so the queue can offer "hand back" on their own rows. */
   viewerId: string;
   className?: string;
-  params?: Record<string, string | undefined>;
   total?: number;
   unfilteredTotal?: number;
   pagination?: { page: number; pageCount: number; size: number };
-  filteredLabel?: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
@@ -227,12 +223,9 @@ export function SupportTable({
       columns={columns}
       locale={locale}
       label={OPS_SUPPORT.panel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={OPS_SUPPORT.requestsWord[locale]}
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       basePath="/ops/support"
-      params={params}
       pagination={pagination}
       toolbar={{
         placeholder: OPS_SUPPORT.searchPlaceholder[locale],

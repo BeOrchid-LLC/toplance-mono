@@ -34,23 +34,19 @@ export function RuleSetsTable({
   locale,
   sort,
   dir,
-  params,
   purposes,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
 }: {
   rows: AgencyRuleSetRow[];
   locale: Locale;
   sort: RuleSetSort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   /** Every purpose present in this agency's own rows, so the filter offers only real ones. */
   purposes: AgencyRuleSetRow["purpose"][];
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
 }) {
   const columns: DataColumn<AgencyRuleSetRow>[] = [
@@ -163,10 +159,7 @@ export function RuleSetsTable({
       numbered
       columns={columns}
       label={AGENCY_RULE_SETS.panel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={AGENCY_RULE_SETS.routesWord[locale]}
       basePath="/agency/rule-sets"
-      params={params}
       sort={sort}
       dir={dir}
       locale={locale}

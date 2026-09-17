@@ -53,12 +53,10 @@ export function TableToolbar({
   placeholder = "Search…",
   filters = [],
   sort,
-  className,
 }: {
   placeholder?: string;
   filters?: ToolbarFilter[];
   sort?: ToolbarSort;
-  className?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -153,69 +151,80 @@ export function TableToolbar({
     write(next);
   }
 
-  return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {filters.map((f) => (
-        <div key={f.param} className="relative">
-          {/* Native select behind a styled face, per guideline §10: on a
-              phone this opens the system picker, which is faster and
-              already in the reader's own language. */}
-          <select
-            value={params.get(f.param) ?? ""}
-            onChange={(e) => setFilter(f.param, e.target.value)}
-            aria-label={f.label}
-            className={toolbarSelectClass}
-          >
-            <option value="">{f.label}</option>
-            {f.options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-            aria-hidden
-          />
-        </div>
-      ))}
+  const hasSort = Boolean(sort && sort.options.length > 0);
 
-      {sort && sort.options.length > 0 && (
-        <div className="relative">
-          {/* The icon says what the control is; the face says which
-              order is on. A "Sort" placeholder option would be a choice
-              that does nothing, since a table is always in some order. */}
-          <ArrowDownUp
-            className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-            aria-hidden
-          />
-          <select
-            value={sort.value}
-            onChange={(e) => setSort(e.target.value)}
-            aria-label={sort.label}
-            className={cn(toolbarSelectClass, "ps-8")}
-          >
-            {sort.options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-            aria-hidden
-          />
+  // Two pieces, not one box: `DataTable` lays its header out as a single
+  // row — title, then these controls, then the search in the middle, then
+  // the pager at the far end — and a wrapper here would put the search
+  // and the filters in one flex item where the row cannot place them
+  // apart. The fragment hands both straight to that row.
+  return (
+    <>
+      {(filters.length > 0 || hasSort) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {filters.map((f) => (
+            <div key={f.param} className="relative">
+              {/* Native select behind a styled face, per guideline §10: on a
+                  phone this opens the system picker, which is faster and
+                  already in the reader's own language. */}
+              <select
+                value={params.get(f.param) ?? ""}
+                onChange={(e) => setFilter(f.param, e.target.value)}
+                aria-label={f.label}
+                className={toolbarSelectClass}
+              >
+                <option value="">{f.label}</option>
+                {f.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+                aria-hidden
+              />
+            </div>
+          ))}
+
+          {sort && hasSort && (
+            <div className="relative">
+              {/* The icon says what the control is; the face says which
+                  order is on. A "Sort" placeholder option would be a choice
+                  that does nothing, since a table is always in some order. */}
+              <ArrowDownUp
+                className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+                aria-hidden
+              />
+              <select
+                value={sort.value}
+                onChange={(e) => setSort(e.target.value)}
+                aria-label={sort.label}
+                className={cn(toolbarSelectClass, "ps-8")}
+              >
+                {sort.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+                aria-hidden
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Last in the row, pushed to the far end. `ms-auto` rather than
-          `justify-end` on the container so only the search moves: the
-          filters stay left, against the columns they name. Logical, so it
-          lands on the left in Arabic with the rest of the layout.
-
-          Only from `sm`. Below that the row wraps, `flex-1` gives the
-          field the full width, and an auto margin would just add a gap. */}
-      <div className="relative min-w-0 flex-1 sm:ms-auto sm:max-w-[360px]">
+      {/* In the middle of the header, the way Gmail centres its search:
+          the client asked for it there on 17 September. From `lg` it
+          grows up to 360px and its auto margins split what is left, so
+          it sits halfway between the filters and the pager. Below `lg`
+          there is not room for one row, so it drops to a line of its
+          own at full width (`order-last basis-full`) and the title and
+          pager keep the first. Logical margins, so Arabic mirrors it. */}
+      <div className="relative order-last min-w-0 basis-full lg:order-none lg:mx-auto lg:min-w-[10rem] lg:max-w-[360px] lg:flex-1 lg:basis-0">
         <Search
           className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
           aria-hidden
@@ -229,6 +238,6 @@ export function TableToolbar({
           className="h-9 w-full rounded-[var(--radius-sm)] border border-border-strong bg-surface ps-9 pe-3 text-base text-ink placeholder:text-ink-3"
         />
       </div>
-    </div>
+    </>
   );
 }

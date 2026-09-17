@@ -29,7 +29,6 @@ import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/do
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
 import { opsAccount } from "@/app/[locale]/ops/account";
@@ -89,8 +88,6 @@ export default async function OpsCorridorsPage({
   const unverified = live.filter((r) => !r.lastVerifiedAt);
   const purposes = [...new Set(rows.map((r) => r.purpose))].sort();
 
-  // Any narrowing at all, however many rows survive it.
-  const filtered = Boolean(search || state || purpose);
 
   const visible = rows.filter((r) => {
     if (state && !corridorMatchesState(r, state)) return false;
@@ -206,21 +203,9 @@ export default async function OpsCorridorsPage({
         locale={locale}
         sort={sort}
         dir={dir}
-        params={params}
         purposes={purposes}
         total={sorted.length}
         unfilteredTotal={rows.length}
-        filteredLabel={
-          // Whether the reader narrowed the list, not whether the counts
-          // happen to agree. A filter that matches every row still
-          // filtered — calling that "All versions" tells somebody the
-          // search box is empty when it is not.
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(rows.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
       />
     </AdminShell>

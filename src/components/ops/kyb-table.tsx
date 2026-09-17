@@ -37,10 +37,8 @@ export function KybTable({
   className,
   sort,
   dir,
-  params,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
 }: {
   rows: KybQueueRow[];
@@ -48,10 +46,8 @@ export function KybTable({
   className?: string;
   sort?: KybSort;
   dir?: SortDir;
-  params?: Record<string, string | undefined>;
   total?: number;
   unfilteredTotal?: number;
-  filteredLabel?: string;
   pagination?: { page: number; pageCount: number; size: number };
 }) {
   const columns: DataColumn<KybQueueRow>[] = [
@@ -133,10 +129,7 @@ export function KybTable({
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       label={OPS_KYB.queuePanel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={OPS_KYB.agenciesWord[locale]}
       basePath="/ops/kyb"
-      params={params}
       sort={sort}
       dir={dir}
       pagination={pagination}

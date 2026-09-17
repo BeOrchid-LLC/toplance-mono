@@ -47,10 +47,8 @@ export function InvitationTable({
   locale,
   sort,
   dir,
-  params,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
   resendAction,
   revokeAction,
@@ -59,10 +57,8 @@ export function InvitationTable({
   locale: Locale;
   sort: StaffSort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
   resendAction: (formData: FormData) => Promise<ResendResult>;
   revokeAction: (formData: FormData) => Promise<RevokeResult>;
@@ -140,9 +136,7 @@ export function InvitationTable({
       numbered
       columns={columns}
       label={OPS_STAFF.invitesPanel[locale]}
-      filteredLabel={filteredLabel}
       basePath="/ops/staff"
-      params={params}
       sort={sort}
       dir={dir}
       locale={locale}

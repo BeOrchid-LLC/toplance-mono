@@ -22,7 +22,6 @@ export const OPS_CORRIDORS: {
     notBuilt: { label: L; sub: L };
   };
   allVersionsPanel: L;
-  rowsWord: L;
   emptyPrefix: L;
   emptyMiddle: L;
   tableHead: {
@@ -198,18 +197,6 @@ export const OPS_CORRIDORS: {
     ar: "جميع الإصدارات",
     tw: "Nsakraeɛ nyinaa",
     zu: "Zonke izinguqulo",
-  },
-  rowsWord: {
-    en: "rows",
-    ha: "layuka",
-    yo: "àwọn ìlà",
-    ig: "ahịrị",
-    fr: "lignes",
-    pt: "linhas",
-    sw: "safu mlalo",
-    ar: "صفوف",
-    tw: "nkyekyɛmu",
-    zu: "imigqa",
   },
   /** Followed by the literal `npm run db:seed` and `scripts/draft-corridor.mts`. */
   emptyPrefix: {

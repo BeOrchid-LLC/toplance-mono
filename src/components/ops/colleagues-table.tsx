@@ -45,10 +45,8 @@ export function ColleaguesTable({
   viewerId,
   locale,
   className,
-  params,
   total,
   unfilteredTotal,
-  filteredLabel,
 }: {
   /** The colleagues left after the toolbar, already filtered. */
   rows: StaffColleague[];
@@ -63,10 +61,8 @@ export function ColleaguesTable({
   viewerId: string;
   locale: Locale;
   className?: string;
-  params?: Record<string, string | undefined>;
   total?: number;
   unfilteredTotal?: number;
-  filteredLabel?: string;
 }) {
   const columns: DataColumn<StaffColleague>[] = [
     {
@@ -150,12 +146,10 @@ export function ColleaguesTable({
       numbered
       columns={columns}
       label={OPS_STAFF.colleaguesPanel[locale]}
-      filteredLabel={filteredLabel}
       locale={locale}
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       basePath="/ops/staff"
-      params={params}
       toolbar={{
         placeholder: OPS_STAFF.colleagueSearchPlaceholder[locale],
         filters: [

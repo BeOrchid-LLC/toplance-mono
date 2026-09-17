@@ -80,8 +80,6 @@ export function ClientRoster({
   sort,
   dir,
   basePath,
-  params,
-  count,
   total,
   unfilteredTotal,
   toolbar,
@@ -109,9 +107,6 @@ export function ClientRoster({
   sort?: ClientSort;
   dir?: SortDir;
   basePath?: string;
-  params?: Record<string, string | undefined>;
-  /** Overrides the badge figure when the list has been narrowed. */
-  count?: number;
   /**
    * Rows after filtering across every page, and rows before any filter.
    * Both default to what was handed in, which is right for the two
@@ -141,7 +136,6 @@ export function ClientRoster({
    */
   pagination?: { page: number; pageCount: number; size: number };
 }) {
-  const shown = count ?? total ?? rows.length;
   const sortable = sort !== undefined && dir !== undefined && basePath !== undefined;
 
   const columns: DataColumn<RosterRow>[] = [
@@ -278,10 +272,7 @@ export function ClientRoster({
       numbered
       columns={columns}
       label={label ?? AGENCY.yourClientsLabel[locale]}
-      count={shown}
-      countLabel={(shown === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
       basePath={basePath}
-      params={params}
       sort={sort}
       dir={dir}
       toolbar={toolbar}

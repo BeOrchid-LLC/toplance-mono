@@ -20,25 +20,21 @@ export function TenantsTable({
   rows,
   locale,
   className,
-  params,
   sort,
   dir,
   total,
   unfilteredTotal,
   pagination,
-  filteredLabel,
 }: {
   /** The current page of agencies: already filtered, sorted and sliced. */
   rows: TenantRow[];
   locale: Locale;
   className?: string;
-  params?: Record<string, string | undefined>;
   sort?: string;
   dir?: "asc" | "desc";
   total?: number;
   unfilteredTotal?: number;
   pagination?: { page: number; pageCount: number; size: number };
-  filteredLabel?: string;
 }) {
   const columns: DataColumn<TenantRow>[] = [
     {
@@ -130,10 +126,7 @@ export function TenantsTable({
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       label={OPS_TENANTS.tenantsPanel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={OPS_TENANTS.agenciesWord[locale]}
       basePath="/ops/tenants"
-      params={params}
       sort={sort}
       dir={dir}
       pagination={pagination}

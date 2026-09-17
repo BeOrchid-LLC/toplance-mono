@@ -23,7 +23,6 @@ import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { activeSubscription } from "@/lib/data/payments";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import { opsAccount } from "@/app/[locale]/ops/account";
 
@@ -136,7 +135,6 @@ export default async function OpsTenantPage({
   const query = await searchParams;
   const inviteSearch = (query.q ?? "").trim();
   const inviteKind = query.kind ?? "";
-  const invitesNarrowed = Boolean(inviteSearch || inviteKind);
   const visibleInvites = tenant.pendingInvites.filter((i) =>
     tenantInviteMatches(i, inviteSearch, inviteKind)
   );
@@ -231,19 +229,10 @@ export default async function OpsTenantPage({
           <TenantInvitesTable
             rows={visibleInvites}
             locale={locale}
-            pendingCount={tenant.pendingInvitations}
             className="mt-8"
             basePath={`/ops/tenants/${tenant.id}`}
-            params={{ q: query.q, kind: query.kind }}
             total={visibleInvites.length}
             unfilteredTotal={tenant.pendingInvites.length}
-            filteredLabel={
-              invitesNarrowed
-                ? ADMIN_CONSOLE.showingTemplate[locale]
-                    .replace("{shown}", String(visibleInvites.length))
-                    .replace("{total}", String(tenant.pendingInvites.length))
-                : undefined
-            }
           />
 
           <div className="mt-8 mb-16">

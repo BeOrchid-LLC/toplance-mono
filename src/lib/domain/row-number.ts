@@ -14,3 +14,20 @@ export function rowOffset(pagination?: { page: number; size: number }): number {
   if (!pagination) return 0;
   return Math.max(0, (pagination.page - 1) * pagination.size);
 }
+
+/**
+ * The rows a page shows, as the pager prints them: "26–50 of 104".
+ *
+ * Counted from `rowOffset`, so the range and the `#` column beside the
+ * rows can never disagree about where page two starts. The end stops at
+ * the total — the last page of 104 at 25 a page is "101–104", not
+ * "101–125" — and an empty list is "0–0" rather than "1–0".
+ */
+export function pageRange(
+  pagination: { page: number; size: number },
+  total: number
+): { start: number; end: number } {
+  if (total <= 0) return { start: 0, end: 0 };
+  const offset = rowOffset(pagination);
+  return { start: Math.min(offset + 1, total), end: Math.min(offset + pagination.size, total) };
+}

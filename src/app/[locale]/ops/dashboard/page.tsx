@@ -15,8 +15,6 @@ import { ClientsTable } from "@/components/ops/clients-table";
 import { DashboardTabs } from "@/components/ops/dashboard-tabs";
 import { openTabOf, opsClientMatches } from "@/lib/domain/ops-client-table";
 import { readPageSize, resolvePage } from "@/lib/domain/sorting";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
-import { fill } from "@/lib/i18n/fill";
 import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -390,7 +388,6 @@ function Clients({
       money={billed}
       currency={data.payments.currency}
       locale={locale}
-      totalClients={data.clients.length}
       // The dormant tail is a fact about every client, not about the
       // rows a search left behind, so it does not move when the reader
       // narrows the table. A footer that shrank with the search would
@@ -399,18 +396,9 @@ function Clients({
       searchPlaceholder="Search by agency"
       // `tab` rides along so the toolbar's own links come back to this
       // panel instead of dropping the reader on Overview.
-      params={{ tab: "clients", q: params.q, size: params.size }}
       total={visible.length}
       unfilteredTotal={active.length}
       pagination={{ page, pageCount, size }}
-      filteredLabel={
-        search
-          ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
-              shown: visible.length,
-              total: active.length,
-            })
-          : undefined
-      }
     />
   );
 }

@@ -402,8 +402,8 @@ export async function seedSubmittedCase(travellerName: string): Promise<SeededCa
     const orgId = await seedAgency(client);
 
     const { rows } = await client.query<{ id: string; case_ref: string }>(
-      `insert into applications (traveler_id, org_id, corridor_id, status, intake_complete, submitted_at)
-       values ($1, $2, $3, 'submitted', true, now())
+      `insert into applications (traveler_id, org_id, corridor_id, status, intake_complete, submitted_at, first_submitted_at)
+       values ($1, $2, $3, 'submitted', true, now(), now())
        returning id, case_ref`,
       [travellerId, orgId, corridorId]
     );
@@ -569,13 +569,14 @@ export async function approveApplicationFor(email: string): Promise<string> {
     const orgId = await seedAgency(client);
 
     const { rows } = await client.query<{ id: string }>(
-      `insert into applications (traveler_id, org_id, corridor_id, status, intake_complete, submitted_at, decided_at)
-       values ($1, $2, $3, 'approved', true, now(), now())
+      `insert into applications (traveler_id, org_id, corridor_id, status, intake_complete, submitted_at, first_submitted_at, decided_at)
+       values ($1, $2, $3, 'approved', true, now(), now(), now())
        on conflict (traveler_id) do update
          set corridor_id = excluded.corridor_id,
              status = 'approved',
              intake_complete = true,
              submitted_at = coalesce(applications.submitted_at, now()),
+             first_submitted_at = coalesce(applications.first_submitted_at, applications.submitted_at, now()),
              decided_at = now()
        returning id`,
       [travellerId, orgId, corridorId]

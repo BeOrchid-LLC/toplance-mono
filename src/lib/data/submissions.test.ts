@@ -166,6 +166,38 @@ describe.skipIf(!process.env.DATABASE_URL)("submitApplicationTx", async () => {
     expect(await statusOf()).toBe("submitted");
   });
 
+  it("keeps the first submission time when a case is resubmitted", async () => {
+    // `submitted_at` moves on a resubmission; `first_submitted_at` is what
+    // the ops dashboard's timeline counts from, and must not.
+    await expect(submitApplicationTx(applicationId)).resolves.toEqual({ ok: true });
+
+    const read = async () => {
+      const [row] = await db
+        .select({
+          submittedAt: applications.submittedAt,
+          firstSubmittedAt: applications.firstSubmittedAt,
+        })
+        .from(applications)
+        .where(eq(applications.id, applicationId));
+      return row;
+    };
+
+    const first = await read();
+    expect(first.firstSubmittedAt).not.toBeNull();
+    expect(first.firstSubmittedAt!.getTime()).toBe(first.submittedAt!.getTime());
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await db
+      .update(applications)
+      .set({ status: "additional_documents" })
+      .where(eq(applications.id, applicationId));
+    await expect(submitApplicationTx(applicationId)).resolves.toEqual({ ok: true });
+
+    const second = await read();
+    expect(second.submittedAt!.getTime()).toBeGreaterThan(first.submittedAt!.getTime());
+    expect(second.firstSubmittedAt!.getTime()).toBe(first.firstSubmittedAt!.getTime());
+  });
+
   it("refuses while a document the agency asked for is unverified", async () => {
     /**
      * This passes on the strength of code nobody changed, which is the

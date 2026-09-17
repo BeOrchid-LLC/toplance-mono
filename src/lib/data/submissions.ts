@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
 import { applications, documents, statusEvents } from "@/lib/db/schema";
@@ -71,9 +71,17 @@ export async function submitApplicationTx(
       };
     }
 
+    const submittedAt = new Date();
     await tx
       .update(applications)
-      .set({ status: "submitted", submittedAt: new Date() })
+      .set({
+        status: "submitted",
+        submittedAt,
+        // Written on the first submission only. A resubmission after a
+        // request for more documents moves `submittedAt` and leaves this
+        // where it was, so the timeline still counts from the first.
+        firstSubmittedAt: sql`coalesce(${applications.firstSubmittedAt}, ${submittedAt.toISOString()}::timestamptz)`,
+      })
       .where(eq(applications.id, applicationId));
 
     // Under RLS this insert was silently rejected — "staff write status

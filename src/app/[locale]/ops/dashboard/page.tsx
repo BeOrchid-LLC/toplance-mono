@@ -30,6 +30,7 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { track } from "@/lib/analytics/track";
 import { dashboardData, USAGE_WINDOW_DAYS, type DashboardData } from "@/lib/data/dashboard";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import { OVERDUE_AFTER_DAYS, formatTimelineDays } from "@/lib/domain/kpis";
 import { routeName } from "@/lib/domain/corridor-demand";
 import { formatMoney } from "@/lib/domain/pricing";
 import type { Invoice } from "@/lib/domain/payments";
@@ -49,11 +50,6 @@ export async function generateMetadata(): Promise<Metadata> {
 /** A rate as a whole percentage, or an em dash when there is nothing to divide. */
 function pct(value: number | null): string {
   return value === null ? "—" : `${Math.round(value * 100)}%`;
-}
-
-/** A count of days, or an em dash before the first sample. */
-function days(value: number | null): string {
-  return value === null ? "—" : `${value}d`;
 }
 
 /** `2026-07-01` → `Jul 2026`. */
@@ -134,7 +130,7 @@ async function DashboardContent({
             // lives where it is actually set, on `/ops/tenants`.
             label: "Applications processed",
             value: data.totals.applicationsProcessed,
-            sub: `${data.totals.applicants} started, drafts included`,
+            sub: "all statuses",
           },
           {
             label: "Travellers",
@@ -415,18 +411,18 @@ function Operations({ data, locale }: { data: DashboardData; locale: Locale }) {
           {
             label: "Unassigned",
             value: operations.unassigned,
-            sub: "open, no reviewer",
+            sub: "in review, no reviewer",
             tone: operations.unassigned > 0 ? "text-warning-ink" : undefined,
           },
           {
             label: "Overdue",
-            value: operations.overdueSla,
-            sub: "open and overdue",
-            tone: operations.overdueSla > 0 ? "text-danger-ink" : undefined,
+            value: operations.overdue,
+            sub: `in review over ${OVERDUE_AFTER_DAYS} days`,
+            tone: operations.overdue > 0 ? "text-danger-ink" : undefined,
           },
           {
             label: "Av. timeline",
-            value: days(operations.medianDaysToDecision),
+            value: formatTimelineDays(operations.meanDaysToApproval),
             sub: "submission to decision",
           },
           {

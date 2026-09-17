@@ -1018,6 +1018,15 @@ export const applications = pgTable(
     assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),
     intakeComplete: boolean().notNull().default(false),
     submittedAt: timestamp({ withTimezone: true }),
+    /**
+     * The first time this case was submitted. `submitted_at` is the
+     * latest submission and is overwritten on every resubmission after
+     * a request for more documents; this is written once, on the first,
+     * and never moved. It is what the ops dashboard's timeline counts
+     * from, so a case sent back for documents does not have its clock
+     * reset by coming back.
+     */
+    firstSubmittedAt: timestamp({ withTimezone: true }),
     decidedAt: timestamp({ withTimezone: true }),
     slaDueAt: timestamp({ withTimezone: true }),
     /**

@@ -648,7 +648,7 @@ export function demoRequestEmail({
       heading: `${fullName} wants a demo`,
       paragraphs: [
         `${fullName}, ${jobTitle} at ${companyName}, asked for a demo.`,
-        `Preferred time: ${when} (${preferredTz}).`,
+        `Demo time: ${when} (${preferredTz}).`,
         `They read the site in "${locale}".`,
       ],
       cta: { href: `mailto:${email}`, label: `Reply to ${fullName}` },

@@ -475,6 +475,11 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant writes", async () => {
 
     expect(row.status).toBe("converted");
     expect(row.convertedOrgId).toBe(result.orgId);
+    // The operator who converted it is remembered, and is the name the
+    // queue shows from now on — a converted row never reads "Unassigned".
+    expect(row.convertedBy).toBe(STAFF);
+    expect(row.convertedAt).toBeInstanceOf(Date);
+    expect(row.assigneeId).toBe(STAFF);
   });
 
   it("refuses a demo request that does not exist, and writes nothing", async () => {

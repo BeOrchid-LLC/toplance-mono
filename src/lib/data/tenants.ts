@@ -574,9 +574,21 @@ export async function provisionTenantTx(
       .returning({ token: invitations.token });
 
     if (input.demoRequestId) {
+      // Who converted it, and when, in the same write as the conversion
+      // itself — and the converter becomes the assignee, overwriting
+      // whoever was named before. A converted row has no picker any
+      // more, so the name on it is the last one anybody will read, and
+      // the client's review of 17 September asked that it be the person
+      // who actually turned the enquiry into an agency.
       await tx
         .update(demoRequests)
-        .set({ status: "converted", convertedOrgId: org.id })
+        .set({
+          status: "converted",
+          convertedOrgId: org.id,
+          convertedBy: actorId,
+          convertedAt: new Date(),
+          assigneeId: actorId,
+        })
         .where(eq(demoRequests.id, input.demoRequestId));
     }
 

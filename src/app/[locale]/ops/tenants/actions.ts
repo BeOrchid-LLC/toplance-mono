@@ -145,6 +145,9 @@ export async function provisionTenant(formData: FormData) {
   await audit(actor.userId, "tenant.provisioned", "organisation", result.orgId, {
     name: field("name").trim(),
     emailSent,
+    // Which enquiry became this agency, so the audit trail can answer
+    // "who converted that demo request" without the enquiry row.
+    demoRequestId: demoRequestId || null,
   });
 
   /**

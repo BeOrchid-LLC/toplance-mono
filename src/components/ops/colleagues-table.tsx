@@ -20,12 +20,13 @@ import { formatDate } from "@/lib/format/date";
  * console accounts today. `InvitationTable` beside it now answers only
  * the second half of that sentence.
  *
- * No toolbar, no sort links, no pager, unlike its neighbour. Both tables
- * live at `/ops/staff` and would write the same `?sort=` and `?q=` into
- * one URL — two controls fighting over one parameter. The roster is also
- * a list of colleagues rather than a queue: it is read down in one go,
- * and BeOrchid would have to grow a great deal before that stopped being
- * true. Give this one its own params when it does.
+ * A search and a rank filter, but no sort control and no pager, unlike
+ * its neighbour. Both tables live at `/ops/staff`, so this one's toolbar
+ * writes parameters of its own — `cq` and `crank` — and the invitations
+ * keep `q`, `rank`, `sort`, `dir`, `page` and `size`. The roster is a list
+ * of colleagues rather than a queue: it is read down in one go, and
+ * BeOrchid would have to grow a great deal before it needed a pager.
+ * Give it `csort` and `cpage` when it does.
  *
  * The invite button rides in the panel header rather than the console
  * bar, at the client's request on 2026-09-08. It makes a row in the
@@ -148,6 +149,12 @@ export function ColleaguesTable({
       basePath="/ops/staff"
       toolbar={{
         placeholder: OPS_STAFF.colleagueSearchPlaceholder[locale],
+        // Its own search key, as `crank` below is its own filter key: the
+        // page reads `cq` for this table and `q` for the invitations.
+        searchParam: "cq",
+        // This table has no pager, and `page` is the invitations' — a
+        // colleague search must not send that table back to page one.
+        pageParam: "cpage",
         filters: [
           {
             /* `crank`, not `rank`: the invitations table below this one

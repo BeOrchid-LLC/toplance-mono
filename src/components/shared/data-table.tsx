@@ -194,7 +194,16 @@ export function DataTable<T>({
   /** The order the page sorted the rows in — what the sort control shows. */
   sort?: string;
   dir?: SortDir;
-  toolbar?: { placeholder: string; filters: ToolbarFilter[] };
+  /**
+   * `searchParam` and `pageParam` for a table that shares its page with
+   * another — see `TableToolbar`. Both default to `q` and `page`.
+   */
+  toolbar?: {
+    placeholder: string;
+    filters: ToolbarFilter[];
+    searchParam?: string;
+    pageParam?: string;
+  };
   pagination?: { page: number; pageCount: number; size: number };
   locale: Locale;
   /** Rows after filtering, across every page. */
@@ -273,6 +282,8 @@ export function DataTable<T>({
             placeholder={toolbar.placeholder}
             filters={toolbar.filters}
             sort={toolbarSort}
+            searchParam={toolbar.searchParam}
+            pageParam={toolbar.pageParam}
           />
         )}
         {(action || (pagination && showPager)) && (

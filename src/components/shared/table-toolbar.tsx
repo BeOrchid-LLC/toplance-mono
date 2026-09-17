@@ -49,17 +49,31 @@ export function TableToolbar({
   placeholder = "Search…",
   filters = [],
   sort,
+  searchParam = "q",
+  pageParam = "page",
 }: {
   placeholder?: string;
   filters?: ToolbarFilter[];
   sort?: ToolbarSort;
+  /**
+   * The query-string key the search box owns. `q` unless a second table
+   * on the same page already owns it — `/ops/staff` holds two, and a
+   * shared `q` made typing in the colleagues search filter the
+   * invitations below it and leave the colleagues untouched.
+   */
+  searchParam?: string;
+  /**
+   * The page parameter a narrowing resets. Only this table's own: a
+   * search in one table must not send its neighbour back to page one.
+   */
+  pageParam?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const [, startTransition] = useTransition();
 
-  const urlQuery = params.get("q") ?? "";
+  const urlQuery = params.get(searchParam) ?? "";
   const [query, setQuery] = useState(urlQuery);
 
   // The field follows the URL when the URL changes underneath it — a
@@ -99,7 +113,7 @@ export function TableToolbar({
       // past the end as a backstop for a bookmarked URL, but silently
       // landing somebody on the last page of their own search is not the
       // same as showing them what they just asked for.
-      next.delete("page");
+      next.delete(pageParam);
 
       const qs = next.toString();
       liveParams.current = qs;
@@ -111,7 +125,7 @@ export function TableToolbar({
         router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
       });
     },
-    [pathname, router]
+    [pathname, router, pageParam]
   );
 
   // Typing rewrites the URL, so it is debounced — one navigation per
@@ -120,13 +134,13 @@ export function TableToolbar({
     if (query === urlQuery) return;
     const timer = setTimeout(() => {
       const next = new URLSearchParams(liveParams.current);
-      if (query) next.set("q", query);
-      else next.delete("q");
+      if (query) next.set(searchParam, query);
+      else next.delete(searchParam);
       lastUrlQuery.current = query;
       write(next);
     }, 250);
     return () => clearTimeout(timer);
-  }, [query, urlQuery, write]);
+  }, [query, urlQuery, write, searchParam]);
 
   function setFilter(param: string, value: string) {
     const next = new URLSearchParams(liveParams.current);

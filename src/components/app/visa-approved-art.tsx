@@ -51,7 +51,17 @@ export function VisaApprovedArt({ className }: { className?: string }) {
       {/* The stamp: a ring and a tick, overlapping the cover's corner the
           way a real one lands off-centre. */}
       <g transform="rotate(12 100 78)">
-        <circle cx="100" cy="78" r="24" fill="var(--surface)" />
+        {/* The disc that lifts the stamp off the cover. Half of it hangs
+            past the passport's edge onto the plate, so it is painted the
+            plate's own sheet — the success tint the dashboard gives an
+            approved `Panel` — and not `--surface`, which would draw a pale
+            half-moon there. Change one, change the other. */}
+        <circle
+          cx="100"
+          cy="78"
+          r="24"
+          style={{ fill: "color-mix(in srgb, var(--success) 7%, var(--surface))" }}
+        />
         <circle cx="100" cy="78" r="21" stroke="var(--success)" strokeWidth="3.5" />
         <circle
           cx="100"

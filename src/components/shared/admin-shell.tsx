@@ -54,18 +54,22 @@ export async function AdminShell({
    * logo in `/agency`.
    *
    * `railTitle` is still required alongside it, and still does two jobs a
-   * picture cannot: it is the letter the rail shows when it is collapsed
-   * to 56px, and it is the fallback when an agency has uploaded nothing.
-   * A console whose identity vanished at the width somebody works at all
-   * day would be worse than one that never had a logo.
+   * picture cannot: it is the fallback when an agency has uploaded
+   * nothing, and its first letter is what a rail collapsed to 56px shows
+   * unless `railMark` gives it something else. A console whose identity
+   * vanished at the width somebody works at all day would be worse than
+   * one that never had a logo.
+   *
+   * `railBrand` itself never reaches the collapsed rail: a mark sized for
+   * a 240px head is not one sized for a 32px box.
    */
   railBrand?: React.ReactNode;
   /**
    * What a rail collapsed to 56px shows in place of `railTitle`'s first
-   * letter — the Toplance pin in `/ops`, an agency's uploaded logo in
-   * `/agency`. The client asked for the icon there on 2026-09-10. Leave it
-   * out and the letter stays, which is the right answer for an agency
-   * that has uploaded nothing.
+   * letter — the Toplance pin in `/ops`. The client asked for the icon
+   * there on 2026-09-10. Pass only a mark drawn for a 32px square; leave
+   * it out and the letter stays, which is what `/agency` does — see
+   * `AgencyShell` for why an uploaded logo is not one.
    */
   railMark?: React.ReactNode;
   railSubtitle?: string;

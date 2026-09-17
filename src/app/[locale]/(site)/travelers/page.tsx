@@ -223,12 +223,16 @@ export default async function TravellersPage() {
           cannot drift out of sync with the palette.
 
           `bg-surface`, not `bg-bg`: in dark mode `bg-bg` resolves to the
-          page background and the beat disappears entirely. */}
+          page background and the beat disappears entirely.
+
+          `overflow-clip`, not `overflow-hidden`: the landing page's twin
+          of this section says why — `hidden` stops the rail label
+          sticking. */}
       <Section
         id="orgs"
         label={SITE_TRAVELERS.orgsLabel[locale]}
         glow
-        className="dark overflow-hidden bg-surface text-ink"
+        className="dark overflow-clip bg-surface text-ink"
       >
         <div className="grid items-start gap-12 xl:grid-cols-[1fr_0.85fr]">
           <div>
@@ -244,13 +248,16 @@ export default async function TravellersPage() {
                 </li>
               ))}
             </ul>
+            {/* Same pair as the landing page's: one row at `xl` in English
+                (about 444px of a 488px column), wrapping only for a longer
+                language. */}
             <div className="mt-9 flex flex-wrap gap-3">
               <Button asChild>
                 <Link href="/sign-in">
                   <Briefcase /> {SITE_TRAVELERS.orgsSponsorSeatsCta[locale]}
                 </Link>
               </Button>
-              <Button asChild variant="tertiary">
+              <Button asChild variant="secondary">
                 <Link href="/sign-in">
                   {SITE_CHROME.employerSignIn[locale]} <ArrowRight />
                 </Link>

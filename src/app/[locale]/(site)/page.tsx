@@ -558,12 +558,19 @@ export default async function HomePage() {
 
           Was "The console" until the client's copy renamed it. The `orgs`
           id stays — it is linked from the footer and from anywhere else
-          that has ever pointed at this section. */}
+          that has ever pointed at this section.
+
+          `overflow-clip`, not `overflow-hidden`, to keep the glow inside
+          the section. `hidden` makes the section a scroll container, and a
+          sticky element sticks to its nearest scroll container — so the
+          rail's label stuck to a box that never scrolls and rode off the
+          top with the rest. `clip` cuts the glow the same way without
+          becoming one. */}
       <Section
         id="orgs"
         label={SITE_CHROME.yourDashboard[locale]}
         glow
-        className="dark overflow-hidden bg-surface text-ink"
+        className="dark overflow-clip bg-surface text-ink"
       >
         <div className="grid items-start gap-12 xl:grid-cols-[1fr_0.85fr]">
           <div>
@@ -581,13 +588,17 @@ export default async function HomePage() {
                 </li>
               ))}
             </ul>
+            {/* A pair, side by side. At `xl` this column is 488px and the
+                English pair is about 386px, so it sits on one row; `wrap`
+                stays so a longer language drops the second button under
+                the first instead of pushing it into the roster card. */}
             <div className="mt-9 flex flex-wrap gap-3">
-              <Button asChild>
-                <Link href="/agency/sign-up">
-                  <Briefcase /> {SITE_HOME.talkToUsAboutTravelers[locale]}
-                </Link>
-              </Button>
-              <Button asChild variant="tertiary">
+              <DemoDialog
+                label={SITE_HOME.dashboardCtaRequestDemo[locale]}
+                variant="primary"
+                icon={<Briefcase />}
+              />
+              <Button asChild variant="secondary">
                 <Link href="/sign-in">
                   {SITE_CHROME.agencySignIn[locale]} <ArrowRight />
                 </Link>

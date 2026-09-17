@@ -104,9 +104,26 @@ function useTimezones(): { zones: string[]; detected: string } {
  * down to the sent sheet — same dialog, same transition, same reset on
  * close — because a visitor who books a demo and later signs up should
  * meet one product, not two.
+ *
+ * The trigger defaults to the hero's secondary "Book a demo". The
+ * dashboard section opens the same form from its own primary button with
+ * its own words, so `label`, `variant` and `icon` override the trigger —
+ * and the title follows `label`, keeping the heading the words that
+ * opened it wherever the dialog is placed.
  */
-export function DemoDialog() {
+export function DemoDialog({
+  label,
+  variant = "secondary",
+  icon,
+}: {
+  /** Already translated. Defaults to `SITE_HOME.heroCtaBookDemo`. */
+  label?: string;
+  variant?: React.ComponentProps<typeof Button>["variant"];
+  /** Rendered before the label, the way a `Button` takes an icon child. */
+  icon?: React.ReactNode;
+} = {}) {
   const t = useT();
+  const title = label ?? t(SITE_HOME.heroCtaBookDemo);
   const { locale } = useLocale();
   const { zones, detected } = useTimezones();
   const [open, setOpen] = React.useState(false);
@@ -163,7 +180,10 @@ export function DemoDialog() {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="secondary">{t(SITE_HOME.heroCtaBookDemo)}</Button>
+        <Button variant={variant}>
+          {icon}
+          {title}
+        </Button>
       </DialogTrigger>
       <DialogContent>
         {sentTo ? (
@@ -183,7 +203,7 @@ export function DemoDialog() {
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>{t(SITE_HOME.heroCtaBookDemo)}</DialogTitle>
+              <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{t(DEMO_DIALOG.description)}</DialogDescription>
             </DialogHeader>
 

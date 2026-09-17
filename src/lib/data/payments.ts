@@ -16,6 +16,7 @@ import { db } from "@/lib/db/client";
 import { applications, organisations, payments } from "@/lib/db/schema";
 import { activeRateCard } from "@/lib/data/billing";
 import { quote, type RateCard } from "@/lib/domain/pricing";
+import type { PlanRecord } from "@/lib/payments/plan-state";
 import {
   clientFeesByMonth,
   collapseClientRevenue,
@@ -147,6 +148,69 @@ export async function hasActiveSubscription(
   at: Date = new Date()
 ): Promise<boolean> {
   return (await activeSubscription(orgId, at)) !== null;
+}
+
+/** What `agencyStatus` needs to know about one agency's plans. */
+export type SubscriptionFacts = {
+  /** `activeSubscription(orgId, at)?.periodEnd`, computed in bulk. */
+  activeUntil: Date | null;
+  /** `latestSubscription(orgId)`, reduced to the two dates `PlanRecord` reads. */
+  latest: PlanRecord | null;
+};
+
+/**
+ * `activeSubscription` and `latestSubscription` for many agencies in one
+ * grouped read, keyed by organisation. An agency that never paid has no
+ * entry.
+ *
+ * The same predicates as the two single-agency reads, so the agencies
+ * table and one agency's page cannot disagree about who is live: paid
+ * `agency_subscription` rows with a `period_end`; active means not
+ * cancelled and ending after `at`; latest is the row with the furthest
+ * `period_end`.
+ */
+export async function subscriptionFactsByOrg(
+  options: { orgId?: string; at?: Date } = {}
+): Promise<Map<string, SubscriptionFacts>> {
+  const at = options.at ?? new Date();
+
+  const rows = await db
+    .select({
+      orgId: payments.orgId,
+      activeUntil: sql<Date | string | null>`max(${payments.periodEnd}) filter (where ${payments.cancelledAt} is null and ${payments.periodEnd} > ${at.toISOString()}::timestamptz)`,
+      latestEnd: sql<Date | string | null>`max(${payments.periodEnd})`,
+      latestCancelledAt: sql<Date | string | null>`(array_agg(${payments.cancelledAt} order by ${payments.periodEnd} desc))[1]`,
+    })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.kind, "agency_subscription"),
+        eq(payments.status, "paid"),
+        isNotNull(payments.periodEnd),
+        isNotNull(payments.orgId),
+        options.orgId ? eq(payments.orgId, options.orgId) : undefined
+      )
+    )
+    .groupBy(payments.orgId);
+
+  // Raw `sql` aggregates come back as strings; a `Date` is what every
+  // caller compares against.
+  const date = (value: Date | string | null) =>
+    value === null ? null : value instanceof Date ? value : new Date(value);
+
+  return new Map(
+    rows
+      .filter((row): row is typeof row & { orgId: string } => row.orgId !== null)
+      .map((row) => [
+        row.orgId,
+        {
+          activeUntil: date(row.activeUntil),
+          latest: row.latestEnd
+            ? { periodEnd: date(row.latestEnd), cancelledAt: date(row.latestCancelledAt) }
+            : null,
+        },
+      ])
+  );
 }
 
 /**

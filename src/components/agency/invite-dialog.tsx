@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -18,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { inviteTraveller } from "@/app/[locale]/agency/actions";
 import { useT } from "@/components/locale-provider";
+import { CASE_COMMON } from "@/lib/i18n/case-review-actions";
 import { fill } from "@/lib/i18n/fill";
 import { INVITE_DIALOG } from "@/lib/i18n/invite-dialog";
 
@@ -178,57 +181,59 @@ export function InviteDialog({
               </DialogDescription>
             </DialogHeader>
 
-            {/* The invitation as a document sheet: the same ruled rows
-                as every case-file card. Every child is min-w-0 so a long
-                address can never push the sheet past the dialog's edge —
-                the grid parent would let it. */}
-            <div className="min-w-0 overflow-hidden rounded-md border border-border">
-              <dl>
-                <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
-                  <dt className="t-body shrink-0 text-ink-2">
-                    {t(INVITE_DIALOG.sheetFor)}
-                  </dt>
-                  <dd className="min-w-0 truncate text-end text-base font-semibold">
-                    {recipient?.fullName || recipient?.email}
-                  </dd>
-                </div>
-                {recipient?.fullName && (
+            <DialogBody className="flex flex-col gap-5">
+              {/* The invitation as a document sheet: the same ruled rows
+                  as every case-file card. Every child is min-w-0 so a long
+                  address can never push the sheet past the dialog's edge —
+                  the column parent would let it. */}
+              <div className="min-w-0 overflow-hidden rounded-md border border-border">
+                <dl>
                   <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
                     <dt className="t-body shrink-0 text-ink-2">
-                      {t(INVITE_DIALOG.emailWord)}
+                      {t(INVITE_DIALOG.sheetFor)}
                     </dt>
                     <dd className="min-w-0 truncate text-end text-base font-semibold">
-                      {recipient.email}
+                      {recipient?.fullName || recipient?.email}
                     </dd>
                   </div>
-                )}
-                {/* Last row, so no bottom rule: the sheet's own border
-                    closes it. The link itself never appears here — it is
-                    a 30-day bearer token, and a dialog that shows it puts
-                    it into every screenshot and screen share of this
-                    screen. It reaches its recipient by email alone. */}
-                <div className="flex items-baseline justify-between gap-6 px-4 py-3">
-                  <dt className="t-body shrink-0 text-ink-2">
-                    {t(INVITE_DIALOG.sheetValidFor)}
-                  </dt>
-                  <dd className="text-end text-base font-semibold">
-                    {t(INVITE_DIALOG.sheetThirtyDays)}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+                  {recipient?.fullName && (
+                    <div className="flex items-baseline justify-between gap-6 border-b border-border px-4 py-3">
+                      <dt className="t-body shrink-0 text-ink-2">
+                        {t(INVITE_DIALOG.emailWord)}
+                      </dt>
+                      <dd className="min-w-0 truncate text-end text-base font-semibold">
+                        {recipient.email}
+                      </dd>
+                    </div>
+                  )}
+                  {/* Last row, so no bottom rule: the sheet's own border
+                      closes it. The link itself never appears here — it is
+                      a 30-day bearer token, and a dialog that shows it puts
+                      it into every screenshot and screen share of this
+                      screen. It reaches its recipient by email alone. */}
+                  <div className="flex items-baseline justify-between gap-6 px-4 py-3">
+                    <dt className="t-body shrink-0 text-ink-2">
+                      {t(INVITE_DIALOG.sheetValidFor)}
+                    </dt>
+                    <dd className="text-end text-base font-semibold">
+                      {t(INVITE_DIALOG.sheetThirtyDays)}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
 
-            {/* What the link actually does, rather than a warning about
-                what it does not. `checkInvitedAddress` refuses a token
-                presented from any other address, so the old line —
-                "anyone who opens this link can accept" — described a
-                risk the product had already closed, and asked the agency
-                to be careful in place of a guarantee it already had. */}
-            <p className="t-muted -mt-1 text-[14px]">
-              {fill(t(INVITE_DIALOG.onlyAddressNotice), {
-                email: recipient?.email ?? t(INVITE_DIALOG.onlyAddressFallback),
-              })}
-            </p>
+              {/* What the link actually does, rather than a warning about
+                  what it does not. `checkInvitedAddress` refuses a token
+                  presented from any other address, so the old line —
+                  "anyone who opens this link can accept" — described a
+                  risk the product had already closed, and asked the agency
+                  to be careful in place of a guarantee it already had. */}
+              <p className="t-muted -mt-1 text-[14px]">
+                {fill(t(INVITE_DIALOG.onlyAddressNotice), {
+                  email: recipient?.email ?? t(INVITE_DIALOG.onlyAddressFallback),
+                })}
+              </p>
+            </DialogBody>
 
             <DialogFooter>
               <Button
@@ -246,56 +251,69 @@ export function InviteDialog({
               <DialogTitle>{t(heading)}</DialogTitle>
               <DialogDescription>{t(description)}</DialogDescription>
             </DialogHeader>
-            <form action={onSubmit} className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="invite_email">{t(INVITE_DIALOG.emailWord)}</Label>
-                <Input
-                  id="invite_email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="person@example.com"
-                  required
-                />
-                <p className="t-muted text-[14px]">
-                  {t(INVITE_DIALOG.emailHelp)}
-                </p>
-              </div>
-
-              {/* The page's answer, carried the same way the radio
-                  carried it: `inviteTraveller` reads one field either
-                  way, and only trusts it as far as `isAgencyOwner`
-                  allows for a staff invitation. */}
-              <input type="hidden" name="kind" value={kind} />
-
-
-              <fieldset className="flex flex-col gap-4 border-t border-border pt-4">
-                <legend className="sr-only">
-                  {t(INVITE_DIALOG.nameFieldsetLegend)}
-                </legend>
-                <p aria-hidden className="tag">
-                  {t(INVITE_DIALOG.nameFieldsetTag)}
-                </p>
+            {/* The form is the column the body and footer sit in, so the
+                submit button stays inside it while only the fields scroll —
+                see `DialogContent`. */}
+            <form action={onSubmit} className="flex min-h-0 flex-1 flex-col gap-5">
+              <DialogBody className="flex flex-col gap-5">
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="invite_full_name">
-                    {t(INVITE_DIALOG.fullNameLabel)}
-                  </Label>
+                  <Label htmlFor="invite_email">{t(INVITE_DIALOG.emailWord)}</Label>
                   <Input
-                    id="invite_full_name"
-                    name="full_name"
-                    autoComplete="name"
+                    id="invite_email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="person@example.com"
+                    required
                   />
                   <p className="t-muted text-[14px]">
-                    {t(INVITE_DIALOG.fullNameHelp)}
+                    {t(INVITE_DIALOG.emailHelp)}
                   </p>
                 </div>
-              </fieldset>
 
-              <Button type="submit" size="block" disabled={pending}>
-                {pending
-                  ? t(INVITE_DIALOG.sendingButton)
-                  : t(INVITE_DIALOG.sendButton)}
-              </Button>
+                {/* The page's answer, carried the same way the radio
+                    carried it: `inviteTraveller` reads one field either
+                    way, and only trusts it as far as `isAgencyOwner`
+                    allows for a staff invitation. */}
+                <input type="hidden" name="kind" value={kind} />
+
+                <fieldset className="flex flex-col gap-4 border-t border-border pt-4">
+                  <legend className="sr-only">
+                    {t(INVITE_DIALOG.nameFieldsetLegend)}
+                  </legend>
+                  <p aria-hidden className="special-caps">
+                    {t(INVITE_DIALOG.nameFieldsetTag)}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="invite_full_name">
+                      {t(INVITE_DIALOG.fullNameLabel)}
+                    </Label>
+                    <Input
+                      id="invite_full_name"
+                      name="full_name"
+                      autoComplete="name"
+                    />
+                    <p className="t-muted text-[14px]">
+                      {t(INVITE_DIALOG.fullNameHelp)}
+                    </p>
+                  </div>
+                </fieldset>
+              </DialogBody>
+
+              {/* A Cancel beside the send, side by side from `sm` — the
+                  client's rule for a button pair. */}
+              <DialogFooter className="flex-col-reverse items-stretch sm:flex-row sm:items-center">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    {t(CASE_COMMON.cancel)}
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={pending}>
+                  {pending
+                    ? t(INVITE_DIALOG.sendingButton)
+                    : t(INVITE_DIALOG.sendButton)}
+                </Button>
+              </DialogFooter>
             </form>
           </>
         )}

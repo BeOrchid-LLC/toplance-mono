@@ -14,7 +14,6 @@ import { listSupportRequests } from "@/lib/data/support";
 import { getOpsCounts } from "@/lib/data/ops-counts";
 import { readPageSize, resolvePage } from "@/lib/domain/sorting";
 import { supportMatches } from "@/lib/domain/support-table";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { getLocale } from "@/lib/i18n/server";
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
@@ -77,7 +76,6 @@ export default async function OpsSupportPage({
   const params = await searchParams;
   const search = (params.q ?? "").trim();
   const state = params.state ?? "";
-  const narrowed = Boolean(search || state);
 
   const visible = requests.filter((r) => supportMatches(r, search, state));
 
@@ -108,17 +106,9 @@ export default async function OpsSupportPage({
         rows={visible.slice(start, end)}
         locale={locale}
         viewerId={actor.userId}
-        params={{ q: params.q, state: params.state, size: params.size }}
         total={visible.length}
         unfilteredTotal={requests.length}
         pagination={{ page, pageCount, size }}
-        filteredLabel={
-          narrowed
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(requests.length))
-            : undefined
-        }
       />
     </AdminShell>
   );

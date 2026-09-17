@@ -147,8 +147,15 @@ export default async function DocumentsPage() {
           box taller than the space under the bar can never be scrolled
           past, so on a short viewport with the guidance open the
           overflow scrolls inside the header instead of trapping the
-          page. */}
-      <div className="sticky top-[var(--bar-h)] z-30 max-h-[calc(100dvh-var(--bar-h))] overflow-y-auto border-b border-border bg-bg">
+          page.
+
+          From `md` only. On a phone the heading, the download button and
+          the 128px ring stack, and with the guidance toggle the strip is
+          about 300px — half of what a 740px phone shows under the bar and
+          the browser's own chrome, pinned there for the whole list. Below
+          `md` it scrolls away with the page, and the ring is one flick
+          back up. */}
+      <div className="border-b border-border bg-bg md:sticky md:top-[var(--bar-h)] md:z-30 md:max-h-[calc(100dvh-var(--bar-h))] md:overflow-y-auto">
         <Shell className="py-4 md:py-5">
           {/* The ring stays, at the client's request, and the download
               button rides with it — the two things that were on this

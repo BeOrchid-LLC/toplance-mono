@@ -16,6 +16,7 @@ import { useT } from "@/components/locale-provider";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { ADMIN_ICONS } from "@/components/shared/admin-icons";
 import type { AdminNavGroup } from "@/components/shared/admin-nav";
+import { NavCount } from "@/components/shared/nav-count";
 
 /**
  * The rail's destinations below `lg`, where there is no room for a rail.
@@ -71,9 +72,7 @@ export function AdminMobileNav({
                     />
                     <span className="truncate">{item.label}</span>
                     {item.badge != null && item.badge > 0 && (
-                      <span className="num ms-auto text-[13px] font-semibold text-ink-3">
-                        {item.badge}
-                      </span>
+                      <NavCount count={item.badge} className="ms-auto" />
                     )}
                   </Link>
                 </DropdownMenuItem>

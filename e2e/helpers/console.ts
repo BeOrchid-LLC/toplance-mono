@@ -20,5 +20,5 @@ import type { Page } from "@playwright/test";
  * not in the document to be matched.
  */
 export function consoleNav(page: Page) {
-  return page.getByRole("navigation", { name: "Console menu" });
+  return page.getByRole("navigation", { name: "Workspace menu" });
 }

@@ -3,13 +3,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import { Badge } from "@/components/ui/badge";
-import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
-import { Pagination } from "@/components/shared/pagination";
-import { PageSizeSelect } from "@/components/shared/page-size-select";
+import { Panel, PanelBody } from "@/components/shared/panel";
+import { TablePager } from "@/components/shared/pagination";
+import { PillCell } from "@/components/shared/pill-cell";
 import { PAGE_SIZE_OPTIONS } from "@/lib/domain/sorting";
 import { rowOffset } from "@/lib/domain/row-number";
-import { SortHead } from "@/components/shared/sort-head";
 import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
 import {
   Table,
@@ -20,6 +18,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { SortDir } from "@/lib/domain/sorting";
+import {
+  buildSortOptions,
+  sortOptionValue,
+  type ColumnSort,
+} from "@/lib/domain/sort-options";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
@@ -36,20 +39,41 @@ import { cn } from "@/lib/utils";
  * being looked at is serialised.
  */
 export type DataColumn<T> = {
-  /** Stable id. Also the `?sort=` value when `sortable`. */
+  /** Stable id. Also the `?sort=` value when the column sorts. */
   id: string;
   label: string;
-  sortable?: boolean;
-  /** Right-aligns the column — for an actions cell or a bare number. */
-  align?: "end";
+  /**
+   * Offers this column in the table's sort control, and says what kind
+   * of order it is — which decides the options' words ("A–Z", "newest
+   * first", "high to low") and which direction leads. See `ColumnSort`.
+   *
+   * The header itself stays a plain label either way: since the
+   * client's review of 17 September, a header is never a control.
+   * The page still does the sorting, on its own allow-list.
+   */
+  sort?: ColumnSort;
+  /**
+   * `end` right-aligns the column — for an actions cell or a bare
+   * number. `center` centres header and cells; a `pill` column is
+   * centred without asking.
+   */
+  align?: "end" | "center";
+  /**
+   * Makes this a status column: every pill in it is as wide as the
+   * widest one it can show, and centred, header included — the client's
+   * review of 17 September. `labels` is every label the column can show
+   * in the current locale, straight from its label map; `control` says
+   * some rows show a `NativeSelect` in the pill's place. See `PillCell`.
+   */
+  pill?: { labels: readonly string[]; control?: boolean };
   /**
    * A width hint for this column, as a literal Tailwind class —
    * `"w-[22%]"`, `"w-[120px]"`. Written out rather than interpolated
    * because Tailwind scans source for whole class names.
    *
    * A hint, not a rule. The table sizes columns to their content
-   * (`table-auto`), so this is the width the column prefers when there
-   * is room to honour it, and a column whose content will not fit
+   * (`table-auto`), so this is the share the column prefers when there
+   * is room to honour it, and a column whose content will not shrink
    * takes what it needs regardless. That is deliberate, and it is the
    * difference between this and the `table-fixed` version it replaced
    * on 2026-09-12: under `table-fixed` a 15% actions column was 151px
@@ -60,64 +84,67 @@ export type DataColumn<T> = {
    * without one. Percentages need not total 100 and are not checked —
    * they are a statement about relative emphasis, and the browser
    * settles the rest.
-   *
-   * A column that truncates needs a ceiling as well — see `ceiling`.
    */
   width?: string;
   className?: string;
   /**
-   * The ceiling a truncating column truncates against, as a literal
-   * Tailwind class — `"max-w-[260px]"`.
+   * Makes this a column of unbounded text that truncates, and says how
+   * narrow it may go — a literal Tailwind class, `"min-w-[9rem]"`.
    *
-   * Why it is needed at all: `truncate` is `white-space: nowrap` plus
-   * `overflow: hidden`, and only the second half does anything in a
-   * content-sized table. The first half makes the content's preferred
-   * width the whole unbroken string, which is the width the column then
-   * asks for. One enquiry whose address carried an invitation token took
-   * the Who column to 624px and pushed the table off a 1680px monitor,
-   * with `truncate` on it the whole time. The ceiling is the thing it
-   * truncates against.
+   * Why a floor rather than the ceiling it replaced on 2026-09-17: the
+   * client asked for tables that fit a 1280px laptop without scrolling
+   * sideways, and a truncating column is the only kind that can give
+   * width back. `truncate` alone gives none: it is `white-space:
+   * nowrap`, so the column's minimum width is the whole unbroken string
+   * — one enquiry whose address carried an invitation token took the
+   * Who column to 624px. The ceiling that fixed that (`max-w-[260px]`)
+   * still made 260px the column's minimum, and five such minimums plus
+   * a row of buttons is wider than a laptop.
    *
-   * Why it is its own field and not a `className`: `DataTable` puts it
-   * on a block wrapper *inside* the cell, because `max-width` on a
-   * `td`/`th` is undefined in CSS 2.1 auto table layout and Firefox
-   * ignores it there (Bugzilla 823483) — a ceiling on the cell holds in
-   * Chrome, silently does nothing in Firefox, and the Chromium-only
-   * Playwright sweep cannot tell the difference. On a block box inside
-   * the cell the clamp is specified behaviour everywhere: the cell's
-   * min-content contribution is the wrapper's, and the wrapper's is
-   * capped by its `max-width`.
+   * `DataTable` wraps the cell's content in a block with `contain:
+   * inline-size`, which makes the content contribute nothing to the
+   * column's intrinsic width, and puts this floor on it — so the column
+   * asks for exactly the floor, takes whatever share of the spare width
+   * the table hands it, and the text inside truncates against that.
+   * On a block inside the cell rather than on the cell because
+   * `min-width`/`max-width` on a `td` are undefined in CSS 2.1 auto
+   * table layout and Firefox ignores them there (Bugzilla 823483).
+   *
+   * The content still has to truncate itself (`block truncate`) and
+   * carry a `title`, so the whole string is a hover away.
    */
-  ceiling?: string;
+  floor?: string;
   /** Hides the header text from sight but keeps it for a screen reader. */
   labelHidden?: boolean;
   cell: (row: T) => ReactNode;
 };
 
+function alignClass(column: { align?: "end" | "center"; pill?: unknown }) {
+  if (column.align === "end") return "text-end";
+  if (column.align === "center" || column.pill) return "text-center";
+  return undefined;
+}
+
 /**
  * Every console table, as one component.
  *
  * What it owns is the chrome that was copied six times: the panel and its
- * header, the "showing N of M" line, the row-count badge, the search and
- * filter row, the column headers with their sort links, the two different
- * empty states, and the pager. What each caller still owns is its columns
- * — the only part that was ever actually different.
+ * header, the search, filter and sort controls, the column headers, the
+ * two different empty states, and the pager. What each caller still owns
+ * is its columns — the only part that was ever actually different.
  *
- * Two bands above the rows, not four. Until 2026-09-09 the heading, the
- * search, and the paging controls each had a full-width row of their
- * own, so `/ops/dashboard` opened on three stacked rules with one
- * control apiece and a lot of empty space between them — the client
- * said so looking at the agencies table. They are now sorted by what
- * they are for. The header names the sheet and carries what changes
- * *which* rows are in it: the search, the filters, and any action that
- * makes one. The band under it describes the rows that resulted — how
- * many there are, how many to show at a time, and where in them the
- * reader is standing.
+ * One band above the rows. Until 2026-09-09 the heading, the search and
+ * the paging controls each had a full-width row; then two, a header with
+ * the search and a second band with the row count, a rows-per-page
+ * select and "Page 1 of 5". The client's review of 17 September asked
+ * for one, taking Gmail's as the model: the title at the start, the
+ * filters and sort beside it, the search in the middle, and the pager
+ * — "1–25 of 104" with its arrows — at the far end. The row count went
+ * with the second band, at the client's word: the `#` column already
+ * counts the rows, and the pager's range says how many there are.
  *
- * That band appears only where it has a control to hold. A table showing
- * everything it holds already answers "how many" with its own rows, so
- * its count stays a `Badge` beside the heading rather than gaining a
- * rule and a strip of chrome to repeat what is on screen.
+ * Below `lg` there is not room for one row, so the search takes a line
+ * of its own under the title and pager rather than squeezing them.
  *
  * The two empty states are not the same message and must not be merged.
  * "Nobody has been invited yet" is a fact about the product; "nothing
@@ -131,11 +158,7 @@ export function DataTable<T>({
   columns,
   numbered = false,
   label,
-  filteredLabel,
-  countLabel,
-  count,
   basePath = "",
-  params = {},
   sort = "",
   dir = "asc",
   toolbar,
@@ -160,28 +183,27 @@ export function DataTable<T>({
    * a plan, a card — does not gain a column of 1.
    */
   numbered?: boolean;
-  /** Panel heading. Names the sheet, and does not move when a filter does. */
-  label: string;
   /**
-   * What the count line says while a filter is on — usually
-   * "Showing 12 of 96".
-   *
-   * It replaced the heading until 2026-09-09, which meant typing in the
-   * search box renamed the panel and took the table's own name off the
-   * screen. It now replaces the count instead, which is the thing a
-   * filter actually changes.
+   * Panel heading. Names the sheet, and does not move when a filter
+   * does — a search that renamed the panel took the table's own name off
+   * the screen.
    */
-  filteredLabel?: string;
-  /** The word after the number in the badge. Defaults to "rows"; "" for a bare number. */
-  countLabel?: string;
-  /** Badge number, when it is not the row count — a live total that excludes expired rows, say. */
-  count?: number;
-  /** Only needed by a table that sorts, filters or pages — the URL it writes. */
+  label: string;
+  /** The page's own address, for the "clear the filters" way out. */
   basePath?: string;
-  params?: Record<string, string | undefined>;
+  /** The order the page sorted the rows in — what the sort control shows. */
   sort?: string;
   dir?: SortDir;
-  toolbar?: { placeholder: string; filters: ToolbarFilter[] };
+  /**
+   * `searchParam` and `pageParam` for a table that shares its page with
+   * another — see `TableToolbar`. Both default to `q` and `page`.
+   */
+  toolbar?: {
+    placeholder: string;
+    filters: ToolbarFilter[];
+    searchParam?: string;
+    pageParam?: string;
+  };
   pagination?: { page: number; pageCount: number; size: number };
   locale: Locale;
   /** Rows after filtering, across every page. */
@@ -191,24 +213,22 @@ export function DataTable<T>({
   /** Shown when the table holds nothing at all. */
   empty: ReactNode;
   /**
-   * One control at the end of the panel header, after the count badge.
+   * One control in the header, just before the pager.
    *
    * For the action that makes a row in *this* table and nothing else —
    * `/ops/staff`'s "Invite a colleague", which sat in the console bar
    * until 2026-09-08 and named a thing three screens away from the list
-   * it fills. `PanelHeader` calls its right-hand slot one datum about
-   * the sheet; a button that adds to the sheet is that, where a page-wide
-   * export or a filter would not be.
+   * it fills. A page-wide export or a filter would not belong here.
    */
   action?: ReactNode;
   /**
-   * A note under the table, in the band the pager would use.
+   * A note under the table.
    *
    * For a fact about the rows that are *not* here — the ops dashboard
    * counts its dormant clients rather than listing them, and that
    * sentence has to sit inside the panel or it reads as a caption
    * belonging to whatever comes next on the page. Not a place for
-   * controls: the pager is the row above the table, not below this one.
+   * controls: the pager is in the header.
    */
   footer?: ReactNode;
   className?: string;
@@ -228,75 +248,68 @@ export function DataTable<T>({
   // has just emptied the table — that is the moment the reader most
   // needs the control that did it, and the way out below.
   const showToolbar = Boolean(toolbar) && !isEmpty;
-  // Below the smallest option every choice shows the same rows, so the
-  // select would be a control that does nothing.
-  const showSize = Boolean(pagination) && total > PAGE_SIZE_OPTIONS[0];
-  // The band earns its rule when it has a control in it. A table that
-  // fits on one page at the smallest size has neither pager nor select,
-  // and its count goes back to the badge — a whole row for one figure
-  // over a list the reader can already see the end of is the chrome
-  // this change set out to remove.
-  //
-  // Above the rows, not below them. The pager sat under the table until
-  // 2026-09-08, which on a long page put the only way to page below a
-  // screen of header and a screen of rows — far enough down that a
-  // reader took the first page for the whole table.
-  const showMeta =
-    !isEmpty && !isNoMatch && (showSize || (pagination?.pageCount ?? 0) > 1);
 
-  const countLine = filteredLabel ?? (
-    <>
-      <span className="num">{count ?? total}</span>{" "}
-      {countLabel ?? ADMIN_CONSOLE.rowsWord[locale]}
-    </>
-  );
+  // The pager earns its place when it has something to do: another page
+  // to go to, or a rows-per-page choice that would change what is shown.
+  // At or under the smallest page size every choice shows the same rows,
+  // and a single page has nowhere to go — then the rows on screen are
+  // the whole answer and the header carries no pager at all.
+  const showPager =
+    Boolean(pagination) &&
+    !isEmpty &&
+    !isNoMatch &&
+    ((pagination?.pageCount ?? 0) > 1 || total > PAGE_SIZE_OPTIONS[0]);
+
+  const sortOptions = buildSortOptions(columns, locale);
+  const toolbarSort =
+    sortOptions.length > 0
+      ? {
+          value: sortOptionValue(sort, dir),
+          options: sortOptions,
+          label: ADMIN_CONSOLE.sortLabel[locale],
+        }
+      : undefined;
 
   return (
     <Panel className={className}>
-      <PanelHeader
-        label={label}
-        // The header holds a 36px-tall field once it carries the search,
-        // so its rows need room to breathe when they wrap under `sm`.
-        className={showToolbar ? "gap-x-6 gap-y-3 py-3" : undefined}
-        aside={
+      {/* `PanelHeader`'s anatomy — same height, padding and rule — laid
+          out as one row of its own, because `PanelHeader` holds a label
+          and one datum and this holds up to four groups. */}
+      <div className="flex min-h-[60px] flex-wrap items-center gap-x-4 gap-y-3 border-b border-border px-5 py-3 sm:px-6">
+        <h2 className="t-title order-0">{label}</h2>
+        {toolbar && showToolbar && (
+          <TableToolbar
+            placeholder={toolbar.placeholder}
+            filters={toolbar.filters}
+            sort={toolbarSort}
+            searchParam={toolbar.searchParam}
+            pageParam={toolbar.pageParam}
+          />
+        )}
+        {(action || (pagination && showPager)) && (
           <div
             className={cn(
-              "flex items-center gap-3",
-              // A definite width, so the search inside can be `flex-1`
-              // and still have something to be a fraction of.
-              showToolbar ? "w-full sm:w-auto sm:min-w-[320px] sm:flex-1" : "justify-end"
+              // Pushed to the end. From `md` the search's own auto
+              // margins do that and centre the search, so this one
+              // steps aside rather than taking a third share of the
+              // space and pulling the search off-centre.
+              "order-3 ms-auto flex items-center gap-3",
+              showToolbar && "md:ms-0"
             )}
           >
-            {toolbar && showToolbar && (
-              <TableToolbar
-                placeholder={toolbar.placeholder}
-                filters={toolbar.filters}
-                className="min-w-0 flex-1"
+            {action}
+            {pagination && showPager && (
+              <TablePager
+                page={pagination.page}
+                pageCount={pagination.pageCount}
+                size={pagination.size}
+                total={total}
+                locale={locale}
               />
             )}
-            {/* No paging band to put it in, so the count keeps the slot
-                `PanelHeader` calls one datum about the sheet. */}
-            {!showMeta && <Badge variant="outline">{countLine}</Badge>}
-            {action}
           </div>
-        }
-      />
-
-      {pagination && showMeta && (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border px-5 py-3 sm:px-6">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            <p className="t-muted whitespace-nowrap">{countLine}</p>
-            {showSize && <PageSizeSelect size={pagination.size} locale={locale} />}
-          </div>
-          <Pagination
-            page={pagination.page}
-            pageCount={pagination.pageCount}
-            basePath={basePath}
-            params={params}
-            locale={locale}
-          />
-        </div>
-      )}
+        )}
+      </div>
 
       {isEmpty ? (
         <PanelBody>{empty}</PanelBody>
@@ -318,30 +331,28 @@ export function DataTable<T>({
                   {ADMIN_CONSOLE.ordinalHeading[locale]}
                 </TableHead>
               )}
-              {columns.map((c) =>
-                c.sortable ? (
-                  <SortHead
-                    key={c.id}
-                    label={c.label}
-                    column={c.id}
-                    sort={sort}
-                    dir={dir}
-                    basePath={basePath}
-                    params={params}
-                    className={cn(c.width, c.className)}
-                  />
-                ) : (
-                  <TableHead
-                    key={c.id}
-                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
-                  >
-                    {/* An actions column has a header for a screen reader
-                        and nothing for an eye — the buttons name
-                        themselves. */}
-                    {c.labelHidden ? <span className="sr-only">{c.label}</span> : c.label}
-                  </TableHead>
-                )
-              )}
+              {columns.map((c) => (
+                <TableHead
+                  key={c.id}
+                  // Which column the rows are in order of, for a screen
+                  // reader. Nothing for an eye: a header is a label, one
+                  // colour and one weight, and the order is named in the
+                  // sort control above.
+                  aria-sort={
+                    c.sort && sort === c.id
+                      ? dir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                  className={cn(c.width, alignClass(c), c.className)}
+                >
+                  {/* An actions column has a header for a screen reader
+                      and nothing for an eye — the buttons name
+                      themselves. */}
+                  {c.labelHidden ? <span className="sr-only">{c.label}</span> : c.label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -353,10 +364,16 @@ export function DataTable<T>({
                 {columns.map((c) => (
                   <TableCell
                     key={c.id}
-                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
+                    className={cn(c.width, alignClass(c), c.className)}
                   >
-                    {c.ceiling ? (
-                      <div className={c.ceiling}>{c.cell(row)}</div>
+                    {c.floor ? (
+                      <div className={cn("[contain:inline-size]", c.floor)}>
+                        {c.cell(row)}
+                      </div>
+                    ) : c.pill ? (
+                      <PillCell labels={c.pill.labels} control={c.pill.control}>
+                        {c.cell(row)}
+                      </PillCell>
                     ) : (
                       c.cell(row)
                     )}

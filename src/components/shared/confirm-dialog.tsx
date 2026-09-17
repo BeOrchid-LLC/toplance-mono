@@ -5,6 +5,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -85,8 +86,16 @@ export function ConfirmDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{body}</DialogDescription>
         </DialogHeader>
+        {/* The body is the part that scrolls. It says what happens, in
+            full, and some of these run to three sentences — in several
+            languages, longer. Inside `DialogHeader`, which does not
+            shrink, a long one on a short phone put the confirm button
+            below the screen. `-mt-5` takes back the column's gap, so the
+            text sits under the title as closely as it did in the header. */}
+        <DialogBody className="-mt-5">
+          <DialogDescription className="mt-0">{body}</DialogDescription>
+        </DialogBody>
         <DialogFooter>
           {/* Cancel is the quiet one and it comes first. The destructive
               button is not the default action of this dialog, and

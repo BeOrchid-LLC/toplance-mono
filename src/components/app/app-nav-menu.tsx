@@ -29,12 +29,19 @@ export function AppNavMenu({ nav }: { nav: NavItem[] }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={t(APP_NAV.menuLabel)}
-        className="grid size-9 place-items-center rounded-full hover:bg-surface-2"
+        // 44px on a phone, where this is how every page is reached; 36px
+        // from `md`, level with the bell beside the avatar.
+        className="grid size-[var(--row-h)] place-items-center rounded-full hover:bg-surface-2 md:size-9"
       >
         <Menu className="size-5" aria-hidden />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="start" className="w-[220px]">
+      {/* Capped at the viewport, as `NotificationsMenu` is. */}
+      <DropdownMenuContent
+        align="start"
+        collisionPadding={16}
+        className="w-[min(220px,calc(100vw-2rem))]"
+      >
         {nav.map((item) => {
           const active = isActive(pathname, item.href, root);
           return (

@@ -136,6 +136,16 @@ export type KybStanding = "not_started" | "in_review" | "ready" | "activated";
  * opened. Closing one is `suspendTenant`, which is a different act with
  * a different control.
  *
+ * Activation is the authority, here and in `agencyStatus`
+ * (`@/lib/domain/agency-status`), which reads the same `activated_at` to
+ * tell onboarding from everything after it. Both must answer from it
+ * alone, or /ops/kyb and /ops/tenants disagree about one agency — the
+ * "Live" beside "Unpaid" class of contradiction the client's review of
+ * 17 September flagged. An agency activated with an unverified checklist
+ * (migration `0037` grandfathered the agencies that existed then) is a
+ * data problem, fixed by resetting that data (decision D2), not by this
+ * column quietly disagreeing with the Agencies screen.
+ *
  * `touched` rather than `verified` separates the two waiting states,
  * and the distinction is the whole point of the queue: an agency that
  * has sent nothing is waiting on *them*, and one whose documents are

@@ -7,7 +7,6 @@ import {
   Building2,
   CheckCircle2,
   CheckCircle,
-  ChevronDown,
   Clock3,
   ExternalLink,
   FileCheck2,
@@ -37,10 +36,12 @@ import {
 import type { AgencyKyb, KybRequirementRow } from "@/lib/data/kyb";
 import type { KybState } from "@/lib/db/schema";
 import { ACCEPT } from "@/lib/domain/uploads";
-import { useT } from "@/components/locale-provider";
+import { useLocale, useT } from "@/components/locale-provider";
+import { NativeSelect } from "@/components/ui/native-select";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format/date";
 
 /* ── state map ── */
 const STATE: Record<
@@ -90,6 +91,7 @@ function docIndex(docKey: string) {
  */
 export function KybChecklist({ agency }: { agency: AgencyKyb }) {
   const t = useT();
+  const { locale } = useLocale();
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [removing, setRemoving] = React.useState<KybRequirementRow | null>(null);
@@ -275,7 +277,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
               <div>
                 <p className="font-semibold text-success-ink">Agency activated</p>
                 <p className="mt-1 text-sm leading-5 text-ink-2">
-                  BeOrchid opened this console on {agency.activatedAt.toISOString().slice(0, 10)}. The director
+                  BeOrchid opened this workspace on {formatDate(agency.activatedAt, locale)}. The director
                   was notified by email.
                 </p>
               </div>
@@ -306,7 +308,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
                   <p className="mt-1 max-w-[52ch] text-sm leading-5 text-ink-2">
                     {agency.progress.canActivate ? (
                       <>
-                        All six requirements are verified. Activation opens the agency console and emails the
+                        All six requirements are verified. Activation opens the agency workspace and emails the
                         director a link to billing.
                       </>
                     ) : (
@@ -398,6 +400,7 @@ function RequirementRow({
   onReview: (state: KybState, note: string) => void;
 }) {
   const t = useT();
+  const { locale } = useLocale();
   const [state, setState] = React.useState<KybState>(requirement.state);
   const [note, setNote] = React.useState(requirement.note ?? "");
   const inputId = `kyb-file-${requirement.docKey}`;
@@ -458,7 +461,7 @@ function RequirementRow({
               </div>
 
               {/* filed count / index */}
-              <span className="hidden shrink-0 items-center gap-1.5 font-mono text-[11px] font-semibold tracking-[0.08em] text-ink-3 sm:inline-flex">
+              <span className="hidden shrink-0 items-center gap-1.5 num text-[11px] font-semibold tracking-[0.08em] text-ink-3 sm:inline-flex">
                 <span className="inline-flex size-5 items-center justify-center rounded-full border border-border bg-surface-2 text-[10px]">
                   {docIndex(requirement.docKey)}
                 </span>
@@ -586,29 +589,19 @@ function RequirementRow({
                   >
                     {t(OPS_KYB.tableHead.standing)} — state
                   </Label>
-                  <div className="relative">
-                    <select
-                      id={`kyb-state-${requirement.docKey}`}
-                      value={state}
-                      disabled={pending}
-                      onChange={(event) => setState(event.target.value as KybState)}
-                      // Focus is the base rule's. What stood here was `focus:` rather
-                      // than `focus-visible:`, so it also fired on every mouse
-                      // click, and it spent its ring on `--brand/20` — a fifth
-                      // of the fill hue, under 1.2:1 on either plate.
-                      className="h-9 w-full appearance-none rounded-lg border border-border-strong bg-surface px-3 pe-8 text-sm font-semibold text-ink shadow-sm"
-                    >
-                      {(Object.keys(STATE) as KybState[]).map((value) => (
-                        <option key={value} value={value}>
-                          {t(OPS_KYB.state[STATE[value].key])}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-                      aria-hidden
-                    />
-                  </div>
+                  <NativeSelect
+                    id={`kyb-state-${requirement.docKey}`}
+                    value={state}
+                    disabled={pending}
+                    onChange={(event) => setState(event.target.value as KybState)}
+                    className="w-full"
+                  >
+                    {(Object.keys(STATE) as KybState[]).map((value) => (
+                      <option key={value} value={value}>
+                        {t(OPS_KYB.state[STATE[value].key])}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 </div>
 
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -646,7 +639,7 @@ function RequirementRow({
                   </span>
                   {t(OPS_KYB.reviewedBy).replace("{name}", requirement.reviewedByName)}
                   {requirement.checkedAt && (
-                    <span className="text-ink-3">· {requirement.checkedAt.toISOString().slice(0, 10)}</span>
+                    <span className="text-ink-3">· {formatDate(requirement.checkedAt, locale)}</span>
                   )}
                 </p>
               )}

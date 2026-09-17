@@ -161,7 +161,12 @@ export function DocumentRow({
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-        <div className="min-w-[280px] flex-1">
+        {/* `min(280px, 100%)`, not a flat 280: the floor is what pushes
+            the buttons onto their own line before the text column gets
+            too narrow to read, and it must never be wider than the row
+            itself. A phone under ~370px has less than 280px inside this
+            row's padding, and the flat value ran the text off the edge. */}
+        <div className="min-w-[min(280px,100%)] flex-1">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h3 className="t-title">{doc.name}</h3>
             <DocStateBadge state={doc.state} locale={locale} verdict={documentVerdict(doc)} />

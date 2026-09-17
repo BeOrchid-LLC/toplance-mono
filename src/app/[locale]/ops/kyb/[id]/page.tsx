@@ -22,6 +22,7 @@ import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { opsAccount } from "@/app/[locale]/ops/account";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -157,7 +158,7 @@ export default async function OpsKybAgencyPage({
               <Badge variant={standing.variant}>{OPS_KYB.standing[standing.key][locale]}</Badge>
               <span className="special hidden sm:block">
                 {agency.activatedAt
-                  ? `Activated ${agency.activatedAt.toISOString().slice(0, 10)}`
+                  ? `Activated ${formatDate(agency.activatedAt, locale)}`
                   : agency.progress.canActivate
                     ? "Ready — gate is open"
                     : `${agency.progress.total - agency.progress.verified} to verify`}

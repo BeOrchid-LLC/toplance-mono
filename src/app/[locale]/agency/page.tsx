@@ -3,16 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import {
-  ArrowRight,
-  ChevronDown,
-  FolderOpen,
-  Inbox,
-  Mail,
-  Shield,
-  UsersRound,
-  Wallet,
-} from "lucide-react";
+import { ArrowRight, ChevronDown, Shield } from "lucide-react";
 import { eq } from "drizzle-orm";
 
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +37,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
 import { withLocalePrefix } from "@/lib/i18n/paths";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -244,7 +236,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.clients.label[locale],
           value: String(summary.used),
           sub: AGENCY.kpi.clients.sub[locale],
-          icon: UsersRound,
           href: "/agency/clients",
           tone: "neutral",
         },
@@ -252,7 +243,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.awaitingReview.label[locale],
           value: String(summary.byStatus.submitted ?? 0),
           sub: AGENCY.kpi.awaitingReview.sub[locale],
-          icon: Inbox,
           href: "/agency/clients?status=submitted",
           tone: (summary.byStatus.submitted ?? 0) > 0 ? "warning" : "neutral",
         },
@@ -260,7 +250,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.withHandler.label[locale],
           value: String(summary.byStatus.under_review ?? 0),
           sub: AGENCY.kpi.withHandler.sub[locale],
-          icon: FolderOpen,
           href: "/agency/clients?status=under_review",
           tone: "info",
         },
@@ -268,7 +257,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.invitations.label[locale],
           value: String(summary.pendingInvitations.length),
           sub: AGENCY.kpi.invitations.sub[locale],
-          icon: Mail,
           tone: "neutral",
         },
         {
@@ -292,7 +280,6 @@ async function AgencyOverview({
           sub: summary.charts.clientRevenue.mixedCurrency
             ? AGENCY.kpi.clientsPaid.mixed[locale]
             : AGENCY.kpi.clientsPaid.sub[locale],
-          icon: Wallet,
           tone: "success",
         },
       ]
@@ -389,7 +376,7 @@ async function AgencyOverview({
             {/* `me-auto` on the text rather than a wrapper around it, the
                 same way `DisclosurePanel` keeps its aside at the edge. */}
             <div className="me-auto min-w-0">
-              <p className="tag">{AGENCY.privacyTag[locale]}</p>
+              <p className="special-caps">{AGENCY.privacyTag[locale]}</p>
               <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
             </div>
             {/* Down when shut, up when open — the strip opens by default,
@@ -460,9 +447,7 @@ async function AgencyOverview({
                       </span>
                       <span className="t-muted">
                         {fill(AGENCY.staleInterviewsWhen[locale], {
-                          date: new Intl.DateTimeFormat(locale, {
-                            dateStyle: "medium",
-                          }).format(c.scheduledFor),
+                          date: formatDate(c.scheduledFor, locale),
                         })}
                       </span>
                     </Link>

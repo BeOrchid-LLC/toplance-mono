@@ -4,7 +4,8 @@ import * as React from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Label } from "@/components/ui/label";
 import { addTravelRecord, removeTravelRecord } from "@/app/[locale]/(app)/actions";
@@ -24,7 +25,7 @@ import { TRAVEL_HISTORY } from "@/lib/i18n/travel-history";
 export type { Trip };
 
 const inputClass =
-  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink placeholder:text-ink-3";
+  "h-[var(--control-h)] w-full min-w-0 rounded-md border border-border-strong bg-surface px-4 text-base text-ink placeholder:text-ink-3";
 
 export function TravelHistory({ trips }: { trips: Trip[] }) {
   const t = useT();
@@ -82,7 +83,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
       />
 
       {adding ? (
-        <form ref={formRef} action={save} className="mt-5 grid gap-4">
+        <form ref={formRef} action={save} className="mt-5 grid grid-cols-1 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="trip_country">{t(TRAVEL_HISTORY.countryLabel)}</Label>
             <input
@@ -103,7 +104,10 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          {/* One date under the other on a phone. Side by side, each
+              field got half of ~300px, and iOS draws a date input with a
+              minimum width of its own that does not fit in that. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="trip_from">{t(TRAVEL_HISTORY.fromLabel)}</Label>
               <input
@@ -123,7 +127,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
               />
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button type="submit" size="sm" disabled={pending}>
               {pending ? t(TRAVEL_HISTORY.saving) : t(TRAVEL_HISTORY.saveTrip)}
             </Button>
@@ -143,7 +147,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           type="button"
           variant="neutral"
           size="sm"
-          className="mt-5"
+          className={cn("mt-5", wrapOnPhone("sm"))}
           onClick={() => setAdding(true)}
         >
           <Plus /> {t(TRAVEL_HISTORY.addTrip)}

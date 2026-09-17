@@ -22,7 +22,7 @@ function InputOTP({
 
 function InputOTPGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div data-slot="input-otp-group" className={cn("flex gap-2", className)} {...props} />
+    <div data-slot="input-otp-group" className={cn("flex gap-1.5 sm:gap-2", className)} {...props} />
   );
 }
 
@@ -39,7 +39,10 @@ function InputOTPSlot({
       data-slot="input-otp-slot"
       data-active={isActive}
       className={cn(
-        "relative grid h-[var(--control-h)] w-12 place-items-center rounded-md border border-border-strong bg-surface text-xl font-semibold text-ink transition-[border-color,box-shadow] duration-[var(--dur-tap)]",
+        /* 40px wide below `sm`, 48px from it. Six 48px boxes and their
+           gaps come to 328px, which is more than a 375px phone has inside
+           the sign-in panel; six 40px boxes come to 270px. */
+        "relative grid h-[var(--control-h)] w-10 place-items-center rounded-md sm:w-12 border border-border-strong bg-surface text-xl font-semibold text-ink transition-[border-color,box-shadow] duration-[var(--dur-tap)]",
         /* A permitted deviation, of the second kind named on
            `:focus-visible` in globals.css: the element that holds focus is
            `input-otp`'s single collapsed <input>, and the slot a person

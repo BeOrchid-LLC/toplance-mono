@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Download, Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import { ARCHIVE_READY_COOKIE, readCookie } from "@/lib/http/cookies";
 
 /**
@@ -131,7 +131,9 @@ export function DownloadDocuments({
 
   return (
     <>
-      <Button asChild variant="neutral" size="sm">
+      {/* Wraps below `sm`: "Préparation de votre téléchargement…" is
+          wider than a phone once the icon and padding are added. */}
+      <Button asChild variant="neutral" size="sm" className={wrapOnPhone("sm")}>
         {/* `relative overflow-hidden` so the track below is clipped to
             the button's own corners; without it the sweep squares off
             the rounded ends. */}

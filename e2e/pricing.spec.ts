@@ -54,7 +54,7 @@ test("an agency cannot open its console until the plan is paid for", async ({ pa
   await page.waitForURL("**/agency/billing");
 
   // ---- paying opens it ----
-  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.getByRole("button", { name: "Pay and open the workspace" }).click();
   await page.waitForURL("**/agency");
   await expect(page.getByRole("heading", { name: ORG })).toBeVisible();
 
@@ -63,7 +63,7 @@ test("an agency cannot open its console until the plan is paid for", async ({ pa
   await page.waitForURL("**/agency/billing");
   await expect(page.getByText("Your plan runs until")).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Pay and open the console" })
+    page.getByRole("button", { name: "Pay and open the workspace" })
   ).toHaveCount(0);
 });
 
@@ -89,7 +89,7 @@ test("an agency can end its plan, and is not stranded when it does", async ({
   });
 
   await page.waitForURL("**/agency/billing");
-  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.getByRole("button", { name: "Pay and open the workspace" }).click();
   await page.waitForURL("**/agency");
 
   await consoleNav(page).getByRole("link", { name: "Billing" }).click();
@@ -121,7 +121,7 @@ test("an agency can end its plan, and is not stranded when it does", async ({
   await expect(page.getByText("You ended your plan on")).toBeVisible();
 
   // ---- buying again reopens it, and nothing gates the way back in ----
-  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.getByRole("button", { name: "Pay and open the workspace" }).click();
   await page.waitForURL("**/agency");
   await expect(page.getByRole("heading", { name: LEAVER_ORG })).toBeVisible();
 });

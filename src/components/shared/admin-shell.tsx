@@ -53,12 +53,8 @@ export async function AdminShell({
    * text — the Toplance wordmark in `/ops`, an agency's own uploaded
    * logo in `/agency`.
    *
-   * `railTitle` is still required alongside it, and still does two jobs a
-   * picture cannot: it is the fallback when an agency has uploaded
-   * nothing, and its first letter is what a rail collapsed to 56px shows
-   * unless `railMark` gives it something else. A console whose identity
-   * vanished at the width somebody works at all day would be worse than
-   * one that never had a logo.
+   * `railTitle` is still required alongside it: it is the fallback when
+   * an agency has uploaded nothing, and the text a logo cannot be.
    *
    * `railBrand` itself never reaches the collapsed rail: a mark sized for
    * a 240px head is not one sized for a 32px box.
@@ -66,10 +62,10 @@ export async function AdminShell({
   railBrand?: React.ReactNode;
   /**
    * What a rail collapsed to 56px shows in place of `railTitle`'s first
-   * letter — the Toplance pin in `/ops`. The client asked for the icon
-   * there on 2026-09-10. Pass only a mark drawn for a 32px square; leave
-   * it out and the letter stays, which is what `/agency` does — see
-   * `AgencyShell` for why an uploaded logo is not one.
+   * letter. The client asked for the icon there on 2026-09-10: `/ops`
+   * passes the Toplance pin, `/agency` its uploaded logo or the pin
+   * (decision D8, 2026-09-17 — see `AgencyShell`). Leave it out and the
+   * letter stays.
    */
   railMark?: React.ReactNode;
   railSubtitle?: string;

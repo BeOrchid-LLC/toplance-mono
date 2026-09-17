@@ -15,6 +15,7 @@ import {
   canReadMessages,
   canReviewDocuments,
   canAssignCase,
+  canAssignDemoRequest,
   canReadStatusEvents,
   canWriteApplication,
   canWriteCaseNotes,
@@ -605,6 +606,25 @@ describe("reference data and audit", () => {
     expect(canWriteCorridors(platformStaff)).toBe(false);
     expect(canWriteCorridors(agencyReviewer)).toBe(false);
     expect(canWriteCorridors(traveller)).toBe(false);
+  });
+
+  /** D6, pending the client's confirmation. */
+  it("lets any staff take or clear a demo request, and only an owner hand one on", () => {
+    // Taking it yourself, and putting it back, are anybody's.
+    expect(canAssignDemoRequest(platformStaff, platformStaff.userId)).toBe(true);
+    expect(canAssignDemoRequest(platformStaff, null)).toBe(true);
+    expect(canAssignDemoRequest(platformOwner, platformOwner.userId)).toBe(true);
+    expect(canAssignDemoRequest(platformOwner, null)).toBe(true);
+
+    // Naming a colleague is the owner's.
+    expect(canAssignDemoRequest(platformOwner, platformStaff.userId)).toBe(true);
+    expect(canAssignDemoRequest(platformStaff, platformOwner.userId)).toBe(false);
+    expect(canAssignDemoRequest(platformStaff, "user-someone-else")).toBe(false);
+
+    // Nobody outside the platform team, not even for themselves.
+    expect(canAssignDemoRequest(agencyDirector, null)).toBe(false);
+    expect(canAssignDemoRequest(agencyDirector, agencyDirector.userId)).toBe(false);
+    expect(canAssignDemoRequest(traveller, traveller.userId)).toBe(false);
   });
 
   it("lets only platform staff read the audit log", () => {

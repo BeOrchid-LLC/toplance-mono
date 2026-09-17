@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, Check, ExternalLink, Flag } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FxCredit } from "@/components/app/fx-credit";
 import { Shell } from "@/components/shared/shell";
@@ -767,7 +767,7 @@ export default async function RequirementsPage() {
                           Without this the panel says "some of these
                           might be yours" and leaves the reader to guess
                           which — the hedge the client objected to. */}
-                      <span className="tag">{t.onlyIfLabel[locale]}</span>{" "}
+                      <span className="special-caps">{t.onlyIfLabel[locale]}</span>{" "}
                       {describeAppliesWhen(r.appliesWhen)}
                     </p>
                   )}
@@ -784,7 +784,7 @@ export default async function RequirementsPage() {
         )}
 
         <div className="mt-8">
-          <Button asChild>
+          <Button asChild className={wrapOnPhone()}>
             <Link href="/app/documents">
               {t.startUploading[locale].replace("{n}", String(docs.length))} <ArrowRight />
             </Link>

@@ -3,6 +3,7 @@ import "server-only";
 import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
+import { canAssignDemoRequest, type Actor } from "@/lib/auth/policy";
 import { db } from "@/lib/db/client";
 import {
   demoRequests,
@@ -49,6 +50,8 @@ export type DemoRequestRow = {
    */
   assigneeId: string | null;
   assigneeName: string | null;
+  /** For a short name when the profile has no `full_name`. */
+  assigneeEmail: string | null;
   createdAt: Date;
 };
 
@@ -99,6 +102,7 @@ export async function listDemoRequests(): Promise<DemoRequestRow[]> {
       convertedOrgName: organisations.name,
       assigneeId: demoRequests.assigneeId,
       assigneeName: assignee.fullName,
+      assigneeEmail: assignee.email,
       createdAt: demoRequests.createdAt,
     })
     .from(demoRequests)
@@ -190,22 +194,25 @@ export async function setDemoRequestStatus(
 export type DemoRequestAssigneeError =
   | "not_found"
   | "already_converted"
-  | "not_staff";
+  | "not_staff"
+  | "not_owner";
 
 /**
  * Put a member of staff's name against an enquiry, or take it off.
  *
  * Assignment is a label and not a lock — anyone on the platform team may
- * set it, clear it, or move a row's status regardless of whose name is
- * on it. What it answers is "is anyone on this", for a queue two people
+ * take it, clear it, or move a row's status regardless of whose name is
+ * on it. Naming *somebody else* is the owner's (`canAssignDemoRequest`,
+ * decision D6, pending the client's confirmation). What it answers is "is anyone on this", for a queue two people
  * work at once; `status` says how far along an enquiry is and has never
  * said who has it.
  *
  * `null` clears it, and that is an ordinary operation: putting an
  * enquiry back in the pool is as normal as taking one out of it.
  *
- * Two guards, in this order:
+ * Three guards, in this order:
  *
+ * - `canAssignDemoRequest`: yourself or nobody, unless you are an owner.
  * - the assignee must be `role = 'staff'`. The picker only ever offers
  *   staff, but it posts an id, and a hand-made POST must not be able to
  *   file BeOrchid's sales queue against a traveller — whose name would
@@ -220,8 +227,13 @@ export type DemoRequestAssigneeError =
  */
 export async function setDemoRequestAssignee(
   id: string,
-  assigneeId: string | null
+  assigneeId: string | null,
+  actor: Actor
 ): Promise<{ ok: true } | { error: DemoRequestAssigneeError }> {
+  // First, and here rather than only in the action: the picker hides
+  // colleagues from a reviewer, but this is what a hand-made POST meets.
+  if (!canAssignDemoRequest(actor, assigneeId)) return { error: "not_owner" };
+
   if (assigneeId !== null) {
     const [staff] = await db
       .select({ id: profiles.id })

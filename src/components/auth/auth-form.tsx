@@ -603,7 +603,7 @@ export function AuthForm(props: AuthFormProps) {
         </span>
         <h1 className="d-md mt-4">Enter the code we emailed you</h1>
         <p className="t-muted mt-2">
-          Sent to <b className="text-ink">{state.email}</b>. It expires in ten
+          Sent to <b className="wrap-anywhere text-ink">{state.email}</b>. It expires in ten
           minutes and can be used once.
         </p>
 
@@ -638,7 +638,7 @@ export function AuthForm(props: AuthFormProps) {
           </Button>
         </form>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4">
           <button
             type="button"
             onClick={() => {

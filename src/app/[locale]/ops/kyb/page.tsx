@@ -20,7 +20,6 @@ import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/do
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { opsAccount } from "@/app/[locale]/ops/account";
 
@@ -80,14 +79,13 @@ export default async function OpsKybPage({
 
   // Newest first by default, as on `/ops/tenants`: the client asked for
   // it on 2026-09-11, so the agency that just signed up is the first row
-  // a reviewer sees. `SortHead` writes `dir` into the URL on every click,
-  // so this fallback only decides the view nobody has sorted yet.
+  // a reviewer sees. The sort control writes `dir` into the URL with every
+  // choice, so this fallback only decides the view nobody has sorted yet.
   const sort = readSort(params.sort, KYB_SORTS, "added");
   // Descending belongs to the date column alone. A hand-typed
   // `?sort=agency` with no `dir` should still read A-Z, not Z-A.
   const dir = readDir(params.dir, sort === "added" ? "desc" : "asc");
 
-  const filtered = Boolean(search.trim() || standing);
 
   const visible = rows.filter(
     (r) => kybMatchesStanding(r, standing ?? "") && kybMatches(r, search)
@@ -128,19 +126,8 @@ export default async function OpsKybPage({
         locale={locale}
         sort={sort}
         dir={dir}
-        params={params}
         total={sorted.length}
         unfilteredTotal={rows.length}
-        filteredLabel={
-          // Whether the reader narrowed the list, not whether the counts
-          // happen to agree — the rule `/ops/corridors` states. A filter
-          // that matches every row still filtered.
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(rows.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
       />
     </AdminShell>

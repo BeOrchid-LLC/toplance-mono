@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { ArrowLeft } from "lucide-react";
 
 import { AgencyShell } from "@/components/agency/agency-shell";
-import { TakeCaseButton } from "@/components/agency/take-case-button";
+import { CaseHandlerControl } from "@/components/agency/case-handler-control";
 import { MessageComposer } from "@/components/app/message-composer";
 import { MessageThread } from "@/components/app/message-thread";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
@@ -108,7 +108,13 @@ export default async function AgencyCaseThreadPage({
               <p className="t-muted max-w-[62ch]">
                 {CASE_REVIEW.threadOnly[locale]}
               </p>
-              <TakeCaseButton applicationId={row.id} viewerId={actor.userId} />
+              <CaseHandlerControl
+                applicationId={row.id}
+                assigneeId={null}
+                viewerId={actor.userId}
+                isDirector={false}
+                colleagues={[]}
+              />
             </div>
           )}
 

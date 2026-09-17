@@ -3,10 +3,13 @@
 import Link from "next/link";
 
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
-import { Badge } from "@/components/ui/badge";
+import { leadsFirst } from "@/lib/domain/sort-options";
+import { AgencyStatusBadge } from "@/components/ops/agency-status-badge";
+import { AGENCY_STATUSES } from "@/lib/domain/agency-status";
 import type { TenantRow } from "@/lib/data/tenants";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Every agency on the platform, as columns over the shared `DataTable`.
@@ -19,53 +22,58 @@ export function TenantsTable({
   rows,
   locale,
   className,
-  params,
   sort,
   dir,
   total,
   unfilteredTotal,
   pagination,
-  filteredLabel,
 }: {
   /** The current page of agencies: already filtered, sorted and sliced. */
   rows: TenantRow[];
   locale: Locale;
   className?: string;
-  params?: Record<string, string | undefined>;
   sort?: string;
   dir?: "asc" | "desc";
   total?: number;
   unfilteredTotal?: number;
   pagination?: { page: number; pageCount: number; size: number };
-  filteredLabel?: string;
 }) {
   const columns: DataColumn<TenantRow>[] = [
     {
       id: "agency",
-      sortable: true,
+      sort: "text",
       label: OPS_TENANTS.tableHead.agency[locale],
+      width: "w-[28%]",
+      // An agency's name and domain are whatever was typed at
+      // provisioning; see `DataColumn.floor`.
+      floor: "min-w-[9rem]",
       cell: (t) => (
         <>
           <Link
             href={`/ops/tenants/${t.id}`}
-            className="font-semibold text-brand-text hover:underline"
+            title={t.name}
+            className="block truncate font-semibold text-brand-text hover:underline"
           >
             {t.name}
           </Link>
-          {t.domain && <span className="t-muted block">{t.domain}</span>}
+          {t.domain && (
+            <span className="t-muted block truncate" title={t.domain}>
+              {t.domain}
+            </span>
+          )}
         </>
       ),
     },
     {
       id: "members",
-      sortable: true,
+      sort: "number",
       label: OPS_TENANTS.tableHead.members[locale],
       className: "num",
       cell: (t) => String(t.members),
     },
     {
       id: "applications",
-      sortable: true,
+      sort: "number",
       label: OPS_TENANTS.tableHead.applications[locale],
       className: "num",
       cell: (t) => t.applicationsTotal,
@@ -77,7 +85,7 @@ export function TenantsTable({
       cell: (t) => (
         <>
           {/* Four numbers, not four badges: this is a scan column, and
-              colour here would compete with the state pill beside it. */}
+              colour here would compete with the status pill beside it. */}
           <span className="num">{t.inProgress}</span> ·{" "}
           <span className="num">{t.withReviewer}</span> ·{" "}
           <span className="num">{t.approved}</span> ·{" "}
@@ -87,20 +95,22 @@ export function TenantsTable({
     },
     {
       id: "state",
-      sortable: true,
+      // Ordered by lifecycle (`tenantSortKey`), not by the words, so the
+      // options name which status leads.
+      sort: {
+        asc: leadsFirst(OPS_TENANTS.status[AGENCY_STATUSES[0]][locale], locale),
+        desc: leadsFirst(OPS_TENANTS.status[AGENCY_STATUSES.at(-1)!][locale], locale),
+      },
       label: OPS_TENANTS.tableHead.state[locale],
-      cell: (t) => (
-        <Badge variant={t.suspendedAt ? "warning" : "success"}>
-          {t.suspendedAt ? OPS_TENANTS.suspendedBadge[locale] : OPS_TENANTS.live[locale]}
-        </Badge>
-      ),
+      pill: { labels: AGENCY_STATUSES.map((status) => OPS_TENANTS.status[status][locale]) },
+      cell: (t) => <AgencyStatusBadge status={t.status} locale={locale} />,
     },
     {
       id: "added",
-      sortable: true,
+      sort: "date",
       label: OPS_TENANTS.tableHead.added[locale],
       className: "t-muted",
-      cell: (t) => t.createdAt.toISOString().slice(0, 10),
+      cell: (t) => formatDate(t.createdAt, locale),
     },
   ];
 
@@ -115,10 +125,7 @@ export function TenantsTable({
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       label={OPS_TENANTS.tenantsPanel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={OPS_TENANTS.agenciesWord[locale]}
       basePath="/ops/tenants"
-      params={params}
       sort={sort}
       dir={dir}
       pagination={pagination}
@@ -128,10 +135,10 @@ export function TenantsTable({
           {
             param: "state",
             label: OPS_TENANTS.anyStatus[locale],
-            options: [
-              { value: "live", label: OPS_TENANTS.live[locale] },
-              { value: "suspended", label: OPS_TENANTS.suspendedBadge[locale] },
-            ],
+            options: AGENCY_STATUSES.map((status) => ({
+              value: status,
+              label: OPS_TENANTS.status[status][locale],
+            })),
           },
         ],
       }}

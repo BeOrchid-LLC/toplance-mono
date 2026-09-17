@@ -49,7 +49,7 @@ export function ChatMarkdown({ children }: { children: string }) {
               href={href}
               target={external ? "_blank" : undefined}
               rel={external ? "noreferrer nofollow" : undefined}
-              className="font-semibold text-brand-text underline decoration-current/35 underline-offset-4 hover:decoration-current"
+              className="font-semibold text-brand-text underline decoration-current/35 underline-offset-4 wrap-anywhere hover:decoration-current"
             >
               {linkChildren}
             </a>
@@ -81,7 +81,7 @@ export function ChatMarkdown({ children }: { children: string }) {
         ),
         hr: () => <hr className="my-4 border-border" />,
         ol: ({ children: listChildren }) => (
-          <ol className="mt-3 list-decimal space-y-1 pl-6 first:mt-0">{listChildren}</ol>
+          <ol className="mt-3 list-decimal space-y-1 ps-6 first:mt-0">{listChildren}</ol>
         ),
         p: ({ children: paragraphChildren }) => (
           <p className="leading-7 [&:not(:first-child)]:mt-3">{paragraphChildren}</p>
@@ -105,7 +105,7 @@ export function ChatMarkdown({ children }: { children: string }) {
           <th className="bg-surface-2 px-3 py-2 align-top font-semibold">{cellChildren}</th>
         ),
         ul: ({ children: listChildren }) => (
-          <ul className="mt-3 list-disc space-y-1 pl-6 first:mt-0">{listChildren}</ul>
+          <ul className="mt-3 list-disc space-y-1 ps-6 first:mt-0">{listChildren}</ul>
         ),
       }}
     >

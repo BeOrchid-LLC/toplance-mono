@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { PillCell } from "@/components/shared/pill-cell";
 import {
   Table,
   TableBody,
@@ -13,19 +14,16 @@ import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
+import { formatDate } from "@/lib/format/date";
 
 /**
  * The colleagues inside this agency, oldest first — so the director who
  * created it heads the list.
  *
  * A table since the client's 7 September review, which asked for the
- * same treatment the clients roster got. No sortable headers, though:
- * the order is the argument. Oldest first puts the person who founded
- * the agency at the top, and a column that reorders away from that is
+ * same treatment the clients roster got. No sort control, though: the
+ * order is the argument. Oldest first puts the person who founded the
+ * agency at the top, and a control that reorders away from that is
  * offering to lose the one thing the sequence says.
  *
  * Their rank is a badge rather than bare text, for the same reason the
@@ -99,7 +97,7 @@ export function TeamRoster({
               <TableHead>{AGENCY.tableHead.colleague[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.email[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.joined[locale]}</TableHead>
-              <TableHead>{AGENCY.tableHead.rank[locale]}</TableHead>
+              <TableHead className="text-center">{AGENCY.tableHead.rank[locale]}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -107,10 +105,10 @@ export function TeamRoster({
               <TableRow key={member.userId}>
                 <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                 <TableCell>
-                  {/* The ceiling the truncates inside need: on a block
-                      wrapper, not the cell, because Firefox ignores
-                      `max-width` on a `td` — see `DataColumn.ceiling`. */}
-                  <div className="max-w-[280px]">
+                  {/* What the truncates inside need: a block that lends
+                      the column none of its string's width and a floor
+                      of its own — see `DataColumn.floor`. */}
+                  <div className="min-w-[10rem] [contain:inline-size]">
                     <span
                       className="block truncate font-semibold"
                       title={member.email}
@@ -129,14 +127,18 @@ export function TeamRoster({
 
                 <TableCell className="t-muted">
                   {fill(AGENCY.joinedOn[locale], {
-                    date: formatDay(member.joinedAt),
+                    date: formatDate(member.joinedAt, locale),
                   })}
                 </TableCell>
 
-                <TableCell>
-                  <Badge variant="neutral">
-                    {AGENCY.roleLabel[member.role][locale]}
-                  </Badge>
+                <TableCell className="text-center">
+                  <PillCell
+                    labels={Object.values(AGENCY.roleLabel).map((l) => l[locale])}
+                  >
+                    <Badge variant="neutral">
+                      {AGENCY.roleLabel[member.role][locale]}
+                    </Badge>
+                  </PillCell>
                 </TableCell>
               </TableRow>
             ))}

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { TableSkeleton } from "@/components/shared/content-skeleton";
@@ -20,8 +19,6 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
-import { fill } from "@/lib/i18n/fill";
 import {
   TENANT_SORTS,
   tenantMatches,
@@ -80,8 +77,10 @@ async function TenantsContent({
     listDemoRequests(),
   ]);
 
-  const live = tenants.filter((t) => !t.suspendedAt);
-  const suspended = tenants.filter((t) => t.suspendedAt);
+  // By lifecycle status, the word each row's pill prints — so "Live
+  // agencies" no longer counts one that has not passed KYB or paid.
+  const live = tenants.filter((t) => t.status === "live");
+  const suspended = tenants.filter((t) => t.status === "suspended");
   const memberTotal = tenants.reduce((sum, t) => sum + t.members, 0);
   // The same set the rail badge counts — see `OPEN_DEMO_STATUSES`.
   const openEnquiries = demoRequests.filter((r) =>
@@ -98,28 +97,24 @@ async function TenantsContent({
       label: OPS_TENANTS.counters.liveTenants.label[locale],
       value: String(live.length),
       sub: OPS_TENANTS.counters.liveTenants.sub[locale],
-      icon: Building2,
       tone: "neutral",
     },
     {
       label: OPS_TENANTS.counters.suspended.label[locale],
       value: String(suspended.length),
       sub: OPS_TENANTS.counters.suspended.sub[locale],
-      icon: PauseCircle,
       tone: suspended.length ? "warning" : "neutral",
     },
     {
       label: OPS_TENANTS.counters.members.label[locale],
       value: String(memberTotal),
       sub: OPS_TENANTS.counters.members.sub[locale],
-      icon: UsersRound,
       tone: "info",
     },
     {
       label: OPS_TENANTS.counters.openEnquiries.label[locale],
       value: String(openEnquiries.length),
       sub: OPS_TENANTS.counters.openEnquiries.sub[locale],
-      icon: MessageSquareText,
       tone: openEnquiries.length ? "success" : "neutral",
       // The queue used to be a table at the foot of this page. It is its
       // own screen now, so the card that counts it opens it — a figure
@@ -134,18 +129,14 @@ async function TenantsContent({
   // Newest agency first, at the client's request on 10 September: an
   // agency created during the call came third under the old A-Z
   // default, and the reason to open this table at all is usually the
-  // one that just arrived. Alphabetical is still a click away, and
-  // `SortHead` writes `dir` into the URL on every click, so this
-  // fallback only decides the view nobody has sorted yet.
+  // one that just arrived. Alphabetical is still one choice away, and
+  // the sort control writes `dir` into the URL with every choice, so
+  // this fallback only decides the view nobody has sorted yet.
   const sort = readSort(params.sort, TENANT_SORTS, "added");
   // Descending belongs to the date column alone. A hand-typed
   // `?sort=agency` with no `dir` should still read A-Z, not Z-A.
   const dir = readDir(params.dir, sort === "added" ? "desc" : "asc");
 
-  // Any narrowing at all, however many rows survive it — the panel
-  // heading has to say "showing 3 of 104" whenever the reader is not
-  // looking at everything.
-  const narrowed = Boolean(search || state);
   const visible = tenants.filter((t) => tenantMatches(t, search, state));
   const sorted = sortRows(visible, (t) => tenantSortKey(t, sort), dir);
 
@@ -163,20 +154,11 @@ async function TenantsContent({
         rows={sorted.slice(start, end)}
         locale={locale}
         className="mt-8"
-        params={{ q: params.q, state: params.state, size: params.size }}
         sort={sort}
         dir={dir}
         total={sorted.length}
         unfilteredTotal={tenants.length}
         pagination={{ page, pageCount, size }}
-        filteredLabel={
-          narrowed
-            ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
-                shown: sorted.length,
-                total: tenants.length,
-              })
-            : undefined
-        }
       />
     </>
   );

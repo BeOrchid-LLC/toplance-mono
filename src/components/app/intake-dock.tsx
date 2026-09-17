@@ -58,7 +58,10 @@ export function AgentDock({
     // bottom edge — on a phone, always. Without a band of page ground
     // there, a white record ends flush against a white dock and reads as
     // a card with its bottom torn off rather than as a page that scrolls.
-    <div className="shrink-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-7">
+    //
+    // The bottom padding never drops below the device's safe area, so on
+    // a phone with a home indicator the composer clears it.
+    <div className="shrink-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pb-7">
       <div className="mx-auto flex w-full max-w-[720px] border border-border flex-col gap-3 rounded-[var(--radius-lg)] bg-surface px-5 py-4 shadow-[var(--shadow-lg)] sm:px-7 sm:py-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -78,7 +81,12 @@ export function AgentDock({
               // greeting *and* a question, and run together as two
               // paragraphs of the same flow they read as one long
               // sentence that happens to bold at the end.
-              className="flex min-w-0 flex-1 flex-col gap-1.5 text-base leading-[1.6] text-ink"
+              //
+              // Capped on a phone. The live agent's reply is model text
+              // of any length, and the dock does not shrink: a long one
+              // took the record's space first and then pushed the
+              // composer — the only way to answer — below the screen.
+              className="flex min-w-0 flex-1 flex-col gap-1.5 text-base leading-[1.6] text-ink max-sm:max-h-[30dvh] max-sm:overflow-y-auto"
             >
               {say}
             </div>
@@ -88,7 +96,9 @@ export function AgentDock({
             onClick={onToggleTranscript}
             aria-expanded={transcriptOpen}
             aria-controls="intake-transcript"
-            className="special -me-2 flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+            // 44px square on a phone, where the label is screen-reader
+            // only and this was a 36px icon; the 36px pill from `sm`.
+            className="special -me-2 flex h-[var(--row-h)] min-w-[var(--row-h)] shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 sm:h-9 sm:min-w-0 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
           >
             {transcriptOpen ? (
               <X aria-hidden className="size-4" />

@@ -34,23 +34,19 @@ export function RuleSetsTable({
   locale,
   sort,
   dir,
-  params,
   purposes,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
 }: {
   rows: AgencyRuleSetRow[];
   locale: Locale;
   sort: RuleSetSort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   /** Every purpose present in this agency's own rows, so the filter offers only real ones. */
   purposes: AgencyRuleSetRow["purpose"][];
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
 }) {
   const columns: DataColumn<AgencyRuleSetRow>[] = [
@@ -58,12 +54,12 @@ export function RuleSetsTable({
       id: "route",
       width: "w-[25%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
-      sortable: true,
-      // What the two `truncate`s below truncate against: a country
+      sort: "text",
+      // What lets the two `truncate`s below give width back: a country
       // pair like "United Kingdom → United Arab Emirates" is exactly
       // the unbroken string whose full width the column would
-      // otherwise ask for. See `DataColumn`.
-      ceiling: "max-w-[300px]",
+      // otherwise ask for. See `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (row) => {
         const route = `${countryName(row.nationalityIso)} → ${countryName(row.destinationIso)}`;
         return (
@@ -89,14 +85,14 @@ export function RuleSetsTable({
       id: "purpose",
       width: "w-[12%]",
       label: OPS_CORRIDORS.tableHead.purpose[locale],
-      sortable: true,
+      sort: "text",
       cell: (row) => OPS_COMMON.purpose[row.purpose][locale],
     },
     {
       id: "cases",
       width: "w-[9%]",
       label: AGENCY_RULE_SETS.tableHead.cases[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       cell: (row) => row.caseCount,
     },
@@ -104,7 +100,7 @@ export function RuleSetsTable({
       id: "documents",
       width: "w-[11%]",
       label: OPS_CORRIDORS.tableHead.documents[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       cell: (row) => row.requirementCount,
     },
@@ -126,7 +122,7 @@ export function RuleSetsTable({
       id: "version",
       width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.version[locale],
-      sortable: true,
+      sort: "number",
       cell: (row) => (
         <div className="flex flex-wrap items-center gap-2">
           <span className="num">v{row.version}</span>
@@ -163,10 +159,7 @@ export function RuleSetsTable({
       numbered
       columns={columns}
       label={AGENCY_RULE_SETS.panel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={AGENCY_RULE_SETS.routesWord[locale]}
       basePath="/agency/rule-sets"
-      params={params}
       sort={sort}
       dir={dir}
       locale={locale}

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 
-import { TakeCaseButton } from "@/components/agency/take-case-button";
+import { CaseAssigneeSelect } from "@/components/agency/case-handler-control";
 import { Progress } from "@/components/ui/progress";
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { type ToolbarFilter } from "@/components/shared/table-toolbar";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { STATUS_COPY } from "@/lib/i18n/status";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import type { ClientSort } from "@/lib/domain/client-table";
 import type { SortDir } from "@/lib/domain/sorting";
@@ -15,6 +16,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import { MESSAGES } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/locales";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * One person on the roster, as `org_application_progress` returns them.
@@ -66,8 +68,8 @@ export type RosterRow = {
  * filtered, sorted and sliced by the page above.
  *
  * Sorting is the page's, not this component's: it arrives already
- * ordered, and `sort`/`dir` are passed only so the headers can render
- * which way they point. Omit them and the headers are plain — the
+ * ordered, and `sort`/`dir` are passed only so the sort control can show
+ * the order that is on. Omit them and there is no sort control — the
  * dashboard's two desk lists are short and have no URL to sort in.
  */
 export function ClientRoster({
@@ -80,8 +82,6 @@ export function ClientRoster({
   sort,
   dir,
   basePath,
-  params,
-  count,
   total,
   unfilteredTotal,
   toolbar,
@@ -109,9 +109,6 @@ export function ClientRoster({
   sort?: ClientSort;
   dir?: SortDir;
   basePath?: string;
-  params?: Record<string, string | undefined>;
-  /** Overrides the badge figure when the list has been narrowed. */
-  count?: number;
   /**
    * Rows after filtering across every page, and rows before any filter.
    * Both default to what was handed in, which is right for the two
@@ -141,18 +138,17 @@ export function ClientRoster({
    */
   pagination?: { page: number; pageCount: number; size: number };
 }) {
-  const shown = count ?? total ?? rows.length;
   const sortable = sort !== undefined && dir !== undefined && basePath !== undefined;
 
   const columns: DataColumn<RosterRow>[] = [
     {
       id: "client",
       label: AGENCY.tableHead.client[locale],
-      sortable,
-      // A traveller's name is unbounded data; without a ceiling the
-      // `truncate` below is inert in the content-sized table — the
-      // column's min-content is the whole string. See `DataColumn`.
-      ceiling: "max-w-[260px]",
+      sort: sortable ? "text" : undefined,
+      // A traveller's name is unbounded data; without a floor the
+      // `truncate` below would make the whole string the column's
+      // minimum width. See `DataColumn.floor`.
+      floor: "min-w-[9rem]",
       cell: (r) =>
         takeableBy ? (
           <>
@@ -181,13 +177,13 @@ export function ClientRoster({
     {
       id: "route",
       label: AGENCY.tableHead.route[locale],
-      sortable,
-      ceiling: "max-w-[240px]",
+      sort: sortable ? "text" : undefined,
+      floor: "min-w-[8rem]",
       cell: (r) => {
         const destination = countryFromIso2(r.destinationIso);
         return (
           <>
-            <span className="block truncate">
+            <span className="block truncate" title={destination?.name ?? undefined}>
               {destination?.name ??
                 r.destinationIso?.toUpperCase() ??
                 AGENCY.routeNotSet[locale]}
@@ -202,7 +198,7 @@ export function ClientRoster({
     {
       id: "documents",
       label: AGENCY.tableHead.documents[locale],
-      sortable,
+      sort: sortable ? "number" : undefined,
       cell: (r) => {
         const pct = r.completionPct ?? 0;
         return (
@@ -224,21 +220,22 @@ export function ClientRoster({
     {
       id: "status",
       label: AGENCY.tableHead.status[locale],
-      sortable,
+      sort: sortable ? "text" : undefined,
+      pill: { labels: Object.values(STATUS_COPY).map((c) => c.short[locale]) },
       cell: (r) =>
         r.status ? <StatusBadge status={r.status} locale={locale} short /> : null,
     },
     {
       id: "submitted",
       label: AGENCY.tableHead.submitted[locale],
-      sortable,
+      sort: sortable ? "date" : undefined,
       className: "t-muted",
-      // The same ISO date the platform console's tables print. A console
-      // is read across ten locales and a localised short date is the one
-      // format that means two different days to two readers.
+      // The same date every console table prints — day, short month,
+      // year, in that order in every locale, so it cannot be read as
+      // two different days by two readers.
       cell: (r) =>
         r.submittedAt
-          ? r.submittedAt.toISOString().slice(0, 10)
+          ? formatDate(r.submittedAt, locale)
           : AGENCY.dateNotSubmitted[locale],
     },
     ...(takeableBy
@@ -249,7 +246,7 @@ export function ClientRoster({
             labelHidden: true,
             align: "end" as const,
             cell: (r: RosterRow) => (
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
                 {/* The one door into an unheld case that is not claiming
                     it. `reachesThread` opens the conversation to the
                     whole agency, so a traveller's question is answerable
@@ -262,7 +259,16 @@ export function ClientRoster({
                 >
                   {MESSAGES.panelLabel[locale]}
                 </Link>
-                <TakeCaseButton applicationId={r.id} viewerId={takeableBy} />
+                {/* Unheld by definition — these are the pool's rows —
+                    so the dropdown offers Assign to me; a reviewer
+                    has nobody else to hand a case to. */}
+                <CaseAssigneeSelect
+                  applicationId={r.id}
+                  assigneeId={null}
+                  viewerId={takeableBy}
+                  isDirector={false}
+                  colleagues={[]}
+                />
               </div>
             ),
           },
@@ -278,10 +284,7 @@ export function ClientRoster({
       numbered
       columns={columns}
       label={label ?? AGENCY.yourClientsLabel[locale]}
-      count={shown}
-      countLabel={(shown === 1 ? AGENCY.clientWord : AGENCY.clientsWord)[locale]}
       basePath={basePath}
-      params={params}
       sort={sort}
       dir={dir}
       toolbar={toolbar}

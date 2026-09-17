@@ -19,7 +19,6 @@ import {
   readAssigneeFilter,
 } from "@/lib/domain/enquiry-table";
 import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 import { getLocale } from "@/lib/i18n/server";
 import {
@@ -53,8 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * The two writes behind it check staff and a second factor for
  * themselves; this page is not their gate.
  *
- * Assignment is a label rather than a lock. Anyone may take a row, hand
- * it on or put it back, and holding one grants nothing — see
+ * Assignment is a label rather than a lock. Anyone may take a row or put
+ * it back, an owner may hand it on (D6, pending the client's
+ * confirmation), and holding one grants nothing — see
  * `setDemoRequestAssignee`. What it buys is the answer to "is anybody on
  * this", which `status` has never been able to give.
  */
@@ -99,16 +99,13 @@ export default async function OpsEnquiriesPage({
   // Newest enquiry first, as `/ops/tenants` and `/ops/kyb` open — the
   // client asked for it on 2026-09-11. It is also the order
   // `listDemoRequests` reads in, so the default no longer overrules the
-  // query. `SortHead` writes `dir` on every click, so this fallback only
-  // decides the view nobody has sorted yet.
+  // query. The sort control writes `dir` with every choice, so this
+  // fallback only decides the view nobody has sorted yet.
   const sort = readSort(params.sort, ENQUIRY_SORTS, "requested");
   // Descending belongs to the date columns alone. A hand-typed
   // `?sort=who` with no `dir` should still read A-Z, not Z-A.
   const dir = readDir(params.dir, sort === "requested" ? "desc" : "asc");
 
-  // Any narrowing at all, however many rows survive it — the same test
-  // `/ops/staff` and `/ops/corridors` use.
-  const filtered = Boolean(search || params.status || params.assignee);
 
   const visible = enquiries.filter((row) => {
     if (params.status && row.status !== params.status) return false;
@@ -148,18 +145,11 @@ export default async function OpsEnquiriesPage({
         rows={sorted.slice(start, end)}
         staff={staff}
         viewerId={actor.userId}
+        viewerIsOwner={isOwner(actor)}
         sort={sort}
         dir={dir}
-        params={params}
         total={sorted.length}
         unfilteredTotal={enquiries.length}
-        filteredLabel={
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(enquiries.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
       />
     </AdminShell>

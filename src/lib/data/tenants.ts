@@ -16,6 +16,8 @@ import type { ApplicationStatus } from "@/lib/domain/status";
 import { ORG_NAME_MAX } from "@/lib/domain/organisations";
 import { isUuid } from "@/lib/domain/uuid";
 import { seedKybRequirements } from "@/lib/data/kyb";
+import { subscriptionFactsByOrg, type SubscriptionFacts } from "@/lib/data/payments";
+import { agencyStatus, type AgencyStatus } from "@/lib/domain/agency-status";
 
 /**
  * What BeOrchid is allowed to know about the agencies on the platform.
@@ -61,7 +63,16 @@ export type TenantRow = {
   seatsPurchased: number;
   billingContact: string | null;
   suspendedAt: Date | null;
+  activatedAt: Date | null;
   createdAt: Date;
+  /**
+   * Where the agency is in its lifecycle — see `agencyStatus`. Derived
+   * here, once, so the table, its filter, its sort and the agency's own
+   * page all read the same word.
+   */
+  status: AgencyStatus;
+  /** The active plan's `period_end`, or `null` — the plan card's date. */
+  activeUntil: Date | null;
 } & TenantCounts;
 
 export type TenantMember = {
@@ -144,6 +155,25 @@ const BUCKET: Record<
   rejected: "rejected",
 };
 
+/** The status and plan date one agency's row carries. */
+function lifecycleOf(
+  org: { suspendedAt: Date | null; activatedAt: Date | null },
+  plan: SubscriptionFacts | undefined,
+  now: Date
+): Pick<TenantRow, "status" | "activeUntil"> {
+  const activeUntil = plan?.activeUntil ?? null;
+  return {
+    activeUntil,
+    status: agencyStatus({
+      suspendedAt: org.suspendedAt,
+      activatedAt: org.activatedAt,
+      activeUntil,
+      latest: plan?.latest ?? null,
+      now,
+    }),
+  };
+}
+
 const ZERO_COUNTS: TenantCounts = {
   members: 0,
   applicationsTotal: 0,
@@ -157,18 +187,19 @@ const ZERO_COUNTS: TenantCounts = {
 /**
  * Every agency with its numbers, newest first.
  *
- * Four grouped queries and three Maps rather than one query with joined
+ * Five grouped queries and their Maps rather than one query with joined
  * aggregate subqueries — the idiom `listCorridors` already uses in this
  * directory. Joining a one-to-many count onto the base row multiplies
  * the rows before it aggregates them, and the shape that avoids that is
- * harder to read than four flat `group by`s. What matters is that the
- * cost does not grow with the number of tenants: there is no per-tenant
- * follow-up query here.
+ * harder to read than flat `group by`s. The fifth is every agency's
+ * plans, which `lifecycleOf` turns into the status column. What matters
+ * is that the cost does not grow with the number of tenants: there is
+ * no per-tenant follow-up query here.
  */
 export async function listTenants(): Promise<TenantRow[]> {
   const now = new Date();
 
-  const [orgs, memberCounts, statusCounts, inviteCounts] = await Promise.all([
+  const [orgs, memberCounts, statusCounts, inviteCounts, plans] = await Promise.all([
     db
       .select({
         id: organisations.id,
@@ -177,6 +208,7 @@ export async function listTenants(): Promise<TenantRow[]> {
         seatsPurchased: organisations.seatsPurchased,
         billingContact: organisations.billingContact,
         suspendedAt: organisations.suspendedAt,
+        activatedAt: organisations.activatedAt,
         createdAt: organisations.createdAt,
       })
       .from(organisations)
@@ -217,6 +249,9 @@ export async function listTenants(): Promise<TenantRow[]> {
         )
       )
       .groupBy(invitations.orgId),
+
+    // One grouped read for every agency's plans, not one per row.
+    subscriptionFactsByOrg({ at: now }),
   ]);
 
   const membersByOrg = new Map(memberCounts.map((m) => [m.orgId, m.total]));
@@ -234,6 +269,7 @@ export async function listTenants(): Promise<TenantRow[]> {
   // members and no invitations reports zeroes rather than being dropped.
   return orgs.map((org) => ({
     ...org,
+    ...lifecycleOf(org, plans.get(org.id), now),
     ...ZERO_COUNTS,
     ...countsByOrg.get(org.id),
     members: membersByOrg.get(org.id) ?? 0,
@@ -268,7 +304,7 @@ export const getTenant = cache(async function getTenant(
   const id = orgId.toLowerCase();
   const now = new Date();
 
-  const [orgRows, memberCounts, statusCounts, members_, inviteRows] =
+  const [orgRows, memberCounts, statusCounts, members_, inviteRows, plans] =
     await Promise.all([
       db
         .select({
@@ -278,6 +314,7 @@ export const getTenant = cache(async function getTenant(
           seatsPurchased: organisations.seatsPurchased,
           billingContact: organisations.billingContact,
           suspendedAt: organisations.suspendedAt,
+          activatedAt: organisations.activatedAt,
           createdAt: organisations.createdAt,
         })
         .from(organisations)
@@ -342,6 +379,8 @@ export const getTenant = cache(async function getTenant(
           )
         )
         .orderBy(desc(invitations.createdAt)),
+
+      subscriptionFactsByOrg({ orgId: id, at: now }),
     ]);
 
   const [org] = orgRows;
@@ -359,7 +398,7 @@ export const getTenant = cache(async function getTenant(
   // page cannot report different numbers for the same agency.
   counts.pendingInvitations = pendingInvites.filter((i) => !i.expired).length;
 
-  return { ...org, ...counts, members_, pendingInvites };
+  return { ...org, ...lifecycleOf(org, plans.get(org.id), now), ...counts, members_, pendingInvites };
 });
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -535,9 +574,21 @@ export async function provisionTenantTx(
       .returning({ token: invitations.token });
 
     if (input.demoRequestId) {
+      // Who converted it, and when, in the same write as the conversion
+      // itself — and the converter becomes the assignee, overwriting
+      // whoever was named before. A converted row has no picker any
+      // more, so the name on it is the last one anybody will read, and
+      // the client's review of 17 September asked that it be the person
+      // who actually turned the enquiry into an agency.
       await tx
         .update(demoRequests)
-        .set({ status: "converted", convertedOrgId: org.id })
+        .set({
+          status: "converted",
+          convertedOrgId: org.id,
+          convertedBy: actorId,
+          convertedAt: new Date(),
+          assigneeId: actorId,
+        })
         .where(eq(demoRequests.id, input.demoRequestId));
     }
 

@@ -22,16 +22,22 @@ export const ADMIN_CONSOLE: {
   expandMenu: L;
   openMenu: L;
   menuTitle: L;
-  showingTemplate: L;
-  rowsWord: L;
   ordinalHeading: L;
   noMatch: L;
   clearFilters: L;
   pagesLabel: L;
   rowsPerPage: L;
-  pageOfTemplate: L;
   previousPage: L;
   nextPage: L;
+  rangeTemplate: L;
+  sortLabel: L;
+  sortAsc: L;
+  sortDesc: L;
+  sortNewest: L;
+  sortOldest: L;
+  sortHigh: L;
+  sortLow: L;
+  sortFirst: L;
 } = {
   /**
    * The skip link's own label. It belongs here rather than in either
@@ -88,29 +94,16 @@ export const ADMIN_CONSOLE: {
     zu: "Vula imenyu",
   },
   menuTitle: {
-    en: "Console menu",
-    ha: "Menu na na'ura",
-    yo: "Àkójọ àṣàyàn kọ́ńsọ̀",
-    ig: "Menu console",
-    fr: "Menu de la console",
-    pt: "Menu da consola",
-    sw: "Menyu ya kiweko",
-    ar: "قائمة وحدة التحكم",
-    tw: "Console menu",
-    zu: "Imenyu yekhonsoli",
-  },
-  /** `{shown}` and `{total}` are literal markers the call site replaces. */
-  showingTemplate: {
-    en: "Showing {shown} of {total}",
-    ha: "Ana nuna {shown} daga {total}",
-    yo: "Ń fi {shown} nínú {total} hàn",
-    ig: "Na-egosi {shown} n'ime {total}",
-    fr: "Affichage de {shown} sur {total}",
-    pt: "A mostrar {shown} de {total}",
-    sw: "Inaonyesha {shown} kati ya {total}",
-    ar: "عرض {shown} من {total}",
-    tw: "Ɛreda {shown} wɔ {total} mu adi",
-    zu: "Kukhonjiswa {shown} kwangu-{total}",
+    en: "Workspace menu",
+    ha: "Menu na wurin aiki",
+    yo: "Àkójọ àṣàyàn ibi-iṣẹ́",
+    ig: "Menu ebe ọrụ",
+    fr: "Menu de l'espace de travail",
+    pt: "Menu do espaço de trabalho",
+    sw: "Menyu ya eneo la kazi",
+    ar: "قائمة مساحة العمل",
+    tw: "Adwumayɛbea menu",
+    zu: "Imenyu yendawo yokusebenzela",
   },
   /**
    * The ordinal column's heading.
@@ -130,18 +123,6 @@ export const ADMIN_CONSOLE: {
     ar: "#",
     tw: "#",
     zu: "#",
-  },
-  rowsWord: {
-    en: "rows",
-    ha: "layuka",
-    yo: "ìlà",
-    ig: "ahịrị",
-    fr: "lignes",
-    pt: "linhas",
-    sw: "safu",
-    ar: "صفوف",
-    tw: "nsɔre",
-    zu: "imigqa",
   },
   noMatch: {
     en: "Nothing here matches this search.",
@@ -192,19 +173,6 @@ export const ADMIN_CONSOLE: {
     tw: "Nkrataafa",
     zu: "Amakhasi",
   },
-  /** `{page}` and `{pages}` are literal markers the call site replaces. */
-  pageOfTemplate: {
-    en: "Page {page} of {pages}",
-    ha: "Shafi {page} na {pages}",
-    yo: "Ojú ìwé {page} nínú {pages}",
-    ig: "Peeji {page} n'ime {pages}",
-    fr: "Page {page} sur {pages}",
-    pt: "Página {page} de {pages}",
-    sw: "Ukurasa {page} kati ya {pages}",
-    ar: "صفحة {page} من {pages}",
-    tw: "Krataafa {page} wɔ {pages} mu",
-    zu: "Ikhasi {page} kwangu-{pages}",
-  },
   previousPage: {
     en: "Previous page",
     ha: "Shafin da ya gabata",
@@ -228,5 +196,138 @@ export const ADMIN_CONSOLE: {
     ar: "الصفحة التالية",
     tw: "Krataafa a edi so",
     zu: "Ikhasi elilandelayo",
+  },
+  /**
+   * The pager's range, Gmail's way: "26–50 of 104". `{start}`, `{end}`
+   * and `{total}` are literal markers the call site replaces; see
+   * `pageRange`. It is also the button that opens the rows-per-page menu.
+   */
+  rangeTemplate: {
+    en: "{start}–{end} of {total}",
+    ha: "{start}–{end} daga {total}",
+    yo: "{start}–{end} nínú {total}",
+    ig: "{start}–{end} n'ime {total}",
+    fr: "{start}–{end} sur {total}",
+    pt: "{start}–{end} de {total}",
+    sw: "{start}–{end} kati ya {total}",
+    ar: "{start}–{end} من {total}",
+    tw: "{start}–{end} wɔ {total} mu",
+    zu: "{start}–{end} kwangu-{total}",
+  },
+  /**
+   * The accessible name of a table's sort control. Never shown: the
+   * control shows the order it is set to, and an icon says what it is.
+   */
+  sortLabel: {
+    en: "Sort",
+    ha: "Tsara",
+    yo: "Ṣètò",
+    ig: "Hazie",
+    fr: "Trier",
+    pt: "Ordenar",
+    sw: "Panga",
+    ar: "ترتيب",
+    tw: "Hyehyɛ",
+    zu: "Hlela",
+  },
+  /**
+   * The sort control's options, one pair per kind of column. `{label}`
+   * is the column's own heading, so the option names the column the
+   * reader can see. A–Z and Z–A for text; newest and oldest for dates;
+   * high-to-low and low-to-high for counts. See `buildSortOptions`.
+   */
+  sortAsc: {
+    en: "{label}: A–Z",
+    ha: "{label}: A–Z",
+    yo: "{label}: A–Z",
+    ig: "{label}: A–Z",
+    fr: "{label}: A–Z",
+    pt: "{label}: A–Z",
+    sw: "{label}: A–Z",
+    ar: "{label}: أ–ي",
+    tw: "{label}: A–Z",
+    zu: "{label}: A–Z",
+  },
+  /** See `sortAsc`. */
+  sortDesc: {
+    en: "{label}: Z–A",
+    ha: "{label}: Z–A",
+    yo: "{label}: Z–A",
+    ig: "{label}: Z–A",
+    fr: "{label}: Z–A",
+    pt: "{label}: Z–A",
+    sw: "{label}: Z–A",
+    ar: "{label}: ي–أ",
+    tw: "{label}: Z–A",
+    zu: "{label}: Z–A",
+  },
+  /** See `sortAsc`. */
+  sortNewest: {
+    en: "{label}: newest first",
+    ha: "{label}: sabuwa da farko",
+    yo: "{label}: tuntun ní àkọ́kọ́",
+    ig: "{label}: nke ọhụrụ na mbụ",
+    fr: "{label} : plus récent d'abord",
+    pt: "{label}: mais recente primeiro",
+    sw: "{label}: mpya kwanza",
+    ar: "{label}: الأحدث أولاً",
+    tw: "{label}: foforo di kan",
+    zu: "{label}: okusha kuqala",
+  },
+  /** See `sortAsc`. */
+  sortOldest: {
+    en: "{label}: oldest first",
+    ha: "{label}: tsohuwa da farko",
+    yo: "{label}: àtijọ́ ní àkọ́kọ́",
+    ig: "{label}: nke ochie na mbụ",
+    fr: "{label} : plus ancien d'abord",
+    pt: "{label}: mais antigo primeiro",
+    sw: "{label}: ya zamani kwanza",
+    ar: "{label}: الأقدم أولاً",
+    tw: "{label}: dada di kan",
+    zu: "{label}: okudala kuqala",
+  },
+  /** See `sortAsc`. */
+  sortHigh: {
+    en: "{label}: high to low",
+    ha: "{label}: daga babba zuwa ƙarami",
+    yo: "{label}: láti gíga sí kékeré",
+    ig: "{label}: site n'elu ruo n'ala",
+    fr: "{label} : décroissant",
+    pt: "{label}: do maior para o menor",
+    sw: "{label}: kubwa hadi ndogo",
+    ar: "{label}: من الأعلى إلى الأدنى",
+    tw: "{label}: kɛse kɔ ketewa",
+    zu: "{label}: kusuka phezulu kuya phansi",
+  },
+  /** See `sortAsc`. */
+  sortLow: {
+    en: "{label}: low to high",
+    ha: "{label}: daga ƙarami zuwa babba",
+    yo: "{label}: láti kékeré sí gíga",
+    ig: "{label}: site n'ala ruo n'elu",
+    fr: "{label} : croissant",
+    pt: "{label}: do menor para o maior",
+    sw: "{label}: ndogo hadi kubwa",
+    ar: "{label}: من الأدنى إلى الأعلى",
+    tw: "{label}: ketewa kɔ kɛse",
+    zu: "{label}: kusuka phansi kuya phezulu",
+  },
+  /**
+   * An option for a column ordered by rank rather than by its words —
+   * a status whose order is "ready, then in review, then…". `{value}`
+   * is the status that leads, in the cell's own words.
+   */
+  sortFirst: {
+    en: "{value} first",
+    ha: "{value} da farko",
+    yo: "{value} ní àkọ́kọ́",
+    ig: "{value} na mbụ",
+    fr: "{value} d'abord",
+    pt: "{value} primeiro",
+    sw: "{value} kwanza",
+    ar: "{value} أولاً",
+    tw: "{value} di kan",
+    zu: "{value} kuqala",
   },
 };

@@ -1,3 +1,5 @@
+import { AGENCY_STATUSES, AGENCY_STATUS_RANK, type AgencyStatus } from "@/lib/domain/agency-status";
+
 /**
  * Everything the agencies table knows that is not a rendered cell.
  *
@@ -12,10 +14,7 @@
 export const TENANT_SORTS = ["agency", "members", "applications", "state", "added"] as const;
 export type TenantSort = (typeof TENANT_SORTS)[number];
 
-/** The two states the filter offers, which are the two the pill shows. */
-export const TENANT_STATES = ["live", "suspended"] as const;
-
-type Searchable = { name: string; domain: string | null; suspendedAt: Date | null };
+type Searchable = { name: string; domain: string | null; status: AgencyStatus };
 
 /**
  * Whether one agency survives the toolbar.
@@ -36,8 +35,11 @@ export function tenantMatches(row: Searchable, q: string, state: string): boolea
     const hay = `${row.name} ${row.domain ?? ""}`.toLowerCase();
     if (!hay.includes(needle)) return false;
   }
-  if (state === "live") return row.suspendedAt === null;
-  if (state === "suspended") return row.suspendedAt !== null;
+  // `?state=` keeps its name — see `OPS_TENANTS.tableHead.state`. Its
+  // values are now the five `AgencyStatus`es; `live` and `suspended`
+  // are two of them, so a link bookmarked from the two-state filter
+  // still opens, now meaning the narrower lifecycle status.
+  if ((AGENCY_STATUSES as readonly string[]).includes(state)) return row.status === state;
   return true;
 }
 
@@ -50,10 +52,10 @@ type Sortable = Searchable & {
 /**
  * What one column sorts on.
  *
- * State sorts live-before-suspended rather than by the suspension date:
- * the column shows a pill with two values, so an operator ordering by
- * it wants the two groups apart, and the date behind it would scatter
- * the suspended among themselves for no visible reason.
+ * State sorts by lifecycle rank (`AGENCY_STATUS_RANK`: onboarding,
+ * awaiting payment, live, lapsed, suspended) rather than by the words,
+ * which would order differently in every locale, or by a date behind
+ * the pill, which would scatter one status among itself.
  */
 export function tenantSortKey(row: Sortable, sort: TenantSort): string | number {
   switch (sort) {
@@ -62,7 +64,7 @@ export function tenantSortKey(row: Sortable, sort: TenantSort): string | number 
     case "applications":
       return row.applicationsTotal;
     case "state":
-      return row.suspendedAt === null ? 0 : 1;
+      return AGENCY_STATUS_RANK[row.status];
     case "added":
       return row.createdAt.getTime();
     default:

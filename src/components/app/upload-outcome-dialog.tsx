@@ -4,8 +4,10 @@ import * as React from "react";
 import { Check, RotateCcw, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -113,6 +115,14 @@ export function UploadOutcomeDialog({
   return (
     <Dialog open={outcome !== null} onOpenChange={onOpenChange}>
       <DialogContent>
+        {/* The icon and the title are the header; what they mean is the
+            body. The flagged reason is the pre-check's own free text and
+            has no length limit, and `DialogHeader` does not shrink — so
+            with the reason inside it, a long one on a short phone pushed
+            "Re-upload" below the bottom of the screen, and a traveller
+            told their document was refused could not reach the button
+            that fixes it. In `DialogBody` the reason scrolls and the
+            buttons stay put. */}
         <DialogHeader>
           <div className="flex items-start gap-3">
             {outcome === "flagged" ? (
@@ -125,52 +135,62 @@ export function UploadOutcomeDialog({
             ) : (
               <Check className="mt-0.5 size-6 shrink-0 text-success" aria-hidden />
             )}
-            <div className="min-w-0">
-              <DialogTitle>
-                {outcome === "flagged"
-                  ? "We cannot use this one"
-                  : processing
-                    ? "Finishing up"
-                    : outcome === "complete"
-                      ? "That is everything"
-                      : "Received"}
-              </DialogTitle>
-              <DialogDescription>
-                {outcome === "flagged" ? (
-                  <>
-                    {/* The checker's own reason, verbatim. A generic
-                        "please upload a clearer copy" would send someone
-                        back to re-photograph a document that was refused
-                        for being the wrong document entirely — which is
-                        exactly what the sentence after it used to do,
-                        appended to every flag whatever its reason. The
-                        follow-up now says what to do without claiming to
-                        know why, so it is true of a wrong document and an
-                        unreadable one alike. */}
-                    {reason?.trim()
-                      ? reason
-                      : `We could not read your ${documentName}.`}{" "}
-                    Replace the file and we will check it again.
-                  </>
-                ) : processing ? (
-                  <>Adding your {documentName} to the file.</>
-                ) : outcome === "complete" ? (
-                  <>
-                    Every document we asked for is in, and our reviewers have
-                    them. We will tell you here and by email as soon as there is
-                    an update — there is nothing else for you to do right now.
-                  </>
-                ) : (
-                  <>
-                    Your {documentName} is stored and with our reviewers. We
-                    will let you know here and by email once it has been
-                    checked.
-                  </>
-                )}
-              </DialogDescription>
-            </div>
+            <DialogTitle className={cn("min-w-0", processing && "self-center")}>
+              {outcome === "flagged"
+                ? "We cannot use this one"
+                : processing
+                  ? "Finishing up"
+                  : outcome === "complete"
+                    ? "That is everything"
+                    : "Received"}
+            </DialogTitle>
           </div>
         </DialogHeader>
+
+        {/* `-mt-5` takes back the column's gap, so the text sits as close
+            under the title as it did inside the header. The start padding
+            lines it up with the title rather than the icon: the body's
+            own 24px, plus the icon and the 12px gap beside it. */}
+        <DialogBody
+          className={cn(
+            "-mt-5",
+            processing ? "ps-[calc(1.5rem+3.25rem)]" : "ps-[calc(1.5rem+2.25rem)]"
+          )}
+        >
+          <DialogDescription className="mt-0">
+            {outcome === "flagged" ? (
+              <>
+                {/* The checker's own reason, verbatim. A generic
+                    "please upload a clearer copy" would send someone
+                    back to re-photograph a document that was refused
+                    for being the wrong document entirely — which is
+                    exactly what the sentence after it used to do,
+                    appended to every flag whatever its reason. The
+                    follow-up now says what to do without claiming to
+                    know why, so it is true of a wrong document and an
+                    unreadable one alike. */}
+                {reason?.trim()
+                  ? reason
+                  : `We could not read your ${documentName}.`}{" "}
+                Replace the file and we will check it again.
+              </>
+            ) : processing ? (
+              <>Adding your {documentName} to the file.</>
+            ) : outcome === "complete" ? (
+              <>
+                Every document we asked for is in, and our reviewers have
+                them. We will tell you here and by email as soon as there is
+                an update — there is nothing else for you to do right now.
+              </>
+            ) : (
+              <>
+                Your {documentName} is stored and with our reviewers. We
+                will let you know here and by email once it has been
+                checked.
+              </>
+            )}
+          </DialogDescription>
+        </DialogBody>
 
         {!processing && (
           <DialogFooter>
@@ -187,7 +207,15 @@ export function UploadOutcomeDialog({
                 >
                   Skip for now
                 </Button>
-                <Button type="button" onClick={onReupload}>
+                {/* Allowed to wrap: the document's name is in the label,
+                    and a name like "Bank statements for the last six
+                    months" on one unbreakable line is wider than a
+                    phone. */}
+                <Button
+                  type="button"
+                  onClick={onReupload}
+                  className="h-auto min-h-[var(--control-h)] whitespace-normal py-2 text-start"
+                >
                   <RotateCcw /> Re-upload {documentName}
                 </Button>
               </>

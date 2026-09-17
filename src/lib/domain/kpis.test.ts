@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   FUNNEL_STAGES,
+  OPEN_STATUSES,
+  OVERDUE_AFTER_DAYS,
+  REVIEW_STATUSES,
+  dashboardTotals,
+  formatTimelineDays,
   funnelOf,
-  medianMs,
   operationsOf,
   rate,
   rollupClients,
@@ -203,49 +207,82 @@ describe("rollupClients", () => {
   });
 });
 
-describe("medianMs", () => {
-  it("is null for no samples, so an empty console shows no duration", () => {
-    expect(medianMs([])).toBeNull();
-  });
-
-  it("takes the middle value of an odd number of samples", () => {
-    expect(medianMs([3 * DAY, 1 * DAY, 2 * DAY])).toBe(2 * DAY);
-  });
-
-  it("averages the two middle values of an even number of samples", () => {
-    // The median, not the mean: one case stuck in review for a year
-    // would drag an average past every real duration on the queue.
-    expect(medianMs([1 * DAY, 2 * DAY, 4 * DAY, 100 * DAY])).toBe(3 * DAY);
-  });
-});
-
 describe("operationsOf", () => {
-  // `at(0)`, so a negative day is overdue and a positive one is not.
+  // `at(0)`, so a case submitted at `at(-6)` has been in review six days.
   const now = T0;
 
   function queued(over: Partial<QueueFacts> = {}): QueueFacts {
-    return { ...application(), slaDueAt: null, assigneeId: null, ...over };
+    return { ...application(), firstSubmittedAt: null, assigneeId: null, ...over };
   }
 
-  it("measures time to decision from submission, not from sign-up", () => {
-    // Folding in however long a traveller took to gather their documents
-    // would produce a figure that looks like a review-desk metric and
-    // describes something else entirely.
+  it("measures the timeline from first submission, not from the resubmission", () => {
+    // `submitted_at` moves every time a traveller resubmits after a
+    // request for more documents. Measuring from it would reset the
+    // clock on exactly the cases that took longest.
     const ops = operationsOf(
       [
-        queued({ submittedAt: at(3), decidedAt: at(7), status: "approved" }),
-        queued({ submittedAt: at(1), decidedAt: at(3), status: "approved" }),
+        queued({
+          status: "approved",
+          firstSubmittedAt: at(1),
+          submittedAt: at(5),
+          decidedAt: at(7),
+        }),
       ],
       now
     );
 
-    // Four days and two days — the mean of the two middle values.
-    expect(ops.medianDaysToDecision).toBe(3);
+    expect(ops.meanDaysToApproval).toBe(6);
   });
 
-  it("has no decision time at all before the first decision", () => {
+  it("averages approved cases only, with the mean rather than the median", () => {
+    const ops = operationsOf(
+      [
+        queued({ status: "approved", firstSubmittedAt: at(3), submittedAt: at(3), decidedAt: at(7) }),
+        queued({ status: "approved", firstSubmittedAt: at(1), submittedAt: at(1), decidedAt: at(2) }),
+        queued({ status: "approved", firstSubmittedAt: at(0), submittedAt: at(0), decidedAt: at(10) }),
+        // A refusal is a decision, but the client's figure is time to an
+        // approved visa.
+        queued({ status: "rejected", firstSubmittedAt: at(0), submittedAt: at(0), decidedAt: at(30) }),
+      ],
+      now
+    );
+
+    // (4 + 1 + 10) / 3
+    expect(ops.meanDaysToApproval).toBe(5);
+  });
+
+  it("falls back to submitted_at for a row that predates first_submitted_at", () => {
+    const ops = operationsOf(
+      [queued({ status: "approved", submittedAt: at(1), decidedAt: at(3) })],
+      now
+    );
+
+    expect(ops.meanDaysToApproval).toBe(2);
+  });
+
+  it("keeps the fraction, so half a day is not rounded to nothing", () => {
+    const ops = operationsOf(
+      [queued({ status: "approved", firstSubmittedAt: at(1), submittedAt: at(1), decidedAt: at(1.5) })],
+      now
+    );
+
+    expect(ops.meanDaysToApproval).toBe(0.5);
+  });
+
+  it("has no timeline at all before the first approval", () => {
+    const ops = operationsOf(
+      [
+        queued({ status: "submitted", submittedAt: at(1) }),
+        // Approved, but with no timestamps to measure between.
+        queued({ status: "approved", decidedAt: null }),
+      ],
+      now
+    );
+    expect(ops.meanDaysToApproval).toBeNull();
+  });
+
+  it("has no approval rate before the first decision", () => {
     const ops = operationsOf([queued({ status: "submitted", submittedAt: at(1) })], now);
-    expect(ops.medianDaysToDecision).toBeNull();
     expect(ops.approvalRate).toBeNull();
   });
 
@@ -283,20 +320,36 @@ describe("operationsOf", () => {
     expect(ops.approvalRate).toBe(0.5);
   });
 
-  it("counts an open case past its SLA as overdue, and a decided one never", () => {
+  it(`counts a case as overdue after ${OVERDUE_AFTER_DAYS} days in review`, () => {
     const ops = operationsOf(
       [
-        queued({ status: "under_review", slaDueAt: at(-1) }),
-        queued({ status: "under_review", slaDueAt: at(5) }),
-        // Late, but finished. An SLA breach after the decision has
-        // landed is not work anybody can still do.
-        queued({ status: "approved", decidedAt: at(-2), slaDueAt: at(-3) }),
+        // Six days in review.
+        queued({ status: "under_review", submittedAt: at(-6) }),
+        queued({ status: "awaiting_decision", submittedAt: at(-(OVERDUE_AFTER_DAYS + 0.01)) }),
+        // Exactly on the line is not over it.
+        queued({ status: "submitted", submittedAt: at(-OVERDUE_AFTER_DAYS) }),
+        queued({ status: "under_review", submittedAt: at(-2) }),
       ],
       now
     );
 
-    expect(ops.overdueSla).toBe(1);
-    expect(ops.openCases).toBe(2);
+    expect(ops.overdue).toBe(2);
+  });
+
+  it("never counts a decided case, or one waiting on the traveller, as overdue", () => {
+    const ops = operationsOf(
+      [
+        // Late, but finished — not work anybody can still do.
+        queued({ status: "approved", submittedAt: at(-30), decidedAt: at(-2) }),
+        // The traveller's turn: the desk cannot move it.
+        queued({ status: "additional_documents", submittedAt: at(-30) }),
+        // In review but never submitted — nothing to measure from.
+        queued({ status: "under_review", submittedAt: null }),
+      ],
+      now
+    );
+
+    expect(ops.overdue).toBe(0);
   });
 
   /**
@@ -321,11 +374,15 @@ describe("operationsOf", () => {
     expect(ops.approvalRate).toBeNull();
   });
 
-  it("counts an open case with no reviewer as unassigned", () => {
+  it("counts a case in review with no reviewer as unassigned", () => {
     const ops = operationsOf(
       [
         queued({ status: "submitted" }),
         queued({ status: "submitted", assigneeId: "staff_1" }),
+        // Unassigned, but it is the traveller's turn — the same rule
+        // the "Open applications" card counts by, so this card can never
+        // read higher than that one.
+        queued({ status: "collecting_documents" }),
         // Unassigned, but nobody needs to pick it up.
         queued({ status: "approved", decidedAt: at(1) }),
       ],
@@ -333,6 +390,98 @@ describe("operationsOf", () => {
     );
 
     expect(ops.unassigned).toBe(1);
+  });
+});
+
+describe("dashboardTotals", () => {
+  it("counts every application as processed, drafts included", () => {
+    const totals = dashboardTotals([
+      application({ status: "draft" }),
+      application({ status: "collecting_documents" }),
+      application({ status: "under_review" }),
+      application({ status: "approved" }),
+    ]);
+
+    expect(totals.applicationsProcessed).toBe(4);
+  });
+
+  it("counts travellers as approved applications, not accounts", () => {
+    const totals = dashboardTotals([
+      application({ status: "approved" }),
+      application({ status: "approved" }),
+      application({ status: "rejected" }),
+      application({ status: "draft" }),
+    ]);
+
+    expect(totals.travellers).toBe(2);
+  });
+
+  it("counts open applications as the ones waiting on a reviewer", () => {
+    // The traveller's turn is not "still in review": nobody at the desk
+    // can move a case that is waiting for its own documents.
+    const totals = dashboardTotals([
+      application({ status: "collecting_documents" }),
+      application({ status: "additional_documents" }),
+      application({ status: "submitted" }),
+      application({ status: "under_review" }),
+      application({ status: "processing" }),
+      application({ status: "interview_scheduled" }),
+      application({ status: "awaiting_decision" }),
+      application({ status: "approved" }),
+    ]);
+
+    expect(totals.openCases).toBe(5);
+  });
+
+  it("never reports more travellers than applications processed", () => {
+    const statuses = [
+      "draft",
+      "collecting_documents",
+      "submitted",
+      "approved",
+      "rejected",
+      "approved",
+    ] as const;
+
+    for (let n = 0; n <= statuses.length; n += 1) {
+      const totals = dashboardTotals(
+        statuses.slice(0, n).map((status) => application({ status }))
+      );
+      expect(totals.travellers).toBeLessThanOrEqual(totals.applicationsProcessed);
+    }
+  });
+});
+
+describe("REVIEW_STATUSES", () => {
+  it("is the open statuses without the traveller's turn", () => {
+    expect([...REVIEW_STATUSES].sort()).toEqual(
+      OPEN_STATUSES.filter(
+        (s) => s !== "collecting_documents" && s !== "additional_documents"
+      ).sort()
+    );
+  });
+});
+
+describe("formatTimelineDays", () => {
+  it("is an em dash before the first approval", () => {
+    expect(formatTimelineDays(null)).toBe("—");
+  });
+
+  it("counts hours under a day, so a fast desk does not read 0.0d", () => {
+    expect(formatTimelineDays(0.3)).toBe("7h");
+    expect(formatTimelineDays(0.01)).toBe("<1h");
+    // 23.9h rounds to 24h, which is a day.
+    expect(formatTimelineDays(0.996)).toBe("1.0d");
+  });
+
+  it("keeps one decimal from one day to under ten", () => {
+    expect(formatTimelineDays(2.46)).toBe("2.5d");
+  });
+
+  it("rounds to whole days from ten up", () => {
+    expect(formatTimelineDays(12.4)).toBe("12d");
+    // 9.96 rounds to 10.0, which is no longer under ten.
+    expect(formatTimelineDays(9.96)).toBe("10d");
   });
 });
 

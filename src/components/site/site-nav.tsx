@@ -278,17 +278,24 @@ export function SiteNav() {
                 what its `z-index` says, and it is `aria-hidden` besides.
                 Without this button the only ways out were Escape and an
                 overlay tap — and a hamburger that visibly does nothing
-                when you tap it to dismiss is the worst of the three. */}
+                when you tap it to dismiss is the worst of the three.
+
+                The sheet stops at the bottom of the screen and its rows
+                scroll inside it, so a phone held landscape can still
+                reach "Sign in" and the language menu. The box itself
+                does not scroll, for the same reason `DialogContent`'s
+                does not: the close button would scroll away with it. */}
             <DialogContent
+              overlayClassName="z-80"
               className={cn(
-                "left-0 top-[var(--bar-h)] max-w-none translate-x-0 translate-y-0 gap-0 rounded-none rounded-b-lg border-x-0 border-t-0 p-0 pb-2 pt-16",
+                "z-80 left-0 top-[var(--bar-h)] max-h-[calc(100dvh-var(--bar-h))] w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-none rounded-b-lg border-x-0 border-t-0 p-0 pb-2 pt-16",
                 "data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100",
                 "data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2"
               )}
             >
               <DialogTitle className="sr-only">{t(SITE_CHROME.menuTitle)}</DialogTitle>
 
-              <div className="px-6 pb-4">
+              <div className="min-h-0 overflow-y-auto px-6 pb-4 pt-1">
                 {sections.map((l) => (
                   <DialogClose asChild key={l.href}>
                     <Link

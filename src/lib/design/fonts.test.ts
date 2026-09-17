@@ -82,6 +82,25 @@ describe("the font chain", () => {
     }
   });
 
+  it("sets figures and labels in the body face, so a zero has no dot in it", () => {
+    // Plex Mono draws its zero dotted, and the client read that as the
+    // wrong font (review of 2026-09-17, decision D7). `.num` and `.tag`
+    // are where figures and labels meet it; `.mrz` is the one role that
+    // is meant to look like a machine, and the only one left on `--data`.
+    const rule = (sel: string) => {
+      const m = CSS.match(new RegExp(`^\\s*\\${sel}\\s*\\{([^}]*)\\}`, "m"));
+      if (!m) throw new Error(`No ${sel} rule in globals.css`);
+      return m[1];
+    };
+    expect(rule(".num")).toMatch(/font-family:\s*var\(--sans\)/);
+    expect(rule(".num")).toMatch(/tabular-nums/);
+    expect(rule(".tag")).toMatch(/font-family:\s*var\(--sans\)/);
+    const dataUsers = [...CSS.matchAll(/^\s*([.\w-]+)\s*\{[^}]*font-family:\s*var\(--data\)/gm)].map(
+      (m) => m[1]
+    );
+    expect(dataUsers).toEqual([".mrz"]);
+  });
+
   it("declares no `fallback` on any localFont, because it would land mid-chain", () => {
     expect(LAYOUT).not.toMatch(/\bfallback:\s*\[/);
   });

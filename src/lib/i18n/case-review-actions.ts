@@ -479,7 +479,7 @@ export const FLAG_REASONS: {
  * to say "Cancel", and one shared word is not a dependency worth having
  * between two consoles that are meant to drift apart.
  */
-export const CASE_COMMON: { cancel: L; handledBy: L; unheld: L; takeCase: L; release: L; assignTo: L } = {
+export const CASE_COMMON: { cancel: L; handledBy: L } = {
   cancel: {
     en: "Cancel",
     ha: "Soke",
@@ -503,53 +503,5 @@ export const CASE_COMMON: { cancel: L; handledBy: L; unheld: L; takeCase: L; rel
     ar: "يتولاه",
     tw: "Nea ɔhwɛ so",
     zu: "Kuphathwa ngu",
-  },
-  unheld: {
-    en: "Nobody yet",
-    ha: "Babu kowa tukuna",
-    yo: "Kò sí ẹnikẹ́ni síbẹ̀",
-    ig: "Ọ dịbeghị onye",
-    fr: "Personne pour l'instant",
-    pt: "Ainda ninguém",
-    sw: "Bado hakuna mtu",
-    ar: "لا أحد بعد",
-    tw: "Obiara nni hɔ",
-    zu: "Akekho okwamanje",
-  },
-  takeCase: {
-    en: "Take this case",
-    ha: "Ka ɗauki wannan shari'ar",
-    yo: "Gba ẹjọ́ yìí",
-    ig: "Were okwu a",
-    fr: "Prendre ce dossier",
-    pt: "Assumir este caso",
-    sw: "Chukua kesi hii",
-    ar: "تولَّ هذه الحالة",
-    tw: "Fa asɛm yi",
-    zu: "Thatha leli cala",
-  },
-  release: {
-    en: "Hand back",
-    ha: "Mayar da shi",
-    yo: "Dá a padà",
-    ig: "Nyeghachi ya",
-    fr: "Rendre",
-    pt: "Devolver",
-    sw: "Rudisha",
-    ar: "إعادته",
-    tw: "San fa ma",
-    zu: "Buyisela",
-  },
-  assignTo: {
-    en: "Hand to a colleague",
-    ha: "Ba abokin aiki",
-    yo: "Fi lé alábàáṣiṣẹ́ lọ́wọ́",
-    ig: "Nyefee onye ọrụ ibe gị",
-    fr: "Confier à un collègue",
-    pt: "Entregar a um colega",
-    sw: "Mpe mwenzako",
-    ar: "أسندها إلى زميل",
-    tw: "Fa ma wo yɔnko adwumayɛni",
-    zu: "Nikeza ozakwenu",
   },
 };

@@ -292,13 +292,16 @@ test("an employer invites a traveller, who accepts and appears on the roster", a
   // since #51 deleted the platform's.
   await expect(page.getByRole("heading", { name: INVITEE_NAME })).toBeVisible();
   await expect(page.getByText("Decision")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Take this case" })).toBeVisible();
+  const handler = page.getByLabel("Handled by");
+  await expect(handler).toHaveValue("");
 
   // Nobody holds it yet, so the whole agency can see it. Taking it is
   // what narrows that to this reviewer — `handlesCase` reads the column
-  // this button writes.
-  await page.getByRole("button", { name: "Take this case" }).click();
-  await expect(page.getByRole("button", { name: "Hand back" })).toBeVisible();
+  // this option writes. Once taken, "Assign to me" gives way to their
+  // own name as the selected option.
+  await handler.selectOption({ label: "Assign to me" });
+  await expect(handler).toHaveValue(/.+/);
+  await expect(handler.locator("option", { hasText: "Assign to me" })).toHaveCount(0);
 
   // The privacy promise is the console's front page, and stays there:
   // one laminate, on the screen you land on, none on the rosters or the
@@ -448,7 +451,7 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   // The pool row is not a link: a reviewer may take an unheld case but
   // not read it, so the row carries the one action that is theirs.
   await expect(colleague.getByRole("link", { name: /TPL-/ })).toHaveCount(0);
-  await colleague.getByRole("button", { name: "Take this case" }).click();
+  await colleague.getByLabel("Handled by").selectOption({ label: "Assign to me" });
 
   // Once it is theirs it moves onto the desk, the pool empties, and the
   // case opens — the same column decided all three.
@@ -459,9 +462,12 @@ test("a colleague joins the agency, takes a case and sees it on their desk", asy
   await expect(mine).toBeVisible();
   await mine.click();
   await colleague.waitForURL("**/agency/clients/**");
+  // Theirs now: the dropdown names them, and Unassigned is how they would
+  // hand it back.
+  await expect(colleague.getByLabel("Handled by")).toHaveValue(/.+/);
   await expect(
-    colleague.getByRole("button", { name: "Hand back" })
-  ).toBeVisible();
+    colleague.getByLabel("Handled by").locator("option", { hasText: "Assign to me" })
+  ).toHaveCount(0);
 
   await consoleNav(colleague).getByRole("link", { name: "Dashboard" }).click();
   await colleague.waitForURL("**/agency");

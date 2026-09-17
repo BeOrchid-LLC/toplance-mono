@@ -1,3 +1,4 @@
+import type { AgencyStatus } from "@/lib/domain/agency-status";
 import type { Locale } from "@/lib/i18n/locales";
 
 type L = Record<Locale, string>;
@@ -24,7 +25,6 @@ export const OPS_TENANTS: {
     openEnquiries: { label: L; sub: L };
   };
   tenantsPanel: L;
-  agenciesWord: L;
   searchPlaceholder: L;
   anyStatus: L;
   inviteSearchPlaceholder: L;
@@ -40,6 +40,7 @@ export const OPS_TENANTS: {
   };
   live: L;
   suspendedBadge: L;
+  status: Record<AgencyStatus, L>;
   planLabel: L;
   planUnpaid: L;
   planPaidUntil: L;
@@ -235,16 +236,16 @@ export const OPS_TENANTS: {
     },
   },
   tenantsPanel: {
-    en: "Every agency",
-    ha: "Kowace hukuma",
-    yo: "Gbogbo ilé-iṣẹ́",
-    ig: "Ụlọ ọrụ ọ bụla",
-    fr: "Toutes les agences",
-    pt: "Todas as agências",
-    sw: "Kila wakala",
-    ar: "كل وكالة",
-    tw: "Adwumakuo biara",
-    zu: "Yonke i-ejensi",
+    en: "Agencies",
+    ha: "Hukumomi",
+    yo: "Àwọn ilé-iṣẹ́",
+    ig: "Ụlọ ọrụ",
+    fr: "Agences",
+    pt: "Agências",
+    sw: "Mawakala",
+    ar: "الوكالات",
+    tw: "Adwumakuo",
+    zu: "Ama-ejensi",
   },
   inviteSearchPlaceholder: {
     en: "Search by email or name",
@@ -304,18 +305,6 @@ export const OPS_TENANTS: {
     ar: "كل الحالات",
     tw: "Tebea nyinaa",
     zu: "Zonke izimo",
-  },
-  agenciesWord: {
-    en: "agencies",
-    ha: "hukumomi",
-    yo: "àwọn ilé-iṣẹ́",
-    ig: "ụlọ ọrụ",
-    fr: "agences",
-    pt: "agências",
-    sw: "mawakala",
-    ar: "الوكالات",
-    tw: "adwumakuo",
-    zu: "ama-ejensi",
   },
   emptyTenants: {
     en: "No agency has been created yet. Create one from an enquiry below, or start from scratch.",
@@ -436,6 +425,74 @@ export const OPS_TENANTS: {
     ar: "موقوفة",
     tw: "Wɔagyae",
     zu: "Kumisiwe",
+  },
+  /**
+   * An agency's lifecycle status (`agencyStatus`), decision D1 of the
+   * client review on 17 September — pending her confirmation, so the
+   * words are here in one place. `live` and `suspended` repeat the two
+   * words above, which the KYB queue still reads for its own pill.
+   */
+  status: {
+    onboarding: {
+      en: "Onboarding",
+      ha: "Ana shigar da ita",
+      yo: "Ń wọlé",
+      ig: "Na-abanye",
+      fr: "Intégration",
+      pt: "Em integração",
+      sw: "Inasajiliwa",
+      ar: "قيد الإعداد",
+      tw: "Wɔrede no ahyɛ mu",
+      zu: "Iyangeniswa",
+    },
+    awaiting_payment: {
+      en: "Awaiting payment",
+      ha: "Ana jiran biya",
+      yo: "Ń dúró de ìsanwó",
+      ig: "Na-eche ịkwụ ụgwọ",
+      fr: "Paiement en attente",
+      pt: "A aguardar pagamento",
+      sw: "Inasubiri malipo",
+      ar: "بانتظار الدفع",
+      tw: "Ɛretwɛn akatua",
+      zu: "Ilinde inkokhelo",
+    },
+    live: {
+      en: "Live",
+      ha: "Yana aiki",
+      yo: "Ń ṣiṣẹ́",
+      ig: "Na-arụ ọrụ",
+      fr: "En ligne",
+      pt: "Ativo",
+      sw: "Inatumika",
+      ar: "مُفعَّل",
+      tw: "Ɛreyɛ adwuma",
+      zu: "Iyasebenza",
+    },
+    lapsed: {
+      en: "Lapsed",
+      ha: "Ya ƙare",
+      yo: "Ó ti parí",
+      ig: "Agwụla",
+      fr: "Expirée",
+      pt: "Expirada",
+      sw: "Imekwisha",
+      ar: "منتهية",
+      tw: "Ne berɛ atwam",
+      zu: "Iphelelwe yisikhathi",
+    },
+    suspended: {
+      en: "Suspended",
+      ha: "An dakatar",
+      yo: "A ti dádúró",
+      ig: "Akwụsịrị ya",
+      fr: "Suspendue",
+      pt: "Suspensa",
+      sw: "Imesimamishwa",
+      ar: "موقوفة",
+      tw: "Wɔagyae",
+      zu: "Kumisiwe",
+    },
   },
   planLabel: {
     en: "Plan",
@@ -822,16 +879,16 @@ export const OPS_TENANTS: {
     zu: "Wenze u-{name} umhloli?",
   },
   demoteConfirmBody: {
-    en: "They lose the owner's controls as soon as you confirm — inviting people, billing, and the agency's settings. They keep their console and their cases. Any owner can hand it back.",
-    ha: "Za su rasa ikon mai gidan da zarar ka tabbatar — gayyatar mutane, biyan kuɗi, da saitunan hukumar. Za su riƙe na'urar aikinsu da shari'o'insu. Kowane mai gida zai iya mayar musu da shi.",
-    yo: "Wọn yóò pàdánù àwọn ìdarí olówó lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́sí — pípe ènìyàn, ìsanwó, àti ètò ilé-iṣẹ́ náà. Wọn yóò pa kọ́ńsọ́ọ̀lù wọn àti àwọn ẹjọ́ wọn mọ́. Olówó èyíkéyìí lè dá a padà fún wọn.",
-    ig: "Ha ga-atụfu njikwa nke onye nwe ozugbo ị kwadoro — ịkpọ ndị mmadụ òkù, ụgwọ, na ntọala ụlọ ọrụ ahụ. Ha ga-ejide console ha na ikpe ha. Onye nwe ọ bụla nwere ike inyeghachi ya.",
-    fr: "Cette personne perd les commandes du propriétaire dès que vous confirmez — inviter, la facturation et les réglages de l'agence. Elle garde sa console et ses dossiers. N'importe quel propriétaire peut les lui rendre.",
-    pt: "Perde os controlos de proprietário assim que confirmar — convidar pessoas, faturação e as definições da agência. Mantém a sua consola e os seus processos. Qualquer proprietário pode devolvê-los.",
-    sw: "Anapoteza vidhibiti vya mmiliki mara tu unapothibitisha — kualika watu, malipo, na mipangilio ya wakala. Anabaki na konsoli yake na kesi zake. Mmiliki yeyote anaweza kumrudishia.",
-    ar: "يفقد صلاحيات المالك فور تأكيدك — دعوة الأشخاص والفوترة وإعدادات الوكالة. ويحتفظ بلوحته وبحالاته. ويستطيع أي مالك إعادتها إليه.",
-    tw: "Sɛ wopene so ara a, ɔbɛhwere owura no tumi — nnipa a ɔfrɛ wɔn, sika a wɔgye, ne adwumakuo no nhyehyɛeɛ. Ne console ne ne nsɛm no bɛka ne nsam. Owura biara bɛtumi asan de ama no.",
-    zu: "Ulahlekelwa izilawuli zomnikazi ngokushesha uma uqinisekisa — ukumema abantu, ukukhokhisa, nezilungiselelo ze-ejensi. Ugcina ikhonsoli yakhe namacala akhe. Noma yimuphi umnikazi angambuyisela zona.",
+    en: "They lose the owner's controls as soon as you confirm — inviting people, billing, and the agency's settings. They keep their workspace and their cases. Any owner can hand it back.",
+    ha: "Za su rasa ikon mai gidan da zarar ka tabbatar — gayyatar mutane, biyan kuɗi, da saitunan hukumar. Za su riƙe wurin aikinsu da shari'o'insu. Kowane mai gida zai iya mayar musu da shi.",
+    yo: "Wọn yóò pàdánù àwọn ìdarí olówó lẹ́sẹ̀kẹsẹ̀ tí o bá fọwọ́sí — pípe ènìyàn, ìsanwó, àti ètò ilé-iṣẹ́ náà. Wọn yóò pa ibi-iṣẹ́ wọn àti àwọn ẹjọ́ wọn mọ́. Olówó èyíkéyìí lè dá a padà fún wọn.",
+    ig: "Ha ga-atụfu njikwa nke onye nwe ozugbo ị kwadoro — ịkpọ ndị mmadụ òkù, ụgwọ, na ntọala ụlọ ọrụ ahụ. Ha ga-ejide ebe ọrụ ha na ikpe ha. Onye nwe ọ bụla nwere ike inyeghachi ya.",
+    fr: "Cette personne perd les commandes du propriétaire dès que vous confirmez — inviter, la facturation et les réglages de l'agence. Elle garde son espace de travail et ses dossiers. N'importe quel propriétaire peut les lui rendre.",
+    pt: "Perde os controlos de proprietário assim que confirmar — convidar pessoas, faturação e as definições da agência. Mantém o seu espaço de trabalho e os seus processos. Qualquer proprietário pode devolvê-los.",
+    sw: "Anapoteza vidhibiti vya mmiliki mara tu unapothibitisha — kualika watu, malipo, na mipangilio ya wakala. Anabaki na eneo lake la kazi na kesi zake. Mmiliki yeyote anaweza kumrudishia.",
+    ar: "يفقد صلاحيات المالك فور تأكيدك — دعوة الأشخاص والفوترة وإعدادات الوكالة. ويحتفظ بمساحة عمله وبحالاته. ويستطيع أي مالك إعادتها إليه.",
+    tw: "Sɛ wopene so ara a, ɔbɛhwere owura no tumi — nnipa a ɔfrɛ wɔn, sika a wɔgye, ne adwumakuo no nhyehyɛeɛ. Ne adwumayɛbea ne ne nsɛm no bɛka ne nsam. Owura biara bɛtumi asan de ama no.",
+    zu: "Ulahlekelwa izilawuli zomnikazi ngokushesha uma uqinisekisa — ukumema abantu, ukukhokhisa, nezilungiselelo ze-ejensi. Ugcina indawo yakhe yokusebenzela namacala akhe. Noma yimuphi umnikazi angambuyisela zona.",
   },
   toastRoleChanged: {
     en: "Role updated.",

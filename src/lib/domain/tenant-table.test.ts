@@ -5,13 +5,14 @@ import { TENANT_SORTS, tenantMatches, tenantSortKey } from "./tenant-table";
 const sahara = {
   name: "Sahara Travel",
   domain: "sahara.ng",
-  suspendedAt: null,
+  status: "live" as const,
   members: 4,
   applicationsTotal: 31,
   createdAt: new Date("2026-03-02T00:00:00.000Z"),
 };
 
-const halted = { ...sahara, name: "Kano Voyages", domain: null, suspendedAt: new Date() };
+const halted = { ...sahara, name: "Kano Voyages", domain: null, status: "suspended" as const };
+const unpaid = { ...sahara, name: "Abuja Tours", status: "awaiting_payment" as const };
 
 describe("tenantMatches", () => {
   it("keeps every row when nothing is asked of it", () => {
@@ -37,11 +38,14 @@ describe("tenantMatches", () => {
     expect(tenantMatches(sahara, "lagos", "")).toBe(false);
   });
 
-  it("narrows to live or suspended", () => {
+  it("narrows to one lifecycle status", () => {
     expect(tenantMatches(sahara, "", "live")).toBe(true);
     expect(tenantMatches(sahara, "", "suspended")).toBe(false);
     expect(tenantMatches(halted, "", "suspended")).toBe(true);
     expect(tenantMatches(halted, "", "live")).toBe(false);
+    // Not suspended is no longer enough to be live.
+    expect(tenantMatches(unpaid, "", "live")).toBe(false);
+    expect(tenantMatches(unpaid, "", "awaiting_payment")).toBe(true);
   });
 
   it("ignores a state nobody offers rather than emptying the table", () => {
@@ -63,9 +67,9 @@ describe("tenantSortKey", () => {
     expect(tenantSortKey(sahara, "applications")).toBe(31);
   });
 
-  it("sorts the live above the suspended, not by date", () => {
-    expect(tenantSortKey(sahara, "state")).toBe(0);
-    expect(tenantSortKey(halted, "state")).toBe(1);
+  it("sorts by lifecycle status, not by its words or a date", () => {
+    expect(tenantSortKey(unpaid, "state")).toBeLessThan(tenantSortKey(sahara, "state") as number);
+    expect(tenantSortKey(sahara, "state")).toBeLessThan(tenantSortKey(halted, "state") as number);
   });
 
   it("orders by when the agency arrived", () => {

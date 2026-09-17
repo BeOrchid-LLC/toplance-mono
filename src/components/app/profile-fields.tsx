@@ -83,7 +83,7 @@ function Row({
     <div className="border-b border-border py-3">
       <dt className="special-caps">{label}</dt>
       <dd className="mt-1 flex items-center justify-between gap-2">
-        <span className="min-w-0 break-words text-base font-semibold">
+        <span className="min-w-0 wrap-anywhere text-base font-semibold">
           {value}
         </span>
         <button
@@ -108,7 +108,7 @@ function SaveCancel({
 }) {
   const t = useT();
   return (
-    <div className="mt-3 flex gap-2">
+    <div className="mt-3 flex flex-wrap gap-2">
       <Button type="submit" size="sm" disabled={pending}>
         {pending ? t(PROFILE_FIELDS.saving) : t(PROFILE_FIELDS.save)}
       </Button>

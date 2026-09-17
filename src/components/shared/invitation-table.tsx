@@ -15,14 +15,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_STAFF } from "@/lib/i18n/ops-staff";
 import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Who has been asked to work at BeOrchid, as columns over `DataTable`.
@@ -47,10 +40,8 @@ export function InvitationTable({
   locale,
   sort,
   dir,
-  params,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
   resendAction,
   revokeAction,
@@ -59,10 +50,8 @@ export function InvitationTable({
   locale: Locale;
   sort: StaffSort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
   resendAction: (formData: FormData) => Promise<ResendResult>;
   revokeAction: (formData: FormData) => Promise<RevokeResult>;
@@ -71,12 +60,12 @@ export function InvitationTable({
     {
       id: "person",
       label: OPS_STAFF.tableHead.person[locale],
-      sortable: true,
-      // The same ceiling `ColleaguesTable` puts on the same data one
+      sort: "text",
+      // The same floor `ColleaguesTable` puts on the same data one
       // panel up: an invitation is addressed to exactly the kind of
-      // 50+ character tokenised address that makes `truncate` inert
-      // without one — the column's min-content is the whole string.
-      ceiling: "max-w-[280px]",
+      // 50+ character tokenised address that would otherwise be the
+      // column's minimum width. See `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (invite) => (
         <>
           <p className="t-title truncate" title={invite.email}>
@@ -88,7 +77,7 @@ export function InvitationTable({
     {
       // Its own column, as on `ColleaguesTable` one panel up — see there.
       id: "email",
-      ceiling: "max-w-[280px]",
+      floor: "min-w-[10rem]",
       label: OPS_STAFF.tableHead.email[locale],
       cell: (invite) => (
         <span className="block truncate" title={invite.email}>
@@ -99,21 +88,22 @@ export function InvitationTable({
     {
       id: "rank",
       label: OPS_STAFF.tableHead.rank[locale],
-      sortable: true,
+      sort: "text",
       cell: (invite) => OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale],
     },
     {
       id: "status",
       label: OPS_STAFF.tableHead.status[locale],
-      sortable: true,
+      sort: "text",
+      pill: { labels: Object.values(INVITATION_STATUS_COPY).map((c) => c.label[locale]) },
       cell: (invite) => <InvitationStatusBadge status={invite.status} locale={locale} />,
     },
     {
       id: "invited",
       label: OPS_STAFF.tableHead.invited[locale],
-      sortable: true,
+      sort: "date",
       className: "num whitespace-nowrap",
-      cell: (invite) => formatDay(invite.createdAt),
+      cell: (invite) => formatDate(invite.createdAt, locale),
     },
     {
       id: "actions",
@@ -146,9 +136,7 @@ export function InvitationTable({
       numbered
       columns={columns}
       label={OPS_STAFF.invitesPanel[locale]}
-      filteredLabel={filteredLabel}
       basePath="/ops/staff"
-      params={params}
       sort={sort}
       dir={dir}
       locale={locale}

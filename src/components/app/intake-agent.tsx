@@ -8,7 +8,8 @@ import { toast } from "sonner";
 import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
 import { useChat } from "@ai-sdk/react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/components/locale-provider";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { AgentDock, Chips, Composer } from "@/components/app/intake-dock";
@@ -864,7 +865,9 @@ function TranscriptPanel({
           type="button"
           onClick={onClose}
           aria-label={t(INTAKE_UI.ariaCloseTranscript)}
-          className="-me-2 grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+          // 44px on a phone — the row is 44px tall, so it fits — and
+          // the 36px it was from `sm`.
+          className="-me-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full sm:size-9 text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
         >
           <X aria-hidden className="size-4" />
         </button>
@@ -950,7 +953,8 @@ function CompletionBar({
   return (
     // The same card the dock was, so the final answer changes what the
     // panel says without changing what it is. See `AgentDock`.
-    <div className="shrink-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-7">
+    // Clears the device's safe area at the bottom, as `AgentDock` does.
+    <div className="shrink-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pb-7">
       {/* A grid rather than a row, so the sentence can run the full
           measure underneath the buttons instead of being squeezed into
           whatever they leave. Laid out flat it wrapped into a ~210px
@@ -988,7 +992,7 @@ function CompletionBar({
             )}
             {transcriptOpen ? t(INTAKE_UI.close) : t(INTAKE_UI.transcript)}
           </button>
-          <Button asChild className="w-full sm:w-auto">
+          <Button asChild className={cn("w-full sm:w-auto", wrapOnPhone())}>
             <Link href={next.href}>
               {t(INTAKE_UI[next.key])} <ArrowRight />
             </Link>
@@ -1057,7 +1061,7 @@ function Turn({
           dark an inset that goes darker than the surface it sits on. The
           bubble reads better here than it did before, so the token
           stands. */}
-      <div className="max-w-[80%] rounded-[20px] bg-surface-inset px-4 py-2.5 text-base leading-[1.6] text-ink">
+      <div className="max-w-[80%] rounded-[20px] bg-surface-inset px-4 py-2.5 text-base leading-[1.6] text-ink wrap-anywhere">
         {children}
       </div>
     </div>

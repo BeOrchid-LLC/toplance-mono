@@ -196,6 +196,6 @@ export async function signUpInvited(
  */
 export async function payAgencyPlan(page: Page): Promise<void> {
   await page.waitForURL("**/agency/billing");
-  await page.getByRole("button", { name: "Pay and open the console" }).click();
+  await page.getByRole("button", { name: "Pay and open the workspace" }).click();
   await page.waitForURL("**/agency");
 }

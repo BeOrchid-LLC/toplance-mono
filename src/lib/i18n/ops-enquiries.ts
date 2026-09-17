@@ -31,7 +31,7 @@ export const OPS_ENQUIRIES: {
     preferred: L;
     status: L;
     assignee: L;
-    action: L;
+    actions: L;
   };
   status: {
     new: L;
@@ -41,7 +41,7 @@ export const OPS_ENQUIRIES: {
     declined: L;
   };
   unassigned: L;
-  claimButton: L;
+  rowActions: L;
   assigneeFilterAll: L;
   assigneeFilterMine: L;
   assigneeFilterNobody: L;
@@ -123,28 +123,28 @@ export const OPS_ENQUIRIES: {
     },
     /** The day the enquiry arrived, not the day they want the call. */
     requested: {
-      en: "Requested",
-      ha: "Ranar nema",
-      yo: "Ọjọ́ ìbéèrè",
-      ig: "Ụbọchị arịrịọ",
-      fr: "Demandée le",
-      pt: "Pedido em",
-      sw: "Tarehe ya ombi",
-      ar: "تاريخ الطلب",
-      tw: "Da a wɔbisaeɛ",
-      zu: "Usuku lwesicelo",
+      en: "Logged",
+      ha: "An rubuta",
+      yo: "Ọjọ́ àkọsílẹ̀",
+      ig: "E dekọrọ",
+      fr: "Enregistrée le",
+      pt: "Registado em",
+      sw: "Imerekodiwa",
+      ar: "تاريخ التسجيل",
+      tw: "Da a wɔkyerɛw",
+      zu: "Kubhaliswe",
     },
     preferred: {
-      en: "Preferred time",
-      ha: "Lokacin da ake so",
-      yo: "Àkókò tí a fẹ́",
-      ig: "Oge a chọrọ",
-      fr: "Heure préférée",
-      pt: "Hora preferida",
-      sw: "Saa inayopendelewa",
-      ar: "الوقت المفضل",
-      tw: "Bere a wɔpɛ",
-      zu: "Isikhathi esithandwayo",
+      en: "Demo time",
+      ha: "Lokacin nuni",
+      yo: "Àkókò àfihàn",
+      ig: "Oge ngosi",
+      fr: "Heure de la démo",
+      pt: "Hora da demo",
+      sw: "Muda wa onyesho",
+      ar: "موعد العرض",
+      tw: "Nkyerɛkyerɛmu bere",
+      zu: "Isikhathi somboniso",
     },
     status: {
       en: "Status",
@@ -170,17 +170,22 @@ export const OPS_ENQUIRIES: {
       tw: "Wɔde ama",
       zu: "Kwabelwe",
     },
-    action: {
-      en: "",
-      ha: "",
-      yo: "",
-      ig: "",
-      fr: "",
-      pt: "",
-      sw: "",
-      ar: "",
-      tw: "",
-      zu: "",
+    /**
+     * The row menu's column. Hidden from sight (`labelHidden`) — a kebab
+     * needs no heading — but read out, so the column is not a blank to a
+     * screen reader. The support queue's word.
+     */
+    actions: {
+      en: "Actions",
+      ha: "Ayyuka",
+      yo: "Ìṣe",
+      ig: "Omume",
+      fr: "Actions",
+      pt: "Ações",
+      sw: "Vitendo",
+      ar: "إجراءات",
+      tw: "Nneyɛe",
+      zu: "Izenzo",
     },
   },
   status: {
@@ -259,23 +264,21 @@ export const OPS_ENQUIRIES: {
     zu: "Ayabelwe muntu",
   },
   /**
-   * "Assign to me", not "Claim" — renamed 2026-09-11 to match the support
-   * queue, which dropped the word on 2026-09-10 (see `OPS_SUPPORT.claim`).
-   * The translations are that key's, so the same button reads the same
-   * on both screens. The key stays `claimButton`: renaming the word is
-   * not a reason to touch every call site.
+   * The kebab's accessible name. `{name}` is the company, or the person
+   * when there is no company — every row's button would otherwise be
+   * announced as the same "Actions".
    */
-  claimButton: {
-    en: "Assign to me",
-    ha: "Ba ni wannan",
-    yo: "Yàn án fún mi",
-    ig: "Kenye m ya",
-    fr: "M'attribuer",
-    pt: "Atribuir a mim",
-    sw: "Nikabidhi mimi",
-    ar: "إسناد إليّ",
-    tw: "Fa ma me",
-    zu: "Ngabele mina",
+  rowActions: {
+    en: "Actions for {name}",
+    ha: "Ayyuka don {name}",
+    yo: "Ìṣe fún {name}",
+    ig: "Omume maka {name}",
+    fr: "Actions pour {name}",
+    pt: "Ações para {name}",
+    sw: "Vitendo vya {name}",
+    ar: "إجراءات {name}",
+    tw: "Nneyɛe ma {name}",
+    zu: "Izenzo zika-{name}",
   },
   assigneeFilterAll: {
     en: "Anyone",

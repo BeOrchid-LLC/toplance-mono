@@ -137,4 +137,31 @@ function Button({
   );
 }
 
-export { Button, buttonVariants };
+/**
+ * Lets a button's label wrap below `sm`, for the traveller-facing calls
+ * to action whose label can outgrow a phone.
+ *
+ * A button does not wrap by default, and should not: a label broken over
+ * two lines in a desktop row reads as a layout that ran out of room. But
+ * `whitespace-nowrap` and `shrink-0` together mean a label wider than
+ * its container simply runs out of it, and several of ours are — "Start
+ * uploading (6 on your checklist)" is about 380px in English, and the
+ * Twi, Yoruba and Hausa strings for the site's calls to action run to
+ * 32–38 characters. A 360px phone has 312px inside the page gutter.
+ *
+ * Below `sm` the label may wrap, the height becomes a floor rather than a
+ * fixed value, and the button never outgrows its container. At `sm` and
+ * up nothing changes. `size` picks the floor, and must match the
+ * button's own size so a label that fits keeps its exact height.
+ *
+ * A helper rather than a new variant because it only ever applies with
+ * `default`, `block` or `sm`, and the consoles have no use for it.
+ */
+function wrapOnPhone(size: "default" | "sm" = "default") {
+  return cn(
+    "max-sm:h-auto max-sm:max-w-full max-sm:whitespace-normal max-sm:py-2.5 max-sm:text-center",
+    size === "sm" ? "max-sm:min-h-[var(--row-h)]" : "max-sm:min-h-[var(--control-h)]"
+  );
+}
+
+export { Button, buttonVariants, wrapOnPhone };

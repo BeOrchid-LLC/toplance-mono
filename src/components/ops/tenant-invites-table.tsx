@@ -5,6 +5,7 @@ import type { TenantPendingInvite } from "@/lib/data/tenants";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * One agency's unanswered invitations, as columns over `DataTable`.
@@ -15,35 +16,36 @@ import { cn } from "@/lib/utils";
 export function TenantInvitesTable({
   rows,
   locale,
-  /** What the panel badge counts — the agency's own pending total. */
-  pendingCount,
   className,
   basePath,
-  params,
   total,
   unfilteredTotal,
-  filteredLabel,
 }: {
   /** The invitations left after the toolbar, already filtered. */
   rows: TenantPendingInvite[];
   locale: Locale;
-  pendingCount: number;
   className?: string;
   /** This agency's own address — the toolbar writes its query onto it. */
   basePath?: string;
-  params?: Record<string, string | undefined>;
   total?: number;
   unfilteredTotal?: number;
-  filteredLabel?: string;
 }) {
   const columns: DataColumn<TenantPendingInvite>[] = [
     {
       id: "email",
       label: OPS_TENANTS.invitesHead.email[locale],
+      // An invited address carries its token; see `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (i) => (
         <>
-          {i.email}
-          {i.fullName && <span className="t-muted block">{i.fullName}</span>}
+          <span className="block truncate" title={i.email}>
+            {i.email}
+          </span>
+          {i.fullName && (
+            <span className="t-muted block truncate" title={i.fullName}>
+              {i.fullName}
+            </span>
+          )}
         </>
       ),
     },
@@ -57,14 +59,14 @@ export function TenantInvitesTable({
       id: "sent",
       label: OPS_TENANTS.invitesHead.sent[locale],
       className: "t-muted",
-      cell: (i) => i.createdAt.toISOString().slice(0, 10),
+      cell: (i) => formatDate(i.createdAt, locale),
     },
     {
       id: "expires",
       label: OPS_TENANTS.invitesHead.expires[locale],
       cell: (i) => (
         <span className={cn("t-muted", i.expired && "text-danger-ink")}>
-          {i.expiresAt.toISOString().slice(0, 10)}
+          {formatDate(i.expiresAt, locale)}
           {/* Colour alone said this to sighted readers only, and said it
               in a language nobody translated. */}
           {i.expired && <span className="block">{OPS_TENANTS.inviteExpired[locale]}</span>}
@@ -83,9 +85,7 @@ export function TenantInvitesTable({
       locale={locale}
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
-      filteredLabel={filteredLabel}
       basePath={basePath}
-      params={params}
       toolbar={
         basePath
           ? {
@@ -103,13 +103,7 @@ export function TenantInvitesTable({
             }
           : undefined
       }
-      // The live count, not the row count: the panel is titled "Pending
-      // invitations", and an expired row is listed below (nothing here
-      // can resend one, so the operator needs to see it) but labelled
-      // rather than counted. Same number the agencies list shows.
-      count={pendingCount}
       label={OPS_TENANTS.invitesPanel[locale]}
-      countLabel=""
       empty={<p className="t-muted max-w-[62ch]">{OPS_TENANTS.emptyInvites[locale]}</p>}
     />
   );

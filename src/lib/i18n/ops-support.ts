@@ -18,7 +18,6 @@ export const OPS_SUPPORT: {
   intro: L;
   panel: L;
   empty: L;
-  requestsWord: L;
   searchPlaceholder: L;
   anyState: L;
   stateOpen: L;
@@ -106,10 +105,6 @@ export const OPS_SUPPORT: {
     ar: "لم تطلب أي وكالة المساعدة بعد.",
     tw: "Adwumakuo biara nnbisaa mmoa ɛ.",
     zu: "Ayikho i-ejensi ecele usizo okwamanje.",
-  },
-  requestsWord: {
-    en: "requests", ha: "buƙatu", yo: "ìbéèrè", ig: "arịrịọ", fr: "demandes",
-    pt: "pedidos", sw: "maombi", ar: "طلبات", tw: "abisadeɛ", zu: "izicelo",
   },
   searchPlaceholder: {
     en: "Search by agency or subject",

@@ -14,6 +14,11 @@ import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import {
+  CORRIDOR_STATUS_VARIANT,
+  corridorStatus,
+  corridorStatusLabel,
+} from "@/lib/domain/corridor-table";
 import { corridorDiff, isUnchanged } from "@/lib/domain/corridor-diff";
 import { parseAppliesWhen } from "@/lib/domain/applies-when";
 import { freshnessOf } from "@/lib/domain/freshness";
@@ -29,6 +34,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDOR_REVIEW } from "@/lib/i18n/ops-corridor-review";
 import { opsAccount } from "@/app/[locale]/ops/account";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -113,6 +119,7 @@ export default async function ReviewCorridorPage({
     corridor.purpose
   );
   const decidable = corridor.reviewState === "pending";
+  const status = corridorStatus(corridor);
 
   const counts = await getOpsCounts();
 
@@ -156,20 +163,17 @@ export default async function ReviewCorridorPage({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {corridor.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
-            {corridor.reviewState === "pending" && (
-              <Badge variant="warning">{OPS_COMMON.awaitingReview[locale]}</Badge>
-            )}
-            {corridor.reviewState === "rejected" && (
-              <Badge variant="neutral">{OPS_COMMON.sentBack[locale]}</Badge>
-            )}
-            {corridor.reviewState === "approved" && (
-              <Badge variant="success">
-                {OPS_COMMON.approved[locale]}
-                {corridor.approverName
-                  ? ` ${OPS_CORRIDOR_REVIEW.approvedByPrefix[locale]} ${corridor.approverName}`
-                  : ""}
-              </Badge>
+            {/* One status, the same word the routes table prints for this
+                row — not "Live" beside "Approved". Who approved it is a
+                fact about the record, so it reads beside the pill. */}
+            <Badge variant={CORRIDOR_STATUS_VARIANT[status]}>
+              {corridorStatusLabel(status, locale)}
+            </Badge>
+            {corridor.reviewState === "approved" && corridor.approverName && (
+              <span className="t-muted text-sm">
+                {OPS_COMMON.approved[locale]} {OPS_CORRIDOR_REVIEW.approvedByPrefix[locale]}{" "}
+                {corridor.approverName}
+              </span>
             )}
           </div>
         </div>
@@ -236,9 +240,9 @@ export default async function ReviewCorridorPage({
               {
                 label: OPS_CORRIDOR_REVIEW.fields.lastChecked[locale],
                 value:
-                  freshness.state === "unverified"
+                  freshness.state === "unverified" || !corridor.lastVerifiedAt
                     ? OPS_CORRIDOR_REVIEW.notYet[locale]
-                    : freshness.checked,
+                    : formatDate(corridor.lastVerifiedAt, locale),
               },
             ].map((f) => (
               <div

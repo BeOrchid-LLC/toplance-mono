@@ -52,7 +52,9 @@ function InviteChrome({ children }: { children: React.ReactNode }) {
           <SettingsCluster />
         </div>
       </header>
-      <main className="relative isolate flex-1 px-6 py-14 md:py-20">
+      {/* No side padding on <main>: the `Shell` inside already has its
+          own, and the two together left a phone 264px of a 360px screen. */}
+      <main className="relative isolate flex-1 py-14 md:py-20">
         <Shell className="max-w-[560px]">{children}</Shell>
       </main>
     </div>

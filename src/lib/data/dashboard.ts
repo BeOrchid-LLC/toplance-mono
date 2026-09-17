@@ -16,7 +16,7 @@ import { listInvoices } from "@/lib/data/payments";
 import { requestedRoutes } from "@/lib/data/corridor-demand";
 import type { RequestedRoute } from "@/lib/domain/corridor-demand";
 import {
-  OPEN_STATUSES,
+  dashboardTotals,
   funnelOf,
   operationsOf,
   rate,
@@ -98,19 +98,14 @@ export type DashboardData = {
     clients: number;
     seatsPurchased: number;
     /**
-     * Applications that were actually sent, across every agency.
-     *
-     * This is the platform's throughput and the figure the business is
-     * billed on — BeOrchid charges per application, not per seat, so
-     * `seatsPurchased` was never the number to show beside it. Drafts
-     * are excluded: a file somebody opened and never submitted is not
-     * work the platform processed, and counting it would overstate the
-     * product to the person deciding whether it works.
+     * Every application on the platform, whatever its status — drafts
+     * included (decision D10, 2026-09-17, pending the client's
+     * confirmation). See `dashboardTotals`.
      */
     applicationsProcessed: number;
+    /** Approved applications — not traveller accounts. */
     travellers: number;
-    applicants: number;
-    directApplicants: number;
+    /** Applications waiting on a reviewer — `REVIEW_STATUSES`. */
     openCases: number;
   };
   clients: ClientRow[];
@@ -135,7 +130,6 @@ export async function dashboardData(
     orgRows,
     invitationRows,
     applicationRows,
-    travellerCount,
     documentRows,
     flaggedByKey,
     eventRows,
@@ -170,7 +164,7 @@ export async function dashboardData(
         checklistCompleteAt: applications.checklistCompleteAt,
         submittedAt: applications.submittedAt,
         decidedAt: applications.decidedAt,
-        slaDueAt: applications.slaDueAt,
+        firstSubmittedAt: applications.firstSubmittedAt,
         assigneeId: applications.assigneeId,
         visaExpiresOn: applications.visaExpiresOn,
         nationalityIso: profiles.countryIso,
@@ -180,11 +174,6 @@ export async function dashboardData(
       .from(applications)
       .innerJoin(profiles, eq(profiles.id, applications.travelerId))
       .leftJoin(corridors, eq(corridors.id, applications.corridorId)),
-
-    db
-      .select({ n: count() })
-      .from(profiles)
-      .where(eq(profiles.role, "traveler")),
 
     // Documents outnumber applications several times over, so these are
     // counted in SQL rather than pulled across.
@@ -238,11 +227,7 @@ export async function dashboardData(
     totals: {
       clients: orgRows.length,
       seatsPurchased: orgRows.reduce((sum, o) => sum + o.seatsPurchased, 0),
-      applicationsProcessed: applicationRows.filter((a) => a.status !== "draft").length,
-      travellers: travellerCount[0]?.n ?? 0,
-      applicants: applicationRows.length,
-      directApplicants: applicationRows.filter((a) => !a.orgId).length,
-      openCases: applicationRows.filter((a) => OPEN_STATUSES.includes(a.status)).length,
+      ...dashboardTotals(applicationRows),
     },
     clients,
     funnel,

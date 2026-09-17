@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageSquare, Sparkles, Upload } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceNotice } from "@/components/app/attendance-notice";
 import { VisaApprovedArt } from "@/components/app/visa-approved-art";
@@ -130,7 +131,10 @@ export default async function DashboardPage() {
             used to be stretched and vertically centred because it sat
             beside the completion ring; with the ring gone that left the
             copy floating in the middle of a tall empty panel. */}
-        <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+        {/* `grid-cols-1` below `lg`: an implicit column is as wide as its
+            widest content, and on a phone the next-action button alone
+            could be wider than the screen. */}
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
           {/* A row, not a stack, from `md` up: the words on the left and
               the one action beside them, so the plate is a row shorter.
               Asked for on the 2026-09-10 call — "shift it to the side
@@ -185,7 +189,7 @@ export default async function DashboardPage() {
                   <Button
                     asChild
                     variant="way"
-                    className="shrink-0 self-start md:ms-auto md:self-center"
+                    className={cn("shrink-0 self-start md:ms-auto md:self-center", wrapOnPhone())}
                   >
                     <Link href="/app/documents">
                       {step.kind === "sent_back" ? (
@@ -209,7 +213,7 @@ export default async function DashboardPage() {
                     <Button
                       asChild
                       variant="way"
-                      className="shrink-0 self-start md:ms-auto md:self-center"
+                      className={cn("shrink-0 self-start md:ms-auto md:self-center", wrapOnPhone())}
                     >
                       <Link href="/app/companion">{COMPANION.title[locale]}</Link>
                     </Button>
@@ -252,7 +256,7 @@ export default async function DashboardPage() {
           </Panel>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Panel>
             <PanelHeader
               label={t.tripGlanceLabel[locale]}

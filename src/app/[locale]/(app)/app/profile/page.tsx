@@ -5,7 +5,7 @@ import { ArrowRight, Clock3, Sparkles } from "lucide-react";
 
 import { Hint } from "@/components/ui/hint";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FxCredit } from "@/components/app/fx-credit";
 import { Shell } from "@/components/shared/shell";
@@ -49,6 +49,7 @@ import { currencyForCountryName } from "@/lib/domain/currencies";
 import { convertFee, formatApproximate } from "@/lib/domain/fx";
 import { getPairRate } from "@/lib/fx/rates";
 import { withLocalePrefix } from "@/lib/i18n/paths";
+import { formatDate } from "@/lib/format/date";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -88,19 +89,15 @@ function DetailField({
   return (
     <div className="border-b border-border py-3">
       <dt className="special-caps">{label}</dt>
-      <dd className="mt-1 break-words text-base font-semibold">
+      {/* `wrap-anywhere`, not `break-words`: the email is one unbroken
+          string, and only `anywhere` lets it count as breakable when
+          the grid measures the column, so a long address wraps on a
+          phone rather than widening the whole sheet past the screen. */}
+      <dd className="mt-1 wrap-anywhere text-base font-semibold">
         {value || <Awaiting label={notAnsweredLabel} />}
       </dd>
     </div>
   );
-}
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function formatFee(minor: number | null, currency: string | null) {
@@ -204,11 +201,7 @@ export default async function ProfilePage() {
       ? `${corridor.processingWeeksMin}–${corridor.processingWeeksMax} weeks`
       : null;
   const effective = corridor
-    ? new Date(corridor.effectiveFrom).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
+    ? formatDate(corridor.effectiveFrom, uiLocale)
     : null;
 
   /**
@@ -262,7 +255,7 @@ export default async function ProfilePage() {
                   page. The circle in the app bar stays a circle. */}
               <AvatarUpload fullName={profile.fullName} avatarUrl={avatarUrl} />
               <div className="min-w-0 flex-1">
-                <p className="tag">{t.travelerTag[uiLocale]}</p>
+                <p className="special-caps">{t.travelerTag[uiLocale]}</p>
                 <h1 className="d-lg mt-1.5 break-words text-ink">
                   {profile.fullName || t.travelerFallback[uiLocale]}
                 </h1>
@@ -320,15 +313,21 @@ export default async function ProfilePage() {
               asChild
               variant="neutral"
               size="sm"
-              className="w-full sm:ms-auto sm:w-auto"
+              className={cn("w-full sm:ms-auto sm:w-auto", wrapOnPhone("sm"))}
             >
               <Link href="/app/agent">{t.editTripAnswers[uiLocale]}</Link>
             </Button>
           </div>
         </Panel>
 
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="grid gap-6">
+        {/* `grid-cols-1` below `lg`, not an implicit column. An implicit
+            column is as wide as its widest unbreakable content — a date
+            input, a button, a long value — so on a phone one of those
+            pushed every panel on the page past the screen's edge.
+            `grid-cols-1` is `minmax(0, 1fr)`, which holds the column to
+            the screen and lets the content inside wrap to it. */}
+        <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="grid grid-cols-1 gap-6">
           {/* ---- personal and travel details ---- */}
           <Panel>
             <PanelHeader
@@ -344,7 +343,7 @@ export default async function ProfilePage() {
                   fixed half-columns, so the sheet reads in rows the way
                   a data page does and collapses to a single column
                   without re-ordering. */}
-              <dl className="grid gap-x-10 sm:grid-cols-2">
+              <dl className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
                 <EditableName fullName={profile.fullName} />
                 {/* Beside the account name deliberately. A visa is issued
                     to the passport's spelling, so the two disagreeing is
@@ -408,7 +407,7 @@ export default async function ProfilePage() {
               {/* The field grid above already closes with a hairline, so
                   the first block here draws no top border of its own —
                   `divide-y` rules only between blocks. */}
-              <div className="mt-1 grid divide-y divide-border">
+              <div className="mt-1 grid grid-cols-1 divide-y divide-border">
                 <div className="py-4">
                   <h3 className="t-title">{t.foodAndSupportNeeds[uiLocale]}</h3>
                   <p className="t-muted mt-1.5">
@@ -498,7 +497,7 @@ export default async function ProfilePage() {
                     <span>
                       {t.generatedOn[uiLocale].replace(
                         "{date}",
-                        formatDay(itinerary.generatedAt)
+                        formatDate(itinerary.generatedAt, uiLocale)
                       )}
                     </span>
                   </p>
@@ -522,7 +521,7 @@ export default async function ProfilePage() {
           </Panel>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* ---- agent memory ---- */}
             <Panel>
               <PanelHeader label={t.agentLearnedLabel[uiLocale]} />
@@ -608,7 +607,7 @@ export default async function ProfilePage() {
                         <p className="t-body max-w-[62ch]">{note.body}</p>
                         <p className="special mt-1.5">
                           {note.authorName ?? t.toplanceTeamFallback[uiLocale]} ·{" "}
-                          {formatDay(note.createdAt)}
+                          {formatDate(note.createdAt, uiLocale)}
                         </p>
                       </li>
                     ))}
@@ -638,7 +637,7 @@ export default async function ProfilePage() {
                             {STATUS_COPY[event.toStatus].label[uiLocale]}
                           </p>
                           <p className="special num shrink-0">
-                            {formatDay(event.createdAt)}
+                            {formatDate(event.createdAt, uiLocale)}
                           </p>
                         </div>
                         {event.message && (

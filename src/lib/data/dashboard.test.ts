@@ -119,17 +119,22 @@ describe.skipIf(!process.env.DATABASE_URL)("dashboardData", async () => {
   });
 
   it("hands the operations panel the decided applications", async () => {
-    // The durations themselves are pinned exactly in
-    // `@/lib/domain/kpis` — they are a median over every application in
-    // the database, so no fixture can assert a number here without the
-    // rest of the table agreeing to hold still. What this checks is the
-    // wiring: our decided application reached the panel, and the figure
-    // it produced is a real number of days.
+    // The timeline itself is pinned exactly in `@/lib/domain/kpis` — it
+    // is a mean over every approved application in the database, so no
+    // fixture can assert a number here without the rest of the table
+    // agreeing to hold still. What this checks is the wiring: our
+    // approved application reached the panel, and produced a real,
+    // non-negative number of days.
     const { data } = await clientRow();
 
     expect(data.operations.decided).toBeGreaterThanOrEqual(1);
-    expect(data.operations.medianDaysToDecision).toBeGreaterThanOrEqual(0);
-    expect(Number.isInteger(data.operations.medianDaysToDecision)).toBe(true);
+    expect(data.operations.meanDaysToApproval).toBeGreaterThanOrEqual(0);
+  });
+
+  it("never reports more travellers than applications", async () => {
+    const { data } = await clientRow();
+    expect(data.totals.travellers).toBeGreaterThanOrEqual(1);
+    expect(data.totals.travellers).toBeLessThanOrEqual(data.totals.applicationsProcessed);
   });
 
   it("reports the share of documents a reviewer had to flag", async () => {

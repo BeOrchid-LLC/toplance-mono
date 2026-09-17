@@ -71,12 +71,12 @@ export function AttendanceNotice({
           <MapPin className="mt-0.5 size-5 shrink-0 text-warning-ink" aria-hidden />
           <div className="min-w-0">
             <dt className="t-label">{ATTENDANCE.noticeWhere[locale]}</dt>
-            <dd className="t-body whitespace-pre-wrap text-ink">{request.place}</dd>
+            <dd className="t-body whitespace-pre-wrap wrap-anywhere text-ink">{request.place}</dd>
           </div>
         </div>
       </dl>
       {request.note && (
-        <p className="t-body mt-4 whitespace-pre-wrap text-ink-2">{request.note}</p>
+        <p className="t-body mt-4 whitespace-pre-wrap wrap-anywhere text-ink-2">{request.note}</p>
       )}
     </section>
   );

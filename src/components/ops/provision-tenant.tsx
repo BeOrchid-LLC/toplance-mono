@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -36,25 +38,38 @@ import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 export function ProvisionTenant({
   demoRequest,
   size = "bar",
+  open: openProp,
+  onOpenChange,
+  onCloseAutoFocus,
 }: {
   demoRequest?: DemoRequestRow;
   /**
-   * `bar` because that is where this button usually is — the console
-   * bar on `/ops/tenants`, standing in the row of 36px chrome that
-   * size exists to match.
-   *
-   * It is not always there. `EnquiryTable` renders one per row as a
-   * `DataTable` cell, among 44px `size="sm"` row controls, which is
-   * precisely the context `size="bar"` documents itself as not being —
-   * it would sit undersized, cut to a tighter radius than its
-   * neighbours, and under the tap minimum in a table meant for thumbs.
-   * That call site passes `sm`.
+   * `bar` because that is where this button is — the console bar on
+   * `/ops/tenants`, standing in the row of 36px chrome that size exists
+   * to match. Ignored without a trigger (see `open`).
    */
   size?: "bar" | "sm";
+  /**
+   * Makes the dialog controlled and trigger-less, for a caller that
+   * opens it from somewhere else — `EnquiryTable`'s row menu. Omit it
+   * and this renders its own "Create agency" button, as on
+   * `/ops/tenants`.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /**
+   * Where focus goes when the dialog closes. With no trigger of its own
+   * Radix would return it to whatever was focused when the dialog
+   * opened — a menu item that no longer exists — so the row menu
+   * points it back at its kebab.
+   */
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const t = useT();
   const router = useRouter();
-  const [open, setOpen] = React.useState(false);
+  const controlled = openProp !== undefined;
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+  const open = controlled ? openProp : uncontrolledOpen;
   const [pending, startTransition] = React.useTransition();
   const [inviteUrl, setInviteUrl] = React.useState<string | null>(null);
   // Who the invitation went to, so the success screen can name them
@@ -82,25 +97,29 @@ export function ProvisionTenant({
   const refreshOnCloseRef = React.useRef(false);
 
   function handleOpenChange(next: boolean) {
-    setOpen(next);
+    if (!controlled) setUncontrolledOpen(next);
+    onOpenChange?.(next);
     if (!next) {
       setInviteUrl(null);
       setEmailSent(true);
       setFormKey((key) => key + 1);
 
-      // Deferred from `submit`, on purpose. When `demoRequest` is set,
-      // this component is rendered from a ternary in
-      // `EnquiryTable` keyed on `demoRequest.convertedOrgId` — a
-      // `router.refresh()` fired right after a successful provision
-      // lands the instant this row's server data comes back with that
-      // id populated, which flips the ternary to a `<Link>` and unmounts
-      // this whole dialog, taking `inviteUrl` — the operator's only
-      // other copy of the link — with it before it can be read. Holding
-      // the refresh until the operator has actually closed the dialog
-      // means the swap can only happen after they are done with it. The
-      // walk-in path (no `demoRequest`) is never conditionally rendered
-      // on anything this refresh changes, so deferring it here costs
-      // that path nothing.
+      // Deferred from `submit`, on purpose: the invitation link shown
+      // after a provision may be the only copy that will ever exist, and
+      // nothing may unmount this dialog before the operator has read it.
+      //
+      // This used to be the whole guarantee. `EnquiryTable` rendered one
+      // of these per row from a ternary on `convertedOrgId`, so a
+      // refresh landing the converted row swapped the cell to a link and
+      // took the dialog with it. Since 17 September the table mounts a
+      // single dialog outside its rows, opened from each row's menu, so
+      // the row changing no longer reaches it — but the refresh would
+      // still re-render the row without its menu while the dialog is up,
+      // leaving focus nowhere to return to. Holding it to close keeps
+      // both: the link outlives the conversion, and the kebab is still
+      // there to take focus back. The walk-in path (no `demoRequest`) is
+      // never conditionally rendered on anything this refresh changes,
+      // so deferring it costs that path nothing.
       if (refreshOnCloseRef.current) {
         refreshOnCloseRef.current = false;
         router.refresh();
@@ -132,26 +151,25 @@ export function ProvisionTenant({
       toast.success(t(OPS_TENANTS.toastProvisioned));
 
       // Not refreshed here — see `handleOpenChange`. Refreshing now
-      // would re-render this row's parent with the demo request already
-      // converted, which unmounts this dialog before the invite link
-      // above has been read.
+      // would re-render the demo request's row as converted while the
+      // invite link above is still being read.
       refreshOnCloseRef.current = true;
     });
   }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button size={size}>
-          <Building2 /> {t(OPS_TENANTS.provisionButton)}
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+      {!controlled && (
+        <DialogTrigger asChild>
+          <Button size={size}>
+            <Building2 /> {t(OPS_TENANTS.provisionButton)}
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle>{t(OPS_TENANTS.provisionTitle)}</DialogTitle>
         </DialogHeader>
-
-        <p className="t-muted max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
 
         {inviteUrl ? (
           /*
@@ -169,73 +187,85 @@ export function ProvisionTenant({
             the roster never selects `token`, so this is the only copy
             that will ever exist and losing it strands the agency.
           */
-          <div className="flex flex-col gap-2">
-            {emailSent ? (
-              <p className="max-w-[52ch]">
-                {fill(t(OPS_TENANTS.provisionSentTo), { email: sentTo })}
-              </p>
-            ) : (
-              <>
-                <p role="alert" className="max-w-[52ch] text-danger-ink">
-                  {t(OPS_TENANTS.provisionEmailFailed)}
+          <DialogBody className="flex flex-col gap-5">
+            <p className="t-muted max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
+            <div className="flex flex-col gap-2">
+              {emailSent ? (
+                <p className="max-w-[52ch]">
+                  {fill(t(OPS_TENANTS.provisionSentTo), { email: sentTo })}
                 </p>
-                <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
-                <Input
-                  id="invite-url"
-                  readOnly
-                  value={inviteUrl}
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-              </>
-            )}
-          </div>
+              ) : (
+                <>
+                  <p role="alert" className="max-w-[52ch] text-danger-ink">
+                    {t(OPS_TENANTS.provisionEmailFailed)}
+                  </p>
+                  <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
+                  <Input
+                    id="invite-url"
+                    readOnly
+                    value={inviteUrl}
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                </>
+              )}
+            </div>
+          </DialogBody>
         ) : (
-          <form key={formKey} action={submit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">{t(OPS_TENANTS.fieldAgencyName)}</Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                maxLength={160}
-                defaultValue={demoRequest?.companyName ?? ""}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="owner_email">{t(OPS_TENANTS.fieldOwnerEmail)}</Label>
-              <Input
-                id="owner_email"
-                name="owner_email"
-                type="email"
-                required
-                defaultValue={demoRequest?.email ?? ""}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="owner_name">{t(OPS_TENANTS.fieldOwnerName)}</Label>
-              <Input
-                id="owner_name"
-                name="owner_name"
-                defaultValue={demoRequest?.fullName ?? ""}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="domain">{t(OPS_TENANTS.fieldDomain)}</Label>
-              <Input id="domain" name="domain" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="seats">{t(OPS_TENANTS.fieldSeats)}</Label>
-              <Input id="seats" name="seats" type="number" min={0} defaultValue={0} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="billing_contact">{t(OPS_TENANTS.fieldBillingContact)}</Label>
-              <Input id="billing_contact" name="billing_contact" type="email" />
-            </div>
+          /* The form is the column the body and footer sit in, so the
+             submit button stays inside it while only the fields scroll —
+             see `DialogContent`. */
+          <form
+            key={formKey}
+            action={submit}
+            className="flex min-h-0 flex-1 flex-col gap-5"
+          >
+            <DialogBody className="flex flex-col gap-4">
+              <p className="t-muted mb-1 max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">{t(OPS_TENANTS.fieldAgencyName)}</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  maxLength={160}
+                  defaultValue={demoRequest?.companyName ?? ""}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="owner_email">{t(OPS_TENANTS.fieldOwnerEmail)}</Label>
+                <Input
+                  id="owner_email"
+                  name="owner_email"
+                  type="email"
+                  required
+                  defaultValue={demoRequest?.email ?? ""}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="owner_name">{t(OPS_TENANTS.fieldOwnerName)}</Label>
+                <Input
+                  id="owner_name"
+                  name="owner_name"
+                  defaultValue={demoRequest?.fullName ?? ""}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="domain">{t(OPS_TENANTS.fieldDomain)}</Label>
+                <Input id="domain" name="domain" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="seats">{t(OPS_TENANTS.fieldSeats)}</Label>
+                <Input id="seats" name="seats" type="number" min={0} defaultValue={0} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="billing_contact">{t(OPS_TENANTS.fieldBillingContact)}</Label>
+                <Input id="billing_contact" name="billing_contact" type="email" />
+              </div>
+            </DialogBody>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" disabled={pending}>
-                {t(OPS_TENANTS.createButton)}
-              </Button>
+            {/* Cancel first and quiet, create at the end — the order
+                `ConfirmDialog` uses, side by side. */}
+            <DialogFooter>
               <Button
                 type="button"
                 variant="tertiary"
@@ -244,7 +274,10 @@ export function ProvisionTenant({
               >
                 {t(OPS_TENANTS.cancelButton)}
               </Button>
-            </div>
+              <Button type="submit" disabled={pending}>
+                {t(OPS_TENANTS.createButton)}
+              </Button>
+            </DialogFooter>
           </form>
         )}
       </DialogContent>

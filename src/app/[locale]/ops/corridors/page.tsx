@@ -1,11 +1,4 @@
 import type { Metadata } from "next";
-import {
-  ClipboardCheck,
-  Globe2,
-  MapPinOff,
-  Route as RouteIcon,
-  ShieldAlert,
-} from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
@@ -29,7 +22,6 @@ import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/do
 import { getNotifications, unreadNotificationCount } from "@/lib/notifications/notify";
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
 import { opsAccount } from "@/app/[locale]/ops/account";
@@ -89,8 +81,6 @@ export default async function OpsCorridorsPage({
   const unverified = live.filter((r) => !r.lastVerifiedAt);
   const purposes = [...new Set(rows.map((r) => r.purpose))].sort();
 
-  // Any narrowing at all, however many rows survive it.
-  const filtered = Boolean(search || state || purpose);
 
   const visible = rows.filter((r) => {
     if (state && !corridorMatchesState(r, state)) return false;
@@ -108,7 +98,7 @@ export default async function OpsCorridorsPage({
       .some((field) => field.toLowerCase().includes(search));
   });
 
-  const sorted = sortRows(visible, (r) => corridorSortKey(r, sort, locale), dir);
+  const sorted = sortRows(visible, (r) => corridorSortKey(r, sort), dir);
 
   // 99 versions today and climbing, so this is the table the pager was
   // written for. Sliced after the sort, never before: page two has to be
@@ -124,7 +114,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.liveRoutes.label[locale],
       value: live.length,
       sub: OPS_CORRIDORS.counters.liveRoutes.sub[locale],
-      icon: RouteIcon,
       href: "/ops/corridors?state=live",
       tone: "neutral" as const,
     },
@@ -132,7 +121,6 @@ export default async function OpsCorridorsPage({
       label: OPS_COMMON.awaitingReview[locale],
       value: pending.length,
       sub: OPS_CORRIDORS.counters.awaitingReviewSub[locale],
-      icon: ClipboardCheck,
       href: "/ops/corridors?state=pending",
       tone: "warning" as const,
     },
@@ -144,7 +132,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.destinations.label[locale],
       value: new Set(live.map((r) => r.destinationIso)).size,
       sub: OPS_CORRIDORS.counters.destinations.sub[locale],
-      icon: Globe2,
       href: "/ops/corridors?state=live",
       tone: "info" as const,
     },
@@ -152,7 +139,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.notCheckedYet.label[locale],
       value: unverified.length,
       sub: OPS_CORRIDORS.counters.notCheckedYet.sub[locale],
-      icon: ShieldAlert,
       href: "/ops/corridors?state=unverified",
       tone: unverified.length ? ("danger" as const) : ("neutral" as const),
     },
@@ -164,7 +150,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.notBuilt.label[locale],
       value: asked.total,
       sub: OPS_CORRIDORS.counters.notBuilt.sub[locale],
-      icon: MapPinOff,
       tone: asked.total ? ("warning" as const) : ("neutral" as const),
     },
   ];
@@ -207,21 +192,9 @@ export default async function OpsCorridorsPage({
         locale={locale}
         sort={sort}
         dir={dir}
-        params={params}
         purposes={purposes}
         total={sorted.length}
         unfilteredTotal={rows.length}
-        filteredLabel={
-          // Whether the reader narrowed the list, not whether the counts
-          // happen to agree. A filter that matches every row still
-          // filtered — calling that "All versions" tells somebody the
-          // search box is empty when it is not.
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(rows.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
       />
     </AdminShell>

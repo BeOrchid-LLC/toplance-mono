@@ -22,6 +22,7 @@ import type { TenantDetail } from "@/lib/data/tenants";
 import { useLocale, useT } from "@/components/locale-provider";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Everything ops can change about one agency.
@@ -118,21 +119,26 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
         total={tenant.members_.length}
         unfilteredTotal={tenant.members_.length}
         label={t(OPS_TENANTS.rosterPanel)}
-        countLabel=""
         columns={[
           {
             id: "person",
             label: t(OPS_TENANTS.rosterHead.person),
+            floor: "min-w-[10rem]",
             cell: (m) => (
               <>
-                <span className="font-semibold">{m.fullName}</span>
-                <span className="t-muted block">{m.email}</span>
+                <span className="block truncate font-semibold" title={m.fullName}>
+                  {m.fullName}
+                </span>
+                <span className="t-muted block truncate" title={m.email}>
+                  {m.email}
+                </span>
               </>
             ),
           },
           {
             id: "role",
             label: t(OPS_TENANTS.rosterHead.role),
+            pill: { labels: [t(OPS_TENANTS.roleOwner), t(OPS_TENANTS.roleReviewer)] },
             cell: (m) => (
               <Badge variant={m.role === "owner" ? "brand" : "neutral"}>
                 {m.role === "owner" ? t(OPS_TENANTS.roleOwner) : t(OPS_TENANTS.roleReviewer)}
@@ -143,7 +149,7 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
             id: "joined",
             label: t(OPS_TENANTS.rosterHead.joined),
             className: "t-muted",
-            cell: (m) => m.joinedAt.toISOString().slice(0, 10),
+            cell: (m) => formatDate(m.joinedAt, locale),
           },
           {
             id: "action",

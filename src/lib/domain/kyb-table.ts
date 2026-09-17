@@ -1,6 +1,7 @@
 import type { KybQueueRow } from "@/lib/data/kyb";
 import type { KybStanding } from "@/lib/domain/kyb";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
+import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import type { Locale } from "@/lib/i18n/locales";
 
 /**
@@ -19,6 +20,23 @@ export const KYB_SORTS = ["agency", "progress", "standing", "added"] as const;
 export type KybSort = (typeof KYB_SORTS)[number];
 
 /**
+ * What the queue's one status pill says: the verification standing, or
+ * "Suspended", which overrides it.
+ *
+ * One pill rather than a standing with a "Suspended" marker beside it,
+ * at the client's request on 17 September. A suspended agency owes
+ * nobody a decision whatever its checklist says, so the suspension is
+ * the more useful word; its progress is still in the column beside it.
+ */
+export type KybQueueStatus = KybStanding | "suspended";
+
+export function kybQueueStatus(
+  row: Pick<KybQueueRow, "standing" | "suspendedAt">
+): KybQueueStatus {
+  return row.suspendedAt ? "suspended" : row.standing;
+}
+
+/**
  * The order a reader means by "state", which is not the enum's
  * declaration order.
  *
@@ -27,19 +45,21 @@ export type KybSort = (typeof KYB_SORTS)[number];
  * `KYB_STANDING`. Sorting by the raw string would file `activated`
  * above `ready` on the alphabet and bury the work under the history.
  */
-const STANDING_RANK: Record<KybStanding, number> = {
+const STANDING_RANK: Record<KybQueueStatus, number> = {
   ready: 0,
   in_review: 1,
   not_started: 2,
   activated: 3,
+  // Last: owed nothing, for the reason `kybQueue` sorts it with the
+  // settled rows.
+  suspended: 4,
 };
 
 /**
  * The standing filters, as the queue's own words.
  *
- * Every value is a real `KybStanding`, so unlike the corridor table
- * this needs no predicate that cuts across two columns — `standing` is
- * already the single question a reader is asking.
+ * Every value is a `KybQueueStatus` — exactly the words the pill can
+ * print. `suspended` uses the Agencies screen's word for the same state.
  */
 export function kybStandingFilters(locale: Locale) {
   return [
@@ -47,13 +67,18 @@ export function kybStandingFilters(locale: Locale) {
     { value: "in_review", label: OPS_KYB.standing.inReview[locale] },
     { value: "not_started", label: OPS_KYB.standing.notStarted[locale] },
     { value: "activated", label: OPS_KYB.standing.activated[locale] },
+    { value: "suspended", label: OPS_TENANTS.status.suspended[locale] },
   ];
 }
 
-/** An exact standing match; an empty filter means any. */
+/**
+ * An exact match on the pill's status; an empty filter means any. A
+ * suspended agency matches "suspended" only, never the standing the
+ * pill no longer shows.
+ */
 export function kybMatchesStanding(row: KybQueueRow, standing: string): boolean {
   if (!standing) return true;
-  return row.standing === standing;
+  return kybQueueStatus(row) === standing;
 }
 
 /**
@@ -83,7 +108,7 @@ export function kybSortKey(row: KybQueueRow, sort: KybSort) {
     case "progress":
       return row.total === 0 ? 0 : row.verified / row.total;
     case "standing":
-      return STANDING_RANK[row.standing];
+      return STANDING_RANK[kybQueueStatus(row)];
     case "added":
       return row.createdAt;
     default:

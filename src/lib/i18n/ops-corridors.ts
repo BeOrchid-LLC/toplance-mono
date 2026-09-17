@@ -22,7 +22,6 @@ export const OPS_CORRIDORS: {
     notBuilt: { label: L; sub: L };
   };
   allVersionsPanel: L;
-  rowsWord: L;
   emptyPrefix: L;
   emptyMiddle: L;
   tableHead: {
@@ -199,18 +198,6 @@ export const OPS_CORRIDORS: {
     tw: "Nsakraeɛ nyinaa",
     zu: "Zonke izinguqulo",
   },
-  rowsWord: {
-    en: "rows",
-    ha: "layuka",
-    yo: "àwọn ìlà",
-    ig: "ahịrị",
-    fr: "lignes",
-    pt: "linhas",
-    sw: "safu mlalo",
-    ar: "صفوف",
-    tw: "nkyekyɛmu",
-    zu: "imigqa",
-  },
   /** Followed by the literal `npm run db:seed` and `scripts/draft-corridor.mts`. */
   emptyPrefix: {
     en: "No routes yet. Run",
@@ -274,11 +261,11 @@ export const OPS_CORRIDORS: {
       zu: "Inguqulo",
     },
     state: {
-      en: "State",
+      en: "Status",
       ha: "Matsayi",
       yo: "Ipò",
       ig: "Ọnọdụ",
-      fr: "État",
+      fr: "Statut",
       pt: "Estado",
       sw: "Hali",
       ar: "الحالة",
@@ -347,11 +334,11 @@ export const OPS_CORRIDORS: {
     zu: "Sesha ngezwe, indlela noma igama levisa",
   },
   anyState: {
-    en: "Any state",
-    ha: "Kowane hali",
+    en: "Any status",
+    ha: "Kowane matsayi",
     yo: "Ipò yòówù",
     ig: "Ọnọdụ ọ bụla",
-    fr: "Tout état",
+    fr: "Tout statut",
     pt: "Qualquer estado",
     sw: "Hali yoyote",
     ar: "أي حالة",

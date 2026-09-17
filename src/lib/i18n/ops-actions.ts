@@ -29,6 +29,7 @@ export const OPS_ACTIONS: {
   demoRequestAlreadyConverted: L;
   provisionFailed: L;
   assigneeNotStaff: L;
+  assigneeOwnerOnly: L;
   chooseADemoStatus: L;
   chooseARole: L;
   conversionNotAStatus: L;
@@ -179,6 +180,23 @@ export const OPS_ACTIONS: {
     ar: "لا يمكن إسناد استفسار إلا إلى موظفي Toplance.",
     tw: "Toplance adwumayɛfoɔ nko ara na wɔbɛtumi de nsɛmmisa ama wɔn.",
     zu: "Abasebenzi be-Toplance kuphela abangabelwa umbuzo.",
+  },
+  /**
+   * `setDemoRequestAssignee` refused a reviewer naming somebody other
+   * than themselves (D6). The picker does not offer it, so this is a
+   * stale screen or a hand-made POST — say what is theirs to do.
+   */
+  assigneeOwnerOnly: {
+    en: "Only an owner can assign an enquiry to someone else. You can assign it to yourself or leave it unassigned.",
+    ha: "Mai shi kaɗai ne zai iya ba wani tambaya. Kana iya ɗaukar ta da kanka ko ka bar ta ba tare da kowa ba.",
+    yo: "Olóhun nìkan ló lè yan ìbéèrè fún ẹlòmíràn. O lè yàn án fún ara rẹ tàbí fi í sílẹ̀ láìsí ẹni tí ó gbà á.",
+    ig: "Naanị onye nwe ya nwere ike inye onye ọzọ ajụjụ. Ị nwere ike iwere ya n'onwe gị ma ọ bụ hapụ ya na-enweghị onye.",
+    fr: "Seul un propriétaire peut attribuer une demande à quelqu'un d'autre. Vous pouvez vous l'attribuer ou la laisser non attribuée.",
+    pt: "Só um proprietário pode atribuir um pedido a outra pessoa. Pode atribuí-lo a si ou deixá-lo sem responsável.",
+    sw: "Mmiliki pekee ndiye anayeweza kumkabidhi mtu mwingine ulizo. Unaweza kujikabidhi au kuliacha bila kukabidhiwa.",
+    ar: "لا يمكن إلا للمالك إسناد استفسار إلى شخص آخر. يمكنك إسناده إلى نفسك أو تركه غير مُسند.",
+    tw: "Ɔwura nko ara na obetumi de nsɛmmisa ama obi foforɔ. Wobɛtumi de ama wo ho anaa wogyae ma ɛnni obiara.",
+    zu: "Ngumnikazi kuphela ongabela omunye umuntu umbuzo. Ungazabela wona noma uwushiye ungabelwanga muntu.",
   },
   chooseADemoStatus: {
     en: "Choose a status for this request.",

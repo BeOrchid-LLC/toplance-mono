@@ -10,7 +10,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogBody,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -81,37 +84,55 @@ export function InviteStaff() {
           <DialogTitle>{t(OPS_STAFF.dialogTitle)}</DialogTitle>
         </DialogHeader>
 
-        <form key={formKey} action={onSubmit} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="staff-email">{t(OPS_STAFF.emailLabel)}</Label>
-            <Input id="staff-email" name="email" type="email" required autoComplete="off" />
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="staff-name">{t(OPS_STAFF.fullNameLabel)}</Label>
-            <Input id="staff-name" name="full_name" autoComplete="off" />
-          </div>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend className="t-label mb-2">{t(OPS_STAFF.rankLabel)}</legend>
+        {/* The form is the column the body and footer sit in, so the
+            submit button stays inside it while only the fields scroll —
+            see `DialogContent`. */}
+        <form
+          key={formKey}
+          action={onSubmit}
+          className="flex min-h-0 flex-1 flex-col gap-5"
+        >
+          <DialogBody className="flex flex-col gap-5">
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-3 text-[15px]">
-                <input type="radio" name="staff_rank" value="reviewer" defaultChecked />
-                {t(OPS_COMMON.staffRole.reviewer)}
-              </label>
-              <label className="flex items-center gap-3 text-[15px]">
-                <input type="radio" name="staff_rank" value="owner" />
-                {t(OPS_COMMON.staffRole.owner)}
-              </label>
+              <Label htmlFor="staff-email">{t(OPS_STAFF.emailLabel)}</Label>
+              <Input id="staff-email" name="email" type="email" required autoComplete="off" />
             </div>
-            <p className="t-muted mt-2">{t(OPS_STAFF.rankHint)}</p>
-          </fieldset>
 
-          <p className="t-muted">{t(OPS_STAFF.secondFactorNotice)}</p>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="staff-name">{t(OPS_STAFF.fullNameLabel)}</Label>
+              <Input id="staff-name" name="full_name" autoComplete="off" />
+            </div>
 
-          <Button type="submit" disabled={pending}>
-            {pending ? t(OPS_STAFF.sending) : t(OPS_STAFF.send)}
-          </Button>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="t-label mb-2">{t(OPS_STAFF.rankLabel)}</legend>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-3 text-[15px]">
+                  <input type="radio" name="staff_rank" value="reviewer" defaultChecked />
+                  {t(OPS_COMMON.staffRole.reviewer)}
+                </label>
+                <label className="flex items-center gap-3 text-[15px]">
+                  <input type="radio" name="staff_rank" value="owner" />
+                  {t(OPS_COMMON.staffRole.owner)}
+                </label>
+              </div>
+              <p className="t-muted mt-2">{t(OPS_STAFF.rankHint)}</p>
+            </fieldset>
+
+            <p className="t-muted">{t(OPS_STAFF.secondFactorNotice)}</p>
+          </DialogBody>
+
+          {/* A Cancel beside the send, side by side from `sm` — the
+              client's rule for a button pair. */}
+          <DialogFooter className="flex-col-reverse items-stretch sm:flex-row sm:items-center">
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                {t(OPS_COMMON.cancel)}
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={pending}>
+              {pending ? t(OPS_STAFF.sending) : t(OPS_STAFF.send)}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

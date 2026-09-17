@@ -1,5 +1,4 @@
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -8,7 +7,6 @@ export type Kpi = {
   value: number | string;
   /** One real fact under the figure — what it counts, or what it means. */
   sub: string;
-  icon: LucideIcon;
   /**
    * Where this figure lives in full. Omitted when the console has no
    * view behind the number — a card that looks clickable and goes
@@ -31,25 +29,31 @@ const TONE: Record<NonNullable<Kpi["tone"]>, string> = {
 const BOX =
   "@container/tile min-w-0 rounded-lg border border-border bg-surface p-5 shadow-[var(--shadow-sm)]";
 
-/** The figure itself. Identical whether or not the card is a door. */
+/**
+ * The figure itself. Identical whether or not the card is a door.
+ *
+ * Title, figure and gloss are set exactly as `CounterRow` sets them on
+ * the ops dashboard — `special-caps` label, the same container-keyed
+ * figure steps, a `t-muted` line under it — because the client asked
+ * for one typescale across overview cards (2026-09-17). The title used
+ * to be `t-muted` sentence case, the same size and colour as the gloss
+ * under the figure, so nothing marked it as the title.
+ *
+ * No icon. Each card carried a 36px brand-tinted chip, the loudest thing
+ * in it after the figure, and it sat beside a 13px caps title that it
+ * out-weighed; the dashboard's counters have none and read more clearly
+ * for it. A label that needs a picture to be understood is the label to
+ * fix.
+ */
 function KpiBody({ kpi }: { kpi: Kpi }) {
-  const Icon = kpi.icon;
   return (
     <>
-      <div className="flex items-start justify-between gap-3">
-        <p className="t-muted min-w-0">{kpi.label}</p>
-        {/* Tinted toward transparent, not toward --surface: these cards
-            sit on the ruled ground and an opaque chip would punch a
-            rectangle through it (guideline §3). */}
-        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-brand-text">
-          <Icon className="size-[18px]" aria-hidden />
-        </span>
-      </div>
+      <p className="special-caps min-w-0">{kpi.label}</p>
       <p
         className={cn(
           // Keyed to the card, not the window — see the same steps in
           // `counter-row.tsx` for what a 32px figure did to a 194px tile.
-          "num mt-3 text-[22px] @min-[165px]/tile:text-[26px] @min-[200px]/tile:text-[32px] font-semibold leading-none",
+          "num mt-2 text-[22px] @min-[165px]/tile:text-[26px] @min-[200px]/tile:text-[32px] font-semibold leading-none",
           TONE[kpi.tone ?? "neutral"]
         )}
       >

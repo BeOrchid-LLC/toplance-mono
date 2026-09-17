@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -85,7 +87,7 @@ export function RequestDocument({ applicationId }: { applicationId: string }) {
           {t(DOCUMENT_REQUESTS.trigger)}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t(DOCUMENT_REQUESTS.panelTitle)}</DialogTitle>
           {/* The two things a reviewer has to know before typing: it
@@ -95,7 +97,7 @@ export function RequestDocument({ applicationId }: { applicationId: string }) {
           <DialogDescription>{t(DOCUMENT_REQUESTS.panelLead)}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
+        <DialogBody className="grid gap-4">
           <div>
             <label className="t-label" htmlFor="request-document-name">
               {t(DOCUMENT_REQUESTS.nameLabel)}
@@ -127,9 +129,9 @@ export function RequestDocument({ applicationId }: { applicationId: string }) {
               disabled={pending}
             />
           </div>
-        </div>
+        </DialogBody>
 
-        <div className="flex justify-end">
+        <DialogFooter>
           {/* Disabled on an empty name rather than left to fail in the
               action: the transaction refuses a name that slugifies to
               nothing, and a red toast is a poor way to learn that the
@@ -137,7 +139,7 @@ export function RequestDocument({ applicationId }: { applicationId: string }) {
           <Button onClick={submit} disabled={pending || !name.trim()}>
             {t(DOCUMENT_REQUESTS.send)}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

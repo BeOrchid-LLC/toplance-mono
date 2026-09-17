@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import { useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
 import { CORRIDOR_PICKER, fillTemplate } from "@/lib/i18n/corridor-picker";
@@ -49,14 +49,16 @@ export function CorridorBoard() {
             over a styled pill, so the pill draws the ring. Nothing clips
             this one, so it takes the standard outward outline rather than
             the bar's inset ring. */}
-        <div className="relative inline-flex items-center gap-2 rounded-[var(--radius-pill)] border border-border-strong bg-surface py-2 ps-4 pe-3 transition-colors hover:border-brand-text has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-ring">
+        <div className="relative inline-flex min-h-[var(--row-h)] items-center gap-2 rounded-[var(--radius-pill)] border border-border-strong bg-surface py-2 ps-4 pe-3 transition-colors hover:border-brand-text has-[select:focus-visible]:outline-2 has-[select:focus-visible]:outline-offset-2 has-[select:focus-visible]:outline-ring">
           <span className="d-sm text-ink">{origin}</span>
           <ChevronDown className="size-4 text-ink-3" aria-hidden />
           <select
             aria-label={t(CORRIDOR_PICKER.travelingFrom)}
             value={origin}
             onChange={(e) => set({ origin: e.target.value })}
-            className="absolute inset-0 cursor-pointer opacity-0"
+            // 16px for iOS, which zooms into a smaller control on focus;
+            // see the corridor bar's slot.
+            className="absolute inset-0 cursor-pointer text-base opacity-0"
           >
             {ORIGINS.map((o) => (
               <option key={o.name} value={o.name}>
@@ -76,9 +78,13 @@ export function CorridorBoard() {
       </div>
 
       <div className="mt-6 border-b border-border">
-        <div className="grid grid-cols-[3px_auto_1fr_auto] items-center gap-x-4 border-b border-border-strong pb-2">
+        {/* Below `sm` the route code column goes. It repeats the flag and
+            the country name beside it in three letters, and on a phone
+            its width came straight out of the name, which truncated to
+            "United Ki…" while "NGA → GBR" stood next to it in full. */}
+        <div className="grid grid-cols-[3px_1fr_auto] items-center gap-x-3 border-b border-border-strong pb-2 sm:grid-cols-[3px_auto_1fr_auto] sm:gap-x-4">
           <span />
-          <span className="tag">{t(CORRIDOR_PICKER.routeColumnHeader)}</span>
+          <span className="tag hidden sm:inline">{t(CORRIDOR_PICKER.routeColumnHeader)}</span>
           <span className="tag">{t(HERO.slots.destination)}</span>
           <span className="tag text-end">{t(CORRIDOR_PICKER.statusColumnHeader)}</span>
         </div>
@@ -92,7 +98,7 @@ export function CorridorBoard() {
               onClick={() => set({ destination: row.name })}
               aria-pressed={selected}
               className={cn(
-                "grid w-full grid-cols-[3px_auto_1fr_auto] items-center gap-x-4 border-t border-border py-3.5 text-start transition-colors first:border-t-0",
+                "grid min-h-[var(--row-h)] w-full grid-cols-[3px_1fr_auto] items-center gap-x-3 border-t border-border py-3.5 text-start transition-colors first:border-t-0 sm:grid-cols-[3px_auto_1fr_auto] sm:gap-x-4",
                 selected
                   ? "bg-[color-mix(in_srgb,var(--brand)_6%,transparent)]"
                   : "hover:bg-surface-2"
@@ -107,7 +113,7 @@ export function CorridorBoard() {
               />
               <span
                 className={cn(
-                  "num text-[13px] font-semibold whitespace-nowrap",
+                  "num hidden text-[13px] font-semibold whitespace-nowrap sm:inline",
                   row.soon ? "text-ink-3" : "text-brand-text"
                 )}
               >
@@ -138,7 +144,7 @@ export function CorridorBoard() {
       </div>
 
       <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
-        <Button asChild>
+        <Button asChild className={wrapOnPhone()}>
           <Link href="/agency/sign-up">
             {fillTemplate(t(CORRIDOR_PICKER.runRouteTemplate), {
               route: `${iso3(origin)} → ${iso3(destination)}`,

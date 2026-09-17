@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ADMIN_ICONS } from "@/components/shared/admin-icons";
 import type { AdminNavGroup } from "@/components/shared/admin-nav";
+import { NavCount } from "@/components/shared/nav-count";
 
 /**
  * What is inside the rail.
@@ -150,9 +151,11 @@ export function AdminSidebar({
                             for, seeing that six cases have no handler,
                             is the first thing collapsing costs you. */}
                         {item.badge != null && item.badge > 0 && (
-                          <span className="num absolute -end-2 -top-1.5 hidden min-w-4 rounded-full bg-brand px-1 text-center text-[11px] font-semibold leading-4 text-on-brand group-data-[collapsed]/rail:block">
-                            {item.badge}
-                          </span>
+                          <NavCount
+                            count={item.badge}
+                            size="sm"
+                            className="absolute -end-2 -top-1.5 hidden group-data-[collapsed]/rail:block"
+                          />
                         )}
                       </span>
                       <span className="truncate group-data-[collapsed]/rail:hidden">
@@ -160,11 +163,14 @@ export function AdminSidebar({
                       </span>
                       {/* Zero is not shown. "Overdue 0" is a good fact
                           about the queue, but as a badge it reads as a
-                          thing to go and clear. */}
+                          thing to go and clear. The same bubble as the
+                          collapsed rail's: opening the rail should not
+                          turn a signal into a footnote. */}
                       {item.badge != null && item.badge > 0 && (
-                        <span className="num ms-auto shrink-0 text-[13px] font-semibold text-ink-3 group-data-[collapsed]/rail:hidden">
-                          {item.badge}
-                        </span>
+                        <NavCount
+                          count={item.badge}
+                          className="ms-auto group-data-[collapsed]/rail:hidden"
+                        />
                       )}
                     </Link>
                   </li>

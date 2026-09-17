@@ -38,6 +38,7 @@ export const SITE_HOME: {
   dashboardBody: L;
   /** Both the dashboard's Briefcase button and the closing `CorridorBar`'s `ctaLabel`. */
   talkToUsAboutTravelers: L;
+  dashboardCtaRequestDemo: L;
   dashboardCardTitle: L;
   dashboardCardBody: L;
   /** `"{{count}} routes live · more on the way"` */
@@ -274,29 +275,46 @@ export const SITE_HOME: {
     tw: "Ka wo ho kyerɛ yɛn fa wo akwantufoɔ ho",
     zu: "Khuluma nathi ngabahambi bakho",
   },
+  /**
+   * The dashboard section's primary action, which opens the demo form.
+   * Its own key rather than a new value for `talkToUsAboutTravelers`,
+   * which the closing corridor bar still uses.
+   */
+  dashboardCtaRequestDemo: {
+    en: "Request a demo",
+    ha: "Nemi nunawa",
+    yo: "Béèrè fún àṣàyẹ̀wò",
+    ig: "Rịọ demo",
+    fr: "Demander une démo",
+    pt: "Pedir uma demonstração",
+    sw: "Omba onyesho",
+    ar: "اطلب عرضًا تجريبيًا",
+    tw: "Bisa nhwɛso",
+    zu: "Cela idemo",
+  },
   dashboardCardTitle: {
-    en: "You see progress, we handle the file",
-    ha: "Kana ganin ci gaba, muna kula da fayil",
-    yo: "O máa rí ìtẹ̀síwájú, a máa dá fáìlì náà",
-    ig: "Ị na-ahụ ọganihu, anyị na-elekọta faịlụ ahụ",
-    fr: "Vous voyez la progression, nous gérons le dossier",
-    pt: "Vê o progresso, nós tratamos do ficheiro",
-    sw: "Unaona maendeleo, sisi tunashughulikia faili",
-    ar: "أنت ترى التقدم، ونحن نتولى الملف",
-    tw: "Wohunu nkɔso, yɛn na yɛhwɛ faili no",
-    zu: "Ubona inqubekelaphambili, thina siphatha ifayela",
+    en: "We curate the files. You see the progress.",
+    ha: "Muna tsara fayilolin. Kai kana ganin ci gaba.",
+    yo: "Àwa ń ṣètò àwọn fáìlì. Ìwọ ń rí ìtẹ̀síwájú.",
+    ig: "Anyị na-ahazi faịlụ ndị ahụ. Ị na-ahụ ọganihu.",
+    fr: "Nous préparons les dossiers. Vous suivez la progression.",
+    pt: "Nós organizamos os ficheiros. Vê o progresso.",
+    sw: "Sisi tunaandaa mafaili. Wewe unaona maendeleo.",
+    ar: "نحن نُعِدّ الملفات، وأنت ترى التقدم.",
+    tw: "Yɛn na yɛhwɛ faili no so. Wo na wohunu nkɔso.",
+    zu: "Thina sihlela amafayela. Wena ubona inqubekelaphambili.",
   },
   dashboardCardBody: {
-    en: "Passports, bank statements and police certificates are reviewed by Toplance, not chased by your team.",
-    ha: "Toplance ne ke duba fasfo, bayanan banki da takardun sanarwar 'yan sanda, ba ƙungiyarka ba ce ke bin diddiginsu.",
-    yo: "Toplance ni yóò máa ṣàyẹ̀wò ìwé ìrìnnà, àkọsílẹ̀ báńkì àti ẹ̀rí ọlọ́pàá, kì í ṣe ẹgbẹ́ rẹ ni yóò máa lépa wọn.",
-    ig: "Toplance na-enyocha paspọtụ, akwụkwọ akaụntụ ụlọ akụ na akwụkwọ ndị uwe ojii, ọ bụghị otu gị na-achụso ha.",
-    fr: "Les passeports, relevés bancaires et certificats de police sont vérifiés par Toplance, pas poursuivis par votre équipe.",
-    pt: "Passaportes, extratos bancários e certificados de antecedentes são revistos pela Toplance, não perseguidos pela sua equipa.",
-    sw: "Pasipoti, taarifa za benki na vyeti vya polisi hukaguliwa na Toplance, si kufuatiliwa na timu yako.",
-    ar: "تتم مراجعة جوازات السفر وكشوف الحسابات البنكية وشهادات حسن السير والسلوك من قبل Toplance، ولا يلاحقها فريقك.",
-    tw: "Toplance na ɛhwɛ passport, sikakorabea nkrataa ne polisifoɔ adansedie krataa, ɛnyɛ wo kuo na wɔtaa ho.",
-    zu: "Amaphasipoti, izitatimende zasebhange nezitifiketi zamaphoyisa kubuyekezwa yi-Toplance, hhayi ukulandelisiswa ithimba lakho.",
+    en: "Passports, bank statements, police certificates — each one checked the moment it lands, so problems are caught early, and your team reviews a clean, complete pack instead of chasing documents.",
+    ha: "Fasfo, bayanan banki, takardun shaidar 'yan sanda — ana duba kowanne da zarar ya iso, don a gano matsaloli da wuri, kuma ƙungiyarka ta duba cikakken fayil mai tsabta maimakon bin diddigin takardu.",
+    yo: "Ìwé ìrìnnà, àkọsílẹ̀ báńkì, ẹ̀rí ọlọ́pàá — a máa ń ṣàyẹ̀wò ọ̀kọ̀ọ̀kan ní kété tí ó bá dé, kí a lè tètè rí ìṣòro, kí ẹgbẹ́ rẹ sì lè ṣàyẹ̀wò àkójọ tí ó mọ́ tí ó sì pé dípò kí wọ́n máa lépa ìwé.",
+    ig: "Paspọtụ, akwụkwọ akaụntụ ụlọ akụ, akwụkwọ ndị uwe ojii — a na-enyocha nke ọ bụla ozugbo o rutere, ka e jide nsogbu n'oge, ka otu gị wee nyochaa ngwugwu dị ọcha ma zuo ezu kama ịchụso akwụkwọ.",
+    fr: "Passeports, relevés bancaires, certificats de police — chaque pièce est vérifiée dès son arrivée, pour repérer les problèmes tôt, et votre équipe examine un dossier propre et complet au lieu de courir après les documents.",
+    pt: "Passaportes, extratos bancários, certificados de registo criminal — cada um é verificado no momento em que chega, para que os problemas sejam detetados cedo, e a sua equipa revê um processo limpo e completo em vez de andar atrás de documentos.",
+    sw: "Pasipoti, taarifa za benki, vyeti vya polisi — kila kimoja hukaguliwa mara kinapofika, ili matatizo yagunduliwe mapema, na timu yako ipitie kifurushi safi na kamili badala ya kufuatilia hati.",
+    ar: "جوازات السفر وكشوف الحسابات البنكية وشهادات حسن السير والسلوك — يُفحص كل منها لحظة وصوله، فتُكتشف المشكلات مبكرًا، ويراجع فريقك ملفًا نظيفًا ومكتملًا بدلًا من ملاحقة المستندات.",
+    tw: "Passport, sikakorabea nkrataa, polisifoɔ adansedie krataa — yɛhwɛ biara so bere a ɛduru ara pɛ, sɛnea ɛbɛyɛ a yɛbɛhunu ɔhaw ntɛm, na wo kuo no hwɛ faili a ɛho tew na ɛyɛ pɛ mmom sen sɛ wɔbɛtaa nkrataa akyi.",
+    zu: "Amaphasipoti, izitatimende zasebhange, izitifiketi zamaphoyisa — ngayinye ihlolwa ngokushesha lapho ifika, ukuze izinkinga zibonakale kusenesikhathi, futhi ithimba lakho libuyekeze iphakethe elihlanzekile neliphelele esikhundleni sokujaha amadokhumenti.",
   },
   /* WHERE */
   whereDatumTemplate: {

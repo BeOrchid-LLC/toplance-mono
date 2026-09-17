@@ -345,8 +345,9 @@ test("the platform console holds its invariants at 390px, both themes, LTR and R
    * empty table is not evidence about a full one.
    *
    * A demo request is the cheapest row with an action cell in it —
-   * `seedDemoRequest` is one insert, and the Status select, the Assign
-   * control and `ProvisionTenant` all render beside it.
+   * `seedDemoRequest` is one insert, and the Status select, the
+   * assignee dropdown and the row menu that opens `ProvisionTenant` all
+   * render beside it.
    */
   const enquiryId = await seedDemoRequest(OPS_ORG);
 

@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -91,10 +93,10 @@ export function InviteAttendance({ applicationId }: { applicationId: string }) {
           {t(ATTENDANCE.panelTitle)}
         </Button>
       </DialogTrigger>
-      {/* The form runs to four fields, so it is told to scroll rather
-          than to run off a short laptop screen with its send button
-          below the bottom edge. */}
-      <DialogContent className="max-h-[calc(100dvh-4rem)] overflow-y-auto">
+      {/* The form runs to four fields, so they go in `DialogBody`, which
+          scrolls on a short laptop screen while the title and the send
+          button stay on it — see `DialogContent`. */}
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{t(ATTENDANCE.panelTitle)}</DialogTitle>
           {/* The lead that used to sit above the fields in the rail. It
@@ -103,77 +105,79 @@ export function InviteAttendance({ applicationId }: { applicationId: string }) {
           <DialogDescription>{t(ATTENDANCE.panelLead)}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-wrap gap-3">
-          {kinds.map(({ value, label, Icon }) => (
-            <Button
-              key={value}
-              type="button"
-              variant={kind === value ? "primary" : "neutral"}
-              size="sm"
-              aria-pressed={kind === value}
-              disabled={pending}
-              onClick={() => setKind(value)}
-            >
-              <Icon className="size-4" aria-hidden />
-              {t(label)}
-            </Button>
-          ))}
-        </div>
+        <DialogBody className="flex flex-col gap-5">
+          <div className="flex flex-wrap gap-3">
+            {kinds.map(({ value, label, Icon }) => (
+              <Button
+                key={value}
+                type="button"
+                variant={kind === value ? "primary" : "neutral"}
+                size="sm"
+                aria-pressed={kind === value}
+                disabled={pending}
+                onClick={() => setKind(value)}
+              >
+                <Icon className="size-4" aria-hidden />
+                {t(label)}
+              </Button>
+            ))}
+          </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="t-label" htmlFor="attendance-when">
+                {t(ATTENDANCE.whenLabel)}
+              </label>
+              <Input
+                id="attendance-when"
+                type="datetime-local"
+                className="mt-2"
+                value={when}
+                onChange={(e) => setWhen(e.target.value)}
+                disabled={pending}
+              />
+              <p className="t-muted mt-2">{t(ATTENDANCE.whenHint)}</p>
+            </div>
+            <div>
+              <label className="t-label" htmlFor="attendance-place">
+                {t(ATTENDANCE.placeLabel)}
+              </label>
+              <Input
+                id="attendance-place"
+                className="mt-2"
+                value={place}
+                onChange={(e) => setPlace(e.target.value)}
+                placeholder={t(ATTENDANCE.placePlaceholder)}
+                maxLength={300}
+                disabled={pending}
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="t-label" htmlFor="attendance-when">
-              {t(ATTENDANCE.whenLabel)}
+            <label className="t-label" htmlFor="attendance-note">
+              {t(ATTENDANCE.noteLabel)}
             </label>
-            <Input
-              id="attendance-when"
-              type="datetime-local"
+            <Textarea
+              id="attendance-note"
               className="mt-2"
-              value={when}
-              onChange={(e) => setWhen(e.target.value)}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t(ATTENDANCE.notePlaceholder)}
+              rows={2}
+              maxLength={1000}
               disabled={pending}
             />
-            <p className="t-muted mt-2">{t(ATTENDANCE.whenHint)}</p>
           </div>
-          <div>
-            <label className="t-label" htmlFor="attendance-place">
-              {t(ATTENDANCE.placeLabel)}
-            </label>
-            <Input
-              id="attendance-place"
-              className="mt-2"
-              value={place}
-              onChange={(e) => setPlace(e.target.value)}
-              placeholder={t(ATTENDANCE.placePlaceholder)}
-              maxLength={300}
-              disabled={pending}
-            />
-          </div>
-        </div>
+        </DialogBody>
 
-        <div>
-          <label className="t-label" htmlFor="attendance-note">
-            {t(ATTENDANCE.noteLabel)}
-          </label>
-          <Textarea
-            id="attendance-note"
-            className="mt-2"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t(ATTENDANCE.notePlaceholder)}
-            rows={2}
-            maxLength={1000}
-            disabled={pending}
-          />
-        </div>
-
-        <div>
+        <DialogFooter>
           {/* Disabled until there is an address, because the address is
               the whole message. A time is optional; a place is not. */}
           <Button type="button" disabled={pending || !place.trim()} onClick={submit}>
             {t(ATTENDANCE.send)}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

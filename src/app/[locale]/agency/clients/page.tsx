@@ -13,7 +13,6 @@ import { countryFromIso2 } from "@/lib/domain/corridors";
 import { matchesDateWindow, windowCutoff } from "@/lib/domain/date-window";
 import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
 import type { ApplicationStatus } from "@/lib/domain/status";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
 import { STATUS_COPY } from "@/lib/i18n/status";
 import { getLocale } from "@/lib/i18n/server";
@@ -108,12 +107,6 @@ async function ClientsRoster({
     isDirector ? undefined : { handledBy: actor.userId }
   );
 
-  // Any narrowing at all, however many rows survive it — the same
-  // distinction `/ops/corridors` draws. A filter matching every row
-  // still filtered, and saying "All clients" over it would tell somebody
-  // the search box is empty when it is not.
-  const narrowed = Boolean(search || status || date);
-
   // Read once, not per row: `windowCutoff` is where the clock is read,
   // so the filter below stays pure and the whole rule is testable.
   const cutoff = windowCutoff(date);
@@ -188,20 +181,11 @@ async function ClientsRoster({
       locale={locale}
       toolbar={{ placeholder: AGENCY.searchClients[locale], filters }}
       empty={isDirector ? undefined : AGENCY.noAssignedClients[locale]}
-      label={
-        narrowed
-          ? ADMIN_CONSOLE.showingTemplate[locale]
-              .replace("{shown}", String(visible.length))
-              .replace("{total}", String(rows.length))
-          : undefined
-      }
-      count={visible.length}
       total={visible.length}
       unfilteredTotal={rows.length}
       sort={sort}
       dir={dir}
       basePath="/agency/clients"
-      params={params}
       pagination={{ page, pageCount, size }}
     />
   );

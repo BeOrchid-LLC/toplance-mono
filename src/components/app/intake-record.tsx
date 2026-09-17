@@ -297,7 +297,9 @@ export function EditButton({
       title={
         disabled ? t(INTAKE_UI.titleEditListening) : t(INTAKE_UI.titleEditAnswer)
       }
-      className="grid size-9 shrink-0 place-items-center rounded-full text-ink-3 opacity-0 transition-[color,background,opacity] duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink focus-visible:opacity-100 group-hover/row:opacity-100 disabled:pointer-events-none disabled:opacity-40 max-lg:opacity-100"
+      // 44px below `sm`, pulled up and down by 4px so the field keeps
+      // the height the 36px button gave it.
+      className="grid size-9 shrink-0 place-items-center rounded-full max-sm:-my-1 max-sm:size-[var(--row-h)] text-ink-3 opacity-0 transition-[color,background,opacity] duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink focus-visible:opacity-100 group-hover/row:opacity-100 disabled:pointer-events-none disabled:opacity-40 max-lg:opacity-100"
     >
       <RotateCcw className="size-4" />
     </button>

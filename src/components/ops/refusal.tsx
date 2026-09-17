@@ -13,7 +13,7 @@ export function StaffAccessRefused() {
   return (
     <div className="grid min-h-dvh place-items-center px-6">
       <div className="max-w-[440px] text-center">
-        <h1 className="t-h2">This console is for Toplance staff</h1>
+        <h1 className="t-h2">This workspace is for Toplance staff</h1>
         <p className="t-muted mt-3">
           Your account does not have operations access. If that is wrong, ask
           a Director to set your role — it cannot be granted from this screen.
@@ -96,7 +96,7 @@ export function StaffEnrollmentRequired({ accountsUrl }: { accountsUrl: string }
           </span>
           <h1 className="t-h2 mt-4">Add an authenticator app to continue</h1>
           <p className="t-muted mt-3">
-            This console holds passport scans, so every Toplance operations
+            This workspace holds passport scans, so every Toplance operations
             account needs a second sign-in factor on top of the emailed code.
             Add an authenticator app — and, if you want a fallback, backup
             codes — from your account&apos;s security settings, then sign in

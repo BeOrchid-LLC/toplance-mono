@@ -15,8 +15,6 @@ import { ClientsTable } from "@/components/ops/clients-table";
 import { DashboardTabs } from "@/components/ops/dashboard-tabs";
 import { openTabOf, opsClientMatches } from "@/lib/domain/ops-client-table";
 import { readPageSize, resolvePage } from "@/lib/domain/sorting";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
-import { fill } from "@/lib/i18n/fill";
 import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -32,6 +30,7 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { track } from "@/lib/analytics/track";
 import { dashboardData, USAGE_WINDOW_DAYS, type DashboardData } from "@/lib/data/dashboard";
 import { countryFromIso2 } from "@/lib/domain/corridors";
+import { OVERDUE_AFTER_DAYS, formatTimelineDays } from "@/lib/domain/kpis";
 import { routeName } from "@/lib/domain/corridor-demand";
 import { formatMoney } from "@/lib/domain/pricing";
 import type { Invoice } from "@/lib/domain/payments";
@@ -51,11 +50,6 @@ export async function generateMetadata(): Promise<Metadata> {
 /** A rate as a whole percentage, or an em dash when there is nothing to divide. */
 function pct(value: number | null): string {
   return value === null ? "—" : `${Math.round(value * 100)}%`;
-}
-
-/** A count of days, or an em dash before the first sample. */
-function days(value: number | null): string {
-  return value === null ? "—" : `${value}d`;
 }
 
 /** `2026-07-01` → `Jul 2026`. */
@@ -136,17 +130,17 @@ async function DashboardContent({
             // lives where it is actually set, on `/ops/tenants`.
             label: "Applications processed",
             value: data.totals.applicationsProcessed,
-            sub: `${data.totals.applicants} started, drafts included`,
+            sub: "all statuses",
           },
           {
             label: "Travellers",
             value: data.totals.travellers,
-            sub: `${data.totals.directApplicants} came directly`,
+            sub: "across board",
           },
           {
-            label: "Open cases",
+            label: "Open applications",
             value: data.totals.openCases,
-            sub: "somebody still has work to do",
+            sub: "still in review",
             tone: "text-info-ink",
           },
         ]}
@@ -391,7 +385,6 @@ function Clients({
       money={billed}
       currency={data.payments.currency}
       locale={locale}
-      totalClients={data.clients.length}
       // The dormant tail is a fact about every client, not about the
       // rows a search left behind, so it does not move when the reader
       // narrows the table. A footer that shrank with the search would
@@ -400,18 +393,9 @@ function Clients({
       searchPlaceholder="Search by agency"
       // `tab` rides along so the toolbar's own links come back to this
       // panel instead of dropping the reader on Overview.
-      params={{ tab: "clients", q: params.q, size: params.size }}
       total={visible.length}
       unfilteredTotal={active.length}
       pagination={{ page, pageCount, size }}
-      filteredLabel={
-        search
-          ? fill(ADMIN_CONSOLE.showingTemplate[locale], {
-              shown: visible.length,
-              total: active.length,
-            })
-          : undefined
-      }
     />
   );
 }
@@ -428,19 +412,19 @@ function Operations({ data, locale }: { data: DashboardData; locale: Locale }) {
           {
             label: "Unassigned",
             value: operations.unassigned,
-            sub: "open, no reviewer",
+            sub: "in review, no reviewer",
             tone: operations.unassigned > 0 ? "text-warning-ink" : undefined,
           },
           {
-            label: "Past SLA",
-            value: operations.overdueSla,
-            sub: "open and overdue",
-            tone: operations.overdueSla > 0 ? "text-danger-ink" : undefined,
+            label: "Overdue",
+            value: operations.overdue,
+            sub: `in review over ${OVERDUE_AFTER_DAYS} days`,
+            tone: operations.overdue > 0 ? "text-danger-ink" : undefined,
           },
           {
-            label: "To decision",
-            value: days(operations.medianDaysToDecision),
-            sub: "median, from submission",
+            label: "Av. timeline",
+            value: formatTimelineDays(operations.meanDaysToApproval),
+            sub: "submission to decision",
           },
           {
             label: "Approval rate",

@@ -77,7 +77,7 @@ export function CounterRow({
               i % 2 === 0 && "@md/row:border-e"
             )}
           >
-            <dt className="tag">{c.label}</dt>
+            <dt className="special-caps">{c.label}</dt>
             {/* Sized against the tile, not the window. Five tiles in a
                 969px console are 194px wide, which leaves 154px inside
                 the padding — and `$14,100.00` set at 32px is 198px, so

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { inArray } from "drizzle-orm";
 
+import type { Actor } from "@/lib/auth/policy";
+
 /**
  * The demo queue, against the real database.
  *
@@ -17,6 +19,22 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
   } = await import("@/lib/data/demo-requests");
 
   const ids: string[] = [];
+
+  /**
+   * The actor doing the assigning. The picker's rule (D6) is that a
+   * reviewer may name themselves or nobody, so most tests assign as the
+   * person being named; the owner is who may name anyone.
+   */
+  function reviewer(userId: string): Actor {
+    return { userId, role: "staff", staffRole: "reviewer", orgIds: [], orgs: [] };
+  }
+  const OWNER: Actor = {
+    userId: "staff_assignee_owner",
+    role: "staff",
+    staffRole: "owner",
+    orgIds: [],
+    orgs: [],
+  };
   const profileIds: string[] = [];
 
   /**
@@ -192,7 +210,7 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
       const id = await request("Kite Travel");
       const staffId = await profile("staff_assignee_1", "staff", "Ngozi Balogun");
 
-      expect(await setDemoRequestAssignee(id, staffId)).toEqual({ ok: true });
+      expect(await setDemoRequestAssignee(id, staffId, reviewer(staffId))).toEqual({ ok: true });
 
       const row = (await listDemoRequests()).find((r) => r.id === id);
       expect(row?.assigneeId).toBe(staffId);
@@ -204,8 +222,11 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
       const id = await request("Kite Travel");
       const staffId = await profile("staff_assignee_2", "staff", "Ngozi Balogun");
 
-      await setDemoRequestAssignee(id, staffId);
-      expect(await setDemoRequestAssignee(id, null)).toEqual({ ok: true });
+      await setDemoRequestAssignee(id, staffId, reviewer(staffId));
+      // Cleared by a different reviewer: putting a row back is anybody's.
+      expect(
+        await setDemoRequestAssignee(id, null, reviewer("staff_assignee_other"))
+      ).toEqual({ ok: true });
 
       const row = (await listDemoRequests()).find((r) => r.id === id);
       expect(row?.assigneeId).toBeNull();
@@ -221,7 +242,7 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
       const id = await request("Kite Travel");
       const travellerId = await profile("traveller_assignee_1", "traveler", "Ada Traveller");
 
-      expect(await setDemoRequestAssignee(id, travellerId)).toEqual({
+      expect(await setDemoRequestAssignee(id, travellerId, OWNER)).toEqual({
         error: "not_staff",
       });
 
@@ -229,11 +250,33 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
       expect(row?.assigneeId).toBeNull();
     });
 
+    /**
+     * D6, pending the client's confirmation: a reviewer may take a row or
+     * clear it, and handing it to a colleague is an owner's. Enforced
+     * here, because the picker hiding the colleague is not a gate.
+     */
+    it("lets only an owner assign an enquiry to somebody else", async () => {
+      const id = await request("Kite Travel");
+      const staffId = await profile("staff_assignee_5", "staff", "Ngozi Balogun");
+
+      expect(
+        await setDemoRequestAssignee(id, staffId, reviewer("staff_assignee_other"))
+      ).toEqual({ error: "not_owner" });
+      expect((await listDemoRequests()).find((r) => r.id === id)?.assigneeId).toBeNull();
+
+      expect(await setDemoRequestAssignee(id, staffId, OWNER)).toEqual({ ok: true });
+      expect((await listDemoRequests()).find((r) => r.id === id)?.assigneeId).toBe(staffId);
+    });
+
     it("refuses an enquiry that is not there", async () => {
       const staffId = await profile("staff_assignee_3", "staff", "Ngozi Balogun");
 
       expect(
-        await setDemoRequestAssignee("00000000-0000-4000-8000-00000000dead", staffId)
+        await setDemoRequestAssignee(
+          "00000000-0000-4000-8000-00000000dead",
+          staffId,
+          reviewer(staffId)
+        )
       ).toEqual({ error: "not_found" });
     });
 
@@ -257,7 +300,7 @@ describe.skipIf(!process.env.DATABASE_URL)("demo requests", async () => {
           .set({ status: "converted", convertedOrgId: orgId })
           .where(inArray(demoRequests.id, [id]));
 
-        expect(await setDemoRequestAssignee(id, staffId)).toEqual({
+        expect(await setDemoRequestAssignee(id, staffId, OWNER)).toEqual({
           error: "already_converted",
         });
       } finally {

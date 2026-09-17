@@ -45,15 +45,12 @@ export function ClientsTable({
   money,
   currency,
   locale,
-  totalClients,
   dormant,
-  params,
   sort,
   dir,
   total,
   unfilteredTotal,
   pagination,
-  filteredLabel,
   searchPlaceholder,
 }: {
   /** The clients with activity. The dormant tail is counted, not listed. */
@@ -62,16 +59,12 @@ export function ClientsTable({
   money: Record<string, ClientMoney>;
   currency: string;
   locale: Locale;
-  /** Every client, dormant ones included — the badge's figure. */
-  totalClients: number;
   dormant: number;
-  params?: Record<string, string | undefined>;
   sort?: string;
   dir?: "asc" | "desc";
   total?: number;
   unfilteredTotal?: number;
   pagination?: { page: number; pageCount: number; size: number };
-  filteredLabel?: string;
   searchPlaceholder?: string;
 }) {
   const columns: DataColumn<ClientRow>[] = [
@@ -79,12 +72,14 @@ export function ClientsTable({
       id: "client",
       label: "Client",
       className: "w-[30%]",
-      // The ceiling the `truncate` below truncates against — inert
-      // without one in the content-sized table. See `DataColumn`.
-      ceiling: "max-w-[280px]",
+      // Lets the `truncate` below give width back rather than asking
+      // for the whole name. See `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (client) => (
         <>
-          <span className="t-title block truncate">{client.name}</span>
+          <span className="t-title block truncate" title={client.name}>
+            {client.name}
+          </span>
           {/* One line about this client, and the one worth acting on
               wins: somebody stuck at 100% is a phone call, an approval
               rate is just a fact. A client with neither gets nothing
@@ -171,15 +166,11 @@ export function ClientsTable({
       rowKey={(client) => client.orgId}
       numbered
       columns={columns}
-      label="Every agency, busiest first"
-      filteredLabel={filteredLabel}
-      count={totalClients}
-      countLabel="agencies"
+      label="Agencies"
       locale={locale}
       total={total ?? rows.length}
       unfilteredTotal={unfilteredTotal ?? rows.length}
       basePath="/ops/dashboard"
-      params={params}
       sort={sort}
       dir={dir}
       pagination={pagination}

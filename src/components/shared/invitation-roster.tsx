@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/table";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { InvitationStatusBadge } from "@/components/shared/status-badge";
+import { PillCell } from "@/components/shared/pill-cell";
+import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
 import {
   ResendInvitationButton,
   RevokeInvitationButton,
@@ -22,13 +24,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-  });
-}
+import { formatDate } from "@/lib/format/date";
 
 /** One line of lifecycle per invitation — the dates its status makes true. */
 function invitationTimeline(
@@ -43,20 +39,20 @@ function invitationTimeline(
   switch (invite.status) {
     case "pending":
       return fill(AGENCY.timelineInvitedExpires[locale], {
-        created: formatDay(invite.createdAt),
-        expires: formatDay(invite.expiresAt),
+        created: formatDate(invite.createdAt, locale),
+        expires: formatDate(invite.expiresAt, locale),
       });
     case "accepted":
       return fill(AGENCY.timelineAccepted[locale], {
-        date: formatDay(invite.acceptedAt ?? invite.createdAt),
+        date: formatDate(invite.acceptedAt ?? invite.createdAt, locale),
       });
     case "expired":
       return fill(AGENCY.timelineExpired[locale], {
-        date: formatDay(invite.expiresAt),
+        date: formatDate(invite.expiresAt, locale),
       });
     default:
       return fill(AGENCY.timelineInvited[locale], {
-        date: formatDay(invite.createdAt),
+        date: formatDate(invite.createdAt, locale),
       });
   }
 }
@@ -152,7 +148,7 @@ export function InvitationRoster({
               <TableHead>{AGENCY.tableHead.invitation[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.email[locale]}</TableHead>
               <TableHead>{detailLabel ?? AGENCY.tableHead.rank[locale]}</TableHead>
-              <TableHead>{AGENCY.tableHead.status[locale]}</TableHead>
+              <TableHead className="text-center">{AGENCY.tableHead.status[locale]}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -163,13 +159,13 @@ export function InvitationRoster({
                 <TableRow key={invite.id}>
                   <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                   <TableCell>
-                    {/* The ceiling the truncates inside need: on a block
-                        wrapper, not the cell, because Firefox ignores
-                        `max-width` on a `td` — see `DataColumn.ceiling`.
-                        An invitation's address is the tokenised 50+
-                        character kind that makes an unceilinged
-                        `truncate` inert. */}
-                    <div className="max-w-[280px]">
+                    {/* What the truncates inside need: a block that lends
+                        the column none of its string's width and a floor
+                        of its own — see `DataColumn.floor`. An
+                        invitation's address is the tokenised 50+
+                        character kind that would otherwise set the
+                        column's width on its own. */}
+                    <div className="min-w-[10rem] [contain:inline-size]">
                       <span
                         className="block truncate font-semibold"
                         title={invite.email}
@@ -187,7 +183,7 @@ export function InvitationRoster({
                   </TableCell>
 
                   <TableCell>
-                    <div className="max-w-[240px]">
+                    <div className="min-w-[8rem] [contain:inline-size]">
                       <span className="block truncate">
                         {invite.kind === "platform_staff"
                           ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]
@@ -203,8 +199,12 @@ export function InvitationRoster({
                     </div>
                   </TableCell>
 
-                  <TableCell>
-                    <InvitationStatusBadge status={invite.status} locale={locale} />
+                  <TableCell className="text-center">
+                    <PillCell
+                      labels={Object.values(INVITATION_STATUS_COPY).map((c) => c.label[locale])}
+                    >
+                      <InvitationStatusBadge status={invite.status} locale={locale} />
+                    </PillCell>
                   </TableCell>
 
                   <TableCell>

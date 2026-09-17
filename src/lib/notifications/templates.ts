@@ -479,12 +479,12 @@ export function platformInvitationEmail({
   const role = rank === "owner" ? "an owner" : "a reviewer";
 
   return {
-    subject: "You have been invited to the BeOrchid platform console",
+    subject: "You have been invited to the BeOrchid platform workspace",
     ...renderEmail({
-      heading: "You have been invited to the BeOrchid platform console",
+      heading: "You have been invited to the BeOrchid platform workspace",
       paragraphs: [
-        `${greeting}ou have been invited to join BeOrchid as ${role} on the Toplance platform console.`,
-        "You will be asked to set up a second factor before the console opens. It is not optional, so have an authenticator app to hand.",
+        `${greeting}ou have been invited to join BeOrchid as ${role} on the Toplance platform workspace.`,
+        "You will be asked to set up a second factor before the workspace opens. It is not optional, so have an authenticator app to hand.",
       ],
       cta: { href: inviteUrl, label: "Accept your invitation" },
     }),
@@ -523,12 +523,12 @@ export function kybActivatedEmail({
   const greeting = fullName ? `${fullName}, w` : "W";
 
   return {
-    subject: `${orgName} is verified — your Toplance console is ready`,
+    subject: `${orgName} is verified — your Toplance workspace is ready`,
     ...renderEmail({
       heading: `${orgName} is verified`,
       paragraphs: [
-        `${greeting}e have finished verifying ${orgName} and your Toplance console is ready to open.`,
-        "Start your subscription and the console opens on the same click. From there you can invite your colleagues and begin taking cases.",
+        `${greeting}e have finished verifying ${orgName} and your Toplance workspace is ready to open.`,
+        "Start your subscription and the workspace opens on the same click. From there you can invite your colleagues and begin taking cases.",
       ],
       cta: { href: billingUrl, label: "Start your subscription" },
     }),
@@ -648,7 +648,7 @@ export function demoRequestEmail({
       heading: `${fullName} wants a demo`,
       paragraphs: [
         `${fullName}, ${jobTitle} at ${companyName}, asked for a demo.`,
-        `Preferred time: ${when} (${preferredTz}).`,
+        `Demo time: ${when} (${preferredTz}).`,
         `They read the site in "${locale}".`,
       ],
       cta: { href: `mailto:${email}`, label: `Reply to ${fullName}` },

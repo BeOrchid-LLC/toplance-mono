@@ -1018,6 +1018,15 @@ export const applications = pgTable(
     assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),
     intakeComplete: boolean().notNull().default(false),
     submittedAt: timestamp({ withTimezone: true }),
+    /**
+     * The first time this case was submitted. `submitted_at` is the
+     * latest submission and is overwritten on every resubmission after
+     * a request for more documents; this is written once, on the first,
+     * and never moved. It is what the ops dashboard's timeline counts
+     * from, so a case sent back for documents does not have its clock
+     * reset by coming back.
+     */
+    firstSubmittedAt: timestamp({ withTimezone: true }),
     decidedAt: timestamp({ withTimezone: true }),
     slaDueAt: timestamp({ withTimezone: true }),
     /**
@@ -1585,6 +1594,22 @@ export const demoRequests = pgTable("demo_requests", {
    * left would be worse than losing the name.
    */
   assigneeId: text().references(() => profiles.id, { onDelete: "set null" }),
+  /**
+   * Who turned this enquiry into an agency, and when.
+   *
+   * Written by `provisionTenantTx` in the same update as `status` and
+   * `converted_org_id`, and never otherwise. Before these existed nothing
+   * recorded the converter — conversion needs no assignee, and
+   * `organisations` has no `created_by` — so a converted row could read
+   * "Unassigned", which the client's review of 17 September rightly
+   * called impossible: somebody attended to that agency.
+   *
+   * `set null` for the reason `assignee_id` gives. Rows converted before
+   * the columns existed were backfilled from the tenant invitation the
+   * same transaction wrote (migration 0046).
+   */
+  convertedBy: text().references(() => profiles.id, { onDelete: "set null" }),
+  convertedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   /**

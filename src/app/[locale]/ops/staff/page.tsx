@@ -12,7 +12,6 @@ import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/re
 import { InvitationTable } from "@/components/shared/invitation-table";
 import { STAFF_SORTS, staffSortKey } from "@/lib/domain/invitation-table";
 import { readDir, readPageSize, readSort, resolvePage, sortRows } from "@/lib/domain/sorting";
-import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { hasDatabaseEnv } from "@/lib/db/client";
 import { isOwner } from "@/lib/auth/policy";
@@ -103,17 +102,12 @@ export default async function OpsStaffPage({
   const colleaguesVisible = colleagues.filter((c) =>
     colleagueMatches(c, colleagueSearch, colleagueRank)
   );
-  const colleaguesNarrowed = Boolean(colleagueSearch || colleagueRank);
   const search = (params.q ?? "").trim().toLowerCase();
   const sort = readSort(params.sort, STAFF_SORTS, "invited");
   // Newest first. An invitation roster is read to find out who was asked
   // recently, not who was asked in 2024.
   const dir = readDir(params.dir, params.sort ? "asc" : "desc");
 
-  // Any narrowing at all, however many rows survive it — the same test
-  // `/ops/corridors` uses, so the two panels say the same thing about
-  // themselves.
-  const filtered = Boolean(search || params.status || params.rank);
 
   const visible = invitations.filter((invite) => {
     if (params.status && invite.status !== params.status) return false;
@@ -167,16 +161,8 @@ export default async function OpsStaffPage({
         viewerId={actor.userId}
         locale={locale}
         className="mt-8"
-        params={{ cq: params.cq, crank: params.crank }}
         total={colleaguesVisible.length}
         unfilteredTotal={colleagues.length}
-        filteredLabel={
-          colleaguesNarrowed
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(colleaguesVisible.length))
-                .replace("{total}", String(colleagues.length))
-            : undefined
-        }
       />
 
       <InvitationTable
@@ -184,16 +170,8 @@ export default async function OpsStaffPage({
         locale={locale}
         sort={sort}
         dir={dir}
-        params={params}
         total={sorted.length}
         unfilteredTotal={invitations.length}
-        filteredLabel={
-          filtered
-            ? ADMIN_CONSOLE.showingTemplate[locale]
-                .replace("{shown}", String(visible.length))
-                .replace("{total}", String(invitations.length))
-            : undefined
-        }
         pagination={{ page, pageCount, size }}
         resendAction={resendPlatformInvitation}
         revokeAction={revokePlatformInvitationAction}

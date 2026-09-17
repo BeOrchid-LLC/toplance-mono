@@ -6,13 +6,16 @@ import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import type { CorridorRow } from "@/lib/data/corridors";
 import {
-  CORRIDOR_STATE_VARIANT,
+  CORRIDOR_STATUSES,
+  CORRIDOR_STATUS_VARIANT,
   corridorStateFilters,
+  corridorStatus,
+  corridorStatusLabel,
   countryName,
   freshnessLabel,
-  stateLabel,
   type CorridorSort,
 } from "@/lib/domain/corridor-table";
+import { leadsFirst } from "@/lib/domain/sort-options";
 import type { SortDir } from "@/lib/domain/sorting";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
@@ -34,23 +37,19 @@ export function CorridorsTable({
   locale,
   sort,
   dir,
-  params,
   purposes,
   total,
   unfilteredTotal,
-  filteredLabel,
   pagination,
 }: {
   rows: CorridorRow[];
   locale: Locale;
   sort: CorridorSort;
   dir: SortDir;
-  params: Record<string, string | undefined>;
   /** Every purpose present in the data, so the filter offers only real ones. */
   purposes: CorridorRow["purpose"][];
   total: number;
   unfilteredTotal: number;
-  filteredLabel?: string;
   pagination: { page: number; pageCount: number; size: number };
 }) {
   const columns: DataColumn<CorridorRow>[] = [
@@ -58,11 +57,11 @@ export function CorridorsTable({
       id: "route",
       width: "w-[26%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
-      sortable: true,
-      // Same ceiling, same reason as `rule-sets-table`'s route column:
-      // a country pair is one unbroken string, and `truncate` without
-      // a ceiling is inert in the content-sized table.
-      ceiling: "max-w-[300px]",
+      sort: "text",
+      // Same floor, same reason as `rule-sets-table`'s route column:
+      // a country pair is one unbroken string, and without a floor
+      // its whole width would be the column's minimum.
+      floor: "min-w-[10rem]",
       cell: (row) => {
         const route = `${countryName(row.nationalityIso)} → ${countryName(row.destinationIso)}`;
         return (
@@ -85,14 +84,14 @@ export function CorridorsTable({
       id: "purpose",
       width: "w-[11%]",
       label: OPS_CORRIDORS.tableHead.purpose[locale],
-      sortable: true,
+      sort: "text",
       cell: (row) => OPS_COMMON.purpose[row.purpose][locale],
     },
     {
       id: "version",
       width: "w-[10%]",
       label: OPS_CORRIDORS.tableHead.version[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       cell: (row) => `v${row.version}`,
     },
@@ -100,23 +99,32 @@ export function CorridorsTable({
       id: "state",
       width: "w-[19%]",
       label: OPS_CORRIDORS.tableHead.state[locale],
-      sortable: true,
-      cell: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={CORRIDOR_STATE_VARIANT[row.reviewState]}>
-            {stateLabel(row.reviewState, locale)}
+      // Ranked by status rather than by its words (`corridorSortKey`), so
+      // the options name which status leads.
+      sort: {
+        asc: leadsFirst(corridorStatusLabel(CORRIDOR_STATUSES[0], locale), locale),
+        desc: leadsFirst(corridorStatusLabel(CORRIDOR_STATUSES.at(-1)!, locale), locale),
+      },
+      pill: {
+        labels: CORRIDOR_STATUSES.map((status) => corridorStatusLabel(status, locale)),
+      },
+      cell: (row) => {
+        // One status, not "Approved" beside "Live": a superseded version
+        // stays approved for the record and stops being served, and the
+        // one word says both.
+        const status = corridorStatus(row);
+        return (
+          <Badge variant={CORRIDOR_STATUS_VARIANT[status]}>
+            {corridorStatusLabel(status, locale)}
           </Badge>
-          {/* Live is a separate fact from approved: a superseded version
-              stays approved for the record and stops being served. */}
-          {row.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
-        </div>
-      ),
+        );
+      },
     },
     {
       id: "documents",
       width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.documents[locale],
-      sortable: true,
+      sort: "number",
       cell: (row) => (
         <span className={cn("num", row.requirementCount === 0 && "text-danger-ink")}>
           {row.requirementCount}
@@ -127,7 +135,7 @@ export function CorridorsTable({
       id: "checked",
       width: "w-[17%]",
       label: OPS_CORRIDORS.tableHead.lastChecked[locale],
-      sortable: true,
+      sort: "date",
       cell: (row) => {
         const fresh = freshnessLabel(row, locale);
         return <span className={fresh.tone}>{fresh.text}</span>;
@@ -143,10 +151,7 @@ export function CorridorsTable({
       numbered
       columns={columns}
       label={OPS_CORRIDORS.allVersionsPanel[locale]}
-      filteredLabel={filteredLabel}
-      countLabel={OPS_CORRIDORS.rowsWord[locale]}
       basePath="/ops/corridors"
-      params={params}
       sort={sort}
       dir={dir}
       locale={locale}

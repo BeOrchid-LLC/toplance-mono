@@ -66,7 +66,7 @@ export async function MessageThread({ messages }: { messages: MessageView[] }) {
           <p className="special">
             {senderLabel(m, locale)} · {relativeTime(m.createdAt, locale)}
           </p>
-          <p className="t-body mt-1 max-w-[62ch] whitespace-pre-wrap">{m.body}</p>
+          <p className="t-body mt-1 max-w-[62ch] whitespace-pre-wrap wrap-anywhere">{m.body}</p>
         </li>
       ))}
     </ul>

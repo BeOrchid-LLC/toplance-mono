@@ -89,7 +89,7 @@ export function VisaExpiryField({
         Leave it empty to remove the date. We never check it against
         anything — it is only used to time your reminders.
       </p>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <Button type="submit" size="sm" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </Button>

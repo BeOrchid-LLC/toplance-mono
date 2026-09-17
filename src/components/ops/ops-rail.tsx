@@ -18,8 +18,7 @@ import { Wordmark } from "@/components/shared/wordmark";
  * Scaled down from the bar's size: the rail head is 64px and carries the
  * rank subtitle under this, where the app bar had the full height to
  * itself. A collapsed rail shows neither — `AdminSidebar` swaps the whole
- * block for the initial letter of `railTitle`, which is why that prop is
- * still required beside this one.
+ * block for the pin alone, `BrandMark`, which is its default mark.
  */
 export const OPS_RAIL_TITLE = "Toplance";
 

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { ADMIN_ICONS } from "@/components/shared/admin-icons";
 import type { AdminNavGroup } from "@/components/shared/admin-nav";
 import { NavCount } from "@/components/shared/nav-count";
+import { BrandMark } from "@/components/shared/wordmark";
 
 /**
  * What is inside the rail.
@@ -26,6 +27,7 @@ export function AdminSidebar({
   activeId,
   title,
   brand,
+  mark,
   subtitle,
   navLabel,
   footer,
@@ -40,6 +42,11 @@ export function AdminSidebar({
    * console this is and at what rank, which a logo never does.
    */
   brand?: React.ReactNode;
+  /**
+   * What the collapsed rail shows in a 32px square — see
+   * `AdminShell.railMark`. Defaults to the Toplance pin.
+   */
+  mark?: React.ReactNode;
   subtitle?: string;
   /**
    * Names the landmark. A console page carries more than one `nav` —
@@ -53,14 +60,15 @@ export function AdminSidebar({
   return (
     <>
       <div className="flex h-[var(--bar-h)] shrink-0 items-center border-b border-border px-5 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
-        {/* Collapsed, the name shrinks to its first letter rather than
-            vanishing: the rail is the only thing on screen that says
-            which console this is. */}
+        {/* Collapsed, the name gives way to a mark rather than vanishing:
+            the rail is the only thing on screen that says which console
+            this is. It was the name's first letter in a grey square until
+            the client asked for the Toplance icon here (2026-09-17). */}
         <span
           aria-hidden
-          className="hidden size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-surface-2 text-[15px] font-semibold text-ink group-data-[collapsed]/rail:flex"
+          className="hidden size-8 shrink-0 items-center justify-center group-data-[collapsed]/rail:flex"
         >
-          {title.charAt(0)}
+          {mark ?? <BrandMark className="h-7 w-auto" />}
         </span>
         <div className="min-w-0 group-data-[collapsed]/rail:hidden">
           {brand ?? <p className="t-title truncate">{title}</p>}

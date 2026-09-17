@@ -107,8 +107,7 @@ export async function AgencyShell({
       // belongs to all of them.
       railTitle={membership?.name || AGENCY.yourOrganisationFallback[locale]}
       // The agency's own mark, once its director has uploaded one on
-      // `/agency/profile`. `railTitle` above stays the fallback and stays
-      // the letter a collapsed rail shows — a picture cannot be either.
+      // `/agency/profile`. `railTitle` above stays the fallback.
       railBrand={
         logoUrl ? (
           // A signed, short-lived URL: next/image's optimizer would cache
@@ -120,6 +119,20 @@ export async function AgencyShell({
             src={logoUrl}
             alt={membership?.name ?? ""}
             className="max-h-7 w-auto max-w-full object-contain"
+          />
+        ) : undefined
+      }
+      // Collapsed, the same logo squeezed into the rail's 32px square —
+      // this console belongs to the agency, so its own mark is the right
+      // one to leave on screen (D8). Without a logo the shell falls back
+      // to the Toplance pin rather than a letter.
+      railMark={
+        logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- signed, short-lived URL; see railBrand
+          <img
+            src={logoUrl}
+            alt=""
+            className="max-h-8 max-w-8 object-contain"
           />
         ) : undefined
       }

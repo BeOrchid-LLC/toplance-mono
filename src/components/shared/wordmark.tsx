@@ -124,6 +124,52 @@ const WORDMARK_TEXT_PATH =
   "234.053 28.6 233.2 28.7733 232.507 29.12C231.84 29.44 231.32 29.9467 230.947 30.64C230.6 31.3067" +
   " 230.36 32.16 230.227 33.2Z";
 
+/**
+ * The pin on its own — the Toplance icon, with no letterforms.
+ *
+ * Lifted out of `Wordmark` so the mark has one drawing: the collapsed
+ * console rail needs the icon without the name, and a second copy of
+ * these paths would be a second place for the brand hue to go stale
+ * (see the comment above). Same art as `public/icon/toplance-icon.svg`,
+ * but reading `var(--brand)`.
+ *
+ * Decorative by default. Wherever it stands for the product, the thing
+ * around it — a link, a rail head — carries the name.
+ */
+export function BrandMark({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 54.839 66"
+      className={className}
+      aria-hidden="true"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M54.8382 20.1835C54.8382 31.3305 30.3309 66 27.4191 66C24.5074 66 0 31.3305 0 20.1835C0 9.03645 12.276 0 27.4191 0C42.5623 0 54.8382 9.03645 54.8382 20.1835Z"
+        fill="var(--brand)"
+      />
+      <rect
+        x="16.0147"
+        y="18.9265"
+        width="23.2941"
+        height="3.88235"
+        rx="1.94118"
+        fill="white"
+      />
+      <rect
+        x="29.603"
+        y="18.9265"
+        width="23.2941"
+        height="3.88235"
+        rx="1.94118"
+        transform="rotate(89.2661 29.603 18.9265)"
+        fill="white"
+      />
+    </svg>
+  );
+}
+
 export function Wordmark({
   href = "/",
   className,
@@ -140,35 +186,7 @@ export function Wordmark({
         className
       )}
     >
-      <svg
-        viewBox="0 0 54.839 66"
-        className="h-8 w-auto"
-        aria-hidden="true"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M54.8382 20.1835C54.8382 31.3305 30.3309 66 27.4191 66C24.5074 66 0 31.3305 0 20.1835C0 9.03645 12.276 0 27.4191 0C42.5623 0 54.8382 9.03645 54.8382 20.1835Z"
-          fill="var(--brand)"
-        />
-        <rect
-          x="16.0147"
-          y="18.9265"
-          width="23.2941"
-          height="3.88235"
-          rx="1.94118"
-          fill="white"
-        />
-        <rect
-          x="29.603"
-          y="18.9265"
-          width="23.2941"
-          height="3.88235"
-          rx="1.94118"
-          transform="rotate(89.2661 29.603 18.9265)"
-          fill="white"
-        />
-      </svg>
+      <BrandMark className="h-8 w-auto" />
       <svg
         viewBox="71.838 17.08 172.989 36.04"
         className="wordmark-label mt-px h-[17.5px] w-auto"

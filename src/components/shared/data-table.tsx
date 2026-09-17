@@ -276,7 +276,7 @@ export function DataTable<T>({
           out as one row of its own, because `PanelHeader` holds a label
           and one datum and this holds up to four groups. */}
       <div className="flex min-h-[60px] flex-wrap items-center gap-x-4 gap-y-3 border-b border-border px-5 py-3 sm:px-6">
-        <h2 className="t-title">{label}</h2>
+        <h2 className="t-title order-0">{label}</h2>
         {toolbar && showToolbar && (
           <TableToolbar
             placeholder={toolbar.placeholder}
@@ -289,12 +289,12 @@ export function DataTable<T>({
         {(action || (pagination && showPager)) && (
           <div
             className={cn(
-              // Pushed to the end. From `lg` the search's own auto
+              // Pushed to the end. From `md` the search's own auto
               // margins do that and centre the search, so this one
               // steps aside rather than taking a third share of the
               // space and pulling the search off-centre.
-              "ms-auto flex items-center gap-3",
-              showToolbar && "lg:ms-0"
+              "order-3 ms-auto flex items-center gap-3",
+              showToolbar && "md:ms-0"
             )}
           >
             {action}

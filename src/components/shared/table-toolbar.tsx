@@ -171,7 +171,13 @@ export function TableToolbar({
   return (
     <>
       {(filters.length > 0 || hasSort) && (
-        <div className="flex flex-wrap items-center gap-2">
+        // Below `2xl` the filters take a line of their own under the
+        // title, search and pager, so those three always keep one row in
+        // Gmail's order. At 1280 a table with two filters and a sort
+        // could not fit all four groups, and a free wrap dropped the
+        // pager to the start of a second line. From `2xl` (the client's
+        // 1920 window) everything fits and the filters join the row.
+        <div className="order-4 flex basis-full flex-wrap items-center gap-2 2xl:order-1 2xl:basis-auto">
           {/* Native selects behind a styled face, per guideline §10: on a
               phone they open the system picker, which is faster and
               already in the reader's own language. */}
@@ -212,13 +218,13 @@ export function TableToolbar({
       )}
 
       {/* In the middle of the header, the way Gmail centres its search:
-          the client asked for it there on 17 September. From `lg` it
+          the client asked for it there on 17 September. From `md` it
           grows up to 360px and its auto margins split what is left, so
-          it sits halfway between the filters and the pager. Below `lg`
+          it sits halfway between the filters and the pager. Below `md`
           there is not room for one row, so it drops to a line of its
           own at full width (`order-last basis-full`) and the title and
           pager keep the first. Logical margins, so Arabic mirrors it. */}
-      <div className="relative order-last min-w-0 basis-full lg:order-none lg:mx-auto lg:min-w-[10rem] lg:max-w-[360px] lg:flex-1 lg:basis-0">
+      <div className="relative order-5 min-w-0 basis-full md:order-2 md:mx-auto md:min-w-[12rem] md:max-w-[360px] md:flex-1 md:basis-0">
         <Search
           className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-ink-3"
           aria-hidden

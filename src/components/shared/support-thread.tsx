@@ -2,6 +2,7 @@ import type { SupportMessageRow } from "@/lib/data/support";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * One support conversation, read by both sides.
@@ -61,7 +62,7 @@ export function SupportThread({
               {m.fromStaff ? OPS_SUPPORT.fromUs[locale] : OPS_SUPPORT.fromAgency[locale]}
             </span>
             <span className="t-muted num ms-auto">
-              {m.createdAt.toISOString().slice(0, 10)}
+              {formatDate(m.createdAt, locale)}
             </span>
           </div>
           {/* Plain text, wrapped. Agency-authored and staff-authored

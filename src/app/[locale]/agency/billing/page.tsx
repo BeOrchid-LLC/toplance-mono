@@ -21,6 +21,7 @@ import { getLocale } from "@/lib/i18n/server";
 import type { Locale } from "@/lib/i18n/locales";
 import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
 import { withLocalePrefix } from "@/lib/i18n/paths";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -28,10 +29,6 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   return { title: BILLING.planTitle[locale] };
-}
-
-function formatDate(date: Date, locale: Locale): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(date);
 }
 
 /**

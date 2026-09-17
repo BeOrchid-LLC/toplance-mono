@@ -15,6 +15,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import { MESSAGES } from "@/lib/i18n/messages";
 import type { Locale } from "@/lib/i18n/locales";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * One person on the roster, as `org_application_progress` returns them.
@@ -227,12 +228,12 @@ export function ClientRoster({
       label: AGENCY.tableHead.submitted[locale],
       sort: sortable ? "date" : undefined,
       className: "t-muted",
-      // The same ISO date the platform console's tables print. A console
-      // is read across ten locales and a localised short date is the one
-      // format that means two different days to two readers.
+      // The same date every console table prints — day, short month,
+      // year, in that order in every locale, so it cannot be read as
+      // two different days by two readers.
       cell: (r) =>
         r.submittedAt
-          ? r.submittedAt.toISOString().slice(0, 10)
+          ? formatDate(r.submittedAt, locale)
           : AGENCY.dateNotSubmitted[locale],
     },
     ...(takeableBy

@@ -12,6 +12,7 @@ import type { SortDir } from "@/lib/domain/sorting";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * The verification queue, as columns over the shared `DataTable`.
@@ -114,7 +115,7 @@ export function KybTable({
       label: OPS_KYB.tableHead.added[locale],
       sort: "date",
       className: "t-muted",
-      cell: (row) => row.createdAt.toISOString().slice(0, 10),
+      cell: (row) => formatDate(row.createdAt, locale),
     },
   ];
 

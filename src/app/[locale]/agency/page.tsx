@@ -46,6 +46,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import { resolveAgencyConsole } from "@/app/[locale]/agency/console";
 import { withLocalePrefix } from "@/lib/i18n/paths";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -460,9 +461,7 @@ async function AgencyOverview({
                       </span>
                       <span className="t-muted">
                         {fill(AGENCY.staleInterviewsWhen[locale], {
-                          date: new Intl.DateTimeFormat(locale, {
-                            dateStyle: "medium",
-                          }).format(c.scheduledFor),
+                          date: formatDate(c.scheduledFor, locale),
                         })}
                       </span>
                     </Link>

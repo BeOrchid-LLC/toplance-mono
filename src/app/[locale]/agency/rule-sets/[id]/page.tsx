@@ -19,6 +19,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDOR_REVIEW } from "@/lib/i18n/ops-corridor-review";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * One rule set, read-only, for the agency whose cases were built from it.
@@ -175,9 +176,9 @@ export default async function AgencyRuleSetPage({
             {
               label: OPS_CORRIDOR_REVIEW.fields.lastChecked[locale],
               value:
-                freshness.state === "unverified"
+                freshness.state === "unverified" || !ruleSet.lastVerifiedAt
                   ? OPS_CORRIDOR_REVIEW.notYet[locale]
-                  : freshness.checked,
+                  : formatDate(ruleSet.lastVerifiedAt, locale),
             },
             {
               label: AGENCY_RULE_SETS.casesOnThisVersion[locale],
@@ -201,7 +202,7 @@ export default async function AgencyRuleSetPage({
           aside={
             <span className="t-muted">
               {AGENCY_RULE_SETS.effectiveFrom[locale]}{" "}
-              <span className="num">{ruleSet.effectiveFrom}</span>
+              <span className="num">{formatDate(ruleSet.effectiveFrom, locale)}</span>
             </span>
           }
         />

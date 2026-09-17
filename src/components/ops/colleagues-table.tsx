@@ -8,14 +8,7 @@ import type { StaffColleague } from "@/lib/data/staff";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_STAFF } from "@/lib/i18n/ops-staff";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Who actually works at BeOrchid, as columns over the shared `DataTable`.
@@ -115,7 +108,7 @@ export function ColleaguesTable({
       width: "w-[14%]",
       label: OPS_STAFF.tableHead.joined[locale],
       className: "num whitespace-nowrap",
-      cell: (person) => formatDay(person.createdAt),
+      cell: (person) => formatDate(person.createdAt, locale),
     },
     {
       id: "actions",

@@ -29,6 +29,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDOR_REVIEW } from "@/lib/i18n/ops-corridor-review";
 import { opsAccount } from "@/app/[locale]/ops/account";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -235,9 +236,9 @@ export default async function ReviewCorridorPage({
               {
                 label: OPS_CORRIDOR_REVIEW.fields.lastChecked[locale],
                 value:
-                  freshness.state === "unverified"
+                  freshness.state === "unverified" || !corridor.lastVerifiedAt
                     ? OPS_CORRIDOR_REVIEW.notYet[locale]
-                    : freshness.checked,
+                    : formatDate(corridor.lastVerifiedAt, locale),
               },
             ].map((f) => (
               <div

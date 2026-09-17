@@ -14,6 +14,7 @@ import { listSupportRequestsForOrg } from "@/lib/data/support";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
 import { requireAgencyConsole } from "@/app/[locale]/agency/console";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -94,7 +95,7 @@ export default async function AgencySupportPage() {
                       {STATE_LABEL[r.state][locale]}
                     </Badge>
                     <span className="t-muted num">
-                      {r.createdAt.toISOString().slice(0, 10)}
+                      {formatDate(r.createdAt, locale)}
                     </span>
                     {/* The way into the conversation, as a control
                         rather than a title that happens to be a link. */}

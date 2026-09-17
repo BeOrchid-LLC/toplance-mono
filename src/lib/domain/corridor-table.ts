@@ -4,6 +4,7 @@ import { freshnessOf } from "@/lib/domain/freshness";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_CORRIDORS } from "@/lib/i18n/ops-corridors";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Everything the route-coverage table knows that is not a rendered cell.
@@ -64,11 +65,14 @@ export function stateLabel(
  */
 export function freshnessLabel(row: CorridorRow, locale: Locale) {
   const f = freshnessOf(row.lastVerifiedAt?.toISOString() ?? null, row.purpose);
-  if (f.state === "unverified")
+  if (f.state === "unverified" || !row.lastVerifiedAt)
     return { text: OPS_CORRIDORS.notCheckedYetShort[locale], tone: "text-danger-ink" };
+  // The table's own short date rather than the sentence form `freshnessOf`
+  // writes for the corridor's page: a cell says when, the page says so.
+  const checked = formatDate(row.lastVerifiedAt, locale);
   if (f.state === "stale")
-    return { text: `${OPS_CORRIDORS.stale[locale]} · ${f.checked}`, tone: "text-warning-ink" };
-  return { text: f.checked, tone: "t-muted" };
+    return { text: `${OPS_CORRIDORS.stale[locale]} · ${checked}`, tone: "text-warning-ink" };
+  return { text: checked, tone: "t-muted" };
 }
 
 /**

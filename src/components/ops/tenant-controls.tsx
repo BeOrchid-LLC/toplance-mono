@@ -22,6 +22,7 @@ import type { TenantDetail } from "@/lib/data/tenants";
 import { useLocale, useT } from "@/components/locale-provider";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Everything ops can change about one agency.
@@ -147,7 +148,7 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
             id: "joined",
             label: t(OPS_TENANTS.rosterHead.joined),
             className: "t-muted",
-            cell: (m) => m.joinedAt.toISOString().slice(0, 10),
+            cell: (m) => formatDate(m.joinedAt, locale),
           },
           {
             id: "action",

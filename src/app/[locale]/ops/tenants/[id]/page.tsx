@@ -25,6 +25,7 @@ import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { activeSubscription } from "@/lib/data/payments";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import { opsAccount } from "@/app/[locale]/ops/account";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -145,9 +146,7 @@ export default async function OpsTenantPage({
       value: subscription?.periodEnd
         ? OPS_TENANTS.planPaidUntil[locale].replace(
             "{date}",
-            new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
-              subscription.periodEnd
-            )
+            formatDate(subscription.periodEnd, locale)
           )
         : OPS_TENANTS.planUnpaid[locale],
       tone: subscription ? "text-success-ink" : "text-warning-ink",

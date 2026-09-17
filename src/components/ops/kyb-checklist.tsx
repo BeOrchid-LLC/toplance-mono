@@ -37,10 +37,11 @@ import {
 import type { AgencyKyb, KybRequirementRow } from "@/lib/data/kyb";
 import type { KybState } from "@/lib/db/schema";
 import { ACCEPT } from "@/lib/domain/uploads";
-import { useT } from "@/components/locale-provider";
+import { useLocale, useT } from "@/components/locale-provider";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format/date";
 
 /* ── state map ── */
 const STATE: Record<
@@ -90,6 +91,7 @@ function docIndex(docKey: string) {
  */
 export function KybChecklist({ agency }: { agency: AgencyKyb }) {
   const t = useT();
+  const { locale } = useLocale();
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [removing, setRemoving] = React.useState<KybRequirementRow | null>(null);
@@ -275,7 +277,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
               <div>
                 <p className="font-semibold text-success-ink">Agency activated</p>
                 <p className="mt-1 text-sm leading-5 text-ink-2">
-                  BeOrchid opened this workspace on {agency.activatedAt.toISOString().slice(0, 10)}. The director
+                  BeOrchid opened this workspace on {formatDate(agency.activatedAt, locale)}. The director
                   was notified by email.
                 </p>
               </div>
@@ -398,6 +400,7 @@ function RequirementRow({
   onReview: (state: KybState, note: string) => void;
 }) {
   const t = useT();
+  const { locale } = useLocale();
   const [state, setState] = React.useState<KybState>(requirement.state);
   const [note, setNote] = React.useState(requirement.note ?? "");
   const inputId = `kyb-file-${requirement.docKey}`;
@@ -646,7 +649,7 @@ function RequirementRow({
                   </span>
                   {t(OPS_KYB.reviewedBy).replace("{name}", requirement.reviewedByName)}
                   {requirement.checkedAt && (
-                    <span className="text-ink-3">· {requirement.checkedAt.toISOString().slice(0, 10)}</span>
+                    <span className="text-ink-3">· {formatDate(requirement.checkedAt, locale)}</span>
                   )}
                 </p>
               )}

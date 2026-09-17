@@ -18,6 +18,7 @@ import type { EnquirySort } from "@/lib/domain/enquiry-table";
 import type { SortDir } from "@/lib/domain/sorting";
 import { useT, useLocale } from "@/components/locale-provider";
 import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
+import { formatDate, formatDateTime } from "@/lib/format/date";
 
 /**
  * The design system has no `<select>`, so this stands in for one —
@@ -219,13 +220,10 @@ export function EnquiryTable({
           sort: "date",
           className: "t-muted",
           // The page's default order, so it has to be on screen: a sort
-          // nobody can see is one nobody can reverse. Pinned to UTC
-          // because this cell renders on the server first, and the
-          // browser's own zone would disagree with it on hydration.
-          cell: (r) =>
-            new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeZone: "UTC" }).format(
-              r.createdAt
-            ),
+          // nobody can see is one nobody can reverse. In UTC, the
+          // helper's default, because this cell renders on the server
+          // first and the browser's own zone would disagree on hydration.
+          cell: (r) => formatDate(r.createdAt, locale),
         },
         {
           id: "preferred",
@@ -233,18 +231,14 @@ export function EnquiryTable({
           label: t(OPS_ENQUIRIES.head.preferred),
           sort: "date",
           className: "t-muted",
+          // The zone is stored beside the instant precisely so this reads
+          // the requester's own wall clock — "14:00 GMT+1" — rather than a
+          // UTC number the operator has to convert in their head. One
+          // line: the GMT offset says what the IANA name under it used to.
           cell: (r) => (
-            <>
-              {/* The zone is stored beside the instant precisely so this
-                  reads "14:00 WAT" rather than a UTC number the operator
-                  has to convert in their head. */}
-              {new Intl.DateTimeFormat(locale, {
-                dateStyle: "medium",
-                timeStyle: "short",
-                timeZone: r.preferredTz,
-              }).format(r.preferredAt)}
-              <span className="block">{r.preferredTz}</span>
-            </>
+            <span title={r.preferredTz}>
+              {formatDateTime(r.preferredAt, locale, r.preferredTz)}
+            </span>
           ),
         },
         {

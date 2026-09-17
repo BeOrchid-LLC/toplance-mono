@@ -15,14 +15,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_STAFF } from "@/lib/i18n/ops-staff";
 import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Who has been asked to work at BeOrchid, as columns over `DataTable`.
@@ -103,7 +96,7 @@ export function InvitationTable({
       label: OPS_STAFF.tableHead.invited[locale],
       sort: "date",
       className: "num whitespace-nowrap",
-      cell: (invite) => formatDay(invite.createdAt),
+      cell: (invite) => formatDate(invite.createdAt, locale),
     },
     {
       id: "actions",

@@ -49,6 +49,7 @@ import { currencyForCountryName } from "@/lib/domain/currencies";
 import { convertFee, formatApproximate } from "@/lib/domain/fx";
 import { getPairRate } from "@/lib/fx/rates";
 import { withLocalePrefix } from "@/lib/i18n/paths";
+import { formatDate } from "@/lib/format/date";
 
 // Needs a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -93,14 +94,6 @@ function DetailField({
       </dd>
     </div>
   );
-}
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
 }
 
 function formatFee(minor: number | null, currency: string | null) {
@@ -204,11 +197,7 @@ export default async function ProfilePage() {
       ? `${corridor.processingWeeksMin}–${corridor.processingWeeksMax} weeks`
       : null;
   const effective = corridor
-    ? new Date(corridor.effectiveFrom).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      })
+    ? formatDate(corridor.effectiveFrom, uiLocale)
     : null;
 
   /**
@@ -498,7 +487,7 @@ export default async function ProfilePage() {
                     <span>
                       {t.generatedOn[uiLocale].replace(
                         "{date}",
-                        formatDay(itinerary.generatedAt)
+                        formatDate(itinerary.generatedAt, uiLocale)
                       )}
                     </span>
                   </p>
@@ -608,7 +597,7 @@ export default async function ProfilePage() {
                         <p className="t-body max-w-[62ch]">{note.body}</p>
                         <p className="special mt-1.5">
                           {note.authorName ?? t.toplanceTeamFallback[uiLocale]} ·{" "}
-                          {formatDay(note.createdAt)}
+                          {formatDate(note.createdAt, uiLocale)}
                         </p>
                       </li>
                     ))}
@@ -638,7 +627,7 @@ export default async function ProfilePage() {
                             {STATUS_COPY[event.toStatus].label[uiLocale]}
                           </p>
                           <p className="special num shrink-0">
-                            {formatDay(event.createdAt)}
+                            {formatDate(event.createdAt, uiLocale)}
                           </p>
                         </div>
                         {event.message && (

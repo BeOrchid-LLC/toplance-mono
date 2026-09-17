@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import type { TenantRow } from "@/lib/data/tenants";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * Every agency on the platform, as columns over the shared `DataTable`.
@@ -111,7 +112,7 @@ export function TenantsTable({
       sort: "date",
       label: OPS_TENANTS.tableHead.added[locale],
       className: "t-muted",
-      cell: (t) => t.createdAt.toISOString().slice(0, 10),
+      cell: (t) => formatDate(t.createdAt, locale),
     },
   ];
 

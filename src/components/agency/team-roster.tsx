@@ -13,10 +13,7 @@ import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import { AGENCY } from "@/lib/i18n/agency";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
+import { formatDate } from "@/lib/format/date";
 
 /**
  * The colleagues inside this agency, oldest first — so the director who
@@ -124,7 +121,7 @@ export function TeamRoster({
 
                 <TableCell className="t-muted">
                   {fill(AGENCY.joinedOn[locale], {
-                    date: formatDay(member.joinedAt),
+                    date: formatDate(member.joinedAt, locale),
                   })}
                 </TableCell>
 

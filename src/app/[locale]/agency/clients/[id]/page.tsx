@@ -44,6 +44,7 @@ import { MESSAGES } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/server";
 import { exportableDocuments } from "@/lib/storage/archive";
 import { requireAgencyCase } from "@/app/[locale]/agency/console";
+import { formatDate } from "@/lib/format/date";
 
 // Reads a session, so it is never prerendered.
 export const dynamic = "force-dynamic";
@@ -381,9 +382,7 @@ export default async function AgencyCasePage({
                 <p className="t-muted mb-4 max-w-[62ch]">
                   {STATUS_CONTROL.exportedNudge[locale].replace(
                     "{date}",
-                    new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
-                      row.documentsExportedAt
-                    )
+                    formatDate(row.documentsExportedAt, locale)
                   )}
                 </p>
               )}
@@ -399,9 +398,7 @@ export default async function AgencyCasePage({
                     ? STATUS_CONTROL.interviewBookedNudge
                     : STATUS_CONTROL.interviewHeldNudge)[locale].replace(
                     "{date}",
-                    new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
-                      latestAttendance.scheduledFor
-                    )
+                    formatDate(latestAttendance.scheduledFor, locale)
                   )}
                 </p>
               )}

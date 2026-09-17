@@ -5,6 +5,7 @@ import type { TenantPendingInvite } from "@/lib/data/tenants";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * One agency's unanswered invitations, as columns over `DataTable`.
@@ -58,14 +59,14 @@ export function TenantInvitesTable({
       id: "sent",
       label: OPS_TENANTS.invitesHead.sent[locale],
       className: "t-muted",
-      cell: (i) => i.createdAt.toISOString().slice(0, 10),
+      cell: (i) => formatDate(i.createdAt, locale),
     },
     {
       id: "expires",
       label: OPS_TENANTS.invitesHead.expires[locale],
       cell: (i) => (
         <span className={cn("t-muted", i.expired && "text-danger-ink")}>
-          {i.expiresAt.toISOString().slice(0, 10)}
+          {formatDate(i.expiresAt, locale)}
           {/* Colour alone said this to sighted readers only, and said it
               in a language nobody translated. */}
           {i.expired && <span className="block">{OPS_TENANTS.inviteExpired[locale]}</span>}

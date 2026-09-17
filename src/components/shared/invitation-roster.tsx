@@ -22,13 +22,7 @@ import { AGENCY } from "@/lib/i18n/agency";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { fill } from "@/lib/i18n/fill";
 import type { Locale } from "@/lib/i18n/locales";
-
-function formatDay(value: Date) {
-  return value.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-  });
-}
+import { formatDate } from "@/lib/format/date";
 
 /** One line of lifecycle per invitation — the dates its status makes true. */
 function invitationTimeline(
@@ -43,20 +37,20 @@ function invitationTimeline(
   switch (invite.status) {
     case "pending":
       return fill(AGENCY.timelineInvitedExpires[locale], {
-        created: formatDay(invite.createdAt),
-        expires: formatDay(invite.expiresAt),
+        created: formatDate(invite.createdAt, locale),
+        expires: formatDate(invite.expiresAt, locale),
       });
     case "accepted":
       return fill(AGENCY.timelineAccepted[locale], {
-        date: formatDay(invite.acceptedAt ?? invite.createdAt),
+        date: formatDate(invite.acceptedAt ?? invite.createdAt, locale),
       });
     case "expired":
       return fill(AGENCY.timelineExpired[locale], {
-        date: formatDay(invite.expiresAt),
+        date: formatDate(invite.expiresAt, locale),
       });
     default:
       return fill(AGENCY.timelineInvited[locale], {
-        date: formatDay(invite.createdAt),
+        date: formatDate(invite.createdAt, locale),
       });
   }
 }

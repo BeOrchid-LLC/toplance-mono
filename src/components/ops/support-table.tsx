@@ -13,6 +13,7 @@ import { claimSupport, resolveSupport } from "@/app/[locale]/ops/support/actions
 import type { SupportRequestRow } from "@/lib/data/support";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_SUPPORT } from "@/lib/i18n/ops-support";
+import { formatDate } from "@/lib/format/date";
 
 /**
  * The support queue.
@@ -133,7 +134,7 @@ export function SupportTable({
       width: "w-[12%]",
       label: OPS_SUPPORT.tableHead.raised[locale],
       className: "t-muted",
-      cell: (r) => r.createdAt.toISOString().slice(0, 10),
+      cell: (r) => formatDate(r.createdAt, locale),
     },
     {
       id: "state",

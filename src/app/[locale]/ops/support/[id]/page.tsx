@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
@@ -93,6 +93,7 @@ export default async function OpsSupportRequestPage({
       activeId="support"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       title={request.subject}

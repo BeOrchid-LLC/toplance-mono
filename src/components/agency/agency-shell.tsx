@@ -107,8 +107,8 @@ export async function AgencyShell({
       // belongs to all of them.
       railTitle={membership?.name || AGENCY.yourOrganisationFallback[locale]}
       // The agency's own mark, once its director has uploaded one on
-      // `/agency/profile`. `railTitle` above stays the fallback and stays
-      // the letter a collapsed rail shows — a picture cannot be either.
+      // `/agency/profile`. `railTitle` above stays the fallback, and the
+      // letter a collapsed rail shows when there is no logo.
       railBrand={
         logoUrl ? (
           // A signed, short-lived URL: next/image's optimizer would cache
@@ -121,6 +121,14 @@ export async function AgencyShell({
             alt={membership?.name ?? ""}
             className="max-h-7 w-auto max-w-full object-contain"
           />
+        ) : undefined
+      }
+      // The same logo, squared into the collapsed rail's 32px box. No
+      // logo, no mark: the rail falls back to the name's first letter.
+      railMark={
+        logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt="" className="max-h-8 max-w-8 object-contain" />
         ) : undefined
       }
       railSubtitle={subtitle}

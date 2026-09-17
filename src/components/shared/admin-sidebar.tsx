@@ -25,6 +25,7 @@ export function AdminSidebar({
   activeId,
   title,
   brand,
+  mark,
   subtitle,
   navLabel,
   footer,
@@ -39,6 +40,8 @@ export function AdminSidebar({
    * console this is and at what rank, which a logo never does.
    */
   brand?: React.ReactNode;
+  /** What the collapsed rail shows instead of the first letter — see `AdminShell.railMark`. */
+  mark?: React.ReactNode;
   subtitle?: string;
   /**
    * Names the landmark. A console page carries more than one `nav` —
@@ -52,15 +55,25 @@ export function AdminSidebar({
   return (
     <>
       <div className="flex h-[var(--bar-h)] shrink-0 items-center border-b border-border px-5 group-data-[collapsed]/rail:justify-center group-data-[collapsed]/rail:px-0">
-        {/* Collapsed, the name shrinks to its first letter rather than
-            vanishing: the rail is the only thing on screen that says
-            which console this is. */}
-        <span
-          aria-hidden
-          className="hidden size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-surface-2 text-[15px] font-semibold text-ink group-data-[collapsed]/rail:flex"
-        >
-          {title.charAt(0)}
-        </span>
+        {/* Collapsed, the name shrinks to a mark rather than vanishing:
+            the rail is the only thing on screen that says which console
+            this is. The logo when the console has one, the first letter
+            of its name when it does not. */}
+        {mark ? (
+          <span
+            aria-hidden
+            className="hidden size-8 shrink-0 items-center justify-center group-data-[collapsed]/rail:flex"
+          >
+            {mark}
+          </span>
+        ) : (
+          <span
+            aria-hidden
+            className="hidden size-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-surface-2 text-[15px] font-semibold text-ink group-data-[collapsed]/rail:flex"
+          >
+            {title.charAt(0)}
+          </span>
+        )}
         <div className="min-w-0 group-data-[collapsed]/rail:hidden">
           {brand ?? <p className="t-title truncate">{title}</p>}
           {subtitle && <p className="special truncate text-ink-3">{subtitle}</p>}

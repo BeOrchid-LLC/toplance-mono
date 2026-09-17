@@ -35,6 +35,7 @@ export async function AdminShell({
   activeId,
   railTitle,
   railBrand,
+  railMark,
   railSubtitle,
   account,
   title,
@@ -59,6 +60,14 @@ export async function AdminShell({
    * day would be worse than one that never had a logo.
    */
   railBrand?: React.ReactNode;
+  /**
+   * What a rail collapsed to 56px shows in place of `railTitle`'s first
+   * letter — the Toplance pin in `/ops`, an agency's uploaded logo in
+   * `/agency`. The client asked for the icon there on 2026-09-10. Leave it
+   * out and the letter stays, which is the right answer for an agency
+   * that has uploaded nothing.
+   */
+  railMark?: React.ReactNode;
   railSubtitle?: string;
   /**
    * Who is signed in. The shell takes the facts rather than rendered
@@ -135,6 +144,7 @@ export async function AdminShell({
             activeId={activeId}
             title={railTitle}
             brand={railBrand}
+            mark={railMark}
             subtitle={railSubtitle}
             navLabel={ADMIN_CONSOLE.menuTitle[locale]}
             footer={

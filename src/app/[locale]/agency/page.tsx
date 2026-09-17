@@ -3,16 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
-import {
-  ArrowRight,
-  ChevronDown,
-  FolderOpen,
-  Inbox,
-  Mail,
-  Shield,
-  UsersRound,
-  Wallet,
-} from "lucide-react";
+import { ArrowRight, ChevronDown, Shield } from "lucide-react";
 import { eq } from "drizzle-orm";
 
 import { Badge } from "@/components/ui/badge";
@@ -245,7 +236,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.clients.label[locale],
           value: String(summary.used),
           sub: AGENCY.kpi.clients.sub[locale],
-          icon: UsersRound,
           href: "/agency/clients",
           tone: "neutral",
         },
@@ -253,7 +243,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.awaitingReview.label[locale],
           value: String(summary.byStatus.submitted ?? 0),
           sub: AGENCY.kpi.awaitingReview.sub[locale],
-          icon: Inbox,
           href: "/agency/clients?status=submitted",
           tone: (summary.byStatus.submitted ?? 0) > 0 ? "warning" : "neutral",
         },
@@ -261,7 +250,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.withHandler.label[locale],
           value: String(summary.byStatus.under_review ?? 0),
           sub: AGENCY.kpi.withHandler.sub[locale],
-          icon: FolderOpen,
           href: "/agency/clients?status=under_review",
           tone: "info",
         },
@@ -269,7 +257,6 @@ async function AgencyOverview({
           label: AGENCY.kpi.invitations.label[locale],
           value: String(summary.pendingInvitations.length),
           sub: AGENCY.kpi.invitations.sub[locale],
-          icon: Mail,
           tone: "neutral",
         },
         {
@@ -293,7 +280,6 @@ async function AgencyOverview({
           sub: summary.charts.clientRevenue.mixedCurrency
             ? AGENCY.kpi.clientsPaid.mixed[locale]
             : AGENCY.kpi.clientsPaid.sub[locale],
-          icon: Wallet,
           tone: "success",
         },
       ]

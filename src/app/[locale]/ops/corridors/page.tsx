@@ -1,11 +1,4 @@
 import type { Metadata } from "next";
-import {
-  ClipboardCheck,
-  Globe2,
-  MapPinOff,
-  Route as RouteIcon,
-  ShieldAlert,
-} from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
@@ -121,7 +114,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.liveRoutes.label[locale],
       value: live.length,
       sub: OPS_CORRIDORS.counters.liveRoutes.sub[locale],
-      icon: RouteIcon,
       href: "/ops/corridors?state=live",
       tone: "neutral" as const,
     },
@@ -129,7 +121,6 @@ export default async function OpsCorridorsPage({
       label: OPS_COMMON.awaitingReview[locale],
       value: pending.length,
       sub: OPS_CORRIDORS.counters.awaitingReviewSub[locale],
-      icon: ClipboardCheck,
       href: "/ops/corridors?state=pending",
       tone: "warning" as const,
     },
@@ -141,7 +132,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.destinations.label[locale],
       value: new Set(live.map((r) => r.destinationIso)).size,
       sub: OPS_CORRIDORS.counters.destinations.sub[locale],
-      icon: Globe2,
       href: "/ops/corridors?state=live",
       tone: "info" as const,
     },
@@ -149,7 +139,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.notCheckedYet.label[locale],
       value: unverified.length,
       sub: OPS_CORRIDORS.counters.notCheckedYet.sub[locale],
-      icon: ShieldAlert,
       href: "/ops/corridors?state=unverified",
       tone: unverified.length ? ("danger" as const) : ("neutral" as const),
     },
@@ -161,7 +150,6 @@ export default async function OpsCorridorsPage({
       label: OPS_CORRIDORS.counters.notBuilt.label[locale],
       value: asked.total,
       sub: OPS_CORRIDORS.counters.notBuilt.sub[locale],
-      icon: MapPinOff,
       tone: asked.total ? ("warning" as const) : ("neutral" as const),
     },
   ];

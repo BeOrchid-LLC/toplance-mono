@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { Building2, MessageSquareText, PauseCircle, UsersRound } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { TableSkeleton } from "@/components/shared/content-skeleton";
@@ -96,28 +95,24 @@ async function TenantsContent({
       label: OPS_TENANTS.counters.liveTenants.label[locale],
       value: String(live.length),
       sub: OPS_TENANTS.counters.liveTenants.sub[locale],
-      icon: Building2,
       tone: "neutral",
     },
     {
       label: OPS_TENANTS.counters.suspended.label[locale],
       value: String(suspended.length),
       sub: OPS_TENANTS.counters.suspended.sub[locale],
-      icon: PauseCircle,
       tone: suspended.length ? "warning" : "neutral",
     },
     {
       label: OPS_TENANTS.counters.members.label[locale],
       value: String(memberTotal),
       sub: OPS_TENANTS.counters.members.sub[locale],
-      icon: UsersRound,
       tone: "info",
     },
     {
       label: OPS_TENANTS.counters.openEnquiries.label[locale],
       value: String(openEnquiries.length),
       sub: OPS_TENANTS.counters.openEnquiries.sub[locale],
-      icon: MessageSquareText,
       tone: openEnquiries.length ? "success" : "neutral",
       // The queue used to be a table at the foot of this page. It is its
       // own screen now, so the card that counts it opens it — a figure

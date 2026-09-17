@@ -67,7 +67,11 @@ function Slot({
         aria-label={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0"
+        // `text-base` although nobody sees it. iOS Safari zooms the page
+        // into any form control under 16px when it takes focus, and an
+        // unstyled <select> is 13px — so tapping a slot on a phone
+        // zoomed the hero in and left it there.
+        className="absolute inset-0 cursor-pointer text-base opacity-0"
       >
         {options.map((o) => (
           <option key={o.name} value={o.name}>

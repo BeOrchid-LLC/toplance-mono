@@ -88,7 +88,9 @@ export function AgentDock({
             onClick={onToggleTranscript}
             aria-expanded={transcriptOpen}
             aria-controls="intake-transcript"
-            className="special -me-2 flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+            // 44px square on a phone, where the label is screen-reader
+            // only and this was a 36px icon; the 36px pill from `sm`.
+            className="special -me-2 flex h-[var(--row-h)] min-w-[var(--row-h)] shrink-0 items-center justify-center gap-1.5 rounded-[var(--radius-pill)] px-2.5 sm:h-9 sm:min-w-0 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
           >
             {transcriptOpen ? (
               <X aria-hidden className="size-4" />

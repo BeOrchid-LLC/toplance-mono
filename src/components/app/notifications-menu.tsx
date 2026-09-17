@@ -180,7 +180,9 @@ export function NotificationsMenu({
               event.preventDefault();
               readAll();
             }}
-            className="min-h-0 shrink-0 px-2 py-1 text-xs font-medium text-brand-text"
+            // The menu item's own 44px floor on a phone, where this is
+            // tapped; the compact text control from `md`.
+            className="shrink-0 px-2 py-1 text-xs font-medium text-brand-text md:min-h-0"
           >
             {t(NOTIFICATIONS.readAll)}
           </DropdownMenuItem>

@@ -865,7 +865,9 @@ function TranscriptPanel({
           type="button"
           onClick={onClose}
           aria-label={t(INTAKE_UI.ariaCloseTranscript)}
-          className="-me-2 grid size-9 shrink-0 place-items-center rounded-full text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
+          // 44px on a phone — the row is 44px tall, so it fits — and
+          // the 36px it was from `sm`.
+          className="-me-2 grid size-[var(--row-h)] shrink-0 place-items-center rounded-full sm:size-9 text-ink-3 transition-colors duration-[var(--dur-tap)] hover:bg-surface-2 hover:text-ink"
         >
           <X aria-hidden className="size-4" />
         </button>

@@ -7,7 +7,6 @@ import {
   Building2,
   CheckCircle2,
   CheckCircle,
-  ChevronDown,
   Clock3,
   ExternalLink,
   FileCheck2,
@@ -38,6 +37,7 @@ import type { AgencyKyb, KybRequirementRow } from "@/lib/data/kyb";
 import type { KybState } from "@/lib/db/schema";
 import { ACCEPT } from "@/lib/domain/uploads";
 import { useLocale, useT } from "@/components/locale-provider";
+import { NativeSelect } from "@/components/ui/native-select";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
 import { cn } from "@/lib/utils";
@@ -589,29 +589,19 @@ function RequirementRow({
                   >
                     {t(OPS_KYB.tableHead.standing)} — state
                   </Label>
-                  <div className="relative">
-                    <select
-                      id={`kyb-state-${requirement.docKey}`}
-                      value={state}
-                      disabled={pending}
-                      onChange={(event) => setState(event.target.value as KybState)}
-                      // Focus is the base rule's. What stood here was `focus:` rather
-                      // than `focus-visible:`, so it also fired on every mouse
-                      // click, and it spent its ring on `--brand/20` — a fifth
-                      // of the fill hue, under 1.2:1 on either plate.
-                      className="h-9 w-full appearance-none rounded-lg border border-border-strong bg-surface px-3 pe-8 text-sm font-semibold text-ink shadow-sm"
-                    >
-                      {(Object.keys(STATE) as KybState[]).map((value) => (
-                        <option key={value} value={value}>
-                          {t(OPS_KYB.state[STATE[value].key])}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-                      aria-hidden
-                    />
-                  </div>
+                  <NativeSelect
+                    id={`kyb-state-${requirement.docKey}`}
+                    value={state}
+                    disabled={pending}
+                    onChange={(event) => setState(event.target.value as KybState)}
+                    className="w-full"
+                  >
+                    {(Object.keys(STATE) as KybState[]).map((value) => (
+                      <option key={value} value={value}>
+                        {t(OPS_KYB.state[STATE[value].key])}
+                      </option>
+                    ))}
+                  </NativeSelect>
                 </div>
 
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">

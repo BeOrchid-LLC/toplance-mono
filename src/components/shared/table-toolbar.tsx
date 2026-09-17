@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
+import { ArrowDownUp, Search } from "lucide-react";
 
 import { readSortOptionValue, type SortOption } from "@/lib/domain/sort-options";
 
-import { cn } from "@/lib/utils";
+import { NativeSelect } from "@/components/ui/native-select";
 
 export type ToolbarFilter = {
   /** The query-string key this control owns. */
@@ -23,10 +23,6 @@ export type ToolbarSort = {
   /** Accessible name; the face shows the chosen order instead. */
   label: string;
 };
-
-/** The one look every select in a table's header shares. */
-const toolbarSelectClass =
-  "h-9 appearance-none rounded-[var(--radius-sm)] border border-border-strong bg-surface ps-3 pe-8 text-base font-semibold text-ink";
 
 /**
  * Search, filters and sort for a console table, held in the URL.
@@ -162,57 +158,41 @@ export function TableToolbar({
     <>
       {(filters.length > 0 || hasSort) && (
         <div className="flex flex-wrap items-center gap-2">
+          {/* Native selects behind a styled face, per guideline §10: on a
+              phone they open the system picker, which is faster and
+              already in the reader's own language. */}
           {filters.map((f) => (
-            <div key={f.param} className="relative">
-              {/* Native select behind a styled face, per guideline §10: on a
-                  phone this opens the system picker, which is faster and
-                  already in the reader's own language. */}
-              <select
-                value={params.get(f.param) ?? ""}
-                onChange={(e) => setFilter(f.param, e.target.value)}
-                aria-label={f.label}
-                className={toolbarSelectClass}
-              >
-                <option value="">{f.label}</option>
-                {f.options.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-                aria-hidden
-              />
-            </div>
+            <NativeSelect
+              key={f.param}
+              value={params.get(f.param) ?? ""}
+              onChange={(e) => setFilter(f.param, e.target.value)}
+              aria-label={f.label}
+            >
+              <option value="">{f.label}</option>
+              {f.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </NativeSelect>
           ))}
 
           {sort && hasSort && (
-            <div className="relative">
-              {/* The icon says what the control is; the face says which
-                  order is on. A "Sort" placeholder option would be a choice
-                  that does nothing, since a table is always in some order. */}
-              <ArrowDownUp
-                className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-                aria-hidden
-              />
-              <select
-                value={sort.value}
-                onChange={(e) => setSort(e.target.value)}
-                aria-label={sort.label}
-                className={cn(toolbarSelectClass, "ps-8")}
-              >
-                {sort.options.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
-                aria-hidden
-              />
-            </div>
+            // The icon says what the control is; the face says which
+            // order is on. A "Sort" placeholder option would be a choice
+            // that does nothing, since a table is always in some order.
+            <NativeSelect
+              icon={<ArrowDownUp />}
+              value={sort.value}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label={sort.label}
+            >
+              {sort.options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </NativeSelect>
           )}
         </div>
       )}

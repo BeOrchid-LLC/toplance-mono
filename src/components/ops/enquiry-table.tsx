@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import { DataTable } from "@/components/shared/data-table";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import {
@@ -21,37 +22,21 @@ import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 import { formatDate, formatDateTime } from "@/lib/format/date";
 
 /**
- * The design system has no `<select>`, so this stands in for one —
- * copied from `src/components/site/demo-dialog.tsx` rather than
- * imported from it, with two deliberate differences.
+ * The row's selects are `NativeSelect`, the header's own control, at the
+ * row's height rather than the header's — beside a 44px `size="sm"`
+ * button a 36px select sat short of every neighbour.
  *
- * `--row-h` rather than the `--control-h` that `Input` uses. 52px is
- * the height of a control in a *form*, where it is one of a short
- * stack somebody is filling in. These two sit inside a `DataTable`
- * cell, beside a 44px `size="sm"` button, and at 52px they stood
- * taller than every neighbour and made one row of a table look like a
- * form. Row controls share the row's height.
- *
- * And no `w-full`. In the form it fills a column whose width the form
- * set; in the content-sized table (`ui/table.tsx`) the question runs
- * the other way — the column asks its content how wide to be, and a
- * `w-full` control answers "100% of you", which resolves to nothing.
- * The Assignee column measured only its shrink-0 button and the flex
- * row squeezed the select to a 34px chevron, its value unreadable.
- * Left to its own width a native select asks for its widest option,
- * which is the honest claim: the control gets its width before the
- * text columns share what is left, same as the buttons do.
- *
- * Honest, but not unbounded. The status select's options are four
- * fixed words; the assignee select's are the staff roster, labelled
- * `fullName || email` — the same unbounded data every text column in
- * this table carries a ceiling against. One colleague whose label
- * falls back to a long address would widen the unshrinkable Assignee
- * column on every pending row, so that select carries the same kind
- * of ceiling at the call site below.
+ * No `w-full` on the assignee select. In the content-sized table
+ * (`ui/table.tsx`) the column asks its content how wide to be, and a
+ * `w-full` control answers "100% of you", which resolves to nothing —
+ * the flex row squeezed the select to a 34px chevron. Left to its own
+ * width a native select asks for its widest option, which is the honest
+ * claim. Honest, but not unbounded: its options are the staff roster,
+ * labelled `fullName || email`, and one colleague whose label falls back
+ * to a long address would widen the Assignee column on every pending
+ * row, so it carries a ceiling at the call site below.
  */
-const inputClass =
-  "h-[var(--row-h)] rounded-md border border-border-strong bg-surface px-4 text-base text-ink";
+const rowSelectClass = "h-[var(--row-h)]";
 
 /**
  * The enquiries that have not become an agency yet.
@@ -252,9 +237,9 @@ export function EnquiryTable({
                 {t(OPS_ENQUIRIES.status.converted)}
               </Badge>
             ) : (
-              <select
+              <NativeSelect
                 aria-label={t(OPS_ENQUIRIES.head.status)}
-                className={inputClass}
+                className={rowSelectClass}
                 value={r.status}
                 disabled={pending}
                 onChange={(e) =>
@@ -269,7 +254,7 @@ export function EnquiryTable({
                     {t(OPS_ENQUIRIES.status[s])}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             ),
         },
         {
@@ -298,13 +283,13 @@ export function EnquiryTable({
               // a laptop without scrolling sideways (`ui/table.tsx`), and
               // on a wide screen they still sit on one line.
               <div className="flex flex-wrap items-center gap-2">
-                <select
+                <NativeSelect
                   aria-label={t(OPS_ENQUIRIES.head.assignee)}
                   // The ceiling on the roster's unbounded labels — see
-                  // the `inputClass` note. On the control itself rather
-                  // than a wrapper: a select is not a table cell, so its
-                  // `max-width` holds in every browser.
-                  className={`${inputClass} max-w-[240px]`}
+                  // the `rowSelectClass` note. On the control itself
+                  // rather than a wrapper: a select is not a table cell,
+                  // so its `max-width` holds in every browser.
+                  className={`${rowSelectClass} max-w-[240px]`}
                   value={r.assigneeId ?? ""}
                   disabled={pending}
                   onChange={(e) =>
@@ -320,7 +305,7 @@ export function EnquiryTable({
                       {s.fullName || s.email}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
                 {r.assigneeId === null && (
                   <Button
                     type="button"

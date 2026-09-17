@@ -339,6 +339,25 @@ export const canReadMessages: Permission = (actor, app) =>
  */
 export const canWriteMessages: Permission = canReadMessages;
 
+/**
+ * Platform-side: whose name may go against a demo request.
+ *
+ * Any member of staff may take one ("Assign to me") or put one back in
+ * the pool (`null`), whoever held it — working the sales queue is the
+ * platform team's shared job, and a reviewer should not have to find an
+ * owner to pick up a company that enquired this morning. Handing one to
+ * *somebody else* is the owner's: the client's review of 17 September
+ * says the Director reassigns, for when a handler is on leave.
+ *
+ * Decision D6 of the 17 September plan, pending the client's
+ * confirmation. `setDemoRequestAssignee` enforces it; the picker only
+ * mirrors it.
+ */
+export function canAssignDemoRequest(actor: Actor, assigneeId: string | null): boolean {
+  if (!isStaff(actor)) return false;
+  return assigneeId === null || assigneeId === actor.userId || isOwner(actor);
+}
+
 /** Platform-side: route curation. */
 export function canWriteCorridors(actor: Actor): boolean {
   return isOwner(actor);

@@ -107,8 +107,10 @@ export async function updateDemoRequestStatus(formData: FormData) {
 /**
  * Put a colleague's name against an enquiry, or take it off.
  *
- * A label, not a lock. Anyone on the platform team may assign, reassign
- * or clear any row, and nothing else on this screen checks who holds it
+ * A label, not a lock. Anyone on the platform team may take or clear any
+ * row — handing one to a colleague is an owner's (`canAssignDemoRequest`,
+ * D6, pending the client's confirmation) — and nothing else on this
+ * screen checks who holds it
  * — the queue is worked by whoever is free, and an assignment that
  * blocked a colleague from answering a company would cost more than the
  * confusion it prevents.
@@ -138,7 +140,7 @@ export async function assignDemoRequest(formData: FormData) {
   // uuid check to make here, only "empty means unassign".
   const assigneeId = raw === "" ? null : raw;
 
-  const result = await setDemoRequestAssignee(requestId, assigneeId);
+  const result = await setDemoRequestAssignee(requestId, assigneeId, actor);
   if ("error" in result) {
     return {
       error:
@@ -146,7 +148,9 @@ export async function assignDemoRequest(formData: FormData) {
           ? OPS_ACTIONS.demoRequestAlreadyConverted[locale]
           : result.error === "not_staff"
             ? OPS_ACTIONS.assigneeNotStaff[locale]
-            : OPS_ACTIONS.demoRequestNotFound[locale],
+            : result.error === "not_owner"
+              ? OPS_ACTIONS.assigneeOwnerOnly[locale]
+              : OPS_ACTIONS.demoRequestNotFound[locale],
     };
   }
 

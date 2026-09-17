@@ -47,7 +47,7 @@ export function AppBar({
     // against the right edge of a wide monitor with the content it
     // belongs to centred a couple of hundred pixels away.
     <header className="sticky top-0 z-40 border-b border-border bg-surface">
-      <Shell className="flex h-[var(--bar-h)] items-center gap-6">
+      <Shell className="flex h-[var(--bar-h)] items-center gap-3 sm:gap-6">
         <div className="flex h-full min-w-0 items-center gap-3 lg:gap-6">
           {/* Below `lg` the bar hides its nav, and the items move into a
               hamburger — a scrolling rail used to sit under the bar

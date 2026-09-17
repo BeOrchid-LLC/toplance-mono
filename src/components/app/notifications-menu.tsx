@@ -139,7 +139,11 @@ export function NotificationsMenu({
             ? NOTIFICATIONS.ariaUnread[locale].replace("{n}", String(unreadCount))
             : t(NOTIFICATIONS.ariaNoUnread)
         }
-        className="relative grid size-9 place-items-center rounded-full hover:bg-surface-2"
+        // 44px on a phone, 36px from `md`: the same trade `Button`'s `bar`
+        // size makes, for the same row of console chrome this bell also
+        // stands in. A thumb gets the tap target; a desktop bar keeps
+        // its alignment.
+        className="relative grid size-[var(--row-h)] place-items-center rounded-full hover:bg-surface-2 md:size-9"
       >
         <Bell className="size-5" aria-hidden />
         {unreadCount > 0 && (
@@ -149,7 +153,14 @@ export function NotificationsMenu({
         )}
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[340px]">
+      {/* Capped at the viewport less a 16px margin each side. A flat
+          340px is wider than the space a 360px phone has once Radix
+          keeps the menu on screen, and it ran off the left edge. */}
+      <DropdownMenuContent
+        align="end"
+        collisionPadding={16}
+        className="w-[min(340px,calc(100vw-2rem))]"
+      >
         {/* Outside the scroll container below, so the label and the
             button stay put while fifteen notifications move past them.
             A "Read all" that scrolls away is one you have to scroll back

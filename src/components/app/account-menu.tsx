@@ -58,7 +58,12 @@ export function AccountMenu({
         </Avatar>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-[280px]">
+      {/* Capped at the viewport, as `NotificationsMenu` is. */}
+      <DropdownMenuContent
+        align="end"
+        collisionPadding={16}
+        className="w-[min(280px,calc(100vw-2rem))]"
+      >
         <div className="border-b border-border px-3 pb-3 pt-2">
           <p className="t-title">{name || "Guest"}</p>
           <p className="t-muted truncate text-[16px]">{subtitle || email}</p>

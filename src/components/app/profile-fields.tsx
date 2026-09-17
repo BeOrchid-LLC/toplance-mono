@@ -83,7 +83,7 @@ function Row({
     <div className="border-b border-border py-3">
       <dt className="special-caps">{label}</dt>
       <dd className="mt-1 flex items-center justify-between gap-2">
-        <span className="min-w-0 break-words text-base font-semibold">
+        <span className="min-w-0 wrap-anywhere text-base font-semibold">
           {value}
         </span>
         <button

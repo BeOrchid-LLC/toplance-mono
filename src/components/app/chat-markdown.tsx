@@ -49,7 +49,7 @@ export function ChatMarkdown({ children }: { children: string }) {
               href={href}
               target={external ? "_blank" : undefined}
               rel={external ? "noreferrer nofollow" : undefined}
-              className="font-semibold text-brand-text underline decoration-current/35 underline-offset-4 hover:decoration-current"
+              className="font-semibold text-brand-text underline decoration-current/35 underline-offset-4 wrap-anywhere hover:decoration-current"
             >
               {linkChildren}
             </a>

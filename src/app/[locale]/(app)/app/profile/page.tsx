@@ -89,7 +89,11 @@ function DetailField({
   return (
     <div className="border-b border-border py-3">
       <dt className="special-caps">{label}</dt>
-      <dd className="mt-1 break-words text-base font-semibold">
+      {/* `wrap-anywhere`, not `break-words`: the email is one unbroken
+          string, and only `anywhere` lets it count as breakable when
+          the grid measures the column, so a long address wraps on a
+          phone rather than widening the whole sheet past the screen. */}
+      <dd className="mt-1 wrap-anywhere text-base font-semibold">
         {value || <Awaiting label={notAnsweredLabel} />}
       </dd>
     </div>

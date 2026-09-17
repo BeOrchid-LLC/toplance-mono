@@ -41,7 +41,7 @@ export function InvitationDeadEnd({
       <PanelBody>
         <p className="tag">Invitation</p>
         <h1 className="t-h2 mt-3 max-w-[24ch]">{title}</h1>
-        <p className="t-muted mt-3 max-w-[48ch]">{body}</p>
+        <p className="t-muted mt-3 max-w-[48ch] wrap-anywhere">{body}</p>
         {children}
       </PanelBody>
     </Panel>

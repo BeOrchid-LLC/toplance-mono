@@ -100,7 +100,7 @@ export function AppNav({
                  message arrives. `aria-label` because "3" on its own
                  is not what a screen reader should read out. */
               <span
-                className="ml-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold leading-none text-on-brand num"
+                className="ms-2 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-brand px-1.5 py-0.5 text-[11px] font-semibold leading-none text-on-brand num"
                 aria-label={`${item.badge} unread`}
               >
                 {item.badge > 9 ? "9+" : item.badge}

@@ -320,8 +320,14 @@ export default async function ProfilePage() {
           </div>
         </Panel>
 
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="grid gap-6">
+        {/* `grid-cols-1` below `lg`, not an implicit column. An implicit
+            column is as wide as its widest unbreakable content — a date
+            input, a button, a long value — so on a phone one of those
+            pushed every panel on the page past the screen's edge.
+            `grid-cols-1` is `minmax(0, 1fr)`, which holds the column to
+            the screen and lets the content inside wrap to it. */}
+        <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="grid grid-cols-1 gap-6">
           {/* ---- personal and travel details ---- */}
           <Panel>
             <PanelHeader
@@ -337,7 +343,7 @@ export default async function ProfilePage() {
                   fixed half-columns, so the sheet reads in rows the way
                   a data page does and collapses to a single column
                   without re-ordering. */}
-              <dl className="grid gap-x-10 sm:grid-cols-2">
+              <dl className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
                 <EditableName fullName={profile.fullName} />
                 {/* Beside the account name deliberately. A visa is issued
                     to the passport's spelling, so the two disagreeing is
@@ -401,7 +407,7 @@ export default async function ProfilePage() {
               {/* The field grid above already closes with a hairline, so
                   the first block here draws no top border of its own —
                   `divide-y` rules only between blocks. */}
-              <div className="mt-1 grid divide-y divide-border">
+              <div className="mt-1 grid grid-cols-1 divide-y divide-border">
                 <div className="py-4">
                   <h3 className="t-title">{t.foodAndSupportNeeds[uiLocale]}</h3>
                   <p className="t-muted mt-1.5">
@@ -515,7 +521,7 @@ export default async function ProfilePage() {
           </Panel>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* ---- agent memory ---- */}
             <Panel>
               <PanelHeader label={t.agentLearnedLabel[uiLocale]} />

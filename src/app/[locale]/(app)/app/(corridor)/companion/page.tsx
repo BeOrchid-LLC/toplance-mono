@@ -96,8 +96,10 @@ export default async function CompanionPage() {
         <h1 className="d-lg text-ink">{t.heading[locale]}</h1>
         <p className="t-body-lg mt-2 max-w-[62ch] text-ink-2">{t.intro[locale]}</p>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
-          <div className="grid gap-6">
+        {/* `grid-cols-1` below `lg` for the reason given on the profile
+            page: an implicit column grows to its widest content. */}
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="grid grid-cols-1 gap-6">
             {/* ---- arrival checklist ---- */}
             <Panel>
               <PanelHeader
@@ -145,7 +147,7 @@ export default async function CompanionPage() {
             </Panel>
           </div>
 
-          <div className="grid gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* ---- renewal ---- */}
             <Panel>
               <PanelHeader

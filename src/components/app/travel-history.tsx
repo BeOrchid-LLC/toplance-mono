@@ -83,7 +83,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
       />
 
       {adding ? (
-        <form ref={formRef} action={save} className="mt-5 grid gap-4">
+        <form ref={formRef} action={save} className="mt-5 grid grid-cols-1 gap-4">
           <div className="grid gap-2">
             <Label htmlFor="trip_country">{t(TRAVEL_HISTORY.countryLabel)}</Label>
             <input
@@ -107,7 +107,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           {/* One date under the other on a phone. Side by side, each
               field got half of ~300px, and iOS draws a date input with a
               minimum width of its own that does not fit in that. */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="trip_from">{t(TRAVEL_HISTORY.fromLabel)}</Label>
               <input

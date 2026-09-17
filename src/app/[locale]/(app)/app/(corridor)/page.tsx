@@ -129,7 +129,10 @@ export default async function DashboardPage() {
             used to be stretched and vertically centred because it sat
             beside the completion ring; with the ring gone that left the
             copy floating in the middle of a tall empty panel. */}
-        <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+        {/* `grid-cols-1` below `lg`: an implicit column is as wide as its
+            widest content, and on a phone the next-action button alone
+            could be wider than the screen. */}
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_360px]">
           <Panel>
             <PanelBody className="py-8 sm:px-8 sm:py-10">
               <div className="max-w-[58ch]">
@@ -221,7 +224,7 @@ export default async function DashboardPage() {
           </Panel>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Panel>
             <PanelHeader
               label={t.tripGlanceLabel[locale]}

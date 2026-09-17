@@ -638,7 +638,7 @@ export function AuthForm(props: AuthFormProps) {
           </Button>
         </form>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-x-4">
           <button
             type="button"
             onClick={() => {

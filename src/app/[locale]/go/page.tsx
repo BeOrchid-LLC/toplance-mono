@@ -71,7 +71,9 @@ export default async function GoPage() {
   if (destination) redirect(withLocalePrefix(destination, locale));
 
   return (
-    <main className="relative isolate grid min-h-dvh place-items-center px-6 py-14">
+    // No side padding on <main>: the `Shell` inside already has its own,
+    // and the two together left a phone 264px of a 360px screen.
+    <main className="relative isolate grid min-h-dvh place-items-center py-14">
       <Shell className="max-w-[560px]">
         <Panel>
           <PanelBody>

@@ -73,7 +73,9 @@ export default async function CheckoutPage() {
         </div>
       </header>
 
-      <main className="relative isolate flex-1 px-6 py-14 md:py-20">
+      {/* No side padding on <main>: the `Shell` inside already has its
+          own, and the two together left a phone 264px of a 360px screen. */}
+      <main className="relative isolate flex-1 py-14 md:py-20">
         <Shell className="max-w-[560px]">
           <p className="tag">{CHECKOUT.feeLabel[locale]}</p>
           <h1 className="t-h2 mt-3 max-w-[22ch]">{CHECKOUT.title[locale]}</h1>

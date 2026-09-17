@@ -31,7 +31,10 @@ export default async function AuthLayout({
         </div>
       </header>
 
-      <main className="relative isolate flex-1 px-6 py-14 md:py-20">
+      {/* 16px a side on a phone, matching the header's own minimum. The
+          one-time code is six fixed boxes, and at 24px here plus the
+          panel's padding they did not fit a 414px screen. */}
+      <main className="relative isolate flex-1 px-4 py-14 sm:px-6 md:py-20">
         {children}
       </main>
 

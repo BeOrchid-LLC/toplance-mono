@@ -28,7 +28,7 @@ export function AuthPanel({
 }) {
   return (
     <div className={cn("overflow-hidden rounded-lg border border-border bg-surface", className)}>
-      <div className="relative z-[1] p-6 sm:p-8">
+      <div className="relative z-[1] p-5 sm:p-8">
         <p className="tag">{eyebrow}</p>
         <div className="mt-4">{children}</div>
       </div>

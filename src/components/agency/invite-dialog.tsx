@@ -281,7 +281,7 @@ export function InviteDialog({
                   <legend className="sr-only">
                     {t(INVITE_DIALOG.nameFieldsetLegend)}
                   </legend>
-                  <p aria-hidden className="tag">
+                  <p aria-hidden className="special-caps">
                     {t(INVITE_DIALOG.nameFieldsetTag)}
                   </p>
                   <div className="flex flex-col gap-2">

@@ -225,7 +225,7 @@ export function PhoneField({
                       {c.flag}
                     </span>
                     <span className="min-w-0 flex-1 truncate">{c.name}</span>
-                    <span className="special font-mono">{c.dial}</span>
+                    <span className="special num">{c.dial}</span>
                   </button>
                 </React.Fragment>
               ))}

@@ -767,7 +767,7 @@ export default async function RequirementsPage() {
                           Without this the panel says "some of these
                           might be yours" and leaves the reader to guess
                           which — the hedge the client objected to. */}
-                      <span className="tag">{t.onlyIfLabel[locale]}</span>{" "}
+                      <span className="special-caps">{t.onlyIfLabel[locale]}</span>{" "}
                       {describeAppliesWhen(r.appliesWhen)}
                     </p>
                   )}

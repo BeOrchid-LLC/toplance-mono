@@ -390,7 +390,7 @@ async function AgencyOverview({
             {/* `me-auto` on the text rather than a wrapper around it, the
                 same way `DisclosurePanel` keeps its aside at the edge. */}
             <div className="me-auto min-w-0">
-              <p className="tag">{AGENCY.privacyTag[locale]}</p>
+              <p className="special-caps">{AGENCY.privacyTag[locale]}</p>
               <p className="d-sm mt-2 text-ink">{AGENCY.privacyHeading[locale]}</p>
             </div>
             {/* Down when shut, up when open — the strip opens by default,

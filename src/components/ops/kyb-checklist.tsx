@@ -461,7 +461,7 @@ function RequirementRow({
               </div>
 
               {/* filed count / index */}
-              <span className="hidden shrink-0 items-center gap-1.5 font-mono text-[11px] font-semibold tracking-[0.08em] text-ink-3 sm:inline-flex">
+              <span className="hidden shrink-0 items-center gap-1.5 num text-[11px] font-semibold tracking-[0.08em] text-ink-3 sm:inline-flex">
                 <span className="inline-flex size-5 items-center justify-center rounded-full border border-border bg-surface-2 text-[10px]">
                   {docIndex(requirement.docKey)}
                 </span>

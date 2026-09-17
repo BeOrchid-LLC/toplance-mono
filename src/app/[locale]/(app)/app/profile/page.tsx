@@ -251,7 +251,7 @@ export default async function ProfilePage() {
                   page. The circle in the app bar stays a circle. */}
               <AvatarUpload fullName={profile.fullName} avatarUrl={avatarUrl} />
               <div className="min-w-0 flex-1">
-                <p className="tag">{t.travelerTag[uiLocale]}</p>
+                <p className="special-caps">{t.travelerTag[uiLocale]}</p>
                 <h1 className="d-lg mt-1.5 break-words text-ink">
                   {profile.fullName || t.travelerFallback[uiLocale]}
                 </h1>

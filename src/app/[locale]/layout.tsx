@@ -12,7 +12,9 @@ import "../globals.css";
 /**
  * Fonts are self-hosted rather than pulled from Google.
  *
- * The product is set in IBM Plex Sans, with Plex Mono as the data face;
+ * The product is set in IBM Plex Sans — figures included, since
+ * 2026-09-17, because Plex Mono's zero is dotted — with Plex Mono kept
+ * for the passport MRZ strip and code;
  * these are the subsets from the Fontsource packages, vendored into the
  * repo. Self-hosting means no third-party request from a user's
  * browser — which matters for a product handling identity documents,

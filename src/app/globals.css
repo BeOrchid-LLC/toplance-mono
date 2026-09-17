@@ -803,9 +803,11 @@
    Two faces, two jobs. Archivo carries the width axis, so display
    type can be genuinely expanded rather than merely large — that
    width is what stops it reading as Plex Sans at a bigger size.
-   Plex Mono stops being a footnote and becomes the data face: every
-   code, count and status on the page is set in it, because those are
-   the parts a traveller reads as fact rather than as marketing.
+   Plex Mono was the data face here, for every code, count and status —
+   until 2026-09-17, when the client asked why the zeros had dots in
+   them. Plex Mono's zero is dotted; Plex Sans's is plain. Counts and
+   labels are now set in the body face with tabular figures, and mono is
+   kept for the one place that imitates a machine: `.mrz` below.
 
    `font-variation-settings` rather than `font-weight` throughout:
    the two do not compose, and the `wdth` axis is only reachable the
@@ -842,10 +844,15 @@
     line-height: 1.35;
   }
 
-  /* The data face. 13px matches `.special` so the page keeps one
-     metadata size, and like `.special` it never lands on a control. */
+  /* The marketing eyebrow. 13px matches `.special` so the page keeps one
+     metadata size, and like `.special` it never lands on a control.
+
+     Sans, not `--data`: set in Plex Mono, every "0" in a label printed
+     with a dot through it (client review, 2026-09-17). Product screens
+     use `.special-caps` for the same job — this wider tracking is the
+     site's, and the wayfinding spec bans tracked-out caps in the product. */
   .tag {
-    font-family: var(--data);
+    font-family: var(--sans);
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.14em;
@@ -853,16 +860,30 @@
     line-height: 1.4;
     color: var(--ink-3);
   }
+  /* A figure: a count, an amount, a "3 of 6".
+
+     The body face, not `--data`. Plex Mono draws its zero with a dot in
+     it, which the client read as the wrong font (2026-09-17, decision
+     D7). Plex Sans's zero is plain, and its default figures are already
+     lining and all one advance wide (600 units, checked in the vendored
+     latin subset), so columns of figures still line up; the
+     `font-variant-numeric` says so explicitly rather than trusting a
+     font file's defaults. No extra tracking — the 0.02em was there to
+     loosen a monospace. */
   .num {
-    font-family: var(--data);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
+    font-family: var(--sans);
+    font-variant-numeric: tabular-nums lining-nums;
   }
 
   /* The machine-readable zone. A passport's own typography, used as
      the page's structural rule — it separates sections the way the
      band separates the data page from everything above it. The `<`
-     fillers are the real thing, not invented ornament. */
+     fillers are the real thing, not invented ornament.
+
+     The only role still on `--data` (Plex Mono), deliberately: a real
+     MRZ is set in a monospace machine face, and a strip imitating one
+     in the body face would stop reading as one. It is `aria-hidden`
+     ornament, not a figure anybody reads. */
   .mrz {
     font-family: var(--data);
     font-size: 13px;

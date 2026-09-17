@@ -31,7 +31,7 @@ export const OPS_ENQUIRIES: {
     preferred: L;
     status: L;
     assignee: L;
-    action: L;
+    actions: L;
   };
   status: {
     new: L;
@@ -41,6 +41,7 @@ export const OPS_ENQUIRIES: {
     declined: L;
   };
   unassigned: L;
+  rowActions: L;
   assigneeFilterAll: L;
   assigneeFilterMine: L;
   assigneeFilterNobody: L;
@@ -169,17 +170,22 @@ export const OPS_ENQUIRIES: {
       tw: "Wɔde ama",
       zu: "Kwabelwe",
     },
-    action: {
-      en: "",
-      ha: "",
-      yo: "",
-      ig: "",
-      fr: "",
-      pt: "",
-      sw: "",
-      ar: "",
-      tw: "",
-      zu: "",
+    /**
+     * The row menu's column. Hidden from sight (`labelHidden`) — a kebab
+     * needs no heading — but read out, so the column is not a blank to a
+     * screen reader. The support queue's word.
+     */
+    actions: {
+      en: "Actions",
+      ha: "Ayyuka",
+      yo: "Ìṣe",
+      ig: "Omume",
+      fr: "Actions",
+      pt: "Ações",
+      sw: "Vitendo",
+      ar: "إجراءات",
+      tw: "Nneyɛe",
+      zu: "Izenzo",
     },
   },
   status: {
@@ -256,6 +262,23 @@ export const OPS_ENQUIRIES: {
     ar: "غير مُسندة",
     tw: "Wɔmfaa mma obiara",
     zu: "Ayabelwe muntu",
+  },
+  /**
+   * The kebab's accessible name. `{name}` is the company, or the person
+   * when there is no company — every row's button would otherwise be
+   * announced as the same "Actions".
+   */
+  rowActions: {
+    en: "Actions for {name}",
+    ha: "Ayyuka don {name}",
+    yo: "Ìṣe fún {name}",
+    ig: "Omume maka {name}",
+    fr: "Actions pour {name}",
+    pt: "Ações para {name}",
+    sw: "Vitendo vya {name}",
+    ar: "إجراءات {name}",
+    tw: "Nneyɛe ma {name}",
+    zu: "Izenzo zika-{name}",
   },
   assigneeFilterAll: {
     en: "Anyone",

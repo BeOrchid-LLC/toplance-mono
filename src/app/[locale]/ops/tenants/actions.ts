@@ -158,8 +158,9 @@ export async function provisionTenant(formData: FormData) {
    * ships a fresh RSC payload in its own response, and the client
    * commits that payload in the same transition as the `setInviteUrl`
    * below it. When this was called from a demo-request row,
-   * `EnquiryTable` renders `<ProvisionTenant>` from a ternary on
-   * `convertedOrgId`, which this transaction has just populated: the row
+   * `EnquiryTable` rendered `<ProvisionTenant>` from a ternary on
+   * `convertedOrgId` (it has mounted one dialog outside its rows since
+   * 17 September), which this transaction had just populated: the row
    * re-rendered as a `<Link>`, the dialog unmounted, and the invitation
    * URL — the only copy, since the roster never selects `token` and
    * nothing in the product can resend or revoke — was destroyed before

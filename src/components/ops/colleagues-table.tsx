@@ -91,6 +91,9 @@ export function ColleaguesTable({
       id: "rank",
       width: "w-[12%]",
       label: OPS_STAFF.tableHead.rank[locale],
+      pill: {
+        labels: [OPS_COMMON.staffRole.owner[locale], OPS_COMMON.staffRole.reviewer[locale]],
+      },
       // A director is the rank that can approve a corridor and invite
       // the next colleague, so it is the one worth picking out of a
       // column somebody scans. A reviewer reads as plain text because

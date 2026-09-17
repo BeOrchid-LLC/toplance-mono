@@ -138,6 +138,7 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
           {
             id: "role",
             label: t(OPS_TENANTS.rosterHead.role),
+            pill: { labels: [t(OPS_TENANTS.roleOwner), t(OPS_TENANTS.roleReviewer)] },
             cell: (m) => (
               <Badge variant={m.role === "owner" ? "brand" : "neutral"}>
                 {m.role === "owner" ? t(OPS_TENANTS.roleOwner) : t(OPS_TENANTS.roleReviewer)}

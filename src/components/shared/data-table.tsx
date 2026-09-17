@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Panel, PanelBody } from "@/components/shared/panel";
 import { TablePager } from "@/components/shared/pagination";
+import { PillCell } from "@/components/shared/pill-cell";
 import { PAGE_SIZE_OPTIONS } from "@/lib/domain/sorting";
 import { rowOffset } from "@/lib/domain/row-number";
 import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
@@ -51,8 +52,20 @@ export type DataColumn<T> = {
    * The page still does the sorting, on its own allow-list.
    */
   sort?: ColumnSort;
-  /** Right-aligns the column — for an actions cell or a bare number. */
-  align?: "end";
+  /**
+   * `end` right-aligns the column — for an actions cell or a bare
+   * number. `center` centres header and cells; a `pill` column is
+   * centred without asking.
+   */
+  align?: "end" | "center";
+  /**
+   * Makes this a status column: every pill in it is as wide as the
+   * widest one it can show, and centred, header included — the client's
+   * review of 17 September. `labels` is every label the column can show
+   * in the current locale, straight from its label map; `control` says
+   * some rows show a `NativeSelect` in the pill's place. See `PillCell`.
+   */
+  pill?: { labels: readonly string[]; control?: boolean };
   /**
    * A width hint for this column, as a literal Tailwind class —
    * `"w-[22%]"`, `"w-[120px]"`. Written out rather than interpolated
@@ -105,6 +118,12 @@ export type DataColumn<T> = {
   labelHidden?: boolean;
   cell: (row: T) => ReactNode;
 };
+
+function alignClass(column: { align?: "end" | "center"; pill?: unknown }) {
+  if (column.align === "end") return "text-end";
+  if (column.align === "center" || column.pill) return "text-center";
+  return undefined;
+}
 
 /**
  * Every console table, as one component.
@@ -315,7 +334,7 @@ export function DataTable<T>({
                         : "descending"
                       : undefined
                   }
-                  className={cn(c.width, c.align === "end" && "text-end", c.className)}
+                  className={cn(c.width, alignClass(c), c.className)}
                 >
                   {/* An actions column has a header for a screen reader
                       and nothing for an eye — the buttons name
@@ -334,12 +353,16 @@ export function DataTable<T>({
                 {columns.map((c) => (
                   <TableCell
                     key={c.id}
-                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
+                    className={cn(c.width, alignClass(c), c.className)}
                   >
                     {c.floor ? (
                       <div className={cn("[contain:inline-size]", c.floor)}>
                         {c.cell(row)}
                       </div>
+                    ) : c.pill ? (
+                      <PillCell labels={c.pill.labels} control={c.pill.control}>
+                        {c.cell(row)}
+                      </PillCell>
                     ) : (
                       c.cell(row)
                     )}

@@ -101,6 +101,7 @@ export function TenantsTable({
         desc: leadsFirst(OPS_TENANTS.suspendedBadge[locale], locale),
       },
       label: OPS_TENANTS.tableHead.state[locale],
+      pill: { labels: [OPS_TENANTS.live[locale], OPS_TENANTS.suspendedBadge[locale]] },
       cell: (t) => (
         <Badge variant={t.suspendedAt ? "warning" : "success"}>
           {t.suspendedAt ? OPS_TENANTS.suspendedBadge[locale] : OPS_TENANTS.live[locale]}

@@ -231,6 +231,12 @@ export function EnquiryTable({
           width: "w-[10%]",
           label: t(OPS_ENQUIRIES.head.status),
           sort: "text",
+          // A select on most rows and a pill on the converted ones, one
+          // width for both — measured as the select, the wider of the two.
+          pill: {
+            labels: Object.values(OPS_ENQUIRIES.status).map((l) => t(l)),
+            control: true,
+          },
           cell: (r) =>
             r.status === "converted" ? (
               <Badge variant={STATUS_VARIANT.converted}>

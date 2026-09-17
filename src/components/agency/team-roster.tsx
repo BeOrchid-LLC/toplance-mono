@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
+import { PillCell } from "@/components/shared/pill-cell";
 import {
   Table,
   TableBody,
@@ -95,7 +96,7 @@ export function TeamRoster({
               <TableHead className="w-12 text-end">{ADMIN_CONSOLE.ordinalHeading[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.colleague[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.joined[locale]}</TableHead>
-              <TableHead>{AGENCY.tableHead.rank[locale]}</TableHead>
+              <TableHead className="text-center">{AGENCY.tableHead.rank[locale]}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -125,10 +126,14 @@ export function TeamRoster({
                   })}
                 </TableCell>
 
-                <TableCell>
-                  <Badge variant="neutral">
-                    {AGENCY.roleLabel[member.role][locale]}
-                  </Badge>
+                <TableCell className="text-center">
+                  <PillCell
+                    labels={Object.values(AGENCY.roleLabel).map((l) => l[locale])}
+                  >
+                    <Badge variant="neutral">
+                      {AGENCY.roleLabel[member.role][locale]}
+                    </Badge>
+                  </PillCell>
                 </TableCell>
               </TableRow>
             ))}

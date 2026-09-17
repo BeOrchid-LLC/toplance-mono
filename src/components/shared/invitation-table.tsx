@@ -89,6 +89,7 @@ export function InvitationTable({
       id: "status",
       label: OPS_STAFF.tableHead.status[locale],
       sort: "text",
+      pill: { labels: Object.values(INVITATION_STATUS_COPY).map((c) => c.label[locale]) },
       cell: (invite) => <InvitationStatusBadge status={invite.status} locale={locale} />,
     },
     {

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { type ToolbarFilter } from "@/components/shared/table-toolbar";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { STATUS_COPY } from "@/lib/i18n/status";
 import { countryFromIso2 } from "@/lib/domain/corridors";
 import type { ClientSort } from "@/lib/domain/client-table";
 import type { SortDir } from "@/lib/domain/sorting";
@@ -220,6 +221,7 @@ export function ClientRoster({
       id: "status",
       label: AGENCY.tableHead.status[locale],
       sort: sortable ? "text" : undefined,
+      pill: { labels: Object.values(STATUS_COPY).map((c) => c.short[locale]) },
       cell: (r) =>
         r.status ? <StatusBadge status={r.status} locale={locale} short /> : null,
     },

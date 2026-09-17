@@ -140,6 +140,7 @@ export function SupportTable({
       id: "state",
       width: "w-[12%]",
       label: OPS_SUPPORT.tableHead.state[locale],
+      pill: { labels: Object.values(STATE_LABEL).map((l) => l[locale]) },
       cell: (r) => (
         <Badge variant={STATE_VARIANT[r.state]}>{STATE_LABEL[r.state][locale]}</Badge>
       ),

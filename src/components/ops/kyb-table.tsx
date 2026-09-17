@@ -87,10 +87,16 @@ export function KybTable({
         asc: leadsFirst(OPS_KYB.standing.ready[locale], locale),
         desc: leadsFirst(OPS_KYB.standing.activated[locale], locale),
       },
+      pill: {
+        labels: [
+          ...Object.values(OPS_KYB.standing).map((l) => l[locale]),
+          OPS_TENANTS.suspendedBadge[locale],
+        ],
+      },
       cell: (row) => {
         const standing = KYB_STANDING[row.standing];
         return (
-          <div className="flex flex-wrap items-center gap-1.5">
+          <>
             <Badge variant={standing.variant}>
               {OPS_KYB.standing[standing.key][locale]}
             </Badge>
@@ -106,7 +112,7 @@ export function KybTable({
             {row.suspendedAt && (
               <Badge variant="warning">{OPS_TENANTS.suspendedBadge[locale]}</Badge>
             )}
-          </div>
+          </>
         );
       },
     },

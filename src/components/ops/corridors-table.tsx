@@ -97,15 +97,23 @@ export function CorridorsTable({
       width: "w-[19%]",
       label: OPS_CORRIDORS.tableHead.state[locale],
       sort: "text",
+      pill: {
+        labels: [
+          ...(Object.keys(CORRIDOR_STATE_VARIANT) as (keyof typeof CORRIDOR_STATE_VARIANT)[]).map(
+            (state) => stateLabel(state, locale)
+          ),
+          OPS_COMMON.live[locale],
+        ],
+      },
       cell: (row) => (
-        <div className="flex flex-wrap items-center gap-2">
+        <>
           <Badge variant={CORRIDOR_STATE_VARIANT[row.reviewState]}>
             {stateLabel(row.reviewState, locale)}
           </Badge>
           {/* Live is a separate fact from approved: a superseded version
               stays approved for the record and stops being served. */}
           {row.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
-        </div>
+        </>
       ),
     },
     {

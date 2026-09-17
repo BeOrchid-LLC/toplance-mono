@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/table";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { InvitationStatusBadge } from "@/components/shared/status-badge";
+import { PillCell } from "@/components/shared/pill-cell";
+import { INVITATION_STATUS_COPY } from "@/lib/i18n/status";
 import {
   ResendInvitationButton,
   RevokeInvitationButton,
@@ -145,7 +147,7 @@ export function InvitationRoster({
               <TableHead className="w-12 text-end">{ADMIN_CONSOLE.ordinalHeading[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.invitation[locale]}</TableHead>
               <TableHead>{detailLabel ?? AGENCY.tableHead.rank[locale]}</TableHead>
-              <TableHead>{AGENCY.tableHead.status[locale]}</TableHead>
+              <TableHead className="text-center">{AGENCY.tableHead.status[locale]}</TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -192,8 +194,12 @@ export function InvitationRoster({
                     </div>
                   </TableCell>
 
-                  <TableCell>
-                    <InvitationStatusBadge status={invite.status} locale={locale} />
+                  <TableCell className="text-center">
+                    <PillCell
+                      labels={Object.values(INVITATION_STATUS_COPY).map((c) => c.label[locale])}
+                    >
+                      <InvitationStatusBadge status={invite.status} locale={locale} />
+                    </PillCell>
                   </TableCell>
 
                   <TableCell>

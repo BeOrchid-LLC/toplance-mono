@@ -24,7 +24,7 @@ import { TRAVEL_HISTORY } from "@/lib/i18n/travel-history";
 export type { Trip };
 
 const inputClass =
-  "h-[var(--control-h)] w-full rounded-md border border-border-strong bg-surface px-4 text-base text-ink placeholder:text-ink-3";
+  "h-[var(--control-h)] w-full min-w-0 rounded-md border border-border-strong bg-surface px-4 text-base text-ink placeholder:text-ink-3";
 
 export function TravelHistory({ trips }: { trips: Trip[] }) {
   const t = useT();
@@ -103,7 +103,10 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          {/* One date under the other on a phone. Side by side, each
+              field got half of ~300px, and iOS draws a date input with a
+              minimum width of its own that does not fit in that. */}
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="trip_from">{t(TRAVEL_HISTORY.fromLabel)}</Label>
               <input
@@ -123,7 +126,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
               />
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button type="submit" size="sm" disabled={pending}>
               {pending ? t(TRAVEL_HISTORY.saving) : t(TRAVEL_HISTORY.saveTrip)}
             </Button>

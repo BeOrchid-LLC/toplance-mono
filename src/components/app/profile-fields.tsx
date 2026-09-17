@@ -108,7 +108,7 @@ function SaveCancel({
 }) {
   const t = useT();
   return (
-    <div className="mt-3 flex gap-2">
+    <div className="mt-3 flex flex-wrap gap-2">
       <Button type="submit" size="sm" disabled={pending}>
         {pending ? t(PROFILE_FIELDS.saving) : t(PROFILE_FIELDS.save)}
       </Button>

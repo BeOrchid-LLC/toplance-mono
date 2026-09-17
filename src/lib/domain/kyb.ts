@@ -130,11 +130,19 @@ export type KybStanding = "not_started" | "in_review" | "ready" | "activated";
 /**
  * The queue's answer to "who is waiting on us".
  *
- * `activated` wins over everything below it. Requirements stay editable
- * after the fact — a note added, a document replaced when a licence is
- * renewed — and none of that re-closes a door BeOrchid has already
- * opened. Closing one is `suspendTenant`, which is a different act with
- * a different control.
+ * `activated` needs both: the door opened (`activated_at`) **and** every
+ * requirement verified. Until 17 September `activated_at` alone won, and
+ * the client's review found "Activated" printed beside "0 / 6" — the
+ * agencies migration `0037` backfilled as already let in, with a
+ * checklist nobody had looked at. This column is about verification, so
+ * it says how far verification has actually got, and never more.
+ *
+ * That also covers the case the old rule was written for. Requirements
+ * stay editable after activation — a licence renewed a year later is
+ * re-filed and re-judged — and while one is back in review the row says
+ * "In review", which is true. It does not re-close anything: access is
+ * `activated_at`, which only `suspendTenant` takes away, and the
+ * agency's own page still says when it was activated.
  *
  * `touched` rather than `verified` separates the two waiting states,
  * and the distinction is the whole point of the queue: an agency that
@@ -144,6 +152,9 @@ export type KybStanding = "not_started" | "in_review" | "ready" | "activated";
  * under "not started", which is exactly backwards about whose move it
  * is — the same reading `tenants.ts` makes when it splits `inProgress`
  * from `withReviewer`.
+ *
+ * `ready` is complete but not yet activated. An activated agency with a
+ * complete checklist is `activated`, so the two never overlap.
  */
 export function kybStanding(org: {
   activatedAt: Date | null;
@@ -152,7 +163,7 @@ export function kybStanding(org: {
   touched: number;
   total: number;
 }): KybStanding {
-  if (org.activatedAt) return "activated";
-  if (org.total > 0 && org.verified === org.total) return "ready";
+  const complete = org.total > 0 && org.verified === org.total;
+  if (complete) return org.activatedAt ? "activated" : "ready";
   return org.touched > 0 ? "in_review" : "not_started";
 }

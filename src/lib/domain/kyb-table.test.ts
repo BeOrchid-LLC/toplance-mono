@@ -5,6 +5,7 @@ import {
   KYB_SORTS,
   kybMatches,
   kybMatchesStanding,
+  kybQueueStatus,
   kybSortKey,
   kybStandingFilters,
 } from "./kyb-table";
@@ -57,6 +58,27 @@ describe("kybMatchesStanding", () => {
   });
 });
 
+describe("kybQueueStatus", () => {
+  it("is the standing, unless the agency is suspended", () => {
+    expect(kybQueueStatus(row({ standing: "ready" }))).toBe("ready");
+    expect(kybQueueStatus(row({ standing: "ready", suspendedAt: new Date() }))).toBe(
+      "suspended"
+    );
+  });
+
+  it("filters a suspended agency as suspended, not by its hidden standing", () => {
+    const halted = row({ standing: "in_review", suspendedAt: new Date() });
+    expect(kybMatchesStanding(halted, "suspended")).toBe(true);
+    expect(kybMatchesStanding(halted, "in_review")).toBe(false);
+  });
+
+  it("sorts a suspended agency after the settled ones", () => {
+    const activated = kybSortKey(row({ standing: "activated" }), "standing") as number;
+    const halted = kybSortKey(row({ suspendedAt: new Date() }), "standing") as number;
+    expect(activated).toBeLessThan(halted);
+  });
+});
+
 describe("kybSortKey", () => {
   it("orders progress by the fraction, not the numerator", () => {
     // Six of six is finished; six of twelve is halfway. Sorting on
@@ -90,7 +112,7 @@ describe("kybSortKey", () => {
 describe("kybStandingFilters", () => {
   it("offers every standing the queue can hold, ready first", () => {
     const values = kybStandingFilters("en").map((f) => f.value);
-    expect(values).toEqual(["ready", "in_review", "not_started", "activated"]);
+    expect(values).toEqual(["ready", "in_review", "not_started", "activated", "suspended"]);
   });
 
   it("labels each one rather than printing the enum", () => {

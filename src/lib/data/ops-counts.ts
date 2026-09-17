@@ -1,9 +1,15 @@
 import "server-only";
 
-import { and, count, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, or, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/client";
-import { corridors, demoRequests, organisations, supportRequests } from "@/lib/db/schema";
+import {
+  corridors,
+  demoRequests,
+  kybRequirements,
+  organisations,
+  supportRequests,
+} from "@/lib/db/schema";
 
 /**
  * A demo enquiry somebody still has to do something about — the
@@ -31,8 +37,13 @@ export type OpsCounts = {
    */
   openSupport: number;
   /**
-   * Agencies BeOrchid still owes a decision: no `activated_at`, and not
-   * suspended.
+   * Agencies whose KYB is still open: not suspended, and not both
+   * activated and fully verified — exactly the rows the KYB queue's pill
+   * shows as Not started, In review or Ready (`kybStanding`,
+   * `kybQueueStatus`). Until 17 September this counted `activated_at is
+   * null` alone, while the queue printed "Activated" at 0 / 6; now the
+   * two read from the same rule, so an agency activated by the 0037
+   * backfill with nothing verified is counted as the open file it is.
    *
    * The suspension filter is what keeps this a number somebody can
    * drive to zero. An agency provisioned and then suspended before
@@ -81,7 +92,19 @@ export async function getOpsCounts(): Promise<OpsCounts> {
       .select({ n: count() })
       .from(organisations)
       .where(
-        and(isNull(organisations.activatedAt), isNull(organisations.suspendedAt))
+        and(
+          isNull(organisations.suspendedAt),
+          or(
+            isNull(organisations.activatedAt),
+            // Activated but not fully verified — `kybStanding`'s
+            // `complete` is `total > 0 and verified === total`.
+            sql`not exists (
+              select 1 from ${kybRequirements} r
+              where r.org_id = ${organisations.id}
+              having count(*) > 0 and count(*) filter (where r.state <> 'verified') = 0
+            )`
+          )
+        )
       ),
   ]);
 

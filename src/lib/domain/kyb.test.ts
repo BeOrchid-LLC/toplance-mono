@@ -71,13 +71,23 @@ describe("kybProgress", () => {
 });
 
 describe("kybStanding", () => {
-  it("reports an activated agency as activated whatever its rows say", () => {
-    // Requirements can be edited after the fact — a note added, a
-    // document replaced when a licence is renewed. None of that
-    // re-closes a door BeOrchid opened.
+  it("reports an activated agency with a complete checklist as activated", () => {
     expect(
-      kybStanding({ activatedAt: new Date(), verified: 3, touched: 4, total: 6 })
+      kybStanding({ activatedAt: new Date(), verified: 6, touched: 6, total: 6 })
     ).toBe("activated");
+  });
+
+  it("never calls an agency activated past what has been verified", () => {
+    // The client's review of 17 September: "Activated" beside "0 / 6",
+    // on agencies migration 0037 backfilled as let in. The column is
+    // about verification, so it reports verification.
+    expect(
+      kybStanding({ activatedAt: new Date(), verified: 0, touched: 0, total: 6 })
+    ).toBe("not_started");
+    // A licence re-filed after activation reads as back in review.
+    expect(
+      kybStanding({ activatedAt: new Date(), verified: 5, touched: 6, total: 6 })
+    ).toBe("in_review");
   });
 
   it("is ready when the checklist is full but nobody has activated yet", () => {

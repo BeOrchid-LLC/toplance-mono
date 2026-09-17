@@ -7,7 +7,8 @@ import { leadsFirst } from "@/lib/domain/sort-options";
 import { Badge } from "@/components/ui/badge";
 import { KYB_STANDING } from "@/components/ops/kyb-standing";
 import type { KybQueueRow } from "@/lib/data/kyb";
-import { kybStandingFilters, type KybSort } from "@/lib/domain/kyb-table";
+import { AgencyStatusBadge } from "@/components/ops/agency-status-badge";
+import { kybQueueStatus, kybStandingFilters, type KybSort } from "@/lib/domain/kyb-table";
 import type { SortDir } from "@/lib/domain/sorting";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_KYB } from "@/lib/i18n/ops-kyb";
@@ -81,38 +82,30 @@ export function KybTable({
     {
       id: "standing",
       label: OPS_KYB.tableHead.standing[locale],
-      // Ranked ready → in review → not started → activated
+      // Ranked ready → in review → not started → activated → suspended
       // (`kybSortKey`), so the options name which end leads.
       sort: {
         asc: leadsFirst(OPS_KYB.standing.ready[locale], locale),
-        desc: leadsFirst(OPS_KYB.standing.activated[locale], locale),
+        desc: leadsFirst(OPS_TENANTS.status.suspended[locale], locale),
       },
       pill: {
         labels: [
           ...Object.values(OPS_KYB.standing).map((l) => l[locale]),
-          OPS_TENANTS.suspendedBadge[locale],
+          OPS_TENANTS.status.suspended[locale],
         ],
       },
       cell: (row) => {
+        // One pill. A suspended agency owes nobody a decision, so it says
+        // why it is not near the top rather than printing a standing and
+        // a second "Suspended" pill beside it. The word and colour are
+        // the Agencies screen's own (`AgencyStatusBadge`), since it is
+        // the same state.
+        if (kybQueueStatus(row) === "suspended") {
+          return <AgencyStatusBadge status="suspended" locale={locale} />;
+        }
         const standing = KYB_STANDING[row.standing];
         return (
-          <>
-            <Badge variant={standing.variant}>
-              {OPS_KYB.standing[standing.key][locale]}
-            </Badge>
-            {/* A suspended agency sorts with the settled rows and owes
-                nobody a decision, so it must say why it is not near the
-                top — otherwise "Not started" at the bottom of the list
-                reads as a row somebody forgot.
-
-                `OPS_TENANTS.suspendedBadge` rather than a word of our
-                own: it is the same state on the adjacent screen, and
-                `ops-tenants.ts` says it plainly — a second copy of a
-                word is a word that will disagree with itself. */}
-            {row.suspendedAt && (
-              <Badge variant="warning">{OPS_TENANTS.suspendedBadge[locale]}</Badge>
-            )}
-          </>
+          <Badge variant={standing.variant}>{OPS_KYB.standing[standing.key][locale]}</Badge>
         );
       },
     },

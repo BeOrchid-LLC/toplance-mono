@@ -112,6 +112,8 @@ export const AGENCY: {
     status: L;
     submitted: L;
     colleague: L;
+    /** Its own column on both rosters — see `OPS_STAFF.tableHead.email`. */
+    email: L;
     joined: L;
     rank: L;
     invitation: L;
@@ -1184,6 +1186,18 @@ export const AGENCY: {
       ar: "زميل",
       tw: "Adwumayɛni",
       zu: "Ozakwenu",
+    },
+    email: {
+      en: "Email",
+      ha: "Imel",
+      yo: "Ímeèlì",
+      ig: "Email",
+      fr: "E-mail",
+      pt: "E-mail",
+      sw: "Barua pepe",
+      ar: "البريد الإلكتروني",
+      tw: "Email",
+      zu: "I-imeyili",
     },
     joined: {
       en: "Joined",

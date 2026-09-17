@@ -1,4 +1,4 @@
-import { Wordmark } from "@/components/shared/wordmark";
+import { ToplanceMark, Wordmark } from "@/components/shared/wordmark";
 
 /**
  * The name at the head of the platform console's rail, and the mark that
@@ -17,9 +17,8 @@ import { Wordmark } from "@/components/shared/wordmark";
  *
  * Scaled down from the bar's size: the rail head is 64px and carries the
  * rank subtitle under this, where the app bar had the full height to
- * itself. A collapsed rail shows neither — `AdminSidebar` swaps the whole
- * block for the initial letter of `railTitle`, which is why that prop is
- * still required beside this one.
+ * itself. A collapsed rail shows neither: `AdminSidebar` swaps the whole
+ * block for `OpsMark` below, the pin without the letterforms.
  */
 export const OPS_RAIL_TITLE = "Toplance";
 
@@ -30,4 +29,9 @@ export function OpsWordmark() {
       className="[&>svg:first-child]:h-7 [&_.wordmark-label]:h-[15px]"
     />
   );
+}
+
+/** The collapsed rail's head — see `AdminShell.railMark`. */
+export function OpsMark() {
+  return <ToplanceMark className="h-7 w-auto" />;
 }

@@ -97,6 +97,7 @@ export function TeamRoster({
             <TableRow>
               <TableHead className="w-12 text-end">{ADMIN_CONSOLE.ordinalHeading[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.colleague[locale]}</TableHead>
+              <TableHead>{AGENCY.tableHead.email[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.joined[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.rank[locale]}</TableHead>
             </TableRow>
@@ -116,10 +117,14 @@ export function TeamRoster({
                     >
                       {member.fullName || member.email}
                     </span>
-                    {member.fullName && (
-                      <span className="special block truncate">{member.email}</span>
-                    )}
                   </div>
+                </TableCell>
+
+                {/* Its own column — see `OPS_STAFF.tableHead.email`. */}
+                <TableCell>
+                  <span className="block max-w-[280px] truncate" title={member.email}>
+                    {member.email}
+                  </span>
                 </TableCell>
 
                 <TableCell className="t-muted">

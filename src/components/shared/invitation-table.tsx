@@ -82,10 +82,18 @@ export function InvitationTable({
           <p className="t-title truncate" title={invite.email}>
             {invite.fullName || invite.email}
           </p>
-          {invite.fullName && (
-            <span className="special block truncate">{invite.email}</span>
-          )}
         </>
+      ),
+    },
+    {
+      // Its own column, as on `ColleaguesTable` one panel up — see there.
+      id: "email",
+      ceiling: "max-w-[280px]",
+      label: OPS_STAFF.tableHead.email[locale],
+      cell: (invite) => (
+        <span className="block truncate" title={invite.email}>
+          {invite.email}
+        </span>
       ),
     },
     {

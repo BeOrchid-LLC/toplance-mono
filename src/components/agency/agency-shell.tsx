@@ -107,8 +107,15 @@ export async function AgencyShell({
       // belongs to all of them.
       railTitle={membership?.name || AGENCY.yourOrganisationFallback[locale]}
       // The agency's own mark, once its director has uploaded one on
-      // `/agency/profile`. `railTitle` above stays the fallback and stays
-      // the letter a collapsed rail shows — a picture cannot be either.
+      // `/agency/profile`. `railTitle` above stays the fallback, and stays
+      // the letter a collapsed rail shows.
+      //
+      // Deliberately no `railMark` here, unlike `/ops`. The Toplance pin is
+      // square and was drawn for 32px; an uploaded logo is whatever shape
+      // the agency had, and most are a name set in a line. Squeezed into
+      // the collapsed rail's 32px box a 4:1 logo is 32×8 — a smudge that
+      // says less than the letter did. We keep no logo dimensions to tell
+      // the square ones apart, so the letter it is.
       railBrand={
         logoUrl ? (
           // A signed, short-lived URL: next/image's optimizer would cache

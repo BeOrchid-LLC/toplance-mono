@@ -41,6 +41,10 @@ function DialogClose(props: React.ComponentProps<typeof DialogPrimitive.Close>) 
  * in. That keeps the submit button a real descendant of the `<form>` —
  * Enter submits, `action` and `onSubmit` see it — while the body can
  * still shrink.
+ *
+ * The width is `100% - 2rem` up to 560px rather than `w-full`, which on
+ * a phone narrower than 560px put the box flush against both edges of
+ * the screen with its border drawn on the glass.
  */
 function DialogContent({
   className,
@@ -56,7 +60,7 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-full max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-lg border border-border bg-surface p-6 shadow-[var(--shadow-lg)]",
+          "fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[560px] -translate-x-1/2 -translate-y-1/2 flex-col gap-5 rounded-lg border border-border bg-surface p-6 shadow-[var(--shadow-lg)]",
           "duration-[var(--dur-sheet)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}

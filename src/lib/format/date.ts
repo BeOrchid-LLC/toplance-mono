@@ -68,7 +68,9 @@ function datePart(date: Date, locale: string, timeZone: string): string {
     year: "numeric",
     timeZone,
   }).formatToParts(date);
-  return `${part(parts, "day")} ${part(parts, "month")} ${part(parts, "year")}`;
+  // Non-breaking spaces: a narrow date column wrapped `17 Sep 2026` into
+  // `17 Sep` over `2026`. The one allowed break is after the comma.
+  return `${part(parts, "day")}\u00a0${part(parts, "month")}\u00a0${part(parts, "year")}`;
 }
 
 /**
@@ -147,5 +149,5 @@ export function formatDateTime(
     timeZone: zone,
   }).formatToParts(date);
 
-  return `${datePart(date, locale, zone)}, ${part(time, "hour")}:${part(time, "minute")} ${offsetPart(date, zone)}`;
+  return `${datePart(date, locale, zone)}, ${part(time, "hour")}:${part(time, "minute")}\u00a0${offsetPart(date, zone)}`;
 }

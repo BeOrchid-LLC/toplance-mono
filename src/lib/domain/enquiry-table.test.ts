@@ -23,6 +23,7 @@ function enquiry(over: Partial<DemoRequestRow> = {}): DemoRequestRow {
     convertedOrgName: null,
     assigneeId: null,
     assigneeName: null,
+    assigneeEmail: null,
     createdAt: new Date("2026-09-01T09:00:00Z"),
     ...over,
   };

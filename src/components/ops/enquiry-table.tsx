@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
+import { AssigneeSelect } from "@/components/shared/assignee-select";
 import { DataTable } from "@/components/shared/data-table";
 import { ProvisionTenant } from "@/components/ops/provision-tenant";
 import {
@@ -20,21 +20,13 @@ import type { SortDir } from "@/lib/domain/sorting";
 import { useT, useLocale } from "@/components/locale-provider";
 import { OPS_ENQUIRIES } from "@/lib/i18n/ops-enquiries";
 import { formatDate, formatDateTime } from "@/lib/format/date";
+import { shortName } from "@/lib/format/name";
 
 /**
- * The row's selects are `NativeSelect`, the header's own control, at the
- * row's height rather than the header's — beside a 44px `size="sm"`
- * button a 36px select sat short of every neighbour.
- *
- * No `w-full` on the assignee select. In the content-sized table
- * (`ui/table.tsx`) the column asks its content how wide to be, and a
- * `w-full` control answers "100% of you", which resolves to nothing —
- * the flex row squeezed the select to a 34px chevron. Left to its own
- * width a native select asks for its widest option, which is the honest
- * claim. Honest, but not unbounded: its options are the staff roster,
- * labelled `fullName || email`, and one colleague whose label falls back
- * to a long address would widen the Assignee column on every pending
- * row, so it carries a ceiling at the call site below.
+ * The status select is `NativeSelect`, the header's own control, at the
+ * row's height rather than the header's — beside a 44px row control a
+ * 36px select sat short of every neighbour. The assignee select takes
+ * the same height from `AssigneeSelect`.
  */
 const rowSelectClass = "h-[var(--row-h)]";
 
@@ -62,6 +54,7 @@ export function EnquiryTable({
   rows,
   staff,
   viewerId,
+  viewerIsOwner,
   sort,
   dir,
   total,
@@ -73,8 +66,14 @@ export function EnquiryTable({
   rows: DemoRequestRow[];
   /** Everyone the assignee picker may offer. */
   staff: PlatformStaff[];
-  /** Who is reading, so "Assign to me" can skip the picker. */
+  /** Who is reading, whom "Assign to me" names. */
   viewerId: string;
+  /**
+   * Whether the reader may assign a row to somebody else — an ops owner
+   * (D6, pending the client's confirmation). Mirrors the check
+   * `setDemoRequestAssignee` makes; it is not the check.
+   */
+  viewerIsOwner: boolean;
   sort: EnquirySort;
   dir: SortDir;
   total: number;
@@ -265,71 +264,54 @@ export function EnquiryTable({
         },
         {
           id: "assignee",
-          width: "w-[16%]",
           label: t(OPS_ENQUIRIES.head.assignee),
           sort: "text",
           /**
-           * A converted enquiry shows a name and no control: the work is
-           * done, and the action refuses the write anyway — a picker
-           * that always errors is worse than no picker.
-           *
-           * "Assign to me" sits beside the picker rather than replacing it,
-           * because taking a row yourself is the common case and doing
-           * it through a roster of colleagues is three interactions for
-           * the one everybody wants.
+           * One short dropdown until the enquiry is converted — Unassigned,
+           * Assign to me, and the colleagues this reader may name (an
+           * owner's, D6) — then the name of whoever converted it, as
+           * text. The client's review of 17 September: the dropdown stays
+           * so a director can reassign while a handler is away, and goes
+           * once the agency is fully onboarded, "carrying the name of the
+           * last person who worked on that task". `provisionTenantTx`
+           * makes the converter the assignee, so that name is this row's.
            */
-          cell: (r) =>
-            r.status === "converted" ? (
-              <span className="t-muted">
-                {r.assigneeName ?? t(OPS_ENQUIRIES.unassigned)}
-              </span>
-            ) : (
-              // Wraps, so the pair asks the column for the wider of the
-              // two rather than both side by side: the table has to fit
-              // a laptop without scrolling sideways (`ui/table.tsx`), and
-              // on a wide screen they still sit on one line.
-              <div className="flex flex-wrap items-center gap-2">
-                <NativeSelect
-                  aria-label={t(OPS_ENQUIRIES.head.assignee)}
-                  // The ceiling on the roster's unbounded labels — see
-                  // the `rowSelectClass` note. On the control itself
-                  // rather than a wrapper: a select is not a table cell,
-                  // so its `max-width` holds in every browser.
-                  className={`${rowSelectClass} max-w-[240px]`}
-                  value={r.assigneeId ?? ""}
-                  disabled={pending}
-                  onChange={(e) =>
-                    post(assignDemoRequest, {
-                      request_id: r.id,
-                      assignee_id: e.currentTarget.value,
-                    })
-                  }
-                >
-                  <option value="">{t(OPS_ENQUIRIES.unassigned)}</option>
-                  {staff.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.fullName || s.email}
-                    </option>
-                  ))}
-                </NativeSelect>
-                {r.assigneeId === null && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    disabled={pending}
-                    onClick={() =>
-                      post(assignDemoRequest, {
-                        request_id: r.id,
-                        assignee_id: viewerId,
-                      })
-                    }
-                  >
-                    {t(OPS_ENQUIRIES.claimButton)}
-                  </Button>
-                )}
-              </div>
-            ),
+          cell: (r) => {
+            const holder = r.assigneeId
+              ? { id: r.assigneeId, fullName: r.assigneeName ?? "", email: r.assigneeEmail ?? "" }
+              : null;
+
+            if (r.status === "converted") {
+              return holder ? (
+                <span className="t-muted block truncate" title={holder.fullName || holder.email}>
+                  {shortName(holder.fullName, holder.email) || "—"}
+                </span>
+              ) : (
+                // Converted before anybody recorded who did it, by an
+                // operator whose profile is gone: a dash, never
+                // "Unassigned" — somebody did the work.
+                <span className="t-muted">—</span>
+              );
+            }
+
+            return (
+              <AssigneeSelect
+                label={t(OPS_ENQUIRIES.head.assignee)}
+                value={r.assigneeId}
+                current={holder}
+                viewerId={viewerId}
+                people={staff}
+                canAssignOthers={viewerIsOwner}
+                disabled={pending}
+                onChange={(next) =>
+                  post(assignDemoRequest, {
+                    request_id: r.id,
+                    assignee_id: next ?? "",
+                  })
+                }
+              />
+            );
+          },
         },
         {
           id: "action",

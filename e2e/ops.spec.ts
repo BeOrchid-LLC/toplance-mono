@@ -176,8 +176,9 @@ test("the enquiry queue is findable, and an enquiry can be moved and claimed", a
     // Reloaded before asserting, and the database read after that: the
     // select showing a name proves the browser re-rendered, not that a
     // row was written.
-    await expect(row.getByRole("button", { name: "Assign to me" })).toBeVisible();
-    await row.getByRole("button", { name: "Assign to me" }).click();
+    // "Assign to me" is an option in the assignee dropdown, not a button
+    // beside it — the client's review of 17 September.
+    await row.getByLabel("Assigned to").selectOption({ label: "Assign to me" });
 
     await expect(row.getByLabel("Assigned to")).toHaveValue(/.+/);
     await page.reload();
@@ -188,8 +189,11 @@ test("the enquiry queue is findable, and an enquiry can be moved and claimed", a
     // somebody else's id would be a worse failure than none at all.
     expect(await demoRequestAssignee(requestId)).not.toBeNull();
 
-    // Once it is theirs, the shortcut has done its job and goes away.
-    await expect(claimed.getByRole("button", { name: "Assign to me" })).toHaveCount(0);
+    // Once it is theirs, the option has done its job and goes away: their
+    // own short name is the selected option instead.
+    await expect(
+      claimed.getByLabel("Assigned to").locator("option", { hasText: "Assign to me" })
+    ).toHaveCount(0);
   } finally {
     await clearDemoRequest(requestId);
   }

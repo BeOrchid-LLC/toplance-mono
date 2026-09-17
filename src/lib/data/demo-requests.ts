@@ -50,6 +50,8 @@ export type DemoRequestRow = {
    */
   assigneeId: string | null;
   assigneeName: string | null;
+  /** For a short name when the profile has no `full_name`. */
+  assigneeEmail: string | null;
   createdAt: Date;
 };
 
@@ -100,6 +102,7 @@ export async function listDemoRequests(): Promise<DemoRequestRow[]> {
       convertedOrgName: organisations.name,
       assigneeId: demoRequests.assigneeId,
       assigneeName: assignee.fullName,
+      assigneeEmail: assignee.email,
       createdAt: demoRequests.createdAt,
     })
     .from(demoRequests)

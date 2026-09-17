@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { TakeCaseButton } from "@/components/agency/take-case-button";
+import { CaseAssigneeSelect } from "@/components/agency/case-handler-control";
 import { Progress } from "@/components/ui/progress";
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { type ToolbarFilter } from "@/components/shared/table-toolbar";
@@ -259,7 +259,16 @@ export function ClientRoster({
                 >
                   {MESSAGES.panelLabel[locale]}
                 </Link>
-                <TakeCaseButton applicationId={r.id} viewerId={takeableBy} />
+                {/* Unheld by definition — these are the pool's rows —
+                    so the dropdown offers Assign to me; a reviewer
+                    has nobody else to hand a case to. */}
+                <CaseAssigneeSelect
+                  applicationId={r.id}
+                  assigneeId={null}
+                  viewerId={takeableBy}
+                  isDirector={false}
+                  colleagues={[]}
+                />
               </div>
             ),
           },

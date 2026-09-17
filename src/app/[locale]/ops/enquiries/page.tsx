@@ -52,8 +52,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * The two writes behind it check staff and a second factor for
  * themselves; this page is not their gate.
  *
- * Assignment is a label rather than a lock. Anyone may take a row, hand
- * it on or put it back, and holding one grants nothing — see
+ * Assignment is a label rather than a lock. Anyone may take a row or put
+ * it back, an owner may hand it on (D6, pending the client's
+ * confirmation), and holding one grants nothing — see
  * `setDemoRequestAssignee`. What it buys is the answer to "is anybody on
  * this", which `status` has never been able to give.
  */
@@ -143,6 +144,7 @@ export default async function OpsEnquiriesPage({
         rows={sorted.slice(start, end)}
         staff={staff}
         viewerId={actor.userId}
+        viewerIsOwner={isOwner(actor)}
         sort={sort}
         dir={dir}
         total={sorted.length}

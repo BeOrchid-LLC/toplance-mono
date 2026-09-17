@@ -41,7 +41,6 @@ export const OPS_ENQUIRIES: {
     declined: L;
   };
   unassigned: L;
-  claimButton: L;
   assigneeFilterAll: L;
   assigneeFilterMine: L;
   assigneeFilterNobody: L;
@@ -257,25 +256,6 @@ export const OPS_ENQUIRIES: {
     ar: "غير مُسندة",
     tw: "Wɔmfaa mma obiara",
     zu: "Ayabelwe muntu",
-  },
-  /**
-   * "Assign to me", not "Claim" — renamed 2026-09-11 to match the support
-   * queue, which dropped the word on 2026-09-10 (see `OPS_SUPPORT.claim`).
-   * The translations are that key's, so the same button reads the same
-   * on both screens. The key stays `claimButton`: renaming the word is
-   * not a reason to touch every call site.
-   */
-  claimButton: {
-    en: "Assign to me",
-    ha: "Ba ni wannan",
-    yo: "Yàn án fún mi",
-    ig: "Kenye m ya",
-    fr: "M'attribuer",
-    pt: "Atribuir a mim",
-    sw: "Nikabidhi mimi",
-    ar: "إسناد إليّ",
-    tw: "Fa ma me",
-    zu: "Ngabele mina",
   },
   assigneeFilterAll: {
     en: "Anyone",

@@ -265,7 +265,7 @@ export default async function TravellersPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-bg p-6">
+          <div className="rounded-lg border border-border bg-bg p-5 sm:p-6">
             <div className="flex items-start gap-3 border-b border-border pb-5">
               <Shield className="mt-0.5 size-5 shrink-0 text-brand-text" aria-hidden />
               <div>
@@ -279,16 +279,21 @@ export default async function TravellersPage() {
               {ROSTER.map((p) => (
                 <div
                   key={p.name}
-                  className="flex items-center gap-4 border-b border-border py-4 last:border-b-0"
+                  className="flex items-center gap-3 border-b border-border py-4 last:border-b-0 sm:gap-4"
                 >
+                  {/* On a phone the name wraps and the status may take two
+                      lines, rather than a fixed 124px status column
+                      truncating the name to its first few letters. From
+                      `sm` there is room for the column, and it keeps the
+                      statuses aligned down the card. */}
                   <span className="min-w-0 flex-1">
-                    <span className="d-sm block truncate">{p.name}</span>
+                    <span className="d-sm block break-words sm:truncate">{p.name}</span>
                     <span className="num text-[13px] text-ink-3">{p.dest}</span>
                   </span>
                   <span className="hidden w-20 shrink-0 sm:block">
                     <Progress value={p.pct} />
                   </span>
-                  <span className="tag w-[124px] shrink-0 whitespace-nowrap text-end text-ink-2">
+                  <span className="tag max-w-[45%] text-end text-ink-2 sm:w-[124px] sm:max-w-none sm:shrink-0 sm:whitespace-nowrap">
                     {SITE_CHROME[p.stateKey][locale]}
                   </span>
                 </div>

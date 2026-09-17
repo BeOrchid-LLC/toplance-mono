@@ -76,9 +76,13 @@ export function CorridorBoard() {
       </div>
 
       <div className="mt-6 border-b border-border">
-        <div className="grid grid-cols-[3px_auto_1fr_auto] items-center gap-x-4 border-b border-border-strong pb-2">
+        {/* Below `sm` the route code column goes. It repeats the flag and
+            the country name beside it in three letters, and on a phone
+            its width came straight out of the name, which truncated to
+            "United Ki…" while "NGA → GBR" stood next to it in full. */}
+        <div className="grid grid-cols-[3px_1fr_auto] items-center gap-x-3 border-b border-border-strong pb-2 sm:grid-cols-[3px_auto_1fr_auto] sm:gap-x-4">
           <span />
-          <span className="tag">{t(CORRIDOR_PICKER.routeColumnHeader)}</span>
+          <span className="tag hidden sm:inline">{t(CORRIDOR_PICKER.routeColumnHeader)}</span>
           <span className="tag">{t(HERO.slots.destination)}</span>
           <span className="tag text-end">{t(CORRIDOR_PICKER.statusColumnHeader)}</span>
         </div>
@@ -92,7 +96,7 @@ export function CorridorBoard() {
               onClick={() => set({ destination: row.name })}
               aria-pressed={selected}
               className={cn(
-                "grid w-full grid-cols-[3px_auto_1fr_auto] items-center gap-x-4 border-t border-border py-3.5 text-start transition-colors first:border-t-0",
+                "grid min-h-[var(--row-h)] w-full grid-cols-[3px_1fr_auto] items-center gap-x-3 border-t border-border py-3.5 text-start transition-colors first:border-t-0 sm:grid-cols-[3px_auto_1fr_auto] sm:gap-x-4",
                 selected
                   ? "bg-[color-mix(in_srgb,var(--brand)_6%,transparent)]"
                   : "hover:bg-surface-2"
@@ -107,7 +111,7 @@ export function CorridorBoard() {
               />
               <span
                 className={cn(
-                  "num text-[13px] font-semibold whitespace-nowrap",
+                  "num hidden text-[13px] font-semibold whitespace-nowrap sm:inline",
                   row.soon ? "text-ink-3" : "text-brand-text"
                 )}
               >

@@ -953,7 +953,8 @@ function CompletionBar({
   return (
     // The same card the dock was, so the final answer changes what the
     // panel says without changing what it is. See `AgentDock`.
-    <div className="shrink-0 px-4 pb-5 pt-3 sm:px-6 sm:pb-7">
+    // Clears the device's safe area at the bottom, as `AgentDock` does.
+    <div className="shrink-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pb-7">
       {/* A grid rather than a row, so the sentence can run the full
           measure underneath the buttons instead of being squeezed into
           whatever they leave. Laid out flat it wrapped into a ~210px

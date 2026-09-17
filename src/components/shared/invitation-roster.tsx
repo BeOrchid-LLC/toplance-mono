@@ -162,13 +162,13 @@ export function InvitationRoster({
                 <TableRow key={invite.id}>
                   <TableCell className="num t-muted text-end">{i + 1}</TableCell>
                   <TableCell>
-                    {/* The ceiling the truncates inside need: on a block
-                        wrapper, not the cell, because Firefox ignores
-                        `max-width` on a `td` — see `DataColumn.ceiling`.
-                        An invitation's address is the tokenised 50+
-                        character kind that makes an unceilinged
-                        `truncate` inert. */}
-                    <div className="max-w-[280px]">
+                    {/* What the truncates inside need: a block that lends
+                        the column none of its string's width and a floor
+                        of its own — see `DataColumn.floor`. An
+                        invitation's address is the tokenised 50+
+                        character kind that would otherwise set the
+                        column's width on its own. */}
+                    <div className="min-w-[10rem] [contain:inline-size]">
                       <span
                         className="block truncate font-semibold"
                         title={invite.email}
@@ -182,7 +182,7 @@ export function InvitationRoster({
                   </TableCell>
 
                   <TableCell>
-                    <div className="max-w-[240px]">
+                    <div className="min-w-[8rem] [contain:inline-size]">
                       <span className="block truncate">
                         {invite.kind === "platform_staff"
                           ? OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale]

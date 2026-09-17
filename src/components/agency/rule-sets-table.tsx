@@ -59,11 +59,11 @@ export function RuleSetsTable({
       width: "w-[25%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
       sortable: true,
-      // What the two `truncate`s below truncate against: a country
+      // What lets the two `truncate`s below give width back: a country
       // pair like "United Kingdom → United Arab Emirates" is exactly
       // the unbroken string whose full width the column would
-      // otherwise ask for. See `DataColumn`.
-      ceiling: "max-w-[300px]",
+      // otherwise ask for. See `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (row) => {
         const route = `${countryName(row.nationalityIso)} → ${countryName(row.destinationIso)}`;
         return (

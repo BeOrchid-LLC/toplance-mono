@@ -22,7 +22,13 @@ export function Panel({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]",
+        // `overflow-clip`, not `overflow-hidden`. Both cut the contents
+        // to the rounded corners, but `hidden` also makes the panel a
+        // scroll container, and a scroll container captures `position:
+        // sticky` — a table's header then sticks to the panel, which
+        // never scrolls, instead of to the page under the console bar.
+        // `clip` paints the same and leaves the page in charge.
+        "overflow-clip rounded-lg border border-border bg-surface shadow-[var(--shadow-sm)]",
         className
       )}
     >

@@ -48,8 +48,8 @@ export type DataColumn<T> = {
    * because Tailwind scans source for whole class names.
    *
    * A hint, not a rule. The table sizes columns to their content
-   * (`table-auto`), so this is the width the column prefers when there
-   * is room to honour it, and a column whose content will not fit
+   * (`table-auto`), so this is the share the column prefers when there
+   * is room to honour it, and a column whose content will not shrink
    * takes what it needs regardless. That is deliberate, and it is the
    * difference between this and the `table-fixed` version it replaced
    * on 2026-09-12: under `table-fixed` a 15% actions column was 151px
@@ -60,35 +60,36 @@ export type DataColumn<T> = {
    * without one. Percentages need not total 100 and are not checked —
    * they are a statement about relative emphasis, and the browser
    * settles the rest.
-   *
-   * A column that truncates needs a ceiling as well — see `ceiling`.
    */
   width?: string;
   className?: string;
   /**
-   * The ceiling a truncating column truncates against, as a literal
-   * Tailwind class — `"max-w-[260px]"`.
+   * Makes this a column of unbounded text that truncates, and says how
+   * narrow it may go — a literal Tailwind class, `"min-w-[9rem]"`.
    *
-   * Why it is needed at all: `truncate` is `white-space: nowrap` plus
-   * `overflow: hidden`, and only the second half does anything in a
-   * content-sized table. The first half makes the content's preferred
-   * width the whole unbroken string, which is the width the column then
-   * asks for. One enquiry whose address carried an invitation token took
-   * the Who column to 624px and pushed the table off a 1680px monitor,
-   * with `truncate` on it the whole time. The ceiling is the thing it
-   * truncates against.
+   * Why a floor rather than the ceiling it replaced on 2026-09-17: the
+   * client asked for tables that fit a 1280px laptop without scrolling
+   * sideways, and a truncating column is the only kind that can give
+   * width back. `truncate` alone gives none: it is `white-space:
+   * nowrap`, so the column's minimum width is the whole unbroken string
+   * — one enquiry whose address carried an invitation token took the
+   * Who column to 624px. The ceiling that fixed that (`max-w-[260px]`)
+   * still made 260px the column's minimum, and five such minimums plus
+   * a row of buttons is wider than a laptop.
    *
-   * Why it is its own field and not a `className`: `DataTable` puts it
-   * on a block wrapper *inside* the cell, because `max-width` on a
-   * `td`/`th` is undefined in CSS 2.1 auto table layout and Firefox
-   * ignores it there (Bugzilla 823483) — a ceiling on the cell holds in
-   * Chrome, silently does nothing in Firefox, and the Chromium-only
-   * Playwright sweep cannot tell the difference. On a block box inside
-   * the cell the clamp is specified behaviour everywhere: the cell's
-   * min-content contribution is the wrapper's, and the wrapper's is
-   * capped by its `max-width`.
+   * `DataTable` wraps the cell's content in a block with `contain:
+   * inline-size`, which makes the content contribute nothing to the
+   * column's intrinsic width, and puts this floor on it — so the column
+   * asks for exactly the floor, takes whatever share of the spare width
+   * the table hands it, and the text inside truncates against that.
+   * On a block inside the cell rather than on the cell because
+   * `min-width`/`max-width` on a `td` are undefined in CSS 2.1 auto
+   * table layout and Firefox ignores them there (Bugzilla 823483).
+   *
+   * The content still has to truncate itself (`block truncate`) and
+   * carry a `title`, so the whole string is a hover away.
    */
-  ceiling?: string;
+  floor?: string;
   /** Hides the header text from sight but keeps it for a screen reader. */
   labelHidden?: boolean;
   cell: (row: T) => ReactNode;
@@ -355,8 +356,10 @@ export function DataTable<T>({
                     key={c.id}
                     className={cn(c.width, c.align === "end" && "text-end", c.className)}
                   >
-                    {c.ceiling ? (
-                      <div className={c.ceiling}>{c.cell(row)}</div>
+                    {c.floor ? (
+                      <div className={cn("[contain:inline-size]", c.floor)}>
+                        {c.cell(row)}
+                      </div>
                     ) : (
                       c.cell(row)
                     )}

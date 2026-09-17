@@ -1,86 +1,59 @@
 import * as React from "react";
 
+import { TableContainer } from "@/components/ui/table-container";
 import { cn } from "@/lib/utils";
 
 /**
  * Client override, locked: 13px floor inside data tables only. Columns
  * truncate long text with a title attribute rather than wrapping it.
  *
- * The rule used to end "and no horizontal scroll on desktop". It was
- * overridden on 2026-09-12, by the person who set it, because the
- * console had grown a row of controls it cannot honour: `/ops/support`
- * ends in Chat + Assign to me + Mark resolved, which measure 394px
- * together, and the 15% column they were given is 151px at the panel
- * width a 1366px laptop leaves. Nothing about that is a styling choice
- * — 394 does not fit in 151 — so the only question was which way it
- * broke. It broke silently: `td` is `overflow: visible` and the buttons
- * are `shrink-0 whitespace-nowrap`, so instead of clipping or scrolling
- * they painted leftward across the Status and Assignee cells and sat on
- * top of them. Measured at 1180px, 1018px, 900px, 800px and 700px of
- * panel, the overlap was there at every one.
+ * And, since the client's review of 17 September, two more that this
+ * wrapper exists to keep: **the page is the only vertical scroller**, and
+ * **a table fits its panel on a laptop** — 1280px wide with the rail
+ * open — rather than scrolling sideways.
  *
- * So the table now sizes its columns to their content and the wrapper
- * scrolls under it. Content sizing is what does the work: a column is
- * never narrower than what is in it, so the buttons get their width
- * before anything else is shared out, at every viewport measured.
+ * History worth not repeating. On 2026-09-12 the "no horizontal scroll"
+ * half of the rule was set aside because `/ops/support` ended in three
+ * buttons measuring 394px in a column the fixed layout gave 151px, and
+ * the buttons painted across their neighbours. The fix then was content
+ * sizing plus a sideways-scrolling wrapper, with the wrapper also capped
+ * at a max height so a long page of rows scrolled inside the panel. The
+ * client rejected both scrolls: the inner one trapped the wheel at the
+ * table's end (`overscroll-contain`) and made the header stick to the
+ * box rather than the screen, and the sideways one hid columns.
  *
- * The floor under it stays `max-lg:min-w-[720px]`, and only below `lg`.
- * An unconditional 900px floor shipped here briefly and did the
- * opposite of its job: content sizing already hands a wide table its
- * width — `/ops/support` wants 1015px, `/ar/ops/enquiries` 1737px,
- * floor or no floor — so the only tables a blanket floor ever bound
- * were the small rosters on `/agency/team`, stretched over empty
- * columns to 900px and handed a permanent sideways scroll in the
- * 1024–1180px windows where the rail leaves the panel less than that.
- * Below `lg` the floor earns its keep: a phone-width panel could
- * otherwise squeeze a table of all-truncatable columns toward nothing.
- * A table that needs its own floor passes `min-w-[…]`; `twMerge` drops
- * this one.
+ * What stayed from that change is content sizing (`table-auto`, the
+ * default): a column is never narrower than what cannot shrink in it, so
+ * buttons still get their width first and never overlap. What changed
+ * is what can shrink. A column of unbounded text (`DataColumn.floor`)
+ * no longer lends its whole string to the column's width — it declares
+ * a floor and truncates against whatever the table gives it — so the
+ * table's minimum width is the sum of its floors and its controls,
+ * which is what has to fit in 1280px.
  *
- * One thing this replaced, worth not reinventing: `table-fixed` with
- * percentage columns. It makes text truncate predictably, which is why
- * it was tried, but a percentage is a share of whatever is left and a
- * button is a fixed number of pixels. Under it the action column is
- * squeezed and its contents overflow, which is the bug above. Content
- * sizing gets the buttons their width first and shares the rest.
+ * No `min-w-[720px]` floor below `lg` any more: that floor was a
+ * sideways scroll by construction.
  *
- * The wrapper also caps its height at `--table-max-h` and scrolls the
- * rows inside it. A page of 10 rows was taller than a laptop viewport,
- * so everything the panel puts after the table — its footer, and the
- * next panel on the page — sat below a screen of rows nobody had asked
- * to read. Capping here rather than at each call site means the pager,
- * which sits above the table, stays on screen while the rows move under
- * it. `overflow-auto`, not `overflow-y-auto`: a single scrollable axis
- * promotes the other one out of `visible` anyway, so asking for both is
- * the honest spelling.
- *
- * That scroll box also clips anything painted outside it, which is why
- * `SortHead` draws its focus ring inward. A header sitting at the top of
- * this wrapper has no room outside itself for a 2px ring, so widening
- * the cap or dropping `overflow-auto` here is a change to how the
- * console's 15 sort headers indicate focus — the reasoning, and what was
- * measured, is in `shared/sort-head.tsx`.
+ * The wrapper is `TableContainer`, which leaves the box `overflow:
+ * visible` — so the header sticks to the page under the console bar —
+ * and switches to a sideways scroll only when the table measurably does
+ * not fit. That fallback is for a narrow window; on a laptop a table
+ * that triggers it is a table whose columns need a diet.
  *
  * The scrollbars themselves are painted in `globals.css`, keyed on
  * `data-slot="table-container"`: an overlay scrollbar is invisible
- * until the reader is already scrolling, and a table that scrolls
- * sideways by design needs to say so before it is touched.
+ * until the reader is already scrolling, and a table that has fallen
+ * back to scrolling needs to say so before it is touched.
  */
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div
-      data-slot="table-container"
-      className="max-h-[var(--table-max-h)] w-full overflow-auto overscroll-contain"
-    >
+    <TableContainer>
       <table
         data-slot="table"
-        className={cn(
-          "w-full caption-bottom border-collapse text-base max-lg:min-w-[720px]",
-          className
-        )}
+        className={cn("w-full caption-bottom border-collapse text-base", className)}
         {...props}
       />
-    </div>
+    </TableContainer>
   );
 }
 
@@ -126,25 +99,21 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
         // lines of caps at this size, so nothing moves on a wide screen.
         // A label that wraps past two lines — a four-word header in a
         // wrapping locale over a narrow column — grows the header row
-        // past `--row-h`, and `SortHead`'s link grows with it rather
-        // than staying a fixed 44px band inside a taller cell; the
-        // `min-h` note there is the other half of this one.
+        // past `--row-h`, which is allowed; the band grows with it.
         "special-caps h-[var(--row-h)] bg-surface-2 px-4 text-start align-middle",
-        // Sticks to the top of the scrolling wrapper, so scrolling the
-        // rows never leaves a reader guessing which column is which.
+        // Sticks under the console bar as the page scrolls, so a
+        // reader deep in the rows keeps the column names. The offset is
+        // not a class: it depends on whether `TableContainer` has fallen
+        // back to scrolling sideways, where the header has to stick to
+        // the box's own top instead — see "the table's scroll fallback"
+        // in `globals.css`.
+        //
         // The rule under the band is an inset shadow rather than a
         // border because `border-collapse: collapse` hands the row
         // border to the `tr`, which scrolls away with its row.
-        //
-        // `bg-surface-2` has to be opaque for that to work — rows would
-        // otherwise read straight through the band as they pass under
-        // it — and the opacity has one consequence worth knowing about
-        // here. Every header carries the same `z-10`, so they paint in
-        // document order and each one's background lands on top of its
-        // left-hand neighbour's outward edge. `SortHead` therefore draws
-        // its focus ring inside its own box; see the note there before
-        // changing this fill or this stacking.
-        "sticky top-0 z-10 shadow-[inset_0_-1px_0_var(--border)]",
+        // `bg-surface-2` is opaque for the same reason: rows would
+        // otherwise read straight through the band as they pass under.
+        "sticky z-10 shadow-[inset_0_-1px_0_var(--border)]",
         className
       )}
       {...props}

@@ -89,7 +89,7 @@ export function SupportTable({
     {
       id: "agency",
       width: "w-[16%]",
-      ceiling: "max-w-[220px]",
+      floor: "min-w-[8rem]",
       label: OPS_SUPPORT.tableHead.agency[locale],
       cell: (r) => (
         <Link
@@ -104,7 +104,7 @@ export function SupportTable({
     {
       id: "subject",
       width: "w-[26%]",
-      ceiling: "max-w-[340px]",
+      floor: "min-w-[10rem]",
       label: OPS_SUPPORT.tableHead.subject[locale],
       cell: (r) => (
         <>
@@ -125,7 +125,7 @@ export function SupportTable({
               they can answer should not have to open each row to find
               out what it says. The thread page is for replying, not for
               discovering what was asked. */}
-          <span className="t-muted mt-1 block max-w-[74ch] whitespace-pre-wrap">
+          <span className="t-muted mt-1 block max-w-[74ch] whitespace-pre-wrap break-words">
             {r.body}
           </span>
           {r.raisedByName && <span className="t-muted mt-1 block">— {r.raisedByName}</span>}
@@ -156,10 +156,13 @@ export function SupportTable({
     },
     {
       id: "actions",
-      // No width hint: this cell is three buttons that cannot shrink or
-      // wrap, so it takes what they measure and the rest of the table
-      // shares what is left. Giving it 15% is what put them on top of
-      // the Status and Assignee cells — see `ui/table.tsx`.
+      // No width hint: this cell is three buttons that cannot shrink,
+      // so it takes what they measure and the rest of the table shares
+      // what is left. Giving it 15% is what put them on top of the
+      // Status and Assignee cells — see `ui/table.tsx`. They wrap, so
+      // what they measure is the widest button rather than all three
+      // in a row: 394px of buttons side by side is most of what kept
+      // this table from fitting a laptop.
       label: OPS_SUPPORT.tableHead.actions[locale],
       labelHidden: true,
       // Start-aligned, unlike the other action columns, because this is
@@ -168,7 +171,7 @@ export function SupportTable({
       // of line with the Chat that leads every other row. Chat is always
       // first, so anchoring the column at its start edge lines them up.
       cell: (r) => (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {/* Always first, and always present — including on a resolved
               request, where every other control is hidden and the row
               would otherwise have no way into the conversation at all.

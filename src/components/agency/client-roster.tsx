@@ -149,10 +149,10 @@ export function ClientRoster({
       id: "client",
       label: AGENCY.tableHead.client[locale],
       sortable,
-      // A traveller's name is unbounded data; without a ceiling the
-      // `truncate` below is inert in the content-sized table — the
-      // column's min-content is the whole string. See `DataColumn`.
-      ceiling: "max-w-[260px]",
+      // A traveller's name is unbounded data; without a floor the
+      // `truncate` below would make the whole string the column's
+      // minimum width. See `DataColumn.floor`.
+      floor: "min-w-[9rem]",
       cell: (r) =>
         takeableBy ? (
           <>
@@ -182,12 +182,12 @@ export function ClientRoster({
       id: "route",
       label: AGENCY.tableHead.route[locale],
       sortable,
-      ceiling: "max-w-[240px]",
+      floor: "min-w-[8rem]",
       cell: (r) => {
         const destination = countryFromIso2(r.destinationIso);
         return (
           <>
-            <span className="block truncate">
+            <span className="block truncate" title={destination?.name ?? undefined}>
               {destination?.name ??
                 r.destinationIso?.toUpperCase() ??
                 AGENCY.routeNotSet[locale]}
@@ -249,7 +249,7 @@ export function ClientRoster({
             labelHidden: true,
             align: "end" as const,
             cell: (r: RosterRow) => (
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
                 {/* The one door into an unheld case that is not claiming
                     it. `reachesThread` opens the conversation to the
                     whole agency, so a traveller's question is answerable

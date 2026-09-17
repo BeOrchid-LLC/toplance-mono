@@ -123,10 +123,15 @@ export function TenantControls({ tenant }: { tenant: TenantDetail }) {
           {
             id: "person",
             label: t(OPS_TENANTS.rosterHead.person),
+            floor: "min-w-[10rem]",
             cell: (m) => (
               <>
-                <span className="font-semibold">{m.fullName}</span>
-                <span className="t-muted block">{m.email}</span>
+                <span className="block truncate font-semibold" title={m.fullName}>
+                  {m.fullName}
+                </span>
+                <span className="t-muted block truncate" title={m.email}>
+                  {m.email}
+                </span>
               </>
             ),
           },

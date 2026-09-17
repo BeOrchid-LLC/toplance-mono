@@ -296,14 +296,6 @@
   /* fixed dimensions — locked */
   --control-h: 52px;
   --row-h: 44px;
-  /* How tall a data table's rows may get before the body scrolls inside
-     the panel rather than pushing the pager, the footer and everything
-     after it off the screen. Bound at both ends: below 320px a table is
-     a letterbox, and above 640px a full page of 10 rows is again taller
-     than a laptop viewport, which is the thing this token exists to
-     stop. The header row sticks, so a reader who scrolls the body keeps
-     the column names. */
-  --table-max-h: clamp(320px, 60vh, 640px);
   /* 64, not 56. The wordmark's mark is 32px tall, so a 56px bar left it
      12px of air top and bottom — tight enough that the logo read as
      jammed into the rule beneath it. Every consumer reads the token
@@ -1083,15 +1075,37 @@
   20%, 50% { opacity: 0; }
 }
 
+/* ---------- the table's scroll fallback ----------
+   A console table does not scroll. The page does, and the column header
+   sticks under the console bar as it goes — decided 2026-09-17, at the
+   client's request, replacing a box that scrolled rows inside the page.
+   See `ui/table.tsx`.
+
+   `TableContainer` sets `data-overflow` only when the table measurably
+   does not fit its panel — a narrow window, or controls that cannot
+   shrink — and only then does the box scroll sideways. A scroll box
+   captures `position: sticky`, so in that state the header sticks to
+   the box's own top (where, the box never scrolling vertically, it
+   simply stays put) rather than being pushed down by the bar's height
+   over the first row. */
+[data-slot="table-head"] {
+  top: 0;
+}
+[data-slot="table-container"]:not([data-overflow]) [data-slot="table-head"] {
+  top: var(--bar-h);
+}
+[data-slot="table-container"][data-overflow] {
+  overflow-x: auto;
+}
+
 /* ---------- the table's scrollbar ----------
-   Painted by the product, not left to the platform. A console table
-   sizes its columns to their content and scrolls under the wrapper when
-   the panel is narrower than the data — decided 2026-09-12, see
-   `ui/table.tsx` — and that decision only works if a reader can tell
-   the table scrolls. On a machine set to overlay scrollbars (macOS
-   default, and every touch-device emulation) the platform bar is
-   invisible until the reader is already scrolling, so a column sitting
-   past the right edge announces itself with nothing at all.
+   Painted by the product, not left to the platform, for the fallback
+   above: a table that has fallen back to scrolling sideways only works
+   if a reader can tell it scrolls. On a machine set to overlay
+   scrollbars (macOS default, and every touch-device emulation) the
+   platform bar is invisible until the reader is already scrolling, so
+   a column sitting past the right edge announces itself with nothing
+   at all.
 
    Styling `::-webkit-scrollbar` is what opts a Chromium/WebKit scroll
    box out of overlay rendering; the sizes and colours are almost

@@ -72,7 +72,7 @@ export function ColleaguesTable({
     {
       id: "person",
       width: "w-[30%]",
-      ceiling: "max-w-[280px]",
+      floor: "min-w-[10rem]",
       label: OPS_STAFF.tableHead.person[locale],
       cell: (person) => (
         <>
@@ -91,7 +91,9 @@ export function ColleaguesTable({
             )}
           </p>
           {person.fullName && (
-            <span className="special block truncate">{person.email}</span>
+            <span className="special block truncate" title={person.email}>
+              {person.email}
+            </span>
           )}
         </>
       ),

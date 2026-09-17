@@ -186,11 +186,9 @@ export function EnquiryTable({
           // run to 50+ characters. `truncate` alone does not hold them:
           // the column sizes to its content, and a `whitespace-nowrap`
           // span's content is the whole address, so one enquiry pushed
-          // this column to 624px and the table past its panel on a
-          // 1680px monitor. The ceiling is what `truncate` truncates
-          // against — `ceiling`, not `className`, because Firefox
-          // ignores `max-width` on the cell itself; see `DataColumn`.
-          ceiling: "max-w-[260px]",
+          // this column to 624px. The floor is what lets the address
+          // give that width back; see `DataColumn.floor`.
+          floor: "min-w-[9rem]",
           label: t(OPS_ENQUIRIES.head.who),
           sortable: true,
           cell: (r) => (
@@ -207,7 +205,7 @@ export function EnquiryTable({
         {
           id: "company",
           width: "w-[12%]",
-          ceiling: "max-w-[200px]",
+          floor: "min-w-[7rem]",
           label: t(OPS_ENQUIRIES.head.company),
           sortable: true,
           cell: (r) => (
@@ -308,13 +306,11 @@ export function EnquiryTable({
                 {r.assigneeName ?? t(OPS_ENQUIRIES.unassigned)}
               </span>
             ) : (
-              // Was `flex-wrap` with the button allowed to break its
-              // own label, because at a laptop width the select and the
-              // control wanted 190px in a 177px column. The column is
-              // no longer 177px — it is what this pair measures — so
-              // the compensation is gone with the squeeze that needed
-              // it.
-              <div className="flex items-center gap-2">
+              // Wraps, so the pair asks the column for the wider of the
+              // two rather than both side by side: the table has to fit
+              // a laptop without scrolling sideways (`ui/table.tsx`), and
+              // on a wide screen they still sit on one line.
+              <div className="flex flex-wrap items-center gap-2">
                 <select
                   aria-label={t(OPS_ENQUIRIES.head.assignee)}
                   // The ceiling on the roster's unbounded labels — see

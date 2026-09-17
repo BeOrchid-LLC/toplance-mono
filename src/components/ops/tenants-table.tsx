@@ -44,15 +44,24 @@ export function TenantsTable({
       id: "agency",
       sortable: true,
       label: OPS_TENANTS.tableHead.agency[locale],
+      width: "w-[28%]",
+      // An agency's name and domain are whatever was typed at
+      // provisioning; see `DataColumn.floor`.
+      floor: "min-w-[9rem]",
       cell: (t) => (
         <>
           <Link
             href={`/ops/tenants/${t.id}`}
-            className="font-semibold text-brand-text hover:underline"
+            title={t.name}
+            className="block truncate font-semibold text-brand-text hover:underline"
           >
             {t.name}
           </Link>
-          {t.domain && <span className="t-muted block">{t.domain}</span>}
+          {t.domain && (
+            <span className="t-muted block truncate" title={t.domain}>
+              {t.domain}
+            </span>
+          )}
         </>
       ),
     },

@@ -40,10 +40,18 @@ export function TenantInvitesTable({
     {
       id: "email",
       label: OPS_TENANTS.invitesHead.email[locale],
+      // An invited address carries its token; see `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (i) => (
         <>
-          {i.email}
-          {i.fullName && <span className="t-muted block">{i.fullName}</span>}
+          <span className="block truncate" title={i.email}>
+            {i.email}
+          </span>
+          {i.fullName && (
+            <span className="t-muted block truncate" title={i.fullName}>
+              {i.fullName}
+            </span>
+          )}
         </>
       ),
     },

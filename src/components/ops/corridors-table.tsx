@@ -59,10 +59,10 @@ export function CorridorsTable({
       width: "w-[26%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
       sortable: true,
-      // Same ceiling, same reason as `rule-sets-table`'s route column:
-      // a country pair is one unbroken string, and `truncate` without
-      // a ceiling is inert in the content-sized table.
-      ceiling: "max-w-[300px]",
+      // Same floor, same reason as `rule-sets-table`'s route column:
+      // a country pair is one unbroken string, and without a floor
+      // its whole width would be the column's minimum.
+      floor: "min-w-[10rem]",
       cell: (row) => {
         const route = `${countryName(row.nationalityIso)} → ${countryName(row.destinationIso)}`;
         return (

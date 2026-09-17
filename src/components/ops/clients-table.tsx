@@ -79,12 +79,14 @@ export function ClientsTable({
       id: "client",
       label: "Client",
       className: "w-[30%]",
-      // The ceiling the `truncate` below truncates against — inert
-      // without one in the content-sized table. See `DataColumn`.
-      ceiling: "max-w-[280px]",
+      // Lets the `truncate` below give width back rather than asking
+      // for the whole name. See `DataColumn.floor`.
+      floor: "min-w-[10rem]",
       cell: (client) => (
         <>
-          <span className="t-title block truncate">{client.name}</span>
+          <span className="t-title block truncate" title={client.name}>
+            {client.name}
+          </span>
           {/* One line about this client, and the one worth acting on
               wins: somebody stuck at 100% is a phone call, an approval
               rate is just a fact. A client with neither gets nothing

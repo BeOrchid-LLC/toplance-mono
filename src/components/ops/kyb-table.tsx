@@ -58,10 +58,13 @@ export function KybTable({
       id: "agency",
       label: OPS_KYB.tableHead.agency[locale],
       sortable: true,
+      width: "w-[40%]",
+      floor: "min-w-[9rem]",
       cell: (row) => (
         <Link
           href={`/ops/kyb/${row.orgId}`}
-          className="font-semibold text-brand-text hover:underline"
+          title={row.name}
+          className="block truncate font-semibold text-brand-text hover:underline"
         >
           {row.name}
         </Link>

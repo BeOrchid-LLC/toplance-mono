@@ -398,10 +398,8 @@ describe.skipIf(!process.env.DATABASE_URL)("agency KYB", async () => {
         reviewedBy: REVIEWER,
       });
 
-      // The queue says the licence is back in review, which is true; the
-      // door stays open, which is `activated_at`.
       const agency = await getAgencyKyb(SEATED);
-      expect(agency?.standing).toBe("in_review");
+      expect(agency?.standing).toBe("activated");
       expect(agency?.activatedAt).not.toBeNull();
     });
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { agencyStatus } from "@/lib/domain/agency-status";
 import { KYB_REQUIREMENTS, kybProgress, kybStanding } from "@/lib/domain/kyb";
 import type { KybState } from "@/lib/db/schema";
 
@@ -71,23 +72,13 @@ describe("kybProgress", () => {
 });
 
 describe("kybStanding", () => {
-  it("reports an activated agency with a complete checklist as activated", () => {
+  it("reports an activated agency as activated whatever its rows say", () => {
+    // Requirements can be edited after the fact — a note added, a
+    // document replaced when a licence is renewed. None of that
+    // re-closes a door BeOrchid opened.
     expect(
-      kybStanding({ activatedAt: new Date(), verified: 6, touched: 6, total: 6 })
+      kybStanding({ activatedAt: new Date(), verified: 3, touched: 4, total: 6 })
     ).toBe("activated");
-  });
-
-  it("never calls an agency activated past what has been verified", () => {
-    // The client's review of 17 September: "Activated" beside "0 / 6",
-    // on agencies migration 0037 backfilled as let in. The column is
-    // about verification, so it reports verification.
-    expect(
-      kybStanding({ activatedAt: new Date(), verified: 0, touched: 0, total: 6 })
-    ).toBe("not_started");
-    // A licence re-filed after activation reads as back in review.
-    expect(
-      kybStanding({ activatedAt: new Date(), verified: 5, touched: 6, total: 6 })
-    ).toBe("in_review");
   });
 
   it("is ready when the checklist is full but nobody has activated yet", () => {
@@ -122,5 +113,40 @@ describe("kybStanding", () => {
     expect(
       kybStanding({ activatedAt: null, verified: 0, touched: 0, total: 0 })
     ).toBe("not_started");
+  });
+});
+
+describe("kybStanding and agencyStatus", () => {
+  /**
+   * /ops/kyb and /ops/tenants read one `activated_at`. If either ever
+   * derived activation from something else, the same agency would read
+   * "Activated" on one page and "Onboarding" on the other.
+   */
+  it("agree on activation for every checklist and plan", () => {
+    const now = new Date("2026-09-17T12:00:00Z");
+    const checklists = [
+      { verified: 0, touched: 0, total: 0 },
+      { verified: 0, touched: 0, total: 6 },
+      { verified: 2, touched: 4, total: 6 },
+      { verified: 6, touched: 6, total: 6 },
+    ];
+    const running = new Date("2026-10-01T00:00:00Z");
+    const ended = new Date("2026-09-01T00:00:00Z");
+    const plans = [
+      // Never bought, running, and lapsed.
+      { activeUntil: null, latest: null },
+      { activeUntil: running, latest: { periodEnd: running, cancelledAt: null } },
+      { activeUntil: null, latest: { periodEnd: ended, cancelledAt: null } },
+    ];
+
+    for (const activatedAt of [null, new Date("2026-08-01T00:00:00Z")]) {
+      for (const checklist of checklists) {
+        for (const plan of plans) {
+          const standing = kybStanding({ activatedAt, ...checklist });
+          const status = agencyStatus({ suspendedAt: null, activatedAt, ...plan, now });
+          expect(standing === "activated").toBe(status !== "onboarding");
+        }
+      }
+    }
   });
 });

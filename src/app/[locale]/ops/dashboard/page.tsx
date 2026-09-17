@@ -15,7 +15,7 @@ import { ClientsTable } from "@/components/ops/clients-table";
 import { DashboardTabs } from "@/components/ops/dashboard-tabs";
 import { openTabOf, opsClientMatches } from "@/lib/domain/ops-client-table";
 import { readPageSize, resolvePage } from "@/lib/domain/sorting";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { CounterRow, type Counter } from "@/components/shared/counter-row";
@@ -205,6 +205,7 @@ export default async function OpsDashboardPage({
       activeId="business"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_COMMON.nav.dashboard[locale]}

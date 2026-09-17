@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { SupportTable } from "@/components/ops/support-table";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -89,6 +89,7 @@ export default async function OpsSupportPage({
       activeId="support"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_SUPPORT.heading[locale]}

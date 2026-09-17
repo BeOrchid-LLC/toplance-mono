@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { KybTable } from "@/components/ops/kyb-table";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { SetupNotice } from "@/components/shared/setup-notice";
@@ -108,6 +108,7 @@ export default async function OpsKybPage({
       activeId="kyb"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_KYB.heading[locale]}

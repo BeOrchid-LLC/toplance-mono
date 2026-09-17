@@ -80,12 +80,22 @@ export function ColleaguesTable({
               </Badge>
             )}
           </p>
-          {person.fullName && (
-            <span className="special block truncate" title={person.email}>
-              {person.email}
-            </span>
-          )}
         </>
+      ),
+    },
+    {
+      // Its own column rather than a `.special` line under the name — the
+      // client could not read it there on the 2026-09-10 call. The name
+      // column above still falls back to the address for somebody who
+      // has not given a name, so that row says it twice; a blank Person
+      // cell would be worse.
+      id: "email",
+      floor: "min-w-[10rem]",
+      label: OPS_STAFF.tableHead.email[locale],
+      cell: (person) => (
+        <span className="block truncate" title={person.email}>
+          {person.email}
+        </span>
       ),
     },
     {

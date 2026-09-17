@@ -55,15 +55,17 @@ export async function AdminShell({
    *
    * `railTitle` is still required alongside it: it is the fallback when
    * an agency has uploaded nothing, and the text a logo cannot be.
+   *
+   * `railBrand` itself never reaches the collapsed rail: a mark sized for
+   * a 240px head is not one sized for a 32px box.
    */
   railBrand?: React.ReactNode;
   /**
-   * The square mark a rail collapsed to 56px shows in place of the name.
-   * Defaults to the Toplance pin, which is what `/ops` wants and what an
-   * agency without a logo gets; `/agency` passes its uploaded logo when
-   * there is one (decision D8, 2026-09-17). It replaced the first letter
-   * of `railTitle` in a grey square, which the client read as a
-   * placeholder where the product's icon should be.
+   * What a rail collapsed to 56px shows in place of `railTitle`'s first
+   * letter. The client asked for the icon there on 2026-09-10: `/ops`
+   * passes the Toplance pin, `/agency` its uploaded logo or the pin
+   * (decision D8, 2026-09-17 — see `AgencyShell`). Leave it out and the
+   * letter stays.
    */
   railMark?: React.ReactNode;
   railSubtitle?: string;

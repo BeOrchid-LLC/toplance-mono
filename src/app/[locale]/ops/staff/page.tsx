@@ -5,7 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import { ColleaguesTable } from "@/components/ops/colleagues-table";
 import { colleagueMatches } from "@/lib/domain/colleague-table";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
@@ -130,6 +130,7 @@ export default async function OpsStaffPage({
       activeId="colleagues"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       title={OPS_STAFF.heading[locale]}

@@ -32,7 +32,19 @@ export const OPS_STAFF: {
   colleagueSearchPlaceholder: L;
   invitesPanel: L;
   colleaguesEmpty: L;
-  tableHead: { person: L; rank: L; status: L; invited: L; joined: L; actions: L };
+  tableHead: {
+    person: L;
+    /**
+     * The address in a column of its own, not a 13px line under the name.
+     * The client squinted at it on the 2026-09-10 call and asked for this.
+     */
+    email: L;
+    rank: L;
+    status: L;
+    invited: L;
+    joined: L;
+    actions: L;
+  };
   /** The three acts in a colleague's row, and the badge one of them leaves. */
   colleagueRemove: L;
   colleagueSuspend: L;
@@ -646,6 +658,18 @@ export const OPS_STAFF: {
       ar: "الشخص",
       tw: "Onipa",
       zu: "Umuntu",
+    },
+    email: {
+      en: "Email",
+      ha: "Imel",
+      yo: "Ímeèlì",
+      ig: "Email",
+      fr: "E-mail",
+      pt: "E-mail",
+      sw: "Barua pepe",
+      ar: "البريد الإلكتروني",
+      tw: "Email",
+      zu: "I-imeyili",
     },
     rank: {
       en: "Rank",

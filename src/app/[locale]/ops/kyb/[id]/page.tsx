@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { KybChecklist } from "@/components/ops/kyb-checklist";
 import { KYB_STANDING } from "@/components/ops/kyb-standing";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { Panel } from "@/components/shared/panel";
 import { opsAdminNav } from "@/components/shared/admin-nav";
@@ -105,6 +105,7 @@ export default async function OpsKybAgencyPage({
       activeId="kyb"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       actions={

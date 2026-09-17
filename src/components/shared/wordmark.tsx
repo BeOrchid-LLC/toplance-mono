@@ -125,18 +125,12 @@ const WORDMARK_TEXT_PATH =
   " 230.36 32.16 230.227 33.2Z";
 
 /**
- * The pin on its own — the Toplance icon, with no letterforms.
- *
- * Lifted out of `Wordmark` so the mark has one drawing: the collapsed
- * console rail needs the icon without the name, and a second copy of
- * these paths would be a second place for the brand hue to go stale
- * (see the comment above). Same art as `public/icon/toplance-icon.svg`,
- * but reading `var(--brand)`.
- *
- * Decorative by default. Wherever it stands for the product, the thing
- * around it — a link, a rail head — carries the name.
+ * The pin on its own, without the letterforms — what a collapsed console
+ * rail shows, where there is room for 32px and not for a word. The client
+ * asked for "the icon" there on the 2026-09-10 call. Same paint rules as
+ * `Wordmark`: `var(--brand)`, never a literal hue.
  */
-export function BrandMark({ className }: { className?: string }) {
+export function ToplanceMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 54.839 66"
@@ -186,7 +180,7 @@ export function Wordmark({
         className
       )}
     >
-      <BrandMark className="h-8 w-auto" />
+      <ToplanceMark className="h-8 w-auto" />
       <svg
         viewBox="71.838 17.08 172.989 36.04"
         className="wordmark-label mt-px h-[17.5px] w-auto"

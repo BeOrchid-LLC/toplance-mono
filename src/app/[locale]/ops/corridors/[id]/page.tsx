@@ -9,7 +9,7 @@ import { CorridorDecision } from "@/components/ops/corridor-decision";
 import { RequirementCondition } from "@/components/ops/requirement-condition";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
-import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
+import { OPS_RAIL_TITLE, OpsMark, OpsWordmark } from "@/components/ops/ops-rail";
 import { AdminShell } from "@/components/shared/admin-shell";
 import { opsAdminNav } from "@/components/shared/admin-nav";
 import { hasDatabaseEnv } from "@/lib/db/client";
@@ -133,6 +133,7 @@ export default async function ReviewCorridorPage({
       activeId="routes"
       railTitle={OPS_RAIL_TITLE}
       railBrand={<OpsWordmark />}
+      railMark={<OpsMark />}
       railSubtitle={account.subtitle}
       account={account}
       actions={

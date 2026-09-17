@@ -1,5 +1,6 @@
 import { AdminShell } from "@/components/shared/admin-shell";
 import { agencyAdminNav } from "@/components/shared/admin-nav";
+import { ToplanceMark } from "@/components/shared/wordmark";
 import { NotificationsMenu } from "@/components/app/notifications-menu";
 import type { AgencyMembership } from "@/app/[locale]/agency/console";
 import type { Actor } from "@/lib/auth/policy";
@@ -124,8 +125,14 @@ export async function AgencyShell({
       }
       // Collapsed, the same logo squeezed into the rail's 32px square —
       // this console belongs to the agency, so its own mark is the right
-      // one to leave on screen (D8). Without a logo the shell falls back
-      // to the Toplance pin rather than a letter.
+      // one to leave on screen (D8, 2026-09-17). Without a logo it is the
+      // Toplance pin, as in `/ops`, rather than a letter.
+      //
+      // The cost, and why #140 first chose the letter: most uploaded logos
+      // are a name set in a line, and a 4:1 logo in a 32px box is 32×8.
+      // We keep no logo dimensions to tell the square ones apart. If the
+      // client finds wide logos unreadable collapsed, drop the `img` below
+      // and keep the pin.
       railMark={
         logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- signed, short-lived URL; see railBrand
@@ -134,7 +141,9 @@ export async function AgencyShell({
             alt=""
             className="max-h-8 max-w-8 object-contain"
           />
-        ) : undefined
+        ) : (
+          <ToplanceMark className="h-7 w-auto" />
+        )
       }
       railSubtitle={subtitle}
       account={{

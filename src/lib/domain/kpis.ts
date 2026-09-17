@@ -330,12 +330,18 @@ export function dashboardTotals(rows: readonly { status: ApplicationStatus }[]):
 }
 
 /**
- * A timeline in days: one decimal under ten, so a fast desk reads
- * "0.4d" rather than "0d"; whole days from ten up; an em dash before
- * the first approval.
+ * A timeline: hours under a day ("7h", or "<1h"), one decimal of days
+ * under ten ("2.5d"), whole days from ten up; an em dash before the
+ * first approval. Under a day it used to read "0.0d" — which looks like
+ * a broken figure, the same confusion the client raised about "0d".
  */
 export function formatTimelineDays(days: number | null): string {
   if (days === null) return "—";
+  if (days < 1) {
+    const hours = Math.round(days * 24);
+    if (hours < 1) return "<1h";
+    if (hours < 24) return `${hours}h`;
+  }
   const tenths = Math.round(days * 10) / 10;
   return tenths < 10 ? `${tenths.toFixed(1)}d` : `${Math.round(days)}d`;
 }

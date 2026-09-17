@@ -467,8 +467,14 @@ describe("formatTimelineDays", () => {
     expect(formatTimelineDays(null)).toBe("—");
   });
 
-  it("keeps one decimal under ten days, so a fast desk does not read 0d", () => {
-    expect(formatTimelineDays(0.3)).toBe("0.3d");
+  it("counts hours under a day, so a fast desk does not read 0.0d", () => {
+    expect(formatTimelineDays(0.3)).toBe("7h");
+    expect(formatTimelineDays(0.01)).toBe("<1h");
+    // 23.9h rounds to 24h, which is a day.
+    expect(formatTimelineDays(0.996)).toBe("1.0d");
+  });
+
+  it("keeps one decimal from one day to under ten", () => {
     expect(formatTimelineDays(2.46)).toBe("2.5d");
   });
 

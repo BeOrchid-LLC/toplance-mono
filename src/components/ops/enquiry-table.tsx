@@ -189,7 +189,7 @@ export function EnquiryTable({
             // span's content is the whole address, so one enquiry pushed
             // this column to 624px. The floor is what lets the address
             // give that width back; see `DataColumn.floor`.
-            floor: "min-w-[9rem]",
+            floor: "min-w-[7.5rem]",
             label: t(OPS_ENQUIRIES.head.who),
             sort: "text",
             cell: (r) => (
@@ -206,7 +206,7 @@ export function EnquiryTable({
           {
             id: "company",
             width: "w-[12%]",
-            floor: "min-w-[7rem]",
+            floor: "min-w-[6rem]",
             label: t(OPS_ENQUIRIES.head.company),
             sort: "text",
             // The company is the way to the agency it became, once it

@@ -80,7 +80,11 @@ export function AssigneeSelect({
     <NativeSelect
       aria-label={label}
       title={holderFullName}
-      className={cn("h-[var(--row-h)] w-[9.5rem]", className)}
+      // The width goes on the wrapper, not the select: the wrapper is what
+      // positions the chevron, and as a full-width block in a wide cell it
+      // left the chevron at the far end of the column, detached from the box.
+      wrapperClassName="w-[9.5rem]"
+      className={cn("h-[var(--row-h)] w-full", className)}
       value={value ?? ""}
       disabled={disabled}
       onChange={(e) => onChange(e.currentTarget.value || null)}

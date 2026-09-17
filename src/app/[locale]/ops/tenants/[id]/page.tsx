@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { NotificationsMenu } from "@/components/app/notifications-menu";
-import { Badge } from "@/components/ui/badge";
+import { AgencyStatusBadge } from "@/components/ops/agency-status-badge";
 import { StaffAccessRefused, StaffEnrollmentRequired } from "@/components/ops/refusal";
 import { TenantControls } from "@/components/ops/tenant-controls";
 import { OPS_RAIL_TITLE, OpsWordmark } from "@/components/ops/ops-rail";
@@ -22,7 +22,6 @@ import { getNotifications, unreadNotificationCount } from "@/lib/notifications/n
 import { requireStaffConsole } from "@/lib/auth/staff-gate";
 import { getLocale } from "@/lib/i18n/server";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
-import { activeSubscription } from "@/lib/data/payments";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
 import { opsAccount } from "@/app/[locale]/ops/account";
 import { formatDate } from "@/lib/format/date";
@@ -125,14 +124,6 @@ export default async function OpsTenantPage({
   // has no per-agency wording to borrow instead. `CounterRow.sub` is
   // optional for exactly this — a tile that needs no gloss renders
   // without one rather than inventing or borrowing a wrong string.
-  /**
-   * Read, never set. BeOrchid does not sell the plan and cannot mark one
-   * paid from here — the agency buys it in its own console. This is on
-   * the screen because "why is that agency quiet" and "they have not
-   * paid" are the same question, and the console had no way to see it.
-   */
-  const subscription = await activeSubscription(tenant.id);
-
   const query = await searchParams;
   const inviteSearch = (query.q ?? "").trim();
   const inviteKind = query.kind ?? "";
@@ -141,15 +132,26 @@ export default async function OpsTenantPage({
   );
 
   const counters = [
+    /**
+     * Read, never set. BeOrchid does not sell the plan and cannot mark one
+     * paid from here — the agency buys it in its own console. This is on
+     * the screen because "why is that agency quiet" and "they have not
+     * paid" are the same question, and the console had no way to see it.
+     *
+     * `tenant.activeUntil` is the same read the header's status is derived
+     * from (`getTenant`), so the two cannot disagree: "Live" always sits
+     * over a date, and "Unpaid" only ever under onboarding, awaiting
+     * payment, lapsed or suspended.
+     */
     {
       label: OPS_TENANTS.planLabel[locale],
-      value: subscription?.periodEnd
+      value: tenant.activeUntil
         ? OPS_TENANTS.planPaidUntil[locale].replace(
             "{date}",
-            formatDate(subscription.periodEnd, locale)
+            formatDate(tenant.activeUntil, locale)
           )
         : OPS_TENANTS.planUnpaid[locale],
-      tone: subscription ? "text-success-ink" : "text-warning-ink",
+      tone: tenant.activeUntil ? "text-success-ink" : "text-warning-ink",
     },
     {
       label: OPS_TENANTS.tableHead.members[locale],
@@ -206,11 +208,7 @@ export default async function OpsTenantPage({
 
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <h1 className="t-h2">{tenant.name}</h1>
-            <Badge variant={tenant.suspendedAt ? "warning" : "success"}>
-              {tenant.suspendedAt
-                ? OPS_TENANTS.suspendedBadge[locale]
-                : OPS_TENANTS.live[locale]}
-            </Badge>
+            <AgencyStatusBadge status={tenant.status} locale={locale} />
           </div>
           {tenant.domain && <p className="t-muted mt-2">{tenant.domain}</p>}
 

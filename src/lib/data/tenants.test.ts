@@ -14,7 +14,7 @@ import { eq, inArray } from "drizzle-orm";
  */
 describe.skipIf(!process.env.DATABASE_URL)("tenant reads", async () => {
   const { db } = await import("@/lib/db/client");
-  const { applications, invitations, orgMembers, organisations, profiles } =
+  const { applications, invitations, orgMembers, organisations, payments, profiles } =
     await import("@/lib/db/schema");
   const { getTenant, listTenants } = await import("@/lib/data/tenants");
 
@@ -54,6 +54,7 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant reads", async () => {
   });
 
   afterEach(async () => {
+    await db.delete(payments).where(inArray(payments.orgId, [BUSY, EMPTY]));
     // `applications.org_id` is `restrict`, so cases go before agencies.
     await db.delete(applications).where(eq(applications.travelerId, TRAVELER));
     await db.delete(invitations).where(inArray(invitations.orgId, [BUSY, EMPTY]));
@@ -110,6 +111,73 @@ describe.skipIf(!process.env.DATABASE_URL)("tenant reads", async () => {
     // ops cannot find is an agency ops cannot restore.
     expect(busy?.suspendedAt).not.toBeNull();
     expect(busy?.members).toBe(2);
+  });
+
+  it("derives one lifecycle status from activation and the plan", async () => {
+    const DAY = 86_400_000;
+    const subscription = (over: Partial<typeof payments.$inferInsert>) => ({
+      kind: "agency_subscription" as const,
+      status: "paid" as const,
+      amountMinor: 10_000,
+      orgId: BUSY,
+      periodStart: new Date(Date.now() - 20 * DAY),
+      periodEnd: new Date(Date.now() + 10 * DAY),
+      ...over,
+    });
+    const statusOf = async () => ({
+      listed: (await listTenants()).find((r) => r.id === BUSY)?.status,
+      detail: (await getTenant(BUSY))?.status,
+    });
+
+    // Not through KYB.
+    await db.update(organisations).set({ activatedAt: null }).where(eq(organisations.id, BUSY));
+    expect(await statusOf()).toEqual({ listed: "onboarding", detail: "onboarding" });
+
+    await db
+      .update(organisations)
+      .set({ activatedAt: new Date() })
+      .where(eq(organisations.id, BUSY));
+    expect(await statusOf()).toEqual({
+      listed: "awaiting_payment",
+      detail: "awaiting_payment",
+    });
+
+    // A failed card is not a plan somebody once had.
+    await db.insert(payments).values(subscription({ status: "failed" }));
+    expect((await statusOf()).listed).toBe("awaiting_payment");
+
+    const [expired] = await db
+      .insert(payments)
+      .values(
+        subscription({
+          periodStart: new Date(Date.now() - 40 * DAY),
+          periodEnd: new Date(Date.now() - 10 * DAY),
+        })
+      )
+      .returning({ id: payments.id });
+    expect(await statusOf()).toEqual({ listed: "lapsed", detail: "lapsed" });
+
+    const [running] = await db
+      .insert(payments)
+      .values(subscription({}))
+      .returning({ id: payments.id, periodEnd: payments.periodEnd });
+    expect(await statusOf()).toEqual({ listed: "live", detail: "live" });
+    expect((await getTenant(BUSY))?.activeUntil?.getTime()).toBe(running.periodEnd!.getTime());
+
+    // Ended early: no longer live, and the plan card has no date.
+    await db
+      .update(payments)
+      .set({ cancelledAt: new Date() })
+      .where(eq(payments.id, running.id));
+    expect(await statusOf()).toEqual({ listed: "lapsed", detail: "lapsed" });
+    expect((await getTenant(BUSY))?.activeUntil).toBeNull();
+    expect(expired.id).toBeTruthy();
+
+    await db
+      .update(organisations)
+      .set({ suspendedAt: new Date() })
+      .where(eq(organisations.id, BUSY));
+    expect(await statusOf()).toEqual({ listed: "suspended", detail: "suspended" });
   });
 
   it("counts pending invitations and ignores accepted ones", async () => {

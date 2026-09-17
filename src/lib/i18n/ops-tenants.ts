@@ -1,3 +1,4 @@
+import type { AgencyStatus } from "@/lib/domain/agency-status";
 import type { Locale } from "@/lib/i18n/locales";
 
 type L = Record<Locale, string>;
@@ -39,6 +40,7 @@ export const OPS_TENANTS: {
   };
   live: L;
   suspendedBadge: L;
+  status: Record<AgencyStatus, L>;
   planLabel: L;
   planUnpaid: L;
   planPaidUntil: L;
@@ -423,6 +425,74 @@ export const OPS_TENANTS: {
     ar: "موقوفة",
     tw: "Wɔagyae",
     zu: "Kumisiwe",
+  },
+  /**
+   * An agency's lifecycle status (`agencyStatus`), decision D1 of the
+   * client review on 17 September — pending her confirmation, so the
+   * words are here in one place. `live` and `suspended` repeat the two
+   * words above, which the KYB queue still reads for its own pill.
+   */
+  status: {
+    onboarding: {
+      en: "Onboarding",
+      ha: "Ana shigar da ita",
+      yo: "Ń wọlé",
+      ig: "Na-abanye",
+      fr: "Intégration",
+      pt: "Em integração",
+      sw: "Inasajiliwa",
+      ar: "قيد الإعداد",
+      tw: "Wɔrede no ahyɛ mu",
+      zu: "Iyangeniswa",
+    },
+    awaiting_payment: {
+      en: "Awaiting payment",
+      ha: "Ana jiran biya",
+      yo: "Ń dúró de ìsanwó",
+      ig: "Na-eche ịkwụ ụgwọ",
+      fr: "Paiement en attente",
+      pt: "A aguardar pagamento",
+      sw: "Inasubiri malipo",
+      ar: "بانتظار الدفع",
+      tw: "Ɛretwɛn akatua",
+      zu: "Ilinde inkokhelo",
+    },
+    live: {
+      en: "Live",
+      ha: "Yana aiki",
+      yo: "Ń ṣiṣẹ́",
+      ig: "Na-arụ ọrụ",
+      fr: "En ligne",
+      pt: "Ativo",
+      sw: "Inatumika",
+      ar: "مُفعَّل",
+      tw: "Ɛreyɛ adwuma",
+      zu: "Iyasebenza",
+    },
+    lapsed: {
+      en: "Lapsed",
+      ha: "Ya ƙare",
+      yo: "Ó ti parí",
+      ig: "Agwụla",
+      fr: "Expirée",
+      pt: "Expirada",
+      sw: "Imekwisha",
+      ar: "منتهية",
+      tw: "Ne berɛ atwam",
+      zu: "Iphelelwe yisikhathi",
+    },
+    suspended: {
+      en: "Suspended",
+      ha: "An dakatar",
+      yo: "A ti dádúró",
+      ig: "Akwụsịrị ya",
+      fr: "Suspendue",
+      pt: "Suspensa",
+      sw: "Imesimamishwa",
+      ar: "موقوفة",
+      tw: "Wɔagyae",
+      zu: "Kumisiwe",
+    },
   },
   planLabel: {
     en: "Plan",

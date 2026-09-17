@@ -77,8 +77,10 @@ async function TenantsContent({
     listDemoRequests(),
   ]);
 
-  const live = tenants.filter((t) => !t.suspendedAt);
-  const suspended = tenants.filter((t) => t.suspendedAt);
+  // By lifecycle status, the word each row's pill prints — so "Live
+  // agencies" no longer counts one that has not passed KYB or paid.
+  const live = tenants.filter((t) => t.status === "live");
+  const suspended = tenants.filter((t) => t.status === "suspended");
   const memberTotal = tenants.reduce((sum, t) => sum + t.members, 0);
   // The same set the rail badge counts — see `OPEN_DEMO_STATUSES`.
   const openEnquiries = demoRequests.filter((r) =>

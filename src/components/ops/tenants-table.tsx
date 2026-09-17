@@ -4,7 +4,8 @@ import Link from "next/link";
 
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { leadsFirst } from "@/lib/domain/sort-options";
-import { Badge } from "@/components/ui/badge";
+import { AgencyStatusBadge } from "@/components/ops/agency-status-badge";
+import { AGENCY_STATUSES } from "@/lib/domain/agency-status";
 import type { TenantRow } from "@/lib/data/tenants";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
@@ -84,7 +85,7 @@ export function TenantsTable({
       cell: (t) => (
         <>
           {/* Four numbers, not four badges: this is a scan column, and
-              colour here would compete with the state pill beside it. */}
+              colour here would compete with the status pill beside it. */}
           <span className="num">{t.inProgress}</span> ·{" "}
           <span className="num">{t.withReviewer}</span> ·{" "}
           <span className="num">{t.approved}</span> ·{" "}
@@ -94,19 +95,15 @@ export function TenantsTable({
     },
     {
       id: "state",
-      // Ordered live-then-suspended (`tenantSortKey`), not by the
-      // words, so the options name which state leads.
+      // Ordered by lifecycle (`tenantSortKey`), not by the words, so the
+      // options name which status leads.
       sort: {
-        asc: leadsFirst(OPS_TENANTS.live[locale], locale),
-        desc: leadsFirst(OPS_TENANTS.suspendedBadge[locale], locale),
+        asc: leadsFirst(OPS_TENANTS.status[AGENCY_STATUSES[0]][locale], locale),
+        desc: leadsFirst(OPS_TENANTS.status[AGENCY_STATUSES.at(-1)!][locale], locale),
       },
       label: OPS_TENANTS.tableHead.state[locale],
-      pill: { labels: [OPS_TENANTS.live[locale], OPS_TENANTS.suspendedBadge[locale]] },
-      cell: (t) => (
-        <Badge variant={t.suspendedAt ? "warning" : "success"}>
-          {t.suspendedAt ? OPS_TENANTS.suspendedBadge[locale] : OPS_TENANTS.live[locale]}
-        </Badge>
-      ),
+      pill: { labels: AGENCY_STATUSES.map((status) => OPS_TENANTS.status[status][locale]) },
+      cell: (t) => <AgencyStatusBadge status={t.status} locale={locale} />,
     },
     {
       id: "added",
@@ -138,10 +135,10 @@ export function TenantsTable({
           {
             param: "state",
             label: OPS_TENANTS.anyStatus[locale],
-            options: [
-              { value: "live", label: OPS_TENANTS.live[locale] },
-              { value: "suspended", label: OPS_TENANTS.suspendedBadge[locale] },
-            ],
+            options: AGENCY_STATUSES.map((status) => ({
+              value: status,
+              label: OPS_TENANTS.status[status][locale],
+            })),
           },
         ],
       }}

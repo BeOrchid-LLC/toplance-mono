@@ -275,7 +275,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
               <div>
                 <p className="font-semibold text-success-ink">Agency activated</p>
                 <p className="mt-1 text-sm leading-5 text-ink-2">
-                  BeOrchid opened this console on {agency.activatedAt.toISOString().slice(0, 10)}. The director
+                  BeOrchid opened this workspace on {agency.activatedAt.toISOString().slice(0, 10)}. The director
                   was notified by email.
                 </p>
               </div>
@@ -306,7 +306,7 @@ export function KybChecklist({ agency }: { agency: AgencyKyb }) {
                   <p className="mt-1 max-w-[52ch] text-sm leading-5 text-ink-2">
                     {agency.progress.canActivate ? (
                       <>
-                        All six requirements are verified. Activation opens the agency console and emails the
+                        All six requirements are verified. Activation opens the agency workspace and emails the
                         director a link to billing.
                       </>
                     ) : (

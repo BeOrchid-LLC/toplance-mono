@@ -12,7 +12,7 @@ import { BILLING } from "@/lib/i18n/billing";
 /**
  * The one act on the billing screen.
  *
- * The button says "Pay and open the console", so it opens the console.
+ * The button says "Pay and open the workspace", so it opens the workspace.
  *
  * A `router.refresh()` was not enough: the paywall lives in
  * `resolveAgencyConsole`, so refreshing re-renders this page as a

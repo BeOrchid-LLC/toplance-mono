@@ -61,7 +61,7 @@ test("the platform console curates routes, offers no way into a case, and is som
   // The `refuse` branch, worth proving on the way past.
   await page.goto("/ops");
   await expect(
-    page.getByRole("heading", { name: "This console is for Toplance staff" })
+    page.getByRole("heading", { name: "This workspace is for Toplance staff" })
   ).toBeVisible();
 
   await promoteToStaff(EMAIL);
@@ -159,7 +159,7 @@ test("the enquiry queue is findable, and an enquiry can be moved and claimed", a
     // ---- reachable from the rail, which is the whole point ----
     await page.goto("/ops/corridors");
     const enquiries = page
-      .getByRole("navigation", { name: "Console menu" })
+      .getByRole("navigation", { name: "Workspace menu" })
       .getByRole("link", { name: "Enquiries" });
     await expect(enquiries).toBeVisible();
     await enquiries.click();

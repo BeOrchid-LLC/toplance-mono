@@ -42,7 +42,7 @@ export default function OpsError({
               boundaries do the same and only escape the rule because
               their href is a template literal it cannot resolve. */}
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-          <a href="/ops">Back to the console</a>
+          <a href="/ops">Back to the workspace</a>
         </Button>
       </div>
       {error.digest && (

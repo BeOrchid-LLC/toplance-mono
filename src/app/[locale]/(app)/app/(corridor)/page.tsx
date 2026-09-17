@@ -6,6 +6,7 @@ import { MessageSquare, Sparkles, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceNotice } from "@/components/app/attendance-notice";
+import { VisaApprovedArt } from "@/components/app/visa-approved-art";
 import { Shell } from "@/components/shared/shell";
 import { Panel, PanelBody, PanelHeader } from "@/components/shared/panel";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -98,6 +99,7 @@ export default async function DashboardPage() {
   });
   const actionable =
     step.kind !== "with_team" && step.kind !== "decided" && step.kind !== "interview";
+  const approved = step.kind === "decided" && step.outcome === "granted";
 
   return (
     <main id="main">
@@ -129,20 +131,43 @@ export default async function DashboardPage() {
             beside the completion ring; with the ring gone that left the
             copy floating in the middle of a tall empty panel. */}
         <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
-          <Panel>
-            <PanelBody className="py-8 sm:px-8 sm:py-10">
-              <div className="max-w-[58ch]">
-                <h1 className="t-h2">{headingOf(step, locale)}</h1>
-                {bodyOf(step, locale) && (
-                  <p className="t-body-lg mt-3 text-ink-2">{bodyOf(step, locale)}</p>
+          {/* A row, not a stack, from `md` up: the words on the left and
+              the one action beside them, so the plate is a row shorter.
+              Asked for on the 2026-09-10 call — "shift it to the side
+              horizontally, so that it doesn't stack… occupies even less
+              space". Below `md` there is no side to put it on, and it
+              stacks as it did.
+
+              Approved is the one plate that is not like the others: a
+              success-tinted sheet, a picture and a larger heading,
+              because a granted visa is the thing the client asked this
+              screen to celebrate. Every other status keeps the plain
+              sheet. */}
+          <Panel
+            className={
+              approved
+                ? "border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_7%,var(--surface))]"
+                : undefined
+            }
+          >
+            <PanelBody className="py-6 sm:px-8 sm:py-8">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center">
+                {approved && (
+                  <VisaApprovedArt className="h-24 shrink-0 self-start md:h-28 md:self-center" />
                 )}
-                {/* Only while the checklist is still the subject. Once
-                    the case has gone, "verified means accepted for
-                    review" is answering a question nobody is asking —
-                    and beside a decision it is worse than noise. */}
-                {actionable && (
-                  <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
-                )}
+                <div className="min-w-0 max-w-[58ch] flex-1">
+                  <h1 className={approved ? "t-h1" : "t-h2"}>{headingOf(step, locale)}</h1>
+                  {bodyOf(step, locale) && (
+                    <p className="t-body-lg mt-3 text-ink-2">{bodyOf(step, locale)}</p>
+                  )}
+                  {/* Only while the checklist is still the subject. Once
+                      the case has gone, "verified means accepted for
+                      review" is answering a question nobody is asking —
+                      and beside a decision it is worse than noise. */}
+                  {actionable && (
+                    <p className="special mt-4 text-ink-2">{VERIFIED_MEANS[locale]}</p>
+                  )}
+                </div>
                 {/* The one `--way` object on this screen, per §4.1 —
                     the next action and nothing else wears it. The
                     arrows that used to close three of these four labels
@@ -157,7 +182,11 @@ export default async function DashboardPage() {
                     to a screen which has correctly stopped offering the
                     action is worse than no button. */}
                 {actionable ? (
-                  <Button asChild variant="way" className="mt-6">
+                  <Button
+                    asChild
+                    variant="way"
+                    className="shrink-0 self-start md:ms-auto md:self-center"
+                  >
                     <Link href="/app/documents">
                       {step.kind === "sent_back" ? (
                         t.ctaFixSentBack[locale]
@@ -173,12 +202,15 @@ export default async function DashboardPage() {
                     </Link>
                   </Button>
                 ) : (
-                  step.kind === "decided" &&
-                  step.outcome === "granted" && (
+                  approved && (
                     // The arrival companion is the genuine next step,
                     // and it exists only from `approved` — the same
                     // condition the rail uses to show its tab.
-                    <Button asChild variant="way" className="mt-6">
+                    <Button
+                      asChild
+                      variant="way"
+                      className="shrink-0 self-start md:ms-auto md:self-center"
+                    >
                       <Link href="/app/companion">{COMPANION.title[locale]}</Link>
                     </Button>
                   )
@@ -312,7 +344,7 @@ function headingOf(step: NextStep, locale: Locale): string {
 
 /**
  * The sentence under it, or an empty string where the heading says the
- * whole thing — which is only the approved plate. See `headingApproved`.
+ * whole thing — which is only the interview plate.
  */
 function bodyOf(step: NextStep, locale: Locale): string {
   switch (step.kind) {
@@ -333,6 +365,8 @@ function bodyOf(step: NextStep, locale: Locale): string {
     case "with_team":
       return DASHBOARD.bodyWithTeam[locale];
     case "decided":
-      return step.outcome === "granted" ? "" : DASHBOARD.bodyRefused[locale];
+      return step.outcome === "granted"
+        ? DASHBOARD.bodyApproved[locale]
+        : DASHBOARD.bodyRefused[locale];
   }
 }

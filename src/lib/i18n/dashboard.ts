@@ -30,6 +30,7 @@ export const DASHBOARD: {
   headingWithTeam: L;
   bodyWithTeam: L;
   headingApproved: L;
+  bodyApproved: L;
   headingRefused: L;
   bodyRefused: L;
   routeLabel: L;
@@ -326,11 +327,12 @@ export const DASHBOARD: {
     zu: "Akukho okulindele wena. Sizokuthumelela umyalezo uma kudingeka okunye.",
   },
   /**
-   * The approved plate carries no body line on purpose: the heading is
-   * the news, and the button under it is the one real next thing —
-   * `/app/companion`, which exists only from this status. A sentence
-   * between them would be padding on the one screen in the product
-   * nobody needs persuading to read.
+   * The approved plate is the one moment in the product worth marking,
+   * and it now looks like it — see `VisaApprovedArt`. The heading is the
+   * news; `bodyApproved` under it is the client's own line from the
+   * 2026-09-10 call ("get ready for your trip"), and it points at the
+   * button beside it — `/app/companion`, which exists only from this
+   * status.
    */
   headingApproved: {
     en: "Your visa is approved",
@@ -343,6 +345,18 @@ export const DASHBOARD: {
     ar: "تمت الموافقة على تأشيرتك",
     tw: "Wɔapene wo visa no so",
     zu: "Ivisa yakho igunyaziwe",
+  },
+  bodyApproved: {
+    en: "Congratulations — time to get ready for your trip. Your arrival plan is waiting.",
+    ha: "Barka da warhaka — lokaci ya yi da za ka shirya tafiyarka. Shirin isowarka yana jiranka.",
+    yo: "Ẹ kú oríire — àkókò ti tó láti múra sílẹ̀ fún ìrìn àjò rẹ. Ètò ìdé rẹ ń dúró dè ọ́.",
+    ig: "Ekele — oge eruola ịkwado maka njem gị. Atụmatụ mbata gị na-echere gị.",
+    fr: "Félicitations — place aux préparatifs du voyage. Votre plan d’arrivée vous attend.",
+    pt: "Parabéns — é hora de preparar a sua viagem. O seu plano de chegada está à sua espera.",
+    sw: "Hongera — ni wakati wa kujiandaa kwa safari yako. Mpango wako wa kuwasili unakusubiri.",
+    ar: "تهانينا — حان وقت الاستعداد لرحلتك. خطة وصولك بانتظارك.",
+    tw: "Ayekoo — bere aso sɛ woyɛ w’akwantuo no ho ahoboa. Wo duruo nhyehyɛeɛ no retwɛn wo.",
+    zu: "Halala — sekuyisikhathi sokulungiselela uhambo lwakho. Uhlelo lwakho lokufika lukulindile.",
   },
   headingRefused: {
     en: "Your application was refused",

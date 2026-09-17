@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import { useT } from "@/components/locale-provider";
 import { HERO } from "@/lib/i18n/hero";
 import { CORRIDOR_PICKER, fillTemplate } from "@/lib/i18n/corridor-picker";
@@ -142,7 +142,7 @@ export function CorridorBoard() {
       </div>
 
       <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-4">
-        <Button asChild>
+        <Button asChild className={wrapOnPhone()}>
           <Link href="/agency/sign-up">
             {fillTemplate(t(CORRIDOR_PICKER.runRouteTemplate), {
               route: `${iso3(origin)} → ${iso3(destination)}`,

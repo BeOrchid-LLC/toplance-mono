@@ -3,7 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Check, Minus, Shield } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Accordion,
   AccordionContent,
@@ -795,7 +796,12 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <Button asChild size="block" variant="primary" className="lg:max-w-[320px]">
+            <Button
+              asChild
+              size="block"
+              variant="primary"
+              className={cn("lg:max-w-[320px]", wrapOnPhone())}
+            >
               <Link href="/agency/sign-up">{SITE_CHROME.runYourFirstCase[locale]}</Link>
             </Button>
           </div>

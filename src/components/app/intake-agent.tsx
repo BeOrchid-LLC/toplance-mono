@@ -8,7 +8,8 @@ import { toast } from "sonner";
 import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
 import { useChat } from "@ai-sdk/react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useLocale, useT } from "@/components/locale-provider";
 import { ChatMarkdown } from "@/components/app/chat-markdown";
 import { AgentDock, Chips, Composer } from "@/components/app/intake-dock";
@@ -988,7 +989,7 @@ function CompletionBar({
             )}
             {transcriptOpen ? t(INTAKE_UI.close) : t(INTAKE_UI.transcript)}
           </button>
-          <Button asChild className="w-full sm:w-auto">
+          <Button asChild className={cn("w-full sm:w-auto", wrapOnPhone())}>
             <Link href={next.href}>
               {t(INTAKE_UI[next.key])} <ArrowRight />
             </Link>

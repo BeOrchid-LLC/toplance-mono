@@ -5,7 +5,7 @@ import { ArrowRight, Clock3, Sparkles } from "lucide-react";
 
 import { Hint } from "@/components/ui/hint";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FxCredit } from "@/components/app/fx-credit";
 import { Shell } from "@/components/shared/shell";
@@ -309,7 +309,7 @@ export default async function ProfilePage() {
               asChild
               variant="neutral"
               size="sm"
-              className="w-full sm:ms-auto sm:w-auto"
+              className={cn("w-full sm:ms-auto sm:w-auto", wrapOnPhone("sm"))}
             >
               <Link href="/app/agent">{t.editTripAnswers[uiLocale]}</Link>
             </Button>

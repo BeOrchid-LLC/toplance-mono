@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Briefcase, Check, Shield } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
 import {
   Accordion,
   AccordionContent,
@@ -252,7 +252,7 @@ export default async function TravellersPage() {
                 (about 444px of a 488px column), wrapping only for a longer
                 language. */}
             <div className="mt-9 flex flex-wrap gap-3">
-              <Button asChild>
+              <Button asChild className={wrapOnPhone()}>
                 <Link href="/sign-in">
                   <Briefcase /> {SITE_TRAVELERS.orgsSponsorSeatsCta[locale]}
                 </Link>
@@ -413,7 +413,12 @@ export default async function TravellersPage() {
                 </li>
               ))}
             </ul>
-            <Button asChild size="block" variant="primary" className="mt-auto lg:max-w-[320px]">
+            <Button
+              asChild
+              size="block"
+              variant="primary"
+              className={cn("mt-auto lg:max-w-[320px]", wrapOnPhone())}
+            >
               <Link href={SEAT_PLAN_HREF}>{SITE_TRAVELERS.seatPlanCta[locale]}</Link>
             </Button>
           </div>

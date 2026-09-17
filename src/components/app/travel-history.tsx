@@ -4,7 +4,8 @@ import * as React from "react";
 import { Plus, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { Label } from "@/components/ui/label";
 import { addTravelRecord, removeTravelRecord } from "@/app/[locale]/(app)/actions";
@@ -146,7 +147,7 @@ export function TravelHistory({ trips }: { trips: Trip[] }) {
           type="button"
           variant="neutral"
           size="sm"
-          className="mt-5"
+          className={cn("mt-5", wrapOnPhone("sm"))}
           onClick={() => setAdding(true)}
         >
           <Plus /> {t(TRAVEL_HISTORY.addTrip)}

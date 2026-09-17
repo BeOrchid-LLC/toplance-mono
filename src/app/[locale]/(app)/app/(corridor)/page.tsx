@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { MessageSquare, Sparkles, Upload } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, wrapOnPhone } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceNotice } from "@/components/app/attendance-notice";
 import { Shell } from "@/components/shared/shell";
@@ -157,7 +158,7 @@ export default async function DashboardPage() {
                     to a screen which has correctly stopped offering the
                     action is worse than no button. */}
                 {actionable ? (
-                  <Button asChild variant="way" className="mt-6">
+                  <Button asChild variant="way" className={cn("mt-6", wrapOnPhone())}>
                     <Link href="/app/documents">
                       {step.kind === "sent_back" ? (
                         t.ctaFixSentBack[locale]

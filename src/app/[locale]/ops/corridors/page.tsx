@@ -98,7 +98,7 @@ export default async function OpsCorridorsPage({
       .some((field) => field.toLowerCase().includes(search));
   });
 
-  const sorted = sortRows(visible, (r) => corridorSortKey(r, sort, locale), dir);
+  const sorted = sortRows(visible, (r) => corridorSortKey(r, sort), dir);
 
   // 99 versions today and climbing, so this is the table the pager was
   // written for. Sliced after the sort, never before: page two has to be

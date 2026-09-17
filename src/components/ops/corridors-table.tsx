@@ -6,13 +6,16 @@ import { DataTable, type DataColumn } from "@/components/shared/data-table";
 import { Badge } from "@/components/ui/badge";
 import type { CorridorRow } from "@/lib/data/corridors";
 import {
-  CORRIDOR_STATE_VARIANT,
+  CORRIDOR_STATUSES,
+  CORRIDOR_STATUS_VARIANT,
   corridorStateFilters,
+  corridorStatus,
+  corridorStatusLabel,
   countryName,
   freshnessLabel,
-  stateLabel,
   type CorridorSort,
 } from "@/lib/domain/corridor-table";
+import { leadsFirst } from "@/lib/domain/sort-options";
 import type { SortDir } from "@/lib/domain/sorting";
 import type { Locale } from "@/lib/i18n/locales";
 import { OPS_COMMON } from "@/lib/i18n/ops-common";
@@ -96,25 +99,26 @@ export function CorridorsTable({
       id: "state",
       width: "w-[19%]",
       label: OPS_CORRIDORS.tableHead.state[locale],
-      sort: "text",
-      pill: {
-        labels: [
-          ...(Object.keys(CORRIDOR_STATE_VARIANT) as (keyof typeof CORRIDOR_STATE_VARIANT)[]).map(
-            (state) => stateLabel(state, locale)
-          ),
-          OPS_COMMON.live[locale],
-        ],
+      // Ranked by status rather than by its words (`corridorSortKey`), so
+      // the options name which status leads.
+      sort: {
+        asc: leadsFirst(corridorStatusLabel(CORRIDOR_STATUSES[0], locale), locale),
+        desc: leadsFirst(corridorStatusLabel(CORRIDOR_STATUSES.at(-1)!, locale), locale),
       },
-      cell: (row) => (
-        <>
-          <Badge variant={CORRIDOR_STATE_VARIANT[row.reviewState]}>
-            {stateLabel(row.reviewState, locale)}
+      pill: {
+        labels: CORRIDOR_STATUSES.map((status) => corridorStatusLabel(status, locale)),
+      },
+      cell: (row) => {
+        // One status, not "Approved" beside "Live": a superseded version
+        // stays approved for the record and stops being served, and the
+        // one word says both.
+        const status = corridorStatus(row);
+        return (
+          <Badge variant={CORRIDOR_STATUS_VARIANT[status]}>
+            {corridorStatusLabel(status, locale)}
           </Badge>
-          {/* Live is a separate fact from approved: a superseded version
-              stays approved for the record and stops being served. */}
-          {row.isLive && <Badge variant="brand">{OPS_COMMON.live[locale]}</Badge>}
-        </>
-      ),
+        );
+      },
     },
     {
       id: "documents",

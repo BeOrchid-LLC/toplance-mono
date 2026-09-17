@@ -31,6 +31,7 @@ export const OPS_COMMON: {
   approved: L;
   sentBack: L;
   live: L;
+  superseded: L;
   documentsWord: L;
   caseWord: { one: L; other: L };
   documentWord: { one: L; other: L };
@@ -232,6 +233,19 @@ export const OPS_COMMON: {
     ar: "مُفعَّل",
     tw: "Ɛreyɛ adwuma",
     zu: "Iyasebenza",
+  },
+  /** An approved corridor version a newer approved version replaced. */
+  superseded: {
+    en: "Superseded",
+    ha: "An maye gurbinsa",
+    yo: "A ti rọ́pò rẹ̀",
+    ig: "E dochiela ya",
+    fr: "Remplacé",
+    pt: "Substituído",
+    sw: "Imebadilishwa",
+    ar: "مُستبدَل",
+    tw: "Wɔde foforo asi n'anan mu",
+    zu: "Kushintshiwe",
   },
   documentsWord: {
     en: "documents",

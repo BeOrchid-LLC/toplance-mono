@@ -37,25 +37,49 @@ export type CorridorSort = (typeof CORRIDOR_SORTS)[number];
 export const countryName = (iso: string) => countryFromIso2(iso)?.name ?? iso.toUpperCase();
 
 /**
- * What a row's review state should look like at a glance. `pending` is
- * the only one that is work rather than record, so it is the only one
- * that gets a colour demanding attention. Labels resolve through
- * `OPS_COMMON` rather than living on this object, since the variant is
- * fixed but the word is not.
+ * A corridor version's one status, folding its two columns together.
+ *
+ * `reviewState` is where a version is in the approval path and `isLive`
+ * is whether the engine serves it. The table used to print both as two
+ * pills — "Approved" beside "Live" — and the client's review of
+ * 17 September asked for one. Approving a version flips it live and the
+ * previous one off (`approveCorridor`), so an approved version that is
+ * not live is one a newer version replaced: superseded.
  */
-export const CORRIDOR_STATE_VARIANT = {
-  pending: "warning" as const,
-  approved: "success" as const,
-  rejected: "neutral" as const,
-};
+export const CORRIDOR_STATUSES = ["live", "superseded", "pending", "rejected"] as const;
+export type CorridorStatus = (typeof CORRIDOR_STATUSES)[number];
 
-export function stateLabel(
-  reviewState: keyof typeof CORRIDOR_STATE_VARIANT,
-  locale: Locale
-) {
-  if (reviewState === "pending") return OPS_COMMON.awaitingReview[locale];
-  if (reviewState === "approved") return OPS_COMMON.approved[locale];
-  return OPS_COMMON.sentBack[locale];
+export function corridorStatus(
+  row: Pick<CorridorRow, "reviewState" | "isLive">
+): CorridorStatus {
+  if (row.reviewState === "pending") return "pending";
+  if (row.reviewState === "rejected") return "rejected";
+  return row.isLive ? "live" : "superseded";
+}
+
+/**
+ * What each status looks like at a glance. `pending` is the only one
+ * that is work rather than record, so it is the only one that gets a
+ * colour demanding attention.
+ */
+export const CORRIDOR_STATUS_VARIANT = {
+  live: "brand",
+  superseded: "neutral",
+  pending: "warning",
+  rejected: "neutral",
+} as const satisfies Record<CorridorStatus, string>;
+
+export function corridorStatusLabel(status: CorridorStatus, locale: Locale) {
+  switch (status) {
+    case "live":
+      return OPS_COMMON.live[locale];
+    case "superseded":
+      return OPS_COMMON.superseded[locale];
+    case "pending":
+      return OPS_COMMON.awaitingReview[locale];
+    case "rejected":
+      return OPS_COMMON.sentBack[locale];
+  }
 }
 
 /**
@@ -76,33 +100,37 @@ export function freshnessLabel(row: CorridorRow, locale: Locale) {
 }
 
 /**
- * The coverage filters, as one map.
+ * The status filter: the four statuses the column prints, plus "Not
+ * checked yet", which the corridor page's counter of that name links to
+ * (`?state=unverified`) and which is about freshness rather than status.
  *
- * These cut across the two columns that are not the same question:
- * `reviewState` is where a version is in the approval path, `isLive` is
- * whether the engine serves it, and a superseded version is approved and
- * not live at once. So the filter names the state a person is looking
- * for rather than the column it happens to live in.
+ * The URL key stays `state`, and `approved` — from before approved and
+ * live were one status — still reads, as either of the two it split into.
  */
 export function corridorStateFilters(locale: Locale) {
   return [
-    { value: "live", label: OPS_COMMON.live[locale] },
-    { value: "pending", label: OPS_COMMON.awaitingReview[locale] },
+    ...CORRIDOR_STATUSES.map((status) => ({
+      value: status,
+      label: corridorStatusLabel(status, locale),
+    })),
     { value: "unverified", label: OPS_CORRIDORS.notCheckedYetShort[locale] },
-    { value: "rejected", label: OPS_COMMON.sentBack[locale] },
   ];
 }
 
-export function corridorMatchesState(row: CorridorRow, state: string) {
+export function corridorMatchesState(
+  row: Pick<CorridorRow, "reviewState" | "isLive" | "lastVerifiedAt">,
+  state: string
+) {
   switch (state) {
     case "live":
-      return row.isLive;
+    case "superseded":
     case "pending":
-      return row.reviewState === "pending";
+    case "rejected":
+      return corridorStatus(row) === state;
+    case "approved":
+      return row.reviewState === "approved";
     case "unverified":
       return row.isLive && !row.lastVerifiedAt;
-    case "rejected":
-      return row.reviewState === "rejected";
     default:
       return true;
   }
@@ -115,14 +143,17 @@ export function corridorMatchesState(row: CorridorRow, state: string) {
  * one field and shows another is a mismatch inside one file instead of
  * one hidden across two.
  */
-export function corridorSortKey(row: CorridorRow, sort: CorridorSort, locale: Locale) {
+export function corridorSortKey(row: CorridorRow, sort: CorridorSort) {
   switch (sort) {
     case "purpose":
       return row.purpose;
     case "version":
       return row.version;
     case "state":
-      return stateLabel(row.reviewState, locale);
+      // By rank, in `CORRIDOR_STATUSES` order — live, superseded,
+      // awaiting review, sent back — rather than by the translated word,
+      // which would order differently in every locale.
+      return CORRIDOR_STATUSES.indexOf(corridorStatus(row));
     case "documents":
       return row.requirementCount;
     case "checked":

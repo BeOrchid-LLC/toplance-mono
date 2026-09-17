@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -76,35 +78,37 @@ export function AskAboutCase({ applicationId }: { applicationId: string }) {
           <DialogDescription>{t(OPS_SUPPORT.askAboutCaseLead)}</DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2">
-          <label className="t-label" htmlFor="case-support-subject">
-            {t(OPS_SUPPORT.subjectLabel)}
-          </label>
-          <Input
-            id="case-support-subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            maxLength={200}
-            disabled={pending}
-          />
-        </div>
+        <DialogBody>
+          <div className="flex flex-col gap-2">
+            <label className="t-label" htmlFor="case-support-subject">
+              {t(OPS_SUPPORT.subjectLabel)}
+            </label>
+            <Input
+              id="case-support-subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              maxLength={200}
+              disabled={pending}
+            />
+          </div>
 
-        <div className="mt-4 flex flex-col gap-2">
-          <label className="t-label" htmlFor="case-support-body">
-            {t(OPS_SUPPORT.bodyLabel)}
-          </label>
-          <Textarea
-            id="case-support-body"
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder={t(OPS_SUPPORT.bodyPlaceholder)}
-            rows={5}
-            maxLength={4000}
-            disabled={pending}
-          />
-        </div>
+          <div className="mt-4 flex flex-col gap-2">
+            <label className="t-label" htmlFor="case-support-body">
+              {t(OPS_SUPPORT.bodyLabel)}
+            </label>
+            <Textarea
+              id="case-support-body"
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder={t(OPS_SUPPORT.bodyPlaceholder)}
+              rows={5}
+              maxLength={4000}
+              disabled={pending}
+            />
+          </div>
+        </DialogBody>
 
-        <div className="mt-4">
+        <DialogFooter>
           <Button
             type="button"
             disabled={pending || !subject.trim() || !body.trim()}
@@ -112,7 +116,7 @@ export function AskAboutCase({ applicationId }: { applicationId: string }) {
           >
             {t(OPS_SUPPORT.send)}
           </Button>
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

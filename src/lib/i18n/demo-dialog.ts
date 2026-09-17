@@ -22,6 +22,10 @@ type L = Record<Locale, string>;
  * and stay in English until every action in the codebase is translated,
  * which is its own piece of work rather than something to start here.
  *
+ * `cancel` repeats the word every other surface already uses for it
+ * (`OPS_COMMON.cancel`, `PROFILE_FIELDS.cancel`), in every language,
+ * rather than importing a console's dictionary into the public site.
+ *
  * NEEDS NATIVE REVIEW before launch, like every non-English string in
  * this codebase translated in-house rather than supplied by the client.
  */
@@ -38,6 +42,7 @@ export const DEMO_DIALOG: {
   sentTitle: L;
   sentBody: L;
   close: L;
+  cancel: L;
 } = {
   description: {
     en: "Tell us who you are and when suits you. We will confirm the time by email.",
@@ -182,5 +187,17 @@ export const DEMO_DIALOG: {
     ar: "إغلاق",
     tw: "To mu",
     zu: "Vala",
+  },
+  cancel: {
+    en: "Cancel",
+    ha: "Soke",
+    yo: "Fagilé",
+    ig: "Kagbuo",
+    fr: "Annuler",
+    pt: "Cancelar",
+    sw: "Ghairi",
+    ar: "إلغاء",
+    tw: "Twa mu",
+    zu: "Khansela",
   },
 };

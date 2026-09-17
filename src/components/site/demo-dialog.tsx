@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -180,117 +181,135 @@ export function DemoDialog() {
             </DialogFooter>
           </>
         ) : (
-          <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-5">
+          <>
             <DialogHeader>
               <DialogTitle>{t(SITE_HOME.heroCtaBookDemo)}</DialogTitle>
               <DialogDescription>{t(DEMO_DIALOG.description)}</DialogDescription>
             </DialogHeader>
 
-            <input type="hidden" name="locale" value={locale} />
+            {/* The form is the column the body and footer sit in, so the
+                submit button stays inside it while only the fields scroll —
+                see `DialogContent`. */}
+            <form
+              ref={formRef}
+              onSubmit={onSubmit}
+              className="flex min-h-0 flex-1 flex-col gap-5"
+            >
+              <input type="hidden" name="locale" value={locale} />
 
-            {/*
-              The honeypot. Positioned off-screen rather than hidden with
-              `display:none`, which the cruder scripts know to skip, and
-              taken out of the tab order and the accessibility tree so
-              nobody using the form as built can reach it. A filled value
-              means a script typed into every input it found.
+              {/*
+                The honeypot. Positioned off-screen rather than hidden with
+                `display:none`, which the cruder scripts know to skip, and
+                taken out of the tab order and the accessibility tree so
+                nobody using the form as built can reach it. A filled value
+                means a script typed into every input it found.
 
-              The name is `HONEYPOT_FIELD` and must stay meaningless.
-              It was `website` until 2026-09-09, and Chrome autofilled
-              it with a real visitor's email — the lead was discarded
-              and the visitor was told it had arrived.
-            */}
-            <input
-              type="text"
-              name={HONEYPOT_FIELD}
-              tabIndex={-1}
-              autoComplete="off"
-              aria-hidden="true"
-              /* `readOnly` is the second layer, and the one that does the
-                 work: Chrome ignores `autocomplete="off"` on a form
-                 shaped like this one, but it does not autofill a
-                 read-only input. A script setting `.value` directly —
-                 which is what this is here to catch — is unaffected,
-                 because `readOnly` binds the user agent and not the
-                 DOM. */
-              readOnly
-              className="absolute -left-[9999px] size-px opacity-0"
-            />
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="demo-full-name">{t(DEMO_DIALOG.fullNameLabel)}</Label>
-              <Input
-                id="demo-full-name"
-                name="full_name"
-                required
-                autoComplete="name"
+                The name is `HONEYPOT_FIELD` and must stay meaningless.
+                It was `website` until 2026-09-09, and Chrome autofilled
+                it with a real visitor's email — the lead was discarded
+                and the visitor was told it had arrived.
+              */}
+              <input
+                type="text"
+                name={HONEYPOT_FIELD}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                /* `readOnly` is the second layer, and the one that does the
+                   work: Chrome ignores `autocomplete="off"` on a form
+                   shaped like this one, but it does not autofill a
+                   read-only input. A script setting `.value` directly —
+                   which is what this is here to catch — is unaffected,
+                   because `readOnly` binds the user agent and not the
+                   DOM. */
+                readOnly
+                className="absolute -left-[9999px] size-px opacity-0"
               />
-            </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="demo-email">{t(DEMO_DIALOG.emailLabel)}</Label>
-              <Input
-                id="demo-email"
-                name="email"
-                type="email"
-                required
-                autoComplete="email"
-                placeholder="you@agency.com"
-              />
-            </div>
+              <DialogBody className="flex flex-col gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="demo-full-name">{t(DEMO_DIALOG.fullNameLabel)}</Label>
+                  <Input
+                    id="demo-full-name"
+                    name="full_name"
+                    required
+                    autoComplete="name"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="demo-company">{t(DEMO_DIALOG.companyLabel)}</Label>
-              <Input
-                id="demo-company"
-                name="company_name"
-                required
-                autoComplete="organization"
-              />
-            </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="demo-email">{t(DEMO_DIALOG.emailLabel)}</Label>
+                  <Input
+                    id="demo-email"
+                    name="email"
+                    type="email"
+                    required
+                    autoComplete="email"
+                    placeholder="you@agency.com"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="demo-job-title">{t(DEMO_DIALOG.jobTitleLabel)}</Label>
-              <Input
-                id="demo-job-title"
-                name="job_title"
-                required
-                autoComplete="organization-title"
-              />
-            </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="demo-company">{t(DEMO_DIALOG.companyLabel)}</Label>
+                  <Input
+                    id="demo-company"
+                    name="company_name"
+                    required
+                    autoComplete="organization"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="demo-preferred">{t(DEMO_DIALOG.preferredLabel)}</Label>
-              <Input
-                id="demo-preferred"
-                name="preferred_local"
-                type="datetime-local"
-                required
-              />
-            </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="demo-job-title">{t(DEMO_DIALOG.jobTitleLabel)}</Label>
+                  <Input
+                    id="demo-job-title"
+                    name="job_title"
+                    required
+                    autoComplete="organization-title"
+                  />
+                </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="demo-timezone">{t(DEMO_DIALOG.timezoneLabel)}</Label>
-              <select
-                id="demo-timezone"
-                name="preferred_tz"
-                defaultValue={detected}
-                className={selectClass}
-              >
-                {zones.map((zone) => (
-                  <option key={zone} value={zone}>
-                    {zone.replaceAll("_", " ")}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="demo-preferred">{t(DEMO_DIALOG.preferredLabel)}</Label>
+                  <Input
+                    id="demo-preferred"
+                    name="preferred_local"
+                    type="datetime-local"
+                    required
+                  />
+                </div>
 
-            <DialogFooter>
-              <Button type="submit" size="block" disabled={pending}>
-                {pending ? t(DEMO_DIALOG.submitting) : t(DEMO_DIALOG.submit)}
-              </Button>
-            </DialogFooter>
-          </form>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="demo-timezone">{t(DEMO_DIALOG.timezoneLabel)}</Label>
+                  <select
+                    id="demo-timezone"
+                    name="preferred_tz"
+                    defaultValue={detected}
+                    className={selectClass}
+                  >
+                    {zones.map((zone) => (
+                      <option key={zone} value={zone}>
+                        {zone.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </DialogBody>
+
+              {/* Side by side from `sm`, the client's rule for a button
+                  pair; stacked full width on a phone, submit on top. */}
+              <DialogFooter className="flex-col-reverse items-stretch sm:flex-row sm:items-center">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">
+                    {t(DEMO_DIALOG.cancel)}
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={pending}>
+                  {pending ? t(DEMO_DIALOG.submitting) : t(DEMO_DIALOG.submit)}
+                </Button>
+              </DialogFooter>
+            </form>
+          </>
         )}
       </DialogContent>
     </Dialog>

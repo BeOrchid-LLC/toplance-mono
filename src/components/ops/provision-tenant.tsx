@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -151,8 +153,6 @@ export function ProvisionTenant({
           <DialogTitle>{t(OPS_TENANTS.provisionTitle)}</DialogTitle>
         </DialogHeader>
 
-        <p className="t-muted max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
-
         {inviteUrl ? (
           /*
             The link is shown only when the email did not go.
@@ -169,73 +169,85 @@ export function ProvisionTenant({
             the roster never selects `token`, so this is the only copy
             that will ever exist and losing it strands the agency.
           */
-          <div className="flex flex-col gap-2">
-            {emailSent ? (
-              <p className="max-w-[52ch]">
-                {fill(t(OPS_TENANTS.provisionSentTo), { email: sentTo })}
-              </p>
-            ) : (
-              <>
-                <p role="alert" className="max-w-[52ch] text-danger-ink">
-                  {t(OPS_TENANTS.provisionEmailFailed)}
+          <DialogBody className="flex flex-col gap-5">
+            <p className="t-muted max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
+            <div className="flex flex-col gap-2">
+              {emailSent ? (
+                <p className="max-w-[52ch]">
+                  {fill(t(OPS_TENANTS.provisionSentTo), { email: sentTo })}
                 </p>
-                <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
-                <Input
-                  id="invite-url"
-                  readOnly
-                  value={inviteUrl}
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-              </>
-            )}
-          </div>
+              ) : (
+                <>
+                  <p role="alert" className="max-w-[52ch] text-danger-ink">
+                    {t(OPS_TENANTS.provisionEmailFailed)}
+                  </p>
+                  <Label htmlFor="invite-url">{t(OPS_TENANTS.inviteLinkLabel)}</Label>
+                  <Input
+                    id="invite-url"
+                    readOnly
+                    value={inviteUrl}
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                </>
+              )}
+            </div>
+          </DialogBody>
         ) : (
-          <form key={formKey} action={submit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">{t(OPS_TENANTS.fieldAgencyName)}</Label>
-              <Input
-                id="name"
-                name="name"
-                required
-                maxLength={160}
-                defaultValue={demoRequest?.companyName ?? ""}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="owner_email">{t(OPS_TENANTS.fieldOwnerEmail)}</Label>
-              <Input
-                id="owner_email"
-                name="owner_email"
-                type="email"
-                required
-                defaultValue={demoRequest?.email ?? ""}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="owner_name">{t(OPS_TENANTS.fieldOwnerName)}</Label>
-              <Input
-                id="owner_name"
-                name="owner_name"
-                defaultValue={demoRequest?.fullName ?? ""}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="domain">{t(OPS_TENANTS.fieldDomain)}</Label>
-              <Input id="domain" name="domain" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="seats">{t(OPS_TENANTS.fieldSeats)}</Label>
-              <Input id="seats" name="seats" type="number" min={0} defaultValue={0} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="billing_contact">{t(OPS_TENANTS.fieldBillingContact)}</Label>
-              <Input id="billing_contact" name="billing_contact" type="email" />
-            </div>
+          /* The form is the column the body and footer sit in, so the
+             submit button stays inside it while only the fields scroll —
+             see `DialogContent`. */
+          <form
+            key={formKey}
+            action={submit}
+            className="flex min-h-0 flex-1 flex-col gap-5"
+          >
+            <DialogBody className="flex flex-col gap-4">
+              <p className="t-muted mb-1 max-w-[52ch]">{t(OPS_TENANTS.provisionNotice)}</p>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="name">{t(OPS_TENANTS.fieldAgencyName)}</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  required
+                  maxLength={160}
+                  defaultValue={demoRequest?.companyName ?? ""}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="owner_email">{t(OPS_TENANTS.fieldOwnerEmail)}</Label>
+                <Input
+                  id="owner_email"
+                  name="owner_email"
+                  type="email"
+                  required
+                  defaultValue={demoRequest?.email ?? ""}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="owner_name">{t(OPS_TENANTS.fieldOwnerName)}</Label>
+                <Input
+                  id="owner_name"
+                  name="owner_name"
+                  defaultValue={demoRequest?.fullName ?? ""}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="domain">{t(OPS_TENANTS.fieldDomain)}</Label>
+                <Input id="domain" name="domain" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="seats">{t(OPS_TENANTS.fieldSeats)}</Label>
+                <Input id="seats" name="seats" type="number" min={0} defaultValue={0} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="billing_contact">{t(OPS_TENANTS.fieldBillingContact)}</Label>
+                <Input id="billing_contact" name="billing_contact" type="email" />
+              </div>
+            </DialogBody>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Button type="submit" disabled={pending}>
-                {t(OPS_TENANTS.createButton)}
-              </Button>
+            {/* Cancel first and quiet, create at the end — the order
+                `ConfirmDialog` uses, side by side. */}
+            <DialogFooter>
               <Button
                 type="button"
                 variant="tertiary"
@@ -244,7 +256,10 @@ export function ProvisionTenant({
               >
                 {t(OPS_TENANTS.cancelButton)}
               </Button>
-            </div>
+              <Button type="submit" disabled={pending}>
+                {t(OPS_TENANTS.createButton)}
+              </Button>
+            </DialogFooter>
           </form>
         )}
       </DialogContent>

@@ -141,12 +141,12 @@ async function DashboardContent({
           {
             label: "Travellers",
             value: data.totals.travellers,
-            sub: `${data.totals.directApplicants} came directly`,
+            sub: "across board",
           },
           {
-            label: "Open cases",
+            label: "Open applications",
             value: data.totals.openCases,
-            sub: "somebody still has work to do",
+            sub: "still in review",
             tone: "text-info-ink",
           },
         ]}
@@ -431,15 +431,15 @@ function Operations({ data, locale }: { data: DashboardData; locale: Locale }) {
             tone: operations.unassigned > 0 ? "text-warning-ink" : undefined,
           },
           {
-            label: "Past SLA",
+            label: "Overdue",
             value: operations.overdueSla,
             sub: "open and overdue",
             tone: operations.overdueSla > 0 ? "text-danger-ink" : undefined,
           },
           {
-            label: "To decision",
+            label: "Av. timeline",
             value: days(operations.medianDaysToDecision),
-            sub: "median, from submission",
+            sub: "submission to decision",
           },
           {
             label: "Approval rate",

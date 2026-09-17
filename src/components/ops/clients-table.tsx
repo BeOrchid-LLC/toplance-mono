@@ -171,7 +171,7 @@ export function ClientsTable({
       rowKey={(client) => client.orgId}
       numbered
       columns={columns}
-      label="Every agency, busiest first"
+      label="Agencies"
       filteredLabel={filteredLabel}
       count={totalClients}
       countLabel="agencies"

@@ -51,7 +51,7 @@ export function Hint({ label }: { label: string }) {
           // Hover on the panel itself would be a trap on a control
           // whose open state is driven by the trigger's hover.
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="z-50 max-w-[34ch] rounded-md border border-border bg-surface px-3 py-2 text-[13px] leading-relaxed text-ink-2 shadow-[var(--shadow-lg)]"
+          className="z-[110] max-w-[34ch] rounded-md border border-border bg-surface px-3 py-2 text-[13px] leading-relaxed text-ink-2 shadow-[var(--shadow-lg)]"
         >
           {label}
           <Popover.Arrow className="fill-[var(--surface)]" />

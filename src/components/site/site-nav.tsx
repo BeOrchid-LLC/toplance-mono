@@ -286,8 +286,9 @@ export function SiteNav() {
                 does not scroll, for the same reason `DialogContent`'s
                 does not: the close button would scroll away with it. */}
             <DialogContent
+              overlayClassName="z-80"
               className={cn(
-                "left-0 top-[var(--bar-h)] max-h-[calc(100dvh-var(--bar-h))] w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-none rounded-b-lg border-x-0 border-t-0 p-0 pb-2 pt-16",
+                "z-80 left-0 top-[var(--bar-h)] max-h-[calc(100dvh-var(--bar-h))] w-full max-w-none translate-x-0 translate-y-0 gap-0 rounded-none rounded-b-lg border-x-0 border-t-0 p-0 pb-2 pt-16",
                 "data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100",
                 "data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2"
               )}

@@ -32,6 +32,14 @@ export const ADMIN_CONSOLE: {
   pageOfTemplate: L;
   previousPage: L;
   nextPage: L;
+  sortLabel: L;
+  sortAsc: L;
+  sortDesc: L;
+  sortNewest: L;
+  sortOldest: L;
+  sortHigh: L;
+  sortLow: L;
+  sortFirst: L;
 } = {
   /**
    * The skip link's own label. It belongs here rather than in either
@@ -228,5 +236,121 @@ export const ADMIN_CONSOLE: {
     ar: "الصفحة التالية",
     tw: "Krataafa a edi so",
     zu: "Ikhasi elilandelayo",
+  },
+  /**
+   * The accessible name of a table's sort control. Never shown: the
+   * control shows the order it is set to, and an icon says what it is.
+   */
+  sortLabel: {
+    en: "Sort",
+    ha: "Tsara",
+    yo: "Ṣètò",
+    ig: "Hazie",
+    fr: "Trier",
+    pt: "Ordenar",
+    sw: "Panga",
+    ar: "ترتيب",
+    tw: "Hyehyɛ",
+    zu: "Hlela",
+  },
+  /**
+   * The sort control's options, one pair per kind of column. `{label}`
+   * is the column's own heading, so the option names the column the
+   * reader can see. A–Z and Z–A for text; newest and oldest for dates;
+   * high-to-low and low-to-high for counts. See `buildSortOptions`.
+   */
+  sortAsc: {
+    en: "{label}: A–Z",
+    ha: "{label}: A–Z",
+    yo: "{label}: A–Z",
+    ig: "{label}: A–Z",
+    fr: "{label}: A–Z",
+    pt: "{label}: A–Z",
+    sw: "{label}: A–Z",
+    ar: "{label}: أ–ي",
+    tw: "{label}: A–Z",
+    zu: "{label}: A–Z",
+  },
+  /** See `sortAsc`. */
+  sortDesc: {
+    en: "{label}: Z–A",
+    ha: "{label}: Z–A",
+    yo: "{label}: Z–A",
+    ig: "{label}: Z–A",
+    fr: "{label}: Z–A",
+    pt: "{label}: Z–A",
+    sw: "{label}: Z–A",
+    ar: "{label}: ي–أ",
+    tw: "{label}: Z–A",
+    zu: "{label}: Z–A",
+  },
+  /** See `sortAsc`. */
+  sortNewest: {
+    en: "{label}: newest first",
+    ha: "{label}: sabuwa da farko",
+    yo: "{label}: tuntun ní àkọ́kọ́",
+    ig: "{label}: nke ọhụrụ na mbụ",
+    fr: "{label} : plus récent d'abord",
+    pt: "{label}: mais recente primeiro",
+    sw: "{label}: mpya kwanza",
+    ar: "{label}: الأحدث أولاً",
+    tw: "{label}: foforo di kan",
+    zu: "{label}: okusha kuqala",
+  },
+  /** See `sortAsc`. */
+  sortOldest: {
+    en: "{label}: oldest first",
+    ha: "{label}: tsohuwa da farko",
+    yo: "{label}: àtijọ́ ní àkọ́kọ́",
+    ig: "{label}: nke ochie na mbụ",
+    fr: "{label} : plus ancien d'abord",
+    pt: "{label}: mais antigo primeiro",
+    sw: "{label}: ya zamani kwanza",
+    ar: "{label}: الأقدم أولاً",
+    tw: "{label}: dada di kan",
+    zu: "{label}: okudala kuqala",
+  },
+  /** See `sortAsc`. */
+  sortHigh: {
+    en: "{label}: high to low",
+    ha: "{label}: daga babba zuwa ƙarami",
+    yo: "{label}: láti gíga sí kékeré",
+    ig: "{label}: site n'elu ruo n'ala",
+    fr: "{label} : décroissant",
+    pt: "{label}: do maior para o menor",
+    sw: "{label}: kubwa hadi ndogo",
+    ar: "{label}: من الأعلى إلى الأدنى",
+    tw: "{label}: kɛse kɔ ketewa",
+    zu: "{label}: kusuka phezulu kuya phansi",
+  },
+  /** See `sortAsc`. */
+  sortLow: {
+    en: "{label}: low to high",
+    ha: "{label}: daga ƙarami zuwa babba",
+    yo: "{label}: láti kékeré sí gíga",
+    ig: "{label}: site n'ala ruo n'elu",
+    fr: "{label} : croissant",
+    pt: "{label}: do menor para o maior",
+    sw: "{label}: ndogo hadi kubwa",
+    ar: "{label}: من الأدنى إلى الأعلى",
+    tw: "{label}: ketewa kɔ kɛse",
+    zu: "{label}: kusuka phansi kuya phezulu",
+  },
+  /**
+   * An option for a column ordered by rank rather than by its words —
+   * a status whose order is "ready, then in review, then…". `{value}`
+   * is the status that leads, in the cell's own words.
+   */
+  sortFirst: {
+    en: "{value} first",
+    ha: "{value} da farko",
+    yo: "{value} ní àkọ́kọ́",
+    ig: "{value} na mbụ",
+    fr: "{value} d'abord",
+    pt: "{value} primeiro",
+    sw: "{value} kwanza",
+    ar: "{value} أولاً",
+    tw: "{value} di kan",
+    zu: "{value} kuqala",
   },
 };

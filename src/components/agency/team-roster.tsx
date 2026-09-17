@@ -23,9 +23,9 @@ function formatDay(value: Date) {
  * created it heads the list.
  *
  * A table since the client's 7 September review, which asked for the
- * same treatment the clients roster got. No sortable headers, though:
- * the order is the argument. Oldest first puts the person who founded
- * the agency at the top, and a column that reorders away from that is
+ * same treatment the clients roster got. No sort control, though: the
+ * order is the argument. Oldest first puts the person who founded the
+ * agency at the top, and a control that reorders away from that is
  * offering to lose the one thing the sequence says.
  *
  * Their rank is a badge rather than bare text, for the same reason the

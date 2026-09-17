@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
+import { leadsFirst } from "@/lib/domain/sort-options";
 import { Badge } from "@/components/ui/badge";
 import type { TenantRow } from "@/lib/data/tenants";
 import type { Locale } from "@/lib/i18n/locales";
@@ -42,7 +43,7 @@ export function TenantsTable({
   const columns: DataColumn<TenantRow>[] = [
     {
       id: "agency",
-      sortable: true,
+      sort: "text",
       label: OPS_TENANTS.tableHead.agency[locale],
       width: "w-[28%]",
       // An agency's name and domain are whatever was typed at
@@ -67,14 +68,14 @@ export function TenantsTable({
     },
     {
       id: "members",
-      sortable: true,
+      sort: "number",
       label: OPS_TENANTS.tableHead.members[locale],
       className: "num",
       cell: (t) => String(t.members),
     },
     {
       id: "applications",
-      sortable: true,
+      sort: "number",
       label: OPS_TENANTS.tableHead.applications[locale],
       className: "num",
       cell: (t) => t.applicationsTotal,
@@ -96,7 +97,12 @@ export function TenantsTable({
     },
     {
       id: "state",
-      sortable: true,
+      // Ordered live-then-suspended (`tenantSortKey`), not by the
+      // words, so the options name which state leads.
+      sort: {
+        asc: leadsFirst(OPS_TENANTS.live[locale], locale),
+        desc: leadsFirst(OPS_TENANTS.suspendedBadge[locale], locale),
+      },
       label: OPS_TENANTS.tableHead.state[locale],
       cell: (t) => (
         <Badge variant={t.suspendedAt ? "warning" : "success"}>
@@ -106,7 +112,7 @@ export function TenantsTable({
     },
     {
       id: "added",
-      sortable: true,
+      sort: "date",
       label: OPS_TENANTS.tableHead.added[locale],
       className: "t-muted",
       cell: (t) => t.createdAt.toISOString().slice(0, 10),

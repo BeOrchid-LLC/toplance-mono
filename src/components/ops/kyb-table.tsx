@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { DataTable, type DataColumn } from "@/components/shared/data-table";
+import { leadsFirst } from "@/lib/domain/sort-options";
 import { Badge } from "@/components/ui/badge";
 import { KYB_STANDING } from "@/components/ops/kyb-standing";
 import type { KybQueueRow } from "@/lib/data/kyb";
@@ -19,11 +20,11 @@ import { OPS_TENANTS } from "@/lib/i18n/ops-tenants";
  * `TenantsTable` gives: a column's `cell` is a function and the page
  * above is a server component, so only the rows come down.
  *
- * The page sorts by `added`, newest first, unless a header says
+ * The page sorts by `added`, newest first, unless the sort control says
  * otherwise — the client asked for that on 2026-09-11, replacing
  * `kybQueue`'s own "owed a decision first" order as the default. A
  * reviewer after the rows waiting on them has the Status filter and the
- * Status header, which ranks `ready` first.
+ * "Ready first" sort.
  *
  * The search, the standing filter and the pager arrived on 2026-09-09,
  * with the rest of the console: the client asked for them on every
@@ -57,7 +58,7 @@ export function KybTable({
     {
       id: "agency",
       label: OPS_KYB.tableHead.agency[locale],
-      sortable: true,
+      sort: "text",
       width: "w-[40%]",
       floor: "min-w-[9rem]",
       cell: (row) => (
@@ -73,7 +74,7 @@ export function KybTable({
     {
       id: "progress",
       label: OPS_KYB.tableHead.progress[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       // The bare fraction, not a bar. A bar would need a legend to say
       // whether a rejected row counts, and the fraction simply does not
@@ -83,7 +84,12 @@ export function KybTable({
     {
       id: "standing",
       label: OPS_KYB.tableHead.standing[locale],
-      sortable: true,
+      // Ranked ready → in review → not started → activated
+      // (`kybSortKey`), so the options name which end leads.
+      sort: {
+        asc: leadsFirst(OPS_KYB.standing.ready[locale], locale),
+        desc: leadsFirst(OPS_KYB.standing.activated[locale], locale),
+      },
       cell: (row) => {
         const standing = KYB_STANDING[row.standing];
         return (
@@ -110,7 +116,7 @@ export function KybTable({
     {
       id: "added",
       label: OPS_KYB.tableHead.added[locale],
-      sortable: true,
+      sort: "date",
       className: "t-muted",
       cell: (row) => row.createdAt.toISOString().slice(0, 10),
     },

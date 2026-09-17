@@ -9,7 +9,6 @@ import { Pagination } from "@/components/shared/pagination";
 import { PageSizeSelect } from "@/components/shared/page-size-select";
 import { PAGE_SIZE_OPTIONS } from "@/lib/domain/sorting";
 import { rowOffset } from "@/lib/domain/row-number";
-import { SortHead } from "@/components/shared/sort-head";
 import { TableToolbar, type ToolbarFilter } from "@/components/shared/table-toolbar";
 import {
   Table,
@@ -20,6 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { SortDir } from "@/lib/domain/sorting";
+import {
+  buildSortOptions,
+  sortOptionValue,
+  type ColumnSort,
+} from "@/lib/domain/sort-options";
 import { ADMIN_CONSOLE } from "@/lib/i18n/admin-console";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
@@ -36,10 +40,19 @@ import { cn } from "@/lib/utils";
  * being looked at is serialised.
  */
 export type DataColumn<T> = {
-  /** Stable id. Also the `?sort=` value when `sortable`. */
+  /** Stable id. Also the `?sort=` value when the column sorts. */
   id: string;
   label: string;
-  sortable?: boolean;
+  /**
+   * Offers this column in the table's sort control, and says what kind
+   * of order it is — which decides the options' words ("A–Z", "newest
+   * first", "high to low") and which direction leads. See `ColumnSort`.
+   *
+   * The header itself stays a plain label either way: since the
+   * client's review of 17 September, a header is never a control.
+   * The page still does the sorting, on its own allow-list.
+   */
+  sort?: ColumnSort;
   /** Right-aligns the column — for an actions cell or a bare number. */
   align?: "end";
   /**
@@ -100,7 +113,7 @@ export type DataColumn<T> = {
  *
  * What it owns is the chrome that was copied six times: the panel and its
  * header, the "showing N of M" line, the row-count badge, the search and
- * filter row, the column headers with their sort links, the two different
+ * filter row, the sort control, the column headers, the two different
  * empty states, and the pager. What each caller still owns is its columns
  * — the only part that was ever actually different.
  *
@@ -245,6 +258,16 @@ export function DataTable<T>({
   const showMeta =
     !isEmpty && !isNoMatch && (showSize || (pagination?.pageCount ?? 0) > 1);
 
+  const sortOptions = buildSortOptions(columns, locale);
+  const toolbarSort =
+    sortOptions.length > 0
+      ? {
+          value: sortOptionValue(sort, dir),
+          options: sortOptions,
+          label: ADMIN_CONSOLE.sortLabel[locale],
+        }
+      : undefined;
+
   const countLine = filteredLabel ?? (
     <>
       <span className="num">{count ?? total}</span>{" "}
@@ -272,6 +295,7 @@ export function DataTable<T>({
               <TableToolbar
                 placeholder={toolbar.placeholder}
                 filters={toolbar.filters}
+                sort={toolbarSort}
                 className="min-w-0 flex-1"
               />
             )}
@@ -319,30 +343,28 @@ export function DataTable<T>({
                   {ADMIN_CONSOLE.ordinalHeading[locale]}
                 </TableHead>
               )}
-              {columns.map((c) =>
-                c.sortable ? (
-                  <SortHead
-                    key={c.id}
-                    label={c.label}
-                    column={c.id}
-                    sort={sort}
-                    dir={dir}
-                    basePath={basePath}
-                    params={params}
-                    className={cn(c.width, c.className)}
-                  />
-                ) : (
-                  <TableHead
-                    key={c.id}
-                    className={cn(c.width, c.align === "end" && "text-end", c.className)}
-                  >
-                    {/* An actions column has a header for a screen reader
-                        and nothing for an eye — the buttons name
-                        themselves. */}
-                    {c.labelHidden ? <span className="sr-only">{c.label}</span> : c.label}
-                  </TableHead>
-                )
-              )}
+              {columns.map((c) => (
+                <TableHead
+                  key={c.id}
+                  // Which column the rows are in order of, for a screen
+                  // reader. Nothing for an eye: a header is a label, one
+                  // colour and one weight, and the order is named in the
+                  // sort control above.
+                  aria-sort={
+                    c.sort && sort === c.id
+                      ? dir === "asc"
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                  className={cn(c.width, c.align === "end" && "text-end", c.className)}
+                >
+                  {/* An actions column has a header for a screen reader
+                      and nothing for an eye — the buttons name
+                      themselves. */}
+                  {c.labelHidden ? <span className="sr-only">{c.label}</span> : c.label}
+                </TableHead>
+              ))}
             </TableRow>
           </TableHeader>
           <TableBody>

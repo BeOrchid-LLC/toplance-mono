@@ -58,7 +58,7 @@ export function RuleSetsTable({
       id: "route",
       width: "w-[25%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
-      sortable: true,
+      sort: "text",
       // What lets the two `truncate`s below give width back: a country
       // pair like "United Kingdom → United Arab Emirates" is exactly
       // the unbroken string whose full width the column would
@@ -89,14 +89,14 @@ export function RuleSetsTable({
       id: "purpose",
       width: "w-[12%]",
       label: OPS_CORRIDORS.tableHead.purpose[locale],
-      sortable: true,
+      sort: "text",
       cell: (row) => OPS_COMMON.purpose[row.purpose][locale],
     },
     {
       id: "cases",
       width: "w-[9%]",
       label: AGENCY_RULE_SETS.tableHead.cases[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       cell: (row) => row.caseCount,
     },
@@ -104,7 +104,7 @@ export function RuleSetsTable({
       id: "documents",
       width: "w-[11%]",
       label: OPS_CORRIDORS.tableHead.documents[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       cell: (row) => row.requirementCount,
     },
@@ -126,7 +126,7 @@ export function RuleSetsTable({
       id: "version",
       width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.version[locale],
-      sortable: true,
+      sort: "number",
       cell: (row) => (
         <div className="flex flex-wrap items-center gap-2">
           <span className="num">v{row.version}</span>

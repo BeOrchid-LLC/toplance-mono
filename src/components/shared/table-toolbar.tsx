@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Search } from "lucide-react";
+import { ArrowDownUp, ChevronDown, Search } from "lucide-react";
+
+import { readSortOptionValue, type SortOption } from "@/lib/domain/sort-options";
 
 import { cn } from "@/lib/utils";
 
@@ -13,8 +15,21 @@ export type ToolbarFilter = {
   options: { value: string; label: string }[];
 };
 
+/** The sort control's state: what is on, what may be, and its name. */
+export type ToolbarSort = {
+  /** `sort:dir` of the order the table is showing. */
+  value: string;
+  options: SortOption[];
+  /** Accessible name; the face shows the chosen order instead. */
+  label: string;
+};
+
+/** The one look every select in a table's header shares. */
+const toolbarSelectClass =
+  "h-9 appearance-none rounded-[var(--radius-sm)] border border-border-strong bg-surface ps-3 pe-8 text-base font-semibold text-ink";
+
 /**
- * Search and filters for a console table, held in the URL.
+ * Search, filters and sort for a console table, held in the URL.
  *
  * The URL rather than component state, for three reasons that all matter
  * on this screen: a filtered queue is a link a reviewer can send to
@@ -26,14 +41,23 @@ export type ToolbarFilter = {
  * The KPI cards and the side rail write the same parameters, so
  * "Unassigned" in the rail and a click on the Unassigned card land on the
  * identical URL rather than on two views that happen to look alike.
+ *
+ * Sorting is a control here rather than a click on a column header,
+ * since the client's review of 17 September: headers that were links
+ * with arrows beside them read as a style nobody could explain, and the
+ * sorted one was a different colour from its neighbours. The control
+ * writes the same `sort` and `dir` the headers did, so every bookmark
+ * made against the old headers still opens the same view.
  */
 export function TableToolbar({
   placeholder = "Search…",
   filters = [],
+  sort,
   className,
 }: {
   placeholder?: string;
   filters?: ToolbarFilter[];
+  sort?: ToolbarSort;
   className?: string;
 }) {
   const router = useRouter();
@@ -117,6 +141,18 @@ export function TableToolbar({
     write(next);
   }
 
+  function setSort(value: string) {
+    const chosen = readSortOptionValue(value);
+    if (!chosen) return;
+    const next = new URLSearchParams(liveParams.current);
+    // Both, always — the page's default direction depends on the column
+    // (`readDir`'s fallback), so a `sort` without a `dir` would not be
+    // the order the reader just picked.
+    next.set("sort", chosen.sort);
+    next.set("dir", chosen.dir);
+    write(next);
+  }
+
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
       {filters.map((f) => (
@@ -128,7 +164,7 @@ export function TableToolbar({
             value={params.get(f.param) ?? ""}
             onChange={(e) => setFilter(f.param, e.target.value)}
             aria-label={f.label}
-            className="h-9 appearance-none rounded-[var(--radius-sm)] border border-border-strong bg-surface ps-3 pe-8 text-base font-semibold text-ink"
+            className={toolbarSelectClass}
           >
             <option value="">{f.label}</option>
             {f.options.map((o) => (
@@ -143,6 +179,34 @@ export function TableToolbar({
           />
         </div>
       ))}
+
+      {sort && sort.options.length > 0 && (
+        <div className="relative">
+          {/* The icon says what the control is; the face says which
+              order is on. A "Sort" placeholder option would be a choice
+              that does nothing, since a table is always in some order. */}
+          <ArrowDownUp
+            className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+            aria-hidden
+          />
+          <select
+            value={sort.value}
+            onChange={(e) => setSort(e.target.value)}
+            aria-label={sort.label}
+            className={cn(toolbarSelectClass, "ps-8")}
+          >
+            {sort.options.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 text-ink-3"
+            aria-hidden
+          />
+        </div>
+      )}
 
       {/* Last in the row, pushed to the far end. `ms-auto` rather than
           `justify-end` on the container so only the search moves: the

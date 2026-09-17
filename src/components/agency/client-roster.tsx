@@ -66,8 +66,8 @@ export type RosterRow = {
  * filtered, sorted and sliced by the page above.
  *
  * Sorting is the page's, not this component's: it arrives already
- * ordered, and `sort`/`dir` are passed only so the headers can render
- * which way they point. Omit them and the headers are plain — the
+ * ordered, and `sort`/`dir` are passed only so the sort control can show
+ * the order that is on. Omit them and there is no sort control — the
  * dashboard's two desk lists are short and have no URL to sort in.
  */
 export function ClientRoster({
@@ -148,7 +148,7 @@ export function ClientRoster({
     {
       id: "client",
       label: AGENCY.tableHead.client[locale],
-      sortable,
+      sort: sortable ? "text" : undefined,
       // A traveller's name is unbounded data; without a floor the
       // `truncate` below would make the whole string the column's
       // minimum width. See `DataColumn.floor`.
@@ -181,7 +181,7 @@ export function ClientRoster({
     {
       id: "route",
       label: AGENCY.tableHead.route[locale],
-      sortable,
+      sort: sortable ? "text" : undefined,
       floor: "min-w-[8rem]",
       cell: (r) => {
         const destination = countryFromIso2(r.destinationIso);
@@ -202,7 +202,7 @@ export function ClientRoster({
     {
       id: "documents",
       label: AGENCY.tableHead.documents[locale],
-      sortable,
+      sort: sortable ? "number" : undefined,
       cell: (r) => {
         const pct = r.completionPct ?? 0;
         return (
@@ -224,14 +224,14 @@ export function ClientRoster({
     {
       id: "status",
       label: AGENCY.tableHead.status[locale],
-      sortable,
+      sort: sortable ? "text" : undefined,
       cell: (r) =>
         r.status ? <StatusBadge status={r.status} locale={locale} short /> : null,
     },
     {
       id: "submitted",
       label: AGENCY.tableHead.submitted[locale],
-      sortable,
+      sort: sortable ? "date" : undefined,
       className: "t-muted",
       // The same ISO date the platform console's tables print. A console
       // is read across ten locales and a localised short date is the one

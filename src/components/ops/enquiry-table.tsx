@@ -190,7 +190,7 @@ export function EnquiryTable({
           // give that width back; see `DataColumn.floor`.
           floor: "min-w-[9rem]",
           label: t(OPS_ENQUIRIES.head.who),
-          sortable: true,
+          sort: "text",
           cell: (r) => (
             <>
               <span className="block truncate font-semibold" title={r.fullName}>
@@ -207,7 +207,7 @@ export function EnquiryTable({
           width: "w-[12%]",
           floor: "min-w-[7rem]",
           label: t(OPS_ENQUIRIES.head.company),
-          sortable: true,
+          sort: "text",
           cell: (r) => (
             <>
               <span className="block truncate" title={r.companyName ?? undefined}>
@@ -223,7 +223,7 @@ export function EnquiryTable({
           id: "requested",
           width: "w-[13%]",
           label: t(OPS_ENQUIRIES.head.requested),
-          sortable: true,
+          sort: "date",
           className: "t-muted",
           // The page's default order, so it has to be on screen: a sort
           // nobody can see is one nobody can reverse. Pinned to UTC
@@ -238,7 +238,7 @@ export function EnquiryTable({
           id: "preferred",
           width: "w-[14%]",
           label: t(OPS_ENQUIRIES.head.preferred),
-          sortable: true,
+          sort: "date",
           className: "t-muted",
           cell: (r) => (
             <>
@@ -258,7 +258,7 @@ export function EnquiryTable({
           id: "status",
           width: "w-[10%]",
           label: t(OPS_ENQUIRIES.head.status),
-          sortable: true,
+          sort: "text",
           cell: (r) =>
             r.status === "converted" ? (
               <Badge variant={STATUS_VARIANT.converted}>
@@ -289,7 +289,7 @@ export function EnquiryTable({
           id: "assignee",
           width: "w-[16%]",
           label: t(OPS_ENQUIRIES.head.assignee),
-          sortable: true,
+          sort: "text",
           /**
            * A converted enquiry shows a name and no control: the work is
            * done, and the action refuses the write anyway — a picker

@@ -58,7 +58,7 @@ export function CorridorsTable({
       id: "route",
       width: "w-[26%]",
       label: OPS_CORRIDORS.tableHead.route[locale],
-      sortable: true,
+      sort: "text",
       // Same floor, same reason as `rule-sets-table`'s route column:
       // a country pair is one unbroken string, and without a floor
       // its whole width would be the column's minimum.
@@ -85,14 +85,14 @@ export function CorridorsTable({
       id: "purpose",
       width: "w-[11%]",
       label: OPS_CORRIDORS.tableHead.purpose[locale],
-      sortable: true,
+      sort: "text",
       cell: (row) => OPS_COMMON.purpose[row.purpose][locale],
     },
     {
       id: "version",
       width: "w-[10%]",
       label: OPS_CORRIDORS.tableHead.version[locale],
-      sortable: true,
+      sort: "number",
       className: "num",
       cell: (row) => `v${row.version}`,
     },
@@ -100,7 +100,7 @@ export function CorridorsTable({
       id: "state",
       width: "w-[19%]",
       label: OPS_CORRIDORS.tableHead.state[locale],
-      sortable: true,
+      sort: "text",
       cell: (row) => (
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant={CORRIDOR_STATE_VARIANT[row.reviewState]}>
@@ -116,7 +116,7 @@ export function CorridorsTable({
       id: "documents",
       width: "w-[13%]",
       label: OPS_CORRIDORS.tableHead.documents[locale],
-      sortable: true,
+      sort: "number",
       cell: (row) => (
         <span className={cn("num", row.requirementCount === 0 && "text-danger-ink")}>
           {row.requirementCount}
@@ -127,7 +127,7 @@ export function CorridorsTable({
       id: "checked",
       width: "w-[17%]",
       label: OPS_CORRIDORS.tableHead.lastChecked[locale],
-      sortable: true,
+      sort: "date",
       cell: (row) => {
         const fresh = freshnessLabel(row, locale);
         return <span className={fresh.tone}>{fresh.text}</span>;

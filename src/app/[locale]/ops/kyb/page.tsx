@@ -80,8 +80,8 @@ export default async function OpsKybPage({
 
   // Newest first by default, as on `/ops/tenants`: the client asked for
   // it on 2026-09-11, so the agency that just signed up is the first row
-  // a reviewer sees. `SortHead` writes `dir` into the URL on every click,
-  // so this fallback only decides the view nobody has sorted yet.
+  // a reviewer sees. The sort control writes `dir` into the URL with every
+  // choice, so this fallback only decides the view nobody has sorted yet.
   const sort = readSort(params.sort, KYB_SORTS, "added");
   // Descending belongs to the date column alone. A hand-typed
   // `?sort=agency` with no `dir` should still read A-Z, not Z-A.

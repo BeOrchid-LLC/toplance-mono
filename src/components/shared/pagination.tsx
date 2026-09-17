@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
  * Page controls for a console table, held in the URL like everything
  * else on the toolbar above it.
  *
- * Links rather than buttons, for the reasons `SortHead` is a link: page
- * three of a filtered queue is a URL somebody can send, the back button
+ * Links rather than buttons: page three of a filtered queue is a URL
+ * somebody can send, the back button
  * walks back through the pages, and no JavaScript ships to render an
  * arrow. It also means the whole control is a server component — the
  * page it belongs to already knows the answer, so nothing here needs

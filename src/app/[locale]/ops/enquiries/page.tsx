@@ -99,8 +99,8 @@ export default async function OpsEnquiriesPage({
   // Newest enquiry first, as `/ops/tenants` and `/ops/kyb` open — the
   // client asked for it on 2026-09-11. It is also the order
   // `listDemoRequests` reads in, so the default no longer overrules the
-  // query. `SortHead` writes `dir` on every click, so this fallback only
-  // decides the view nobody has sorted yet.
+  // query. The sort control writes `dir` with every choice, so this
+  // fallback only decides the view nobody has sorted yet.
   const sort = readSort(params.sort, ENQUIRY_SORTS, "requested");
   // Descending belongs to the date columns alone. A hand-typed
   // `?sort=who` with no `dir` should still read A-Z, not Z-A.

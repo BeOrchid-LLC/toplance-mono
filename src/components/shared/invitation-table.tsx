@@ -71,7 +71,7 @@ export function InvitationTable({
     {
       id: "person",
       label: OPS_STAFF.tableHead.person[locale],
-      sortable: true,
+      sort: "text",
       // The same floor `ColleaguesTable` puts on the same data one
       // panel up: an invitation is addressed to exactly the kind of
       // 50+ character tokenised address that would otherwise be the
@@ -93,19 +93,19 @@ export function InvitationTable({
     {
       id: "rank",
       label: OPS_STAFF.tableHead.rank[locale],
-      sortable: true,
+      sort: "text",
       cell: (invite) => OPS_COMMON.staffRole[invite.staffRank ?? "reviewer"][locale],
     },
     {
       id: "status",
       label: OPS_STAFF.tableHead.status[locale],
-      sortable: true,
+      sort: "text",
       cell: (invite) => <InvitationStatusBadge status={invite.status} locale={locale} />,
     },
     {
       id: "invited",
       label: OPS_STAFF.tableHead.invited[locale],
-      sortable: true,
+      sort: "date",
       className: "num whitespace-nowrap",
       cell: (invite) => formatDay(invite.createdAt),
     },

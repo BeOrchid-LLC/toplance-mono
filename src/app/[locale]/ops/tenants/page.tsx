@@ -134,9 +134,9 @@ async function TenantsContent({
   // Newest agency first, at the client's request on 10 September: an
   // agency created during the call came third under the old A-Z
   // default, and the reason to open this table at all is usually the
-  // one that just arrived. Alphabetical is still a click away, and
-  // `SortHead` writes `dir` into the URL on every click, so this
-  // fallback only decides the view nobody has sorted yet.
+  // one that just arrived. Alphabetical is still one choice away, and
+  // the sort control writes `dir` into the URL with every choice, so
+  // this fallback only decides the view nobody has sorted yet.
   const sort = readSort(params.sort, TENANT_SORTS, "added");
   // Descending belongs to the date column alone. A hand-typed
   // `?sort=agency` with no `dir` should still read A-Z, not Z-A.

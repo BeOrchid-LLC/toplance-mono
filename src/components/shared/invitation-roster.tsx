@@ -150,6 +150,7 @@ export function InvitationRoster({
             <TableRow>
               <TableHead className="w-12 text-end">{ADMIN_CONSOLE.ordinalHeading[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.invitation[locale]}</TableHead>
+              <TableHead>{AGENCY.tableHead.email[locale]}</TableHead>
               <TableHead>{detailLabel ?? AGENCY.tableHead.rank[locale]}</TableHead>
               <TableHead>{AGENCY.tableHead.status[locale]}</TableHead>
               <TableHead />
@@ -175,10 +176,14 @@ export function InvitationRoster({
                       >
                         {invite.fullName || invite.email}
                       </span>
-                      {invite.fullName && (
-                        <span className="special block truncate">{invite.email}</span>
-                      )}
                     </div>
+                  </TableCell>
+
+                  {/* Its own column — see `OPS_STAFF.tableHead.email`. */}
+                  <TableCell>
+                    <span className="block max-w-[280px] truncate" title={invite.email}>
+                      {invite.email}
+                    </span>
                   </TableCell>
 
                   <TableCell>

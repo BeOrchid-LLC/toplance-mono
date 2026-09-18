@@ -115,12 +115,21 @@ export function DemoDialog({
   label,
   variant = "secondary",
   icon,
+  className,
 }: {
   /** Already translated. Defaults to `SITE_HOME.heroCtaBookDemo`. */
   label?: string;
   variant?: React.ComponentProps<typeof Button>["variant"];
   /** Rendered before the label, the way a `Button` takes an icon child. */
   icon?: React.ReactNode;
+  /**
+   * On the trigger, not the dialog — the form's box is this component's
+   * own business, but the button is a child of whatever row places it.
+   * The hero's row is a two-column grid on a phone, and a button that
+   * cannot be told to drop its fixed height stays 52px beside a
+   * neighbour that wrapped to 68px.
+   */
+  className?: string;
 } = {}) {
   const t = useT();
   const title = label ?? t(SITE_HOME.heroCtaBookDemo);
@@ -180,7 +189,7 @@ export function DemoDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant={variant}>
+        <Button variant={variant} className={className}>
           {icon}
           {title}
         </Button>

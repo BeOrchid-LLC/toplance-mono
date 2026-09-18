@@ -327,16 +327,37 @@ export default async function HomePage() {
                   control, and removing a working way to interrogate the
                   product on the first screen is not something a copy change
                   should decide. */}
+              {/* Two equal halves on a phone, their own widths from `sm`.
+                  Left to `flex`, the pair sized itself from its labels:
+                  a 190px primary against a 140px secondary, ragged on
+                  the left edge of a 375px screen and with a stripe of
+                  dead ground to the right of both. The grid is what
+                  makes them equal — `flex-1` would only distribute the
+                  slack and still start from two different label widths.
+
+                  Blockification does the rest: a grid item is laid out
+                  as a block, so `Button`'s `inline-flex` becomes `flex`
+                  and each fills its column with no `w-full` at the call
+                  site — which matters because the secondary is
+                  `DemoDialog`'s own trigger and takes no class from
+                  here.
+
+                  `wrapOnPhone` on the primary, because half of a 375px
+                  screen is 157px and "Get Started" plus its arrow wants
+                  about 167px: without it the label would be squeezed
+                  against the padding. The secondary's shorter words fit,
+                  and a button that grows only when its language needs it
+                  keeps the pair level in the common case. */}
               <div
-                className="rise mt-8 flex flex-wrap gap-3"
+                className="rise mt-8 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap"
                 style={{ animationDelay: "130ms" }}
               >
-                <Button asChild>
+                <Button asChild className={wrapOnPhone()}>
                   <Link href="/agency/sign-up">
                     {SITE_HOME.heroCtaGetStarted[locale]} <ArrowRight />
                   </Link>
                 </Button>
-                <DemoDialog />
+                <DemoDialog className={wrapOnPhone()} />
               </div>
             </div>
 

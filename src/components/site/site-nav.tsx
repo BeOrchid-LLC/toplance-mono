@@ -233,8 +233,17 @@ export function SiteNav() {
               primary act — a button that named an audience read as a
               second navigation entry and left the page with no call to
               action at all. Both landing pages sell the same seat, so
-              both send here. */}
-          <Button asChild size="sm">
+              both send here.
+
+              Desktop only, like everything else in this group. Below
+              `lg` it was the one control that stayed in the bar beside
+              the hamburger, on the narrowest screens crowding a
+              wordmark already down to its pin — and the hero directly
+              underneath carries the same call to action twice over. It
+              is the last row of the menu instead, where it is still the
+              one primary act and no longer competes with the trigger
+              that reaches the navigation. */}
+          <Button asChild size="sm" className="hidden lg:inline-flex">
             <Link href="/agency/sign-up">{t(HERO.ctaShort)}</Link>
           </Button>
 
@@ -321,6 +330,23 @@ export function SiteNav() {
                   >
                     {t(HERO.signIn)}
                   </Link>
+                </DialogClose>
+
+                {/* The bar's call to action, landed. It stays a button
+                    rather than becoming a sixth link row: the rows are
+                    places to go and this is the act, and a menu whose
+                    every entry looks alike has no primary act at all.
+                    Full width and below the doors, so it reads as the
+                    end of the list rather than as another entry in it.
+
+                    `DialogClose` like the rows above — the sheet shuts
+                    on the click that navigates, so the reader does not
+                    come back from the sign-up page to a menu still
+                    hanging open. */}
+                <DialogClose asChild>
+                  <Button asChild className="mt-4 w-full">
+                    <Link href="/agency/sign-up">{t(HERO.ctaShort)}</Link>
+                  </Button>
                 </DialogClose>
 
                 {/* Named rows, not the icon cluster. A setting you have

@@ -153,12 +153,25 @@ test.describe("the small-screen menu", () => {
     // bar stayed unusable.
     await expect(page.getByRole("navigation").getByRole("link", { name: "Pricing" })).toHaveCount(0);
 
+    // And so is the call to action, which used to be the one control
+    // that stayed in the bar below `lg` — beside a wordmark already cut
+    // down to its pin, and above a hero carrying the same button. It is
+    // the last row of the menu now. The sheet is portalled out of the
+    // bar, so this stays 0 with the menu open.
+    await expect(
+      page.getByRole("navigation").getByRole("link", { name: "Get started" })
+    ).toHaveCount(0);
+
     await page.getByRole("button", { name: "Open menu" }).click();
 
     const menu = page.getByRole("dialog");
     for (const label of ["How it works", "Where you can go", "Pricing", "For travelers", "Sign in"]) {
       await expect(menu.getByRole("link", { name: label })).toBeVisible();
     }
+
+    const cta = menu.getByRole("link", { name: "Get started" });
+    await expect(cta).toBeVisible();
+    await expect(cta).toHaveAttribute("href", "/agency/sign-up");
 
     // A way out that is not the Escape key. Hiding this in favour of
     // "tap the trigger again" does not work: Radix makes the body
